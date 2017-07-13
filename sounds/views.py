@@ -183,7 +183,7 @@ def front_page(request):
 
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("last_license", "user", "user__profile", "pack").get(id=sound_id)
+        sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id)
         if sound.user.username.lower() != username.lower():
             raise Http404
         user_is_owner = request.user.is_authenticated and \
@@ -291,7 +291,7 @@ def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    Download.objects.create(user=request.user, sound=sound, license=sound.last_license)
+    Download.objects.create(user=request.user, sound=sound, license=sound.license)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
@@ -431,16 +431,16 @@ def sound_edit(request, username, sound_id):
 
     license_form = NewLicenseForm(request.POST)
     if request.POST and license_form.is_valid():
-        sound.last_license = license_form.cleaned_data["license"]
+        sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
         if sound.pack:
             sound.pack.process()  # Sound license changed, process pack (is sound has pack)
         sound.invalidate_template_caches()
-        SoundLicenseHistory.objects.create(sound=sound, license=sound.last_license)
+        SoundLicenseHistory.objects.create(sound=sound, license=sound.license)
         update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm(initial={'license': sound.last_license})
+        license_form = NewLicenseForm(initial={'license': sound.license})
 
     tvars = {
         'sound': sound,

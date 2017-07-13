@@ -21,11 +21,6 @@ class Migration(migrations.Migration):
                 ('license', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sounds.License')),
             ],
         ),
-        migrations.RenameField(
-            model_name='sound',
-            old_name='license',
-            new_name='last_license',
-        ),
         migrations.AddField(
             model_name='soundlicensehistory',
             name='sound',

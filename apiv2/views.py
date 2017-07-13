@@ -675,7 +675,7 @@ class PackSounds(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        queryset = Sound.objects.select_related('user', 'pack', 'last_license').filter(moderation_state="OK",
+        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
                                                                                   processing_state="OK",
                                                                                   pack__id=self.kwargs['pk'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
@@ -909,7 +909,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'license' in serializer.data:
                     if serializer.data['license']:
                         license = License.objects.get(name=serializer.data['license'])
-                        sound.last_license = license
+                        sound.license = license
                         SoundLicenseHistory.objects.create(sound=sound, license=license)
                 if 'geotag' in serializer.data:
                     if serializer.data['geotag']:

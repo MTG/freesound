@@ -154,7 +154,7 @@ def bulk_license_change(request):
         form = NewLicenseForm(request.POST)
         if form.is_valid():
             selected_license = form.cleaned_data['license']
-            Sound.objects.filter(user=request.user).update(last_license=selected_license, is_index_dirty=True)
+            Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
             for sound in Sound.objects.filter(user=request.user).all():
                 SoundLicenseHistory.objects.create(sound=sound, license=selected_license)
             Profile.objects.filter(user=request.user).update(has_old_license=False)

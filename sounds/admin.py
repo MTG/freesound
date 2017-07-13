@@ -33,7 +33,7 @@ admin.site.register(License, LicenseAdmin)
 class SoundAdmin(admin.ModelAdmin):
     fieldsets = ((None, {'fields': ('user', )}),
                  ('Filenames', {'fields': ('base_filename_slug',)}),
-                 ('User defined fields', {'fields': ('description', 'last_license', 'original_filename', 'sources', 'pack')}),
+                 ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'sources', 'pack')}),
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
                                                  'filesize', 'channels', 'date_recorded')}),
                  ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description', 'is_explicit')}),
@@ -41,8 +41,8 @@ class SoundAdmin(admin.ModelAdmin):
                                             'similarity_state')}),
                  )
     raw_id_fields = ('user', 'pack', 'sources')
-    list_display = ('id', 'user', 'original_filename', 'last_license', 'created', 'moderation_state')
-    list_filter = ('moderation_state', 'last_license', 'processing_state')
+    list_display = ('id', 'user', 'original_filename', 'license', 'created', 'moderation_state')
+    list_filter = ('moderation_state', 'license', 'processing_state')
 admin.site.register(Sound, SoundAdmin)
 
 

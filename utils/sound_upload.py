@@ -75,7 +75,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     license = License.objects.get(name=sound_fields['license'])
     sound.type = get_sound_type(sound.original_path)
-    sound.last_license = license
+    sound.license = license
     sound.md5 = md5file(sound.original_path)
 
     sound_already_exists = Sound.objects.filter(md5=sound.md5).exists()

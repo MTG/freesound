@@ -60,7 +60,7 @@ class UtilsTest(TestCase):
                 user=user,
                 original_filename="Test sound %i" % i,
                 base_filename_slug="test_sound_%i" % i,
-                last_license=License.objects.all()[0],
+                license=License.objects.all()[0],
                 pack=pack,
                 md5="fakemd5_%i" % i)
         licenses_url = (reverse('pack-licenses', args=["testuser", pack.id]))
@@ -152,7 +152,7 @@ class ShouldSuggestDonationTest(TestCase):
             user=user,
             original_filename="Test sound",
             base_filename_slug="test_sound_10",
-            last_license=License.objects.all()[0],
+            license=License.objects.all()[0],
             md5="fakemd5_10")
         for i in range(0, donations_settings.downloads_in_period):
             Download.objects.create(user=user, sound=sound)
@@ -202,7 +202,7 @@ class ShouldSuggestDonationTest(TestCase):
             user=user,
             original_filename="Test sound",
             base_filename_slug="test_sound_10",
-            last_license=License.objects.all()[0],
+            license=License.objects.all()[0],
             md5="fakemd5_10")
         for i in range(0, donations_settings.downloads_in_period):
             Download.objects.create(user=user, sound=sound)

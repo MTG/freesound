@@ -17,6 +17,6 @@ Sounds in this pack
 
 {% for sound in sound_list %}  * {{sound.base_filename_slug}}.{{sound.type}}
     * url: {% absurl 'short-sound-link' sound.id %}
-    * license: {{sound.last_license}}
+    * license: {{sound.license}}
 {% endfor %}
 

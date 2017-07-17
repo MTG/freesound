@@ -22,11 +22,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.urls import reverse, resolve
-from django.db import connection
-from django.db.models import Q
+from django.db import connection, transaction
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404, render, redirect
@@ -39,7 +37,6 @@ from comments.models import Comment
 from forum.models import Thread
 from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
-from networkx import nx
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundLicenseHistory
@@ -283,7 +280,7 @@ def after_download_modal(request):
 
     return JsonResponse({'content': response_content})
 
-
+@transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),

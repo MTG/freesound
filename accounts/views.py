@@ -149,6 +149,7 @@ def check_username(request):
 
 
 @login_required
+@transaction.atomic()
 def bulk_license_change(request):
     if request.method == 'POST':
         form = NewLicenseForm(request.POST)

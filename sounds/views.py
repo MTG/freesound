@@ -275,7 +275,7 @@ def after_download_modal(request):
         modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
 
         if should_suggest_donation(request.user, len(modal_shown_timestamps)):
-            logger.info('Showing after download donate modal (user id:%i)' % request.user.id)
+            logger.info('Showing after download donate modal (%s)' % json.dumps({'user_id': request.user.id}))
             modal_shown_timestamps.append(time.time())
             cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps)
             template = loader.get_template('sounds/after_download_modal_donation.html')

@@ -900,3 +900,6 @@ class SoundLicenseHistory(models.Model):
     license = models.ForeignKey(License)
     sound = models.ForeignKey(Sound)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created",)

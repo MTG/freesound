@@ -327,7 +327,7 @@ def get_authentication_details_form_request(request):
     client_id = None
     client_name = None
     protocol = "https" if request.is_secure() else "http"
-    contains_www = 'www' if 'www' in request.META.get('HTTP_X_FORWARDED_HOST', '') else 'none'
+    contains_www = 'www' if 'www' in request.get_host() else 'none'
 
     if request.successful_authenticator:
         auth_method_name = request.successful_authenticator.authentication_method_name

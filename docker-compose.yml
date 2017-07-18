@@ -1,0 +1,32 @@
+version: "3.3"
+
+volumes:
+  pgdata:
+
+services:
+  #processing:
+  #  build:
+  #    context: .
+  #    dockerfile: docker/processing/Dockerfile
+
+  web:
+    build:
+      context: .
+
+    volumes:
+     - .:/code
+
+    ports:
+     - "8000:8000"
+    command: python manage.py runserver
+    depends_on:
+      - db
+
+  db:
+    image: postgres:9.6
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5543:5432"
+    environment:
+      - POSTGRES_DB=freesound

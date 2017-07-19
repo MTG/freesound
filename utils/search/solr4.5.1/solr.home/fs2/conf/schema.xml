@@ -265,7 +265,7 @@
 
 
 	<fields>
-		<field name="id" type="integer" indexed="true" stored="true" required="true" />
+		<field name="id" type="sint" indexed="true" stored="true" required="true" />
 		<field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
 
 		<field name="created" type="date" indexed="true" stored="true" required="true" />

@@ -29,7 +29,7 @@ def donation_complete(request):
 
     try:
         req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
-    except requests.exceptions.Timeout:
+    except requests.ConnectionError:
         logger.error("Can't verify donations information with paypal")
         return HttpResponse("FAIL")
 

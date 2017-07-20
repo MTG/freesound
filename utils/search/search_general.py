@@ -40,6 +40,7 @@ def convert_to_solr_document(sound):
     document["description"] = remove_control_chars(sound.description)
     document["tag"] = list(sound.tags.select_related("tag").values_list('tag__name', flat=True))
     document["license"] = sound.license.name
+    document["is_explicit"] = sound.is_explicit
     document["is_remix"] = bool(sound.sources.count())
     document["was_remixed"] = bool(sound.remixes.count())
     if sound.pack:
@@ -145,7 +146,7 @@ def get_random_sounds_from_solr(numb_sounds):
     solr = Solr(settings.SOLR_URL)
     query = SolrQuery()
     sort = ['random_%d asc' % (time.time())]
-    filter_query = ["is_explicit=0", "avg_rating__gt=6", "num_ratings__gt=3"]
+    filter_query = 'is_explicit:0 avg_rating:[6 TO *] num_ratings:[3 TO *]'
     query.set_query("*:*")
     query.set_query_options(start=0, rows=numb_sounds, field_list=["*"], filter_query=filter_query, sort=sort)
     response = SolrResponseInterpreter(solr.select(unicode(query)))

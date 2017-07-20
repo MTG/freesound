@@ -22,6 +22,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrExce
 from django.conf import settings
 from search.views import search_prepare_sort, search_prepare_query
 from search.forms import SEARCH_SORT_OPTIONS_WEB
+from socket import error as socket_error
 from utils.text import remove_control_chars
 import time
 import logging
@@ -149,8 +150,11 @@ def get_random_sounds_from_solr(numb_sounds):
     filter_query = 'is_explicit:0 avg_rating:[6 TO *] num_ratings:[3 TO *]'
     query.set_query("*:*")
     query.set_query_options(start=0, rows=numb_sounds, field_list=["*"], filter_query=filter_query, sort=sort)
-    response = SolrResponseInterpreter(solr.select(unicode(query)))
-    return response.docs
+    try:
+        response = SolrResponseInterpreter(solr.select(unicode(query)))
+        return response.docs
+    except SolrException, socket_error:
+        return None
 
 
 def delete_sound_from_solr(sound):

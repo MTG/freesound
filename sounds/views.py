@@ -24,6 +24,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse, resolve
 from django.db import connection
 from django.db.models import Q
@@ -46,6 +47,7 @@ from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSou
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
+from utils.search.search_general import get_random_sounds_from_solr
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
@@ -125,10 +127,18 @@ def remixed(request):
 
 
 def random(request):
-    sound_id = Sound.objects.random()
-    if sound_id is None:
+    sounds = get_random_sounds_from_solr(1)
+    sound_obj = None
+    if sounds:
+        try:
+            sound_obj = Sound.objects.get(id=sounds[0]['id'])
+        except ObjectDoesNotExist:
+            pass
+    if sound_obj is None:
+        sound_id = Sound.objects.random()
+        sound_obj = Sound.objects.get(pk=sound_id)
+    if sound_obj is None:
         raise Http404
-    sound_obj = Sound.objects.get(pk=sound_id)
     return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
 
 

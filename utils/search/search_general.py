@@ -153,7 +153,7 @@ def get_random_sounds_from_solr(numb_sounds):
     try:
         response = SolrResponseInterpreter(solr.select(unicode(query)))
         return response.docs
-    except SolrException, socket_error:
+    except socket_error:
         return None
 
 

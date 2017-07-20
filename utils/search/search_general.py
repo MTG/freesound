@@ -18,11 +18,12 @@
 #     See AUTHORS file.
 #
 
-from solr import Solr, SolrException, SolrResponseInterpreter
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrException
 from django.conf import settings
 from search.views import search_prepare_sort, search_prepare_query
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 from utils.text import remove_control_chars
+import time
 import logging
 import math
 import sounds
@@ -138,6 +139,17 @@ def check_if_sound_exists_in_solr(sound):
         solr.select(unicode(search_prepare_query(
             '', 'id:%i' % sound.id, search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), 1, 1))))
     return response.num_found > 0
+
+
+def get_random_sounds_from_solr(numb_sounds):
+    solr = Solr(settings.SOLR_URL)
+    query = SolrQuery()
+    sort = ['random_%d asc' % (time.time())]
+    filter_query = ["is_explicit=0", "avg_rating__gt=6", "num_ratings__gt=3"]
+    query.set_query("*:*")
+    query.set_query_options(start=0, rows=numb_sounds, field_list=["*"], filter_query=filter_query, sort=sort)
+    response = SolrResponseInterpreter(solr.select(unicode(query)))
+    return response.docs
 
 
 def delete_sound_from_solr(sound):

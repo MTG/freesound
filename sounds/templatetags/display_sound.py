@@ -26,7 +26,7 @@ from django.conf import settings
 register = template.Library()
 
 
-@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+@register.inclusion_tag('sounds/display_raw_sound.html', takes_context=True)
 def display_sound(context, sound):
 
     if isinstance(sound, Sound):
@@ -52,6 +52,8 @@ def display_sound(context, sound):
      'sound_id':     sound_id,
      'sound':        sound_obj,
      'sound_tags':   sound_tags,
+     'sound_user':   sound.user.username,
+     'license_name': sound.license.name,
      'media_url':    context['media_url'],
      'request':      context['request'],
      'is_explicit':  is_explicit
@@ -69,6 +71,8 @@ def display_raw_sound(context, sound):
         'sound_id':     sound_id,
         'sound':        sound,
         'sound_tags':   sound.tag_array,
+        'sound_user':   sound.username,
+        'license_name': sound.license_name,
         'media_url':    context['media_url'],
         'request':      request,
         'is_explicit':  is_explicit

@@ -22,7 +22,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay
-from sounds.views import get_random_sound, get_random_uploader
+from sounds.views import get_random_sound
 from general.templatetags.filter_img import replace_img
 from sounds.views import get_sound_of_the_day_id, get_random_uploader
 from comments.models import Comment
@@ -90,15 +90,6 @@ class RandomSoundAndUploaderTestCase(TestCase):
         SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date.today())
         random_sound = get_sound_of_the_day_id()
         self.assertEqual(isinstance(random_sound, int), True)
-
-    def test_random_uploader(self):
-        # Update num_sounds in user profile data
-        for u in User.objects.all():
-            profile = u.profile
-            profile.num_sounds = u.sounds.all().count()
-            profile.save()
-        random_uploader = get_random_uploader()
-        self.assertEqual(isinstance(random_uploader, User), True)
 
 
 class CommentSoundsTestCase(TestCase):

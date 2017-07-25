@@ -84,18 +84,6 @@ def get_sound_of_the_day_id():
     return random_sound
 
 
-def get_random_uploader():
-    """
-    Returns random User object (among users that have uploaded at least one sound)
-    """
-    cache_key = "random_uploader"
-    random_uploader = cache.get(cache_key)
-    if not random_uploader:
-        random_uploader = Profile.objects.random_uploader()
-        cache.set(cache_key, random_uploader, 60*60*24)
-    return random_uploader
-
-
 def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')

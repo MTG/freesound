@@ -25,7 +25,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.urls import reverse, resolve
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
@@ -315,6 +315,7 @@ def pack_licenses(request, username, pack_id):
 
 
 @login_required
+@transaction.atomic()
 def sound_edit(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, processing_state='OK')
     if sound.user.username.lower() != username.lower():

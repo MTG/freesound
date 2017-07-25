@@ -103,7 +103,8 @@ def donate(request):
                         "item_name": "Freesound donation",
                         "custom": returned_data_str,
                         "notify_url": return_url,
-                        "lc": 'en_US'
+                        "no_shipping": 1,
+                        "lc": "en_US"
                         }
                     }
 
@@ -118,10 +119,8 @@ def donate(request):
                 data['params']['t3'] = 'M'
                 # sra - Number of times to reattempt on failure
                 data['params']['sra'] = 1
-                data['params']['no_shipping'] = 1
                 data['params']['item_name'] = 'Freesound monthly donation'
             else:
-                data['params']['no_shipping'] = 1
                 data['params']['amount'] = amount
         else:
             data = {'errors': form.errors}

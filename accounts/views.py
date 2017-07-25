@@ -179,6 +179,7 @@ def tos_acceptance(request):
     return render(request, 'accounts/accept_terms_of_service.html', tvars)
 
 
+@transaction.atomic()
 def registration(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)

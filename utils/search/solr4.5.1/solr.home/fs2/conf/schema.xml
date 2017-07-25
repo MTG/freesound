@@ -274,6 +274,7 @@
 
 		<field name="description" type="text" indexed="true" stored="true" required="false" />
 		<field name="tag" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/>
+		<field name="is_explicit" type="boolean" indexed="true" stored="true" required="false" />
 
 		<field name="license" type="string" indexed="true" stored="true" />
 

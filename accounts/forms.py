@@ -205,18 +205,6 @@ class RegistrationForm(forms.Form):
 class ReactivationForm(forms.Form):
     user = forms.CharField(label="The username or email you signed up with")
 
-    def clean_user(self):
-        username_or_email = self.cleaned_data["user"]
-        try:
-            return User.objects.get(email__iexact=username_or_email, is_active=False)
-        except User.DoesNotExist:
-            pass
-        try:
-            return User.objects.get(username__iexact=username_or_email, is_active=False)
-        except User.DoesNotExist:
-            pass
-        raise forms.ValidationError(_("No non-active user with such email or username exists."))
-
 
 class FsAuthenticationForm(AuthenticationForm):
 
@@ -235,13 +223,6 @@ class FsAuthenticationForm(AuthenticationForm):
 
 class UsernameReminderForm(forms.Form):
     user = forms.EmailField(label="The email address you signed up with")
-
-    def clean_user(self):
-        email = self.cleaned_data["user"]
-        try:
-            return get_user_by_email(email)
-        except User.DoesNotExist:
-            raise forms.ValidationError(_("No user with such an email exists."))
 
 
 class ProfileForm(forms.ModelForm):
@@ -287,23 +268,6 @@ class EmailResetForm(forms.Form):
     email = forms.EmailField(label=_("New e-mail address"), max_length=75)
     password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
 
-    def __init__(self, *args, **kwargs):
-        # Using init function to pass user variable so later we can perform check_password in clean_password function
-        self.user = kwargs.pop('user', None)
-        super(EmailResetForm, self).__init__(*args, **kwargs)
-
-    def clean_email(self):
-        email = self.cleaned_data["email"]
-        try:
-            get_user_by_email(email)
-            raise forms.ValidationError(_("A user using that email address already exists."))
-        except User.DoesNotExist:
-            pass
-        return email
-
-    def clean_password(self):
-        if not self.user.check_password(self.cleaned_data["password"]):
-            raise forms.ValidationError(_("Incorrect password."))
 
 DELETE_CHOICES = [('only_user', mark_safe(u'Delete only my user account information :)  (see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a> for more information)')),
                   ('delete_sounds', u'Delete also my sounds and packs :(')]

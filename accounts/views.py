@@ -1059,7 +1059,7 @@ def flag_user(request, username=None):
             to_emails = []
             for mail in settings.ADMINS:
                 to_emails.append(mail[1])
-            send_mail_template(u'Spam report for user ' + flagged_user.username,
+            send_mail_template(u'Spam/offensive report for user ' + flagged_user.username,
                                template_to_use, locals(), None, to_emails)
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:

@@ -398,6 +398,8 @@ class ProfileGetUserTags(TestCase):
 
 class UserEditProfile(TestCase):
 
+    fixtures = ['email_preference_type']
+
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser", password="testpass")

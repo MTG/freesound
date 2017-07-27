@@ -18,17 +18,15 @@
 #     See AUTHORS file.
 #
 
-import gearman, sys, traceback, json, time, os
+import gearman
+import json
+import os
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from tickets.models import Ticket
-from sounds.models import Sound, SoundOfTheDay
-from optparse import make_option
-from utils.mail import send_mail_template
 from tickets import TICKET_STATUS_CLOSED
 import logging
-import datetime
 
 logger = logging.getLogger("gearman_worker_async_tasks")
 
@@ -90,24 +88,6 @@ class Command(BaseCommand):
                 count_done = count_done + 1
             self.write_stdout("Finished processing one ticket, %d remaining" % (len(tickets)-count_done))
         return 'true' if len(tickets) == count_done else 'false'
-
-    def task_email_random_sound(self, gearman_worker, gearman_job):
-        self.write_stdout("Notifying user of random sound of the day")
-        rnd = SoundOfTheDay.objects.filter(date_display=datetime.date.today(), email_sent=False)
-        random_sound = rnd.sound
-
-        if random_sound.user.profile.email_not_disabled("random_sound"):
-            send_mail_template(\
-                u'One of your sounds has been chosen as random sound of the day!',
-                'sounds/email_random_sound.txt',
-                {'sound': random_sound, 'user': random_sound.user},
-                None, random_sound.user.email)
-            rnd.email_sent = True
-            rnd.save()
-
-        self.write_stdout("Finished sending mail to user %s of random sound of the day %s" %
-                (random_sound.user, random_sound.id))
-        return 'true'
 
     def task_delete_user(self, gearman_worker, gearman_job):
         self.write_stdout("Started delete_user task ")

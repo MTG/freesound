@@ -76,9 +76,16 @@ def get_sound_of_the_day_id():
     random_sound = cache.get(cache_key)
     if not random_sound:
         try:
-            rnd = SoundOfTheDay.objects.get(date_display=datetime.date.today())
+            today = datetime.date.today()
+            now = datetime.datetime.now()
+            tomorrow = datetime.datetime(today.year, today.month, today.day)
+            time_until_tomorrow = tomorrow - now
+
+            rnd = SoundOfTheDay.objects.get(date_display=today)
             random_sound = rnd.sound_id
-            cache.set(cache_key, random_sound, 60*60*24)
+            # Set the cache to expire at midnight tomorrow, so that
+            # a new sound is chosen
+            cache.set(cache_key, random_sound, time_until_tomorrow.seconds)
         except SoundOfTheDay.DoesNotExist:
             return None
     return random_sound

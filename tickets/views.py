@@ -348,6 +348,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
 
 
 @permission_required('tickets.can_moderate')
+@transaction.atomic()
 def moderation_assigned(request, user_id):
 
     clear_forms = True
@@ -400,6 +401,7 @@ def moderation_assigned(request, user_id):
                     if ticket.sound.pack:
                         packs_to_update.add(ticket.sound.pack)
                 Sound.objects.filter(ticket__in=tickets).delete()
+                tickets.update(sound_id=None)
                 notification = Ticket.NOTIFICATION_DELETED
 
             elif action == "Whitelist":

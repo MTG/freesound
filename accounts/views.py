@@ -429,8 +429,11 @@ def describe(request):
                 return render(request, 'accounts/confirm_delete_undescribed_files.html', tvars)
             elif "delete_confirm" in request.POST:
                 for f in form.cleaned_data["files"]:
-                    os.remove(files[f].full_path)
-                    remove_uploaded_file_from_mirror_locations(files[f].full_path)
+                    try:
+                        os.remove(files[f].full_path)
+                        remove_uploaded_file_from_mirror_locations(files[f].full_path)
+                    except OSError as e:
+                        logger.error("\tfailed removing file " + str(e))
 
                 # Remove user uploads directory if there are no more files to describe
                 user_uploads_dir = request.user.profile.locations()['uploads_dir']

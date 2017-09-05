@@ -433,7 +433,7 @@ def describe(request):
                         os.remove(files[f].full_path)
                         remove_uploaded_file_from_mirror_locations(files[f].full_path)
                     except OSError as e:
-                        logger.error("\tfailed removing file " + str(e))
+                        logger.error("Failed removing file " + str(e))
 
                 # Remove user uploads directory if there are no more files to describe
                 user_uploads_dir = request.user.profile.locations()['uploads_dir']

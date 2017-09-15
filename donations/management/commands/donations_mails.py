@@ -27,6 +27,7 @@ from donations.models import Donation
 from utils.mail import send_mail_template
 import datetime
 import logging
+import json
 
 logger = logging.getLogger("web")
 
@@ -83,7 +84,8 @@ class Command(BaseCommand):
             user.profile.last_donation_email_sent = datetime.datetime.now()
             user.profile.donations_reminder_email_sent = True
             user.profile.save()
-            logger.info("Sent donation email (reminder) to user %i" % user.id)
+            logger.info("Sent donation email (%s)" % json.dumps(
+                {'user_id': user.id, 'donation_email_type': 'reminder'}))
 
         # 2) Send email to users that download a lot of sounds without donating
         # potential_users -> All users that:
@@ -127,6 +129,7 @@ class Command(BaseCommand):
                             }, None, user.email)
                     user.profile.last_donation_email_sent = datetime.datetime.now()
                     user.profile.save()
-                    logger.info("Sent donation email (request) to user %i" % user.id)
+                    logger.info("Sent donation email (%s)" % json.dumps(
+                        {'user_id': user.id, 'donation_email_type': 'request'}))
 
         logger.info("Finished sending donation emails")

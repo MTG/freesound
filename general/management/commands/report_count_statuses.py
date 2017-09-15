@@ -88,7 +88,7 @@ class Command(BaseCommand):
             needs_save = False
 
             # Check num_comments
-            real_num_comments = Comment.objects.filter(object_id=sound.id, content_type=sound_content_type).count()
+            real_num_comments = sound.comments.count()
             if real_num_comments != sound.num_comments:
                 mismatches_report['Sound.num_comments'] += 1
                 mismatches_object_ids['Sound.num_comments'].append(sound.id)

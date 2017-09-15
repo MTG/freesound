@@ -28,6 +28,7 @@ import sounds
 import forms
 import logging
 import json
+import re
 
 logger = logging.getLogger("search")
 
@@ -115,6 +116,24 @@ def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+
+    # Generate array with information of filters
+    filter_query_split = []
+    if filter_query != "":
+        for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
+            filter_str = filter_str + '"'
+            filter_display = filter_str.replace('"', '')
+            filter_name = filter_str.split(":")[0]
+            if filter_name != "duration" and filter_name != "is_geotagged":
+                if filter_name == "grouping_pack":
+                    val = filter_display.split(":")[1]
+                    filter_display = "pack:"+ val.split("_")[1]
+
+                filter = {
+                    'name': filter_display,
+                    'remove_url': filter_query.replace(filter_str, ''),
+                }
+                filter_query_split.append(filter)
 
     try:
         current_page = int(request.GET.get("page", 1))

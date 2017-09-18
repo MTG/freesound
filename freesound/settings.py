@@ -20,6 +20,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
+    'freesound.middleware.NewTemplatesHandler',
 ]
 
 INSTALLED_APPS = [
@@ -330,7 +331,30 @@ TEMPLATES = [
                 'freesound.context_processor.context_extra',
             ],
         },
+        'NAME': 'old_frontend',
     },
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(os.path.dirname(__file__), '../templates2')
+        ],
+        'OPTIONS': {
+            'loaders': CONF_TEMPLATE_LOADERS,
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.template.context_processors.request',
+                'django.contrib.messages.context_processors.messages',
+                'freesound.context_processor.context_extra',
+            ],
+        },
+        'NAME': 'new_frontend',
+    },
+
 ]
 
 AVATARS_URL = DATA_URL + "avatars/"

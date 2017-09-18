@@ -88,6 +88,21 @@ class BulkChangeLicenseHandler(object):
         return response
 
 
+class NewTemplatesHandler(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """
+        This middleware sets a session variable when the parameter 'new_frontend' is received.
+        The 'render' method will use this session variable to display the new/old frontend
+        """
+        if request.GET.get('new_frontend', None):
+            request.session['new_frontend'] = request.GET.get('new_frontend')
+        response = self.get_response(request)
+        return response
+
+
 class TosAcceptanceHandler(object):
     def __init__(self, get_response):
         self.get_response = get_response

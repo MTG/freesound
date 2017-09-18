@@ -21,6 +21,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from comments.models import Comment
 from sounds.models import Sound, Pack, License, DeletedSound
 from sounds.views import get_random_sound, get_random_uploader
 from general.templatetags.filter_img import replace_img
@@ -239,6 +240,7 @@ class ProfileNumSoundsTestCase(TestCase):
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
+        c = Comment.objects.create(user=user, sound=sound)
         self.assertEqual(user.profile.num_sounds, 1)
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)

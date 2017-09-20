@@ -47,6 +47,7 @@ SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 GEARMAN_JOB_SERVERS = ["localhost:4730"]
 
 
+STRIPE_KEY = "sk_test_..."
 PAYPAL_EMAIL = "paypal@freesound.org"
 PAYPAL_VALIDATION_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
 DONATIONS_PER_PAGE = 40

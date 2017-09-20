@@ -132,7 +132,7 @@
           description: "Donation to the Phonos Foundation",
 
           token: function(token) {
-            form.attr("action", "/donations/stripe/");
+            form.attr("action", "{% url 'donation-complete-stripe' %}");
             $('<input>').attr({type: 'hidden', name: 'stripeToken', value: token.id}).appendTo(form);
             $('<input>').attr({type: 'hidden', name: 'stripeEmail', value: token.email}).appendTo(form);
             form.submit();

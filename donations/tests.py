@@ -26,7 +26,7 @@ class DonationTest(TestCase):
         with mock.patch('donations.views.requests') as mock_requests:
             mock_response = mock.Mock(text='VERIFIED')
             mock_requests.post.return_value = mock_response
-            resp = self.client.post(reverse('donation-complete'), params)
+            resp = self.client.post(reverse('donation-complete-paypal'), params)
             self.assertEqual(resp.status_code, 200)
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='8B703020T00352816')
@@ -51,7 +51,7 @@ class DonationTest(TestCase):
         with mock.patch('donations.views.requests') as mock_requests:
             mock_response = mock.Mock(text='VERIFIED')
             mock_requests.post.return_value = mock_response
-            resp = self.client.post(reverse('donation-complete'), params)
+            resp = self.client.post(reverse('donation-complete-paypal'), params)
             self.assertEqual(resp.status_code, 200)
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='8B703020T00352816')
@@ -75,7 +75,7 @@ class DonationTest(TestCase):
         with mock.patch('donations.views.requests') as mock_requests:
             mock_response = mock.Mock(text='VERIFIED')
             mock_requests.post.return_value = mock_response
-            resp = self.client.post(reverse('donation-complete'), params)
+            resp = self.client.post(reverse('donation-complete-paypal'), params)
             self.assertEqual(resp.status_code, 200)
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='8B703020T00352816')

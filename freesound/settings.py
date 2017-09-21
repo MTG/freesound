@@ -295,21 +295,6 @@ LOG_START_AND_END_COPYING_FILES = True
 # leave at bottom starting here!
 from local_settings import *
 
-if DEBUG:
-    # We name this CONF_ because Django system check thinks that a variable
-    # called TEMPLATE_LOADERS is pre-1.8 Django configuration.
-    CONF_TEMPLATE_LOADERS = [
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    ]
-else:
-    CONF_TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', [
-            'django.template.loaders.filesystem.Loader',
-            'django.template.loaders.app_directories.Loader',
-        ]),
-    ]
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -317,7 +302,6 @@ TEMPLATES = [
             os.path.join(os.path.dirname(__file__), '../templates')
         ],
         'OPTIONS': {
-            'loaders': CONF_TEMPLATE_LOADERS,
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',

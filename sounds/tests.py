@@ -21,6 +21,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.management import call_command
 from django.core import mail
 from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay, Flag
@@ -492,6 +493,9 @@ class RandomSoundTestCase(TestCase):
 class SoundOfTheDayTestCase(TestCase):
 
     fixtures = ['sounds', 'email_preference_type']
+
+    def setUp(self):
+        cache.clear()
 
     def test_no_random_sound(self):
         # If we have no sound, return None

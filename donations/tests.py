@@ -11,7 +11,7 @@ import views
 class DonationTest(TestCase):
     fixtures = ['initial_data']
 
-    def test_non_annon_donation_with_name(self):
+    def test_non_annon_donation_with_name_paypal(self):
         donations.models.DonationCampaign.objects.create(\
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(\
@@ -36,7 +36,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, True)
 
-    def test_non_annon_donation(self):
+    def test_non_annon_donation_paypal(self):
         donations.models.DonationCampaign.objects.create(\
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(\
@@ -62,10 +62,10 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].is_anonymous, False)
 
 
-    def test_annon_donation(self):
+    def test_annon_donation_paypal(self):
         donations.models.DonationCampaign.objects.create(\
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        # {u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}
+
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
                 'custom': 'eyJkaXNwbGF5X2Ftb3VudCI6IHRydWUsICJjYW1wYWlnbl9pZCI6IDEsICJuYW1lIjogIkFub255bW91cyJ9',
@@ -79,6 +79,78 @@ class DonationTest(TestCase):
             self.assertEqual(resp.status_code, 200)
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='8B703020T00352816')
+            self.assertEqual(donations_query.exists(), True)
+            self.assertEqual(donations_query[0].is_anonymous, True)
+
+    def test_non_annon_donation_with_name_stripe(self):
+        donations.models.DonationCampaign.objects.create(\
+                goal=200, date_start=datetime.datetime.now(), id=1)
+        self.user = User.objects.create_user(\
+                username='fsuser', email='j@test.com', password='top', id='46280')
+        self.client.login(username='fsuser', password='top')
+        # custom ={u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}
+        params = {
+                'stripeToken': '8B703020T00352816',
+                'stripeEmail': 'donor@freesound.org',
+                'amount': '1.5',
+                'show_amount': True,
+                'donation_type': '2',
+                'name_option': 'test'
+        }
+        with mock.patch('stripe.Charge.create') as mock_create:
+            mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
+            resp = self.client.post(reverse('donation-complete-stripe'), params)
+            donations_query = donations.models.Donation.objects.filter(\
+                transaction_id='txn123')
+            self.assertEqual(donations_query.exists(), True)
+            self.assertEqual(donations_query[0].campaign_id, 1)
+            self.assertEqual(donations_query[0].display_name, 'test')
+            self.assertEqual(donations_query[0].user_id, 46280)
+            self.assertEqual(donations_query[0].is_anonymous, True)
+
+    def test_non_annon_donation_stripe(self):
+        donations.models.DonationCampaign.objects.create(\
+                goal=200, date_start=datetime.datetime.now(), id=1)
+        self.user = User.objects.create_user(\
+                username='fsuser', email='j@test.com', password='top', id='46280')
+        self.client.login(username='fsuser', password='top')
+        # custom = {u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}
+        params = {
+                'stripeToken': '8B703020T00352816',
+                'stripeEmail': 'donor@freesound.org',
+                'amount': '1.5',
+                'show_amount': True,
+                'donation_type': '0'
+            }
+
+        with mock.patch('stripe.Charge.create') as mock_create:
+            mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
+            resp = self.client.post(reverse('donation-complete-stripe'), params)
+            donations_query = donations.models.Donation.objects.filter(\
+                transaction_id='txn123')
+            self.assertEqual(donations_query.exists(), True)
+            self.assertEqual(donations_query[0].campaign_id, 1)
+            self.assertEqual(donations_query[0].display_name, None)
+            self.assertEqual(donations_query[0].user_id, 46280)
+            self.assertEqual(donations_query[0].is_anonymous, False)
+
+    def test_annon_donation_stripe(self):
+        donations.models.DonationCampaign.objects.create(\
+                goal=200, date_start=datetime.datetime.now(), id=1)
+        # {u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}
+        params = {
+                'stripeToken': '8B703020T00352816',
+                'stripeEmail': 'donor@freesound.org',
+                'amount': '1.5',
+                'show_amount': True,
+                'donation_type': '1'
+            }
+
+        with mock.patch('stripe.Charge.create') as mock_create:
+            mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
+            resp = self.client.post(reverse('donation-complete-stripe'), params)
+            donations_query = donations.models.Donation.objects.filter(\
+                transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
 

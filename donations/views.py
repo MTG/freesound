@@ -87,7 +87,7 @@ def donation_complete_stripe(request):
             try:
                 # Charge the user's card:
                 charge = stripe.Charge.create(
-                  amount=int(amount)*100,
+                  amount=int(amount*100),
                   currency="eur",
                   description="Freesound.org Donation",
                   source=token,

@@ -35,7 +35,10 @@ class Command(BaseCommand):
         logger.info('Create new RandomSound task')
 
         # First make sure there is a sound for today
-        SoundOfTheDay.objects.create_sound_for_date(datetime.date.today())
+        today = datetime.date.today()
+        SoundOfTheDay.objects.create_sound_for_date(today)
+        sound = SoundOfTheDay.objects.get_sound_for_date(today)
+        sound.notify_by_email()
 
         # Then create sounds in advance
         number_sounds = settings.NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE

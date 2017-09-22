@@ -148,7 +148,8 @@ MEDIA_URL = "/media/"
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 ADMIN_MEDIA_PREFIX = '/media/admin_media/'
-STATIC_URL = '/media/admin_media/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), '../freesound/build')]
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 

@@ -435,7 +435,7 @@ def describe(request):
                         remove_uploaded_file_from_mirror_locations(files[f].full_path)
                     except OSError as e:
                         if e.errno == errno.ENOENT:
-                            logger.error("Failed to remove file %s" % str(e))
+                            logger.error("Failed to remove file %s", str(e))
                         else:
                             raise
 

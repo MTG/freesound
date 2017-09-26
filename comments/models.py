@@ -20,9 +20,9 @@
 #     See AUTHORS file.
 #
 
+import sounds
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.signals import post_delete
 
@@ -44,7 +44,7 @@ class Comment(models.Model):
 def on_delete_comment(sender, instance, **kwargs):
     try:
         instance.sound.post_delete_comment()
-    except ObjectDoesNotExist:
+    except sounds.models.Sound.DoesNotExist:
         """
         If this comment is deleted as a result of its parent sound being deleted, the
         sound will no longer exist so we don't need to update it

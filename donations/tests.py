@@ -35,6 +35,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].display_name, 'test')
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, True)
+            self.assertEqual(donations_query[0].source, 'p')
 
     def test_non_annon_donation_paypal(self):
         donations.models.DonationCampaign.objects.create(\
@@ -60,6 +61,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].display_name, None)
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, False)
+            self.assertEqual(donations_query[0].source, 'p')
 
 
     def test_annon_donation_paypal(self):
@@ -81,6 +83,7 @@ class DonationTest(TestCase):
                 transaction_id='8B703020T00352816')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
+            self.assertEqual(donations_query[0].source, 'p')
 
     def test_non_annon_donation_with_name_stripe(self):
         donations.models.DonationCampaign.objects.create(\
@@ -107,6 +110,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].display_name, 'test')
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, True)
+            self.assertEqual(donations_query[0].source, 's')
 
     def test_non_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(\
@@ -133,6 +137,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].display_name, None)
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, False)
+            self.assertEqual(donations_query[0].source, 's')
 
     def test_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(\
@@ -153,6 +158,7 @@ class DonationTest(TestCase):
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
+            self.assertEqual(donations_query[0].source, 's')
 
     def test_donation_form(self):
         donations.models.DonationCampaign.objects.create(\

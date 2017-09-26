@@ -20,7 +20,7 @@ from utils.mail import send_mail_template
 logger = logging.getLogger('web')
 
 
-def _save_donation(encoded_data, email, amount, currency, transaction_id):
+def _save_donation(encoded_data, email, amount, currency, transaction_id, source):
     extra_data = json.loads(base64.b64decode(encoded_data))
     campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
     is_anonymous = False
@@ -48,7 +48,9 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id):
         'display_amount': extra_data['display_amount'],
         'is_anonymous': is_anonymous,
         'user': user,
-        'campaign': campaign}
+        'campaign': campaign,
+        'source': source
+    }
     Donation.objects.get_or_create(transaction_id=transaction_id, defaults=donation_data)
 
     send_mail_template(
@@ -95,7 +97,7 @@ def donation_complete_stripe(request):
                 if charge['status'] == 'succeeded':
                     donation_received = True
                     messages.add_message(request, messages.INFO, 'Thanks! your donation has been processed.')
-                    _save_donation(form.encoded_data, email, amount, 'eur', charge['id'])
+                    _save_donation(form.encoded_data, email, amount, 'eur', charge['id'], 's')
             except stripe.error.StripeError as e:
                 logger.error("Can't charge donation whith stripe", e)
     if not donation_received:
@@ -123,7 +125,8 @@ def donation_complete_paypal(request):
             params['payer_email'],
             params['mc_gross'],
             params['mc_currency'],
-            params['txn_id'])
+            params['txn_id'],
+            'p')
     return HttpResponse("OK")
 
 

@@ -311,6 +311,7 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(os.path.dirname(__file__), '../templates')
         ],
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',

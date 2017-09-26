@@ -406,6 +406,7 @@ class EmailPreferenceType(models.Model):
     def __unicode__(self):
         return self.display_name
 
+
 class UserEmailSetting(models.Model):
     user = models.ForeignKey(User, related_name="email_settings")
     email_type = models.ForeignKey(EmailPreferenceType)

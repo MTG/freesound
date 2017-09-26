@@ -240,10 +240,12 @@ class ProfileNumSoundsTestCase(TestCase):
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
-        c = Comment.objects.create(user=user, sound=sound)
+        sound.add_comment(user, "some comment")
         self.assertEqual(user.profile.num_sounds, 1)
+        self.assertEqual(Comment.objects.count(), 1)
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
+        self.assertEqual(Comment.objects.count(), 0)
 
     def test_deletedsound_creation(self):
         user, packs, sounds = create_user_and_sounds()

@@ -12,10 +12,10 @@
 <div id="content">
     <div id="sound_of_the_day" class="content_box">
         <h3>Random sound of the day</h3>
-            {% if random_sound != None %}
+            {% if random_sound %}
                 {% display_raw_sound random_sound %}
             {% else %}
-                <p>Could not pick random sound.
+                <p>We're still choosing a random sound... check back soon!
             {% endif %}
     </div><!-- #sound_of_the_day -->
 

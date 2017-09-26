@@ -42,6 +42,7 @@ from utils.text import slugify
 from utils.locations import locations_decorator
 from utils.search.search_general import delete_sound_from_solr
 from utils.similarity_utilities import delete_sound_from_gaia
+from utils.mail import send_mail_template
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
@@ -99,19 +100,27 @@ class SoundManager(models.Manager):
                 ) as X order by created desc limit %d;""" % (interval_query, num_sounds)
         return DelayedQueryExecuter(query)
 
-    def random(self):
-        sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
+    def random(self, excludes=None):
+        """ Select a random sound from the database which is suitable for display.
+        Random sounds must fall under the following criteria:
+           - Not Explicit
+           - Moderated and processed
+           - Not flagged
+           - At least 3 ratings and an average rating of >6
+        Additionally, an optional set of `excludes` can be specified
+        to disallow sounds which match this criteria."""
+        query_sounds = self.exclude(is_explicit=True)\
+            .filter(moderation_state="OK",
+                    processing_state="OK",
+                    flag=None,
+                    avg_rating__gt=6,
+                    num_ratings__gt=3)
+        if excludes:
+            query_sounds = query_sounds.exclude(**excludes)
+        sound_count = query_sounds.count()
         if sound_count:
             offset = random.randint(0, sound_count - 1)
-            cursor = connection.cursor()
-            cursor.execute("""SELECT id
-                               FROM sounds_sound
-                              WHERE moderation_state='OK'
-                                AND processing_state='OK'
-                                AND is_explicit=FALSE
-                             OFFSET %d
-                              LIMIT 1""" % offset)
-            return cursor.fetchone()[0]
+            return query_sounds.all()[offset]
         else:
             return None
 
@@ -679,6 +688,83 @@ class Sound(SocialModel):
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
+
+
+class SoundOfTheDayManager(models.Manager):
+    def create_sound_for_date(self, date_display):
+        """Create a random sound of the day for a specific date.
+        Make sure that the sound hasn't already been chosen as a sound of the day
+        and that it is not by a user who has recently had their sound chosen.
+
+        Returns:
+            True if the sound was created
+            False if no sound of the day was able to be created (e.g. if there are no sounds available)
+        """
+        already_created = self.model.objects.filter(date_display=date_display).exists()
+        if already_created:
+            return True
+
+        days_for_user = settings.NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS
+        date_from = date_display - datetime.timedelta(days=days_for_user)
+        users = self.model.objects.filter(
+                date_display__lt=date_display,
+                date_display__gte=date_from).distinct().values_list('sound__user_id', flat=True)
+        used_sounds = self.model.objects.values_list('sound_id', flat=True)
+
+        sound = Sound.objects.random(excludes={'user__id__in': users, 'id__in': used_sounds})
+        if sound:
+            rnd = self.model.objects.create(sound=sound, date_display=date_display)
+        else:
+            return False
+
+        return True
+
+    def get_sound_for_date(self, date_display):
+        """Get a sound that has been chosen for a given date
+
+        Returns:
+            A sound for the given date
+        Raises:
+            SoundOfTheDay.DoesNotExist if no sound of the day for this date has been created
+        """
+        return self.model.objects.get(date_display=date_display)
+
+
+class SoundOfTheDay(models.Model):
+    sound = models.ForeignKey(Sound)
+    date_display = models.DateField(db_index=True)
+    email_sent = models.BooleanField(default=False)
+
+    objects = SoundOfTheDayManager()
+
+    def notify_by_email(self):
+        """Notify the user of this sound by email that their sound has been chosen
+        as our Sound of the Day.
+        If the email has already been sent, don't send the notification.
+        If the user has disabled the email notifications for this type of message, don't send it.
+
+        Returns:
+            True if the email was sent
+            False if it was not sent
+        """
+        audio_logger.info("Notifying user of random sound of the day")
+        if self.email_sent:
+            audio_logger.info("Email was already sent")
+            return False
+
+        if self.sound.user.profile.email_not_disabled("random_sound"):
+            send_mail_template(
+                u'One of your sounds has been chosen as random sound of the day!',
+                'sounds/email_random_sound.txt',
+                {'sound': self.sound, 'user': self.sound.user},
+                None, self.sound.user.email)
+            self.email_sent = True
+            self.save()
+
+        audio_logger.info("Finished sending mail to user %s of random sound of the day %s" %
+                          (self.sound.user, self.sound))
+
+        return True
 
 
 class DeletedSound(models.Model):

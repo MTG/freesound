@@ -21,6 +21,7 @@
 import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
 import utils.sound_upload
+import errno
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -433,7 +434,10 @@ def describe(request):
                         os.remove(files[f].full_path)
                         remove_uploaded_file_from_mirror_locations(files[f].full_path)
                     except OSError as e:
-                        logger.error("Failed removing file " + str(e))
+                        if e.errno == errno.ENOENT:
+                            logger.error("Failed removing file " + str(e) + " (no such file or directory)")
+                        else:
+                            raise
 
                 # Remove user uploads directory if there are no more files to describe
                 user_uploads_dir = request.user.profile.locations()['uploads_dir']

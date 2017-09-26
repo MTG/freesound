@@ -719,6 +719,16 @@ class SoundOfTheDayManager(models.Manager):
 
         return True
 
+    def get_sound_for_date(self, date_display):
+        """Get a sound that has been chosen for a given date
+
+        Returns:
+            A sound for the given date
+        Raises:
+            SoundOfTheDay.DoesNotExist if no sound of the day for this date has been created
+        """
+        return self.model.objects.get(date_display=date_display)
+
 
 class SoundOfTheDay(models.Model):
     sound = models.ForeignKey(Sound)
@@ -739,10 +749,11 @@ class SoundOfTheDay(models.Model):
         """
         audio_logger.info("Notifying user of random sound of the day")
         if self.email_sent:
+            audio_logger.info("Email was already sent")
             return False
 
         if self.sound.user.profile.email_not_disabled("random_sound"):
-            send_mail_template(\
+            send_mail_template(
                 u'One of your sounds has been chosen as random sound of the day!',
                 'sounds/email_random_sound.txt',
                 {'sound': self.sound, 'user': self.sound.user},
@@ -751,7 +762,9 @@ class SoundOfTheDay(models.Model):
             self.save()
 
         audio_logger.info("Finished sending mail to user %s of random sound of the day %s" %
-                (self.sound.user, self.sound))
+                          (self.sound.user, self.sound))
+
+        return True
 
 
 class DeletedSound(models.Model):

@@ -127,8 +127,8 @@
       
         var amount = $('#id_amount');
         var stripeHandler = StripeCheckout.configure({
-          key: "pk_test_UzyfUXngjROCGjKKlipLgRw9",
-          name: "Fs test",
+          key: "{{stripe_key}}",
+          name: "Freesound",
           description: "Donation to the Phonos Foundation",
 
           token: function(token) {

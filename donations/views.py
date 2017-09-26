@@ -85,7 +85,7 @@ def donation_complete_stripe(request):
 
         if form.is_valid() and token and email:
             amount = form.cleaned_data['amount']
-            stripe.api_key = settings.STRIPE_KEY
+            stripe.api_key = settings.STRIPE_PRIVATE_KEY
             try:
                 # Charge the user's card:
                 charge = stripe.Charge.create(
@@ -175,7 +175,7 @@ def donate(request):
         return JsonResponse(data)
     else:
         form = DonateForm(user=request.user)
-        tvars = {'form': form}
+        tvars = {'form': form, 'stripe_key': settings.STRIPE_PUBLIC_KEY}
         return render(request, 'donations/donate.html', tvars)
 
 

@@ -26,7 +26,7 @@ from django.conf import settings
 register = template.Library()
 
 
-@register.inclusion_tag('sounds/display_raw_sound.html', takes_context=True)
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound(context, sound):
     """
     When a sound object is passed make sure to call select_related for license and user so it's already fetched
@@ -63,7 +63,7 @@ def display_sound(context, sound):
     }
 
 
-@register.inclusion_tag('sounds/display_raw_sound.html', takes_context=True)
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_raw_sound(context, sound):
     sound_id = sound.id
     request = context['request']

@@ -22,7 +22,7 @@
 import time
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
@@ -354,8 +354,12 @@ class EmailSettingsForm(forms.Form):
 
 class FsPasswordResetForm(forms.Form):
     """
-    This form is a modification of django's PasswordResetForm, the only difference is that here we allow the user
-    to enter an email or a username to send the reset password email
+    This form is a modification of django's PasswordResetForm. The only difference is that here we allow the user
+    to enter an email or a username (insetad of only a username) to send the reset password email.
+    Methods `send_email` and `save` are very similar to the original methods from `django.contrib.auth.forms.PasswordResetForm`
+    We could not inherit from the original form because we don't want the old `username` field to be present.
+    When migrating to a new version of django (current is 1.11) we should check for updates in this code in case we also
+    have to apply them.
     """
     email_or_username = forms.CharField(label="Email or Username", max_length=254)
 

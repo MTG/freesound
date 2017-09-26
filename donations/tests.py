@@ -2,11 +2,14 @@ import datetime
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.core.management import call_command
 import mock
+import sounds.models
 import donations.models
 import views
 
 class DonationTest(TestCase):
+    fixtures = ['initial_data']
 
     def test_non_annon_donation_with_name(self):
         donations.models.DonationCampaign.objects.create(\
@@ -112,3 +115,185 @@ class DonationTest(TestCase):
         resp = self.client.get(reverse('donors'))
         self.assertEqual(resp.status_code, 200)
 
+    def test_donation_emails(self):
+        donation_settings, _ = donations.models.DonationsEmailSettings.objects.get_or_create()
+        TEST_DOWNLOADS_IN_PERIOD = 1
+        donation_settings.downloads_in_period = TEST_DOWNLOADS_IN_PERIOD
+        donation_settings.enabled = True
+        donation_settings.save()
+
+        # Create user a
+        self.user_a = User.objects.create_user(username='user_a', email='user_a@test.com')
+        self.assertIsNone(self.user_a.profile.last_donation_email_sent)
+
+        # Create user b
+        self.user_b = User.objects.create_user(username='user_b', email='user_b@test.com')
+        self.assertIsNone(self.user_b.profile.last_donation_email_sent)
+
+        # Create user c (uploader)
+        self.user_c = User.objects.create_user(username='user_c', email='user_c@test.com')
+        self.assertIsNone(self.user_c.profile.last_donation_email_sent)
+
+        # Simulate a donation from the user (older than donation_settings.minimum_days_since_last_donation)
+        old_donation_date = datetime.datetime.now() - datetime.timedelta(
+            days=donation_settings.minimum_days_since_last_donation + 100)
+        donation = donations.models.Donation.objects.create(
+            user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')
+        # NOTE: use .update(created=...) to avoid field auto_now to take over
+        donations.models.Donation.objects.filter(pk=donation.pk).update(created=old_donation_date)
+
+        # Run command for sending donation emails
+        call_command('donations_mails')
+
+        # Check that user_a has been sent a reminder email and user_b has not been sent any email
+        self.user_a.profile.refresh_from_db()
+        self.assertIsNotNone(self.user_a.profile.last_donation_email_sent)
+        user_a_last_donation_email_sent = self.user_a.profile.last_donation_email_sent
+        self.assertIsNone(self.user_b.profile.last_donation_email_sent)
+
+        # Simulate uploads from user_c
+        for i in range(0, TEST_DOWNLOADS_IN_PERIOD + 1):
+            sounds.models.Sound.objects.create(
+                user=self.user_c,
+                original_filename="Test sound %i" % i,
+                base_filename_slug="test_sound_%i" % i,
+                license=sounds.models.License.objects.all()[0],
+                md5="fakemd5_%i" % i)
+        self.user_c.profile.num_sounds = TEST_DOWNLOADS_IN_PERIOD + 1
+        self.user_c.profile.save()
+
+        # Simulate downloads from user_b
+        for sound in sounds.models.Sound.objects.all():
+            sounds.models.Download.objects.create(user=self.user_b, sound=sound)
+
+        # Now run the command for sending donation emails again
+        call_command('donations_mails')
+
+        # Check that user_a has not received any new email
+        self.user_a.profile.refresh_from_db()
+        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+
+        # Check that user_b has received an email
+        self.user_b.profile.refresh_from_db()
+        self.assertIsNotNone(self.user_b.profile.last_donation_email_sent)
+        user_b_last_donation_email_sent = self.user_b.profile.last_donation_email_sent
+
+        # Check that user_c has not received any email
+        self.user_c.profile.refresh_from_db()
+        self.assertIsNone(self.user_c.profile.last_donation_email_sent)
+
+        # Simulate downloads from user_c
+        for sound in sounds.models.Sound.objects.all():
+            sounds.models.Download.objects.create(user=self.user_c, sound=sound)
+
+        # Run the command for sending donation emails again
+        call_command('donations_mails')
+
+        # Check that user_a has not received any new email
+        self.user_a.profile.refresh_from_db()
+        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+
+        # Check that user_b has not received any new email
+        self.user_b.profile.refresh_from_db()
+        self.assertEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+
+        # Check that user_c has not received any new email (because he's an uploader)
+        self.user_c.profile.refresh_from_db()
+        self.assertIsNone(self.user_c.profile.last_donation_email_sent)
+
+        # Change donation settings to send emails to uploaders too
+        donation_settings.never_send_email_to_uploaders = False
+        donation_settings.save()
+
+        # Run the command for sending donation emails again
+        call_command('donations_mails')
+
+        # Check that user_a has not received any new email
+        self.user_a.profile.refresh_from_db()
+        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+
+        # Check that user_b has not received any new email
+        self.user_b.profile.refresh_from_db()
+        self.assertEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+
+        # Check that now user_c has been sent an email
+        self.user_c.profile.refresh_from_db()
+        self.assertIsNotNone(self.user_c.profile.last_donation_email_sent)
+
+        # Set send email to uploaders back to default
+        donation_settings.never_send_email_to_uploaders = True
+        donation_settings.save()
+
+        # Now simulate that we advance time (100 days,
+        # something above donation_settings.minimum_days_since_last_donation_email)
+        # Change timestamps for users' last_donation_email_sent, donation objects and download objects
+        time_interval = datetime.timedelta(days=donation_settings.minimum_days_since_last_donation_email + 10)
+        self.user_a.profile.last_donation_email_sent -= time_interval
+        self.user_b.profile.last_donation_email_sent -= time_interval
+        self.user_c.profile.last_donation_email_sent -= time_interval
+        self.user_a.profile.save()
+        self.user_b.profile.save()
+        self.user_c.profile.save()
+        donation = donations.models.Donation.objects.get(pk=donation.pk)
+        new_donation_created_date = donation.created - time_interval
+        donations.models.Donation.objects.filter(pk=donation.pk).update(created=new_donation_created_date)
+        download = sounds.models.Download.objects.first()
+        new_downloads_date = download.created - time_interval
+        sounds.models.Download.objects.update(created=new_downloads_date)
+        user_a_last_donation_email_sent = self.user_a.profile.last_donation_email_sent
+        user_b_last_donation_email_sent = self.user_b.profile.last_donation_email_sent
+        user_c_last_donation_email_sent = self.user_c.profile.last_donation_email_sent
+
+        # Now that time has passed (bigger than minimum_days_since_last_donation_email), we check again if
+        # emails are sent
+        call_command('donations_mails')
+
+        # Check that user_a has not received any new email (no new downloads)
+        self.user_a.profile.refresh_from_db()
+        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+
+        # Check that user_b has not received any new email (no new downloads)
+        self.user_b.profile.refresh_from_db()
+        self.assertEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+
+        # Check that user_c has not received any new email (no new downloads)
+        self.user_c.profile.refresh_from_db()
+        self.assertEquals(self.user_c.profile.last_donation_email_sent, user_c_last_donation_email_sent)
+
+        # Now simulate downloads for all users and check again
+        for sound in sounds.models.Sound.objects.all():
+            sounds.models.Download.objects.create(user=self.user_a, sound=sound)
+            sounds.models.Download.objects.create(user=self.user_b, sound=sound)
+            sounds.models.Download.objects.create(user=self.user_c, sound=sound)
+
+        # Run command again
+        call_command('donations_mails')
+
+        # Check that user_a has received new email
+        self.user_a.profile.refresh_from_db()
+        self.assertNotEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+        user_a_last_donation_email_sent = self.user_a.profile.last_donation_email_sent
+
+        # Check that user_b has received new email
+        self.user_b.profile.refresh_from_db()
+        self.assertNotEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+
+        # Check that user_c has not received any new email (he is an uploader)
+        self.user_c.profile.refresh_from_db()
+        self.assertEquals(self.user_c.profile.last_donation_email_sent, user_c_last_donation_email_sent)
+
+        # Simulate user_a makes a new donation and then downloads some sounds
+        donations.models.Donation.objects.create(
+            user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')
+        # Reset the reminder flag to False so that in a year time user is reminded to donate
+        self.user_a.profile.donations_reminder_email_sent = False
+        self.user_a.profile.save()
+        for sound in sounds.models.Sound.objects.all():
+            sounds.models.Download.objects.create(user=self.user_a, sound=sound)
+
+        # Run command again
+        call_command('donations_mails')
+
+        # Check that now user_a does not receive an email beacuse he donated recently
+        self.user_a.profile.refresh_from_db()
+        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)

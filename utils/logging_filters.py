@@ -11,16 +11,23 @@ def get_client_ip(request):
     return ip
 
 
-class SearchLogsFilter(logging.Filter):
-
+class GenericDataFilter(logging.Filter):
+    """
+    This filter expects a message of the form:
+        XXX(YYY)
+    Where XXX can be anything, YYY must be a serialized json object, and the message ends with )
+    Assuming this format, the filter tries to separate the json part, unserialize it and add it as
+    properties of the emessage so graylog can process them. If the parsing does not succeed, the 
+    message is sent as is.
+    """
     def filter(self, record):
         try:
             message = record.getMessage()
-            json_part = message.split('Search (')[1][:-1]
+            json_part = message[message.find('(') + 1:-1]
             fields = json.loads(json_part)
             for key, value in fields.items():
                 setattr(record, key, value)
-        except IndexError:
+        except (IndexError, ValueError, AttributeError):
             pass  # Message is not formatted for json parsing
         return True
 

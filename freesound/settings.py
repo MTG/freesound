@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'apiv2',
     'geotags',
     'accounts',
-    'comments',
     'ratings',
     'tags',
     'general',
@@ -43,6 +42,7 @@ INSTALLED_APPS = [
     'wiki',
     'favorites',
     'sounds',
+    'comments',
     'bookmarks',
     'forum',
     'search',
@@ -93,7 +93,12 @@ USE_TZ = False
 # to load the internationalization machinery.
 USE_I18N = False
 
-#CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
 
@@ -179,6 +184,11 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# Random Sound of the day settings
+# Don't choose a sound by a user whose sound has been chosen in the last ~1 month
+NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
+NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
+
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
 
@@ -186,17 +196,6 @@ MIN_NUMBER_RATINGS = 3
 GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
 GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
 GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
-
-# After download modal
-AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
-AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
-AFTER_DOWNLOAD_MODAL = None  # Set it to none for no modal after download
-
-# Donation modal settings
-DONATION_MODAL_DAYS_AFTER_DONATION = 1  # After a donation we don't display the popup for this long
-DONATION_MODAL_DOWNLOADS_IN_PERIOD = 1  # After this number of downloads...
-DONATION_MODAL_DOWNLOAD_DAYS = 10  # ...in this period of days, we display the popup
-DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popup per day:
 
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
@@ -306,29 +305,14 @@ LOG_START_AND_END_COPYING_FILES = True
 # leave at bottom starting here!
 from local_settings import *
 
-if DEBUG:
-    # We name this CONF_ because Django system check thinks that a variable
-    # called TEMPLATE_LOADERS is pre-1.8 Django configuration.
-    CONF_TEMPLATE_LOADERS = [
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    ]
-else:
-    CONF_TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', [
-            'django.template.loaders.filesystem.Loader',
-            'django.template.loaders.app_directories.Loader',
-        ]),
-    ]
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             os.path.join(os.path.dirname(__file__), '../templates')
         ],
+        'APP_DIRS': True,
         'OPTIONS': {
-            'loaders': CONF_TEMPLATE_LOADERS,
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',

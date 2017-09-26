@@ -31,7 +31,7 @@ from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm
-from sounds.models import License, Sound, Pack, DeletedSound
+from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
 from tags.models import Tag
@@ -54,6 +54,7 @@ class SimpleUserTest(TestCase):
     def setUp(self):
         self.user = User.objects.all()[0]
         self.sound = Sound.objects.all()[0]
+        SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
 
     def test_account_response_ok(self):
         # 200 response on account access
@@ -397,6 +398,8 @@ class ProfileGetUserTags(TestCase):
 
 class UserEditProfile(TestCase):
 
+    fixtures = ['email_preference_type']
+
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser", password="testpass")
@@ -609,8 +612,7 @@ class UserDelete(TestCase):
         # Create comments
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
-            comment = Comment(comment="Comment %i" % i, user=user, content_object=target_sound)
-            target_sound.add_comment(comment)
+            target_sound.add_comment(user, "Comment %i" % i)
         # Create threads and posts
         thread = Thread.objects.create(author=user, title="Test thread", forum=Forum.objects.create(name="Test forum"))
         for i in range(0, 3):

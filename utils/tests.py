@@ -22,10 +22,11 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.core.cache import cache
 from utils.forms import filename_has_valid_extension
 from utils.tags import clean_and_split_tags
 from sounds.models import Sound, Pack, License, Download
-from donations.models import Donation
+from donations.models import Donation, DonationsModalSettings
 from shutil import copyfile
 import datetime
 import utils.downloads
@@ -116,15 +117,27 @@ class UtilsTest(TestCase):
         self.assertNotEqual(user.sounds.get(original_filename=filenames[1]).geotag, None)
 
 
-    def test_should_suggest_donation(self):
+class ShouldSuggestDonationTest(TestCase):
+
+    fixtures = ['initial_data']
+
+    def test_should_suggest_donation_probabilty_1(self):
+
+        # In this set of tests 'should_suggest_donation' should return True or False depending on the decided criteria
+        # Probabilty is set to 1.0 to avoid ranomeness in the test
+        donations_settings, _ = DonationsModalSettings.objects.get_or_create()
+        donations_settings.display_probability = 1.0
+        donations_settings.save()
+        cache.set(DonationsModalSettings.DONATION_MODAL_SETTINGS_CACHE_KEY, donations_settings, timeout=3600)
+
         user = User.objects.create_user("testuser", password="testpass")
 
         # should_suggest_donation returns False if modal has been shown more than DONATION_MODAL_DISPLAY_TIMES_DAY
-        times_shown_in_last_day = settings.DONATION_MODAL_DISPLAY_TIMES_DAY + 1
+        times_shown_in_last_day = donations_settings.max_times_display_a_day + 1
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # set times_shown_in_last_day lower than DONATION_MODAL_DISPLAY_TIMES_DAY
-        times_shown_in_last_day = settings.DONATION_MODAL_DISPLAY_TIMES_DAY - 1
+        times_shown_in_last_day = donations_settings.max_times_display_a_day - 1
 
         # if user donated recently, modal is not shown (even if times_shown_in_last_day <
         # DONATION_MODAL_DISPLAY_TIMES_DAY)
@@ -134,28 +147,80 @@ class UtilsTest(TestCase):
         # remove donation object (to simulate user never donated)
         donation.delete()
 
-        # if user has downloaded less or equal than DONATION_MODAL_DOWNLOADS_IN_PERIOD, do not show the modal
+        # if user has downloaded less or equal than donations_settings.downloads_in_period, do not show the modal
         sound = Sound.objects.create(
             user=user,
             original_filename="Test sound",
             base_filename_slug="test_sound_10",
             license=License.objects.all()[0],
             md5="fakemd5_10")
-        for i in range(0, settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD):
+        for i in range(0, donations_settings.downloads_in_period):
             Download.objects.create(user=user, sound=sound)
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
-        Download.objects.create(user=user, sound=sound)  # n downloads > DONATION_MODAL_DOWNLOADS_IN_PERIOD
+        Download.objects.create(user=user, sound=sound)  # downloads > donations_settings.downloads_in_period (modal shows)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
-        # if the download objects are older than DONATION_MODAL_DOWNLOAD_DAYS, don't consider them
+        # if the download objects are older than donations_settings.download_days, don't consider them
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS + 1))
+            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.download_days + 1))
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
-        # if user has donations but these are older than DONATION_MODAL_DAYS_AFTER_DONATION, do not consider them
+        # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
         Donation.objects.create(user=user, amount=1)
         Donation.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=settings.DONATION_MODAL_DAYS_AFTER_DONATION + 1))
+            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.days_after_donation + 1))
         Download.objects.filter(user=user).update(
             created=datetime.datetime.now())  # Change downloads date again to be recent (modal show be shown)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
+
+    def test_should_suggest_donation_probabilty_0(self):
+        # In this set of tests 'should_suggest_donation' should always return False as probability is set to 0.0
+        donations_settings, _ = DonationsModalSettings.objects.get_or_create()
+        donations_settings.display_probability = 0.0
+        donations_settings.save()
+        cache.set(DonationsModalSettings.DONATION_MODAL_SETTINGS_CACHE_KEY, donations_settings, timeout=3600)
+
+        user = User.objects.create_user("testuser", password="testpass")
+
+        # should_suggest_donation returns False if modal has been shown more than DONATION_MODAL_DISPLAY_TIMES_DAY
+        times_shown_in_last_day = donations_settings.max_times_display_a_day + 1
+        self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
+
+        # set times_shown_in_last_day lower than DONATION_MODAL_DISPLAY_TIMES_DAY
+        times_shown_in_last_day = donations_settings.max_times_display_a_day - 1
+
+        # if user donated recently, modal is not shown (even if times_shown_in_last_day <
+        # DONATION_MODAL_DISPLAY_TIMES_DAY)
+        donation = Donation.objects.create(user=user, amount=1)
+        self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
+
+        # remove donation object (to simulate user never donated)
+        donation.delete()
+
+        # if user has downloaded less or equal than donations_settings.downloads_in_period, do not show the modal
+        sound = Sound.objects.create(
+            user=user,
+            original_filename="Test sound",
+            base_filename_slug="test_sound_10",
+            license=License.objects.all()[0],
+            md5="fakemd5_10")
+        for i in range(0, donations_settings.downloads_in_period):
+            Download.objects.create(user=user, sound=sound)
+            self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
+        Download.objects.create(user=user, sound=sound)  # n downloads > donations_settings.downloads_in_period
+        # In this case still not shown the modal as probability is 0.0
+        self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
+
+        # if the download objects are older than donations_settings.download_days, don't consider them
+        Download.objects.filter(user=user).update(
+            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.download_days + 1))
+        self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
+
+        # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
+        Donation.objects.create(user=user, amount=1)
+        Donation.objects.filter(user=user).update(
+            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1))
+        Download.objects.filter(user=user).update(
+            created=datetime.datetime.now())
+        # Change downloads date again to be recent (however modal won't show because probability is 0.0)
+        self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)

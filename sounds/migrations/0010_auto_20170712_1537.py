@@ -9,7 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sounds', '0008_download_license'),
+        ('sounds', '0009_download_license'),
     ]
 
     operations = [

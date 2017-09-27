@@ -69,7 +69,7 @@ def validate_file_extension(audiofiles):
 
 
 class UploadFileForm(forms.Form):
-    files = MultiFileField(min_num=1, validators=[validate_file_extension], label="")
+    files = MultiFileField(min_num=1, validators=[validate_file_extension], label="", required=False)
 
 
 class FlashUploadFileForm(forms.Form):

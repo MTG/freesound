@@ -577,6 +577,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
 
     def setUp(self):
         # Find a sound which has tags to test
+
         for sound in Sound.objects.all():
             if sound.tags.all():
                 self.sound = sound
@@ -588,7 +589,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             'request': HttpRequest(),
             'media_url': 'http://example.org/'
         }))
-        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything
+        #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
     def test_display_sound_from_obj(self):
         Template("{% load display_sound %}{% display_sound sound %}").render(Context({
@@ -596,20 +597,13 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             'request': HttpRequest(),
             'media_url': 'http://example.org/'
         }))
-        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything
+        #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
-    def test_display_raw_sound_from_id(self):
+    def test_display_raw_sound(self):
+        raw_sound = Sound.objects.bulk_query_id([self.sound.id])[0]
         Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({
-            'sound': self.sound.id,
+            'sound': raw_sound,
             'request': HttpRequest(),
             'media_url': 'http://example.org/'
         }))
-        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything
-
-    def test_display_raw_sound_from_obj(self):
-        Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({
-            'sound': self.sound,
-            'request': HttpRequest(),
-            'media_url': 'http://example.org/'
-        }))
-        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything
+        #  If the template could not be rendered, the test will have failed by that time, no need to assert anything

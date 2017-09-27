@@ -19,6 +19,7 @@
 #
 
 from django.test import TestCase, Client
+from django.http import HttpRequest
 from django.urls import reverse
 from django.contrib.auth.models import User
 from comments.models import Comment
@@ -30,6 +31,8 @@ from general.templatetags.filter_img import replace_img
 from sounds.views import get_sound_of_the_day_id
 from utils.tags import clean_and_split_tags
 from utils.encryption import encrypt
+from django.template import Context, Template
+from tags.models import TaggedItem
 import accounts
 
 import time
@@ -566,3 +569,47 @@ class SoundOfTheDayTestCase(TestCase):
         sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
         sound_id = get_sound_of_the_day_id()
         cache_set.assert_called_with("random_sound", 19, 48600)
+
+
+class DisplaySoundTemplatetagTestCase(TestCase):
+
+    fixtures = ['sounds_with_tags']
+
+    def setUp(self):
+        # Find a sound which has tags to test
+        for sound in Sound.objects.all():
+            if sound.tags.all():
+                self.sound = sound
+                break
+
+    def test_display_sound_from_id(self):
+        Template("{% load display_sound %}{% display_sound sound %}").render(Context({
+            'sound': self.sound.id,
+            'request': HttpRequest(),
+            'media_url': 'http://example.org/'
+        }))
+        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything
+
+    def test_display_sound_from_obj(self):
+        Template("{% load display_sound %}{% display_sound sound %}").render(Context({
+            'sound': self.sound,
+            'request': HttpRequest(),
+            'media_url': 'http://example.org/'
+        }))
+        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything
+
+    def test_display_raw_sound_from_id(self):
+        Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({
+            'sound': self.sound.id,
+            'request': HttpRequest(),
+            'media_url': 'http://example.org/'
+        }))
+        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything
+
+    def test_display_raw_sound_from_obj(self):
+        Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({
+            'sound': self.sound,
+            'request': HttpRequest(),
+            'media_url': 'http://example.org/'
+        }))
+        #  If the template could not be rednered, the test will have failed by that time, no need to assert anything

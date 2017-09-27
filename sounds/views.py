@@ -428,12 +428,13 @@ def sound_edit(request, username, sound_id):
 
     license_form = NewLicenseForm(request.POST)
     if request.POST and license_form.is_valid():
-        sound.license = license_form.cleaned_data["license"]
-        sound.mark_index_dirty()
+        new_license = license_form.cleaned_data["license"]
+        if new_license != sound.license:
+            sound.set_license(new_license)
+        sound.mark_index_dirty()  # Sound is saved here
         if sound.pack:
-            sound.pack.process()  # Sound license changed, process pack (is sound has pack)
+            sound.pack.process()  # Sound license changed, process pack (if sound has pack)
         sound.invalidate_template_caches()
-        SoundLicenseHistory.objects.create(sound=sound, license=sound.license)
         update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:

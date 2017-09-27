@@ -96,7 +96,9 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     # 2 save
     sound.save()
-    SoundLicenseHistory.objects.create(sound=sound, license=license)
+
+    # Create corresponding SoundLicenseHistory object (can't be done before Sound is saved for the first time)
+    sound.set_license(license)
 
     # 3 move to new path
     orig = os.path.splitext(os.path.basename(sound.original_filename))[0]  # WATCH OUT!

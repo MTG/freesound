@@ -905,7 +905,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'license' in serializer.data:
                     if serializer.data['license']:
                         license = License.objects.get(name=serializer.data['license'])
-                        sound.set_license(license)
+                        if license != sound.license:
+                            # Only update license and create new SoundLicenseHistory object if license has changed
+                            sound.set_license(license)
                 if 'geotag' in serializer.data:
                     if serializer.data['geotag']:
                         lat, lon, zoom = serializer.data['geotag'].split(',')

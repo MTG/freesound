@@ -45,12 +45,11 @@ def display_sound(context, sound):
     is_explicit = False
     sound_tags = []
     if sound_obj is not None:
-        sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
+        sound_tags = [ti.tag.name for ti in sound_obj.tags.select_related("tag").all()[0:12]]
         request = context['request']
         is_explicit = sound_obj.is_explicit and \
                 (not request.user.is_authenticated or \
                         not request.user.profile.is_adult)
-
     return {
      'sound_id':     sound_id,
      'sound':        sound_obj,

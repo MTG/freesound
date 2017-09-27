@@ -22,9 +22,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.urls import reverse, resolve
-from django.db import connection, transaction
+from django.db import connection
+from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404, render, redirect
@@ -37,9 +39,10 @@ from comments.models import Comment
 from forum.models import Thread
 from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
+from networkx import nx
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundLicenseHistory
+from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundLicenseHistory, SoundOfTheDay
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
@@ -280,7 +283,7 @@ def after_download_modal(request):
 
     return JsonResponse({'content': response_content})
 
-@transaction.atomic()
+
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
@@ -288,7 +291,7 @@ def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    Download.objects.create(user=request.user, sound=sound, license=sound.license)
+    Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
@@ -428,12 +431,10 @@ def sound_edit(request, username, sound_id):
 
     license_form = NewLicenseForm(request.POST)
     if request.POST and license_form.is_valid():
-        new_license = license_form.cleaned_data["license"]
-        if new_license != sound.license:
-            sound.set_license(new_license)
-        sound.mark_index_dirty()  # Sound is saved here
+        sound.license = license_form.cleaned_data["license"]
+        sound.mark_index_dirty()
         if sound.pack:
-            sound.pack.process()  # Sound license changed, process pack (if sound has pack)
+            sound.pack.process()  # Sound license changed, process pack (is sound has pack)
         sound.invalidate_template_caches()
         update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
         return HttpResponseRedirect(sound.get_absolute_url())

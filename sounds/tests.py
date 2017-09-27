@@ -21,6 +21,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from comments.models import Comment
 from django.core.cache import cache
 from django.core.management import call_command
 from django.core import mail
@@ -232,9 +233,12 @@ class ProfileNumSoundsTestCase(TestCase):
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
+        sound.add_comment(user, "some comment")
         self.assertEqual(user.profile.num_sounds, 1)
+        self.assertEqual(Comment.objects.count(), 1)
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
+        self.assertEqual(Comment.objects.count(), 0)
 
     def test_deletedsound_creation(self):
         user, packs, sounds = create_user_and_sounds()

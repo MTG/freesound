@@ -28,6 +28,9 @@ register = template.Library()
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound(context, sound):
+    """
+    When a sound object is passed make sure to call select_related for license and user so it's already fetched
+    """
 
     if isinstance(sound, Sound):
         sound_id = sound.id
@@ -35,7 +38,7 @@ def display_sound(context, sound):
     else:
         sound_id = int(sound)
         try:
-            sound_obj = Sound.objects.get(id=sound_id)
+            sound_obj = Sound.objects.select_related('license', 'user').get(id=sound_id)
         except Sound.DoesNotExist:
             sound_obj = None
 
@@ -52,13 +55,15 @@ def display_sound(context, sound):
      'sound_id':     sound_id,
      'sound':        sound_obj,
      'sound_tags':   sound_tags,
+     'sound_user':   sound_obj.user.username,
+     'license_name': sound_obj.license.name,
      'media_url':    context['media_url'],
      'request':      context['request'],
      'is_explicit':  is_explicit
     }
 
 
-@register.inclusion_tag('sounds/display_raw_sound.html', takes_context=True)
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_raw_sound(context, sound):
     sound_id = sound.id
     request = context['request']
@@ -69,6 +74,8 @@ def display_raw_sound(context, sound):
         'sound_id':     sound_id,
         'sound':        sound,
         'sound_tags':   sound.tag_array,
+        'sound_user':   sound.username,
+        'license_name': sound.license_name,
         'media_url':    context['media_url'],
         'request':      request,
         'is_explicit':  is_explicit

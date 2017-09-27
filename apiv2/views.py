@@ -29,10 +29,10 @@ from oauth2_provider.models import Grant, AccessToken
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
-from exceptions import *
-from forms import *
-from models import ApiV2Client
-from sounds.models import Sound, Pack, License, SoundLicenseHistory
+from apiv2.exceptions import *
+from apiv2.forms import *
+from apiv2.models import ApiV2Client
+from sounds.models import Sound, Pack, License
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from accounts.views import handle_uploaded_file, send_activation
@@ -48,13 +48,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render
-from django.template import RequestContext
-from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
-try:
-    from collections import OrderedDict
-except:
-    from freesound.utils.ordered_dict import OrderedDict
+from collections import OrderedDict
 from urllib import quote
 from django.conf import settings
 import utils.sound_upload
@@ -909,8 +905,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'license' in serializer.data:
                     if serializer.data['license']:
                         license = License.objects.get(name=serializer.data['license'])
-                        sound.license = license
-                        SoundLicenseHistory.objects.create(sound=sound, license=license)
+                        sound.set_license(license)
                 if 'geotag' in serializer.data:
                     if serializer.data['geotag']:
                         lat, lon, zoom = serializer.data['geotag'].split(',')

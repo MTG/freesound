@@ -29,7 +29,7 @@ class Command(BaseCommand):
     help = 'Update Downloads license from sound table'
 
     def add_arguments(self, parser):
-        parser.add_argument('limit', type=int, nargs='?', default=1000, help='Limit of Download rows to update at each step')
+        parser.add_argument('limit', type=int, nargs='?', default=10000, help='Limit of Download rows to update at each step')
 
     def handle(self, *args, **options):
         limit = options['limit']

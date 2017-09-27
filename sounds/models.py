@@ -442,14 +442,12 @@ class Sound(SocialModel):
     def set_license(self, new_license):
         """
         Set `new_license` as the current license of the sound. Create the corresponding SoundLicenseHistory object.
-        If `new_license` is the same as current license, do nothing.
+        Note that this method *does not save* the sound object, it needs to be manually done afterwards.
         :param new_license: License object representing the new license
         :return:
         """
-        if new_license != self.license:
-            self.license = new_license
-            self.save()
-            SoundLicenseHistory.objects.create(sound=self, license=new_license)
+        self.license = new_license
+        SoundLicenseHistory.objects.create(sound=self, license=new_license)
 
     # N.B. These set functions are used in the distributed processing.
     # They set a single field to prevent overwriting eachother's result in

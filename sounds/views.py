@@ -303,7 +303,7 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    Download.objects.get_or_create(user=request.user, pack=pack)
+    Download.objects.create(user=request.user, pack=pack)
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
 

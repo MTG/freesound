@@ -221,6 +221,8 @@ class Sound(SocialModel):
     # user defined fields
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
+
+    # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
@@ -452,6 +454,16 @@ class Sound(SocialModel):
                 (tag_object, created) = Tag.objects.get_or_create(name=tag)
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
                 tagged_object.save()
+
+    def set_license(self, new_license):
+        """
+        Set `new_license` as the current license of the sound. Create the corresponding SoundLicenseHistory object.
+        Note that this method *does not save* the sound object, it needs to be manually done afterwards.
+        :param new_license: License object representing the new license
+        :return:
+        """
+        self.license = new_license
+        SoundLicenseHistory.objects.create(sound=self, license=new_license)
 
     # N.B. These set functions are used in the distributed processing.
     # They set a single field to prevent overwriting eachother's result in
@@ -970,7 +982,19 @@ class Download(models.Model):
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
     pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
+    license = models.ForeignKey(License, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    def get_license(self):
+        """
+        Return self.license if it's not null. Otherwise, return self.sound.license if self.sound is not null, or return
+        None if there is no license and no sound.
+        """
+        if self.license:
+            return self.license
+        if self.sound:
+            return self.sound.license
+        return None
 
     class Meta:
         ordering = ("-created",)
@@ -983,3 +1007,13 @@ class RemixGroup(models.Model):
                                     related_name='remix_group',
                                     blank=True)
     group_size = models.PositiveIntegerField(null=False, default=0)
+
+
+class SoundLicenseHistory(models.Model):
+    """Store history of licenses related to a sound"""
+    license = models.ForeignKey(License)
+    sound = models.ForeignKey(Sound)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created",)

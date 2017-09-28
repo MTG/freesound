@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, to='sounds.License'),
         ),
         migrations.RunSQL('create index if not exists sounds_download_user_sound on sounds_download(user_id, sound_id) WHERE pack_id IS NULL;'),
-        migrations.RunSQL('create index if not exists sounds_download_user_pack on sounds_download(user_id, pack) WHERE sound_id IS NULL;'),
+        migrations.RunSQL('create index if not exists sounds_download_user_pack on sounds_download(user_id, pack_id) WHERE sound_id IS NULL;'),
         migrations.RunSQL('drop index if exists sounds_download_user_pack_unique;'),
         migrations.RunSQL('drop index if exists sounds_download_user_sound_unique;'),
     ]

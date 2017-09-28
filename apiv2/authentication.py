@@ -45,7 +45,12 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
         We override this method to check the status of related ApiV2Client.
         Check that ApiV2Client associatied to the given acess_token has not been disabled.
         """
-        super_response = super(OAuth2Authentication, self).authenticate(request)
+        try:
+            super_response = super(OAuth2Authentication, self).authenticate(request)
+        except UnicodeDecodeError:
+            # Catch excpetion when data can not be decoded
+            super_response = None
+
         if super_response is not None:
             # super_response[1] -> access_token
             if super_response[1].application.apiv2_client.status != "OK":

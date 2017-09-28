@@ -607,3 +607,10 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             'media_url': 'http://example.org/'
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
+
+    def test_display_sound_wrapper_view(self):
+        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, 921]))  # Non existent ID
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(response.status_code, 200)

@@ -740,6 +740,7 @@ def sound_short_link(request, sound_id):
     return redirect('sound', username=sound.user.username,
             sound_id=sound.id)
 
+
 def __redirect_old_link(request, cls, url_name):
     obj_id = request.GET.get('id', False)
     if obj_id:
@@ -751,24 +752,33 @@ def __redirect_old_link(request, cls, url_name):
     else:
         raise Http404
 
+
 def old_sound_link_redirect(request):
     return __redirect_old_link(request, Sound, "sound")
+
 
 def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
+
 def display_sound_wrapper(request, username, sound_id):
-    sound_obj = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
-    if sound_obj.user.username.lower() != username.lower():
-        raise Http404
-    sound_tags = []
+    sound_obj = get_object_or_404(Sound, id=sound_id, user__username__iexact=username)
+
+    # The following code is duplicated in sounds.tempaltetags.display_sound. This could be optimized.
+    is_explicit = False
     if sound_obj is not None:
-        sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
+        is_explicit = sound_obj.is_explicit and \
+                      (not request.user.is_authenticated or \
+                       not request.user.profile.is_adult)
     tvars = {
         'sound_id': sound_id,
         'sound': sound_obj,
-        'sound_tags': sound_tags,
-        'limit_description': False,
+        'sound_tags': sound_obj.get_sound_tags(12),
+        'sound_user': sound_obj.user.username,
+        'license_name': sound_obj.license.name,
+        'media_url': settings.MEDIA_URL,
+        'request': request,
+        'is_explicit': is_explicit
     }
     return render(request, 'sounds/display_sound.html', tvars)
 

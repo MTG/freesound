@@ -435,6 +435,18 @@ class Sound(SocialModel):
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
 
+    def get_license_history(self):
+        """
+        Returns a list of tuples with the following format:
+            (license_name, timestamp)
+        License name is a string, while timestamps are represented as python datetime objects.
+        The list represent the different licenses that have been assigned to a single sound.
+        If a sound never had a license changed, then the list will have a single element.
+        List is sorted with the newest license at the top.
+        """
+        return [(slh.created, slh.license) for slh in
+                self.soundlicensehistory_set.select_related('license').order_by('-created')]
+
     def get_sound_tags(self, limit=None):
         """
         Returns the tags assigned to the sound as a list of strings, e.g. ["tag1", "tag2", "tag3"]

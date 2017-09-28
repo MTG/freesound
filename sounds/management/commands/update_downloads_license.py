@@ -39,7 +39,22 @@ class Command(BaseCommand):
         while more_results:
             more_results = False
             with connection.cursor() as cursor:
-                cursor.execute("WITH sub AS (SELECT id FROM sounds_download WHERE license_id is null ORDER BY id LIMIT %s FOR UPDATE SKIP LOCKED ) UPDATE sounds_download sd SET license_id=s.license_id FROM sub , sounds_sound s WHERE sub.id = sd.id AND s.id=sd.sound_id;", (limit,))
+                cursor.execute(
+                    """
+                    WITH sub AS 
+                        (SELECT id 
+                           FROM sounds_download 
+                          WHERE license_id is null AND sound_id is not null
+                       ORDER BY id 
+                          LIMIT %s 
+                     FOR UPDATE SKIP LOCKED ) 
+                  UPDATE sounds_download sd 
+                     SET license_id=s.license_id 
+                    FROM sub 
+                       , sounds_sound s 
+                   WHERE sub.id = sd.id 
+                     AND s.id=sd.sound_id
+                    """, (limit,))
                 more_results = cursor.rowcount
                 logger.info("Updated %i Download licenses" % (more_results))
         logger.info("Finished updating Download licenses")

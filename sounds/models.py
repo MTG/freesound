@@ -435,6 +435,13 @@ class Sound(SocialModel):
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
 
+    def get_sound_tags(self, limit=None):
+        """
+        Returns the tags assigned to the sound as a list of strings, e.g. ["tag1", "tag2", "tag3"]
+        :param limit: The maximum number of tags to return
+        """
+        return [ti.tag.name for ti in self.tags.select_related("tag").all()[0:limit]]
+
     def set_tags(self, tags):
         # remove tags that are not in the list
         for tagged_item in self.tags.all():

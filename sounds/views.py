@@ -39,7 +39,7 @@ from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundLicenseHistory
+from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundOfTheDay, SoundLicenseHistory
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
@@ -65,31 +65,27 @@ import os
 logger = logging.getLogger('web')
 
 
-def get_random_sound():
+def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
     """
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
     if not random_sound:
-        random_sound = Sound.objects.random()
-        cache.set(cache_key, random_sound, 60*60*24)
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("email_random_sound", str(random_sound),
-                wait_until_complete=False, background=True)
+        try:
+            today = datetime.date.today()
+            now = datetime.datetime.now()
+            tomorrow = datetime.datetime(today.year, today.month, today.day)
+            time_until_tomorrow = tomorrow - now
+
+            rnd = SoundOfTheDay.objects.get(date_display=today)
+            random_sound = rnd.sound_id
+            # Set the cache to expire at midnight tomorrow, so that
+            # a new sound is chosen
+            cache.set(cache_key, random_sound, time_until_tomorrow.seconds)
+        except SoundOfTheDay.DoesNotExist:
+            return None
     return random_sound
-
-
-def get_random_uploader():
-    """
-    Returns random User object (among users that have uploaded at least one sound)
-    """
-    cache_key = "random_uploader"
-    random_uploader = cache.get(cache_key)
-    if not random_uploader:
-        random_uploader = Profile.objects.random_uploader()
-        cache.set(cache_key, random_uploader, 60*60*24)
-    return random_uploader
 
 
 def sounds(request):
@@ -103,7 +99,11 @@ def sounds(request):
             Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
     popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
-    random_sound = Sound.objects.bulk_query_id([get_random_sound()])[0]
+    random_sound_id = get_sound_of_the_day_id()
+    if random_sound_id:
+        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+    else:
+        random_sound = None
     tvars = {
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
@@ -122,11 +122,10 @@ def remixed(request):
 
 
 def random(request):
-    sound_id = Sound.objects.random()
-    if sound_id is None:
+    sound_obj = Sound.objects.random()
+    if sound is None:
         raise Http404
-    sound_obj = Sound.objects.get(pk=sound_id)
-    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
+    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_obj.id])+"?random_browsing=true")
 
 
 def packs(request):
@@ -167,7 +166,11 @@ def front_page(request):
                                                           'last_post__thread',
                                                           'last_post__thread__forum')
     latest_additions = Sound.objects.latest_additions(5, '2 days')
-    random_sound = get_random_sound()
+    random_sound_id = get_sound_of_the_day_id()
+    if random_sound_id:
+        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+    else:
+        random_sound = None
     tvars = {
         'rss_cache': rss_cache,
         'donations_cache': donations_cache,
@@ -736,6 +739,7 @@ def sound_short_link(request, sound_id):
     return redirect('sound', username=sound.user.username,
             sound_id=sound.id)
 
+
 def __redirect_old_link(request, cls, url_name):
     obj_id = request.GET.get('id', False)
     if obj_id:
@@ -747,24 +751,33 @@ def __redirect_old_link(request, cls, url_name):
     else:
         raise Http404
 
+
 def old_sound_link_redirect(request):
     return __redirect_old_link(request, Sound, "sound")
+
 
 def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
+
 def display_sound_wrapper(request, username, sound_id):
-    sound_obj = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
-    if sound_obj.user.username.lower() != username.lower():
-        raise Http404
-    sound_tags = []
+    sound_obj = get_object_or_404(Sound, id=sound_id, user__username__iexact=username)
+
+    # The following code is duplicated in sounds.tempaltetags.display_sound. This could be optimized.
+    is_explicit = False
     if sound_obj is not None:
-        sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
+        is_explicit = sound_obj.is_explicit and \
+                      (not request.user.is_authenticated or \
+                       not request.user.profile.is_adult)
     tvars = {
         'sound_id': sound_id,
         'sound': sound_obj,
-        'sound_tags': sound_tags,
-        'limit_description': False,
+        'sound_tags': sound_obj.get_sound_tags(12),
+        'sound_user': sound_obj.user.username,
+        'license_name': sound_obj.license.name,
+        'media_url': settings.MEDIA_URL,
+        'request': request,
+        'is_explicit': is_explicit
     }
     return render(request, 'sounds/display_sound.html', tvars)
 

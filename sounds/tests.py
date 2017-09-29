@@ -79,7 +79,7 @@ class RandomSoundAndUploaderTestCase(TestCase):
 
     def test_random_sound(self):
         random_sound = get_random_sound()
-        self.assertEqual(isinstance(random_sound, int), True)
+        self.assertEqual(isinstance(random_sound, Sound), True)
 
     def test_random_uploader(self):
         # Update num_sounds in user profile data

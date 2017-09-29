@@ -47,7 +47,7 @@ from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSou
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
-from utils.search.search_general import get_random_sounds_from_solr
+from utils.search.search_general import get_random_sound_from_solr
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
@@ -78,9 +78,9 @@ def get_random_sound():
     random_sound = cache.get(cache_key)
     if not random_sound:
         random_sound = Sound.objects.random()
-        cache.set(cache_key, random_sound, 60*60*24)
+        cache.set(cache_key, random_sound.id, 60*60*24)
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("email_random_sound", str(random_sound),
+        gm_client.submit_job("email_random_sound", str(random_sound.id),
                 wait_until_complete=False, background=True)
     return random_sound
 
@@ -108,7 +108,7 @@ def sounds(request):
             Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
     popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
-    random_sound = Sound.objects.bulk_query_id([get_random_sound()])[0]
+    random_sound = get_random_sound()
     tvars = {
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
@@ -127,16 +127,18 @@ def remixed(request):
 
 
 def random(request):
-    sounds = get_random_sounds_from_solr(1)
+    sound = get_random_sound_from_solr()
     sound_obj = None
-    if sounds:
+    if sound:
         try:
-            sound_obj = Sound.objects.get(id=sounds[0]['id'])
-        except ObjectDoesNotExist:
+            sound_obj = Sound.objects.get(id=sound['id'])
+        except Sound.DoesNotExist:
             pass
     if sound_obj is None:
-        sound_id = Sound.objects.random()
-        sound_obj = Sound.objects.get(pk=sound_id)
+        try:
+            sound_obj = Sound.objects.random()
+        except Sound.DoesNotExist:
+            pass
     if sound_obj is None:
         raise Http404
     return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_id])+"?random_browsing=true")

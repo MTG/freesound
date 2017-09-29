@@ -21,6 +21,7 @@
 import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
 import utils.sound_upload
+import errno
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -49,7 +50,7 @@ from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetti
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, License
+from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
@@ -149,12 +150,15 @@ def check_username(request):
 
 
 @login_required
+@transaction.atomic()
 def bulk_license_change(request):
     if request.method == 'POST':
         form = NewLicenseForm(request.POST)
         if form.is_valid():
             selected_license = form.cleaned_data['license']
             Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
+            for sound in Sound.objects.filter(user=request.user).all():
+                SoundLicenseHistory.objects.create(sound=sound, license=selected_license)
             Profile.objects.filter(user=request.user).update(has_old_license=False)
             cache.set('has-old-license-%s' % request.user.id,
                       [False, Sound.objects.filter(user=request.user).exists()], 2592000)
@@ -429,8 +433,14 @@ def describe(request):
                 return render(request, 'accounts/confirm_delete_undescribed_files.html', tvars)
             elif "delete_confirm" in request.POST:
                 for f in form.cleaned_data["files"]:
-                    os.remove(files[f].full_path)
-                    remove_uploaded_file_from_mirror_locations(files[f].full_path)
+                    try:
+                        os.remove(files[f].full_path)
+                        remove_uploaded_file_from_mirror_locations(files[f].full_path)
+                    except OSError as e:
+                        if e.errno == errno.ENOENT:
+                            logger.error("Failed to remove file %s", str(e))
+                        else:
+                            raise
 
                 # Remove user uploads directory if there are no more files to describe
                 user_uploads_dir = request.user.profile.locations()['uploads_dir']
@@ -644,7 +654,7 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.select_related('sound', 'sound__user', 'sound__license', 'pack',
+    qs = Download.objects.select_related('sound', 'sound__user', 'license', 'pack',
                                          'pack__user').filter(user=request.user)
     tvars = {'format': request.GET.get("format", "regular")}
     tvars.update(paginate(request, qs, 40))

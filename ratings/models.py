@@ -24,6 +24,10 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import F, Avg
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+
 
 class Rating(models.Model):
     user = models.ForeignKey(User)
@@ -42,3 +46,29 @@ class Rating(models.Model):
     class Meta:
         unique_together = (('user', 'content_type', 'object_id'),)
         ordering = ('-created',)
+
+
+@receiver(post_delete, sender=Rating)
+def post_delete_rating(sender, instance, **kwargs):
+    try:
+        instance.content_object.num_ratings = F('num_ratings') - 1
+        rating = Rating.objects.filter(
+                content_type_id=instance.content_type_id,
+                object_id=instance.object_id).aggregate(Avg('rating')).values()[0]
+        if rating == None:
+            rating = 0
+        instance.content_object.avg_rating = rating
+        instance.content_object.save()
+    except ObjectDoesNotExist:
+        pass
+
+
+@receiver(post_save, sender=Rating)
+def update_num_posts_on_post_insert(**kwargs):
+    instance = kwargs['instance']
+    if kwargs['created']:
+        instance.content_object.num_ratings = F('num_ratings') + 1
+    instance.content_object.avg_rating = Rating.objects.filter(
+            content_type_id=instance.content_type_id,
+            object_id=instance.object_id).aggregate(Avg('rating')).values()[0]
+    instance.content_object.save()

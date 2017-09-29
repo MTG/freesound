@@ -1,15 +1,15 @@
-Spam report for user {{flagged_user.username}}
+Report for spammer/offensive user {{flagged_user.username}}
 ----------------------------------------
 
 Hi there super admin!
-User {{ flagged_user.username }} has been reported as a spammer at least three times by different users.
-Here you have a list of the items that have been marked as spam:
+User {{ flagged_user.username }} has been reported as a spammer or offensive at least three times by different users.
+Here you have a list of the items that have been marked as bad content:
 
 {% for url in urls %}
     * {{url.0}}: {{url.1}}
 {% endfor %}
 
-If you can confirm this user is a spammer, please delete him following {{user_url}}
-If the user is not a spammer, you can clean the spam reports by following {{clear_url}}
+If you can confirm this user is a spammer or offensive, please delete him following {{user_url}}
+If the user is not a spammer or offensive, you can clean the reports by following {{clear_url}}
 
 

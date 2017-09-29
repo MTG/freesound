@@ -31,6 +31,7 @@ from django.utils.translation import ugettext as _
 from django.db import models, connection, transaction
 from django.db.models import F
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
+from django.dispatch import receiver
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from general.models import OrderedModel, SocialModel
@@ -1010,6 +1011,29 @@ class Download(models.Model):
 
     class Meta:
         ordering = ("-created",)
+
+
+@receiver(post_delete, sender=Download)
+def update_num_downloads_on_delete(**kwargs):
+    download = kwargs['instance']
+    if download.pack:
+        download.pack.num_downloads = F('num_downloads') - 1
+        download.pack.save()
+    if download.sound:
+        download.sound.num_downloads = F('num_downloads') - 1
+        download.sound.save()
+
+
+@receiver(post_save, sender=Download)
+def update_num_downloads_on_insert(**kwargs):
+    download = kwargs['instance']
+    if kwargs['created']:
+        if download.pack:
+            download.pack.num_downloads = F('num_downloads') + 1
+            download.pack.save()
+        if download.sound:
+            download.sound.num_downloads = F('num_downloads') + 1
+            download.sound.save()
 
 
 class RemixGroup(models.Model):

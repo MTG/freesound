@@ -22,10 +22,11 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import F
 from django.urls import reverse
 from django.utils.encoding import smart_unicode
 from general.models import OrderedModel
-from django.db.models.signals import post_delete, pre_delete
+from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
 from django.dispatch import receiver
 from utils.cache import invalidate_template_cache
 from django.utils.translation import ugettext as _
@@ -112,10 +113,31 @@ class Thread(models.Model):
         return self.title
 
 
+@receiver(post_save, sender=Thread)
+def update_num_threads_on_thread_insert(**kwargs):
+    thread = kwargs['instance']
+    if kwargs['created']:
+        thread.forum.num_threads = F('num_threads') + 1
+        thread.forum.save()
+
+
+@receiver(pre_save, sender=Thread)
+def update_num_threads_on_thread_update(sender, instance, **kwargs):
+    if instance.id:
+        old_thread = Thread.objects.get(pk=instance.id)
+        if old_thread.forum_id != instance.forum_id:
+            old_thread.forum.num_threads = F('num_threads') - 1
+            old_thread.forum.save()
+            instance.forum.num_threads = F('num_threads') + 1
+            instance.forum.save()
+
+
 @receiver(post_delete, sender=Thread)
 def update_last_post_on_thread_delete(**kwargs):
     thread = kwargs['instance']
     try:
+        thread.forum.num_threads = F('num_threads') - 1
+        thread.forum.save()
         thread.forum.set_last_post()
     except Forum.DoesNotExist:
         pass
@@ -148,11 +170,29 @@ class Post(models.Model):
         return reverse("forums-post", args=[smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id])
 
 
+@receiver(post_save, sender=Post)
+def update_num_posts_on_post_insert(**kwargs):
+    if kwargs['created']:
+        post = kwargs['instance']
+        post.thread.num_posts = F('num_posts') + 1
+        post.thread.forum.num_posts = F('num_posts') + 1
+        post.author.num_posts = F('num_posts') + 1
+        post.thread.save()
+        post.thread.forum.set_last_post()
+        post.thread.set_last_post()
+        invalidate_template_cache('latest_posts')
+
+
 @receiver(post_delete, sender=Post)
 def update_last_post_on_post_delete(**kwargs):
     post = kwargs['instance']
     delete_post_from_solr(post)
     try:
+        post.thread.num_posts = F('num_posts') - 1
+        post.thread.forum.num_posts = F('num_posts') - 1
+        post.author.num_posts = F('num_posts') - 1
+        post.thread.save()
+        post.thread.forum.set_last_post()
         post.thread.set_last_post()
     except Thread.DoesNotExist:
         # This happens when the thread has already been deleted, for example

@@ -143,18 +143,21 @@ def check_if_sound_exists_in_solr(sound):
     return response.num_found > 0
 
 
-def get_random_sounds_from_solr(numb_sounds):
+def get_random_sound_from_solr():
     solr = Solr(settings.SOLR_URL)
     query = SolrQuery()
     sort = ['random_%d asc' % (time.time())]
     filter_query = 'is_explicit:0 avg_rating:[6 TO *] num_ratings:[3 TO *]'
     query.set_query("*:*")
-    query.set_query_options(start=0, rows=numb_sounds, field_list=["*"], filter_query=filter_query, sort=sort)
+    query.set_query_options(start=0, rows=1, field_list=["*"], filter_query=filter_query, sort=sort)
     try:
         response = SolrResponseInterpreter(solr.select(unicode(query)))
-        return response.docs
+        docs = response.docs
+        if docs:
+            return docs[0]
     except socket_error:
-        return None
+        pass
+    return None
 
 
 def delete_sound_from_solr(sound):

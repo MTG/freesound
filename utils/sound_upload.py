@@ -21,7 +21,7 @@
 import os
 import shutil
 from django.urls import reverse
-from sounds.models import Sound, Pack, License
+from sounds.models import Sound, Pack, License, SoundLicenseHistory
 from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from utils.filesystem import md5file, remove_directory_if_empty
@@ -96,6 +96,9 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     # 2 save
     sound.save()
+
+    # Create corresponding SoundLicenseHistory object (can't be done before Sound is saved for the first time)
+    sound.set_license(license)
 
     # 3 move to new path
     orig = os.path.splitext(os.path.basename(sound.original_filename))[0]  # WATCH OUT!

@@ -31,7 +31,7 @@
         function display_flagged_feedback(id, data){
 
             $("#" + id.toString() + "_link").html("");
-            $("#" + id.toString() + "_info").html("<span style='color:green'>Spam report sent!</span>");
+            $("#" + id.toString() + "_info").html("<span style='color:green'>Spam/Offensive report sent!</span>");
             setTimeout(function() {
                 $("#" + id.toString() + "_info").hide()
                 $("#" + id.toString() + "_link").html("<span style='color:#808080;'>{{ done_text }}</span>");
@@ -43,7 +43,7 @@
             $("#" + id.toString() + "_info").html("<span style='color:red'>Some error occurred! Try again later...</span>")
             setTimeout(function() {
                 $("#" + id.toString() + "_info").hide()
-                $("#" + id.toString() + "_link").html("<span style='color:#808080;'>Spam reporting falied</span>");
+                $("#" + id.toString() + "_link").html("<span style='color:#808080;'>Spam/Offensive reporting falied</span>");
             }, 2000);
         }
 

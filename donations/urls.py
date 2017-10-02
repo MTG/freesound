@@ -26,6 +26,7 @@ import views
 urlpatterns = [
     url(r'^donate/$', views.donate, name="donate"),
     url(r'^donors/$', views.DonationsList.as_view(), name="donors"),
-    url(r'^donation-complete/$', views.donation_complete, name="donation-complete"),
+    url(r'^donation-complete-stripe/$', views.donation_complete_stripe, name="donation-complete-stripe"),
+    url(r'^donation-complete-paypal/$', views.donation_complete_paypal, name="donation-complete-paypal"),
 
 ]

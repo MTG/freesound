@@ -24,6 +24,7 @@ class Donation(models.Model):
     DONATION_CHOICES =(
         ('p', 'paypal'),
         ('s', 'stripe'),
+        ('t', 'transfer'),
     )
     source = models.CharField(max_length=2, choices=DONATION_CHOICES, default='p')
 

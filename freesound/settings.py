@@ -379,4 +379,8 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.SHA1PasswordHasher',
 ]
 
+# Stripe keys for testing (never set real keys here!!!)
+STRIPE_PUBLIC_KEY = ""
+STRIPE_PRIVATE_KEY = ""
+
 from logger import LOGGING

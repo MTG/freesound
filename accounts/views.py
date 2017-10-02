@@ -946,7 +946,7 @@ def old_user_link_redirect(request):
 @login_required
 def email_reset(request):
     if request.method == "POST":
-        form = EmailResetForm(request.POST)
+        form = EmailResetForm(request.POST, user=request.user)
         if form.is_valid():
             # First check that email is not already on the database, if it's already used we don't do anything.
             try:
@@ -959,9 +959,9 @@ def email_reset(request):
                 try:
                     rer = ResetEmailRequest.objects.get(user=request.user)
                     rer.email = form.cleaned_data['email']
+                    rer.save()
                 except ResetEmailRequest.DoesNotExist:
-                    rer = ResetEmailRequest(user=request.user, email=form.cleaned_data['email'])
-                rer.save()
+                    rer = ResetEmailRequest.objects.create(user=request.user, email=form.cleaned_data['email'])
 
                 # Send email to the new address
                 user = request.user
@@ -984,7 +984,7 @@ def email_reset(request):
                 send_mail(subject=subject, email_body=email_body, email_to=[email])
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
-        form = EmailResetForm()
+        form = EmailResetForm(user = request.user)
     tvars = {'form': form}
     return render(request, 'accounts/email_reset_form.html', tvars)
 

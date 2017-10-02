@@ -268,9 +268,15 @@ class EmailResetForm(forms.Form):
     email = forms.EmailField(label=_("New e-mail address"), max_length=75)
     password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
 
+    def __init__(self, *args, **kwargs):
+        # Using init function to pass user variable so later we can perform check_password in clean_password function
+        self.user = kwargs.pop('user', None)
+        super(EmailResetForm, self).__init__(*args, **kwargs)
+
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):
             raise forms.ValidationError(_("Incorrect password."))
+        return self.cleaned_data['password']
 
 
 DELETE_CHOICES = [('only_user', mark_safe(u'Delete only my user account information :)  (see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a> for more information)')),

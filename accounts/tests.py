@@ -19,7 +19,7 @@
 #
 
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, Client
 from django.test.utils import override_settings, skipIf
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import PasswordResetForm
@@ -28,7 +28,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.core import mail
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, SameUser
+from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm
 from sounds.models import License, Sound, Pack, DeletedSound
@@ -858,3 +858,34 @@ class PasswordReset(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
+
+
+class EmailReset(TestCase):
+    def test_reset_email_form(self):
+        """ Check that reset email with the right parameters """
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        user.set_password('12345')
+        user.save()
+        a = self.client.login(username=user.username, password='12345')
+        resp = self.client.post(reverse('accounts-email-reset'), {
+            'email': u'new_email@freesound.org',
+            'password': '12345',
+        })
+        self.assertRedirects(resp, reverse('accounts-email-reset-done'))
+        self.assertEqual(ResetEmailRequest.objects.filter(user=user, email="new_email@freesound.org").count(), 1)
+
+    def test_reset_email_form_existing_email(self):
+        """ Check that reset email with an existing email address """
+        user = User.objects.create_user("new_user", email="new_email@freesound.org")
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        user.set_password('12345')
+        user.save()
+        a = self.client.login(username=user.username, password='12345')
+        resp = self.client.post(reverse('accounts-email-reset'), {
+            'email': u'new_email@freesound.org',
+            'password': '12345',
+        })
+        self.assertRedirects(resp, reverse('accounts-email-reset-done'))
+        self.assertEqual(ResetEmailRequest.objects.filter(user=user, email="new_email@freesound.org").count(), 0)
+
+

@@ -493,6 +493,8 @@ def convert_to_pcm(input_filename, output_filename):
         cmd = ["oggdec", input_filename, "-o", output_filename]
     elif sound_type == "flac":
         cmd = ["flac", "-f", "-d", "-s", "-o", output_filename, input_filename]
+    elif sound_type == "m4a":
+        cmd = ["faad", "-o", output_filename, input_filename]
     else:
         return False
 

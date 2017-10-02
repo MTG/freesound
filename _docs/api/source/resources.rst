@@ -60,7 +60,7 @@ was_remixed: 		boolean
 pack: 			string
 pack_tokenized: 	string, tokenized
 is_geotagged: 		boolean
-type: 			string, original file type ("wav", "aif", "aiff", "ogg", "mp3" or "flac")
+type: 			string, original file type ("wav", "aif", "aiff", "ogg", "mp3", "m4a" or "flac")
 duration: 		numerical, duration of sound in seconds
 bitdepth: 		integer, WARNING is not to be trusted right now
 bitrate: 		numerical, WARNING is not to be trusted right now
@@ -429,7 +429,7 @@ Name                  Type              Description
 ``geotag``            string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
 ``created``           string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
 ``license``           string            The license under which the sound is available to you.
-``type``              string            The type of sound (wav, aif, aiff, mp3, or flac).
+``type``              string            The type of sound (wav, aif, aiff, mp3, m4a or flac).
 ``channels``          number            The number of channels.
 ``filesize``          number            The size of the file in bytes.
 ``bitrate``           number            The bit rate of the sound in kbps.

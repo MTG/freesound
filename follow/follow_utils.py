@@ -137,7 +137,7 @@ def get_stream_sounds(user, time_lapse):
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
-            sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids)
+            sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids).select_related('license', 'user')
             new_count = more_count + len(sound_ids)
             users_sounds.append(((user_following, False), sound_objs, more_url_params, more_count, new_count))
 

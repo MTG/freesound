@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+import sounds
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.db import models
@@ -41,5 +42,12 @@ class Comment(models.Model):
 
 
 def on_delete_comment(sender, instance, **kwargs):
+    try:
         instance.sound.post_delete_comment()
+    except sounds.models.Sound.DoesNotExist:
+        """
+        If this comment is deleted as a result of its parent sound being deleted, the
+        sound will no longer exist so we don't need to update it
+        """
+        pass
 post_delete.connect(on_delete_comment, sender=Comment)

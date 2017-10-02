@@ -27,7 +27,7 @@
 			{% for download_item in group.list %}
 				{% if download_item.sound %}
 					{% with download_item.sound as sound %}
-						<li>S: <a href="{% url "sound" sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url "account" sound.user.username %}">{{sound.user.username}}</a>  | <span style="color:gray">License:</span> {{ sound.license }}</li>
+						<li>S: <a href="{% url "sound" sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url "account" sound.user.username %}">{{sound.user.username}}</a>  | <span style="color:gray">License: </span>{{ download_item.get_license }}</li>
 					{% endwith %}
 				{% else %}
 					{% with download_item.pack as pack %}
@@ -48,7 +48,7 @@
 				&nbsp;&nbsp;&nbsp;&nbsp;{% filter force_escape %}
 				{% if download_item.sound %}
 					{% with download_item.sound as sound %}
-						<li>S: <a href="{% absurl 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% absurl 'account' sound.user.username %}">{{sound.user.username}}</a> | License: {{ sound.license }}</li>
+						<li>S: <a href="{% absurl 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% absurl 'account' sound.user.username %}">{{sound.user.username}}</a> | License: {{ download_item.get_license }}</li>
 					{% endwith %}
 				{% else %}
 					{% with download_item.pack as pack %}
@@ -70,7 +70,7 @@
 			    &nbsp;&nbsp;&nbsp;&nbsp;
 				{% if download_item.sound %}
 					{% with download_item.sound as sound %}
-		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl 'short-sound-link' sound.id %} -- License: {{ sound.license }}<br />
+		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl 'short-sound-link' sound.id %} -- License: {{ download_item.get_license }}<br />
 					{% endwith %}
 				{% else %}
 					{% with download_item.pack as pack %}

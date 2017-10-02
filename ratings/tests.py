@@ -55,6 +55,8 @@ class RatingsTestCase(TestCase):
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
 
+        r = ratings.models.Rating.objects.create(object_id=self.sound.id, content_type=self.ct, user_id=self.user1.id, rating=4)
+
         resp = self.client.get("/ratings/add/%s/%s/%s/" % (self.ct.id, self.sound.id, 5))
         newr = ratings.models.Rating.objects.first()
         self.assertEqual(ratings.models.Rating.objects.count(), 1)

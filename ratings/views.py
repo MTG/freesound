@@ -34,10 +34,15 @@ def add(request, content_type_id, object_id, rating):
     if rating in range(1,6):
         # in order to keep the ratings compatible with freesound 1, we multiply by two...
         rating = rating*2
-        rating_object = Rating.objects.get_or_create(
+        rating_obj, created = Rating.objects.get_or_create(
                 user=request.user,
                 object_id=object_id,
                 content_type=content_type, defaults={'rating': rating})
+
+        if not created:
+            rating_obj.rating = rating
+            rating_obj.save()
+
         # make sure the rating is seen on the next page load by invalidating the cache for it.
         ct = ContentType.objects.get(id=content_type_id)
         if ct.name == 'sound':

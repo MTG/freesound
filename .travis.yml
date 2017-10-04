@@ -1,6 +1,6 @@
 language: python
 addons:
-  postgresql: "9.4"
+  postgresql: "9.5"
 python:
 - '2.7'
 before_install:

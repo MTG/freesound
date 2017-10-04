@@ -3,8 +3,10 @@ import base64
 import requests
 import urlparse
 import logging
-from django.shortcuts import render
+import stripe
+from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.contrib import messages
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.contrib.sites.models import Site
@@ -18,8 +20,93 @@ from utils.mail import send_mail_template
 logger = logging.getLogger('web')
 
 
+def _save_donation(encoded_data, email, amount, currency, transaction_id, source):
+    extra_data = json.loads(base64.b64decode(encoded_data))
+    campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
+    is_anonymous = False
+    user = None
+    user_id = None
+    display_name = None
+
+    if 'user_id' in extra_data:
+        user = User.objects.get(id=extra_data['user_id'])
+        user_id = user.id
+        email = user.email
+        # Reset the reminder flag to False so that in a year time user is reminded to donate
+        user.profile.donations_reminder_email_sent = False
+        user.profile.save()
+
+    if 'name' in extra_data:
+        is_anonymous = True
+        display_name = extra_data['name']
+
+    donation_data = {
+        'email': email,
+        'display_name': display_name,
+        'amount': amount,
+        'currency': currency,
+        'display_amount': extra_data['display_amount'],
+        'is_anonymous': is_anonymous,
+        'user': user,
+        'campaign': campaign,
+        'source': source
+    }
+    Donation.objects.get_or_create(transaction_id=transaction_id, defaults=donation_data)
+
+    send_mail_template(
+            u'Thanks for your donation!',
+            'donations/email_donation.txt', {
+                'user': user,
+                'amount': amount,
+                'display_name': display_name
+                }, None, email)
+
+    log_data = donation_data
+    log_data.update({'user_id': user_id})
+    del log_data['user']  # Don't want to serialize user
+    del log_data['campaign']  # Don't want to serialize campaign
+    log_data['amount_float'] = float(log_data['amount'])
+    logger.info('Recevied donation (%s)' % json.dumps(log_data))
+    return True
+
+
 @csrf_exempt
-def donation_complete(request):
+def donation_complete_stripe(request):
+    """
+    This view receives a stripe token of a validated credit card and requests for the actual donation.
+    If the donation is successfully done it stores it and send the email to the user.
+    """
+    donation_received = False
+    if request.method == 'POST':
+        form = DonateForm(request.POST, user=request.user)
+
+        token = request.POST.get('stripeToken', False)
+        email = request.POST.get('stripeEmail', False)
+
+        if form.is_valid() and token and email:
+            amount = form.cleaned_data['amount']
+            stripe.api_key = settings.STRIPE_PRIVATE_KEY
+            try:
+                # Charge the user's card:
+                charge = stripe.Charge.create(
+                  amount=int(amount*100),
+                  currency="eur",
+                  description="Freesound.org Donation",
+                  source=token,
+                )
+                if charge['status'] == 'succeeded':
+                    donation_received = True
+                    messages.add_message(request, messages.INFO, 'Thanks! your donation has been processed.')
+                    _save_donation(form.encoded_data, email, amount, 'eur', charge['id'], 's')
+            except stripe.error.StripeError as e:
+                logger.error("Can't charge donation whith stripe", e)
+    if not donation_received:
+        messages.add_message(request, messages.WARNING, 'Your donation could not be processed.')
+    return redirect('donate')
+
+
+@csrf_exempt
+def donation_complete_paypal(request):
     """
     This view listens to a notification made from paypal when someone makes
     a donation, it validates the data and then stores the donation.
@@ -34,51 +121,12 @@ def donation_complete(request):
         return HttpResponse("FAIL")
 
     if req.text == 'VERIFIED':
-        extra_data = json.loads(base64.b64decode(params['custom']))
-        email = params['payer_email']
-        campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
-        is_anonymous = False
-        user = None
-        user_id = None
-        display_name = None
-
-        if 'user_id' in extra_data:
-            user = User.objects.get(id=extra_data['user_id'])
-            user_id = user.id
-            email = user.email
-            # Reset the reminder flag to False so that in a year time user is reminded to donate
-            user.profile.donations_reminder_email_sent = False
-            user.profile.save()
-
-        if 'name' in extra_data:
-            is_anonymous = True
-            display_name = extra_data['name']
-
-        donation_data = {
-            'email': params['payer_email'],
-            'display_name': display_name,
-            'amount': params['mc_gross'],
-            'currency': params['mc_currency'],
-            'display_amount': extra_data['display_amount'],
-            'is_anonymous': is_anonymous,
-            'user': user,
-            'campaign': campaign}
-        Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults=donation_data)
-
-        send_mail_template(
-                u'Thanks for your donation!',
-                'donations/email_donation.txt', {
-                    'user': user,
-                    'amount': params['mc_gross'],
-                    'display_name': display_name
-                    }, None, email)
-
-        log_data = donation_data
-        log_data.update({'user_id': user_id})
-        del log_data['user']  # Don't want to serialize user
-        del log_data['campaign']  # Don't want to serialize campaign
-        log_data['amount_float'] = float(log_data['amount'])
-        logger.info('Recevied donation (%s)' % json.dumps(log_data))
+        _save_donation(params['custom'],
+            params['payer_email'],
+            params['mc_gross'],
+            params['mc_currency'],
+            params['txn_id'],
+            'p')
     return HttpResponse("OK")
 
 
@@ -94,7 +142,7 @@ def donate(request):
             amount = form.cleaned_data['amount']
             returned_data_str = form.encoded_data
             domain = "https://%s" % Site.objects.get_current().domain
-            return_url = urlparse.urljoin(domain, reverse('donation-complete'))
+            return_url = urlparse.urljoin(domain, reverse('donation-complete-paypal'))
             data = {"url": settings.PAYPAL_VALIDATION_URL,
                     "params": {
                         "cmd": "_donations",
@@ -102,7 +150,9 @@ def donate(request):
                         "business": settings.PAYPAL_EMAIL,
                         "item_name": "Freesound donation",
                         "custom": returned_data_str,
-                        "notify_url": return_url
+                        "notify_url": return_url,
+                        "no_shipping": 1,
+                        "lc": "en_US"
                         }
                     }
 
@@ -117,7 +167,6 @@ def donate(request):
                 data['params']['t3'] = 'M'
                 # sra - Number of times to reattempt on failure
                 data['params']['sra'] = 1
-                data['params']['no_shipping'] = 1
                 data['params']['item_name'] = 'Freesound monthly donation'
             else:
                 data['params']['amount'] = amount
@@ -126,7 +175,7 @@ def donate(request):
         return JsonResponse(data)
     else:
         form = DonateForm(user=request.user)
-        tvars = {'form': form}
+        tvars = {'form': form, 'stripe_key': settings.STRIPE_PUBLIC_KEY}
         return render(request, 'donations/donate.html', tvars)
 
 

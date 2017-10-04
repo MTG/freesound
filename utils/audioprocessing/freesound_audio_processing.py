@@ -137,7 +137,7 @@ def process(sound):
         return False
 
     success("got sound info and stereofied: " + tmp_wavefile2)
-    if sound.type in ["mp3","ogg"]:
+    if sound.type in ["mp3","ogg","m4a"]:
         info['bitdepth']=0 # mp3 and ogg don't have bitdepth
 
     try:

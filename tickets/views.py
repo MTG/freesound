@@ -78,7 +78,7 @@ def ticket(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
-    ticket = get_object_or_404(Ticket, key=ticket_key)
+    ticket = get_object_or_404(Ticket.objects.select_related('sound__license', 'sound__user'), key=ticket_key)
 
     if request.method == 'POST':
 

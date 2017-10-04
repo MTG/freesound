@@ -22,11 +22,18 @@
 import time
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
+from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.template import loader
 from django.urls import reverse
+from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import PermissionDenied
 from multiupload.fields import MultiFileField
 from django.conf import settings
@@ -69,7 +76,7 @@ def validate_file_extension(audiofiles):
 
 
 class UploadFileForm(forms.Form):
-    files = MultiFileField(min_num=1, validators=[validate_file_extension], label="")
+    files = MultiFileField(min_num=1, validators=[validate_file_extension], label="", required=False)
 
 
 class FlashUploadFileForm(forms.Form):
@@ -205,18 +212,6 @@ class RegistrationForm(forms.Form):
 class ReactivationForm(forms.Form):
     user = forms.CharField(label="The username or email you signed up with")
 
-    def clean_user(self):
-        username_or_email = self.cleaned_data["user"]
-        try:
-            return User.objects.get(email__iexact=username_or_email, is_active=False)
-        except User.DoesNotExist:
-            pass
-        try:
-            return User.objects.get(username__iexact=username_or_email, is_active=False)
-        except User.DoesNotExist:
-            pass
-        raise forms.ValidationError(_("No non-active user with such email or username exists."))
-
 
 class FsAuthenticationForm(AuthenticationForm):
 
@@ -235,13 +230,6 @@ class FsAuthenticationForm(AuthenticationForm):
 
 class UsernameReminderForm(forms.Form):
     user = forms.EmailField(label="The email address you signed up with")
-
-    def clean_user(self):
-        email = self.cleaned_data["user"]
-        try:
-            return get_user_by_email(email)
-        except User.DoesNotExist:
-            raise forms.ValidationError(_("No user with such an email exists."))
 
 
 class ProfileForm(forms.ModelForm):
@@ -292,18 +280,11 @@ class EmailResetForm(forms.Form):
         self.user = kwargs.pop('user', None)
         super(EmailResetForm, self).__init__(*args, **kwargs)
 
-    def clean_email(self):
-        email = self.cleaned_data["email"]
-        try:
-            get_user_by_email(email)
-            raise forms.ValidationError(_("A user using that email address already exists."))
-        except User.DoesNotExist:
-            pass
-        return email
-
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):
             raise forms.ValidationError(_("Incorrect password."))
+        return self.cleaned_data['password']
+
 
 DELETE_CHOICES = [('only_user', mark_safe(u'Delete only my user account information :)  (see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a> for more information)')),
                   ('delete_sounds', u'Delete also my sounds and packs :(')]
@@ -345,8 +326,35 @@ class EmailSettingsForm(forms.Form):
     )
 
 
-class FsPasswordResetForm(PasswordResetForm):
-    def get_users(self, email):
+class FsPasswordResetForm(forms.Form):
+    """
+    This form is a modification of django's PasswordResetForm. The only difference is that here we allow the user
+    to enter an email or a username (insetad of only a username) to send the reset password email.
+    Methods `send_email` and `save` are very similar to the original methods from `django.contrib.auth.forms.PasswordResetForm`
+    We could not inherit from the original form because we don't want the old `username` field to be present.
+    When migrating to a new version of django (current is 1.11) we should check for updates in this code in case we also
+    have to apply them.
+    """
+    email_or_username = forms.CharField(label="Email or Username", max_length=254)
+
+    def send_mail(self, subject_template_name, email_template_name,
+                  context, from_email, to_email, html_email_template_name=None):
+        """
+        Sends a django.core.mail.EmailMultiAlternatives to `to_email`.
+        """
+        subject = loader.render_to_string(subject_template_name, context)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+        body = loader.render_to_string(email_template_name, context)
+
+        email_message = EmailMultiAlternatives(subject, body, from_email, [to_email])
+        if html_email_template_name is not None:
+            html_email = loader.render_to_string(html_email_template_name, context)
+            email_message.attach_alternative(html_email, 'text/html')
+
+        email_message.send()
+
+    def get_users(self, email_or_username):
         """Given an email, return matching user(s) who should receive a reset.
 
             This subclass will let all active users reset their password.
@@ -355,8 +363,47 @@ class FsPasswordResetForm(PasswordResetForm):
             password hash that django understands)
         """
         UserModel = get_user_model()
-        active_users = UserModel._default_manager.filter(**{
-            '%s__iexact' % UserModel.get_email_field_name(): email,
+        active_users = UserModel._default_manager.filter(Q(**{
+            '%s__iexact' % UserModel.get_email_field_name(): email_or_username,
             'is_active': True,
-        })
+            }) | Q(**{
+            'username__iexact': email_or_username,
+            'is_active': True,
+            })
+        )
         return (u for u in active_users)
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None, html_email_template_name=None,
+             extra_email_context=None):
+        """
+        Generates a one-use only link for resetting password and sends to the
+        user.
+        """
+        email_or_username = self.cleaned_data["email_or_username"]
+        for user in self.get_users(email_or_username):
+            if not domain_override:
+                current_site = get_current_site(request)
+                site_name = current_site.name
+                domain = current_site.domain
+            else:
+                site_name = domain = domain_override
+            context = {
+                'email': user.email,
+                'domain': domain,
+                'site_name': site_name,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'user': user,
+                'token': token_generator.make_token(user),
+                'protocol': 'https' if use_https else 'http',
+            }
+            if extra_email_context is not None:
+                context.update(extra_email_context)
+            self.send_mail(
+                subject_template_name, email_template_name, context, from_email,
+                user.email, html_email_template_name=html_email_template_name,
+            )
+

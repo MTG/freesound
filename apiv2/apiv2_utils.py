@@ -73,8 +73,8 @@ class GenericAPIView(RestFrameworkGenericAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol \
-            = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
+            self.contains_www = get_authentication_details_form_request(request)
 
     def log_message(self, message):
         return log_message_helper(message, resource=self)
@@ -89,8 +89,8 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol \
-            = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
+            self.contains_www = get_authentication_details_form_request(request)
 
         # Check if using https
         throw_exception_if_not_https(request)
@@ -112,8 +112,8 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
 
         # Get request informationa dn store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol \
-            = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
+            self.contains_www = get_authentication_details_form_request(request)
 
         # Check if using https
         throw_exception_if_not_https(request)
@@ -136,8 +136,8 @@ class ListAPIView(RestFrameworkListAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol \
-            = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
+            self.contains_www = get_authentication_details_form_request(request)
 
     def log_message(self, message):
         return log_message_helper(message, resource=self)
@@ -152,8 +152,8 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol \
-            = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
+            self.contains_www = get_authentication_details_form_request(request)
 
     def log_message(self, message):
         return log_message_helper(message, resource=self)
@@ -275,10 +275,12 @@ def build_info_dict(resource=None, request=None):
             'api_client_id': resource.client_id,
             'api_client_name': resource.client_name,
             'ip': resource.end_user_ip,
-            'api_request_protocol': resource.protocol
+            'api_request_protocol': resource.protocol,
+            'api_www': resource.contains_www
         }
     if request is not None:
-        auth_method_name, developer, user, client_id, client_name, protocol = get_authentication_details_form_request(request)
+        auth_method_name, developer, user, client_id, client_name, protocol,\
+            contains_www = get_authentication_details_form_request(request)
         return {
             'api_version': 'v2',
             'api_auth_type': auth_method_name,
@@ -287,7 +289,8 @@ def build_info_dict(resource=None, request=None):
             'api_client_id': client_id,
             'api_client_name': client_name,
             'ip': get_client_ip(request),
-            'api_request_protocol': protocol
+            'api_request_protocol': protocol,
+            'api_www': contains_www
         }
 
 
@@ -324,6 +327,7 @@ def get_authentication_details_form_request(request):
     client_id = None
     client_name = None
     protocol = "https" if request.is_secure() else "http"
+    contains_www = 'www' if 'www' in request.get_host() else 'none'
 
     if request.successful_authenticator:
         auth_method_name = request.successful_authenticator.authentication_method_name
@@ -343,7 +347,7 @@ def get_authentication_details_form_request(request):
             client_id = None
             client_name = None
 
-    return auth_method_name, developer, user, client_id, client_name, protocol
+    return auth_method_name, developer, user, client_id, client_name, protocol, contains_www
 
 
 def request_parameters_info_for_log_message(get_parameters):

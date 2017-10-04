@@ -93,7 +93,12 @@ USE_TZ = False
 # to load the internationalization machinery.
 USE_I18N = False
 
-#CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
 
@@ -177,7 +182,12 @@ USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
-ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
+ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+
+# Random Sound of the day settings
+# Don't choose a sound by a user whose sound has been chosen in the last ~1 month
+NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
+NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
@@ -291,24 +301,13 @@ MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, s
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
 
+# Stripe keys for testing (never set real keys here!!!)
+STRIPE_PUBLIC_KEY = ""
+STRIPE_PRIVATE_KEY = ""
+
 
 # leave at bottom starting here!
 from local_settings import *
-
-if DEBUG:
-    # We name this CONF_ because Django system check thinks that a variable
-    # called TEMPLATE_LOADERS is pre-1.8 Django configuration.
-    CONF_TEMPLATE_LOADERS = [
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    ]
-else:
-    CONF_TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', [
-            'django.template.loaders.filesystem.Loader',
-            'django.template.loaders.app_directories.Loader',
-        ]),
-    ]
 
 TEMPLATES = [
     {
@@ -316,8 +315,8 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(os.path.dirname(__file__), '../templates')
         ],
+        'APP_DIRS': True,
         'OPTIONS': {
-            'loaders': CONF_TEMPLATE_LOADERS,
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',

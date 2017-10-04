@@ -301,6 +301,10 @@ MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, s
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
 
+# Stripe keys for testing (never set real keys here!!!)
+STRIPE_PUBLIC_KEY = ""
+STRIPE_PRIVATE_KEY = ""
+
 
 # leave at bottom starting here!
 from local_settings import *
@@ -378,9 +382,5 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptPasswordHasher',
     'django.contrib.auth.hashers.SHA1PasswordHasher',
 ]
-
-# Stripe keys for testing (never set real keys here!!!)
-STRIPE_PUBLIC_KEY = ""
-STRIPE_PRIVATE_KEY = ""
 
 from logger import LOGGING

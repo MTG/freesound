@@ -75,8 +75,7 @@
             {{ form.show_amount}}
           </p>
           <button class="donation_button_paypal">Donate with</button>
-          {% comment %}<button class="donation_button_stripe">Donate with Credit Card</button>{% endcomment %}
-
+          <button class="donation_button_stripe">Donate with Credit Card</button>
         </form>
       </div>
     </div>
@@ -126,7 +125,6 @@
         });
       
         var amount = $('#id_amount');
-        {% comment %}
         var stripeHandler = StripeCheckout.configure({
           key: "{{stripe_key}}",
           name: "Freesound",
@@ -147,7 +145,6 @@
           });
           e.preventDefault();
         });
-        {% endcomment %}
       });
     </script>
 

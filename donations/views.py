@@ -116,10 +116,9 @@ def donation_complete_paypal(request):
     params.update({'cmd': '_notify-validate'})
 
     try:
-        req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
         s = requests.Session()
         s.mount(settings.PAYPAL_VALIDATION_URL, HTTPAdapter(max_retries=5))
-        s.post(settings.PAYPAL_VALIDATION_URL)
+        req = s.post(settings.PAYPAL_VALIDATION_URL, data=params)
     except requests.ConnectionError:
         logger.error("Can't verify donations information with paypal")
         return HttpResponse("FAIL")

@@ -401,6 +401,10 @@ def moderation_assigned(request, user_id):
                     if ticket.sound.pack:
                         packs_to_update.add(ticket.sound.pack)
                 Sound.objects.filter(ticket__in=tickets).delete()
+                # After we delete sounds that these tickets are associated with,
+                # we refresh the ticket list so that sound_id is null and this does
+                # not affect the TicketComment post_save trigger
+                tickets = Ticket.objects.filter(id__in=ticket_ids)
                 notification = Ticket.NOTIFICATION_DELETED
 
             elif action == "Whitelist":
@@ -418,7 +422,6 @@ def moderation_assigned(request, user_id):
                     tickets""" % ", ".join(users))
 
             for ticket in tickets:
-                ticket.refresh_from_db()
                 if action != "Delete":
                     # We only fill here users_to_update and packs_to_update if action is not
                     # "Delete". See comment in "Delete" action case some lines above

@@ -39,7 +39,7 @@ class HtmlCleaningCharField(forms.CharField):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
         try:
             return clean_html(value)
-        except HTMLParseError:
+        except HTMLParseError, UnicodeEncodeError:
             raise forms.ValidationError('The text you submitted is badly formed HTML, please fix it')
 
 

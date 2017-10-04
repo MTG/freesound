@@ -31,7 +31,7 @@ from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm
-from sounds.models import License, Sound, Pack, DeletedSound
+from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
 from tags.models import Tag
@@ -54,6 +54,7 @@ class SimpleUserTest(TestCase):
     def setUp(self):
         self.user = User.objects.all()[0]
         self.sound = Sound.objects.all()[0]
+        SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
 
     def test_account_response_ok(self):
         # 200 response on account access
@@ -396,6 +397,8 @@ class ProfileGetUserTags(TestCase):
 
 
 class UserEditProfile(TestCase):
+
+    fixtures = ['email_preference_type']
 
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_image(self):
@@ -854,7 +857,7 @@ class PasswordReset(TestCase):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"email": "testuser@freesound.org"})
+        self.client.post(reverse("password_reset"), {"email_or_username": "testuser@freesound.org"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")

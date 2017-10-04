@@ -18,15 +18,26 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, RequestFactory
+from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
-from django.contrib.auth.models import User
-from sounds.models import Sound, Pack, License, DeletedSound
-from sounds.views import get_random_sound, get_random_uploader
+from django.contrib.auth.models import User, AnonymousUser
+from comments.models import Comment
+from django.core.cache import cache
+from django.core.management import call_command
+from django.core import mail
+from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay, Flag, Download
 from general.templatetags.filter_img import replace_img
+from sounds.views import get_sound_of_the_day_id, sound_download, pack_download
 from utils.tags import clean_and_split_tags
 from utils.encryption import encrypt
+from django.template import Context, Template
+import accounts
 import time
+import datetime
+from itertools import count
+from freezegun import freeze_time
+import mock
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
@@ -73,24 +84,6 @@ class OldPackLinksRedirectTestCase(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class RandomSoundAndUploaderTestCase(TestCase):
-
-    fixtures = ['sounds']
-
-    def test_random_sound(self):
-        random_sound = get_random_sound()
-        self.assertEqual(isinstance(random_sound, int), True)
-
-    def test_random_uploader(self):
-        # Update num_sounds in user profile data
-        for u in User.objects.all():
-            profile = u.profile
-            profile.num_sounds = u.sounds.all().count()
-            profile.save()
-        random_uploader = get_random_uploader()
-        self.assertEqual(isinstance(random_uploader, User), True)
-
-
 class CommentSoundsTestCase(TestCase):
 
     fixtures = ['sounds']
@@ -115,7 +108,7 @@ class CommentSoundsTestCase(TestCase):
 
         replaced_comment = 'Test <a href="http://test.com/img.png">http://test.com/img.png</a> test'
         comment = 'Test <img class="test" src="http://test.com/img.png" /> test'
-        self.assertEqual(replace_img(comment), replaced_comment) 
+        self.assertEqual(replace_img(comment), replaced_comment)
 
         comment = 'Test <img src="https://test.com/img.png" /> test'
         self.assertEqual(replace_img(comment), comment)
@@ -141,8 +134,9 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(current_num_comments, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
 
-
+sound_counter = count()
 def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None):
+    count_offset = count_offset + next(sound_counter)
     if user is None:
         user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
     packs = list()
@@ -166,7 +160,7 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
     return user, packs, sounds
 
 
-class ChanegSoundOwnerTestCase(TestCase):
+class ChangeSoundOwnerTestCase(TestCase):
 
     fixtures = ['initial_data']
 
@@ -239,9 +233,12 @@ class ProfileNumSoundsTestCase(TestCase):
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
+        sound.add_comment(user, "some comment")
         self.assertEqual(user.profile.num_sounds, 1)
+        self.assertEqual(Comment.objects.count(), 1)
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
+        self.assertEqual(Comment.objects.count(), 0)
 
     def test_deletedsound_creation(self):
         user, packs, sounds = create_user_and_sounds()
@@ -419,3 +416,253 @@ class SoundViewsTestCase(TestCase):
         resp = self.client.get(reverse('oembed-sound')+'?url='+url)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.content != '')
+
+
+class RandomSoundTestCase(TestCase):
+    """ Test that sounds that don't fall under our criteria don't get selected
+        as a random sound."""
+
+    fixtures = ['initial_data']
+
+    def _create_test_sound(self):
+        """Create a sound which is suitable for being chosen as a random sound"""
+        try:
+            user = User.objects.get(username="testuser")
+        except User.DoesNotExist:
+            user = None
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, user=user)
+        sound = sounds[0]
+        sound.is_explicit = False
+        sound.moderation_state = 'OK'
+        sound.processing_state = 'OK'
+        sound.avg_rating = 8
+        sound.num_ratings = 5
+        sound.save()
+
+        return sound
+
+    def test_random_sound(self):
+        """Correctly selects a random sound"""
+        sound = self._create_test_sound()
+
+        random = Sound.objects.random()
+        self.assertEqual(random, sound)
+
+    def test_explict(self):
+        """Doesn't select a sound if it is marked as explicit"""
+        sound = self._create_test_sound()
+        sound.is_explicit = True
+        sound.save()
+
+        random = Sound.objects.random()
+        self.assertIsNone(random)
+
+    def test_not_processed(self):
+        """Doesn't select a sound if it isn't processed"""
+        sound = self._create_test_sound()
+        sound.processing_state = 'PE'
+        sound.save()
+
+        random = Sound.objects.random()
+        self.assertIsNone(random)
+
+        # or isn't moderated
+        sound = self._create_test_sound()
+        sound.moderation_state = 'PE'
+        sound.save()
+
+        random = Sound.objects.random()
+        self.assertIsNone(random)
+
+    def test_ratings(self):
+        """Doesn't select a sound if it doesn't have a high enough rating"""
+        sound = self._create_test_sound()
+        sound.avg_rating = 4
+        sound.save()
+
+        random = Sound.objects.random()
+        self.assertIsNone(random)
+
+    def test_flag(self):
+        """Doesn't select a sound if it's flagged"""
+        sound = self._create_test_sound()
+        sound.save()
+        Flag.objects.create(sound=sound, reporting_user=User.objects.all()[0], email="testemail@freesound.org",
+            reason_type="O", reason="Not a good sound")
+
+        random = Sound.objects.random()
+        self.assertIsNone(random)
+
+
+class SoundOfTheDayTestCase(TestCase):
+
+    fixtures = ['sounds', 'email_preference_type']
+
+    def setUp(self):
+        cache.clear()
+
+    def test_no_random_sound(self):
+        # If we have no sound, return None
+        random_sound_id = get_sound_of_the_day_id()
+        self.assertIsNone(random_sound_id)
+        # TODO: If we have some SoundOfTheDay objects, but not for day, don't return them
+
+    def test_random_sound(self):
+        sound = Sound.objects.get(id=19)
+        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date.today())
+        random_sound = get_sound_of_the_day_id()
+        self.assertEqual(isinstance(random_sound, int), True)
+
+    @freeze_time("2017-06-20")
+    def test_create_enough_new_sounds(self):
+        """ If we have some random sounds selected for the future, make sure
+        that we always have at least settings.NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE sounds
+        waiting in the future."""
+
+        sound_ids = []
+        user, packs, sounds = create_user_and_sounds(num_sounds=10)
+        for s in sounds:
+            sound_ids.append(s.id)
+
+        sound = Sound.objects.get(id=19)
+        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
+        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 21))
+
+        call_command("create_random_sound")
+
+        sound_of_days = SoundOfTheDay.objects.count()
+        self.assertEqual(sound_of_days, 6)
+
+    def test_send_email_once(self):
+        """If we have a SoundOfTheDay, send the sound's user an email, but only once"""
+        sound = Sound.objects.get(id=19)
+        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
+        sotd.notify_by_email()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "[freesound] One of your sounds has been chosen as random sound of the day!")
+
+        # If we notify again, we don't send another email
+        sotd.notify_by_email()
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_user_disable_email_notifications(self):
+        """If the chosen Sound's user has disabled email notifications, don't send an email"""
+        sound = Sound.objects.get(id=19)
+        email_pref = accounts.models.EmailPreferenceType.objects.get(name="random_sound")
+        accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
+
+        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
+        sotd.notify_by_email()
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    @freeze_time("2017-06-20 10:30:00")
+    @mock.patch('django.core.cache.cache.set')
+    def test_expire_cache_at_end_of_day(self, cache_set):
+        """When we cache today's random sound, expire the cache at midnight today"""
+
+        sound = Sound.objects.get(id=19)
+        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
+        sound_id = get_sound_of_the_day_id()
+        cache_set.assert_called_with("random_sound", 19, 48600)
+
+
+class DisplaySoundTemplatetagTestCase(TestCase):
+
+    fixtures = ['sounds_with_tags']
+
+    def setUp(self):
+        # Find a sound which has tags to test
+
+        for sound in Sound.objects.all():
+            if sound.tags.all():
+                self.sound = sound
+                break
+
+    def test_display_sound_from_id(self):
+        Template("{% load display_sound %}{% display_sound sound %}").render(Context({
+            'sound': self.sound.id,
+            'request': HttpRequest(),
+            'media_url': 'http://example.org/'
+        }))
+        #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
+
+    def test_display_sound_from_obj(self):
+        Template("{% load display_sound %}{% display_sound sound %}").render(Context({
+            'sound': self.sound,
+            'request': HttpRequest(),
+            'media_url': 'http://example.org/'
+        }))
+        #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
+
+    def test_display_raw_sound(self):
+        raw_sound = Sound.objects.bulk_query_id([self.sound.id])[0]
+        Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({
+            'sound': raw_sound,
+            'request': HttpRequest(),
+            'media_url': 'http://example.org/'
+        }))
+        #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
+
+    def test_display_sound_wrapper_view(self):
+        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, 921]))  # Non existent ID
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(response.status_code, 200)
+
+
+class SoundPackDownloadTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def setUp(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
+        self.sound = sounds[0]
+        self.sound.moderation_state = "OK"
+        self.sound.processing_state = "OK"
+        self.sound.save()
+        self.pack = packs[0]
+        self.user = user
+        self.factory = RequestFactory()
+
+    def test_download_sound(self):
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            # Check sound can't be downloaded if user not logged in
+            resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
+            self.assertRedirects(resp, '%s?next=%s' % (
+            reverse('login'), reverse('sound', args=[self.sound.user.username, self.sound.id])))
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+            # Download again and check n download objects is still 1
+            self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
+            self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+    def test_download_pack(self):
+        with mock.patch('sounds.views.download_sounds', return_value=HttpResponse()):
+
+            # Check sound can't be downloaded if user not logged in
+            resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
+            self.assertRedirects(resp, '%s?next=%s' % (
+            reverse('login'), reverse('pack', args=[self.sound.user.username, self.pack.id])))
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
+
+            # Download again and check n download objects is still 1
+            self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
+            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)

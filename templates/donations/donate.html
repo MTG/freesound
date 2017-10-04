@@ -74,7 +74,8 @@
             {{ form.show_amount.label_tag }}
             {{ form.show_amount}}
           </p>
-          <button class="donation_button">Donate with</button>
+          <button class="donation_button_paypal">Donate with</button>
+          {% comment %}<button class="donation_button_stripe">Donate with Credit Card</button>{% endcomment %}
 
         </form>
       </div>
@@ -84,18 +85,19 @@
         <b>Note</b>: donations are managed through the <a href="http://phonos.upf.edu" target="_blank"> Phonos Foundation</a>,
             an institution linked to the <a href="http://mtg.upf.edu/" target="_blank">Music
             Technology Group</a> for the promotion of social and cultural initiatives.
-        Currently, we only accept donations via PayPal. Please note that you don't need a PayPal account to donate using
-        PayPal.
+        Currently, we only accept donations via PayPal and international credit cards.
     </p>
 
+<script src="https://checkout.stripe.com/checkout.js"></script>
     <script type="text/javascript">
       $(document).ready(function (){
 
-        $('#donation_form form').submit(function(e) {
+        var form = $('#donation_form form');
+        $('.donation_button_paypal').click(function(e) {
           $.ajax({
-            type: $(this).attr('method'),
-            url: $(this).attr('action'),
-            data: $(this).serialize(), // serializes the form's elements.
+            type: form.attr('method'),
+            url: form.attr('action'),
+            data: form.serialize(), // serializes the form's elements.
             success: function(data)
             {
               if (data.errors != null) {
@@ -104,7 +106,7 @@
                   $('.errorlist').append("<li>"+error+"</li>");
                 });
               } else {
-                form = $('<form />', {
+                paypalForm = $('<form />', {
                   action: data.url,
                   method: "POST",
                   style: 'display: none;'
@@ -114,14 +116,38 @@
                     type: 'hidden',
                     name: name,
                     value: value
-                  }).appendTo(form);
+                  }).appendTo(paypalForm);
                 });
-                form.appendTo('body').submit();
+                paypalForm.appendTo('body').submit();
               }
             }
           });
           e.preventDefault(); // avoid to execute the actual submit of the form.
         });
+      
+        var amount = $('#id_amount');
+        {% comment %}
+        var stripeHandler = StripeCheckout.configure({
+          key: "{{stripe_key}}",
+          name: "Freesound",
+          description: "Donation to the Phonos Foundation",
+
+          token: function(token) {
+            form.attr("action", "{% url 'donation-complete-stripe' %}");
+            $('<input>').attr({type: 'hidden', name: 'stripeToken', value: token.id}).appendTo(form);
+            $('<input>').attr({type: 'hidden', name: 'stripeEmail', value: token.email}).appendTo(form);
+            form.submit();
+          },
+
+        });
+        $('.donation_button_stripe').click(function(e) {
+          stripeHandler.open({
+            amount:  amount.val() * 100, // cents
+            currency: 'eur'
+          });
+          e.preventDefault();
+        });
+        {% endcomment %}
       });
     </script>
 

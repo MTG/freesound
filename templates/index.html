@@ -12,16 +12,15 @@
     <!-- featured sound -->
     <div id="featured_sound" class="content_box">
         <h3>Random sound of the day</h3>
-            {% ifnotequal random_sound None %}
-                {% display_sound random_sound %}
-            {% endifnotequal %}
+            {% if random_sound %}
+                {% display_raw_sound random_sound %}
+            {% endif %}
     </div>
     <!-- news -->
     <div id="latest_news" class="content_box">
         <h3>Freesound Blog</h3>
         {% if rss_cache %}
             {{ rss_cache }}
-        {% else %}
         {% endif %}
     </div>
 

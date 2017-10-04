@@ -21,6 +21,13 @@ class Donation(models.Model):
     is_anonymous= models.BooleanField(default=True)
     display_amount = models.BooleanField(default=True)
 
+    DONATION_CHOICES =(
+        ('p', 'paypal'),
+        ('s', 'stripe'),
+        ('t', 'transfer'),
+    )
+    source = models.CharField(max_length=2, choices=DONATION_CHOICES, default='p')
+
 
 class DonationsModalSettings(models.Model):
     enabled = models.BooleanField(default=False)

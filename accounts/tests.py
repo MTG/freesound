@@ -862,6 +862,7 @@ class PasswordReset(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
 
+    @override_settings(SITE_ID=2)
     def test_reset_view_with_username(self):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")

@@ -2294,6 +2294,11 @@ a.donation_button:hover {
     font-size: 13px;
     cursor: pointer;
 }
+
+#donation_form :disabled {
+    opacity:0.5;
+}
+
 .donation_button_paypal{
     background-repeat: no-repeat;
     background-image: url(/media/images/paypal.svg);

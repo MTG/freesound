@@ -145,6 +145,15 @@
           });
           e.preventDefault();
         });
+        $('#id_recurring').change(function(e) {
+            if ($('#id_recurring').is(':checked')){
+                // Disable credit card donation button
+                $('.donation_button_stripe').attr('disabled', true);
+            } else {
+                // Enable credit card donation button
+                $('.donation_button_stripe').attr('disabled', false);
+            }
+        });
       });
     </script>
 

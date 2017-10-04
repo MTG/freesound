@@ -853,11 +853,20 @@ class PasswordReset(TestCase):
         self.assertEqual(list(fs_users)[0].get_username(), user.get_username())
 
     @override_settings(SITE_ID=2)
-    def test_reset_view(self):
+    def test_reset_view_with_email(self):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
         self.client.post(reverse("password_reset"), {"email_or_username": "testuser@freesound.org"})
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
+
+    def test_reset_view_with_username(self):
+        """Check that the reset password view calls our form"""
+        Site.objects.create(id=2, domain="freesound.org", name="Freesound")
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        self.client.post(reverse("password_reset"), {"email_or_username": "testuser"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
@@ -893,20 +902,41 @@ class EmailResetTestCase(TestCase):
 
 
 class ReSendActivationTestCase(TestCase):
-    def test_resend_activation_code(self):
-        """ Check that resend activation code doesn't return an error with post request """
-        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+    def test_resend_activation_code_from_email(self):
+        """
+        Check that resend activation code doesn't return an error with post request (use email to identify user)
+        """
+        user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
         resp = self.client.post(reverse('accounts-resend-activation'), {
             'user': u'testuser@freesound.org',
         })
-
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check email was sent
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] activation link.')
 
         resp = self.client.post(reverse('accounts-resend-activation'), {
             'user': u'new_email@freesound.org',
         })
-
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
+
+    def test_resend_activation_code_from_username(self):
+        """
+        Check that resend activation code doesn't return an error with post request (use username to identify user)
+        """
+        user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
+        resp = self.client.post(reverse('accounts-resend-activation'), {
+            'user': u'testuser',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check email was sent
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] activation link.')
+
+        resp = self.client.post(reverse('accounts-resend-activation'), {
+            'user': u'testuser_does_not_exist',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
 
 
 class UsernameReminderTestCase(TestCase):
@@ -916,12 +946,13 @@ class UsernameReminderTestCase(TestCase):
         resp = self.client.post(reverse('accounts-username-reminder'), {
             'user': u'testuser@freesound.org',
         })
-
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check email was sent
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] username reminder.')
 
         resp = self.client.post(reverse('accounts-username-reminder'), {
             'user': u'new_email@freesound.org',
         })
-
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
 

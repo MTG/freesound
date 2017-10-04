@@ -139,9 +139,11 @@
 
         });
         $('.donation_button_stripe').click(function(e) {
+          var email = "{{user.email}}";
           stripeHandler.open({
             amount:  amount.val() * 100, // cents
-            currency: 'eur'
+            currency: 'eur',
+            email: email
           });
           e.preventDefault();
         });

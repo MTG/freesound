@@ -57,7 +57,9 @@ class Forum(OrderedModel):
         qs = qs.order_by('-created')
         if qs.count() > 0:
             self.last_post = qs[0]
-            self.save()
+        else:
+            self.last_post = None
+        self.save()
 
     def __unicode__(self):
         return self.name
@@ -136,8 +138,8 @@ def update_num_threads_on_thread_update(sender, instance, **kwargs):
 def update_last_post_on_thread_delete(**kwargs):
     thread = kwargs['instance']
     try:
+        thread.forum.refresh_from_db()
         thread.forum.num_threads = F('num_threads') - 1
-        thread.forum.save()
         thread.forum.set_last_post()
     except Forum.DoesNotExist:
         pass
@@ -174,12 +176,15 @@ class Post(models.Model):
 def update_num_posts_on_post_insert(**kwargs):
     if kwargs['created']:
         post = kwargs['instance']
-        post.thread.num_posts = F('num_posts') + 1
+        post.author.profile.num_posts = F('num_posts') + 1
+        post.author.profile.save()
+        # The method set_last_post from Thread calls the method set_last_post from Forum.
+        # The save of the forum instance is done in set_last_post from Forum class.
+        # So is important to keep the order of this lines
         post.thread.forum.num_posts = F('num_posts') + 1
-        post.author.num_posts = F('num_posts') + 1
-        post.thread.save()
-        post.thread.forum.set_last_post()
         post.thread.set_last_post()
+        post.thread.num_posts = F('num_posts') + 1
+        post.thread.save()
         invalidate_template_cache('latest_posts')
 
 
@@ -188,12 +193,16 @@ def update_last_post_on_post_delete(**kwargs):
     post = kwargs['instance']
     delete_post_from_solr(post)
     try:
-        post.thread.num_posts = F('num_posts') - 1
         post.thread.forum.num_posts = F('num_posts') - 1
-        post.author.num_posts = F('num_posts') - 1
-        post.thread.save()
-        post.thread.forum.set_last_post()
+        post.thread.forum.save()
+        post.author.profile.num_posts = F('num_posts') - 1
+        post.author.profile.save()
+        post.thread.forum.refresh_from_db()
         post.thread.set_last_post()
+        post.thread.refresh_from_db()
+        if post.thread:
+            post.thread.num_posts = F('num_posts') - 1
+            post.thread.save()
     except Thread.DoesNotExist:
         # This happens when the thread has already been deleted, for example
         # when a user is deleted through the admin interface. We don't need

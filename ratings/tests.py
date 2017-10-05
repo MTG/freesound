@@ -37,10 +37,16 @@ class RatingsTestCase(TestCase):
 
     def test_rating_normal(self):
         """ Add a rating """
+        # Check that initially the value of num_ratings is 3
+        self.assertEqual(self.sound.num_ratings, 3)
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
         # One rating from a different user
         r = ratings.models.Rating.objects.create(object_id=self.sound.id, content_type=self.ct, user_id=self.user2.id, rating=2)
+
+        # Test signal updated sound.avg_rating
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 2.0)
 
         resp = self.client.get("/ratings/add/%s/%s/%s/" % (self.ct.id, self.sound.id, 3))
         self.assertEqual(resp.content, "2")
@@ -49,6 +55,17 @@ class RatingsTestCase(TestCase):
         r = ratings.models.Rating.objects.get(object_id=self.sound.id, content_type=self.ct, user_id=self.user1.id)
         # Ratings in the database are 2x the value from the web call
         self.assertEqual(r.rating, 6)
+
+        # Check that signal updated sound.avg_rating and sound.num_ratings
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 4.0)
+        self.assertEqual(self.sound.num_ratings, 5)
+
+        # Delete one rating and check if signal updated avg_rating and num_ratings
+        r.delete()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 2.0)
+        self.assertEqual(self.sound.num_ratings, 4)
 
     def test_rating_change(self):
         """ Change your existing rating. """
@@ -62,6 +79,11 @@ class RatingsTestCase(TestCase):
         self.assertEqual(ratings.models.Rating.objects.count(), 1)
         # Ratings in the database are 2x the value from the web call
         self.assertEqual(newr.rating, 10)
+
+        # Check that signal updated sound.avg_rating
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 10.0)
+        self.assertEqual(self.sound.num_ratings, 4)
 
     def test_rating_out_of_range(self):
         """ Change rating by a value which is not 1-5. """

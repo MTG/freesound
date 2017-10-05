@@ -64,7 +64,7 @@ def post_delete_rating(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Rating)
-def update_num_posts_on_post_insert(**kwargs):
+def update_num_ratings_on_post_insert(**kwargs):
     instance = kwargs['instance']
     if kwargs['created']:
         instance.content_object.num_ratings = F('num_ratings') + 1

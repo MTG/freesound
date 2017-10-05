@@ -23,8 +23,10 @@
 from django.contrib import admin
 from comments.models import Comment
 
+
 class CommentAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user', 'parent')
+    fieldsets = ((None, {'fields': ('user', 'sound', 'comment')}),)
+    raw_id_fields = ('user', 'parent', 'sound')
     list_display = ('user', 'sound', 'created')
     search_fields = ('comment', )
 

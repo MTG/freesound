@@ -31,6 +31,7 @@ pillow==2.6.0
 #apt-get install zlib1g-dev
 #apt-get install libpng12-dev
 ipython==4.2.0
+stripe==1.65.0
 Sphinx
 django-fixture-magic
 mock

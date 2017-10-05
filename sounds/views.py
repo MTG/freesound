@@ -25,6 +25,7 @@ from django.contrib.auth.models import User, Group
 from django.core.cache import cache
 from django.urls import reverse, resolve
 from django.db import connection, transaction
+from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404, render, redirect
@@ -291,7 +292,8 @@ def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    Download.objects.create(user=request.user, sound=sound, license=sound.license)
+    if not Download.objects.filter(user=request.user, sound=sound).exists():
+        Download.objects.create(user=request.user, sound=sound, license=sound.license)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
@@ -302,8 +304,8 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
-
-    Download.objects.create(user=request.user, pack=pack)
+    if not Download.objects.filter(user=request.user, pack=pack).exists():
+        Download.objects.create(user=request.user, pack=pack)
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
 
@@ -315,6 +317,7 @@ def pack_licenses(request, username, pack_id):
 
 
 @login_required
+@transaction.atomic()
 def sound_edit(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, processing_state='OK')
     if sound.user.username.lower() != username.lower():

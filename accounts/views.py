@@ -28,7 +28,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import logout
 from django.contrib.auth.views import LoginView
 from django.urls import reverse
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -183,6 +183,7 @@ def tos_acceptance(request):
     return render(request, 'accounts/accept_terms_of_service.html', tvars)
 
 
+@transaction.atomic()
 def registration(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
@@ -226,8 +227,16 @@ def resend_activation(request):
     if request.method == 'POST':
         form = ReactivationForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data['user']
-            send_activation(user)
+            username_or_email = form.cleaned_data['user']
+            print username_or_email
+            try:
+                user = User.objects.get((Q(email__iexact=username_or_email)\
+                         | Q(username__iexact=username_or_email))\
+                         & Q(is_active=False))
+                send_activation(user)
+            except User.DoesNotExist:
+                print 'does not exisr'
+                pass
             return render(request, 'accounts/registration_done.html')
     else:
         form = ReactivationForm()
@@ -239,9 +248,14 @@ def username_reminder(request):
     if request.method == 'POST':
         form = UsernameReminderForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data['user']
-            send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt', {'user': user},
-                               None, user.email)
+            email = form.cleaned_data['user']
+
+            try:
+                user = User.objects.get(email__iexact=email)
+                send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt',
+                        {'user': user}, None, user.email)
+            except User.DoesNotExist:
+                pass
 
             return render(request, 'accounts/username_reminder.html', {'form': form, 'sent': True})
     else:
@@ -947,33 +961,40 @@ def email_reset(request):
     if request.method == "POST":
         form = EmailResetForm(request.POST, user=request.user)
         if form.is_valid():
-            # Save new email info to DB (temporal)
+            # First check that email is not already on the database, if it's already used we don't do anything.
             try:
-                rer = ResetEmailRequest.objects.get(user=request.user)
-                rer.email = form.cleaned_data['email']
-            except ResetEmailRequest.DoesNotExist:
-                rer = ResetEmailRequest(user=request.user, email=form.cleaned_data['email'])
-            rer.save()
+                user = User.objects.get(email__iexact=form.cleaned_data['email'])
+            except User.DoesNotExist:
+                user = None
+            # Check password is OK
+            if user == None and request.user.check_password(form.cleaned_data["password"]):
+                # Save new email info to DB (temporal)
+                try:
+                    rer = ResetEmailRequest.objects.get(user=request.user)
+                    rer.email = form.cleaned_data['email']
+                    rer.save()
+                except ResetEmailRequest.DoesNotExist:
+                    rer = ResetEmailRequest.objects.create(user=request.user, email=form.cleaned_data['email'])
 
-            # Send email to the new address
-            user = request.user
-            email = form.cleaned_data["email"]
-            current_site = get_current_site(request)
-            site_name = current_site.name
-            domain = current_site.domain
-            c = {
-                'email': email,
-                'domain': domain,
-                'site_name': site_name,
-                'uid': int_to_base36(user.id),
-                'user': user,
-                'token': default_token_generator.make_token(user),
-                'protocol': 'http',
-            }
-            subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
-            subject = ''.join(subject.splitlines())
-            email_body = loader.render_to_string('accounts/email_reset_email.html', c)
-            send_mail(subject=subject, email_body=email_body, email_to=[email])
+                # Send email to the new address
+                user = request.user
+                email = form.cleaned_data["email"]
+                current_site = get_current_site(request)
+                site_name = current_site.name
+                domain = current_site.domain
+                c = {
+                    'email': email,
+                    'domain': domain,
+                    'site_name': site_name,
+                    'uid': int_to_base36(user.id),
+                    'user': user,
+                    'token': default_token_generator.make_token(user),
+                    'protocol': 'http',
+                }
+                subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
+                subject = ''.join(subject.splitlines())
+                email_body = loader.render_to_string('accounts/email_reset_email.html', c)
+                send_mail(subject=subject, email_body=email_body, email_to=[email])
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user = request.user)
@@ -1069,7 +1090,7 @@ def flag_user(request, username=None):
             to_emails = []
             for mail in settings.ADMINS:
                 to_emails.append(mail[1])
-            send_mail_template(u'Spam report for user ' + flagged_user.username,
+            send_mail_template(u'Spam/offensive report for user ' + flagged_user.username,
                                template_to_use, locals(), None, to_emails)
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:

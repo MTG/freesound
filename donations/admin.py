@@ -1,5 +1,5 @@
 from django.contrib import admin
-from models import DonationCampaign, DonationsModalSettings, DonationsEmailSettings
+from models import DonationCampaign, DonationsModalSettings, DonationsEmailSettings, Donation
 
 admin.site.register(DonationCampaign)
 
@@ -24,5 +24,13 @@ class DonationsEmailSettingsAdmin(admin.ModelAdmin):
             return True
 
 
+class DonationAdmin(admin.ModelAdmin):
+    raw_id_fields = ("user",)
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(DonationsModalSettings, DonationsModalSettingsAdmin)
 admin.site.register(DonationsEmailSettings, DonationsEmailSettingsAdmin)
+admin.site.register(Donation, DonationAdmin)

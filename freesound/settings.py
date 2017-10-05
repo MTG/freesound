@@ -182,7 +182,7 @@ USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
-ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
+ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
 
 # Random Sound of the day settings
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
@@ -300,6 +300,10 @@ MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, s
 MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
+
+# Stripe keys for testing (never set real keys here!!!)
+STRIPE_PUBLIC_KEY = ""
+STRIPE_PRIVATE_KEY = ""
 
 
 # leave at bottom starting here!

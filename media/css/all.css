@@ -2289,15 +2289,22 @@ a.donation_button:hover {
     font-weight: bold;
     border: 0;
     border-radius: 2px;
-    margin: 0 0 0 82px;
+    margin: 0 0 4px 82px;
     padding: 5px 20px;
     font-size: 13px;
+    cursor: pointer;
+}
+
+#donation_form :disabled {
+    opacity:0.5;
+}
+
+.donation_button_paypal{
     background-repeat: no-repeat;
     background-image: url(/media/images/paypal.svg);
     background-size: 93px;
     background-position: left 109px center;
     text-align: left;
-    cursor: pointer;
 }
 #donation_form #id_name_option{
     width: 206px;

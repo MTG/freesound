@@ -18,27 +18,24 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, Client
-from django.http import HttpRequest
+from django.test import TestCase, Client, RequestFactory
+from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from comments.models import Comment
 from django.core.cache import cache
 from django.core.management import call_command
 from django.core import mail
-from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay, Flag
+from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay, Flag, Download
 from general.templatetags.filter_img import replace_img
-from sounds.views import get_sound_of_the_day_id
+from sounds.views import get_sound_of_the_day_id, sound_download, pack_download
 from utils.tags import clean_and_split_tags
 from utils.encryption import encrypt
 from django.template import Context, Template
-from tags.models import TaggedItem
 import accounts
-
 import time
 import datetime
 from itertools import count
-
 from freezegun import freeze_time
 import mock
 
@@ -614,3 +611,58 @@ class DisplaySoundTemplatetagTestCase(TestCase):
 
         response = self.client.get(reverse('sound-display', args=[self.sound.user.username, self.sound.id]))
         self.assertEqual(response.status_code, 200)
+
+
+class SoundPackDownloadTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def setUp(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
+        self.sound = sounds[0]
+        self.sound.moderation_state = "OK"
+        self.sound.processing_state = "OK"
+        self.sound.save()
+        self.pack = packs[0]
+        self.user = user
+        self.factory = RequestFactory()
+
+    def test_download_sound(self):
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            # Check sound can't be downloaded if user not logged in
+            resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
+            self.assertRedirects(resp, '%s?next=%s' % (
+            reverse('login'), reverse('sound', args=[self.sound.user.username, self.sound.id])))
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+            # Download again and check n download objects is still 1
+            self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
+            self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+    def test_download_pack(self):
+        with mock.patch('sounds.views.download_sounds', return_value=HttpResponse()):
+
+            # Check sound can't be downloaded if user not logged in
+            resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
+            self.assertRedirects(resp, '%s?next=%s' % (
+            reverse('login'), reverse('pack', args=[self.sound.user.username, self.pack.id])))
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
+
+            # Download again and check n download objects is still 1
+            self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
+            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)

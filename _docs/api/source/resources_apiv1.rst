@@ -85,7 +85,7 @@ pack: 			string
 pack_tokenized: 	string, tokenized
 is_geotagged: 		boolean
 type: 			string, original file type, one of wav,
-    			aif, aiff, ogg, mp3, flac
+    			aif, aiff, ogg, mp3, flac, m4a
 duration: 		numerical, duration of sound in seconds
 bitdepth: 		integer, WARNING is not to be trusted right now
 bitrate: 		numerical, WARNING is not to be trusted right now

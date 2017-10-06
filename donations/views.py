@@ -119,22 +119,26 @@ def donation_complete_paypal(request):
     This view listens to a notification made from paypal when someone makes
     a donation, it validates the data and then stores the donation.
     """
-    params = request.POST.copy()
-    params.update({'cmd': '_notify-validate'})
 
-    try:
-        req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
-    except requests.exceptions.Timeout:
-        logger.error("Can't verify donations information with paypal")
-        return HttpResponse("FAIL")
+    if "mc_gross" in params:
+        # Paypal makes notifications of different events e.g: new suscriptions,
+        # we only want to save when the actual payment happends
+        params = request.POST.copy()
+        params.update({'cmd': '_notify-validate'})
 
-    if req.text == 'VERIFIED':
-        _save_donation(params['custom'],
-            params['payer_email'],
-            params['mc_gross'],
-            params['mc_currency'],
-            params['txn_id'],
-            'p')
+        try:
+            req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
+        except requests.exceptions.Timeout:
+            logger.error("Can't verify donations information with paypal")
+            return HttpResponse("FAIL")
+
+        if req.text == 'VERIFIED':
+             _save_donation(params['custom'],
+                params['payer_email'],
+                params['mc_gross'],
+                params['mc_currency'],
+                params['txn_id'],
+                'p')
     return HttpResponse("OK")
 
 

@@ -77,6 +77,7 @@ def donation_complete_stripe(request):
     If the donation is successfully done it stores it and send the email to the user.
     """
     donation_received = False
+    donation_error = False
     if request.method == 'POST':
         form = DonateForm(request.POST, user=request.user)
 
@@ -98,9 +99,16 @@ def donation_complete_stripe(request):
                     donation_received = True
                     messages.add_message(request, messages.INFO, 'Thanks! your donation has been processed.')
                     _save_donation(form.encoded_data, email, amount, 'eur', charge['id'], 's')
+            except stripe.error.CardError as e:
+                # Since it's a decline, stripe.error.CardError will be caught
+                body = e.json_body
+                err  = body.get('error', {})
+                donation_error = err.get('message', False)
             except stripe.error.StripeError as e:
                 logger.error("Can't charge donation whith stripe", e)
-    if not donation_received:
+    if donation_error:
+        messages.add_message(request, messages.WARNING, 'Error processing the donation. %s' % err.get('message'))
+    elif not donation_received:
         messages.add_message(request, messages.WARNING, 'Your donation could not be processed.')
     return redirect('donate')
 

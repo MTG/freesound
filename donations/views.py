@@ -4,6 +4,7 @@ import requests
 import urlparse
 import logging
 import stripe
+from requests.adapters import HTTPAdapter
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -119,7 +120,6 @@ def donation_complete_paypal(request):
     This view listens to a notification made from paypal when someone makes
     a donation, it validates the data and then stores the donation.
     """
-
     if "mc_gross" in params:
         # Paypal makes notifications of different events e.g: new suscriptions,
         # we only want to save when the actual payment happends

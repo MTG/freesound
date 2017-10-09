@@ -4,6 +4,7 @@ import requests
 import urlparse
 import logging
 import stripe
+from requests.adapters import HTTPAdapter
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -115,8 +116,10 @@ def donation_complete_paypal(request):
     params.update({'cmd': '_notify-validate'})
 
     try:
-        req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
-    except requests.exceptions.Timeout:
+        s = requests.Session()
+        s.mount(settings.PAYPAL_VALIDATION_URL, HTTPAdapter(max_retries=5))
+        req = s.post(settings.PAYPAL_VALIDATION_URL, data=params)
+    except requests.ConnectionError:
         logger.error("Can't verify donations information with paypal")
         return HttpResponse("FAIL")
 

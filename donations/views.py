@@ -120,6 +120,9 @@ def donation_complete_paypal(request):
     This view listens to a notification made from paypal when someone makes
     a donation, it validates the data and then stores the donation.
     """
+    params = request.POST.copy()
+    params.update({'cmd': '_notify-validate'})
+
     if "mc_gross" in params:
         # Paypal makes notifications of different events e.g: new suscriptions,
         # we only want to save when the actual payment happends

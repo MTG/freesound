@@ -706,7 +706,7 @@ class Sound(SocialModel):
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):
-        delete_sound_from_solr(self)
+        delete_sound_from_solr(self.id)
         delete_sound_from_gaia(self)
 
     def invalidate_template_caches(self):

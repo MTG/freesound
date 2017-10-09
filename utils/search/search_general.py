@@ -18,16 +18,19 @@
 #     See AUTHORS file.
 #
 
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrException
-from django.conf import settings
-from search.views import search_prepare_sort, search_prepare_query
-from search.forms import SEARCH_SORT_OPTIONS_WEB
-from socket import error as socket_error
-from utils.text import remove_control_chars
-import time
 import logging
 import math
+import socket
+import time
+
+from django.conf import settings
+
 import sounds
+from search.forms import SEARCH_SORT_OPTIONS_WEB
+from search.views import search_prepare_sort, search_prepare_query
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrException
+from utils.text import remove_control_chars
+
 logger = logging.getLogger("search")
 
 
@@ -149,14 +152,14 @@ def get_random_sound_from_solr():
         docs = response.docs
         if docs:
             return docs[0]
-    except socket_error:
+    except socket.error:
         pass
     return {}
 
 
-def delete_sound_from_solr(sound):
-    logger.info("deleting sound with id %d" % sound.id)
+def delete_sound_from_solr(sound_id):
+    logger.info("deleting sound with id %d" % sound_id)
     try:
-        Solr(settings.SOLR_URL).delete_by_id(sound.id)
-    except SolrException as e:
-        logger.error('could not delete sound with id %s (%s).' % (sound.id, e))
+        Solr(settings.SOLR_URL).delete_by_id(sound_id)
+    except (SolrException, socket.error) as e:
+        logger.error('could not delete sound with id %s (%s).' % (sound_id, e))

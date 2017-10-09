@@ -36,4 +36,4 @@ class Command(BaseCommand):
         # Get all sounds that should not be in solr and remove them if they are
         sound_qs = Sound.objects.exclude(processing_state="OK", moderation_state="OK")
         for sound in sound_qs:
-            delete_sound_from_solr(sound)  # Will only do something if sound in fact exists in solr
+            delete_sound_from_solr(sound.id)  # Will only do something if sound in fact exists in solr

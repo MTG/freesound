@@ -129,17 +129,24 @@ def random(request):
     sound_obj = None
     if sound:
         try:
+            # There is a small edge case where a sound may have been marked
+            # as explicit and is selected here before the index is updated,
+            # but we expect this to happen rarely enough that it's not a problem
             sound_obj = Sound.objects.get(id=sound['id'])
         except Sound.DoesNotExist:
             pass
     if sound_obj is None:
+        # Only if solr is down - Won't happen very often, but Sound.objects.random
+        # will also restrict by sounds with at least 3 ratings  and an average
+        # rating of >6. Not important to change this for the rare case that we trigger this.
         try:
             sound_obj = Sound.objects.random()
         except Sound.DoesNotExist:
             pass
     if sound_obj is None:
         raise Http404
-    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_obj.id])+"?random_browsing=true")
+    return HttpResponseRedirect('{}?random_browsing=true'.format(
+        reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
 def packs(request):

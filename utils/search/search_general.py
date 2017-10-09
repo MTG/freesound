@@ -144,10 +144,14 @@ def check_if_sound_exists_in_solr(sound):
 
 
 def get_random_sound_from_solr():
+    """ Get a random sound from solr.
+    This is used for random sound browsing. We filter explicit sounds,
+    but otherwise don't have any other restrictions on sound attributes
+    """
     solr = Solr(settings.SOLR_URL)
     query = SolrQuery()
     sort = ['random_%d asc' % (time.time())]
-    filter_query = 'is_explicit:0 avg_rating:[6 TO *] num_ratings:[3 TO *]'
+    filter_query = 'is_explicit:0'
     query.set_query("*:*")
     query.set_query_options(start=0, rows=1, field_list=["*"], filter_query=filter_query, sort=sort)
     try:

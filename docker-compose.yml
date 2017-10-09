@@ -1,0 +1,20 @@
+version: '2'
+volumes:
+  dbvolume:
+services:
+  db:
+    image: postgres:9.6
+    env_file:
+      - .env
+    volumes:
+      - dbvolume:/var/lib/postgresql/data/
+  web:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+      - /static/
+    command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - db

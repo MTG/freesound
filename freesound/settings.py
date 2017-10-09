@@ -7,8 +7,15 @@ import os
 import datetime
 import re
 import logging.config
+import dj_database_url
 
 DEBUG = False
+
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default_secret_key')
+
+DATABASE_URL_ENV_NAME = 'DJANGO_DATABASE_URL'
+DATABASES = {'default': dj_database_url.config(
+DATABASE_URL_ENV_NAME, default='postgres://postgres:postgres@db/freesound')}
 
 MIDDLEWARE = [
     'freesound.middleware.PermissionDeniedHandler',

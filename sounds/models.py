@@ -769,6 +769,9 @@ class SoundOfTheDay(models.Model):
 
     objects = SoundOfTheDayManager()
 
+    def __unicode__(self):
+        return u'Random sound of the day {0}'.format(self.date_display)
+
     def notify_by_email(self):
         """Notify the user of this sound by email that their sound has been chosen
         as our Sound of the Day.

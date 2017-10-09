@@ -21,13 +21,14 @@
 #
 
 from django.contrib import admin
-from sounds.models import License, Sound, Pack, Flag, DeletedSound
+from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay
 
 
 class LicenseAdmin(admin.ModelAdmin):
     list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
 
 admin.site.register(License, LicenseAdmin)
+admin.site.register(SoundOfTheDay)
 
 
 class SoundAdmin(admin.ModelAdmin):

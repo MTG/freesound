@@ -32,7 +32,7 @@ logger = logging.getLogger("search")
 
 
 def convert_to_solr_document(sound):
-    #logger.info("creating solr XML from sound %d" % sound.id)
+    # logger.info("creating solr XML from sound %d" % sound.id)
     document = dict()
     document["id"] = sound.id
     document["username"] = sound.user.username
@@ -75,14 +75,6 @@ def convert_to_solr_document(sound):
     return document
 
 
-def add_sound_to_solr(sound):
-    logger.info("adding single sound to solr index")
-    try:
-        Solr(settings.SOLR_URL).add([convert_to_solr_document(sound)])
-    except SolrException, e:
-        logger.error("failed to add sound %d to solr index, reason: %s" % (sound.id, str(e)))
-
-
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
     solr = Solr(settings.SOLR_URL)
@@ -98,7 +90,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
     num_sounds = sound_queryset.count()
     num_correctly_indexed_sounds = 0
     for i in range(0, num_sounds, slice_size):
-        print "Adding %i sounds to solr, slice %i"%(slice_size,i)
+        logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
         try:
             sounds_to_update = sound_queryset[i:i+slice_size]
             add_sounds_to_solr(sounds_to_update)
@@ -107,8 +99,9 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
                 sounds.models.Sound.objects.filter(pk__in=[snd.id for snd in sounds_to_update])\
                     .update(is_index_dirty=False)
                 num_correctly_indexed_sounds += len(sounds_to_update)
-        except SolrException, e:
-            logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
+        except SolrException as e:
+            logger.error("failed to add sound batch to solr index, reason: %s", str(e))
+            raise
     return num_correctly_indexed_sounds
 
 
@@ -121,17 +114,14 @@ def get_all_sound_ids_from_solr(limit=False):
     solr_count = None
     PAGE_SIZE = 2000
     current_page = 1
-    try:
-        while (len(solr_ids) < solr_count or solr_count is None) and len(solr_ids) < limit:
-            response = SolrResponseInterpreter(
-                solr.select(unicode(search_prepare_query(
-                    '', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE,
-                    include_facets=False))))
-            solr_ids += [element['id'] for element in response.docs]
-            solr_count = response.num_found
-            current_page += 1
-    except Exception, e:
-        raise Exception(e)
+    while (len(solr_ids) < solr_count or solr_count is None) and len(solr_ids) < limit:
+        response = SolrResponseInterpreter(
+            solr.select(unicode(search_prepare_query(
+                '', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE,
+                include_facets=False))))
+        solr_ids += [element['id'] for element in response.docs]
+        solr_count = response.num_found
+        current_page += 1
     return sorted(solr_ids)
 
 
@@ -161,12 +151,12 @@ def get_random_sound_from_solr():
             return docs[0]
     except socket_error:
         pass
-    return None
+    return {}
 
 
 def delete_sound_from_solr(sound):
     logger.info("deleting sound with id %d" % sound.id)
     try:
         Solr(settings.SOLR_URL).delete_by_id(sound.id)
-    except Exception, e:
+    except SolrException as e:
         logger.error('could not delete sound with id %s (%s).' % (sound.id, e))

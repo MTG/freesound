@@ -28,7 +28,6 @@ class LicenseAdmin(admin.ModelAdmin):
     list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
 
 admin.site.register(License, LicenseAdmin)
-admin.site.register(SoundOfTheDay)
 
 
 class SoundAdmin(admin.ModelAdmin):
@@ -63,3 +62,9 @@ class FlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
     list_display = ('reporting_user', 'email', 'reason_type')
 admin.site.register(Flag, FlagAdmin)
+
+
+class SoundOfTheDayAdmin(admin.ModelAdmin):
+    raw_id_fields = ('sound',)
+    list_display = ('sound', 'email_sent')
+admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)

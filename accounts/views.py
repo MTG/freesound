@@ -228,14 +228,12 @@ def resend_activation(request):
         form = ReactivationForm(request.POST)
         if form.is_valid():
             username_or_email = form.cleaned_data['user']
-            print username_or_email
             try:
                 user = User.objects.get((Q(email__iexact=username_or_email)\
                          | Q(username__iexact=username_or_email))\
                          & Q(is_active=False))
                 send_activation(user)
             except User.DoesNotExist:
-                print 'does not exisr'
                 pass
             return render(request, 'accounts/registration_done.html')
     else:

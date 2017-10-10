@@ -4,10 +4,10 @@ volumes:
   pgdata:
 
 services:
-  #processing:
-  #  build:
-  #    context: .
-  #    dockerfile: docker/processing/Dockerfile
+  processing:
+    build:
+      context: .
+      dockerfile: docker/processing/Dockerfile
 
   web:
     build:

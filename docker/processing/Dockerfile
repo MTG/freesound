@@ -9,7 +9,7 @@ RUN apt-get update \
 
 RUN mkdir /essentia && cd /essentia && git clone https://github.com/MTG/essentia.git
 WORKDIR /essentia/essentia
-RUN git checkout -t origin/debianstatic
+RUN git checkout -t origin/static_builds
 
 WORKDIR /essentia/essentia/packaging
 RUN ./build_3rdparty_static_debian.sh
@@ -35,9 +35,13 @@ FROM debian:jessie
 COPY --from=essentia /usr/local/bin/essentia_streaming_extractor_freesound /usr/local/bin
 COPY --from=stereofy /code/_sandbox/stereofy/stereofy /usr/local/bin
 
+# Base requirements
 RUN apt-get update \
-    && apt-get install -y python wget \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y git-core python python-dev wget
+
+# Additional audio requirements
+RUN apt-get update \
+    && apt-get install -y python-scipy libsndfile1-dev
 
 RUN wget -O - https://bootstrap.pypa.io/get-pip.py | python
 

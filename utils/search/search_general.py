@@ -32,6 +32,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrExce
 from utils.text import remove_control_chars
 
 logger = logging.getLogger("search")
+console_logger = logging.getLogger("console")
 
 
 def convert_to_solr_document(sound):
@@ -79,11 +80,11 @@ def convert_to_solr_document(sound):
 
 
 def add_sounds_to_solr(sounds):
-    logger.info("adding multiple sounds to solr index")
+    console_logger.info("adding multiple sounds to solr index")
     solr = Solr(settings.SOLR_URL)
-    logger.info("creating XML")
+    console_logger.info("creating XML")
     documents = map(convert_to_solr_document, sounds)
-    logger.info("posting to Solr")
+    console_logger.info("posting to Solr")
     solr.add(documents)
 
 
@@ -93,17 +94,17 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
     num_sounds = sound_queryset.count()
     num_correctly_indexed_sounds = 0
     for i in range(0, num_sounds, slice_size):
-        logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
+        console_logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
         try:
             sounds_to_update = sound_queryset[i:i+slice_size]
             add_sounds_to_solr(sounds_to_update)
             if mark_index_clean:
-                logger.info("Marking sounds as clean.")
+                console_logger.info("Marking sounds as clean.")
                 sounds.models.Sound.objects.filter(pk__in=[snd.id for snd in sounds_to_update])\
                     .update(is_index_dirty=False)
                 num_correctly_indexed_sounds += len(sounds_to_update)
         except SolrException as e:
-            logger.error("failed to add sound batch to solr index, reason: %s", str(e))
+            console_logger.error("failed to add sound batch to solr index, reason: %s", str(e))
             raise
     return num_correctly_indexed_sounds
 

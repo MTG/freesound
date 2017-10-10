@@ -23,6 +23,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse, resolve
 from django.db import connection, transaction
 from django.db.models import Q
@@ -44,6 +45,7 @@ from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSou
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
+from utils.search.search_general import get_random_sound_from_solr
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
@@ -123,10 +125,28 @@ def remixed(request):
 
 
 def random(request):
-    sound_obj = Sound.objects.random()
-    if sound is None:
+    sound = get_random_sound_from_solr()
+    sound_obj = None
+    if sound:
+        try:
+            # There is a small edge case where a sound may have been marked
+            # as explicit and is selected here before the index is updated,
+            # but we expect this to happen rarely enough that it's not a problem
+            sound_obj = Sound.objects.get(id=sound['id'])
+        except Sound.DoesNotExist:
+            pass
+    if sound_obj is None:
+        # Only if solr is down - Won't happen very often, but Sound.objects.random
+        # will also restrict by sounds with at least 3 ratings  and an average
+        # rating of >6. Not important to change this for the rare case that we trigger this.
+        try:
+            sound_obj = Sound.objects.random()
+        except Sound.DoesNotExist:
+            pass
+    if sound_obj is None:
         raise Http404
-    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_obj.id])+"?random_browsing=true")
+    return HttpResponseRedirect('{}?random_browsing=true'.format(
+        reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
 def packs(request):

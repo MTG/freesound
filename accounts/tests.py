@@ -161,11 +161,6 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('comments'))
         self.assertEqual(resp.status_code, 200)
 
-    def test_random_sound_response_ok(self):
-        # 302 response on random sound access
-        resp = self.client.get(reverse('sounds-random'))
-        self.assertEqual(resp.status_code, 302)
-
     def test_remixed_response_ok(self):
         # 200 response on remixed sounds page access
         resp = self.client.get(reverse('remix-groups'))
@@ -650,11 +645,14 @@ class UserDelete(TestCase):
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), True)
         self.assertEqual(Sound.objects.filter(user__id=user.id)[0].is_index_dirty, True)
 
-    def test_user_delete_remove_sounds(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_user_delete_remove_sounds(self, delete_sound_solr):
         # This should set user's attribute deleted_user to True and anonymize it,
         # also should remove users Sounds and Packs, and create DeletedSound
         # objects
         user = self.create_user_and_content()
+        user_sounds = Sound.objects.filter(user=user)
+        user_sound_ids = [s.id for s in user_sounds]
         user.profile.delete_user(remove_sounds=True)
         self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
         self.assertEqual(user.username, "deleted_user_%s" % user.id)
@@ -670,6 +668,9 @@ class UserDelete(TestCase):
         self.assertEqual(Pack.objects.filter(user__id=user.id).all()[0].is_deleted, True)
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
         self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
+
+        calls = [mock.call(i) for i in user_sound_ids]
+        delete_sound_solr.assert_has_calls(calls, any_order=True)
 
 
 class UserEmailsUniqueTestCase(TestCase):

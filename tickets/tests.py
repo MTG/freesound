@@ -138,7 +138,8 @@ class TicketsTest(TestCase):
                 'noreply@freesound.org',
                  assigned_ticket.sender.email)
 
-    def test_delete_ticket(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_delete_ticket(self, delete_sound_solr):
         test_user = User.objects.get(username='test_user')
         test_moderator = User.objects.get(username='test_moderator')
         sound = self._create_test_sound(moderation_state='PE', processing_state='OK',
@@ -153,3 +154,4 @@ class TicketsTest(TestCase):
                                     'ticket': ticket.id
                                 })
         self.assertEqual(resp.status_code, 200)
+        delete_sound_solr.assert_called_once_with(sound.id)

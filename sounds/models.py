@@ -131,6 +131,7 @@ class SoundManager(models.Manager):
           sound.type,
           sound.user_id,
           sound.original_filename,
+          sound.is_explicit,
           sound.avg_rating,
           sound.description,
           sound.moderation_state,

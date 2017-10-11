@@ -20,8 +20,8 @@
 
 import logging
 import math
+import random
 import socket
-import time
 
 from django.conf import settings
 
@@ -144,7 +144,8 @@ def get_random_sound_from_solr():
     """
     solr = Solr(settings.SOLR_URL)
     query = SolrQuery()
-    sort = ['random_%d asc' % (time.time())]
+    rand_key = random.randint(1, 10000000)
+    sort = ['random_%d asc' % rand_key]
     filter_query = 'is_explicit:0'
     query.set_query("*:*")
     query.set_query_options(start=0, rows=1, field_list=["*"], filter_query=filter_query, sort=sort)

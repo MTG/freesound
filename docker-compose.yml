@@ -8,7 +8,12 @@ services:
     build:
       context: .
       dockerfile: docker/processing/Dockerfile
-
+    command: python manage.py gm_worker_processing --queue process_sound
+    depends_on:
+      - db
+    env_file:
+     - .env
+ 
   web:
     build:
       context: .

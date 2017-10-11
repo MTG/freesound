@@ -29,7 +29,6 @@ WORKDIR /code/_sandbox/stereofy
 RUN make
 
 # ---
-
 FROM debian:jessie
 
 COPY --from=essentia /usr/local/bin/essentia_streaming_extractor_freesound /usr/local/bin
@@ -37,11 +36,11 @@ COPY --from=stereofy /code/_sandbox/stereofy/stereofy /usr/local/bin
 
 # Base requirements
 RUN apt-get update \
-    && apt-get install -y git-core python python-dev wget
+    && apt-get install -y git-core python python-dev wget postgresql python-psycopg2 libpq-dev
 
 # Additional audio requirements
 RUN apt-get update \
-    && apt-get install -y python-scipy libsndfile1-dev
+    && apt-get install -y python-numpy python-scipy libsndfile1-dev
 
 RUN wget -O - https://bootstrap.pypa.io/get-pip.py | python
 
@@ -50,3 +49,4 @@ COPY . /code
 
 WORKDIR /code
 RUN pip install -r requirements_processing.txt
+RUN pip install -r requirements.txt

@@ -36,3 +36,27 @@ class Rating(models.Model):
     class Meta:
         unique_together = (('user', 'sound'),)
         ordering = ('-created',)
+
+
+@receiver(post_delete, sender=Rating)
+def post_delete_rating(sender, instance, **kwargs):
+    try:
+        instance.sound.num_ratings = F('num_ratings') - 1
+        rating = Rating.objects.filter(
+                sound_id=instance.sound_id).aggregate(Avg('rating')).values()[0]
+        if rating == None:
+            rating = 0
+        instance.sound.avg_rating = rating
+        instance.sound.save()
+    except ObjectDoesNotExist:
+        pass
+
+
+@receiver(post_save, sender=Rating)
+def update_num_ratings_on_post_insert(**kwargs):
+    instance = kwargs['instance']
+    if kwargs['created']:
+        instance.sound.num_ratings = F('num_ratings') + 1
+    instance.sound.avg_rating = Rating.objects.filter(
+            sound_id=instance.sound_id).aggregate(Avg('rating')).values()[0]
+    instance.sound.save()

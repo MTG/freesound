@@ -154,7 +154,7 @@ def get_random_sound_from_solr():
         docs = response.docs
         if docs:
             return docs[0]
-    except socket.error:
+    except (SolrException, socket.error):
         pass
     return {}
 

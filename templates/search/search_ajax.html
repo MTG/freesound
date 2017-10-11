@@ -2,22 +2,20 @@
 
 {% block section_content %}
 
-{% if results %}
+{% if docs %}
     {% if error %}
     <div>
         Search failed
     </div>
     {% else %}
-
-        {% for result in results.docs %}
+        {% for result in docs %}
             {% display_sound result.id %}
         {% endfor %}
-
     {% endif %}
 {% else %}
-<div>
-    No results
-</div>
+    <div>
+        No results
+    </div>
 {% endif %}
 
 {% endblock %}

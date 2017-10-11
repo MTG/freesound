@@ -22,12 +22,15 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import F, Avg
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 
 class Rating(models.Model):
     user = models.ForeignKey(User)
 
     rating = models.IntegerField()
-    sound = models.ForeignKey('sounds.Sound', null=True)
+    sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):

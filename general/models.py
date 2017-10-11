@@ -32,7 +32,6 @@ from tags.models import TaggedItem
 
 class SocialModel(models.Model):
     tags = fields.GenericRelation(TaggedItem)
-    ratings = fields.GenericRelation(Rating)
     fans = fields.GenericRelation(Favorite)
 
     class Meta:

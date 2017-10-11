@@ -24,5 +24,5 @@ from django.conf.urls import url
 import ratings.views as ratings
 
 urlpatterns = [
-    url(r'^add/(?P<content_type_id>\d+)/(?P<object_id>\d+)/(?P<rating>\d)/$', ratings.add, name="ratings-add"),
+    url(r'^add/(?P<sound_id>\d+)/(?P<rating>\d)/$', ratings.add, name="ratings-add"),
 ]

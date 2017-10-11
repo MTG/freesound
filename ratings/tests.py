@@ -31,7 +31,6 @@ class RatingsTestCase(TestCase):
 
     def setUp(self):
         self.sound = sounds.models.Sound.objects.all()[0]
-        self.ct = ContentType.objects.get_for_model(sounds.models.Sound)
         self.user1 = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
         self.user2 = User.objects.create_user("testuser2", email="testuser2@freesound.org", password="testpass")
 
@@ -40,13 +39,13 @@ class RatingsTestCase(TestCase):
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
         # One rating from a different user
-        r = ratings.models.Rating.objects.create(object_id=self.sound.id, content_type=self.ct, user_id=self.user2.id, rating=2)
+        r = ratings.models.Rating.objects.create(sound_id=self.sound.id, user_id=self.user2.id, rating=2)
 
-        resp = self.client.get("/ratings/add/%s/%s/%s/" % (self.ct.id, self.sound.id, 3))
+        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 3))
         self.assertEqual(resp.content, "2")
 
         self.assertEqual(ratings.models.Rating.objects.count(), 2)
-        r = ratings.models.Rating.objects.get(object_id=self.sound.id, content_type=self.ct, user_id=self.user1.id)
+        r = ratings.models.Rating.objects.get(sound_id=self.sound.id, user_id=self.user1.id)
         # Ratings in the database are 2x the value from the web call
         self.assertEqual(r.rating, 6)
 
@@ -55,9 +54,9 @@ class RatingsTestCase(TestCase):
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
 
-        r = ratings.models.Rating.objects.create(object_id=self.sound.id, content_type=self.ct, user_id=self.user1.id, rating=4)
+        r = ratings.models.Rating.objects.create(sound_id=self.sound.id, user_id=self.user1.id, rating=4)
 
-        resp = self.client.get("/ratings/add/%s/%s/%s/" % (self.ct.id, self.sound.id, 5))
+        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 5))
         newr = ratings.models.Rating.objects.first()
         self.assertEqual(ratings.models.Rating.objects.count(), 1)
         # Ratings in the database are 2x the value from the web call
@@ -68,6 +67,6 @@ class RatingsTestCase(TestCase):
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
 
-        resp = self.client.get("/ratings/add/%s/%s/%s/" % (self.ct.id, self.sound.id, 0))
+        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 0))
         # After doing an invalid rating, there are still none for this sound
         self.assertEqual(resp.content, "0")

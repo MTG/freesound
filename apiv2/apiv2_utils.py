@@ -82,6 +82,11 @@ class GenericAPIView(RestFrameworkGenericAPIView):
         return log_message_helper(message, resource=self)
 
     def finalize_response(self, request, response, *args, **kwargs):
+        """ This method is overriden to make a redirect when the user is using the interactive API browser and
+        with 'www' sub-domain. The problem is that we can't check if it's accessing through the interactive browser
+        inside the 'initial' method because it raises an exception when the user is not logged in, that exception is
+        handled by 'finalize_response' method of APIView.
+        """
         response = super(GenericAPIView, self).finalize_response(request, response, *args, **kwargs)
 
         # If the user is using the interactive API browser and the www in the domain we redirect to nowww.

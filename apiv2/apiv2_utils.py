@@ -21,7 +21,7 @@
 #
 
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
 from oauth2_provider.generators import BaseHashGenerator
@@ -38,7 +38,9 @@ from similarity.client import SimilarityException
 from urllib import unquote
 from django.contrib.sites.models import Site
 from django.urls import resolve
+from rest_framework.renderers import BrowsableAPIRenderer
 from utils.logging_filters import get_client_ip
+import urlparse
 import logging
 import json
 
@@ -78,6 +80,17 @@ class GenericAPIView(RestFrameworkGenericAPIView):
 
     def log_message(self, message):
         return log_message_helper(message, resource=self)
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super(GenericAPIView, self).finalize_response(request, response, *args, **kwargs)
+
+        # If the user is using the interactive API browser and the www in the domain we redirect to nowww.
+        host = request.get_host()
+        if type(response.accepted_renderer) == type(BrowsableAPIRenderer()) and 'www' in host:
+            domain = "https://%s" % Site.objects.get_current().domain
+            return_url = urlparse.urljoin(domain, request.get_full_path())
+            return HttpResponseRedirect(return_url)
+        return response
 
 
 class OauthRequiredAPIView(RestFrameworkGenericAPIView):

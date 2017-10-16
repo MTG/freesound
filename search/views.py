@@ -112,6 +112,18 @@ def search_prepare_query(search_query,
     return query
 
 
+def perform_solr_query(q, current_page):
+    """
+    This util function performs the query to SOLR and returns needed parameters to continue with the view.
+    The main reason to have this util function is to facilitate mocking in unit tests for this view.
+    """
+    solr = Solr(settings.SOLR_URL)
+    results = SolrResponseInterpreter(solr.select(unicode(q)))
+    paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+    page = paginator.page(current_page)
+    return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
+
+
 def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
@@ -229,7 +241,6 @@ def search(request):
                                  grouping=actual_groupnig
                                  )
 
-    solr = Solr(settings.SOLR_URL)
     tvars = {
         'error_text': None,
         'filter_query': filter_query,
@@ -245,17 +256,7 @@ def search(request):
         tvars.update(advanced_search_params_dict)
 
     try:
-        def perform_solr_query(q):
-            """
-            This util function performs the query to SOLR and returns needed parameters to continue with the view.
-            The main reason to have this util function is to facilitate mocking in unit tests for this view.
-            """
-            results = SolrResponseInterpreter(solr.select(unicode(q)))
-            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-            page = paginator.page(current_page)
-            return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
-
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query)
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}

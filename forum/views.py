@@ -19,6 +19,7 @@
 #
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator, InvalidPage
 from django.urls import reverse
@@ -335,8 +336,12 @@ def moderate_posts(request):
             elif action == "Delete User":
                 try:
                     post.author.delete()
+                    messages.add_message(request, messages.INFO, 'The user has been successfully deleted.')
                 except: #someone deleted him already
                     pass
+            elif action == "Delete Post":
+                messages.add_message(request, messages.INFO, 'The post has been successfully deleted.')
+                post.delete()
 
     pending_posts = Post.objects.filter(moderation_state='NM')
     post_list = []

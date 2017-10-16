@@ -18,26 +18,27 @@
 #     See AUTHORS file.
 #
 
-from django.conf import settings
-from django.shortcuts import render, render
-from django.template import RequestContext
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
-    SolrResponseInterpreterPaginator, SolrException
-from utils.logging_filters import get_client_ip
-import sounds
-import forms
-import logging
 import json
+import logging
+
 import re
+from django.conf import settings
+from django.shortcuts import render
+
+import forms
+import sounds
+from utils.logging_filters import get_client_ip
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrResponseInterpreterPaginator, SolrException
 
 logger = logging.getLogger("search")
+
 
 def search_prepare_sort(sort, options):
     """ for ordering by rating order by rating, then by number of ratings """
     if sort in [x[1] for x in options]:
         if sort == "avg_rating desc":
             sort = [sort, "num_ratings desc"]
-        elif  sort == "avg_rating asc":
+        elif sort == "avg_rating asc":
             sort = [sort, "num_ratings asc"]
         else:
             sort = [sort]
@@ -51,30 +52,30 @@ def search_prepare_query(search_query,
                          sort,
                          current_page,
                          sounds_per_page,
-                         id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id'],
-                         tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-                         description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description'],
-                         username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username'],
-                         pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-                         original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
-                         grouping = False,
-                         include_facets = True,
-                         grouping_pack_limit = 1,
-                         offset = None):
+                         id_weight=settings.DEFAULT_SEARCH_WEIGHTS['id'],
+                         tag_weight=settings.DEFAULT_SEARCH_WEIGHTS['tag'],
+                         description_weight=settings.DEFAULT_SEARCH_WEIGHTS['description'],
+                         username_weight=settings.DEFAULT_SEARCH_WEIGHTS['username'],
+                         pack_tokenized_weight=settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
+                         original_filename_weight=settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
+                         grouping=False,
+                         include_facets=True,
+                         grouping_pack_limit=1,
+                         offset=None):
     query = SolrQuery()
 
     field_weights = []
-    if id_weight != 0 :
+    if id_weight != 0:
         field_weights.append(("id", id_weight))
-    if tag_weight != 0 :
+    if tag_weight != 0:
         field_weights.append(("tag", tag_weight))
-    if description_weight != 0 :
+    if description_weight != 0:
         field_weights.append(("description", description_weight))
-    if username_weight != 0 :
+    if username_weight != 0:
         field_weights.append(("username", username_weight))
-    if pack_tokenized_weight != 0 :
+    if pack_tokenized_weight != 0:
         field_weights.append(("pack_tokenized", pack_tokenized_weight))
-    if original_filename_weight != 0 :
+    if original_filename_weight != 0:
         field_weights.append(("original_filename", original_filename_weight))
 
     query.set_dismax_query(search_query,
@@ -86,7 +87,8 @@ def search_prepare_query(search_query,
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
 
     if include_facets:
-        query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
+        query.add_facet_fields(
+            "samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
         query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
         query.set_facet_options("tag", limit=30)
         query.set_facet_options("username", limit=30)
@@ -95,11 +97,12 @@ def search_prepare_query(search_query,
 
     if grouping:
         query.set_group_field(group_field="grouping_pack")
-        query.set_group_options(group_func=None,
+        query.set_group_options(
+            group_func=None,
             group_query=None,
             group_rows=10,
             group_start=0,
-            group_limit=grouping_pack_limit,  # This is the number of documents that will be returned for each group. By default only 1 is returned.
+            group_limit=grouping_pack_limit,  # Number of documents that will be returned for each group (default=1)
             group_offset=0,
             group_sort=None,
             group_sort_ingroup=None,
@@ -107,8 +110,6 @@ def search_prepare_query(search_query,
             group_main=False,
             group_num_groups=True,
             group_cache_percent=0)
-
-
     return query
 
 
@@ -141,9 +142,7 @@ def search(request):
         current_page = 1
     sort = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-
-
-    grouping = request.GET.get("g", "1") # Group by default
+    grouping = request.GET.get("g", "1")  # Group by default
     actual_groupnig = grouping
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is thourhg ajax (for sources remix editing), do not collapse
@@ -195,9 +194,6 @@ def search(request):
             if a_filename != "" :
                 original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
 
-    # ALLOW "q" empty queries
-    #if search_query.strip() == ""
-
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
     logger.info(u'Search (%s)' % json.dumps({
@@ -207,7 +203,7 @@ def search(request):
         'username': request.user.username,
         'page': current_page,
         'sort': sort[0],
-        'group_by_pack' : actual_groupnig,
+        'group_by_pack': actual_groupnig,
         'advanced': json.dumps({
             'search_in_tag': a_tag,
             'search_in_filename': a_filename,
@@ -270,6 +266,7 @@ def search(request):
         return render(request, 'search/search.html', locals())
     else:
         return render(request, 'search/search_ajax.html', locals())
+
 
 def search_forum(request):
     search_query = request.GET.get("q", "")
@@ -358,33 +355,23 @@ def get_pack_tags(pack_obj):
     query = SolrQuery()
     query.set_dismax_query('')
     filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
-    #filter_query = 'pack:\"%s\"' % (pack_obj.name,)
     query.set_query_options(field_list=["id"], filter_query=filter_query)
     query.add_facet_fields("tag")
     query.set_facet_options("tag", limit=20, mincount=1)
-    solr = Solr(settings.SOLR_URL)
 
     try:
+        solr = Solr(settings.SOLR_URL)
         results = SolrResponseInterpreter(solr.select(unicode(query)))
-    except SolrException, e:
-        #logger.warning("search error: query: %s error %s" % (query, e))
-        #error = True
-        #error_text = 'There was an error while searching, is your query correct?'
+    except (SolrException, Exception) as e:
+        # TODO: do something here?
         return False
-    except Exception, e:
-        #logger.error("Could probably not connect to Solr - %s" % e)
-        #error = True
-        #error_text = 'The search server could not be reached, please try again later.'
-        return False
-
     return results.facets
+
 
 def __add_date_range(filter_query, date_from, date_to):
     if filter_query != "":
         filter_query += " "
-
     filter_query += "thread_created:["
     date_from = date_from + "T00:00:00Z" if date_from != "" else "*"
     date_to = date_to + "T00:00:00Z]" if date_to != "" else "*]"
-
     return filter_query + date_from + " TO " + date_to

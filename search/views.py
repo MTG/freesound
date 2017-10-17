@@ -18,19 +18,21 @@
 #     See AUTHORS file.
 #
 
+import json
+import logging
+
+import re
 from django.conf import settings
-from django.shortcuts import render, render
-from django.template import RequestContext
+from django.shortcuts import render
+
+import forms
+import sounds
+from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-from utils.logging_filters import get_client_ip
-import sounds
-import forms
-import logging
-import json
-import re
 
 logger = logging.getLogger("search")
+
 
 def search_prepare_sort(sort, options):
     """ for ordering by rating order by rating, then by number of ratings """
@@ -51,30 +53,30 @@ def search_prepare_query(search_query,
                          sort,
                          current_page,
                          sounds_per_page,
-                         id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id'],
-                         tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-                         description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description'],
-                         username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username'],
-                         pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-                         original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
-                         grouping = False,
-                         include_facets = True,
-                         grouping_pack_limit = 1,
-                         offset = None):
+                         id_weight=settings.DEFAULT_SEARCH_WEIGHTS['id'],
+                         tag_weight=settings.DEFAULT_SEARCH_WEIGHTS['tag'],
+                         description_weight=settings.DEFAULT_SEARCH_WEIGHTS['description'],
+                         username_weight=settings.DEFAULT_SEARCH_WEIGHTS['username'],
+                         pack_tokenized_weight=settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
+                         original_filename_weight=settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
+                         grouping=False,
+                         include_facets=True,
+                         grouping_pack_limit=1,
+                         offset=None):
     query = SolrQuery()
 
     field_weights = []
-    if id_weight != 0 :
+    if id_weight != 0:
         field_weights.append(("id", id_weight))
-    if tag_weight != 0 :
+    if tag_weight != 0:
         field_weights.append(("tag", tag_weight))
-    if description_weight != 0 :
+    if description_weight != 0:
         field_weights.append(("description", description_weight))
-    if username_weight != 0 :
+    if username_weight != 0:
         field_weights.append(("username", username_weight))
-    if pack_tokenized_weight != 0 :
+    if pack_tokenized_weight != 0:
         field_weights.append(("pack_tokenized", pack_tokenized_weight))
-    if original_filename_weight != 0 :
+    if original_filename_weight != 0:
         field_weights.append(("original_filename", original_filename_weight))
 
     query.set_dismax_query(search_query,
@@ -95,7 +97,8 @@ def search_prepare_query(search_query,
 
     if grouping:
         query.set_group_field(group_field="grouping_pack")
-        query.set_group_options(group_func=None,
+        query.set_group_options(
+            group_func=None,
             group_query=None,
             group_rows=10,
             group_start=0,
@@ -107,8 +110,6 @@ def search_prepare_query(search_query,
             group_main=False,
             group_num_groups=True,
             group_cache_percent=0)
-
-
     return query
 
 
@@ -378,33 +379,22 @@ def get_pack_tags(pack_obj):
     query = SolrQuery()
     query.set_dismax_query('')
     filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
-    #filter_query = 'pack:\"%s\"' % (pack_obj.name,)
     query.set_query_options(field_list=["id"], filter_query=filter_query)
     query.add_facet_fields("tag")
     query.set_facet_options("tag", limit=20, mincount=1)
-    solr = Solr(settings.SOLR_URL)
-
     try:
+        solr = Solr(settings.SOLR_URL)
         results = SolrResponseInterpreter(solr.select(unicode(query)))
-    except SolrException, e:
-        #logger.warning("search error: query: %s error %s" % (query, e))
-        #error = True
-        #error_text = 'There was an error while searching, is your query correct?'
+    except (SolrException, Exception) as e:
+        #  TODO: do something here?
         return False
-    except Exception, e:
-        #logger.error("Could probably not connect to Solr - %s" % e)
-        #error = True
-        #error_text = 'The search server could not be reached, please try again later.'
-        return False
-
     return results.facets
+
 
 def __add_date_range(filter_query, date_from, date_to):
     if filter_query != "":
         filter_query += " "
-
     filter_query += "thread_created:["
     date_from = date_from + "T00:00:00Z" if date_from != "" else "*"
     date_to = date_to + "T00:00:00Z]" if date_to != "" else "*]"
-
     return filter_query + date_from + " TO " + date_to

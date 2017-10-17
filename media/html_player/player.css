@@ -253,9 +253,14 @@
     background-image: url("img/b_play_pause_icon_small.png");
 }
 
-.player .display
+.player.large .display
 {
     background-image: url("img/b_waveform_spectral_icon.png");
+}
+
+.player.small .display
+{
+    background-image: url("img/b_waveform_spectral_icon_small.png");
 }
 
 .player.large .loop

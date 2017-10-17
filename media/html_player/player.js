@@ -371,6 +371,16 @@ function makePlayer(selector) {
             $('.measure-readout', playerElement).html(readout);
         });
 
+        // Check if spectrogram image should be set
+        if (typeof spectrogramByDefault !== "undefined"){
+            if (spectrogramByDefault){
+                // Switch to to background spectrogram
+                $(".background", playerElement).css("background", "url(" + spectrum + ")");
+                $(".background", playerElement).css("backgroundSize", 'contain');
+                $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+            }
+        }
+
         return true;
     });
 }
@@ -386,6 +396,6 @@ $(function() {
 
     soundManager.onready(function()
     {
-        makePlayer('.player');	
+        makePlayer('.player');
     });
 });

@@ -11,6 +11,7 @@
         <script src="{{ media_url }}html_player/soundmanager2.js"></script>
         <script type="text/javascript">
             var isEmbed = true;
+            var spectrogramByDefault = {{ use_spectrogram|yesno:"true,false" }};
         </script>
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
     </head>

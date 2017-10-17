@@ -811,6 +811,7 @@ def embed_iframe(request, sound_id, player_size):
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
+    use_spectrogram = request.GET.get('spec', None) == '1'
     return render(request, 'sounds/sound_iframe.html', locals())
 
 

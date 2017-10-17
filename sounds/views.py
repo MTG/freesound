@@ -806,6 +806,32 @@ def display_sound_wrapper(request, username, sound_id):
 
 
 def embed_iframe(request, sound_id, player_size):
+    """
+    This view returns an HTML player of `sound_id` which can be embeded in external sites.
+    The player can take different "sizes" including:
+
+        - 'mini': shows just a play button and a loop button. No background image.
+          Eg: /embed/sound/iframe/1234/simple/mini/.
+        - 'small': shows a play button, a loop button and the name of the user and sound.
+          No background image. Eg: /embed/sound/iframe/1234/simple/small/.
+        - 'medium': shows the waveform image with playing controls plus the sound name, username, license and some tags.
+          Eg: /embed/sound/iframe/1234/simple/medium/.
+        - 'medium_no_info': shows the waveform and with playing controls.
+          Eg: /embed/sound/iframe/1234/simple/medium_no_info/.
+        - 'large': shows the waveform image in large size with playing controls plus the sound name, username and license.
+          Eg: /embed/sound/iframe/1234/simple/large/.
+        - 'large_no_info': shows the waveform image in large size with playing controls.
+          Eg: /embed/sound/iframe/1234/simple/large_no_info/.
+        - 'full_size': like 'large' but taking the full width (used in twitter embeds).
+          Eg: /embed/sound/iframe/1234/simple/full_size/.
+
+    The sizes 'medium', 'medium_no_info', 'large', 'large_no_info' and 'full_size' can optionally show the spectrogram
+    image instead of the waveform if being passed a request parameter 'spec=1' in the URL.
+    Eg: /embed/sound/iframe/1234/simple/large/?spec=1.
+
+    The sizes 'medium' and 'medium_no_info' can optionally show a button to toggle the background image between the
+    waveform and the spectrogram by passing the request parameter 'td=1'. Bigger sizes always show that button.
+    """
     if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size']:
         raise Http404
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')

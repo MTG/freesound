@@ -382,20 +382,23 @@ function makePlayer(selector) {
         });
 
         // Check if spectrogram image should be used by default
-        if (typeof spectrogramByDefault !== "undefined"){
-            if (spectrogramByDefault){
-                var display_element = $('.display');
-                if (display_element.length !== 0){
-                    // Switch to to background spectrogram by simulating click on toggle button
-                    display_element.trigger('click');
-                } else {
-                    // Switch to to background spectrogram by replacing the image (toggle display button does not exist)
-                    $(".background", playerElement).css("background", "url(" + spectrum + ")");
-                    $(".background", playerElement).css("backgroundSize", 'contain');
-                    $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+        if (!$(this).hasClass("mini")) {
+            if (typeof spectrogramByDefault !== "undefined") {
+                if (spectrogramByDefault) {
+                    var display_element = $('.display');
+                    if (display_element.length !== 0) {
+                        // Switch to to background spectrogram by simulating click on toggle button
+                        display_element.trigger('click');
+                    } else {
+                        // Switch to to background spectrogram by replacing the image (toggle display button does not exist)
+                        $(".background", playerElement).css("background", "url(" + spectrum + ")");
+                        $(".background", playerElement).css("backgroundSize", 'contain');
+                        $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+                    }
                 }
             }
         }
+
         return true;
     });
 }

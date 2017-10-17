@@ -808,11 +808,15 @@ def display_sound_wrapper(request, username, sound_id):
 def embed_iframe(request, sound_id, player_size):
     if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size']:
         raise Http404
-    size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
-    username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
-    use_spectrogram = request.GET.get('spec', None) == '1'
-    return render(request, 'sounds/sound_iframe.html', locals())
+    tvars = {
+        'sound': sound,
+        'username_and_filename': '%s - %s' % (sound.user.username, sound.original_filename),
+        'size': player_size,
+        'use_spectrogram': request.GET.get('spec', None) == '1',
+        'show_toggle_display_button': request.GET.get('td', None) == '1',
+    }
+    return render(request, 'sounds/sound_iframe.html', tvars)
 
 
 def oembed(request):

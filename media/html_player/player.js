@@ -189,6 +189,16 @@ function makePlayer(selector) {
                 <div class="loading-progress"></div> \
                 <div class="position-indicator"></div> \
                 <div class="time-indicator-container"><div class="time-indicator"></div></div>');
+
+            // Check if toggle display button should be added and add it if requested
+            if (typeof showToggleDisplayButton !== "undefined"){
+                if (showToggleDisplayButton){
+                    var toggle_display_button = '<a href="javascript:void(0)" title="change display" class="toggle display">change display</a>';
+                    var cotrols_element = $('.controls');
+                    cotrols_element.css('width', '60px');
+                    cotrols_element.append(toggle_display_button);
+                }
+            }
         }
         else if ($(this).hasClass("mini")) {
             $(this).append('<div class="controls"> \
@@ -371,16 +381,21 @@ function makePlayer(selector) {
             $('.measure-readout', playerElement).html(readout);
         });
 
-        // Check if spectrogram image should be set
+        // Check if spectrogram image should be used by default
         if (typeof spectrogramByDefault !== "undefined"){
             if (spectrogramByDefault){
-                // Switch to to background spectrogram
-                $(".background", playerElement).css("background", "url(" + spectrum + ")");
-                $(".background", playerElement).css("backgroundSize", 'contain');
-                $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+                var display_element = $('.display');
+                if (display_element.length !== 0){
+                    // Switch to to background spectrogram by simulating click on toggle button
+                    display_element.trigger('click');
+                } else {
+                    // Switch to to background spectrogram by replacing the image (toggle display button does not exist)
+                    $(".background", playerElement).css("background", "url(" + spectrum + ")");
+                    $(".background", playerElement).css("backgroundSize", 'contain');
+                    $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+                }
             }
         }
-
         return true;
     });
 }

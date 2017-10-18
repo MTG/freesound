@@ -45,6 +45,12 @@
  
     var selectAllOnClick = true;
     $(document).ready(function() {
+
+        $("#moderation-form").find("form").submit(function () {
+            $("#submit-moderation").attr("disabled", true);
+            return true;
+        });
+
         {% if moderator_tickets_count %}
 
         $("#select-all").click(function(){
@@ -179,7 +185,6 @@
             }
         }
     });
-
 </script>
 {% endblock head %}
 
@@ -248,7 +253,7 @@
 
                           <p>{{ msg_form.as_p }}
                         <br style="clear: both;">
-                           <input type="submit" value="send" />
+                           <input type="submit" value="send" id="submit-moderation"/>
 
                        </form>
                 </div>  

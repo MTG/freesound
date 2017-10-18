@@ -28,7 +28,8 @@ from django.shortcuts import render
 import forms
 import sounds
 from utils.logging_filters import get_client_ip
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrResponseInterpreterPaginator, SolrException
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
+    SolrResponseInterpreterPaginator, SolrException
 
 logger = logging.getLogger("search")
 
@@ -38,7 +39,7 @@ def search_prepare_sort(sort, options):
     if sort in [x[1] for x in options]:
         if sort == "avg_rating desc":
             sort = [sort, "num_ratings desc"]
-        elif sort == "avg_rating asc":
+        elif  sort == "avg_rating asc":
             sort = [sort, "num_ratings asc"]
         else:
             sort = [sort]
@@ -87,8 +88,7 @@ def search_prepare_query(search_query,
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
 
     if include_facets:
-        query.add_facet_fields(
-            "samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
+        query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
         query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
         query.set_facet_options("tag", limit=30)
         query.set_facet_options("username", limit=30)
@@ -102,7 +102,7 @@ def search_prepare_query(search_query,
             group_query=None,
             group_rows=10,
             group_start=0,
-            group_limit=grouping_pack_limit,  # Number of documents that will be returned for each group (default=1)
+            group_limit=grouping_pack_limit,  # This is the number of documents that will be returned for each group. By default only 1 is returned.
             group_offset=0,
             group_sort=None,
             group_sort_ingroup=None,
@@ -111,6 +111,18 @@ def search_prepare_query(search_query,
             group_num_groups=True,
             group_cache_percent=0)
     return query
+
+
+def perform_solr_query(q, current_page):
+    """
+    This util function performs the query to SOLR and returns needed parameters to continue with the view.
+    The main reason to have this util function is to facilitate mocking in unit tests for this view.
+    """
+    solr = Solr(settings.SOLR_URL)
+    results = SolrResponseInterpreter(solr.select(unicode(q)))
+    paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+    page = paginator.page(current_page)
+    return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
 
 def search(request):
@@ -142,7 +154,7 @@ def search(request):
         current_page = 1
     sort = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-    grouping = request.GET.get("g", "1")  # Group by default
+    grouping = request.GET.get("g", "1") # Group by default
     actual_groupnig = grouping
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is thourhg ajax (for sources remix editing), do not collapse
@@ -159,15 +171,24 @@ def search(request):
 
     # Parse advanced search options
     advanced = request.GET.get("advanced", "")
+    advanced_search_params_dict = {}
 
     # if advanced search
-    if advanced == "1" :
+    if advanced == "1":
         a_tag = request.GET.get("a_tag", "")
         a_filename = request.GET.get("a_filename", "")
         a_description = request.GET.get("a_description", "")
         a_packname = request.GET.get("a_packname", "")
         a_soundid = request.GET.get("a_soundid", "")
         a_username = request.GET.get("a_username", "")
+        advanced_search_params_dict.update({  # These are stored in a dict to facilitate logging and passing to template
+            'a_tag': a_tag,
+            'a_filename': a_filename,
+            'a_description': a_description,
+            'a_packname': a_packname,
+            'a_soundid': a_soundid,
+            'a_username': a_username,
+        })
 
         # If none is selected use all (so other filter can be appleid)
         if a_tag or a_filename or a_description or a_packname or a_soundid or a_username != "" :
@@ -181,17 +202,17 @@ def search(request):
             original_filename_weight = 0
 
             # Set the weights of selected checkboxes
-            if a_soundid != "" :
+            if a_soundid != "":
                 id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
-            if a_tag != "" :
+            if a_tag != "":
                 tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
-            if a_description != "" :
+            if a_description != "":
                 description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
-            if a_username != "" :
+            if a_username != "":
                 username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
-            if a_packname != "" :
+            if a_packname != "":
                 pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
-            if a_filename != "" :
+            if a_filename != "":
                 original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
 
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
@@ -204,14 +225,7 @@ def search(request):
         'page': current_page,
         'sort': sort[0],
         'group_by_pack': actual_groupnig,
-        'advanced': json.dumps({
-            'search_in_tag': a_tag,
-            'search_in_filename': a_filename,
-            'search_in_description': a_description,
-            'search_in_packname': a_packname,
-            'search_in_soundid': a_soundid,
-            'search_in_username': a_username
-        }) if advanced == "1" else ""
+        'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
     }))
 
     query = search_prepare_query(search_query,
@@ -225,20 +239,25 @@ def search(request):
                                  username_weight,
                                  pack_tokenized_weight,
                                  original_filename_weight,
-                                 grouping = actual_groupnig
+                                 grouping=actual_groupnig
                                  )
 
-    solr = Solr(settings.SOLR_URL)
+    tvars = {
+        'error_text': None,
+        'filter_query': filter_query,
+        'filter_query_split': filter_query_split,
+        'search_query': search_query,
+        'grouping': grouping,
+        'advanced': advanced,
+        'sort_options': sort_options,
+        'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
+        'current_page': current_page,
+    }
+    if advanced == "1":
+        tvars.update(advanced_search_params_dict)
 
     try:
-        results = SolrResponseInterpreter(solr.select(unicode(query)))
-        paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-        num_results = paginator.count
-        non_grouped_number_of_results = results.non_grouped_number_of_matches
-        page = paginator.page(current_page)
-        error = False
-
-        docs = results.docs
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
@@ -252,20 +271,25 @@ def search(request):
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
+        tvars.update({
+            'paginator': paginator,
+            'page': page,
+            'docs': docs,
+            'facets': facets,
+            'non_grouped_number_of_results': non_grouped_number_of_results,
+        })
+
     except SolrException, e:
-        logger.warning("search error: query: %s error %s" % (query, e))
-        error = True
-        error_text = 'There was an error while searching, is your query correct?'
+        logger.warning('Search error: query: %s error %s' % (query, e))
+        tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception, e:
-        print e
-        logger.error("Could probably not connect to Solr - %s" % e)
-        error = True
-        error_text = 'The search server could not be reached, please try again later.'
+        logger.error('Could probably not connect to Solr - %s' % e)
+        tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     if request.GET.get("ajax", "") != "1":
-        return render(request, 'search/search.html', locals())
+        return render(request, 'search/search.html', tvars)
     else:
-        return render(request, 'search/search_ajax.html', locals())
+        return render(request, 'search/search_ajax.html', tvars)
 
 
 def search_forum(request):
@@ -358,12 +382,11 @@ def get_pack_tags(pack_obj):
     query.set_query_options(field_list=["id"], filter_query=filter_query)
     query.add_facet_fields("tag")
     query.set_facet_options("tag", limit=20, mincount=1)
-
     try:
         solr = Solr(settings.SOLR_URL)
         results = SolrResponseInterpreter(solr.select(unicode(query)))
     except (SolrException, Exception) as e:
-        # TODO: do something here?
+        #  TODO: do something here?
         return False
     return results.facets
 

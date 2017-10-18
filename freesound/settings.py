@@ -292,7 +292,7 @@ OAUTH2_PROVIDER = {
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
-# Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in
+# Set DATA_URL. You can overwrite this to point to production data ("https://freesound.org/data/") in
 # local settings if needed ;)
 DATA_URL = "/data/"
 

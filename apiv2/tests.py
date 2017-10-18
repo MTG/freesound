@@ -53,7 +53,7 @@ class TestAPiViews(TestCase):
     def test_oauth2_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         client = ApiV2Client.objects.create(user=user, description='',
-                name='', url='', redirect_uri='http://freesound.org')
+                name='', url='', redirect_uri='https://freesound.org')
         # Login so api returns session login based responses
         self.client.login(username=user.username, password='testpass')
 
@@ -96,8 +96,8 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(user=user, status='OK', redirect_uri="http://www.freesound.com",
-                url="http://freesound.com", name="test")
+        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
+                url="https://freesound.com", name="test")
         c.save()
 
         sound = sounds[0]
@@ -118,8 +118,8 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(user=user, status='OK', redirect_uri="http://www.freesound.com",
-                url="http://freesound.com", name="test")
+        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
+                url="https://freesound.com", name="test")
         c.save()
 
         sound = sounds[0]

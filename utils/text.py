@@ -171,8 +171,8 @@ def clean_html(input):
     u'<p>123hello<strong>there <a href="http://www" rel="nofollow">http://www</a></strong></p>'
     >>> clean_html(u'abc http://www.google.com abc')
     u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc'
-    >>> clean_html(u'GALORE: http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
-    u'GALORE: <a href="http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator'
+    >>> clean_html(u'GALORE: https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
+    u'GALORE: <a href="https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator'
     """
     
     delete_tags = [u"script", u"style", u"head"]

@@ -96,7 +96,7 @@ class SearchPageTests(TestCase):
             for sound_id in sound_ids
         ]
         results = SolrResponseInterpreter(copy.deepcopy(solr_select_returned_data))
-        # NOTE: in the live abve, we need to deepcopy the dictionary of results because SolrResponseInterpreter changes
+        # NOTE: in the line abve, we need to deepcopy the dictionary of results because SolrResponseInterpreter changes
         # it and makes it break when run a second time. Ideally SolrResponseInterpreter should be fixed so that it does
         # not change its input parameter.
 

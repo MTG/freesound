@@ -21,5 +21,9 @@ Email: {{flag.email}}
 
 Reason:
 {{flag.reason|safe}}
+
+Discard flag:
+
+<{% absurl 'admin:sounds_flag_delete' flag.id %}>
 {% endblock %}
 {% block ps %}{% endblock %}

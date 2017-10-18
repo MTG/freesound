@@ -340,8 +340,8 @@ def moderate_posts(request):
                 except: #someone deleted him already
                     pass
             elif action == "Delete Post":
-                messages.add_message(request, messages.INFO, 'The post has been successfully deleted.')
                 post.delete()
+                messages.add_message(request, messages.INFO, 'The post has been successfully deleted.')
 
     pending_posts = Post.objects.filter(moderation_state='NM')
     post_list = []

@@ -1,1 +1,0 @@
-Run Solr with the parent directory of this file as the Solr home directory. Be sure to NOT include the data directory in the git repository!

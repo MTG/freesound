@@ -45,7 +45,7 @@ dvar2     The variance of the second derivative
 
 """
 
-curl_str = "    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/"
+curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 algorithm_doc_str = "http://essentia.upf.edu/documentation/reference/streaming_"

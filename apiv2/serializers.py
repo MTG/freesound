@@ -127,6 +127,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_name(self, obj):
         return obj.original_filename
 
+    created = serializers.SerializerMethodField()
+    def get_created(self, obj):
+        return obj.created.replace(microsecond=0)
+
     tags = serializers.SerializerMethodField()
     def get_tags(self, obj):
         try:
@@ -397,6 +401,10 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     def get_description(self, obj):
         return obj.description or ""
 
+    created = serializers.SerializerMethodField()
+    def get_created(self, obj):
+        return obj.created.replace(microsecond=0)
+
 ##################
 # BOOKMARK SERIALIZERS
 ##################
@@ -450,29 +458,7 @@ class CreateBookmarkSerializer(serializers.Serializer):
 # RATING SERIALIZERS
 ####################
 
-class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
-        model = Rating
-        fields = (#'user',
-                  'username',
-                  'rating',
-                  'created')
-
-    #user = serializers.SerializerMethodField()
-    #def get_user(self, obj):
-    #    return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
-
-    username = serializers.SerializerMethodField()
-    def get_username(self, obj):
-        return obj.user.username
-
-    rating = serializers.SerializerMethodField()
-    def get_rating(self, obj):
-        if (obj.rating % 2 == 1):
-            return float(obj.rating)/2
-        else:
-            return obj.rating/2
 
 
 class CreateRatingSerializer(serializers.Serializer):
@@ -503,6 +489,10 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
     username = serializers.SerializerMethodField()
     def get_username(self, obj):
         return obj.user.username
+
+    created = serializers.SerializerMethodField()
+    def get_created(self, obj):
+        return obj.created.replace(microsecond=0)
 
 
 class CreateCommentSerializer(serializers.Serializer):

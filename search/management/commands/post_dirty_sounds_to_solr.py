@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 # We need to know if the sound exists in solr so that besides deleting it (which could be accomplished
                 # by simply using delete_sound_from_solr), we know whether we have to change is_index_dirty state. If
                 # we do not change it, then we would try to delete the sound at every attempt.
-                delete_sound_from_solr(sound)
+                delete_sound_from_solr(sound.id)
                 n_deleted_sounds += 1
                 sound.is_index_dirty = False
                 sound.save()

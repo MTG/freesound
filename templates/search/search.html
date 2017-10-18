@@ -34,6 +34,11 @@
 
 
 <p id="filter_query_display">
+
+{% for filter in filter_query_split %}
+    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="remove this filter">{{ filter.name }}</a>
+{% endfor %}
+
 </p>
 
 <script type="text/javascript">
@@ -211,143 +216,64 @@
         $("#filter_query").val(cleaned);
     }
 
-    function addFilter(name, filter)
-    {
-        if (filter.search(" ") != -1)
-            filter = "\"" + filter.replace(/"/g,'\\\"') + "\""
-        var tag = name + ":" + filter;
 
-        if ($("#filter_query").val().search(tag) == -1)
-        {
-            var value = $("#filter_query").val();
-
-            if (value != "")
-                $("#filter_query").val(value + " " + tag);
-            else
-                $("#filter_query").val(tag);
-
-            $("#search_form").submit();
-        }
-        else
-        {
-            alert("You already added this filter");
-        }
-    }
-
-    function scan(value, pattern, callback)
-    {
-        $.each(value.match(pattern) || [], callback);
-    }
-
-    function update_filter_display()
-    {
-        var i = 0;
-
-        function add_filter(filter)
-        {
-            // prevent advanced options filters to appear in this line
-            filter_name = filter.split(":")[0]
-            if ((filter_name != "duration") && (filter_name != "is_geotagged"))
-            {
-                var filter_id = "filter_" + i++;
-                var display_filter = filter;
-                if (filter_name == "grouping_pack"){
-                    var filter_value = filter.slice(filter.indexOf(":"),filter.length)
-                    display_filter = "pack:" + filter_value.slice(filter_value.indexOf("_")+1,filter_value.length-1)
-                }
-
-                var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(display_filter);
-                element.click(function (event) {
-                    removeFilter(filter);
-                    element.remove();
-                    event.preventDefault();
-                    $("#search_form").submit();
-                });
-
-                $('#filter_query_display').append(element);
-            }
-        }
-
-        var value = $("#filter_query").val().replace(/\\\"/g,'---replace---');
-
-
-        scan(value, /[\w-]+:[\w-\.]+/g, function (index, filter) {
-            add_filter(filter);
-        });
-
-        scan(value, /[\w-]+:\"[^\"]+\"/g, function (index, filter) {
-            add_filter(filter.replace(/---replace---/g,'\\\"'));
-
-        });
-
-    }
-
-    update_filter_display();
-
-    function set_hidden_grouping_value(){
-        if ($("#grouping_geotagged").is(':checked')){
-            $("#grouping_geotagged_hidden").val("1")
-        }else{
-            $("#grouping_geotagged_hidden").val("")
-        }
-    }
 
 </script>
 
-{% if error %}
+{% if error_text %}
     <p>{{ error_text }}</p>
 {% else %}
-    {% if results %}
+    {% if facets %}
     <div id="sidebar" style="float:right">
-        {% if results.facets.license and results.facets.license|length > 1 %}
+        {% if facets.license and facets.license|length > 1 %}
             <h3>licenses</h3>
-            {% display_facet "license" results.facets.license "list" %}
+            {% display_facet "license" facets.license "list" %}
         {% endif %}
 
-        {% if results.facets.tag and results.facets.tag|length > 1 %}
+        {% if facets.tag and facets.tag|length > 1 %}
             <h3>tags</h3>
-            {% display_facet "tag" results.facets.tag "cloud" %}
+            {% display_facet "tag" facets.tag "cloud" %}
         {% endif %}
 
-        {% if results.facets.type and results.facets.type|length > 1 %}
+        {% if facets.type and facets.type|length > 1 %}
             <h3>type</h3>
-            {% display_facet "type" results.facets.type "list" %}
+            {% display_facet "type" facets.type "list" %}
         {% endif %}
 
-        {% if results.facets.samplerate and results.facets.samplerate|length > 1 %}
+        {% if facets.samplerate and facets.samplerate|length > 1 %}
             <h3>samplerate</h3>
-            {% display_facet "samplerate" results.facets.samplerate "list" %}
+            {% display_facet "samplerate" facets.samplerate "list" %}
         {% endif %}
 
-        {% if results.facets.bitdepth and results.facets.bitdepth|length > 1 %}
+        {% if facets.bitdepth and facets.bitdepth|length > 1 %}
             <h3>bitdepth</h3>
-            {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+            {% display_facet "bitdepth" facets.bitdepth "list" %}
         {% endif %}
 
-        {% if results.facets.bitrate and results.facets.bitrate|length > 1 %}
+        {% if facets.bitrate and facets.bitrate|length > 1 %}
             <h3>bitrate</h3>
-            {% display_facet "bitrate" results.facets.bitrate "list" %}
+            {% display_facet "bitrate" facets.bitrate "list" %}
         {% endif %}
 
 
-        {% if results.facets.channels and results.facets.channels|length > 1 %}
+        {% if facets.channels and facets.channels|length > 1 %}
             <h3>channels</h3>
-            {% display_facet "channels" results.facets.channels "list" %}
+            {% display_facet "channels" facets.channels "list" %}
         {% endif %}
 
-        {% if results.facets.grouping_pack and results.facets.grouping_pack|length > 1 %}
+        {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
             <h3>packs</h3>
-            {% display_facet "grouping_pack" results.facets.grouping_pack "list" %}
+            {% display_facet "grouping_pack" facets.grouping_pack "list" %}
         {% endif %}
 
-        {% if results.facets.username and results.facets.username|length > 1 %}
+        {% if facets.username and facets.username|length > 1 %}
             <h3>users</h3>
-            {% display_facet "username" results.facets.username "cloud" %}
+            {% display_facet "username" facets.username "cloud" %}
         {% endif %}
 
     </div>
 
-        {% if num_results > 0 %}
+        {% if paginator.count > 0 %}
             <div class="search_paginator">
                 {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
             </div>
@@ -356,7 +282,6 @@
                 {% display_raw_sound result.sound %}
 
                 {% if result.more_from_pack %}
-                        {% comment %}<div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='javascript:addFilter("pack", "{{result.pack_name|escapejs}}")'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>{% endcomment %}
                         <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>
                 {% endif %}
             {% endfor %}

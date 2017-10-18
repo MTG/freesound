@@ -29,7 +29,7 @@ register = template.Library()
 def flag_user(context, flag_type, username, content_id, text = None, user_sounds = None):
 
     no_show = False
-    link_text = "Report spam"
+    link_text = "Report spam/offensive"
 
     if not context['request'].user.is_authenticated:
         no_show = True
@@ -39,4 +39,4 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
         if text:
             link_text = text
 
-    return {'user_sounds':user_sounds,'done_text':"Marked as spam", 'flagged':len(flagged),'flag_type':flag_type,'username':username, 'content_obj_id':content_id, 'media_url': context['media_url'], 'link_text':link_text, 'no_show':no_show}
+    return {'user_sounds':user_sounds,'done_text':"Marked as spam/offensive", 'flagged':len(flagged),'flag_type':flag_type,'username':username, 'content_obj_id':content_id, 'media_url': context['media_url'], 'link_text':link_text, 'no_show':no_show}

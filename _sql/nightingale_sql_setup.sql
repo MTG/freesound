@@ -99,13 +99,13 @@ where d.pack_id = sounds_pack.id;
 update accounts_profile set has_old_license = (num_sounds > 0) ;
 	
 -- unqueness for downloads with null of either field
-CREATE UNIQUE INDEX sounds_download_user_pack_unique
+CREATE INDEX sounds_download_user_pack
     ON sounds_download
     USING btree
     (user_id, sound_id)
     WHERE pack_id IS NULL;
   
-CREATE UNIQUE INDEX sounds_download_user_sound_unique
+CREATE INDEX sounds_download_user_sound
     ON sounds_download
     USING btree
     (user_id, pack_id)

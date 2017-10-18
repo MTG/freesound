@@ -21,7 +21,7 @@
 #
 
 from django.contrib import admin
-from sounds.models import License, Sound, Pack, Flag, DeletedSound
+from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay
 
 
 class LicenseAdmin(admin.ModelAdmin):
@@ -62,3 +62,9 @@ class FlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
     list_display = ('reporting_user', 'email', 'reason_type')
 admin.site.register(Flag, FlagAdmin)
+
+
+class SoundOfTheDayAdmin(admin.ModelAdmin):
+    raw_id_fields = ('sound',)
+    list_display = ('date_display', 'sound', 'email_sent')
+admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)

@@ -22,10 +22,10 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse, resolve
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
@@ -43,10 +43,11 @@ from networkx import nx
 from freesound.render import render
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound
+from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundOfTheDay, SoundLicenseHistory
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
+from utils.search.search_general import get_random_sound_from_solr
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
@@ -69,31 +70,27 @@ import os
 logger = logging.getLogger('web')
 
 
-def get_random_sound():
+def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
     """
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
     if not random_sound:
-        random_sound = Sound.objects.random()
-        cache.set(cache_key, random_sound, 60*60*24)
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("email_random_sound", str(random_sound),
-                wait_until_complete=False, background=True)
+        try:
+            today = datetime.date.today()
+            now = datetime.datetime.now()
+            tomorrow = datetime.datetime(today.year, today.month, today.day)
+            time_until_tomorrow = tomorrow - now
+
+            rnd = SoundOfTheDay.objects.get(date_display=today)
+            random_sound = rnd.sound_id
+            # Set the cache to expire at midnight tomorrow, so that
+            # a new sound is chosen
+            cache.set(cache_key, random_sound, time_until_tomorrow.seconds)
+        except SoundOfTheDay.DoesNotExist:
+            return None
     return random_sound
-
-
-def get_random_uploader():
-    """
-    Returns random User object (among users that have uploaded at least one sound)
-    """
-    cache_key = "random_uploader"
-    random_uploader = cache.get(cache_key)
-    if not random_uploader:
-        random_uploader = Profile.objects.random_uploader()
-        cache.set(cache_key, random_uploader, 60*60*24)
-    return random_uploader
 
 
 def sounds(request):
@@ -107,7 +104,11 @@ def sounds(request):
             Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
     popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
-    random_sound = Sound.objects.bulk_query_id([get_random_sound()])[0]
+    random_sound_id = get_sound_of_the_day_id()
+    if random_sound_id:
+        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+    else:
+        random_sound = None
     tvars = {
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
@@ -126,11 +127,28 @@ def remixed(request):
 
 
 def random(request):
-    sound_id = Sound.objects.random()
-    if sound_id is None:
+    sound = get_random_sound_from_solr()
+    sound_obj = None
+    if sound:
+        try:
+            # There is a small edge case where a sound may have been marked
+            # as explicit and is selected here before the index is updated,
+            # but we expect this to happen rarely enough that it's not a problem
+            sound_obj = Sound.objects.get(id=sound['id'])
+        except Sound.DoesNotExist:
+            pass
+    if sound_obj is None:
+        # Only if solr is down - Won't happen very often, but Sound.objects.random
+        # will also restrict by sounds with at least 3 ratings  and an average
+        # rating of >6. Not important to change this for the rare case that we trigger this.
+        try:
+            sound_obj = Sound.objects.random()
+        except Sound.DoesNotExist:
+            pass
+    if sound_obj is None:
         raise Http404
-    sound_obj = Sound.objects.get(pk=sound_id)
-    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
+    return HttpResponseRedirect('{}?random_browsing=true'.format(
+        reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
 def packs(request):
@@ -171,7 +189,11 @@ def front_page(request):
                                                           'last_post__thread',
                                                           'last_post__thread__forum')
     latest_additions = Sound.objects.latest_additions(5, '2 days')
-    random_sound = get_random_sound()
+    random_sound_id = get_sound_of_the_day_id()
+    if random_sound_id:
+        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+    else:
+        random_sound = None
     tvars = {
         'rss_cache': rss_cache,
         'donations_cache': donations_cache,
@@ -284,7 +306,7 @@ def after_download_modal(request):
 
     return JsonResponse({'content': response_content})
 
-
+@transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
@@ -292,7 +314,8 @@ def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    Download.objects.get_or_create(user=request.user, sound=sound)
+    if not Download.objects.filter(user=request.user, sound=sound).exists():
+        Download.objects.create(user=request.user, sound=sound, license=sound.license)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
@@ -303,8 +326,8 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
-
-    Download.objects.get_or_create(user=request.user, pack=pack)
+    if not Download.objects.filter(user=request.user, pack=pack).exists():
+        Download.objects.create(user=request.user, pack=pack)
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
 
@@ -316,6 +339,7 @@ def pack_licenses(request, username, pack_id):
 
 
 @login_required
+@transaction.atomic()
 def sound_edit(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, processing_state='OK')
     if sound.user.username.lower() != username.lower():
@@ -432,10 +456,12 @@ def sound_edit(request, username, sound_id):
 
     license_form = NewLicenseForm(request.POST)
     if request.POST and license_form.is_valid():
-        sound.license = license_form.cleaned_data["license"]
-        sound.mark_index_dirty()
+        new_license = license_form.cleaned_data["license"]
+        if new_license != sound.license:
+            sound.set_license(new_license)
+        sound.mark_index_dirty()  # Sound is saved here
         if sound.pack:
-            sound.pack.process()  # Sound license changed, process pack (is sound has pack)
+            sound.pack.process()  # Sound license changed, process pack (if sound has pack)
         sound.invalidate_template_caches()
         update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
         return HttpResponseRedirect(sound.get_absolute_url())
@@ -738,6 +764,7 @@ def sound_short_link(request, sound_id):
     return redirect('sound', username=sound.user.username,
             sound_id=sound.id)
 
+
 def __redirect_old_link(request, cls, url_name):
     obj_id = request.GET.get('id', False)
     if obj_id:
@@ -749,35 +776,75 @@ def __redirect_old_link(request, cls, url_name):
     else:
         raise Http404
 
+
 def old_sound_link_redirect(request):
     return __redirect_old_link(request, Sound, "sound")
+
 
 def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
+
 def display_sound_wrapper(request, username, sound_id):
-    sound_obj = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
-    if sound_obj.user.username.lower() != username.lower():
-        raise Http404
-    sound_tags = []
+    sound_obj = get_object_or_404(Sound, id=sound_id, user__username__iexact=username)
+
+    # The following code is duplicated in sounds.tempaltetags.display_sound. This could be optimized.
+    is_explicit = False
     if sound_obj is not None:
-        sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
+        is_explicit = sound_obj.is_explicit and \
+                      (not request.user.is_authenticated or \
+                       not request.user.profile.is_adult)
     tvars = {
         'sound_id': sound_id,
         'sound': sound_obj,
-        'sound_tags': sound_tags,
-        'limit_description': False,
+        'sound_tags': sound_obj.get_sound_tags(12),
+        'sound_user': sound_obj.user.username,
+        'license_name': sound_obj.license.name,
+        'media_url': settings.MEDIA_URL,
+        'request': request,
+        'is_explicit': is_explicit
     }
     return render(request, 'sounds/display_sound.html', tvars)
 
 
 def embed_iframe(request, sound_id, player_size):
+    """
+    This view returns an HTML player of `sound_id` which can be embeded in external sites.
+    The player can take different "sizes" including:
+
+        - 'mini': shows just a play button and a loop button. No background image.
+          Eg: /embed/sound/iframe/1234/simple/mini/.
+        - 'small': shows a play button, a loop button and the name of the user and sound.
+          No background image. Eg: /embed/sound/iframe/1234/simple/small/.
+        - 'medium': shows the waveform image with playing controls plus the sound name, username, license and some tags.
+          Eg: /embed/sound/iframe/1234/simple/medium/.
+        - 'medium_no_info': shows the waveform and with playing controls.
+          Eg: /embed/sound/iframe/1234/simple/medium_no_info/.
+        - 'large': shows the waveform image in large size with playing controls plus the sound name, username and license.
+          Eg: /embed/sound/iframe/1234/simple/large/.
+        - 'large_no_info': shows the waveform image in large size with playing controls.
+          Eg: /embed/sound/iframe/1234/simple/large_no_info/.
+        - 'full_size': like 'large' but taking the full width (used in twitter embeds).
+          Eg: /embed/sound/iframe/1234/simple/full_size/.
+
+    The sizes 'medium', 'medium_no_info', 'large', 'large_no_info' and 'full_size' can optionally show the spectrogram
+    image instead of the waveform if being passed a request parameter 'spec=1' in the URL.
+    Eg: /embed/sound/iframe/1234/simple/large/?spec=1.
+
+    The sizes 'medium' and 'medium_no_info' can optionally show a button to toggle the background image between the
+    waveform and the spectrogram by passing the request parameter 'td=1'. Bigger sizes always show that button.
+    """
     if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size']:
         raise Http404
-    size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
-    username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
-    return render(request, 'sounds/sound_iframe.html', locals())
+    tvars = {
+        'sound': sound,
+        'username_and_filename': '%s - %s' % (sound.user.username, sound.original_filename),
+        'size': player_size,
+        'use_spectrogram': request.GET.get('spec', None) == '1',
+        'show_toggle_display_button': request.GET.get('td', None) == '1',
+    }
+    return render(request, 'sounds/sound_iframe.html', tvars)
 
 
 def oembed(request):

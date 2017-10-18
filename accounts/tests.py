@@ -19,7 +19,7 @@
 #
 
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, Client
 from django.test.utils import override_settings, skipIf
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import PasswordResetForm
@@ -28,10 +28,10 @@ from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.core import mail
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, SameUser
+from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm
-from sounds.models import License, Sound, Pack, DeletedSound
+from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
 from tags.models import Tag
@@ -54,6 +54,7 @@ class SimpleUserTest(TestCase):
     def setUp(self):
         self.user = User.objects.all()[0]
         self.sound = Sound.objects.all()[0]
+        SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
 
     def test_account_response_ok(self):
         # 200 response on account access
@@ -159,11 +160,6 @@ class SimpleUserTest(TestCase):
         # 200 response on comments page access
         resp = self.client.get(reverse('comments'))
         self.assertEqual(resp.status_code, 200)
-
-    def test_random_sound_response_ok(self):
-        # 302 response on random sound access
-        resp = self.client.get(reverse('sounds-random'))
-        self.assertEqual(resp.status_code, 302)
 
     def test_remixed_response_ok(self):
         # 200 response on remixed sounds page access
@@ -396,6 +392,8 @@ class ProfileGetUserTags(TestCase):
 
 
 class UserEditProfile(TestCase):
+
+    fixtures = ['email_preference_type']
 
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_image(self):
@@ -647,11 +645,14 @@ class UserDelete(TestCase):
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), True)
         self.assertEqual(Sound.objects.filter(user__id=user.id)[0].is_index_dirty, True)
 
-    def test_user_delete_remove_sounds(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_user_delete_remove_sounds(self, delete_sound_solr):
         # This should set user's attribute deleted_user to True and anonymize it,
         # also should remove users Sounds and Packs, and create DeletedSound
         # objects
         user = self.create_user_and_content()
+        user_sounds = Sound.objects.filter(user=user)
+        user_sound_ids = [s.id for s in user_sounds]
         user.profile.delete_user(remove_sounds=True)
         self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
         self.assertEqual(user.username, "deleted_user_%s" % user.id)
@@ -667,6 +668,9 @@ class UserDelete(TestCase):
         self.assertEqual(Pack.objects.filter(user__id=user.id).all()[0].is_deleted, True)
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
         self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
+
+        calls = [mock.call(i) for i in user_sound_ids]
+        delete_sound_solr.assert_has_calls(calls, any_order=True)
 
 
 class UserEmailsUniqueTestCase(TestCase):
@@ -850,11 +854,107 @@ class PasswordReset(TestCase):
         self.assertEqual(list(fs_users)[0].get_username(), user.get_username())
 
     @override_settings(SITE_ID=2)
-    def test_reset_view(self):
+    def test_reset_view_with_email(self):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"email": "testuser@freesound.org"})
+        self.client.post(reverse("password_reset"), {"email_or_username": "testuser@freesound.org"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
+
+    @override_settings(SITE_ID=2)
+    def test_reset_view_with_username(self):
+        """Check that the reset password view calls our form"""
+        Site.objects.create(id=2, domain="freesound.org", name="Freesound")
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        self.client.post(reverse("password_reset"), {"email_or_username": "testuser"})
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
+
+
+class EmailResetTestCase(TestCase):
+    def test_reset_email_form(self):
+        """ Check that reset email with the right parameters """
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        user.set_password('12345')
+        user.save()
+        a = self.client.login(username=user.username, password='12345')
+        resp = self.client.post(reverse('accounts-email-reset'), {
+            'email': u'new_email@freesound.org',
+            'password': '12345',
+        })
+        self.assertRedirects(resp, reverse('accounts-email-reset-done'))
+        self.assertEqual(ResetEmailRequest.objects.filter(user=user, email="new_email@freesound.org").count(), 1)
+
+    def test_reset_email_form_existing_email(self):
+        """ Check that reset email with an existing email address """
+        user = User.objects.create_user("new_user", email="new_email@freesound.org")
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        user.set_password('12345')
+        user.save()
+        a = self.client.login(username=user.username, password='12345')
+        resp = self.client.post(reverse('accounts-email-reset'), {
+            'email': u'new_email@freesound.org',
+            'password': '12345',
+        })
+        self.assertRedirects(resp, reverse('accounts-email-reset-done'))
+        self.assertEqual(ResetEmailRequest.objects.filter(user=user, email="new_email@freesound.org").count(), 0)
+
+
+class ReSendActivationTestCase(TestCase):
+    def test_resend_activation_code_from_email(self):
+        """
+        Check that resend activation code doesn't return an error with post request (use email to identify user)
+        """
+        user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
+        resp = self.client.post(reverse('accounts-resend-activation'), {
+            'user': u'testuser@freesound.org',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check email was sent
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] activation link.')
+
+        resp = self.client.post(reverse('accounts-resend-activation'), {
+            'user': u'new_email@freesound.org',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
+
+    def test_resend_activation_code_from_username(self):
+        """
+        Check that resend activation code doesn't return an error with post request (use username to identify user)
+        """
+        user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
+        resp = self.client.post(reverse('accounts-resend-activation'), {
+            'user': u'testuser',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check email was sent
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] activation link.')
+
+        resp = self.client.post(reverse('accounts-resend-activation'), {
+            'user': u'testuser_does_not_exist',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
+
+
+class UsernameReminderTestCase(TestCase):
+    def test_username_reminder(self):
+        """ Check that send username reminder doesn't return an error with post request """
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        resp = self.client.post(reverse('accounts-username-reminder'), {
+            'user': u'testuser@freesound.org',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check email was sent
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] username reminder.')
+
+        resp = self.client.post(reverse('accounts-username-reminder'), {
+            'user': u'new_email@freesound.org',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
+

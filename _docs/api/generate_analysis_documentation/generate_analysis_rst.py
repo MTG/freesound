@@ -45,14 +45,14 @@ dvar2     The variance of the second derivative
 
 """
 
-curl_str = "    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/"
+curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 algorithm_doc_str = "http://essentia.upf.edu/documentation/reference/streaming_"
 sorted_namespaces = ["metadata","lowlevel","rhythm","tonal","sfx"]
 desc_exceptions = ["metadata.audio_properties","metadata.version","rhythm.onset_rate"]
 
-example_url = "http://freesound.org/api/sounds/1234/analysis/?api_key=53b80e4d8a674ccaa80b780372103680&all=True"
+example_url = "https://freesound.org/api/sounds/1234/analysis/?api_key=53b80e4d8a674ccaa80b780372103680&all=True"
 
 req = urllib2.Request(example_url)
 resp = urllib2.urlopen(req)

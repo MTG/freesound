@@ -237,13 +237,13 @@ class Profile(SocialModel):
             reference_date = self.user.post_set.all()[0].created
 
             # Do not allow posts if last post is not older than 5 minutes
-            seconds_per_post = 60*5
+            seconds_per_post = settings.LAST_FORUM_POST_MINIMUM_TIME
             if (today - self.user.post_set.all().reverse()[0].created).seconds < seconds_per_post:
                 return False, "We're sorry but you can't post to the forum because your last post was less than 5 " \
                               "minutes ago"
 
             # Do not allow posts if user has already posyted N posts that day
-            max_posts_per_day = 5 + pow((today - reference_date).days,2)
+            max_posts_per_day = settings.BASE_MAX_POSTS_PER_DAY + pow((today - reference_date).days, 2)
             if self.user.post_set.filter(created__range=(today-datetime.timedelta(days=1), today)).count() > \
                     max_posts_per_day:
                 return False, "We're sorry but you can't post to the forum because you exceeded your maximum number " \
@@ -405,6 +405,7 @@ class EmailPreferenceType(models.Model):
 
     def __unicode__(self):
         return self.display_name
+
 
 class UserEmailSetting(models.Model):
     user = models.ForeignKey(User, related_name="email_settings")

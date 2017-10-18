@@ -78,7 +78,7 @@ def ticket(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
-    ticket = get_object_or_404(Ticket, key=ticket_key)
+    ticket = get_object_or_404(Ticket.objects.select_related('sound__license', 'sound__user'), key=ticket_key)
 
     if request.method == 'POST':
 
@@ -348,6 +348,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
 
 
 @permission_required('tickets.can_moderate')
+@transaction.atomic()
 def moderation_assigned(request, user_id):
 
     clear_forms = True
@@ -400,6 +401,10 @@ def moderation_assigned(request, user_id):
                     if ticket.sound.pack:
                         packs_to_update.add(ticket.sound.pack)
                 Sound.objects.filter(ticket__in=tickets).delete()
+                # After we delete sounds that these tickets are associated with,
+                # we refresh the ticket list so that sound_id is null and this does
+                # not affect the TicketComment post_save trigger
+                tickets = Ticket.objects.filter(id__in=ticket_ids)
                 notification = Ticket.NOTIFICATION_DELETED
 
             elif action == "Whitelist":

@@ -2,7 +2,7 @@ import sys
 import urllib
 sys.path.append("../../apiv2")
 from examples import examples
-base_url = 'http://www.freesound.org/'
+base_url = 'https://freesound.org/'
 
 def get_formatted_examples_for_view(view_name):
     try:

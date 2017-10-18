@@ -47,7 +47,7 @@ metadata.version
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/metadata/version
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/metadata/version
 
 
 Lowlevel Descriptors
@@ -59,7 +59,7 @@ lowlevel.spectral_complexity
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_complexity
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_complexity
 
 **Essentia Algorithm**
 
@@ -91,7 +91,7 @@ lowlevel.silence_rate_20dB
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_20dB
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_20dB
 
 **Essentia Algorithm**
 
@@ -123,7 +123,7 @@ lowlevel.erb_bands
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/erb_bands
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/erb_bands
 
 **Essentia Algorithm**
 
@@ -189,7 +189,7 @@ lowlevel.average_loudness
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/average_loudness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/average_loudness
 
 **Essentia Algorithm**
 
@@ -204,7 +204,7 @@ lowlevel.spectral_rms
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rms
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rms
 
 **Essentia Algorithm**
 
@@ -236,7 +236,7 @@ lowlevel.spectral_kurtosis
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_kurtosis
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_kurtosis
 
 **Essentia Algorithm**
 
@@ -268,7 +268,7 @@ lowlevel.barkbands_kurtosis
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_kurtosis
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_kurtosis
 
 **Essentia Algorithm**
 
@@ -298,7 +298,7 @@ lowlevel.scvalleys
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/scvalleys
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/scvalleys
 
 **Essentia Algorithm**
 
@@ -340,7 +340,7 @@ lowlevel.spectral_spread
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_spread
 
 **Essentia Algorithm**
 
@@ -372,7 +372,7 @@ lowlevel.pitch
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch
 
 **Essentia Algorithm**
 
@@ -404,7 +404,7 @@ lowlevel.dissonance
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/dissonance
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/dissonance
 
 **Essentia Algorithm**
 
@@ -436,7 +436,7 @@ lowlevel.spectral_energyband_high
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_high
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_high
 
 **Essentia Algorithm**
 
@@ -468,7 +468,7 @@ lowlevel.gfcc
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/gfcc
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/gfcc
 
 **Essentia Algorithm**
 
@@ -524,7 +524,7 @@ lowlevel.spectral_flux
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flux
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flux
 
 **Essentia Algorithm**
 
@@ -556,7 +556,7 @@ lowlevel.silence_rate_30dB
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_30dB
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_30dB
 
 **Essentia Algorithm**
 
@@ -588,7 +588,7 @@ lowlevel.spectral_contrast
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_contrast
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_contrast
 
 **Essentia Algorithm**
 
@@ -630,7 +630,7 @@ lowlevel.spectral_energyband_middle_high
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_high
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_high
 
 **Essentia Algorithm**
 
@@ -662,7 +662,7 @@ lowlevel.barkbands_spread
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_spread
 
 **Essentia Algorithm**
 
@@ -694,7 +694,7 @@ lowlevel.spectral_centroid
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_centroid
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_centroid
 
 **Essentia Algorithm**
 
@@ -726,7 +726,7 @@ lowlevel.pitch_salience
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_salience
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_salience
 
 **Essentia Algorithm**
 
@@ -758,7 +758,7 @@ lowlevel.silence_rate_60dB
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_60dB
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_60dB
 
 **Essentia Algorithm**
 
@@ -790,7 +790,7 @@ lowlevel.spectral_entropy
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_entropy
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_entropy
 
 **Essentia Algorithm**
 
@@ -822,7 +822,7 @@ lowlevel.spectral_rolloff
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rolloff
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rolloff
 
 **Essentia Algorithm**
 
@@ -854,7 +854,7 @@ lowlevel.barkbands
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands
 
 **Essentia Algorithm**
 
@@ -938,7 +938,7 @@ lowlevel.spectral_energyband_low
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_low
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_low
 
 **Essentia Algorithm**
 
@@ -970,7 +970,7 @@ lowlevel.barkbands_skewness
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_skewness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_skewness
 
 **Essentia Algorithm**
 
@@ -1002,7 +1002,7 @@ lowlevel.pitch_instantaneous_confidence
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_instantaneous_confidence
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_instantaneous_confidence
 
 **Essentia Algorithm**
 
@@ -1034,7 +1034,7 @@ lowlevel.spectral_energyband_middle_low
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_low
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_low
 
 **Essentia Algorithm**
 
@@ -1066,7 +1066,7 @@ lowlevel.spectral_strongpeak
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_strongpeak
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_strongpeak
 
 **Essentia Algorithm**
 
@@ -1098,7 +1098,7 @@ lowlevel.startFrame
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/startFrame
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/startFrame
 
 **Essentia Algorithm**
 
@@ -1113,7 +1113,7 @@ lowlevel.spectral_decrease
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_decrease
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_decrease
 
 **Essentia Algorithm**
 
@@ -1142,7 +1142,7 @@ lowlevel.stopFrame
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/stopFrame
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/stopFrame
 
 **Essentia Algorithm**
 
@@ -1157,7 +1157,7 @@ lowlevel.mfcc
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/mfcc
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/mfcc
 
 **Essentia Algorithm**
 
@@ -1213,7 +1213,7 @@ lowlevel.spectral_energy
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energy
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energy
 
 **Essentia Algorithm**
 
@@ -1245,7 +1245,7 @@ lowlevel.spectral_flatness_db
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flatness_db
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flatness_db
 
 **Essentia Algorithm**
 
@@ -1277,7 +1277,7 @@ lowlevel.frequency_bands
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/frequency_bands
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/frequency_bands
 
 **Essentia Algorithm**
 
@@ -1363,7 +1363,7 @@ lowlevel.zerocrossingrate
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/zerocrossingrate
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/zerocrossingrate
 
 **Essentia Algorithm**
 
@@ -1395,7 +1395,7 @@ lowlevel.spectral_skewness
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_skewness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_skewness
 
 **Essentia Algorithm**
 
@@ -1427,7 +1427,7 @@ lowlevel.hfc
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/hfc
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/hfc
 
 **Essentia Algorithm**
 
@@ -1459,7 +1459,7 @@ lowlevel.spectral_crest
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_crest
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_crest
 
 **Essentia Algorithm**
 
@@ -1495,7 +1495,7 @@ rhythm.first_peak_bpm
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_bpm
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_bpm
 
 **Essentia Algorithm**
 
@@ -1522,7 +1522,7 @@ rhythm.onset_times
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_times
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_times
 
 **Essentia Algorithm**
 
@@ -1535,7 +1535,7 @@ rhythm.beats_count
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_count
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_count
 
 **Essentia Algorithm**
 
@@ -1550,7 +1550,7 @@ rhythm.beats_loudness
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness
 
 **Essentia Algorithm**
 
@@ -1582,7 +1582,7 @@ rhythm.first_peak_spread
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_spread
 
 **Essentia Algorithm**
 
@@ -1609,7 +1609,7 @@ rhythm.second_peak_weight
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_weight
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_weight
 
 **Essentia Algorithm**
 
@@ -1636,7 +1636,7 @@ rhythm.bpm
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm
 
 **Essentia Algorithm**
 
@@ -1651,7 +1651,7 @@ rhythm.bpm_intervals
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm_intervals
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm_intervals
 
 **Essentia Algorithm**
 
@@ -1664,7 +1664,7 @@ rhythm.onset_count
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_count
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_count
 
 **Essentia Algorithm**
 
@@ -1679,7 +1679,7 @@ rhythm.second_peak_spread
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_spread
 
 **Essentia Algorithm**
 
@@ -1706,7 +1706,7 @@ rhythm.beats_loudness_band_ratio
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness_band_ratio
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness_band_ratio
 
 **Essentia Algorithm**
 
@@ -1748,7 +1748,7 @@ rhythm.second_peak_bpm
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_bpm
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_bpm
 
 **Essentia Algorithm**
 
@@ -1775,7 +1775,7 @@ rhythm.onset_rate
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_rate
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_rate
 
 **Essentia Algorithm**
 
@@ -1787,7 +1787,7 @@ rhythm.beats_position
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_position
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_position
 
 **Essentia Algorithm**
 
@@ -1800,7 +1800,7 @@ rhythm.first_peak_weight
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_weight
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_weight
 
 **Essentia Algorithm**
 
@@ -1831,7 +1831,7 @@ tonal.hpcp_entropy
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_entropy
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_entropy
 
 **Essentia Algorithm**
 
@@ -1863,7 +1863,7 @@ tonal.chords_scale
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_scale
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_scale
 
 **Essentia Algorithm**
 
@@ -1876,7 +1876,7 @@ tonal.chords_number_rate
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_number_rate
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_number_rate
 
 **Essentia Algorithm**
 
@@ -1891,7 +1891,7 @@ tonal.key_strength
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/key_strength
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/key_strength
 
 **Essentia Algorithm**
 
@@ -1906,7 +1906,7 @@ tonal.chords_progression
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_progression
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_progression
 
 **Essentia Algorithm**
 
@@ -1919,7 +1919,7 @@ tonal.key_scale
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/key_scale
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/key_scale
 
 **Essentia Algorithm**
 
@@ -1932,7 +1932,7 @@ tonal.chords_strength
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_strength
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_strength
 
 **Essentia Algorithm**
 
@@ -1964,7 +1964,7 @@ tonal.key_key
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/key_key
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/key_key
 
 **Essentia Algorithm**
 
@@ -1977,7 +1977,7 @@ tonal.chords_changes_rate
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_changes_rate
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_changes_rate
 
 **Essentia Algorithm**
 
@@ -1992,7 +1992,7 @@ tonal.chords_count
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_count
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_count
 
 **Essentia Algorithm**
 
@@ -2007,7 +2007,7 @@ tonal.hpcp_crest
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_crest
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_crest
 
 **Essentia Algorithm**
 
@@ -2039,7 +2039,7 @@ tonal.chords_histogram
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_histogram
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_histogram
 
 **Essentia Algorithm**
 
@@ -2052,7 +2052,7 @@ tonal.chords_key
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_key
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_key
 
 **Essentia Algorithm**
 
@@ -2065,7 +2065,7 @@ tonal.tuning_frequency
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/tuning_frequency
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/tuning_frequency
 
 **Essentia Algorithm**
 
@@ -2097,7 +2097,7 @@ tonal.hpcp_peak_count
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_peak_count
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_peak_count
 
 **Essentia Algorithm**
 
@@ -2112,7 +2112,7 @@ tonal.hpcp
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp
 
 **Essentia Algorithm**
 
@@ -2218,7 +2218,7 @@ sfx.temporal_decrease
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_decrease
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_decrease
 
 **Essentia Algorithm**
 
@@ -2245,7 +2245,7 @@ sfx.inharmonicity
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/inharmonicity
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/inharmonicity
 
 **Essentia Algorithm**
 
@@ -2277,7 +2277,7 @@ sfx.pitch_min_to_total
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
 
 **Essentia Algorithm**
 
@@ -2292,7 +2292,7 @@ sfx.tc_to_total
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/tc_to_total
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/tc_to_total
 
 **Essentia Algorithm**
 
@@ -2307,7 +2307,7 @@ sfx.der_av_after_max
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/der_av_after_max
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/der_av_after_max
 
 **Essentia Algorithm**
 
@@ -2334,7 +2334,7 @@ sfx.pitch_max_to_total
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_max_to_total
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_max_to_total
 
 **Essentia Algorithm**
 
@@ -2349,7 +2349,7 @@ sfx.temporal_spread
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_spread
 
 **Essentia Algorithm**
 
@@ -2376,7 +2376,7 @@ sfx.temporal_kurtosis
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_kurtosis
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_kurtosis
 
 **Essentia Algorithm**
 
@@ -2403,7 +2403,7 @@ sfx.logattacktime
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/logattacktime
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/logattacktime
 
 **Essentia Algorithm**
 
@@ -2430,7 +2430,7 @@ sfx.temporal_centroid
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_centroid
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_centroid
 
 **Essentia Algorithm**
 
@@ -2457,7 +2457,7 @@ sfx.tristimulus
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/tristimulus
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/tristimulus
 
 **Essentia Algorithm**
 
@@ -2493,7 +2493,7 @@ sfx.max_der_before_max
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/max_der_before_max
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/max_der_before_max
 
 **Essentia Algorithm**
 
@@ -2520,7 +2520,7 @@ sfx.strongdecay
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/strongdecay
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/strongdecay
 
 **Essentia Algorithm**
 
@@ -2535,7 +2535,7 @@ sfx.pitch_centroid
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
 
 **Essentia Algorithm**
 
@@ -2562,7 +2562,7 @@ sfx.duration
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/duration
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/duration
 
 **Essentia Algorithm**
 
@@ -2577,7 +2577,7 @@ sfx.temporal_skewness
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_skewness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_skewness
 
 **Essentia Algorithm**
 
@@ -2604,7 +2604,7 @@ sfx.effective_duration
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/effective_duration
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/effective_duration
 
 **Essentia Algorithm**
 
@@ -2631,7 +2631,7 @@ sfx.max_to_total
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/max_to_total
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/max_to_total
 
 **Essentia Algorithm**
 
@@ -2646,7 +2646,7 @@ sfx.oddtoevenharmonicenergyratio
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/oddtoevenharmonicenergyratio
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/oddtoevenharmonicenergyratio
 
 **Essentia Algorithm**
 
@@ -2675,7 +2675,7 @@ sfx.pitch_after_max_to_before_max_energy_ratio
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_after_max_to_before_max_energy_ratio
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_after_max_to_before_max_energy_ratio
 
 **Essentia Algorithm**
 

@@ -49,7 +49,8 @@ class NewThreadForm(forms.Form):
 
 MODERATION_CHOICES = [(x,x) for x in\
     ['Approve',
-     'Delete User']]
+     'Delete User',
+     'Delete Post']]
 
 class PostModerationForm(forms.Form):
     action      = forms.ChoiceField(choices=MODERATION_CHOICES,

@@ -184,6 +184,11 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
 
+# Forum restrictions
+LAST_FORUM_POST_MINIMUM_TIME = 60*5
+BASE_MAX_POSTS_PER_DAY = 5
+
+
 # Random Sound of the day settings
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30

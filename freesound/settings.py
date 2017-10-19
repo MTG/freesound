@@ -314,8 +314,8 @@ STRIPE_PRIVATE_KEY = ""
 # Frontend preference handling
 FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
 FRONTEND_SESSION_PARAM_NAME = 'frontend'
-FRONTEND_NIGHTINGALE = 'ng'
-FRONTEND_VACUUMCLEANER = 'vc'
+FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
+FRONTEND_BEASTWHOOSH = 'vw'  # https://freesound.org/people/martian/sounds/403973/
 
 
 TEMPLATES = [
@@ -359,7 +359,7 @@ TEMPLATES = [
                 'freesound.context_processor.context_extra',
             ],
         },
-        'NAME': FRONTEND_VACUUMCLEANER,
+        'NAME': FRONTEND_BEASTWHOOSH,
     },
 
 ]

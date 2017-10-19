@@ -72,7 +72,7 @@ class BulkChangeLicenseHandler(object):
         return response
 
 
-class NewTemplatesHandler(object):
+class FrontendPreferenceHandler(object):
     def __init__(self, get_response):
         self.get_response = get_response
 

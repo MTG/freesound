@@ -19,7 +19,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
-    'freesound.middleware.NewTemplatesHandler',
+    'freesound.middleware.FrontendPreferenceHandler',
 ]
 
 INSTALLED_APPS = [

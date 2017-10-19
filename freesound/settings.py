@@ -311,9 +311,12 @@ LOG_START_AND_END_COPYING_FILES = True
 STRIPE_PUBLIC_KEY = ""
 STRIPE_PRIVATE_KEY = ""
 
+# Frontend preference handling
+FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
+FRONTEND_SESSION_PARAM_NAME = 'frontend'
+FRONTEND_NIGHTINGALE = 'ng'
+FRONTEND_VACUUMCLEANER = 'vc'
 
-# leave at bottom starting here!
-from local_settings import *
 
 TEMPLATES = [
     {
@@ -335,15 +338,15 @@ TEMPLATES = [
                 'freesound.context_processor.context_extra',
             ],
         },
-        'NAME': 'old_frontend',
+        'NAME': FRONTEND_NIGHTINGALE,
     },
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             os.path.join(os.path.dirname(__file__), '../templates2')
         ],
+        'APP_DIRS': True,
         'OPTIONS': {
-            'loaders': CONF_TEMPLATE_LOADERS,
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
@@ -356,7 +359,7 @@ TEMPLATES = [
                 'freesound.context_processor.context_extra',
             ],
         },
-        'NAME': 'new_frontend',
+        'NAME': FRONTEND_VACUUMCLEANER,
     },
 
 ]
@@ -412,4 +415,6 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.SHA1PasswordHasher',
 ]
 
+# leave at bottom starting here!
+from local_settings import *
 from logger import LOGGING

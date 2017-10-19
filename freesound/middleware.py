@@ -81,8 +81,9 @@ class FrontendPreferenceHandler(object):
         This middleware sets a session variable when the parameter 'new_frontend' is received.
         The 'render' method will use this session variable to display the new/old frontend
         """
-        if request.GET.get('new_frontend', None):
-            request.session['new_frontend'] = request.GET.get('new_frontend')
+        if request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME, None):
+            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = \
+                request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
         response = self.get_response(request)
         return response
 

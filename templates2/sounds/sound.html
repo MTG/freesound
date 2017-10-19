@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}{{ sound.original_filename }}{% endblock title %}
+
+{% block content %}
+    <h1>{{ sound.user.username }} - {{ sound.original_filename }}</h1>
+    <p>
+        {{ sound.description }}
+    </p>
+{% endblock %}

@@ -315,8 +315,9 @@ STRIPE_PRIVATE_KEY = ""
 FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
 FRONTEND_SESSION_PARAM_NAME = 'frontend'
 FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
-FRONTEND_BEASTWHOOSH = 'vw'  # https://freesound.org/people/martian/sounds/403973/
-
+FRONTEND_BEASTWHOOSH = 'bw'  # https://freesound.org/people/martian/sounds/403973/
+AVAILABLE_FRONTENDS = [FRONTEND_NIGHTINGALE, FRONTEND_BEASTWHOOSH]
+FRONTEND_DEFAULT = FRONTEND_NIGHTINGALE
 
 TEMPLATES = [
     {

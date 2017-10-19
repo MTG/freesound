@@ -316,7 +316,6 @@ FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
 FRONTEND_SESSION_PARAM_NAME = 'frontend'
 FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
 FRONTEND_BEASTWHOOSH = 'bw'  # https://freesound.org/people/martian/sounds/403973/
-AVAILABLE_FRONTENDS = [FRONTEND_NIGHTINGALE, FRONTEND_BEASTWHOOSH]
 FRONTEND_DEFAULT = FRONTEND_NIGHTINGALE
 
 TEMPLATES = [
@@ -344,7 +343,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates2')
+            os.path.join(os.path.dirname(__file__), '../templates2'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {

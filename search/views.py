@@ -90,6 +90,7 @@ def search_prepare_query(search_query,
     if include_facets:
         query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
         query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
+        query.set_facet_options("type", limit=10)
         query.set_facet_options("tag", limit=30)
         query.set_facet_options("username", limit=30)
         query.set_facet_options("grouping_pack", limit=10)

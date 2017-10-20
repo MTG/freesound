@@ -152,8 +152,10 @@ MEDIA_URL = "/media/"
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 ADMIN_MEDIA_PREFIX = '/media/admin_media/'
+
+# Static files
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), '../freesound/build')]
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), '../static/dist/')]
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
@@ -317,7 +319,6 @@ FRONTEND_SESSION_PARAM_NAME = 'frontend'
 FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
 FRONTEND_BEASTWHOOSH = 'bw'  # https://freesound.org/people/martian/sounds/403973/
 FRONTEND_DEFAULT = FRONTEND_NIGHTINGALE
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -364,10 +365,38 @@ TEMPLATES = [
 
 ]
 
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
+# settings were loaded). We add this variable to the context processor and use it in base.html as a
+# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
+# files when we do a deploy (the url changes)
+LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
+
+# Followers notifications
+MAX_EMAILS_PER_COMMAND_RUN = 1000
+NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+]
+
+# Place settings which depend on other settings potentially modified in local_settings.py BELOW the
+# local settings import
+from local_settings import *
+
+
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
+
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
@@ -393,28 +422,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'INTERCEPT_REDIRECTS': False,
     }
 
-MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+# For using static files served by a javascript webpack server
+USE_JS_DEVELOPMENT_SERVER = DEBUG
 
-
-# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
-# settings were loaded). We add this variable to the context processor and use it in base.html as a
-# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
-# files when we do a deploy (the url changes)
-LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
-
-# Followers notifications
-MAX_EMAILS_PER_COMMAND_RUN = 1000
-NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
-
-PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
-    'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
-]
-
-# leave at bottom starting here!
-from local_settings import *
 from logger import LOGGING

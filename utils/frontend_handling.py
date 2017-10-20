@@ -89,13 +89,13 @@ def using_nightingale(request):
     return using_frontend(request, settings.FRONTEND_NIGHTINGALE)
 
 
-def redirect_if_beastwhoosh(redirect_to_view):
+def defer_if_beastwhoosh(redirect_to_view):
     """
     Util decorator to be used in views which, when using Beast Whoosh frontend, should redirect to other views.
     If there are pages in which the 2 front-end require the use of 2 completely different views, this decorator
     can be used to point to the specific Beast Whoosh view. Use it as:
 
-    @redirect_if_beastwhoosh(new_view_func)
+    @defer_if_beastwhoosh(new_view_func)
     def old_view(request):
         ...
     """
@@ -109,7 +109,7 @@ def redirect_if_beastwhoosh(redirect_to_view):
     return decorator
 
 
-def http_redirect_if_beastwhoosh(redirect_url_name, kwarg_keys=None, query_string=''):
+def redirect_if_beastwhoosh(redirect_url_name, kwarg_keys=None, query_string=''):
     """
     Util decorator to be used in view which, when using Beast Whoosh frontend, should return an HTTP redirect to
     a new URL. A typical use case for this is two views whose functionality has been merged into a single one, or
@@ -122,17 +122,17 @@ def http_redirect_if_beastwhoosh(redirect_url_name, kwarg_keys=None, query_strin
 
     Usage examples:
 
-    @http_redirect_if_beastwhoosh('front-page')
+    @redirect_if_beastwhoosh('front-page')
     def view(request, ...):
         ...
     > This will simply redirect to the front page (i.e. '/')
 
-    @http_redirect_if_beastwhoosh('front-page', query_string='param=value&param2=value2')
+    @redirect_if_beastwhoosh('front-page', query_string='param=value&param2=value2')
     def view(request, ...):
         ...
     > This will redirect to the front page with the passed query string (i.e. '/?param=value&param2=value2'
 
-    @http_redirect_if_beastwhoosh('sound', kwarg_keys=['username', 'sound_id'], query_string='edit=1')
+    @redirect_if_beastwhoosh('sound', kwarg_keys=['username', 'sound_id'], query_string='edit=1')
     def sound_edit(request, username, sound_id):
         ...
     > This will redirect to the 'sound' URL passing as arguments 'username' and 'sound_id', and adding the query

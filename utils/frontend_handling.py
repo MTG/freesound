@@ -1,6 +1,6 @@
-from django.template import TemplateDoesNotExist
 from django.conf import settings
 from django.shortcuts import render as django_render
+from django.template import TemplateDoesNotExist
 
 
 def render(request, template_name, context=None, content_type=None, status=None, using=None):

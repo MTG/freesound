@@ -18,7 +18,10 @@
         $(document).ready(function() {
             display_errors();
             for (var i=1; i<={{ sounds_per_round }}; i++){
-                $('#sound-accordion-sound-'+i).hide();
+                var soundAccordion = $('#sound-accordion-sound-header-'+i);
+                if (soundAccordion.hasClass('sound-accordion-sound-alternate-header-errors') == false){
+                  $('#sound-accordion-sound-'+i).hide();
+                }
 
                 unsecureImageCheck($('#id_' + parseInt(i - 1, 10) + '-description'));
             }

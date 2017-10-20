@@ -27,7 +27,7 @@ const config = {
     ]),
   },
   output: {
-    filename: 'js/[name].js',
+    filename: 'dist/js/[name].js',
   },
   plugins: getPlugins([
     new webpack.DefinePlugin({

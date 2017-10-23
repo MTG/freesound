@@ -3042,7 +3042,7 @@ use classes from pack edition
 #describe_form .sound-accordion-sound-alternate-header {
     display: block;
     border: solid 1px #ccc;
-    padding: 15px;
+    padding: 15px 0 15px 35px;
     background: #eee;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
@@ -3051,6 +3051,11 @@ use classes from pack edition
     color:#2C74C9;
     margin-top: 0;
     cursor: pointer;
+}
+
+#describe_form .sound-accordion-sound-alternate-header:hover {
+    color: #19507E;
+    text-decoration: underline;
 }
 
 #describe_form .sound-accordion-sound-alternate-header-errors {
@@ -3064,6 +3069,20 @@ use classes from pack edition
     margin-bottom: 5px;
     color:#ffffff;
     cursor: pointer;
+}
+
+.sound-accordion-sound-alternate-header:before{
+    content: '';
+    background:url(/media/images/arrow-display.svg);
+    background-size:cover;
+    position:absolute;
+    width:20px;
+    height:20px;
+    margin-left:-25px;
+}
+.sound-accordion-sound-alternate-header.expanded:before{
+    background:url(/media/images/arrow.svg);
+    background-size: cover;
 }
 
 .errortag_message {

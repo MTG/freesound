@@ -82,10 +82,13 @@
 
         function toggleSound(n) {
             var sound_accordion_element = $('#sound-accordion-sound-'+n)
+            var sound_accordion_element_header = $('#sound-accordion-sound-header-'+n)
             if (sound_accordion_element.is(':visible')) {
                 sound_accordion_element.hide('fast');
+                sound_accordion_element_header.removeClass('expanded');
             } else {
                 sound_accordion_element.show('fast');
+                sound_accordion_element_header.addClass('expanded');
                 if ($("#id_" + parseInt(n-1,10) + "-zoom").val()){
                     if (!maps[n]){
                         init_map(n);

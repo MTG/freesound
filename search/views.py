@@ -314,9 +314,8 @@ def search_forum(request):
     date_from = request.GET.get("dt_from", "")
     date_to = request.GET.get("dt_to", "")
 
-    invalid = False
-    if "search in " in search_query:
-        invalid = True
+    if search_query.startswith("search in"):
+        search_query = ""
 
     error = False
     error_text = ""
@@ -390,7 +389,6 @@ def search_forum(request):
         'error': error,
         'error_text': error_text,
         'filter_query': filter_query,
-        'invalid': invalid,
         'num_results': num_results,
         'page': page,
         'paginator': paginator,

@@ -51,7 +51,7 @@
             		$('#date_to_forum_search').datepicker('setDate', realDate);
         		}
 
-                $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name|escapejs}}'{%else%}all forums{% endif %} {% endif %}");
+                $("#forum_search input[name=q]").Watermark("search in {% if current_forum %}forum '{{current_forum.name}}'{% else %}{% if forum %}forum '{{forum.name|escapejs}}'{%else%}all forums{% endif %}{% endif %}");
 
             });
 
@@ -125,7 +125,7 @@
             <input type="text"
             	   id="forum_search_box"
                    name="q"
-                   value="{% if not invalid %}{% if request.GET.q %}{{request.GET.q}}{% endif %}{% endif %}"
+                   value="{{search_query}}"
                    size="60" />
 
             <input type="submit" value="search!" id="search_submit" />

@@ -309,11 +309,16 @@ def search_forum(request):
     date_from = request.GET.get("dt_from", "")
     date_to = request.GET.get("dt_to", "")
 
-    # TEMPORAL WORKAROUND!!! to prevent using watermark as the query for forum search...
-    # It only happens in some situations.
+    invalid = False
     if "search in " in search_query:
-        invalid = 1
+        invalid = True
 
+    error = False
+    error_text = ""
+    paginator = None
+    num_results = None
+    page = None
+    results = []
     if search_query.strip() != "" or filter_query:
         # add current forum
         if current_forum_name_slug.strip() != "":
@@ -362,18 +367,35 @@ def search_forum(request):
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
-        except SolrException, e:
+        except SolrException as e:
             logger.warning("search error: query: %s error %s" % (query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
-        except Exception, e:
+        except Exception as e:
             logger.error("Could probably not connect to Solr - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
-    else:
-        results = []
 
-    return render(request, 'search/search_forum.html', locals())
+    tvars = {
+        'advanced_search': advanced_search,
+        'current_forum_name': current_forum_name,
+        'current_forum_name_slug': current_forum_name_slug,
+        'current_page': current_page,
+        'date_from': date_from,
+        'date_to': date_to,
+        'error': error,
+        'error_text': error_text,
+        'filter_query': filter_query,
+        'invalid': invalid,
+        'num_results': num_results,
+        'page': page,
+        'paginator': paginator,
+        'search_query': search_query,
+        'sort': sort,
+        'results': results,
+    }
+
+    return render(request, 'search/search_forum.html', tvars)
 
 
 def get_pack_tags(pack_obj):

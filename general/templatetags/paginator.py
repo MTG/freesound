@@ -48,13 +48,22 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
 
     # although paginator objects are 0-based, we use 1-based paging
     page_numbers = [n for n in range(min_page_num, max_page_num) if n > 0 and n <= paginator.num_pages]
-    
+
     params = urllib.urlencode([(key, value.encode('utf-8')) for (key, value) in request.GET.items() if key.lower() != u"page"])
-    
+
     if params == "":
         url = request.path + u"?page="
     else:
         url = request.path + u"?" + params + u"&page="
+
+    url_prev_page = None
+    if page.has_previous():
+        url_prev_page = url + str(page.previous_page_number())
+    url_next_page = None
+    if page.has_next():
+        url_next_page = url + str(page.next_page_number())
+    url_first_page = url + "1"
+    url_last_page = url + str(paginator.num_pages)
 
     return {
         "page": page,
@@ -64,6 +73,10 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
         "show_first": 1 not in page_numbers,
         "show_last": paginator.num_pages not in page_numbers,
         "url" : url,
+        "url_prev_page": url_prev_page,
+        "url_next_page": url_next_page,
+        "url_first_page": url_first_page,
+        "url_last_page": url_last_page,
         "media_url": context['media_url'],
         "anchor": anchor,
         "non_grouped_number_of_results": non_grouped_number_of_results

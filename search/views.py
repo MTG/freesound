@@ -24,9 +24,11 @@ import logging
 import re
 from django.conf import settings
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 
 import forms
 import sounds
+import forum
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
@@ -300,8 +302,11 @@ def search_forum(request):
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
-    current_forum_name_slug = request.GET.get("current_forum_name_slug", "").strip()    # for context sensitive search
-    current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb
+    current_forum_name_slug = request.GET.get("forum", "").strip()    # for context sensitive search
+    if current_forum_name_slug:
+        current_forum = get_object_or_404(forum.models.Forum.objects, name_slug=current_forum_name_slug)
+    else:
+        current_forum = None
     sort = ["thread_created desc"]
 
     # Parse advanced search options
@@ -321,8 +326,8 @@ def search_forum(request):
     results = []
     if search_query.strip() != "" or filter_query:
         # add current forum
-        if current_forum_name_slug.strip() != "":
-            filter_query += "forum_name_slug:" + current_forum_name_slug
+        if current_forum:
+            filter_query += "forum_name_slug:" + current_forum.name_slug
 
         # add date range
         if advanced_search == "1" and date_from != "" or date_to != "":
@@ -378,8 +383,7 @@ def search_forum(request):
 
     tvars = {
         'advanced_search': advanced_search,
-        'current_forum_name': current_forum_name,
-        'current_forum_name_slug': current_forum_name_slug,
+        'current_forum': current_forum,
         'current_page': current_page,
         'date_from': date_from,
         'date_to': date_to,

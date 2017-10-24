@@ -113,8 +113,7 @@
 {% block forum_search %}
 <div {% if forum or forums or hide_search %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
     <form method="get" action="{% url "forums-search" %}" onsubmit="checkEmptyDates()">
-    <input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
-    <input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
+    <input type="hidden" name="forum" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum.name_slug}}{% endif %}"/>
 
         <input type="hidden"
                name="advanced_search"

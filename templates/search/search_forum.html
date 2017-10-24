@@ -8,11 +8,9 @@
 {% block title %}Forum Search{% endblock title %}
 
 {% block breadcrumb %}
-    {% if current_forum_name_slug and current_forum_name_slug.strip %}
-        {% url "forums-forum" current_forum_name_slug as forum_url %}
-        {% if forum_url %}
-            &#187; <a href="{{forum_url}}">{{current_forum_name}}</a>
-        {% endif %}
+    {% if current_forum %}
+        {% url "forums-forum" current_forum.name_slug as forum_url %}
+        &#187; <a href="{{forum_url}}">{{current_forum.name}}</a>
     {% endif %}
 {%  endblock %}
 

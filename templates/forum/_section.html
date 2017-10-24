@@ -45,21 +45,6 @@
                                                       altFormat: "yy-mm-dd"
                                                       });
 
-        		// Set the date in datepicker objects (if it exists in the parameters)
-        		from_date = gup('dt_from');
-        		if (from_date !== "") {
-        			dateParts = from_date.match(/(\d+)/g);
-            		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            		$('#date_from_forum_search').datepicker('setDate', realDate);
-        		}
-
-        		to_date = gup('dt_to');
-        		if (to_date !== ""){
-        			dateParts = to_date.match(/(\d+)/g);
-            		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            		$('#date_to_forum_search').datepicker('setDate', realDate);
-        		}
-
                 $("#forum_search input[name=q]").Watermark("search in {% if current_forum %}forum '{{current_forum.name}}'{% else %}{% if forum %}forum '{{forum.name|escapejs}}'{%else%}all forums{% endif %}{% endif %}");
 
             });
@@ -86,20 +71,6 @@
         			$("#dt_to").val("");
         		}
         	}
-
-            // Util to parse url parameters
-            function gup( name )
-        	{
-        	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-        	  var regexS = "[\\?&]"+name+"=([^&#]*)";
-        	  var regex = new RegExp( regexS );
-        	  var results = regex.exec( window.location.href );
-        	  if( results == null )
-        	    return "";
-        	  else
-        	    return results[1];
-        	}
-
         </script>
 {% endblock head %}
 
@@ -143,13 +114,13 @@
 
 
                 <label for="date_from_forum_search">From Date:</label>
-                <input class="input_date_field" type="text" value="Choose a Date" id="date_from_forum_search" />
-                <input type="hidden" value="" name="dt_from" id="dt_from" />
+                <input class="input_date_field" type="text" value="{{ date_from_display }}" id="date_from_forum_search" />
+                <input type="hidden" value="{{ date_from }}" name="dt_from" id="dt_from" />
 				<a onclick='clearDate(0);' style="cursor:pointer">clear</a>
 
                 <label for="date_to_forum_search">To Date:</label>
-                <input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
-                <input type="hidden" value="" name="dt_to" id="dt_to" />
+                <input class="input_date_field" type="text" value="{{ date_to_display }}" id="date_to_forum_search" />
+                <input type="hidden" value="{{ date_to }}" name="dt_to" id="dt_to" />
 				<a onclick='clearDate(1);' style="cursor:pointer">clear</a>
                 <br>
                 <span class="advanced_search_options_button"><a id="hide_advanced_search" href="">hide advanced search options</a></span>

@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import datetime
 import json
 import logging
 
@@ -312,7 +313,19 @@ def search_forum(request):
     # Parse advanced search options
     advanced_search = request.GET.get("advanced_search", "")
     date_from = request.GET.get("dt_from", "")
+    try:
+        df_parsed = datetime.datetime.strptime(date_from, "%Y-%m-%d")
+        date_from_display = df_parsed.strftime("%d-%m-%Y")
+    except ValueError:
+        date_from = ""
+        date_from_display = "Choose a Date"
     date_to = request.GET.get("dt_to", "")
+    try:
+        dt_parsed = datetime.datetime.strptime(date_to, "%Y-%m-%d")
+        date_to_display = dt_parsed.strftime("%d-%m-%Y")
+    except ValueError:
+        date_to = ""
+        date_to_display = "Choose a Date"
 
     if search_query.startswith("search in"):
         search_query = ""
@@ -380,12 +393,15 @@ def search_forum(request):
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 
+
     tvars = {
         'advanced_search': advanced_search,
         'current_forum': current_forum,
         'current_page': current_page,
         'date_from': date_from,
+        'date_from_display': date_from_display,
         'date_to': date_to,
+        'date_to_display': date_to_display,
         'error': error,
         'error_text': error_text,
         'filter_query': filter_query,

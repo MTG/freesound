@@ -56,14 +56,22 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
     else:
         url = request.path + u"?" + params + u"&page="
 
-    url_prev_page = None
-    if page.has_previous():
-        url_prev_page = url + str(page.previous_page_number())
-    url_next_page = None
-    if page.has_next():
-        url_next_page = url + str(page.next_page_number())
-    url_first_page = url + "1"
-    url_last_page = url + str(paginator.num_pages)
+    url_last_page = None
+
+    # Page could be a dict or an object
+    if isinstance(page, dict):
+        url_prev_page = url + str(page['previous_page_number'])
+        url_next_page =  url + str(page['next_page_number'])
+        url_first_page = url + '1'
+    else:
+        url_prev_page = None
+        if page.has_previous():
+             url_prev_page = url + str(page.previous_page_number())
+        url_next_page = None
+        if page.has_next():
+             url_next_page = url + str(page.next_page_number())
+        url_first_page = url + '1'
+        url_last_page = url + str(paginator.num_pages)
 
     return {
         "page": page,

@@ -1390,8 +1390,9 @@ def minimal_registration(request):
         if form.is_valid():
             user = form.save()
             send_activation(user)
-            return render(request, 'api/minimal_registration_done.html', locals())
+            return render(request, 'api/minimal_registration_done.html')
     else:
         form = RegistrationForm()
 
-    return render(request, 'api/minimal_registration.html', locals())
+    tvars = {'form': form}
+    return render(request, 'api/minimal_registration.html', tvars)

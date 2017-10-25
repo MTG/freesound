@@ -133,3 +133,17 @@ class TestAPI(TestCase):
         # make query that can't be decoded
         resp = self.client.options("/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers)
         self.assertEqual(resp.status_code, 200)
+
+
+class ApiSearchPaginatorTest(TestCase):
+    def test_page(self):
+        paginator = ApiSearchPaginator([1, 2, 3, 4, 5], 5, 2)
+        page = paginator.page(2)
+
+        self.assertEquals(page, {'object_list': [1, 2, 3, 4, 5],
+                                 'has_next': True,
+                                 'has_previous': True,
+                                 'has_other_pages': True,
+                                 'next_page_number': 3,
+                                 'previous_page_number': 1,
+                                 'page_num': 2})

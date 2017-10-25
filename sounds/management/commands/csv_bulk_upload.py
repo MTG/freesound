@@ -147,7 +147,7 @@ class Command(BaseCommand):
                 # Process
                 try:
                     sound.process()
-                except Exception, e:
+                except Exception as e:
                     print 'Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e))
 
                 if sound.pack:

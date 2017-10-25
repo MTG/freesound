@@ -280,10 +280,10 @@ def search(request):
             'non_grouped_number_of_results': non_grouped_number_of_results,
         })
 
-    except SolrException, e:
+    except SolrException as e:
         logger.warning('Search error: query: %s error %s' % (query, e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
-    except Exception, e:
+    except Exception as e:
         logger.error('Could probably not connect to Solr - %s' % e)
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
@@ -362,11 +362,11 @@ def search_forum(request):
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
-        except SolrException, e:
+        except SolrException as e:
             logger.warning("search error: query: %s error %s" % (query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
-        except Exception, e:
+        except Exception as e:
             logger.error("Could probably not connect to Solr - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'

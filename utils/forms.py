@@ -39,7 +39,7 @@ class HtmlCleaningCharField(forms.CharField):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
         try:
             return clean_html(value)
-        except HTMLParseError, UnicodeEncodeError:
+        except (HTMLParseError, UnicodeEncodeError):
             raise forms.ValidationError('The text you submitted is badly formed HTML, please fix it')
 
 
@@ -152,7 +152,7 @@ class RecaptchaForm(forms.Form):
                 check = captcha.submit(rcf, rrf, settings.RECAPTCHA_PRIVATE_KEY, ip_address)
                 if not check.is_valid:
                     raise forms.ValidationError('You have not entered the correct words')
-            except URLError, timeout:
+            except URLError as timeout:
                 # We often sometimes see error messages that recaptcha url is unreachable and
                 # this causes 500 errors. If recaptcha is unreachable, just skip captcha validation.
                 pass

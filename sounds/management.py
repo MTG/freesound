@@ -38,7 +38,7 @@ def create_locations(sender, **kwargs):
             try:
                 os.mkdir(folder)
                 print ("Successfullly created the folder: '%s'" % folder)
-            except Exception, e:
+            except Exception as e:
                 print ("Problem creating this folder: '%s', %s"
                     % (folder, e))
         else:

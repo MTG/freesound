@@ -104,7 +104,7 @@ class Command(BaseCommand):
             self.write_stdout("Found pack with id %d\n" % pack.id)
             pack.create_zip()
             self.write_stdout("Finished creating zip")
-        except Exception, e:
+        except Exception as e:
             self.write_stdout("ERROR in zip creation: % \n"%str(e))
         return 'true'
     
@@ -146,7 +146,7 @@ class Command(BaseCommand):
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
             success = False
             return 'false'
-        except Exception, e:
+        except Exception as e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
             success = False

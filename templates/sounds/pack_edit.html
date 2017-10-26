@@ -141,9 +141,19 @@
 <div style="display:flex;min-height: 200px;">
     <div id="current_pack_sounds" class="sound_list_minimal">
         <h4> Current sounds</h4>
-        {% for sound in current_sounds %}
+        {% if paginator.count > 0 %}
+            <div class="search_paginator">
+                {% show_paginator paginator page current_page request "sound" %}
+            </div>
+
+            {% for sound in page %}
                 {% display_raw_sound sound %}
-        {% endfor %}
+            {% endfor %}
+
+            <div class="search_paginator">
+                {% show_paginator paginator page current_page request "sound" %}
+            </div>
+        {% endif %}
     </div>
 
     <div id="pack_edit_search" class="sound_list_minimal" >

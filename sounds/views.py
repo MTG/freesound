@@ -23,7 +23,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse, resolve
 from django.db import connection, transaction
 from django.db.models import Q
@@ -37,7 +36,6 @@ from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from forum.models import Thread
-from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
@@ -57,6 +55,7 @@ from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from follow import follow_utils
 from operator import itemgetter
+from django.core.exceptions import PermissionDenied
 import gearman
 import datetime
 import time

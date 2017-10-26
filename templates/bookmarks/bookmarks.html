@@ -83,23 +83,6 @@
 	{% endif %}
 
     </div><!-- #bookmark_categories -->
-
-    {% comment %}
-    {% if is_owner %}
-    <div id="create_category" class="content_box">
-    <h3>Create a new category</h3>
-    <form action="" method="post" style="margin-left:-10px;margin-top:-10px">{% csrf_token %}
-	<p style="margin-top:-10px">
-	    Name: {{form_bookmark_category.name}}
-	    <input type="submit" value="Create" name="create_cat" style="float:right;margin-top:8px"/>
-	    <br style="clear"/>
-	</p>
-    </form>
-    </div>
-    {% endif %}
-    {% endcomment %}
-
-
 </div><!-- #sidebar -->
 
 <br class="clear"/><!-- Need a clearing element for some reason here.. -->

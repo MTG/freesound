@@ -17,12 +17,12 @@
 # Authors:
 #     See AUTHORS file.
 #
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth.models import User
 
-import sounds.models
 import bookmarks.models
+
 
 class BookmarksTest(TestCase):
 
@@ -33,8 +33,8 @@ class BookmarksTest(TestCase):
         context = resp.context
 
         self.assertEqual(200, resp.status_code)
-        expected_keys = ['bookmark_categories', 'bookmarked_sounds', 'category_id', 'current_page', 'is_owner',
-                         'n_uncat', 'page', 'paginator', 'request', 'user', 'username']
+        expected_keys = ['bookmark_categories', 'bookmarked_sounds', 'current_page', 'is_owner',
+                         'n_uncat', 'page', 'paginator', 'user']
         context_keys = context.keys()
         for k in expected_keys:
             self.assertIn(k, context_keys)

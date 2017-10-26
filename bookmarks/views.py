@@ -41,6 +41,7 @@ def bookmarks(request, username, category_id=None):
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()
 
     if not category_id:
+        category = None
         bookmarked_sounds = Bookmark.objects.select_related("sound").filter(user=user, category=None)
     else:
         category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
@@ -48,7 +49,15 @@ def bookmarks(request, username, category_id=None):
 
     bookmark_categories = BookmarkCategory.objects.filter(user=user)
 
-    return render(request, 'bookmarks/bookmarks.html', combine_dicts(locals(), paginate(request, bookmarked_sounds, 30)))
+    tvars = {'user': user,
+             'is_owner': is_owner,
+             'n_uncat': n_uncat,
+             'bookmarked_sounds': bookmarked_sounds,
+             'category': category,
+             'bookmark_categories': bookmark_categories}
+    tvars.update(paginate(request, bookmarked_sounds, 30))
+
+    return render(request, 'bookmarks/bookmarks.html', tvars)
 
 
 @login_required

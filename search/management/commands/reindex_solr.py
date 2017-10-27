@@ -18,20 +18,32 @@
 #     See AUTHORS file.
 #
 
+import logging
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
-from utils.search.search_general import add_all_sounds_to_solr, delete_sound_from_solr
+from utils.search.search_general import add_sounds_to_solr, delete_sound_from_solr
+from utils.search.solr import SolrException
 
+console_logger = logging.getLogger("console")
 
 class Command(BaseCommand):
     args = ''
     help = 'Take all sounds and send them to Solr'
 
     def handle(self, *args, **options):
-        # Get all sounds moderated and processed ok
-        sound_qs = Sound.objects.select_related("pack", "user", "license") \
-                                .filter(processing_state="OK", moderation_state="OK")
-        add_all_sounds_to_solr(sound_qs, mark_index_clean=True)
+        slice_size = 4000
+        num_sounds = Sound.objects.filter(processing_state="OK", moderation_state="OK").count()
+        for i in range(0, num_sounds, slice_size):
+            console_logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
+            try:
+                # Get all sounds moderated and processed ok
+                where = "sound.moderation_state = 'OK' AND sound.processing_state = 'OK' AND sound.id > %s"
+                order_by = "sound.id ASC"
+                sounds_qs = Sound.objects.bulk_query(where, order_by, slice_size, (i, ))
+                add_sounds_to_solr(sounds_qs)
+            except SolrException as e:
+                console_logger.error("failed to add sound batch to solr index, reason: %s", str(e))
+                raise
 
         # Get all sounds that should not be in solr and remove them if they are
         sound_qs = Sound.objects.exclude(processing_state="OK", moderation_state="OK")

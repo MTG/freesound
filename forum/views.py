@@ -111,11 +111,15 @@ def thread(request, forum_name_slug, thread_id):
     paginator = paginate(request, Post.objects.select_related('author', 'author__profile').filter(
         thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE)
 
+    has_subscription = False
     # a logged in user watching a thread can activate his subscription to that thread!
     # we assume the user has seen the latest post if he is browsing the thread
     # this is not entirely correct, but should be close enough
     if request.user.is_authenticated:
-        Subscription.objects.filter(thread=thread, subscriber=request.user, is_active=False).update(is_active=True)
+        subscription = Subscription.objects.filter(thread=thread, subscriber=request.user)
+        if subscription.count() > 0:
+            subscription.filter(is_active=False).update(is_active=True)
+            has_subscription = True
 
     return render(request, 'forum/thread.html', combine_dicts(locals(), paginator))
 
@@ -277,6 +281,14 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
     return render(request, 'forum/unsubscribe_from_thread.html', locals())
+
+
+@login_required
+def subscribe_to_thread(request, forum_name_slug, thread_id):
+    forum = get_object_or_404(Forum, name_slug=forum_name_slug)
+    thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
+    subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
+    return HttpResponseRedirect(reverse('forums-thread', args=[forum.name_slug, thread.id]))
 
 
 def old_topic_link_redirect(request):

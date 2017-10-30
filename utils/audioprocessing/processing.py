@@ -601,7 +601,7 @@ def convert_using_ffmpeg(input_filename, output_filename):
     if not os.path.exists(input_filename):
         raise AudioProcessingException("file %s does not exist" % input_filename)
 
-    command = ["ffmpeg", "-y", "-i", input_filename, "-ac","1","-acodec", "pcm_s16le", "-ar", "44100", output_filename]
+    command = ["ffmpeg", "-y", "-i", input_filename, "-ac","2","-acodec", "pcm_s16le", "-ar", "44100", output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     signal.signal(signal.SIGALRM,alarm_handler)

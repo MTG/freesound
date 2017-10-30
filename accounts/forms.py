@@ -239,6 +239,11 @@ class ProfileForm(forms.ModelForm):
         widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
         required=False
     )
+    sound_signature = HtmlCleaningCharField(
+        label="Sound signature",
+        widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
+        required=False
+    )
     is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
             label="", required=False)
     not_shown_in_online_users_list = forms.BooleanField(
@@ -265,9 +270,16 @@ class ProfileForm(forms.ModelForm):
                                         "failing please contact the admins.")
         return signature
 
+    def clean_sound_signature(self):
+        sound_signature = self.cleaned_data['sound_signature']
+        if is_spam(self.request, sound_signature):
+            raise forms.ValidationError("Your sound signature was considered spam, please edit and resubmit. If it keeps "
+                                        "failing please contact the admins.")
+        return sound_signature
+
     class Meta:
         model = Profile
-        fields = ('home_page', 'is_adult', 'about', 'signature',
+        fields = ('home_page', 'is_adult', 'about', 'signature', 'sound_signature',
                   'not_shown_in_online_users_list')
 
 

@@ -99,6 +99,9 @@
     </div>
     <div id="sound_description">
         {{sound.description|replace_img|safe|linebreaks}}
+        {% if user.profile.sound_signature %}
+            {{user.profile.sound_signature|safe|linebreaks}}</p>
+        {% endif %}
     </div>
 
     <ul class="tags">

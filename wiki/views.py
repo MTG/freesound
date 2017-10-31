@@ -18,18 +18,18 @@
 #     See AUTHORS file.
 #
 
-from django import forms
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.urls import reverse
 
 from wiki.models import Content, Page
+from wiki.forms import ContentForm
 
 
 def page(request, name):
     try:
         version = int(request.GET.get("version", -1))
-    except:
+    except ValueError:
         version = -1
 
     try:
@@ -40,28 +40,21 @@ def page(request, name):
     except Content.DoesNotExist:
         content = Content.objects.filter(page__name__iexact="blank").select_related().latest()
 
-    return render(request, 'wiki/page.html', locals())
+    tvars = {'content': content,
+             'name': name}
+    return render(request, 'wiki/page.html', tvars)
 
 
 def editpage(request, name):
     if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
         raise Http404
 
-    # the class for editing...
-    class ContentForm(forms.ModelForm):
-        title = forms.CharField(label='Page name', widget=forms.TextInput(attrs={'size': '100'}))
-        body = forms.CharField(widget=forms.Textarea(attrs={'rows': '40', 'cols': '100'}))
-
-        class Meta:
-            model = Content
-            exclude = ('author', 'page', "created")
-
-    if request.method == "POST":
+    if request.method == 'POST':
         form = ContentForm(request.POST)
 
         if form.is_valid():
             content = form.save(commit=False)
-            content.page = Page.objects.get_or_create(name=name)[0]
+            content.page, _ = Page.objects.get_or_create(name=name)
             content.author = request.user
             content.save()
             return HttpResponseRedirect(reverse('wiki-page', args=[name]))
@@ -69,11 +62,15 @@ def editpage(request, name):
         try:
             # if the page already exists, load up the previous content
             content = Content.objects.filter(page__name__iexact=name).select_related().latest()
-            form = ContentForm(initial={"title": content.title, "body": content.body})
+            form = ContentForm(initial={'title': content.title, 'body': content.body})
         except Content.DoesNotExist:
+            content = None
             form = ContentForm()
 
-    return render(request, 'wiki/edit.html', locals())
+    tvars = {'content': content,
+             'form': form,
+             'name': name}
+    return render(request, 'wiki/edit.html', tvars)
 
 
 def history(request, name):
@@ -90,11 +87,19 @@ def history(request, name):
     except Content.DoesNotExist:
         raise Http404
 
-    if request.GET and "version1" in request.GET and "version2" in request.GET:
+    version1 = None
+    version2 = None
+    diff = None
+    if request.GET and 'version1' in request.GET and 'version2' in request.GET:
         import difflib
-        version1 = Content.objects.select_related().get(id=request.GET.get("version1"))
-        version2 = Content.objects.select_related().get(id=request.GET.get("version2"))
+        version1 = Content.objects.select_related().get(id=request.GET.get('version1'))
+        version2 = Content.objects.select_related().get(id=request.GET.get('version2'))
 
-        diff = difflib.HtmlDiff(4, 55).make_table(version1.body.split("\n"), version2.body.split("\n"), "version %d" % version1.id, "version %d" % version2.id, True, 5)
+        diff = difflib.HtmlDiff(4, 55).make_table(version1.body.split('\n'), version2.body.split('\n'), 'version %d' % version1.id, 'version %d' % version2.id, True, 5)
 
-    return render(request, 'wiki/history.html', locals())
+    tvars = {'page': page,
+             'versions': versions,
+             'version1': version1,
+             'version2': version2,
+             'diff': diff}
+    return render(request, 'wiki/history.html', tvars)

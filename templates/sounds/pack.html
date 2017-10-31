@@ -3,12 +3,13 @@
 {% load display_sound %}
 {% load paginator %}
 {% load filter_img %}
+{% load google_maps %}
 
 {% block title %}pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{ GOOGLE_API_KEY }}&sensor=false"></script>
+    <script type="text/javascript" src="{% google_maps_js %}"></script>
     <script src="{{media_url}}js/sounds_location.js?v={{ last_restart_date }}" type="text/javascript"></script>
 {% endblock head %}
 
@@ -43,7 +44,7 @@
 		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
 		    {% endif %}
 		</div>
-		
+
 		</div>
 	{% endif %}
 {% endif %}
@@ -86,15 +87,15 @@
 <p>
     See <a href="{% url 'packs-for-user' pack.user.username %}">more packs</a> by <a href="{% url 'account' pack.user.username %}">{{pack.user.username}}</a>
 </p>
-    
-    
+
+
 {% if pack.num_sounds > 0 %}
 	{% show_paginator paginator page current_page request "sound" %}
-	
+
 	{% for sound in pack_sounds %}
     	{% display_raw_sound sound %}
 	{% endfor %}
-	
+
 	{% show_paginator paginator page current_page request "sound" %}
 
 {% else %}
@@ -130,7 +131,7 @@
                     var id = item[0];
                     var lat = item[1];
                     var lon = item[2];
-                        
+
                     var point = new google.maps.LatLng(lat, lon);
                     lastPoint = point;
                     bounds.extend(point);
@@ -166,7 +167,7 @@
             });
         </script>
     </div><!-- #pack_geotags -->
-    
+
     {% if not pack.is_dirty %}
 	{% if num_sounds_ok > 0 %}
 		<!--<div id="single_pack_sidebar">-->
@@ -183,7 +184,7 @@
 		    	<div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
 		    {% endif %}
 		</div>
-		
+
 		<!--</div>-->
 	{% endif %}
     {% endif %}

@@ -88,7 +88,6 @@ def geotags_for_pack_barray(request, pack_id):
 
 
 def geotags(request, tag=None):
-    google_api_key = settings.GOOGLE_API_KEY
     for_user = None
     return render(request, 'geotags/geotags.html', locals())
 
@@ -102,7 +101,6 @@ def geotags_box(request):
     zoom = request.GET.get("z", None)
     username = request.GET.get("username", None)
 
-    google_api_key = settings.GOOGLE_API_KEY
     return render(request, 'geotags/geotags_box.html', locals())
 
 
@@ -111,7 +109,6 @@ def for_user(request, username):
         for_user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
         raise Http404
-    google_api_key = settings.GOOGLE_API_KEY
     tag = None
     return render(request, 'geotags/geotags.html', locals())
 
@@ -134,5 +131,4 @@ def embed_iframe(request):
     zoom = request.GET.get("z", None)
     username = request.GET.get("username", None)
 
-    google_api_key = settings.GOOGLE_API_KEY
     return render(request, 'geotags/geotags_box_iframe.html', locals())

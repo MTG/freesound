@@ -426,7 +426,6 @@ class Solr(object):
 
         if response.status != 200:
             raise SolrException, response.reason
-        
         return response
 
     def select(self, query_string, raw=False):
@@ -472,20 +471,20 @@ class SolrResponseInterpreter(object):
         if "grouped" in response:
             if "thread_title_grouped" in response["grouped"].keys():
                 self.docs = response["grouped"]["thread_title_grouped"]["groups"]
-                self.start = response["responseHeader"]["params"]["start"]
+                self.start = int(response["responseHeader"]["params"]["start"])
                 self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
                 self.num_found = response["grouped"]["thread_title_grouped"]["ngroups"]
                 self.non_grouped_number_of_matches = response["grouped"]["thread_title_grouped"]["matches"]
             elif "grouping_pack" in response["grouped"].keys():
                 #self.docs = response["grouped"]["pack"]["groups"]
                 self.docs = [{
-                                 'id': group['doclist']['docs'][0]['id'],
+                                 'id': int(group['doclist']['docs'][0]['id']),
                                  'more_from_pack':group['doclist']['numFound']-1,
                                  'pack_name':group['groupValue'][group['groupValue'].find("_")+1:],
                                  'pack_id':group['groupValue'][:group['groupValue'].find("_")],
                                  'other_ids': [doc['id'] for doc in group['doclist']['docs'][1:]]
                              } for group in response["grouped"]["grouping_pack"]["groups"] if group['groupValue'] != None ]
-                self.start = response["responseHeader"]["params"]["start"]
+                self.start = int(response["responseHeader"]["params"]["start"])
                 self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
                 self.num_found = response["grouped"]["grouping_pack"]["ngroups"]#["matches"]#
                 self.non_grouped_number_of_matches = response["grouped"]["grouping_pack"]["matches"]

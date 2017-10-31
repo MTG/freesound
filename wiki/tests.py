@@ -58,9 +58,9 @@ class WikiTestCase(TestCase):
         resp = self.client.get('%s?version=%d' % (helpurl, self.help_ids[0]))
         self.assertContains(resp, 'Help version 2')
 
-        # Version that doesn't exist (uses blank)
+        # Version that doesn't exist (uses latest)
         resp = self.client.get('%s?version=100' % helpurl)
-        self.assertContains(resp, 'This is a blank page')
+        self.assertContains(resp, 'Help version 3')
 
         # Not a number in version param (uses latest)
         resp = self.client.get('%s?version=notint' % helpurl)

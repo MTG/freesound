@@ -30,15 +30,28 @@ def page(request, name):
     try:
         version = int(request.GET.get("version", -1))
     except ValueError:
-        version = -1
+        version = None
 
     try:
-        if version == -1:
-            content = Content.objects.filter(page__name__iexact=name).select_related().latest()
-        else:
-            content = Content.objects.select_related().get(page__name__iexact=name, id=version)
-    except Content.DoesNotExist:
-        content = Content.objects.filter(page__name__iexact="blank").select_related().latest()
+        page = Page.objects.get(name__iexact=name)
+    except Page.DoesNotExist:
+        page = Page.objects.get(name__iexact="blank")
+        version = None
+
+    content = None
+    if version:
+        try:
+            content = Content.objects.select_related().get(page=page, id=version)
+        except Content.DoesNotExist:
+            # If there is no content with this version we try and get the latest
+            content = None
+
+    if not content:
+        try:
+            content = Content.objects.select_related().filter(page=page).latest()
+        except Content.DoesNotExist:
+            # If there is still no content, then this page has no Content objects, return Blank
+            content = Content.objects.filter(page__name__iexact="blank").select_related().latest()
 
     tvars = {'content': content,
              'name': name}

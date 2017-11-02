@@ -22,7 +22,7 @@
 import time
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
@@ -337,23 +337,6 @@ class FsPasswordResetForm(forms.Form):
     """
     email_or_username = forms.CharField(label="Email or Username", max_length=254)
 
-    def send_mail(self, subject_template_name, email_template_name,
-                  context, from_email, to_email, html_email_template_name=None):
-        """
-        Sends a django.core.mail.EmailMultiAlternatives to `to_email`.
-        """
-        subject = loader.render_to_string(subject_template_name, context)
-        # Email subject *must not* contain newlines
-        subject = ''.join(subject.splitlines())
-        body = loader.render_to_string(email_template_name, context)
-
-        email_message = EmailMultiAlternatives(subject, body, from_email, [to_email])
-        if html_email_template_name is not None:
-            html_email = loader.render_to_string(html_email_template_name, context)
-            email_message.attach_alternative(html_email, 'text/html')
-
-        email_message.send()
-
     def get_users(self, email_or_username):
         """Given an email, return matching user(s) who should receive a reset.
 
@@ -402,7 +385,8 @@ class FsPasswordResetForm(forms.Form):
             }
             if extra_email_context is not None:
                 context.update(extra_email_context)
-            self.send_mail(
+            dj_auth_form = PasswordResetForm()
+            dj_auth_form.send_mail(
                 subject_template_name, email_template_name, context, from_email,
                 user.email, html_email_template_name=html_email_template_name,
             )

@@ -187,7 +187,7 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
 
             gaia_count = count
             return gaia_ids, gaia_count, distance_to_target_data, None, note, None, None
-        except SimilarityException, e:
+        except SimilarityException as e:
             if e.status_code == 500:
                 raise ServerErrorException(msg=e.message, resource=resource)
             elif e.status_code == 400:
@@ -196,7 +196,7 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
                 raise NotFoundException(msg=e.message, resource=resource)
             else:
                 raise ServerErrorException(msg='Similarity server error: %s' % e.message, resource=resource)
-        except Exception, e:
+        except Exception as e:
             raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource)
 
 
@@ -223,11 +223,11 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
 
             return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
-        except SolrException, e:
+        except SolrException as e:
             if search_form.cleaned_data['filter'] != None:
                 raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field names are correct)' % e.message, resource=resource)
             raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
-        except Exception, e:
+        except Exception as e:
             raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
 
     else:
@@ -311,7 +311,7 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
             url_name = resolve(rel.replace('<sound_id>', '1').replace('<username', 'name').replace('<pack_id>', '1').replace('<category_id>', '1')).url_name
             if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
                 use_https = True
-        except Exception, e:
+        except Exception as e:
             pass
 
     if use_https:
@@ -363,13 +363,16 @@ class ApiSearchPaginator(object):
         self.results = results
 
     def page(self, page_num):
-        object_list = self.results
         has_next = page_num < self.num_pages
         has_previous = page_num > 1 and page_num <= self.num_pages
-        has_other_pages = has_next or has_previous
-        next_page_number = page_num + 1
-        previous_page_number = page_num - 1
-        return locals()
+
+        return {'object_list': self.results,
+                'has_next': has_next,
+                'has_previous': has_previous,
+                'has_other_pages': has_next or has_previous,
+                'next_page_number': page_num + 1,
+                'previous_page_number': page_num - 1,
+                'page_num': page_num}
 
 
 # Docs examples utils

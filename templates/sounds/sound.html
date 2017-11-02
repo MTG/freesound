@@ -101,7 +101,7 @@
     <div id="sound_description">
         {{sound.description|replace_img|safe|linebreaks}}
         {% if user.profile.sound_signature %}
-            {{user.profile.sound_signature|sound_signature_replace:sound|safe|linebreaks}}</p>
+            {{user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
         {% endif %}
     </div>
 

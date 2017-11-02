@@ -65,21 +65,47 @@ class FsClientIdGenerator(BaseHashGenerator):
 #############################
 
 
-class GenericAPIView(RestFrameworkGenericAPIView):
+class FreesoundAPIViewMixin(object):
+    end_user_ip = None
+    auth_method_name = None
+    developer = None
+    user = None
+    client_id = None
+    client_name = None
+    protocol = None
+    contains_www = None
+
+    def log_message(self, message):
+        return log_message_helper(message, resource=self)
+
+    def get_request_information(self, request):
+        # Get request information and store it as class variable
+        # This information is mainly useful for logging
+        self.end_user_ip = get_client_ip(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
+            self.contains_www = get_authentication_details_form_request(request)
+
+    def redirect_to_nowww_if_needed(self, request, response):
+        # If the user is using the interactive API browser and the www in the domain we redirect to no-www.
+        if isinstance(response.accepted_renderer, BrowsableAPIRenderer) and request.get_host().startswith('www'):
+            domain = "%s://%s" % (request.scheme, Site.objects.get_current().domain)
+            return_url = urlparse.urljoin(domain, request.get_full_path())
+            return HttpResponseRedirect(return_url)
+
+    def throw_exception_if_not_https(self, request):
+        if not settings.DEBUG:
+            if not request.is_secure():
+                raise RequiresHttpsException(request=request)
+
+
+class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     queryset = False
 
     def initial(self, request, *args, **kwargs):
         super(GenericAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
-            self.contains_www = get_authentication_details_form_request(request)
-
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
+        self.get_request_information(request)
 
     def finalize_response(self, request, response, *args, **kwargs):
         """ This method is overriden to make a redirect when the user is using the interactive API browser and
@@ -88,93 +114,70 @@ class GenericAPIView(RestFrameworkGenericAPIView):
         handled by 'finalize_response' method of APIView.
         """
         response = super(GenericAPIView, self).finalize_response(request, response, *args, **kwargs)
-
-        # If the user is using the interactive API browser and the www in the domain we redirect to nowww.
-        host = request.get_host()
-        if type(response.accepted_renderer) == type(BrowsableAPIRenderer()) and 'www' in host:
-            domain = "https://%s" % Site.objects.get_current().domain
-            return_url = urlparse.urljoin(domain, request.get_full_path())
-            return HttpResponseRedirect(return_url)
+        self.redirect_to_nowww_if_needed(request, response)
         return response
 
 
-class OauthRequiredAPIView(RestFrameworkGenericAPIView):
+class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(OauthRequiredAPIView, self).initial(request, *args, **kwargs)
+        self.get_request_information(request)
+        self.throw_exception_if_not_https(request)
 
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
-            self.contains_www = get_authentication_details_form_request(request)
-
-        # Check if using https
-        throw_exception_if_not_https(request)
-
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
+    def finalize_response(self, request, response, *args, **kwargs):
+        # See comment in GenericAPIView.finalize_response
+        response = super(OauthRequiredAPIView, self).finalize_response(request, response, *args, **kwargs)
+        self.redirect_to_nowww_if_needed(request, response)
+        return response
 
 
-class DownloadAPIView(OauthRequiredAPIView):
+class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def initial(self, request, *args, **kwargs):
+        super(DownloadAPIView, self).initial(request, *args, **kwargs)
+        self.get_request_information(request)
+        self.throw_exception_if_not_https(request)
+
+    # NOTE: don't override finalize_response here as we are returning a file and not the browseable api response.
+    # There is no need to check for www/non-www host here.
 
 
-class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
+class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request informationa dn store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
-            self.contains_www = get_authentication_details_form_request(request)
-
-        # Check if using https
-        throw_exception_if_not_https(request)
+        self.get_request_information(request)
+        self.throw_exception_if_not_https(request)
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
             if "write" not in request.auth.scopes:
                 raise UnauthorizedException(resource=self)
 
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
 
-
-class ListAPIView(RestFrameworkListAPIView):
+class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(ListAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
-            self.contains_www = get_authentication_details_form_request(request)
-
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
+        self.get_request_information(request)
 
 
-class RetrieveAPIView(RestFrameworkRetrieveAPIView):
+class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
-            self.contains_www = get_authentication_details_form_request(request)
-
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
+        self.get_request_information(request)
 
 
 ##################

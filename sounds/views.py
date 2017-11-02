@@ -495,7 +495,7 @@ def pack_edit(request, username, pack_id):
             return HttpResponseRedirect(pack.get_absolute_url())
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds))
-        current_sounds = list(Sound.objects.bulk_sounds_for_pack(pack_id=pack.id))
+        current_sounds = Sound.objects.filter(pack_id=pack.id)
 
     paginate_data = paginate(request, current_sounds, settings.SOUNDS_PER_PAGE)
     paginator = paginate_data['paginator']

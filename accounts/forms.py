@@ -242,6 +242,11 @@ class ProfileForm(forms.ModelForm):
     sound_signature = HtmlCleaningCharField(
         label="Sound signature",
         widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
+        help_text="""Your sound signature is added to the end of the description of all of your sounds.
+                     You can use it to show a common message on all of your sounds. If you change the
+                     sound signature it will be automatically updated on all of your sounds. Use the
+                     special text ${sound_url} to refer to the URL of the current sound being displayed
+                     and ${sound_id} to refer to the id of the current sound.""",
         required=False
     )
     is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",

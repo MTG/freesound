@@ -21,7 +21,7 @@
 #
 
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F
 from django.urls import reverse
 from django.utils.encoding import smart_unicode
@@ -48,7 +48,7 @@ class Forum(OrderedModel):
                                      related_name="latest_in_forum",
                                      on_delete=models.SET_NULL)
 
-    def set_last_post(self):
+    def set_last_post(self, commit=True):
         qs = Post.objects.filter(thread__forum=self,moderation_state ='OK')
 #        if exclude_post:
 #            qs = qs.exclude(id=exclude_post.id)
@@ -59,7 +59,8 @@ class Forum(OrderedModel):
             self.last_post = qs[0]
         else:
             self.last_post = None
-        self.save()
+        if commit:
+            self.save()
 
     def __unicode__(self):
         return self.name
@@ -126,21 +127,23 @@ def update_num_threads_on_thread_insert(**kwargs):
 @receiver(pre_save, sender=Thread)
 def update_num_threads_on_thread_update(sender, instance, **kwargs):
     if instance.id:
-        old_thread = Thread.objects.get(pk=instance.id)
-        if old_thread.forum_id != instance.forum_id:
-            old_thread.forum.num_threads = F('num_threads') - 1
-            old_thread.forum.save()
-            instance.forum.num_threads = F('num_threads') + 1
-            instance.forum.save()
+        with transaction.atomic():
+            old_thread = Thread.objects.get(pk=instance.id)
+            if old_thread.forum_id != instance.forum_id:
+                old_thread.forum.num_threads = F('num_threads') - 1
+                old_thread.forum.save()
+                instance.forum.num_threads = F('num_threads') + 1
+                instance.forum.save()
 
 
 @receiver(post_delete, sender=Thread)
 def update_last_post_on_thread_delete(**kwargs):
     thread = kwargs['instance']
     try:
-        thread.forum.refresh_from_db()
-        thread.forum.num_threads = F('num_threads') - 1
-        thread.forum.set_last_post()
+        with transaction.atomic():
+            thread.forum.refresh_from_db()
+            thread.forum.num_threads = F('num_threads') - 1
+            thread.forum.set_last_post()
     except Forum.DoesNotExist:
         pass
 

@@ -1017,10 +1017,10 @@ class Download(models.Model):
 @receiver(post_delete, sender=Download)
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
-    if download.pack:
+    if download.pack_id:
         download.pack.num_downloads = F('num_downloads') - 1
         download.pack.save()
-    if download.sound:
+    elif download.sound_id:
         download.sound.num_downloads = F('num_downloads') - 1
         download.sound.save()
 

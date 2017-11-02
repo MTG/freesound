@@ -55,7 +55,7 @@ def post_delete_rating(sender, instance, **kwargs):
         rating = Rating.objects.filter(
                 content_type_id=instance.content_type_id,
                 object_id=instance.object_id).aggregate(Avg('rating')).values()[0]
-        if rating == None:
+        if rating is None:
             rating = 0
         instance.content_object.avg_rating = rating
         instance.content_object.save()

@@ -10,6 +10,7 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
+
 def markdown(value, arg=''):
     """
     Runs Markdown over a given value, optionally using various
@@ -50,12 +51,14 @@ def markdown(value, arg=''):
             
             # Unicode support only in markdown v1.7 or above. Version_info
             # exist only in markdown v1.6.2rc-2 or above.
-            if getattr(markdown, "version_info", None) < (1,7):
+            if getattr(markdown, "version_info", None) < (1, 7):
                 return mark_safe(force_unicode(md.convert(force_unicode(value))))
             else:
                 return mark_safe(md.convert(force_unicode(value)))
         else:
             return mark_safe(force_unicode(markdown.markdown(smart_str(value))))
+
+
 markdown.is_safe = True
 
 register.filter(markdown)

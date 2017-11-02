@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,13 +18,14 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
-from django.views.generic import TemplateView, RedirectView
-import wiki.views as wiki
+from django import forms
+from wiki import models
 
-urlpatterns = [
-    url(r'^$', RedirectView.as_view(url="/help/main/"), name="wiki"),
-    url(r'^(?P<name>[//\w_-]+)/history/$', wiki.history, name="wiki-page-history"),
-    url(r'^(?P<name>[//\w_-]+)/edit/$', wiki.editpage, name="wiki-page-edit"),
-    url(r'^(?P<name>[//\w_-]+)/$', wiki.page, name="wiki-page"),
-]
+
+class ContentForm(forms.ModelForm):
+    title = forms.CharField(label='Page name', widget=forms.TextInput(attrs={'size': '100'}))
+    body = forms.CharField(widget=forms.Textarea(attrs={'rows': '40', 'cols': '100'}))
+
+    class Meta:
+        model = models.Content
+        exclude = ('author', 'page', 'created')

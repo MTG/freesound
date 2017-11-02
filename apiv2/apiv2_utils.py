@@ -365,16 +365,13 @@ class ApiSearchPaginator(object):
     def page(self, page_num):
         has_next = page_num < self.num_pages
         has_previous = page_num > 1 and page_num <= self.num_pages
-        has_other_pages = has_next or has_previous
-        next_page_number = page_num + 1
-        previous_page_number = page_num - 1
 
         return {'object_list': self.results,
                 'has_next': has_next,
                 'has_previous': has_previous,
-                'has_other_pages': has_other_pages,
-                'next_page_number': next_page_number,
-                'previous_page_number': previous_page_number,
+                'has_other_pages': has_next or has_previous,
+                'next_page_number': page_num + 1,
+                'previous_page_number': page_num - 1,
                 'page_num': page_num}
 
 

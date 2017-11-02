@@ -18,15 +18,18 @@
 #     See AUTHORS file.
 #
 
+import datetime
 import json
 import logging
 
 import re
 from django.conf import settings
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 
 import forms
 import sounds
+import forum
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
@@ -300,24 +303,43 @@ def search_forum(request):
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
-    current_forum_name_slug = request.GET.get("current_forum_name_slug", "").strip()    # for context sensitive search
-    current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb
+    current_forum_name_slug = request.GET.get("forum", "").strip()    # for context sensitive search
+    if current_forum_name_slug:
+        current_forum = get_object_or_404(forum.models.Forum.objects, name_slug=current_forum_name_slug)
+    else:
+        current_forum = None
     sort = ["thread_created desc"]
 
     # Parse advanced search options
     advanced_search = request.GET.get("advanced_search", "")
     date_from = request.GET.get("dt_from", "")
+    try:
+        df_parsed = datetime.datetime.strptime(date_from, "%Y-%m-%d")
+        date_from_display = df_parsed.strftime("%d-%m-%Y")
+    except ValueError:
+        date_from = ""
+        date_from_display = "Choose a Date"
     date_to = request.GET.get("dt_to", "")
+    try:
+        dt_parsed = datetime.datetime.strptime(date_to, "%Y-%m-%d")
+        date_to_display = dt_parsed.strftime("%d-%m-%Y")
+    except ValueError:
+        date_to = ""
+        date_to_display = "Choose a Date"
 
-    # TEMPORAL WORKAROUND!!! to prevent using watermark as the query for forum search...
-    # It only happens in some situations.
-    if "search in " in search_query:
-        invalid = 1
+    if search_query.startswith("search in"):
+        search_query = ""
 
+    error = False
+    error_text = ""
+    paginator = None
+    num_results = None
+    page = None
+    results = []
     if search_query.strip() != "" or filter_query:
         # add current forum
-        if current_forum_name_slug.strip() != "":
-            filter_query += "forum_name_slug:" + current_forum_name_slug
+        if current_forum:
+            filter_query += "forum_name_slug:" + current_forum.name_slug
 
         # add date range
         if advanced_search == "1" and date_from != "" or date_to != "":
@@ -362,18 +384,36 @@ def search_forum(request):
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
-        except SolrException, e:
+        except SolrException as e:
             logger.warning("search error: query: %s error %s" % (query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
-        except Exception, e:
+        except Exception as e:
             logger.error("Could probably not connect to Solr - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
-    else:
-        results = []
 
-    return render(request, 'search/search_forum.html', locals())
+
+    tvars = {
+        'advanced_search': advanced_search,
+        'current_forum': current_forum,
+        'current_page': current_page,
+        'date_from': date_from,
+        'date_from_display': date_from_display,
+        'date_to': date_to,
+        'date_to_display': date_to_display,
+        'error': error,
+        'error_text': error_text,
+        'filter_query': filter_query,
+        'num_results': num_results,
+        'page': page,
+        'paginator': paginator,
+        'search_query': search_query,
+        'sort': sort,
+        'results': results,
+    }
+
+    return render(request, 'search/search_forum.html', tvars)
 
 
 def get_pack_tags(pack_obj):

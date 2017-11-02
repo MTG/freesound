@@ -505,10 +505,8 @@ def pack_edit(request, username, pack_id):
     tvars = {
         'pack': pack,
         'form': form,
-        'page': page,
-        'paginator': paginator,
-        'current_page': current_page,
     }
+    tvars.update(paginate_data)
     return render(request, 'sounds/pack_edit.html', tvars)
 
 

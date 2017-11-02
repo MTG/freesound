@@ -486,7 +486,7 @@ def pack_edit(request, username, pack_id):
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
         raise PermissionDenied
 
-    current_sounds = list()
+    current_sounds = []
     if request.method == "POST":
         form = PackEditForm(request.POST, instance=pack)
         if form.is_valid():
@@ -495,12 +495,18 @@ def pack_edit(request, username, pack_id):
             return HttpResponseRedirect(pack.get_absolute_url())
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds))
-        current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
+        current_sounds = Sound.objects.filter(pack_id=pack.id)
+
+    paginate_data = paginate(request, current_sounds, settings.SOUNDS_PER_PAGE)
+    paginator = paginate_data['paginator']
+    current_page = paginate_data['current_page']
+    page = paginate_data['page']
+
     tvars = {
         'pack': pack,
         'form': form,
-        'current_sounds': current_sounds,
     }
+    tvars.update(paginate_data)
     return render(request, 'sounds/pack_edit.html', tvars)
 
 

@@ -56,9 +56,8 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
     else:
         url = request.path + u"?" + params + u"&page="
 
-    url_last_page = None
-
-    # Page could be a dict or an object
+    # The pagination could be over a queryset or over the result of a query to solr, so 'page' could be an object
+    # if it's the case a query to the DB or a dict if it's the case of a query to solr
     if isinstance(page, dict):
         url_prev_page = url + str(page['previous_page_number'])
         url_next_page =  url + str(page['next_page_number'])
@@ -71,7 +70,7 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
         if page.has_next():
              url_next_page = url + str(page.next_page_number())
         url_first_page = url + '1'
-        url_last_page = url + str(paginator.num_pages)
+    url_last_page = url + str(paginator.num_pages)
 
     return {
         "page": page,

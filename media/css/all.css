@@ -3042,7 +3042,7 @@ use classes from pack edition
 #describe_form .sound-accordion-sound-alternate-header {
     display: block;
     border: solid 1px #ccc;
-    padding: 15px 0 15px 35px;
+    padding: 15px 0 15px 20px;
     background: #eee;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
@@ -3072,17 +3072,14 @@ use classes from pack edition
 }
 
 .sound-accordion-sound-alternate-header:before{
-    content: '';
-    background:url(/media/images/arrow-display.svg);
-    background-size:cover;
+    content: '\203A';
     position:absolute;
     width:20px;
     height:20px;
-    margin-left:-25px;
+    margin-left:-15px;
 }
 .sound-accordion-sound-alternate-header.expanded:before{
-    background:url(/media/images/arrow.svg);
-    background-size: cover;
+    content: '\2304';
 }
 
 .errortag_message {

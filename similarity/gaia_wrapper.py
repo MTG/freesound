@@ -200,7 +200,7 @@ class GaiaWrapper:
                     msg = 'Added point with name %s. Index has now %i points (pca index has %i points).' % (str(point_name), self.original_dataset.size(), self.pca_dataset.size())
                     logger.info(msg)
 
-            except Exception, e:
+            except Exception as e:
                 msg = 'Point with name %s could NOT be added (%s).' % (str(point_name), str(e))
                 logger.info(msg)
                 return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
@@ -483,7 +483,7 @@ class GaiaWrapper:
                         query = self.original_dataset.history().mapPoint(p)  # map point to original dataset
                     target_file_parsing_type = 'mapPoint'
 
-                except Exception, e:
+                except Exception as e:
                     logger.info('Unable to create gaia point from uploaded file (%s). Trying adding descriptors one by one.' % e)
 
                     # If does not work load descriptors one by one
@@ -524,7 +524,7 @@ class GaiaWrapper:
 
                         target_file_parsing_type = 'walkDict'
 
-                    except Exception, e:
+                    except Exception as e:
                         logger.info('Unable to create gaia point from uploaded file and adding descriptors one by one (%s)' % e)
                         return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the correct version of Essentia\'s Freesound extractor?', 'status_code': SERVER_ERROR_CODE}
         else:
@@ -577,7 +577,7 @@ class GaiaWrapper:
                     search = self.view.nnSearch(query, metric, str(filter))
             results = search.get(num_results, offset=offset)
             count = search.size()
-        except Exception, e:
+        except Exception as e:
             return {'error': True, 'result': 'Similarity server error', 'status_code': SERVER_ERROR_CODE}
 
         note = None

@@ -101,16 +101,16 @@ def process(sound):
         else:
             to_cleanup.append(tmp_wavefile)
             success("converted to pcm: " + tmp_wavefile)
-    except AudioProcessingException, e:
+    except AudioProcessingException as e:
         failure("conversion to pcm has failed, trying ffmpeg", e)
         try:
             audioprocessing.convert_using_ffmpeg(sound.original_path, tmp_wavefile)
             to_cleanup.append(tmp_wavefile)
             success("converted to pcm: " + tmp_wavefile)
-        except AudioProcessingException, e:
+        except AudioProcessingException as e:
             failure("conversion to pcm with ffmpeg failed", e)
             return False
-    except Exception, e:
+    except Exception as e:
         failure("unhandled exception", e)
         cleanup(to_cleanup)
         return False
@@ -120,18 +120,18 @@ def process(sound):
     try:
         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
         to_cleanup.append(tmp_wavefile2)
-    except AudioProcessingException, e:
+    except AudioProcessingException as e:
         failure("stereofy has failed, trying ffmpeg first", e)
         try:
             audioprocessing.convert_using_ffmpeg(sound.original_path, tmp_wavefile)
             info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
             #if tmp_wavefile not in to_cleanup: to_cleanup.append(tmp_wavefile)
             to_cleanup.append(tmp_wavefile2)
-        except AudioProcessingException, e:
+        except AudioProcessingException as e:
             failure("ffmpeg + stereofy failed", e)
             cleanup(to_cleanup)
             return False
-    except Exception, e:
+    except Exception as e:
         failure("unhandled exception", e)
         cleanup(to_cleanup)
         return False
@@ -142,7 +142,7 @@ def process(sound):
 
     try:
         sound.set_audio_info_fields(info)
-    except Exception, e:  # Could not catch a more specific exception
+    except Exception as e:  # Could not catch a more specific exception
         failure("failed writting audio info fields to db", e)
 
     for mp3_path, quality in [(sound.locations("preview.LQ.mp3.path"),70), (sound.locations("preview.HQ.mp3.path"), 192)]:
@@ -154,11 +154,11 @@ def process(sound):
 
         try:
             audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
-        except AudioProcessingException, e:
+        except AudioProcessingException as e:
             cleanup(to_cleanup)
             failure("conversion to mp3 (preview) has failed", e)
             return False
-        except Exception, e:
+        except Exception as e:
             failure("unhandled exception", e)
             cleanup(to_cleanup)
             return False
@@ -173,11 +173,11 @@ def process(sound):
 
         try:
             audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
-        except AudioProcessingException, e:
+        except AudioProcessingException as e:
             cleanup(to_cleanup)
             failure("conversion to ogg (preview) has failed", e)
             return False
-        except Exception, e:
+        except Exception as e:
             failure("unhandled exception", e)
             cleanup(to_cleanup)
             return False
@@ -194,11 +194,11 @@ def process(sound):
 
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
-    except AudioProcessingException, e:
+    except AudioProcessingException as e:
         cleanup(to_cleanup)
         failure("creation of images (M) has failed", e)
         return False
-    except Exception, e:
+    except Exception as e:
         failure("unhandled exception", e)
         cleanup(to_cleanup)
         return False
@@ -209,11 +209,11 @@ def process(sound):
     spectral_path_l = sound.locations("display.spectral.L.path")
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
-    except AudioProcessingException, e:
+    except AudioProcessingException as e:
         cleanup(to_cleanup)
         failure("creation of images (L) has failed", e)
         return False
-    except Exception, e:
+    except Exception as e:
         failure("unhandled exception", e)
         cleanup(to_cleanup)
         return False

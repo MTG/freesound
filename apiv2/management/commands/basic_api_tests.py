@@ -121,7 +121,7 @@ class Command(BaseCommand):
                                 else:
                                     print 'FAIL! (%i)' % r.status_code
                                     failed.append((prepended_url, r.status_code))
-                            except Exception, e:
+                            except Exception as e:
                                 print 'ERROR (%s)' % str(e)
                                 error.append(prepended_url)
 

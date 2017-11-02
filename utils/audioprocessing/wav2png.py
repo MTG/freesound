@@ -60,7 +60,7 @@ for input_file in args:
     if not options.profile:
         try:
             create_wave_images(*args)
-        except AudioProcessingException, e:
+        except AudioProcessingException as e:
             print "Error running wav2png: ", e
     else:
         from hotshot import stats

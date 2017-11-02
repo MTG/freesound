@@ -251,7 +251,7 @@ class SoundListSerializer(AbstractSoundSerializer):
         # Get descriptors from the view class (should have been requested before the serializer is invoked)
         try:
             return self.context['view'].sound_analysis_data[str(obj.id)]
-        except Exception, e:
+        except Exception as e:
             return None
 
 
@@ -274,7 +274,7 @@ class SoundSerializer(AbstractSoundSerializer):
                                               only_leaf_descriptors=True)[str(obj.id)]
             else:
                 return 'No descriptors specified. You should indicate which descriptors you want with the \'descriptors\' request parameter.'
-        except Exception, e:
+        except Exception as e:
             return None
 
 

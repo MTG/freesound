@@ -4,20 +4,20 @@
 	{% if page.has_other_pages %}
 	
 		{% if page.has_previous %}
-			<li class="previous-page"><a href="{{ url }}{{ page.previous_page_number }}{% if anchor %}#{{anchor}}{% endif %}" title="Previous Page">previous</a></li>
+			<li class="previous-page"><a href="{{ url_prev_page }}{% if anchor %}#{{anchor}}{% endif %}" title="Previous Page">previous</a></li>
 		{% else %}
 			<li class="disabled-previous-next">previous</li>
 		{% endif %}
 		
 		{% if page.has_next %}
-			<li class="next-page"><a href="{{ url }}{{ page.next_page_number }}{% if anchor %}#{{anchor}}{% endif %}" title="Next Page">next</a></li>
+			<li class="next-page"><a href="{{ url_next_page }}{% if anchor %}#{{anchor}}{% endif %}" title="Next Page">next</a></li>
 		{% else %}
 			<li class="disabled-previous-next"><span style="color:#888">next</span></li>
 		{% endif %}
 		
 		
 		{% if show_first %}
-			<li class="first-page"><a href="{{ url }}1{% if anchor %}#{{anchor}}{% endif %}" title="First Page">1</a></li>
+			<li class="first-page"><a href="{{ url_first_page }}{% if anchor %}#{{anchor}}{% endif %}" title="First Page">1</a></li>
 			<li class="dots">...</li>
 		{% endif %}
 		
@@ -31,7 +31,7 @@
 		
 		{% if show_last %}
 			<li class="dots">...</li>
-			<li class="last-page"><a href="{{ url }}{{ paginator.num_pages }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">{{paginator.num_pages}}</a></li>
+			<li class="last-page"><a href="{{ url_last_page }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">{{paginator.num_pages}}</a></li>
 		{% endif %}
 
 

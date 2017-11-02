@@ -93,7 +93,7 @@ class EditWikiPageTest(TestCase):
         Content.objects.create(page=self.page, author=self.user1, title='FS Help', body='Help version 2')
 
     def test_permissions(self):
-        # User with no permissions get 403
+        # User with no permissions get 404
         self.client.force_login(self.user3)
         resp = self.client.get(reverse('wiki-page-edit', kwargs={'name': 'help'}))
         self.assertEqual(404, resp.status_code)

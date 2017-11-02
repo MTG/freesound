@@ -17,11 +17,12 @@
 # Authors:
 #     See AUTHORS file.
 #
-import base64
 from django.test import TestCase
 from django.urls import reverse
+
+from apiv2.models import ApiV2Client
 from sounds.tests import create_user_and_sounds
-from models import ApiV2Client
+
 
 class TestAPiViews(TestCase):
 
@@ -47,24 +48,24 @@ class TestAPiViews(TestCase):
         # 200 response on pack instance download
         # This test uses a https connection.
         resp = self.client.get(reverse('apiv2-pack-download',
-            kwargs={'pk': packs[0].id}), secure=True)
+                               kwargs={'pk': packs[0].id}), secure=True)
         self.assertEqual(resp.status_code, 200)
 
     def test_oauth2_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         client = ApiV2Client.objects.create(user=user, description='',
-                name='', url='', redirect_uri='https://freesound.org')
+                                            name='', url='', redirect_uri='https://freesound.org')
         # Login so api returns session login based responses
         self.client.login(username=user.username, password='testpass')
 
         # 200 response on Oauth2 authorize
         resp = self.client.post(reverse('oauth2_provider:authorize'),
-                {'client_id': client.id, 'response_type': 'code'}, secure=True)
+                                {'client_id': client.id, 'response_type': 'code'}, secure=True)
         self.assertEqual(resp.status_code, 200)
 
         # 302 response on Oauth2 logout and authorize
         resp = self.client.post(reverse('oauth2_provider:logout_and_authorize'),
-                {'client_id': client.id}, secure=True)
+                                {'client_id': client.id}, secure=True)
         self.assertEqual(resp.status_code, 302)
 
     def test_basic_user_response_ok(self):
@@ -97,7 +98,7 @@ class TestAPI(TestCase):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
         c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                url="https://freesound.com", name="test")
+                        url="https://freesound.com", name="test")
         c.save()
 
         sound = sounds[0]
@@ -109,17 +110,17 @@ class TestAPI(TestCase):
             'HTTP_ORIGIN': 'https://www.google.com'
         }
         resp = self.client.options(reverse('apiv2-sound-instance',
-            kwargs={'pk': sound.id}), secure=True, **headers)
+                                   kwargs={'pk': sound.id}), secure=True, **headers)
         self.assertEqual(resp.status_code, 200)
         # Check if header is present
         self.assertEqual(resp['ACCESS-CONTROL-ALLOW-ORIGIN'], '*')
 
-    def test_encodig(self):
+    def test_encoding(self):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
         c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                url="https://freesound.com", name="test")
+                        url="https://freesound.com", name="test")
         c.save()
 
         sound = sounds[0]
@@ -132,3 +133,17 @@ class TestAPI(TestCase):
         # make query that can't be decoded
         resp = self.client.options("/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers)
         self.assertEqual(resp.status_code, 200)
+
+
+class ApiSearchPaginatorTest(TestCase):
+    def test_page(self):
+        paginator = ApiSearchPaginator([1, 2, 3, 4, 5], 5, 2)
+        page = paginator.page(2)
+
+        self.assertEquals(page, {'object_list': [1, 2, 3, 4, 5],
+                                 'has_next': True,
+                                 'has_previous': True,
+                                 'has_other_pages': True,
+                                 'next_page_number': 3,
+                                 'previous_page_number': 1,
+                                 'page_num': 2})

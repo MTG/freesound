@@ -27,7 +27,7 @@ import combined_search_strategies
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
-from exceptions import *
+from apiv2.exceptions import RequiresHttpsException, UnauthorizedException, ServerErrorException, BadRequestException, NotFoundException
 from examples import examples
 from django.conf import settings
 from utils.similarity_utilities import get_sounds_descriptors
@@ -313,12 +313,6 @@ def build_info_dict(resource=None, request=None):
             'api_request_protocol': protocol,
             'api_www': contains_www
         }
-
-
-def throw_exception_if_not_https(request):
-    if not settings.DEBUG:
-        if not request.is_secure():
-            raise RequiresHttpsException(request=request)
 
 
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):

@@ -1029,10 +1029,10 @@ def update_num_downloads_on_delete(**kwargs):
 def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
-        if download.pack:
+        if download.pack_id:
             download.pack.num_downloads = F('num_downloads') + 1
             download.pack.save()
-        if download.sound:
+        elif download.sound_id:
             download.sound.num_downloads = F('num_downloads') + 1
             download.sound.save()
 

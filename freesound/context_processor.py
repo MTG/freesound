@@ -37,11 +37,13 @@ def context_extra(request):
         num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
         num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
 
-    return {'media_url': settings.MEDIA_URL,
-            'request': request,
-            'GOOGLE_API_KEY': settings.GOOGLE_API_KEY,
-            'last_restart_date': settings.LAST_RESTART_DATE,
-            'new_tickets_count': new_tickets_count,
-            'num_pending_sounds': num_pending_sounds,
-            'num_messages': num_messages,
-            }
+    return {
+        'use_js_dev_server': settings.USE_JS_DEVELOPMENT_SERVER,
+        'media_url': settings.MEDIA_URL,
+        'request': request,
+        'GOOGLE_API_KEY': settings.GOOGLE_API_KEY,
+        'last_restart_date': settings.LAST_RESTART_DATE,
+        'new_tickets_count': new_tickets_count,
+        'num_pending_sounds': num_pending_sounds,
+        'num_messages': num_messages,
+    }

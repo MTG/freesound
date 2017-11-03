@@ -29,7 +29,7 @@ from django.db import connection, transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
-from django.shortcuts import render, get_object_or_404, render, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.six.moves.urllib.parse import urlparse
 from django.http import HttpResponse
 from django.template import loader
@@ -39,6 +39,8 @@ from comments.models import Comment
 from forum.models import Thread
 from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
+from networkx import nx
+from utils.frontend_handling import render
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundOfTheDay, SoundLicenseHistory

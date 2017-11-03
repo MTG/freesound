@@ -18,28 +18,13 @@
 #     See AUTHORS file.
 #
 
-from django.shortcuts import render
-from freesound_exceptions import PermissionDenied
-from utils.onlineusers import cache_online_users
-from django.contrib.auth.models import User
-from accounts.models import Profile
-from django.http import HttpResponseRedirect
-from django.urls import reverse
 from django.conf import settings
 from django.core.cache import cache
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+
 from sounds.models import Sound
-
-
-class PermissionDeniedHandler(object):
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        return self.get_response(request)
-
-    def process_exception(self, request, exception):
-        if isinstance(exception, PermissionDenied):
-            return render(request, 'permissiondenied.html')
+from utils.onlineusers import cache_online_users
 
 
 class OnlineUsersHandler(object):
@@ -50,6 +35,7 @@ class OnlineUsersHandler(object):
         cache_online_users(request)
         response = self.get_response(request)
         return response
+
 
 class BulkChangeLicenseHandler(object):
     def __init__(self, get_response):
@@ -62,10 +48,10 @@ class BulkChangeLicenseHandler(object):
         # don't run it for media URLs
         # N.B. probably better just to check for login in the URL
         if request.user.is_authenticated \
-            and not 'bulklicensechange' in request.get_full_path() \
-            and not 'logout' in request.get_full_path() \
-            and not 'tosacceptance' in request.get_full_path() \
-            and not request.get_full_path().startswith(settings.MEDIA_URL):
+                and 'bulklicensechange' not in request.get_full_path() \
+                and 'logout' not in request.get_full_path() \
+                and 'tosacceptance' not in request.get_full_path() \
+                and request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
             cache_key = "has-old-license-%s" % user.id
@@ -77,13 +63,27 @@ class BulkChangeLicenseHandler(object):
                 cache.set(cache_key, [has_old_license, has_sounds], 2592000) # 30 days cache
                 if has_old_license and has_sounds:
                     return HttpResponseRedirect(reverse("bulk-license-change"))
-
-            else :
+            else:
                 has_old_license = cache_info[0]
                 has_sounds = cache_info[1]
-                #print "CACHE LICENSE: has_old_license=" + str(has_old_license) + " has_sounds=" + str(has_sounds)
                 if has_old_license and has_sounds:
                     return HttpResponseRedirect(reverse("bulk-license-change"))
+        response = self.get_response(request)
+        return response
+
+
+class FrontendPreferenceHandler(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """
+        This middleware sets a session variable when the parameter 'new_frontend' is received.
+        The 'render' method will use this session variable to display the new/old frontend
+        """
+        if request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME, None):
+            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = \
+                request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
         response = self.get_response(request)
         return response
 
@@ -95,13 +95,13 @@ class TosAcceptanceHandler(object):
     def __call__(self, request):
 
         if request.user.is_authenticated \
-            and not 'tosacceptance' in request.get_full_path() \
-            and not 'logout' in request.get_full_path() \
-            and not 'tos_api' in request.get_full_path() \
-            and not 'tos_web' in request.get_full_path() \
-            and not 'contact' in request.get_full_path() \
-            and not 'bulklicensechange' in request.get_full_path() \
-            and not request.get_full_path().startswith(settings.MEDIA_URL):
+                and 'tosacceptance' not in request.get_full_path() \
+                and 'logout' not in request.get_full_path() \
+                and 'tos_api' not in request.get_full_path() \
+                and 'tos_web' not in request.get_full_path() \
+                and 'contact' not in request.get_full_path() \
+                and 'bulklicensechange' not in request.get_full_path() \
+                and request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
             cache_key = "has-accepted-tos-%s" % user.id

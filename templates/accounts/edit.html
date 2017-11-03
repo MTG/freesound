@@ -11,10 +11,12 @@
     <div id="edit_account" class="content_box">
         <h3>Edit your account information</h3>
         <form method="post" action=".">{% csrf_token %}
-            {{profile_form.as_p}}
+          <div style="background-color: #f8f8f8;padding: 20px">
+            <p>In some of the following fields you can format the text.</p>
             {% include 'forum/html_explanation.html' %}
-            <p>This formatting is supported for your about text and signature.
-            <br><br>
+            <p>This formatting is supported for your <strong>about text</strong>, <strong>signature</strong> and <strong>sound signature</strong>.</p>
+          </div>
+            {{profile_form.as_p}}
             <input type="submit" value="Save account settings" />
         </form>
     </div><!-- #edit_account -->

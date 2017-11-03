@@ -17,9 +17,9 @@
     {% if user.is_authenticated %}
         <div class="forum_button" style="right: 100px">
           {% if has_subscription %}
-              <a href ="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}">Unsubscribe</a>
+              <a href="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}">Unsubscribe</a>
           {% else %}
-              <a href ="{% url "forums-thread-subscribe" forum.name_slug thread.id %}">Subscribe</a>
+              <a title="Subscribe to receive email notifications" href="{% url "forums-thread-subscribe" forum.name_slug thread.id %}">Subscribe</a>
           {% endif %}
         </div>
     {% endif %}

@@ -280,7 +280,8 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
-    return render(request, 'forum/unsubscribe_from_thread.html', locals())
+    messages.add_message(request, messages.INFO, 'You have been unsubscribed from the thread notification for this thread.')
+    return HttpResponseRedirect(reverse('forums-thread', args=[forum.name_slug, thread.id]))
 
 
 @login_required
@@ -288,6 +289,8 @@ def subscribe_to_thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
+    messages.add_message(request, messages.INFO, "You have been subscribed to this thread. You will receive an "
+                                                 "email notification every time someone makes a reply to this thread.")
     return HttpResponseRedirect(reverse('forums-thread', args=[forum.name_slug, thread.id]))
 
 

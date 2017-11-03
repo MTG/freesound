@@ -19,6 +19,7 @@
 #
 
 from django.test import TestCase, override_settings
+from django.core import mail
 from django.contrib.auth.models import User
 from django.urls import reverse
 from forum.models import Forum, Thread, Post, Subscription
@@ -241,4 +242,30 @@ class ForumPageResponses(TestCase):
         self.assertEqual(resp.status_code, 302)
 
         self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 0)
+
+    def test_emails_sent_for_subscription_to_thread(self):
+        forum = Forum.objects.first()
+        thread = forum.thread_set.first()
+        post = thread.post_set.first()
+
+        self.client.login(username=self.user.username, password='12345')
+        resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
+        self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=self.user).count(), 1)
+
+        # User creates now post
+        user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        self.client.login(username=user2.username, password='12345')
+
+        resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
+        self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 1)
+
+        resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
+            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+        })
+        post = Post.objects.get(body=u'Reply post body')
+        self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
+
+        # Both users are subscribed but the email is not sent to the user that is sending the post
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "[freesound] topic reply notification - Thread 0 of forum 0")
 

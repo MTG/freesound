@@ -104,26 +104,13 @@ class UserFlagAdmin(admin.ModelAdmin):
 admin.site.register(UserFlag, UserFlagAdmin)
 
 
-class ProfileInline(admin.StackedInline):
-    model = Profile
-    can_delete = False
-    verbose_name_plural = 'Profile'
-    fk_name = 'user'
-
-
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     search_fields = ('=username', '=email')
     actions = (disable_active_user, disable_active_user_preserve_sounds, )
     list_display = ('username', 'email')
     list_filter = ()
     ordering = ('id', )
-    inlines = (ProfileInline, )
     show_full_result_count = False
-
-    def get_inline_instances(self, request, obj=None):
-        if not obj:
-            return list()
-        return super(FreesoundUserAdmin, self).get_inline_instances(request, obj)
 
     def full_delete(self, request, obj):
         username = obj.username

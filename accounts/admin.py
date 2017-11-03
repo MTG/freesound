@@ -21,17 +21,19 @@
 #
 
 import json
+
 import gearman
-from django.contrib import admin
-from django.shortcuts import render
-from django.contrib.auth.models import User
-from django.contrib.auth.admin import UserAdmin
-from accounts.models import Profile, UserFlag, EmailPreferenceType
-from django_object_actions import DjangoObjectActions
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import admin
+from django.contrib import messages
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse
+from django_object_actions import DjangoObjectActions
+
+from accounts.models import Profile, UserFlag, EmailPreferenceType
 
 
 def disable_active_user(modeladmin, request, queryset):
@@ -102,13 +104,26 @@ class UserFlagAdmin(admin.ModelAdmin):
 admin.site.register(UserFlag, UserFlagAdmin)
 
 
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+    verbose_name_plural = 'Profile'
+    fk_name = 'user'
+
+
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     search_fields = ('=username', '=email')
     actions = (disable_active_user, disable_active_user_preserve_sounds, )
     list_display = ('username', 'email')
     list_filter = ()
     ordering = ('id', )
-    show_full_result_count=False
+    inlines = (ProfileInline, )
+    show_full_result_count = False
+
+    def get_inline_instances(self, request, obj=None):
+        if not obj:
+            return list()
+        return super(FreesoundUserAdmin, self).get_inline_instances(request, obj)
 
     def full_delete(self, request, obj):
         username = obj.username

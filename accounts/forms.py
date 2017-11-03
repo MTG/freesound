@@ -280,6 +280,9 @@ class ProfileForm(forms.ModelForm):
         if is_spam(self.request, sound_signature):
             raise forms.ValidationError("Your sound signature was considered spam, please edit and resubmit. If it keeps "
                                         "failing please contact the admins.")
+        if len(sound_signature) > 256:
+            raise forms.ValidationError("Your sound signature must not exeed 256 chars, please edit and resubmit.")
+
         return sound_signature
 
     class Meta:

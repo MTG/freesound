@@ -101,7 +101,9 @@
     <div id="sound_description">
         {{sound.description|replace_img|safe|linebreaks}}
         {% if user.profile.sound_signature %}
+        <div style="color: #303336; background-color: #f6f6f6; padding: 10px; border-top: #ccc solid 1px;">
             {{user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+        </div>
         {% endif %}
     </div>
 

@@ -21,7 +21,7 @@
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
-from forum.models import Forum, Thread, Post
+from forum.models import Forum, Thread, Post, Subscription
 
 
 def _create_forums_threads_posts(author, n_forums=1, n_threads=1, n_posts=5):
@@ -213,3 +213,32 @@ class ForumPageResponses(TestCase):
         self.assertRedirects(resp, new_last_post.get_absolute_url(), target_status_code=302)
         # TODO: this case only checks the deletion of the last post of a thread. Deleting the first post of a thread
         # TODO: (or the only post if there's only one) raises a 500 error. This should be fixed and test updated.
+
+    def test_user_subscribe_to_thread(self):
+        forum = Forum.objects.first()
+        thread = forum.thread_set.first()
+
+        # Assert non-logged in user can't subscribe
+        resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
+        self.assertRedirects(resp, '%s?next=%s' % (reverse('login'), reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id])))
+
+        # Assert logged in user can subscribe
+        user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        self.client.login(username=user2.username, password='12345')
+        resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
+        self.assertEqual(resp.status_code, 302)
+
+        self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 1)
+
+        # Try to create another subscription for the same user and thread, it should not create it
+        resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
+        self.assertEqual(resp.status_code, 302)
+
+        self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 1)
+
+        # Assert logged in user can unsubscribe
+        resp = self.client.get(reverse('forums-thread-unsubscribe', args=[forum.name_slug, thread.id]))
+        self.assertEqual(resp.status_code, 302)
+
+        self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 0)
+

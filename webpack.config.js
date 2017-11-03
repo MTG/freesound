@@ -23,11 +23,11 @@ function getPlugins(plugins) {
 const config = {
   entry: {
     index: getEntrySources([
-      './src/js/index',
+      './freesound/static/src/js/index',
     ]),
   },
   output: {
-    filename: 'dist/js/[name].js',
+    filename: './freesound/static/dist/js/[name].js',
   },
   plugins: getPlugins([
     new webpack.DefinePlugin({

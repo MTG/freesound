@@ -18,7 +18,10 @@
         $(document).ready(function() {
             display_errors();
             for (var i=1; i<={{ sounds_per_round }}; i++){
-                $('#sound-accordion-sound-'+i).hide();
+                var soundAccordion = $('#sound-accordion-sound-header-'+i);
+                if (soundAccordion.hasClass('sound-accordion-sound-alternate-header-errors') == false){
+                  $('#sound-accordion-sound-'+i).hide();
+                }
 
                 unsecureImageCheck($('#id_' + parseInt(i - 1, 10) + '-description'));
             }
@@ -79,10 +82,13 @@
 
         function toggleSound(n) {
             var sound_accordion_element = $('#sound-accordion-sound-'+n)
+            var sound_accordion_element_header = $('#sound-accordion-sound-header-'+n)
             if (sound_accordion_element.is(':visible')) {
                 sound_accordion_element.hide('fast');
+                sound_accordion_element_header.removeClass('expanded');
             } else {
                 sound_accordion_element.show('fast');
+                sound_accordion_element_header.addClass('expanded');
                 if ($("#id_" + parseInt(n-1,10) + "-zoom").val()){
                     if (!maps[n]){
                         init_map(n);
@@ -242,7 +248,7 @@
     <p>You are not required to specify a geolocation for each sound, but if the sound is a
         field-recording it's probably a good idea to specify the location.
 
-    <form id="describe_form" action="." method="post">{% csrf_token %}
+    <form id="describe_form" action="." method="post" novalidate>{% csrf_token %}
     <div id="sound-accordion-alternate">
     {% for form in forms %}
         <div onclick="toggleSound({{ forloop.counter }})" class="sound-accordion-sound-alternate-header{% if form.description.errors or form.geotag.errors or form.pack.errors or form.license.errors %}-errors{% endif %}" id="sound-accordion-sound-header-{{ forloop.counter }}">

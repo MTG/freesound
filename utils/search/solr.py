@@ -126,6 +126,18 @@ class SolrQuery(object):
         self.params['sort'] = ",".join(sort) if sort else sort
         self.params['start'] = start
         self.params['rows'] = rows
+        if filter_query:
+            filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+
+            # Generate tuple with information of filters
+            filter_query_split = []
+            if filter_query != "":
+                for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
+                    filter_str = filter_str + '"'
+                    filter_query_split.append(filter_str)
+            print filter_query_split
+            filter_query = tuple(filter_query_split)
+
         self.params['fq'] = filter_query
         self.params['fl'] = ",".join(field_list) if field_list else field_list
 
@@ -494,7 +506,6 @@ class SolrResponseInterpreter(object):
             self.num_rows = len(self.docs)
             self.num_found = response["response"]["numFound"]
             self.non_grouped_number_of_matches = -1
-        
         self.q_time = response["responseHeader"]["QTime"]
         try:
             self.facets = response["facet_counts"]["facet_fields"]
@@ -507,7 +518,6 @@ class SolrResponseInterpreter(object):
         """
         for facet, fields in self.facets.items():
             self.facets[facet] = [(fields[index], fields[index+1]) for index in range(0, len(fields), 2)]
-        
         try:
             self.highlighting = response["highlighting"]
         except KeyError:

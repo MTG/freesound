@@ -85,6 +85,7 @@ def search_prepare_query(search_query,
         start = (current_page - 1) * sounds_per_page
     else:
         start = offset
+
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
 
     if include_facets:
@@ -156,11 +157,11 @@ def search(request):
     sort = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
     grouping = request.GET.get("g", "1") # Group by default
-    actual_groupnig = grouping
+    actual_grouping = grouping
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is thourhg ajax (for sources remix editing), do not collapse
     if "pack" in filter_query or request.GET.get("ajax", "") == "1":
-        actual_groupnig = ""
+        actual_grouping = ""
 
     # Set default values
     id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
@@ -225,7 +226,7 @@ def search(request):
         'username': request.user.username,
         'page': current_page,
         'sort': sort[0],
-        'group_by_pack': actual_groupnig,
+        'group_by_pack': actual_grouping,
         'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
     }))
 
@@ -240,7 +241,7 @@ def search(request):
                                  username_weight,
                                  pack_tokenized_weight,
                                  original_filename_weight,
-                                 grouping=actual_groupnig
+                                 grouping=actual_grouping
                                  )
 
     tvars = {
@@ -259,7 +260,7 @@ def search(request):
 
     try:
         non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
-        resultids = [d.get("id") for d in docs]
+        resultids = [int(d.get("id")) for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
         for s in resultsounds:
@@ -268,9 +269,9 @@ def search(request):
         # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
         # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
         # in docs that have not been loaded in allsounds.
-        docs = [doc for doc in docs if doc["id"] in allsounds]
+        docs = [doc for doc in docs if int(doc["id"]) in allsounds]
         for d in docs:
-            d["sound"] = allsounds[d["id"]]
+            d["sound"] = allsounds[int(d["id"])]
 
         tvars.update({
             'paginator': paginator,

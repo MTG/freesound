@@ -116,7 +116,7 @@ class TextSearch(GenericAPIView):
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
-        ids = [id for id in page['object_list']]
+        ids = [int(id) for id in page['object_list']]
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
 

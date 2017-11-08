@@ -127,16 +127,23 @@ class SolrQuery(object):
         self.params['start'] = start
         self.params['rows'] = rows
         if filter_query:
-            filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
-
-            # Generate tuple with information of filters
-            filter_query_split = []
-            if filter_query != "":
-                for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
-                    filter_str = filter_str + '"'
-                    filter_query_split.append(filter_str)
-            print filter_query_split
-            filter_query = tuple(filter_query_split)
+            # In previous versions of solr when using multiple filters they were applied using AND operator but in
+            # the current version the '+' must be before the field name to be mandatory.
+            # As we want to keep the same behaviour we append the '+' sign to the field name when filtering, only
+            # the user didn't used OR in the filters
+            if 'OR' not in filter_query:
+                filter_names = ['id', 'username', 'created', 'original_filename', 'description', 'tag', 'license',
+                    'is_remix', 'was_remix', 'pack', 'pack_tokenized', 'is_geotagged', 'type', 'duration', 'bitdepth',
+                    'bitrate', 'samplerate', 'filesize', 'channels', 'md5', 'num_downloads', 'avg_rating',
+                    'num_ratings', 'avg_ratings', 'comment', 'comments']
+                for fn in filter_names:
+                    if filter_query.startswith(fn+':'):
+                        filter_query = '+' + filter_query
+                    filter_query = filter_query.replace(' '+fn+':', ' +'+fn+':')
+                # Also we need to add the '+' sign to the geotag filter
+                if filter_query.startswith('{!geofilt'):
+                    filter_query = '+' + filter_query
+                filter_query = filter_query.replace(' {!geofilt', ' +{!geofilt')
 
         self.params['fq'] = filter_query
         self.params['fl'] = ",".join(field_list) if field_list else field_list

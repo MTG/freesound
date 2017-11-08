@@ -21,7 +21,7 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from sounds.models import Sound
-from utils.search.solr import SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from utils.search.solr import SolrResponseInterpreter, SolrResponseInterpreterPaginator, SolrQuery
 import mock
 import copy
 
@@ -122,3 +122,43 @@ class SearchPageTests(TestCase):
         # Check that we perform one single query to get all sounds' information and don't do one extra query per sound
         with self.assertNumQueries(1):
             self.client.get(reverse('sounds-search'))
+
+    def test_search_filter(self):
+        # Test conversion of the filter_query, it should add the '+' sign to each filter value
+        query = SolrQuery()
+        filter_query = "created:[* TO NOW]"
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], "+created:[* TO NOW]")
+
+        filter_query = 'tag:bass description:"heavy distortion"'
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], '+tag:bass +description:"heavy distortion"')
+
+        filter_query = 'tag:bass tag:music'
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], '+tag:bass +tag:music')
+
+        filter_query = 'tag:bass +is_geotagged:true'
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], '+tag:bass +is_geotagged:true')
+
+        filter_query = '+tag:bass is_geotagged:true'
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], '+tag:bass +is_geotagged:true')
+
+        filter_query = "is_geotagged:true tag:field-recording duration:[0 TO 120]"
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], "+is_geotagged:true +tag:field-recording +duration:[0 TO 120]")
+
+        filter_query = "is_geotagged:true {!geofilt sfield=geotag pt=41.3833,2.1833 d=10}"
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], "+is_geotagged:true +{!geofilt sfield=geotag pt=41.3833,2.1833 d=10}")
+
+        filter_query = "{!geofilt sfield=geotag pt=41.3833,2.1833 d=10} tag:barcelona"
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], "+{!geofilt sfield=geotag pt=41.3833,2.1833 d=10} +tag:barcelona")
+
+        # If the filter contains OR operator then don't replace
+        filter_query = "is_geotagged:true OR tag:field-recording"
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        self.assertEqual(query.params['fq'], filter_query)

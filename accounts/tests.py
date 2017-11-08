@@ -264,10 +264,6 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('wiki'))
         self.assertEqual(resp.status_code, 302)
 
-        # 200 response on wiki developers page
-        resp = self.client.get(reverse('wiki_developers'))
-        self.assertEqual(resp.status_code, 302)
-
         # 200 response on forums moderation page
         resp = self.client.get(reverse('forums-moderate'))
         self.assertEqual(resp.status_code, 200)

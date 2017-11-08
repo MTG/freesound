@@ -357,7 +357,7 @@ def edit(request):
             profile.save()
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
-                msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds"
+                msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
             messages.add_message(request, messages.INFO, msg_txt)
             return HttpResponseRedirect(reverse("accounts-home"))
     else:

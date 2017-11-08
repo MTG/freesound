@@ -216,7 +216,13 @@
         $("#filter_query").val(cleaned);
     }
 
-
+    function set_hidden_grouping_value(){
+        if ($("#grouping_geotagged").is(':checked')){
+            $("#grouping_geotagged_hidden").val("1")
+        }else{
+            $("#grouping_geotagged_hidden").val("")
+        }
+    }
 
 </script>
 

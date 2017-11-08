@@ -236,7 +236,7 @@ class ProfileForm(forms.ModelForm):
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     signature = HtmlCleaningCharField(
         label="Forum signature",
-        widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
+        widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
         required=False
     )
     sound_signature = HtmlCleaningCharField(
@@ -245,11 +245,11 @@ class ProfileForm(forms.ModelForm):
         help_text="""Your sound signature is added to the end of the description of all of your sounds.
                      You can use it to show a common message on all of your sounds. If you change the
                      sound signature it will be automatically updated on all of your sounds. Use the
-                     special text ${sound_url} to refer to the URL of the current sound being displayed
-                     and ${sound_id} to refer to the id of the current sound.""",
+                     special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed
+                     and <code>${sound_id}</code> to refer to the id of the current sound.""",
         required=False
     )
-    is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
+    is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inappropriate content warnings",
             label="", required=False)
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
@@ -287,8 +287,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ('home_page', 'is_adult', 'about', 'signature', 'sound_signature',
-                  'not_shown_in_online_users_list')
+        fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
 
 
 class EmailResetForm(forms.Form):

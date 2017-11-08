@@ -38,7 +38,7 @@
 
 		<div class="bookmark_info">
 
-		    <a href="{% url "sound" bookmark.sound.user.username bookmark.sound.id %}">{% if bookmark.name %}{{bookmark.name}}{% else %}{{bookmark.sound.original_filename}}{%endif%}</a> by <a href="{% url "account" bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>
+		    <a href="{% url "sound" bookmark.sound.user.username bookmark.sound.id %}">{% if bookmark.name %}{{bookmark.name|truncatechars:50}}{% else %}{{bookmark.sound.original_filename|truncatechars:50}}{%endif%}</a> by <a href="{% url "account" bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>
 
 		    {% if is_owner %}
 			<a href="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete bookmark"/></a>
@@ -83,23 +83,6 @@
 	{% endif %}
 
     </div><!-- #bookmark_categories -->
-
-    {% comment %}
-    {% if is_owner %}
-    <div id="create_category" class="content_box">
-    <h3>Create a new category</h3>
-    <form action="" method="post" style="margin-left:-10px;margin-top:-10px">{% csrf_token %}
-	<p style="margin-top:-10px">
-	    Name: {{form_bookmark_category.name}}
-	    <input type="submit" value="Create" name="create_cat" style="float:right;margin-top:8px"/>
-	    <br style="clear"/>
-	</p>
-    </form>
-    </div>
-    {% endif %}
-    {% endcomment %}
-
-
 </div><!-- #sidebar -->
 
 <br class="clear"/><!-- Need a clearing element for some reason here.. -->

@@ -51,7 +51,7 @@ def add_post_to_solr(post):
     logger.info("adding single forum post to solr index")
     try:
         Solr(settings.SOLR_FORUM_URL).add([convert_to_solr_document(post)])
-    except SolrException, e:
+    except SolrException as e:
         logger.error("failed to add forum post %d to solr index, reason: %s" % (post.id, str(e)))
 
 
@@ -78,12 +78,12 @@ def add_all_posts_to_solr(post_queryset, slice_size=4000, mark_index_clean=False
         try:
             posts = post_queryset[i:i+slice_size]
             add_posts_to_solr(posts)
-        except SolrException, e:
+        except SolrException as e:
             logger.error("failed to add post batch to solr index, reason: %s" % str(e))
 
 def delete_post_from_solr(post):
     logger.info("deleting post with id %d" % post.id)
     try:
         Solr(settings.SOLR_FORUM_URL).delete_by_id(post.id)
-    except Exception, e:
+    except Exception as e:
         logger.error('could not delete post with id %s (%s).' % (post.id, e))

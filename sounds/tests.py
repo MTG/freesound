@@ -23,13 +23,14 @@ import time
 from itertools import count
 
 import mock
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.cache import cache
 from django.core.management import call_command
 from django.http import HttpRequest, HttpResponse
 from django.template import Context, Template
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client, RequestFactory, override_settings
 from django.urls import reverse
 from freezegun import freeze_time
 
@@ -669,6 +670,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
                 self.sound = sound
                 break
 
+    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_sound_from_id(self):
         Template("{% load display_sound %}{% display_sound sound %}").render(Context({
             'sound': self.sound.id,
@@ -677,6 +679,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
+    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_sound_from_obj(self):
         Template("{% load display_sound %}{% display_sound sound %}").render(Context({
             'sound': self.sound,
@@ -685,6 +688,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
+    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_raw_sound(self):
         raw_sound = Sound.objects.bulk_query_id([self.sound.id])[0]
         Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({

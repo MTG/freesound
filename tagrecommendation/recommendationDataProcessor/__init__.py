@@ -285,7 +285,7 @@ class RecommendationDataProcessor:
         instances_ids = resources_tags.keys()
         try:
             resource_class = loadFromJson(RECOMMENDATION_DATA_DIR + 'Classifier_classified_resources.json')
-        except Exception, e:
+        except Exception as e:
             resource_class = dict()
 
         for count, id in enumerate(instances_ids):

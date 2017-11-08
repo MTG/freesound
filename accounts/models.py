@@ -205,9 +205,9 @@ class Profile(SocialModel):
 
             try:
                 results = SolrResponseInterpreter(solr.select(unicode(query)))
-            except SolrException, e:
+            except SolrException as e:
                 return False
-            except Exception, e:
+            except Exception as e:
                 return False
 
             return [{'name': tag, 'count': count} for tag, count in results.facets['tag']]

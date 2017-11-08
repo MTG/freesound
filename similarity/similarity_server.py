@@ -160,7 +160,7 @@ class SimilarityServer(resource.Resource):
                             return json.dumps({'error': True, 'result': 'Invalid descriptor values for target.', 'status_code': BAD_REQUEST_CODE})
                     if not target.items():
                         return json.dumps({'error': True, 'result': 'Invalid target.', 'status_code': BAD_REQUEST_CODE})
-                except Exception, e:
+                except Exception as e:
                     return json.dumps({'error': True, 'result': 'Invalid descriptor values for target.', 'status_code': BAD_REQUEST_CODE})
             elif target_type == 'file':
                 data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
@@ -181,7 +181,7 @@ class SimilarityServer(resource.Resource):
                         return json.dumps({'error': True, 'result': filter, 'status_code': BAD_REQUEST_CODE})
                     else:
                         return json.dumps({'error': True, 'result': 'Invalid filter.', 'status_code': BAD_REQUEST_CODE})
-            except Exception, e:
+            except Exception as e:
                 return json.dumps({'error': True, 'result': 'Invalid filter.', 'status_code': BAD_REQUEST_CODE})
 
         '''

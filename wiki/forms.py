@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,11 +18,14 @@
 #     See AUTHORS file.
 #
 
-import sys
-from processing import stereofy_and_find_info, AudioProcessingException
+from django import forms
+from wiki import models
 
-try:
-    for (k,v) in stereofy_and_find_info("/Users/bram/Development/nightingale/sandbox/legacy/stereofy/stereofy", sys.argv[1], '/dev/null').items():
-        print k,"->", v
-except AudioProcessingException, e:
-    print "warning, audio information extraction seems to have failed:", e
+
+class ContentForm(forms.ModelForm):
+    title = forms.CharField(label='Page name', widget=forms.TextInput(attrs={'size': '100'}))
+    body = forms.CharField(widget=forms.Textarea(attrs={'rows': '40', 'cols': '100'}))
+
+    class Meta:
+        model = models.Content
+        exclude = ('author', 'page', 'created')

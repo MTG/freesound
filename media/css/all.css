@@ -1416,6 +1416,14 @@ ul#sound_links {
     top: 5px;
 }
 
+.sound_signature {
+    padding: 10px;
+    padding-bottom: 0px;
+    border-top: dashed 1px #C4C4C4;
+    font-size: 12px;
+    color: #777;
+}
+
 
 /* Comments
 ------------------------------------------------------*/

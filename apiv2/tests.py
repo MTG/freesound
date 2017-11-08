@@ -21,6 +21,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apiv2.models import ApiV2Client
+from apiv2.apiv2_utils import ApiSearchPaginator
 from sounds.tests import create_user_and_sounds
 
 

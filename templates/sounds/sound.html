@@ -7,6 +7,7 @@
 {% load cache %}
 {% load absurl %}
 {% load flag_user %}
+{% load sound_signature%}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
 
@@ -99,6 +100,11 @@
     </div>
     <div id="sound_description">
         {{sound.description|replace_img|safe|linebreaks}}
+        {% if user.profile.sound_signature %}
+        <div class="sound_signature">
+            {{user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+        </div>
+        {% endif %}
     </div>
 
     <ul class="tags">

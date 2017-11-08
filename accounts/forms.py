@@ -236,10 +236,20 @@ class ProfileForm(forms.ModelForm):
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     signature = HtmlCleaningCharField(
         label="Forum signature",
-        widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
+        widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
         required=False
     )
-    is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
+    sound_signature = HtmlCleaningCharField(
+        label="Sound signature",
+        widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
+        help_text="""Your sound signature is added to the end of the description of all of your sounds.
+                     You can use it to show a common message on all of your sounds. If you change the
+                     sound signature it will be automatically updated on all of your sounds. Use the
+                     special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed
+                     and <code>${sound_id}</code> to refer to the id of the current sound.""",
+        required=False
+    )
+    is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inappropriate content warnings",
             label="", required=False)
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
@@ -265,10 +275,19 @@ class ProfileForm(forms.ModelForm):
                                         "failing please contact the admins.")
         return signature
 
+    def clean_sound_signature(self):
+        sound_signature = self.cleaned_data['sound_signature']
+        if is_spam(self.request, sound_signature):
+            raise forms.ValidationError("Your sound signature was considered spam, please edit and resubmit. If it keeps "
+                                        "failing please contact the admins.")
+        if len(sound_signature) > 256:
+            raise forms.ValidationError("Your sound signature must not exeed 256 chars, please edit and resubmit.")
+
+        return sound_signature
+
     class Meta:
         model = Profile
-        fields = ('home_page', 'is_adult', 'about', 'signature',
-                  'not_shown_in_online_users_list')
+        fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
 
 
 class EmailResetForm(forms.Form):

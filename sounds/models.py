@@ -1017,24 +1017,20 @@ class Download(models.Model):
 @receiver(post_delete, sender=Download)
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
-    if download.pack_id:
-        download.pack.num_downloads = F('num_downloads') - 1
-        download.pack.save()
-    elif download.sound_id:
-        download.sound.num_downloads = F('num_downloads') - 1
-        download.sound.save()
+    if download.sound_id:
+        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+    elif download.pack_id:
+        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
 
 
 @receiver(post_save, sender=Download)
 def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
-        if download.pack_id:
-            download.pack.num_downloads = F('num_downloads') + 1
-            download.pack.save()
-        elif download.sound_id:
-            download.sound.num_downloads = F('num_downloads') + 1
-            download.sound.save()
+        if download.sound_id:
+            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+        elif download.pack_id:
+            Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
 
 
 class RemixGroup(models.Model):

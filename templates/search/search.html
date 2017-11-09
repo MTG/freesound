@@ -79,21 +79,6 @@
 
     });
 
-    function showAdvancedSearchOptions()
-    {
-        $("#advanced_search_hidden").val(1);
-        $("#enableShowButton").hide();
-        $("#advanced_search_options").show('blind', {}, 500, function() {});
-
-    }
-
-    function hideAdvancedSearchOptions()
-    {
-        $("#advanced_search_hidden").val(0);
-        $("#advanced_search_options").hide('blind', {}, 500, function() {});
-        $("#enableShowButton").show();
-    }
-
     function addAdvancedSearchOptionsFilters()
     {
 
@@ -214,14 +199,6 @@
         var value = $("#filter_query").val();
         var cleaned = $.trim(value.replace(tag + " ", "").replace(tag, ""));
         $("#filter_query").val(cleaned);
-    }
-
-    function set_hidden_grouping_value(){
-        if ($("#grouping_geotagged").is(':checked')){
-            $("#grouping_geotagged_hidden").val("1")
-        }else{
-            $("#grouping_geotagged_hidden").val("")
-        }
     }
 
 </script>

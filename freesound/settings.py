@@ -17,6 +17,8 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'freesound.middleware.TosAcceptanceHandler',
+    'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
     'freesound.middleware.FrontendPreferenceHandler',

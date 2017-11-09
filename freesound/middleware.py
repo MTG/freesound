@@ -51,16 +51,16 @@ class BulkChangeLicenseHandler(object):
                 and 'bulklicensechange' not in request.get_full_path() \
                 and 'logout' not in request.get_full_path() \
                 and 'tosacceptance' not in request.get_full_path() \
-                and request.get_full_path().startswith(settings.MEDIA_URL):
+                and not request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
             cache_key = "has-old-license-%s" % user.id
             cache_info = cache.get(cache_key)
 
-            if cache_info == None or 0 or not isinstance(cache_info, (list, tuple)):
+            if cache_info is None or 0 or not isinstance(cache_info, (list, tuple)):
                 has_old_license = user.profile.has_old_license
                 has_sounds = Sound.objects.filter(user=user).exists()
-                cache.set(cache_key, [has_old_license, has_sounds], 2592000) # 30 days cache
+                cache.set(cache_key, [has_old_license, has_sounds], 2592000)  # 30 days cache
                 if has_old_license and has_sounds:
                     return HttpResponseRedirect(reverse("bulk-license-change"))
             else:
@@ -101,7 +101,7 @@ class TosAcceptanceHandler(object):
                 and 'tos_web' not in request.get_full_path() \
                 and 'contact' not in request.get_full_path() \
                 and 'bulklicensechange' not in request.get_full_path() \
-                and request.get_full_path().startswith(settings.MEDIA_URL):
+                and not request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
             cache_key = "has-accepted-tos-%s" % user.id
@@ -112,9 +112,10 @@ class TosAcceptanceHandler(object):
                 if not has_accepted_tos:
                     return HttpResponseRedirect(reverse("tos-acceptance"))
                 else:
-                    cache.set(cache_key, 'yes', 2592000) # 30 days cache
+                    cache.set(cache_key, 'yes', 2592000)  # 30 days cache
             else:
                 # If there is cache it means the terms has been accepted
                 pass
+
         response = self.get_response(request)
         return response

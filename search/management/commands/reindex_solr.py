@@ -19,12 +19,63 @@
 #
 
 import logging
+import math
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
+from utils.search.solr import Solr, SolrException
+from utils.text import remove_control_chars
 from sounds.models import Sound
-from utils.search.search_general import add_sounds_to_solr, delete_sound_from_solr
-from utils.search.solr import SolrException
 
 console_logger = logging.getLogger("console")
+
+def convert_to_solr_document(sound_obj):
+    document = {}
+    sound = sound_obj.__dict__
+    keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels',
+            'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
+    for key in keep_fields:
+        document[key] = sound[key]
+    document["original_filename"] = remove_control_chars(sound["original_filename"])
+    document["description"] = remove_control_chars(sound["description"])
+    document["tag"] = sound["tag_array"]
+    document["license"] = sound["license_name"]
+
+    if "pack_id" in sound:
+        document["pack"] = remove_control_chars(sound["pack_name"])
+        document["grouping_pack"] = str(sound["pack_id"]) + "_" + remove_control_chars(sound["pack_name"])
+    else:
+        document["grouping_pack"] = str(sound["id"])
+
+    document["is_geotagged"] = False
+    if "geotag_id" in sound:
+        sound["is_geotagged"] = True
+        if not math.isnan(sound["geotag_lon"]) and not math.isnan(sound["geotag_lat"]):
+            document["geotag"] = str(sound["geotag_lon"]) + " " + str(sound["geotag_lat"])
+
+    document["bitdepth"] = sound["bitdepth"] if "bitdepth" in sound else 0
+    document["bitrate"] = sound["bitrate"] if "bitrate" in sound else 0
+    document["samplerate"] = int(sound["samplerate"]) if "samplerate" in sound else 0
+
+    document["comment"] = [remove_control_chars(comment_text) for comment_text in sound["comments_array"]]
+    document["comments"] = sound["num_comments"]
+    locations = sound_obj.locations()
+    document["waveform_path_m"] = locations["display"]["wave"]["M"]["path"]
+    document["waveform_path_l"] = locations["display"]["wave"]["L"]["path"]
+    document["spectral_path_m"] = locations["display"]["spectral"]["M"]["path"]
+    document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
+    document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
+    return document
+
+
+def add_sounds_to_solr(sounds):
+    console_logger.info("adding multiple sounds to solr index")
+    solr = Solr(settings.SOLR_URL)
+    console_logger.info("creating XML")
+    documents = map(convert_to_solr_document, sounds)
+    console_logger.info("posting to Solr")
+    solr.add(documents)
+
 
 class Command(BaseCommand):
     args = ''
@@ -39,7 +90,7 @@ class Command(BaseCommand):
                 # Get all sounds moderated and processed ok
                 where = "sound.moderation_state = 'OK' AND sound.processing_state = 'OK' AND sound.id > %s"
                 order_by = "sound.id ASC"
-                sounds_qs = Sound.objects.bulk_query(where, order_by, slice_size, (i, ))
+                sounds_qs = Sound.objects.bulk_query_solr(where, order_by, slice_size, (i, ))
                 add_sounds_to_solr(sounds_qs)
             except SolrException as e:
                 console_logger.error("failed to add sound batch to solr index, reason: %s", str(e))

@@ -124,6 +124,52 @@ class SoundManager(models.Manager):
         else:
             return None
 
+    def bulk_query_solr(self, where, order_by, limit, args):
+        query = """SELECT
+          auth_user.username,
+          sound.id,
+          sound.type,
+          sound.original_filename,
+          sound.is_explicit,
+          sound.filesize,
+          sound.channels,
+          sound.avg_rating,
+          sound.num_ratings,
+          sound.description,
+          sound.created,
+          sound.num_downloads,
+          sound.num_comments,
+          sound.duration,
+          sounds_pack.name as pack_name,
+          sounds_license.name as license_name,
+          geotags_geotag.lat as geotag_lat,
+          geotags_geotag.lon as geotag_lon,
+          exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
+          exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
+          ARRAY(
+            SELECT tags_tag.name
+            FROM tags_tag
+            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
+          WHERE tags_tag.id = tags_taggeditem.tag_id
+           AND tags_taggeditem.content_type_id=20) AS tag_array,
+          ARRAY(
+            SELECT comments_comment.comment
+            FROM comments_comment
+            WHERE comments_comment.sound_id = sound.id) AS comments_array
+        FROM
+          sounds_sound sound
+          LEFT JOIN auth_user ON auth_user.id = sound.user_id
+          LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
+          LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+        WHERE %s """ % (where, )
+        if order_by:
+            query = "%s ORDER BY %s" % (query, order_by)
+        if limit:
+            query = "%s LIMIT %s" % (query, limit)
+        return self.raw(query, args)
+
+
     def bulk_query(self, where, order_by, limit, args):
         query = """SELECT
           auth_user.username,

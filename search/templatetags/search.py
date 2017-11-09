@@ -20,6 +20,7 @@
 
 
 from django import template
+from django.utils.http import urlquote_plus
 from utils.tags import annotate_tags
 
 register = template.Library()
@@ -41,12 +42,13 @@ def display_facet(context, flt, facet, type):
     for element in facet:
         if flt == "grouping_pack":
             if element['name'].count("_") > 0:
-                element['display_name'] = element['name'][element['name'].find("_")+1:] # We also modify the dispay name to remove the id
-                element['params'] = '%s %s:"%s"' % (filter_query, flt, element['name'])
+                # We also modify the dispay name to remove the id
+                element['display_name'] = element['name'][element['name'].find("_")+1:]
+                element['params'] = '%s %s:"%s"' % (filter_query, flt, urlquote_plus(element['name']))
                 filtered_facet.append(element)
         else:
             element['display_name'] = element['name']
-            element['params'] = '%s %s:"%s"' % (filter_query, flt, element['name'])
+            element['params'] = '%s %s:"%s"' % (filter_query, flt, urlquote_plus(element['name']))
             filtered_facet.append(element)
-    context.update({"facet":filtered_facet, "type":type, "filter": flt})
+    context.update({"facet": filtered_facet, "type": type, "filter": flt})
     return context

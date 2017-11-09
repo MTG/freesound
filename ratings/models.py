@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Avg
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete, post_save
@@ -53,25 +53,30 @@ class Rating(models.Model):
 @receiver(post_delete, sender=Rating)
 def post_delete_rating(sender, instance, **kwargs):
     try:
-        instance.content_object.num_ratings = F('num_ratings') - 1
-        avg_rating = Rating.objects.filter(
-                content_type_id=instance.content_type_id,
-                object_id=instance.object_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
-        rating = avg_rating['average_rating']
-        instance.content_object.avg_rating = rating
-        instance.content_object.save()
+        with transaction.atomic():
+            instance.content_object.num_ratings = F('num_ratings') - 1
+            avg_rating = Rating.objects.filter(
+                    content_type_id=instance.content_type_id,
+                    object_id=instance.object_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+            rating = avg_rating['average_rating']
+            instance.content_object.avg_rating = rating
+            instance.content_object.save()
     except ObjectDoesNotExist:
         pass
 
 
 @receiver(post_save, sender=Rating)
-def update_num_ratings_on_post_insert(**kwargs):
+def update_num_ratings_on_post_save(**kwargs):
     instance = kwargs['instance']
-    if kwargs['created']:
-        instance.content_object.num_ratings = F('num_ratings') + 1
-    avg_rating = Rating.objects.filter(
-        content_type_id=instance.content_type_id,
-        object_id=instance.object_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
-    rating = avg_rating['average_rating']
-    instance.content_object.avg_rating = rating
-    instance.content_object.save()
+
+    with transaction.atomic():
+        # Increase the number of ratings only on insert, but recompute the average
+        # after update as well
+        if kwargs['created']:
+            instance.content_object.num_ratings = F('num_ratings') + 1
+        avg_rating = Rating.objects.filter(
+            content_type_id=instance.content_type_id,
+            object_id=instance.object_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+        rating = avg_rating['average_rating']
+        instance.content_object.avg_rating = rating
+        instance.content_object.save()

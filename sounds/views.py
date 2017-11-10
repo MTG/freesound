@@ -29,7 +29,7 @@ from django.db import connection, transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
-from django.shortcuts import render, get_object_or_404, render, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.six.moves.urllib.parse import urlparse
 from django.http import HttpResponse
 from django.template import loader
@@ -39,6 +39,8 @@ from comments.models import Comment
 from forum.models import Thread
 from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
+from networkx import nx
+from utils.frontend_handling import render
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundOfTheDay, SoundLicenseHistory
@@ -243,7 +245,7 @@ def sound(request, username, sound_id):
                             send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
                                                {'sound': sound, 'user': request.user, 'comment': comment_text},
                                                None, sound.user.email)
-                    except Exception, e:
+                    except Exception as e:
                         # If the email sending fails, ignore...
                         logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.email, e))
 
@@ -806,12 +808,43 @@ def display_sound_wrapper(request, username, sound_id):
 
 
 def embed_iframe(request, sound_id, player_size):
+    """
+    This view returns an HTML player of `sound_id` which can be embeded in external sites.
+    The player can take different "sizes" including:
+
+        - 'mini': shows just a play button and a loop button. No background image.
+          Eg: /embed/sound/iframe/1234/simple/mini/.
+        - 'small': shows a play button, a loop button and the name of the user and sound.
+          No background image. Eg: /embed/sound/iframe/1234/simple/small/.
+        - 'medium': shows the waveform image with playing controls plus the sound name, username, license and some tags.
+          Eg: /embed/sound/iframe/1234/simple/medium/.
+        - 'medium_no_info': shows the waveform and with playing controls.
+          Eg: /embed/sound/iframe/1234/simple/medium_no_info/.
+        - 'large': shows the waveform image in large size with playing controls plus the sound name, username and license.
+          Eg: /embed/sound/iframe/1234/simple/large/.
+        - 'large_no_info': shows the waveform image in large size with playing controls.
+          Eg: /embed/sound/iframe/1234/simple/large_no_info/.
+        - 'full_size': like 'large' but taking the full width (used in twitter embeds).
+          Eg: /embed/sound/iframe/1234/simple/full_size/.
+
+    The sizes 'medium', 'medium_no_info', 'large', 'large_no_info' and 'full_size' can optionally show the spectrogram
+    image instead of the waveform if being passed a request parameter 'spec=1' in the URL.
+    Eg: /embed/sound/iframe/1234/simple/large/?spec=1.
+
+    The sizes 'medium' and 'medium_no_info' can optionally show a button to toggle the background image between the
+    waveform and the spectrogram by passing the request parameter 'td=1'. Bigger sizes always show that button.
+    """
     if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size']:
         raise Http404
-    size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
-    username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
-    return render(request, 'sounds/sound_iframe.html', locals())
+    tvars = {
+        'sound': sound,
+        'username_and_filename': '%s - %s' % (sound.user.username, sound.original_filename),
+        'size': player_size,
+        'use_spectrogram': request.GET.get('spec', None) == '1',
+        'show_toggle_display_button': request.GET.get('td', None) == '1',
+    }
+    return render(request, 'sounds/sound_iframe.html', tvars)
 
 
 def oembed(request):

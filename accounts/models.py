@@ -68,6 +68,7 @@ class Profile(SocialModel):
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
+    sound_signature = models.TextField(max_length=256, null=True, blank=True)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
     has_avatar = models.BooleanField(default=False)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
@@ -204,9 +205,9 @@ class Profile(SocialModel):
 
             try:
                 results = SolrResponseInterpreter(solr.select(unicode(query)))
-            except SolrException, e:
+            except SolrException as e:
                 return False
-            except Exception, e:
+            except Exception as e:
                 return False
 
             return [{'name': tag, 'count': count} for tag, count in results.facets['tag']]
@@ -237,13 +238,13 @@ class Profile(SocialModel):
             reference_date = self.user.post_set.all()[0].created
 
             # Do not allow posts if last post is not older than 5 minutes
-            seconds_per_post = 60*5
+            seconds_per_post = settings.LAST_FORUM_POST_MINIMUM_TIME
             if (today - self.user.post_set.all().reverse()[0].created).seconds < seconds_per_post:
                 return False, "We're sorry but you can't post to the forum because your last post was less than 5 " \
                               "minutes ago"
 
             # Do not allow posts if user has already posyted N posts that day
-            max_posts_per_day = 5 + pow((today - reference_date).days,2)
+            max_posts_per_day = settings.BASE_MAX_POSTS_PER_DAY + pow((today - reference_date).days, 2)
             if self.user.post_set.filter(created__range=(today-datetime.timedelta(days=1), today)).count() > \
                     max_posts_per_day:
                 return False, "We're sorry but you can't post to the forum because you exceeded your maximum number " \

@@ -106,7 +106,7 @@ def donation_complete_stripe(request):
                 err  = body.get('error', {})
                 donation_error = err.get('message', False)
             except stripe.error.StripeError as e:
-                logger.error("Can't charge donation whith stripe", e)
+                logger.error("Can't charge donation whith stripe: %s", e)
     if donation_error:
         messages.add_message(request, messages.WARNING, 'Error processing the donation. %s' % err.get('message'))
     elif not donation_received:

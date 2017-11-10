@@ -439,7 +439,7 @@ class Solr(object):
         encoded_docs = self.encoder.encode(docs)
         try:
             self._request(message=encoded_docs)
-        except error, e:
+        except error as e:
             raise SolrException, e
         #if self.auto_commit:
         #    self.commit()

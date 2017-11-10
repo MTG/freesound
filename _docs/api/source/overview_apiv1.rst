@@ -42,7 +42,7 @@ base URL.
 
 ::
 
-  http://www.freesound.org/api
+  https://freesound.org/api
 
 There is currently no support for HTTPS, only HTTP.
 
@@ -56,7 +56,7 @@ the URI to be requested. A request to the sounds search resource with API key
 
 ::
 
-  http://www.freesound.org/api/sounds/search?q=barking&api_key=12d6dc5486554e278e370cdc49935908
+  https://freesound.org/api/sounds/search?q=barking&api_key=12d6dc5486554e278e370cdc49935908
 
 N.B. The URIs documented on these pages do not show the API keys, but they
 are definitely necessary.
@@ -76,7 +76,7 @@ If authentication fails, you will get a response with status code
 You can apply for API keys at the following URL. Note that you will need
 a Freesound account.
 
-- http://www.freesound.org/api/apply
+- https://freesound.org/api/apply
 
 Requests
 --------
@@ -94,9 +94,9 @@ For example, the following URIs are all instances of the resource indicated by
 
 ::
 
-  http://www.freesound.org/api/sounds/18763
-  http://www.freesound.org/api/sounds/11
-  http://www.freesound.org/api/sounds/8734
+  https://freesound.org/api/sounds/18763
+  https://freesound.org/api/sounds/11
+  https://freesound.org/api/sounds/8734
 
 Responses
 ---------
@@ -119,10 +119,10 @@ to the request. Specify the desired format in lowercase letters as follows:
 ::
 
   # example requests for your files, but with different response formats
-  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=json
-  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=xml
-  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=yaml
-  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=pickle
+  https://freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=json
+  https://freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=xml
+  https://freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=yaml
+  https://freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=pickle
 
 N.B. The default format is JSON.
 

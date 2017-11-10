@@ -133,6 +133,7 @@ class SoundManager(models.Manager):
           sound.original_filename,
           sound.is_explicit,
           sound.avg_rating,
+          sound.num_ratings,
           sound.description,
           sound.moderation_state,
           sound.processing_state,

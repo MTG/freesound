@@ -23,6 +23,8 @@ import unicodedata
 from BeautifulSoup import BeautifulSoup, Comment
 from htmlentitydefs import name2codepoint
 from django.utils.encoding import smart_unicode
+from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, \
+    SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER
 
 
 def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slug_field='slug', filter_dict=None):
@@ -171,9 +173,17 @@ def clean_html(input):
     u'<p>123hello<strong>there <a href="http://www" rel="nofollow">http://www</a></strong></p>'
     >>> clean_html(u'abc http://www.google.com abc')
     u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc'
-    >>> clean_html(u'GALORE: http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
-    u'GALORE: <a href="http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator'
+    >>> clean_html(u'GALORE: https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
+    u'GALORE: <a href="https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator'
+    >>> clean_html(u'<a href="${sound_id}">my sound id</a>')
+    u'<a href="${sound_id}" rel="nofollow">my sound id</a>'
+    >>> clean_html(u'<a href="${sound_url}">my sound url</a>')
+    u'<a href="${sound_url}" rel="nofollow">my sound url</a>'
     """
+
+    def is_valid_url(url):
+        url_exceptions = [SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER]
+        return url_regex.match(url) or url in url_exceptions
     
     delete_tags = [u"script", u"style", u"head"]
     ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br",  u"blockquote", u"code"]
@@ -202,12 +212,12 @@ def clean_html(input):
                         del element[attr_name]
 
                 if element.name == "a":
-                    if u"href" not in dict(element.attrs) or not url_regex.match(element[u"href"]):
+                    if u"href" not in dict(element.attrs) or not is_valid_url(element[u"href"]):
                         replace_element_by_children(soup, element)
                     else:
                         element["rel"] = u"nofollow"
                 elif element.name == u"img":
-                    if u"src" not in dict(element.attrs) or not url_regex.match(element[u"src"]):
+                    if u"src" not in dict(element.attrs) or not is_valid_url(element[u"src"]):
                         replace_element_by_children(soup, element)
             else:
                 # these should not have any attributes

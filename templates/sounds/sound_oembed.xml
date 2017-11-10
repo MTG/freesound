@@ -4,7 +4,7 @@
   <version type="float">1.0</version>
   <type>rich</type>
   <provider-name>Freesound</provider-name>
-  <provider-url>http://freesound.org</provider-url>
+  <provider-url>https://freesound.org</provider-url>
   <title>{{sound.original_filename}}</title>
   <description>{{sound.description}}</description>
   <thumbnail-url>{{sound.get_thumbnail_abs_url}}</thumbnail-url>

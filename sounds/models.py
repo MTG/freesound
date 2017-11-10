@@ -125,6 +125,8 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, where, order_by, limit, args):
+        # This is used to select multiple sounds only in one query, this sounds are indexed in solr
+        # so we seelct only the fields that are going to be indexed
         query = """SELECT
           auth_user.username,
           sound.user_id,
@@ -141,6 +143,11 @@ class SoundManager(models.Manager):
           sound.num_downloads,
           sound.num_comments,
           sound.duration,
+          sound.pack_id,
+          sound.geotag_id,
+          sound.bitrate,
+          sound.bitdepth,
+          sound.samplerate,
           sounds_pack.name as pack_name,
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,

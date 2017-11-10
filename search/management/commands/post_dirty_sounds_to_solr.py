@@ -18,11 +18,16 @@
 #     See AUTHORS file.
 #
 
+import logging
+
 from django.core.management.base import BaseCommand
+
 from sounds.models import Sound
 from utils.search.search_general import add_sounds_to_solr, delete_sound_from_solr, check_if_sound_exists_in_solr
-import logging
+from utils.search.solr import SolrException
+
 logger = logging.getLogger("web")
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
@@ -42,7 +47,8 @@ class Command(BaseCommand):
             console_logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
             try:
                 # Get all sounds moderated and processed ok that has is_index_dirty
-                where = "sound.moderation_state = 'OK' AND sound.processing_state = 'OK' AND is_index_dirty = true AND sound.id > %s"
+                where = "sound.moderation_state = 'OK' AND sound.processing_state = 'OK' AND is_index_dirty = true " \
+                        "AND sound.id > %s"
                 order_by = "sound.id ASC"
                 sounds_qs = Sound.objects.bulk_query_solr(where, order_by, slice_size, (i, ))
                 add_sounds_to_solr(sounds_qs)
@@ -55,7 +61,8 @@ class Command(BaseCommand):
                     % num_correctly_indexed_sounds)
 
         # Remove all those which are not processed or moderated ok and that are still in solr (should not happen)
-        sounds_dirty_to_remove = Sound.objects.filter(is_index_dirty=True).exclude(moderation_state='OK', processing_state='OK')
+        sounds_dirty_to_remove = \
+            Sound.objects.filter(is_index_dirty=True).exclude(moderation_state='OK', processing_state='OK')
         n_deleted_sounds = 0
         for sound in sounds_dirty_to_remove:
             if check_if_sound_exists_in_solr(sound):

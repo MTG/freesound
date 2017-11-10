@@ -158,12 +158,12 @@ def search(request):
         current_page = 1
     sort = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-    grouping = request.GET.get("g", "1") # Group by default
-    actual_groupnig = grouping
+    grouping = request.GET.get("g", "1")  # Group by default
+
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
-    # If the query is thourhg ajax (for sources remix editing), do not collapse
+    # If the query is through AJAX (for sources remix editing), do not collapse
     if "pack" in filter_query or request.GET.get("ajax", "") == "1":
-        actual_groupnig = ""
+        grouping = ""
 
     # Set default values
     id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
@@ -228,7 +228,7 @@ def search(request):
         'username': request.user.username,
         'page': current_page,
         'sort': sort[0],
-        'group_by_pack': actual_groupnig,
+        'group_by_pack': grouping,
         'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
     }))
 
@@ -243,7 +243,7 @@ def search(request):
                                  username_weight,
                                  pack_tokenized_weight,
                                  original_filename_weight,
-                                 grouping=actual_groupnig
+                                 grouping=grouping
                                  )
 
     tvars = {

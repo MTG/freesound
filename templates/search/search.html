@@ -79,21 +79,6 @@
 
     });
 
-    function showAdvancedSearchOptions()
-    {
-        $("#advanced_search_hidden").val(1);
-        $("#enableShowButton").hide();
-        $("#advanced_search_options").show('blind', {}, 500, function() {});
-
-    }
-
-    function hideAdvancedSearchOptions()
-    {
-        $("#advanced_search_hidden").val(0);
-        $("#advanced_search_options").hide('blind', {}, 500, function() {});
-        $("#enableShowButton").show();
-    }
-
     function addAdvancedSearchOptionsFilters()
     {
 
@@ -215,8 +200,6 @@
         var cleaned = $.trim(value.replace(tag + " ", "").replace(tag, ""));
         $("#filter_query").val(cleaned);
     }
-
-
 
 </script>
 

@@ -1,79 +1,55 @@
-{% if advanced == "1" %}
-    <div id="advanced_search_options" class="advanced_search_options">
-{% else %}
-    <div id="advanced_search_options" style="display:none" class="advanced_search_options">
-{% endif %}
+<script type="text/javascript">
 
-{% if advanced == "1" %}
-    <input id="advanced_search_hidden" type="hidden" name="advanced" value="1" />
-{% else %}
-    <input id="advanced_search_hidden" type="hidden" name="advanced" value="0" />
-{% endif %}
+    function showAdvancedSearchOptions()
+    {
+        $("#advanced_search_hidden").val(1);
+        $("#enableShowButton").hide();
+        $("#advanced_search_options").show('blind', {}, 500, function() {});
 
-<div style="margin-top:8px;"></div>
-Search in:&nbsp
+    }
 
-{% if a_tag %}
-    <input type="checkbox" name="a_tag" value="1" checked="checked"/> Tags
-{% else %}
-    <input type="checkbox" name="a_tag" value="1"/> Tags
-{% endif %}
-&nbsp&nbsp
+    function hideAdvancedSearchOptions()
+    {
+        $("#advanced_search_hidden").val(0);
+        $("#advanced_search_options").hide('blind', {}, 500, function() {});
+        $("#enableShowButton").show();
+    }
 
-{% if a_filename %}
-    <input type="checkbox" name="a_filename" value="1" checked="checked"/> File names
-{% else %}
-    <input type="checkbox" name="a_filename" value="1" /> File names
-{% endif %}
-&nbsp&nbsp
+    function set_hidden_grouping_value(){
+        if ($("#grouping_geotagged").is(':checked')){
+            $("#grouping_geotagged_hidden").val("1")
+        }else{
+            $("#grouping_geotagged_hidden").val("")
+        }
+    }
 
-{% if a_description %}
-    <input type="checkbox" name="a_description" value="1" checked="checked"/> Descriptions
-{% else %}
-    <input type="checkbox" name="a_description" value="1" /> Descriptions
-{% endif %}
-&nbsp&nbsp
+</script>
 
-{% if a_packname %}
-    <input type="checkbox" name="a_packname" value="1" checked="checked"/> Pack names
-{% else %}
-    <input type="checkbox" name="a_packname" value="1" /> Pack names
-{% endif %}
-&nbsp&nbsp
 
-{% if a_soundid %}
-    <input type="checkbox" name="a_soundid" value="1" checked="checked"/> Sound Ids
-{% else %}
-    <input type="checkbox" name="a_soundid" value="1" /> Sound Ids
-{% endif %}
-&nbsp&nbsp
+<div id="advanced_search_options" class="advanced_search_options" {% if not advanced == "1" %}style="display:none"{% endif %}>
+<input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" %}1{% else %}0{% endif %}" />
 
-{% if a_username %}
-    <input type="checkbox" name="a_username" value="1" checked="checked"/> User names
-{% else %}
-    <input type="checkbox" name="a_username" value="1" /> User names
-{% endif %}
+<div style="margin-top:8px;"></div>Search in:&nbsp
+<input type="checkbox" name="a_tag" value="1" {% if a_tag %}checked{% endif %}/> Tags&nbsp&nbsp
+<input type="checkbox" name="a_filename" value="1" {% if a_filename %}checked{% endif %}/> File names&nbsp&nbsp
+<input type="checkbox" name="a_description" value="1" {% if a_description %}checked{% endif %}/> Descriptions&nbsp&nbsp
+<input type="checkbox" name="a_packname" value="1" {% if a_packname %}checked{% endif %}/> Pack names&nbsp&nbsp
+<input type="checkbox" name="a_soundid" value="1" {% if a_soundid %}checked{% endif %}/> Sound Ids&nbsp&nbsp
+<input type="checkbox" name="a_username" value="1" {% if a_username %}checked{% endif %}/> User names
 <span class="advanced_search_indication">(if none is selected, all will be used)</span>
 <br>
 
-Duration between <input class="inputtext" id="filter_duration_min" type="text" value="0" size="6" /> (min) and <input class="inputtext" id="filter_duration_max" type="text" value="*" size="6" /> (max) seconds
-<br>
-<input id="filter_is_geotagged" type="checkbox" value="1" /> Only geotagged sounds
-<br>
-<input id="grouping_geotagged" type="checkbox" onchange="set_hidden_grouping_value()" {% ifequal grouping "1" %}checked="checked"{% endifequal %}/> Group sounds by pack
+Duration between <input class="inputtext" id="filter_duration_min" value="0" size="6" /> (min)
+and <input class="inputtext" id="filter_duration_max" value="*" size="6" /> (max) seconds<br>
+<input id="filter_is_geotagged" type="checkbox" value="1" /> Only geotagged sounds<br>
+<input id="grouping_geotagged" type="checkbox" onchange="set_hidden_grouping_value()" {% if grouping == "1" %}checked{% endif %}/> Group sounds by pack
 <input id="grouping_geotagged_hidden" type="hidden" name="g" {% ifequal grouping "1" %}value="1"{% else %}value=""{% endifequal %} />
 
 <br>
 <span class="advanced_search_options_button"><a style="cursor:pointer;" onclick='hideAdvancedSearchOptions();'>Hide advanced search options</a></span>
 </div>
 
-{% if advanced == "1" %}
-    <span id="enableShowButton" style="display:none" class="advanced_search_options_button">
-{% else %}
-    <span id="enableShowButton" class="advanced_search_options_button">
-{% endif %}
-
-
-<div style="margin-top:4px;"></div>
-<a style="cursor:pointer;" onclick='showAdvancedSearchOptions();'>Show advanced search options</a>
+<span id="enableShowButton" class="advanced_search_options_button" {% if advanced == "1" %}style="display:none"{% endif %}>
+    <div style="margin-top:4px;"></div>
+    <a style="cursor:pointer;" onclick='showAdvancedSearchOptions();'>Show advanced search options</a>
 </span>

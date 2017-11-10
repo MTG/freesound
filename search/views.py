@@ -253,6 +253,7 @@ def search(request):
         'search_query': search_query,
         'grouping': grouping,
         'advanced': advanced,
+        'sort': sort,
         'sort_options': sort_options,
         'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
         'current_page': current_page,

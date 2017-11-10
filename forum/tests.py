@@ -51,7 +51,7 @@ class ForumTestCase(TestCase):
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.num_posts, 2)
 
-        # Now remove one post and check if the values are updated correcly
+        # Now remove one post and check if the values are updated correctly
         post2.delete()
         thread.refresh_from_db()
         self.assertEqual(thread.num_posts, 1)
@@ -60,7 +60,7 @@ class ForumTestCase(TestCase):
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.num_posts, 1)
 
-        # Now remove the last post and check if the values are updated correcly
+        # Now remove the last post and check if the values are updated correctly
         post.delete()
         forum.refresh_from_db()
         self.assertEqual(forum.num_posts, 0)
@@ -82,12 +82,12 @@ class ForumTestCase(TestCase):
         forum.refresh_from_db()
         self.assertEqual(forum.num_threads, 2)
 
-        # Now remove one thread and check if the values are updated correcly
+        # Now remove one thread and check if the values are updated correctly
         thread2.delete()
         forum.refresh_from_db()
         self.assertEqual(forum.num_threads, 1)
 
-        # Now remove the last threads and check if the values are updated correcly
+        # Now remove the last threads and check if the values are updated correctly
         thread.delete()
         forum.refresh_from_db()
         self.assertEqual(forum.num_threads, 0)

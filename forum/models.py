@@ -48,19 +48,18 @@ class Forum(OrderedModel):
                                      related_name="latest_in_forum",
                                      on_delete=models.SET_NULL)
 
-    def set_last_post(self, commit=True):
-        qs = Post.objects.filter(thread__forum=self,moderation_state ='OK')
-#        if exclude_post:
-#            qs = qs.exclude(id=exclude_post.id)
-#        if exclude_thread:
-#            qs = qs.exclude(thread=exclude_thread)
+    def set_last_post(self):
+        """
+        Set the `last_post` field of this forum to be the most recently
+        written OK moderated Post.
+        This does not save the current Forum object.
+        """
+        qs = Post.objects.filter(thread__forum=self, moderation_state='OK')
         qs = qs.order_by('-created')
-        if qs.count() > 0:
+        if qs.exists():
             self.last_post = qs[0]
         else:
             self.last_post = None
-        if commit:
-            self.save()
 
     def __unicode__(self):
         return self.name
@@ -95,16 +94,13 @@ class Thread(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def set_last_post(self):
-        qs = Post.objects.filter(thread=self).order_by('-created')
-        if qs.count() > 0:
-            self.last_post = qs[0]
-            self.save()
-            try:
-                self.forum.set_last_post()
-            except Forum.DoesNotExist:
-                pass
-        else:
-            self.delete()
+        qs = Post.objects.filter(thread=self)
+        has_posts = qs.exists()
+        moderated_posts = qs.filter(moderation_state='OK').order_by('-created')
+        if moderated_posts.count() > 0:
+            self.last_post = moderated_posts[0]
+
+        return has_posts
 
     def get_absolute_url(self):
         return reverse("forums-thread", args=[smart_unicode(self.forum.name_slug), self.id])
@@ -117,15 +113,19 @@ class Thread(models.Model):
 
 
 @receiver(post_save, sender=Thread)
-def update_num_threads_on_thread_insert(**kwargs):
-    thread = kwargs['instance']
-    if kwargs['created']:
+def update_num_threads_on_thread_insert(sender, instance, created, **kwargs):
+    """Increase the number of threads when a new thread is created in a Forum."""
+    thread = instance
+    if created:
         thread.forum.num_threads = F('num_threads') + 1
         thread.forum.save()
 
 
 @receiver(pre_save, sender=Thread)
 def update_num_threads_on_thread_update(sender, instance, **kwargs):
+    """If a thread is moved from one forum to another, adjust
+    `num_threads` for each of the two forums.
+    """
     if instance.id:
         with transaction.atomic():
             old_thread = Thread.objects.get(pk=instance.id)
@@ -137,13 +137,16 @@ def update_num_threads_on_thread_update(sender, instance, **kwargs):
 
 
 @receiver(post_delete, sender=Thread)
-def update_last_post_on_thread_delete(**kwargs):
-    thread = kwargs['instance']
+def update_last_post_on_thread_delete(sender, instance, **kwargs):
+    """If a thread is deleted, update num_threads on the forum and update the
+    Forum's last_post (if needed)"""
+    thread = instance
     try:
         with transaction.atomic():
             thread.forum.refresh_from_db()
             thread.forum.num_threads = F('num_threads') - 1
             thread.forum.set_last_post()
+            thread.forum.save()
     except Forum.DoesNotExist:
         pass
 
@@ -176,36 +179,47 @@ class Post(models.Model):
 
 
 @receiver(post_save, sender=Post)
-def update_num_posts_on_post_insert(**kwargs):
-    if kwargs['created']:
-        post = kwargs['instance']
-        post.author.profile.num_posts = F('num_posts') + 1
-        post.author.profile.save()
-        # The method set_last_post from Thread calls the method set_last_post from Forum.
-        # The save of the forum instance is done in set_last_post from Forum class.
-        # So is important to keep the order of this lines
-        post.thread.forum.num_posts = F('num_posts') + 1
-        post.thread.set_last_post()
-        post.thread.num_posts = F('num_posts') + 1
-        post.thread.save()
+def update_num_posts_on_post_insert(sender, instance, created, **kwargs):
+    """Increase num_posts and set last_post when a new Post is created"""
+    if created:
+        post = instance
+        with transaction.atomic():
+            post.author.profile.num_posts = F('num_posts') + 1
+            post.author.profile.save()
+            post.thread.forum.num_posts = F('num_posts') + 1
+            post.thread.forum.set_last_post()
+            post.thread.forum.save()
+            post.thread.num_posts = F('num_posts') + 1
+            post.thread.set_last_post()
+            post.thread.save()
         invalidate_template_cache('latest_posts')
 
 
 @receiver(post_delete, sender=Post)
-def update_last_post_on_post_delete(**kwargs):
-    post = kwargs['instance']
+def update_last_post_on_post_delete(sender, instance, **kwargs):
+    """Update num_posts counts and last_post pointers when a Post is deleted.
+
+    Reduce num_posts by 1 for the author, forum, and thread
+    Set last_post for the forum
+    Set last_post for the thread. If this was the only remaining post
+    in the thread and it was deleted, also delete the thread.
+    """
+    post = instance
     delete_post_from_solr(post)
     try:
-        post.thread.forum.num_posts = F('num_posts') - 1
-        post.thread.forum.save()
-        post.author.profile.num_posts = F('num_posts') - 1
-        post.author.profile.save()
-        post.thread.forum.refresh_from_db()
-        post.thread.set_last_post()
-        post.thread.refresh_from_db()
-        if post.thread:
-            post.thread.num_posts = F('num_posts') - 1
-            post.thread.save()
+        with transaction.atomic():
+            post.author.profile.num_posts = F('num_posts') - 1
+            post.author.profile.save()
+            post.thread.forum.refresh_from_db()
+            post.thread.forum.num_posts = F('num_posts') - 1
+            post.thread.forum.set_last_post()
+            post.thread.forum.save()
+            thread_has_posts = post.thread.set_last_post()
+            if thread_has_posts:
+                post.thread.num_posts = F('num_posts') - 1
+                post.thread.save()
+            else:
+                post.thread.delete()
     except Thread.DoesNotExist:
         # This happens when the thread has already been deleted, for example
         # when a user is deleted through the admin interface. We don't need

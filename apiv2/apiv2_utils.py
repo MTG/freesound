@@ -20,27 +20,33 @@
 #     See AUTHORS file.
 #
 
-from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
-from django.http import JsonResponse
-from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-import combined_search_strategies
-from oauth2_provider.generators import BaseHashGenerator
-from oauthlib.common import generate_client_id as oauthlib_generate_client_id
-from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
-from exceptions import *
-from examples import examples
-from django.conf import settings
-from utils.similarity_utilities import get_sounds_descriptors
-from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
-from search.views import search_prepare_query
-from utils.similarity_utilities import api_search as similarity_api_search
-from similarity.client import SimilarityException
-from urllib import unquote
-from django.contrib.sites.models import Site
-from django.urls import resolve
-from utils.logging_filters import get_client_ip
-import logging
 import json
+import logging
+import urlparse
+from urllib import unquote
+
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.http import JsonResponse, HttpResponseRedirect
+from django.urls import resolve
+from oauth2_provider.generators import BaseHashGenerator
+from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
+from oauthlib.common import generate_client_id as oauthlib_generate_client_id
+from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, \
+    ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
+from rest_framework.renderers import BrowsableAPIRenderer
+
+import combined_search_strategies
+from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
+from apiv2.exceptions import RequiresHttpsException, UnauthorizedException, ServerErrorException, BadRequestException, \
+    NotFoundException
+from examples import examples
+from search.views import search_prepare_query
+from similarity.client import SimilarityException
+from utils.logging_filters import get_client_ip
+from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
+from utils.similarity_utilities import api_search as similarity_api_search
+from utils.similarity_utilities import get_sounds_descriptors
 
 logger_error = logging.getLogger("api_errors")
 
@@ -63,120 +69,145 @@ class FsClientIdGenerator(BaseHashGenerator):
 #############################
 
 
-class GenericAPIView(RestFrameworkGenericAPIView):
+class FreesoundAPIViewMixin(object):
+    end_user_ip = None
+    auth_method_name = None
+    developer = None
+    user = None
+    client_id = None
+    client_name = None
+    protocol = None
+    contains_www = None
+
+    def log_message(self, message):
+        return log_message_helper(message, resource=self)
+
+    def get_request_information(self, request):
+        # Get request information and store it as class variable
+        # This information is mainly useful for logging
+        self.end_user_ip = get_client_ip(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
+            self.contains_www = get_authentication_details_form_request(request)
+
+    def redirect_to_nowww_if_needed(self, request, response):
+        # If the user is using the interactive API browser and the www in the domain we redirect to no-www.
+        if isinstance(response.accepted_renderer, BrowsableAPIRenderer) and request.get_host().startswith('www'):
+            domain = "%s://%s" % (request.scheme, Site.objects.get_current().domain)
+            return_url = urlparse.urljoin(domain, request.get_full_path())
+            return HttpResponseRedirect(return_url)
+
+    def throw_exception_if_not_https(self, request):
+        if not settings.DEBUG:
+            if not request.is_secure():
+                raise RequiresHttpsException(request=request)
+
+
+class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     queryset = False
 
     def initial(self, request, *args, **kwargs):
         super(GenericAPIView, self).initial(request, *args, **kwargs)
+        self.get_request_information(request)
 
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
-            self.contains_www = get_authentication_details_form_request(request)
+    def finalize_response(self, request, response, *args, **kwargs):
+        """ This method is overriden to make a redirect when the user is using the interactive API browser and
+        with 'www' sub-domain. The problem is that we can't check if it's accessing through the interactive browser
+        inside the 'initial' method because it raises an exception when the user is not logged in, that exception is
+        handled by 'finalize_response' method of APIView.
+        """
+        response = super(GenericAPIView, self).finalize_response(request, response, *args, **kwargs)
+        self.redirect_to_nowww_if_needed(request, response)
+        return response
 
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
 
-
-class OauthRequiredAPIView(RestFrameworkGenericAPIView):
+class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(OauthRequiredAPIView, self).initial(request, *args, **kwargs)
+        self.get_request_information(request)
+        self.throw_exception_if_not_https(request)
 
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
-            self.contains_www = get_authentication_details_form_request(request)
-
-        # Check if using https
-        throw_exception_if_not_https(request)
-
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
+    def finalize_response(self, request, response, *args, **kwargs):
+        # See comment in GenericAPIView.finalize_response
+        response = super(OauthRequiredAPIView, self).finalize_response(request, response, *args, **kwargs)
+        self.redirect_to_nowww_if_needed(request, response)
+        return response
 
 
-class DownloadAPIView(OauthRequiredAPIView):
+class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def initial(self, request, *args, **kwargs):
+        super(DownloadAPIView, self).initial(request, *args, **kwargs)
+        self.get_request_information(request)
+        self.throw_exception_if_not_https(request)
+
+    # NOTE: don't override finalize_response here as we are returning a file and not the browseable api response.
+    # There is no need to check for www/non-www host here.
 
 
-class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
+class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request informationa dn store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
-            self.contains_www = get_authentication_details_form_request(request)
-
-        # Check if using https
-        throw_exception_if_not_https(request)
+        self.get_request_information(request)
+        self.throw_exception_if_not_https(request)
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
             if "write" not in request.auth.scopes:
                 raise UnauthorizedException(resource=self)
 
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
 
-
-class ListAPIView(RestFrameworkListAPIView):
+class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(ListAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol,\
-            self.contains_www = get_authentication_details_form_request(request)
-
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
+        self.get_request_information(request)
 
 
-class RetrieveAPIView(RestFrameworkRetrieveAPIView):
+class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request information and store it as class variable
-        self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
-            self.contains_www = get_authentication_details_form_request(request)
-
-    def log_message(self, message):
-        return log_message_helper(message, resource=self)
+        self.get_request_information(request)
 
 
 ##################
 # Search utilities
 ##################
 
-def api_search(search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized', resource=None):
+def api_search(
+        search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized', resource=None):
 
-    if search_form.cleaned_data['query']  == None and search_form.cleaned_data['filter'] == None and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
+    if search_form.cleaned_data['query']  is None \
+            and search_form.cleaned_data['filter'] is None \
+            and not search_form.cleaned_data['descriptors_filter'] \
+            and not search_form.cleaned_data['target'] \
+            and not target_file:
         # No input data for search, return empty results
         return [], 0, None, None, None, None, None
 
-    if search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None:
+    if search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None:
         # Standard content-based search
         try:
-            results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
-                                                         filter=search_form.cleaned_data['descriptors_filter'],
-                                                         num_results=search_form.cleaned_data['page_size'],
-                                                         offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
-                                                         target_file=target_file)
+            results, count, note = similarity_api_search(
+                target=search_form.cleaned_data['target'],
+                filter=search_form.cleaned_data['descriptors_filter'],
+                num_results=search_form.cleaned_data['page_size'],
+                offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
+                target_file=target_file)
 
             gaia_ids = [result[0] for result in results]
             distance_to_target_data = None
@@ -197,10 +228,13 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
             else:
                 raise ServerErrorException(msg='Similarity server error: %s' % e.message, resource=resource)
         except Exception as e:
-            raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource)
+            raise ServerErrorException(
+                msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource)
 
+    elif not search_form.cleaned_data['descriptors_filter'] \
+            and not search_form.cleaned_data['target'] \
+            and not target_file:
 
-    elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # Standard text-based search
         try:
             solr = Solr(settings.SOLR_URL)
@@ -219,16 +253,21 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
             more_from_pack_data = None
             if search_form.cleaned_data['group_by_pack']:
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
-                more_from_pack_data = dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs])
+                more_from_pack_data = dict([
+                    (int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']])
+                    for element in result.docs
+                ])
 
             return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
         except SolrException as e:
-            if search_form.cleaned_data['filter'] != None:
-                raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field names are correct)' % e.message, resource=resource)
+            if search_form.cleaned_data['filter'] is not None:
+                raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field '
+                                              'names are correct)' % e.message, resource=resource)
             raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
         except Exception as e:
-            raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
+            raise ServerErrorException(
+                msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
 
     else:
         # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
@@ -294,12 +333,6 @@ def build_info_dict(resource=None, request=None):
         }
 
 
-def throw_exception_if_not_https(request):
-    if not settings.DEBUG:
-        if not request.is_secure():
-            raise RequiresHttpsException(request=request)
-
-
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
 
     if request_is_secure:
@@ -308,7 +341,10 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
 
     if dynamic_resolve:
         try:
-            url_name = resolve(rel.replace('<sound_id>', '1').replace('<username', 'name').replace('<pack_id>', '1').replace('<category_id>', '1')).url_name
+            url_name = resolve(rel.replace('<sound_id>', '1')
+                               .replace('<username', 'name')
+                               .replace('<pack_id>', '1')
+                               .replace('<category_id>', '1')).url_name
             if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
                 use_https = True
         except Exception as e:
@@ -382,7 +418,6 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
     try:
         data = examples[view_name]
     except:
-        #print 'Could not find examples for view %s' % view_name
         return ''
 
     count = 0
@@ -409,6 +444,7 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
 
     return output
 
+
 # Similarity utils
 ##################
 
@@ -426,20 +462,21 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
             ids = [int(sid) for sid in sound_ids]
 
         # Get descriptor values for the required ids
-        # Required descriptors are indicated with the parameter 'descriptors'. If 'descriptors' is empty, we return nothing
+        # Required descriptors are indicated with the parameter 'descriptors'.
+        # If 'descriptors' is empty, we return nothing
         descriptors = view.request.query_params.get('descriptors', [])
         view.sound_analysis_data = {}
         if descriptors:
             try:
-                view.sound_analysis_data = get_sounds_descriptors(ids,
-                                                                  descriptors.split(','),
-                                                                  view.request.query_params.get('normalized', '0') == '1',
-                                                                  only_leaf_descriptors=True)
+                view.sound_analysis_data = get_sounds_descriptors(
+                    ids, descriptors.split(','), view.request.query_params.get('normalized', '0') == '1',
+                    only_leaf_descriptors=True)
             except:
                 pass
         else:
             for id in ids:
-                view.sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors you want with the \'descriptors\' request parameter.'
+                view.sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors ' \
+                                                    'you want with the \'descriptors\' request parameter.'
 
 
 # APIv1 end of life

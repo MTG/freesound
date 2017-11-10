@@ -34,7 +34,7 @@ from sounds.models import Sound
 from utils.audioprocessing.essentia_analysis import analyze
 from utils.audioprocessing.freesound_audio_processing import process
 
-logger = logging.getLogger("processing")
+logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):

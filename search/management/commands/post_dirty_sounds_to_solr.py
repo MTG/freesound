@@ -23,7 +23,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
-from utils.search.search_general import add_sounds_to_solr, delete_sound_from_solr, check_if_sound_exists_in_solr
+from utils.search.search_general import add_all_sounds_to_solr, delete_sound_from_solr, check_if_sound_exists_in_solr
 from utils.search.solr import SolrException
 
 logger = logging.getLogger("web")
@@ -36,26 +36,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        # Index all those which are processed and moderated ok
-        num_sounds = Sound.objects.filter(processing_state="OK", moderation_state="OK", is_index_dirty=True).count()
+        # Index all those which are processed and moderated ok that has is_index_dirty
+        sounds_to_index = Sound.objects.filter(processing_state="OK", moderation_state="OK", is_index_dirty=True)
+        num_sounds = sounds_to_index.count()
         logger.info("Starting posting dirty sounds to solr. %i sounds to be added/updated to the solr index"
                     % num_sounds)
 
-        num_correctly_indexed_sounds = 0
-        slice_size = 1000
-        for i in range(0, num_sounds, slice_size):
-            console_logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
-            try:
-                # Get all sounds moderated and processed ok that has is_index_dirty
-                where = "sound.moderation_state = 'OK' AND sound.processing_state = 'OK' AND is_index_dirty = true " \
-                        "AND sound.id > %s"
-                order_by = "sound.id ASC"
-                sounds_qs = Sound.objects.bulk_query_solr(where, order_by, slice_size, (i, ))
-                add_sounds_to_solr(sounds_qs)
-                num_correctly_indexed_sounds += slice_size
-            except SolrException as e:
-                console_logger.error("failed to add sound batch to solr index, reason: %s", str(e))
-                raise
+        num_correctly_indexed_sounds = add_all_sounds_to_solr(sounds_to_index)
+
+        if num_correctly_indexed_sounds == num_sounds:
+            sounds_to_index.update(is_index_dirty=False)
 
         logger.info("Finished posting dirty sounds to solr. %i sounds have been added/updated"
                     % num_correctly_indexed_sounds)

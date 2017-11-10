@@ -124,7 +124,7 @@ class SoundManager(models.Manager):
         else:
             return None
 
-    def bulk_query_solr(self, where, order_by, limit, args):
+    def bulk_query_solr(self, sound_ids):
         # This is used to select multiple sounds only in one query, this sounds are indexed in solr
         # so we seelct only the fields that are going to be indexed
         query = """SELECT
@@ -170,12 +170,9 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-        WHERE %s """ % (where, )
-        if order_by:
-            query = "%s ORDER BY %s" % (query, order_by)
-        if limit:
-            query = "%s LIMIT %s" % (query, limit)
-        return self.raw(query, args)
+        WHERE
+          sound.id IN %s """ % (sound_ids, )
+        return self.raw(query)
 
 
     def bulk_query(self, where, order_by, limit, args):

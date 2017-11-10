@@ -25,6 +25,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from utils.search.solr import Solr, SolrException
 from utils.text import remove_control_chars
+from utils.search.search_general import delete_sound_from_solr
 from sounds.models import Sound
 
 console_logger = logging.getLogger("console")
@@ -82,7 +83,7 @@ class Command(BaseCommand):
     help = 'Take all sounds and send them to Solr'
 
     def handle(self, *args, **options):
-        slice_size = 4000
+        slice_size = 400
         num_sounds = Sound.objects.filter(processing_state="OK", moderation_state="OK").count()
         for i in range(0, num_sounds, slice_size):
             console_logger.info("Adding %i sounds to solr, slice %i", slice_size, i)

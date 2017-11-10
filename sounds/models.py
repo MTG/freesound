@@ -127,6 +127,7 @@ class SoundManager(models.Manager):
     def bulk_query_solr(self, where, order_by, limit, args):
         query = """SELECT
           auth_user.username,
+          sound.user_id,
           sound.id,
           sound.type,
           sound.original_filename,

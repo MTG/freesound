@@ -116,10 +116,14 @@ def thread(request, forum_name_slug, thread_id):
     # we assume the user has seen the latest post if he is browsing the thread
     # this is not entirely correct, but should be close enough
     if request.user.is_authenticated:
-        subscription = Subscription.objects.filter(thread=thread, subscriber=request.user)
-        if subscription.count() > 0:
-            subscription.filter(is_active=False).update(is_active=True)
+        try:
+            subscription = Subscription.objects.get(thread=thread, subscriber=request.user)
+            if not subscription.is_active:
+                subscription.is_active = True
+                subscription.save()
             has_subscription = True
+        except Subscription.DoesNotExist:
+            pass
 
     return render(request, 'forum/thread.html', combine_dicts(locals(), paginator))
 

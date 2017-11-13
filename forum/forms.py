@@ -42,7 +42,7 @@ class PostReplyForm(forms.Form):
         return body
 
 class NewThreadForm(forms.Form):
-    title = forms.CharField()
+    title = forms.CharField(max_length=250)
     body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
     subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
 

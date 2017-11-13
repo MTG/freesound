@@ -280,7 +280,7 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
-    messages.add_message(request, messages.INFO, 'You have been unsubscribed from the thread notification for this thread.')
+    messages.add_message(request, messages.INFO, 'You have been unsubscribed from notifications for this thread.')
     return HttpResponseRedirect(reverse('forums-thread', args=[forum.name_slug, thread.id]))
 
 

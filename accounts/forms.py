@@ -138,8 +138,8 @@ class RegistrationForm(forms.Form):
     first_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     last_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     email1 = forms.EmailField(label=_("Email"), help_text=_("We will send you a confirmation/activation email, so make "
-                                                            "sure this is correct!."))
-    email2 = forms.EmailField(label=_("Email confirmation"))
+                                                            "sure this is correct!."), max_length=254)
+    email2 = forms.EmailField(label=_("Email confirmation"), max_length=254)
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
@@ -210,7 +210,7 @@ class RegistrationForm(forms.Form):
 
 
 class ReactivationForm(forms.Form):
-    user = forms.CharField(label="The username or email you signed up with")
+    user = forms.CharField(label="The username or email you signed up with", max_length=254)
 
 
 class FsAuthenticationForm(AuthenticationForm):
@@ -229,7 +229,7 @@ class FsAuthenticationForm(AuthenticationForm):
 
 
 class UsernameReminderForm(forms.Form):
-    user = forms.EmailField(label="The email address you signed up with")
+    user = forms.EmailField(label="The email address you signed up with", max_length=254)
 
 
 class ProfileForm(forms.ModelForm):
@@ -291,7 +291,7 @@ class ProfileForm(forms.ModelForm):
 
 
 class EmailResetForm(forms.Form):
-    email = forms.EmailField(label=_("New e-mail address"), max_length=75)
+    email = forms.EmailField(label=_("New e-mail address"), max_length=254)
     password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
 
     def __init__(self, *args, **kwargs):

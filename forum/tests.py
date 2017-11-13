@@ -30,7 +30,7 @@ def _create_forums_threads_posts(author, n_forums=1, n_threads=1, n_posts=5):
         forum = Forum.objects.create(
             name='Forum %i' % i,
             name_slug='forum_%i' % i,
-            description="Descirption of forum %i" % i
+            description="Description of forum %i" % i
         )
         for j in range(0, n_threads):
             thread = Thread.objects.create(
@@ -81,7 +81,7 @@ class ForumPageResponses(TestCase):
             reverse('login'), reverse('forums-new-thread', args=[forum.name_slug])))
 
         # Assert logged in user can create new thread
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
             u'body': [u'New thread body (first post)'], u'subscribe': [u'on'], u'title': [u'New thread title']
         })
@@ -116,7 +116,7 @@ class ForumPageResponses(TestCase):
             reverse('login'), reverse('forums-reply', args=[forum.name_slug, thread.id])))
 
         # Assert logged in user can reply
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-reply', args=[forum.name_slug, thread.id]), data={
             u'body': [u'Reply post body'], u'subscribe': [u'on'],
         })
@@ -137,7 +137,7 @@ class ForumPageResponses(TestCase):
             reverse('login'), reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id])))
 
         # Assert logged in user can reply
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
             u'body': [u'Reply post body'], u'subscribe': [u'on'],
         })
@@ -157,14 +157,14 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user which is not author of post can't edit post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
-        self.client.login(username=user2.username, password='12345')
+        self.client.force_login(user2)
         resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
             u'body': [u'Edited post body']
         })
         self.assertEqual(resp.status_code, 404)
 
         # Assert logged in user can edit post
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
             u'body': [u'Edited post body']
         })
@@ -183,12 +183,12 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user which is not author of post can't delete post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
-        self.client.login(username=user2.username, password='12345')
+        self.client.force_login(user2)
         resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
         self.assertEqual(resp.status_code, 404)
 
-        # Assert logged in user can delete post (see delete confirmaiton page)
-        self.client.login(username=self.user.username, password='12345')
+        # Assert logged in user can delete post (see delete confirmation page)
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
         self.assertEquals(resp.status_code, 200)
 
@@ -203,12 +203,12 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user which is not author of post can't delete post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
-        self.client.login(username=user2.username, password='12345')
+        self.client.force_login(user2)
         resp = self.client.get(reverse('forums-post-delete-confirm', args=[post.id]))
         self.assertEqual(resp.status_code, 404)
 
         # Assert logged in user can delete post
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('forums-post-delete-confirm', args=[post.id]))
         new_last_post = thread.post_set.last()
         self.assertRedirects(resp, new_last_post.get_absolute_url(), target_status_code=302)
@@ -225,7 +225,7 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user can subscribe
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
-        self.client.login(username=user2.username, password='12345')
+        self.client.force_login(user2)
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
         self.assertEqual(resp.status_code, 302)
 
@@ -248,13 +248,13 @@ class ForumPageResponses(TestCase):
         thread = forum.thread_set.first()
         post = thread.post_set.first()
 
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
         self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=self.user).count(), 1)
 
-        # User creates now post
+        # User creates new post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
-        self.client.login(username=user2.username, password='12345')
+        self.client.force_login(user2)
 
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
         self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 1)

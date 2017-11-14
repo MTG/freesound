@@ -87,6 +87,18 @@ class ForumPageResponses(TestCase):
         post = Post.objects.get(body=u'New thread body (first post)')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
+    @override_settings(LAST_FORUM_POST_MINIMUM_TIME=0)
+    def test_new_thread_title_length(self):
+        forum = Forum.objects.first()
+
+        # Assert logged in user fails creating thread
+        long_title = 255 * '1'
+        self.client.login(username=self.user.username, password='12345')
+        resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
+            u'body': [u'New thread body (first post)'], u'subscribe': [u'on'], u'title': [long_title]
+        })
+        self.assertNotEqual(resp.context['form'].errors, None)
+
     def test_thread_response_ok(self):
         forum = Forum.objects.first()
         thread = forum.thread_set.first()

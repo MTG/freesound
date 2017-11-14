@@ -184,6 +184,14 @@ class DonationTest(TestCase):
         response =  ret.json()
         self.assertFalse('errors' in response)
 
+        long_mail = ('1'*256) + '@freesound.org'
+        data['name_option'] = long_mail
+        data['donation_type'] = '2'
+        ret = self.client.post("/donations/donate/", data)
+        response =  ret.json()
+        self.assertTrue('errors' in response)
+
+
     def test_donation_response(self):
         # 200 response on donate page
         resp = self.client.get(reverse('donate'))

@@ -869,6 +869,16 @@ class PasswordReset(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
 
+    @override_settings(SITE_ID=2)
+    def test_reset_view_with_long_username(self):
+        """Check that the reset password fails with long username"""
+        Site.objects.create(id=2, domain="freesound.org", name="Freesound")
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        long_mail = ('1' * 255) + '@freesound.org'
+        resp = self.client.post(reverse("password_reset"), {"email_or_username": long_mail})
+
+        self.assertNotEqual(resp.context['form'].errors, None)
+
 
 class EmailResetTestCase(TestCase):
     def test_reset_email_form(self):
@@ -897,6 +907,20 @@ class EmailResetTestCase(TestCase):
         })
         self.assertRedirects(resp, reverse('accounts-email-reset-done'))
         self.assertEqual(ResetEmailRequest.objects.filter(user=user, email="new_email@freesound.org").count(), 0)
+
+    def test_reset_long_email(self):
+        """ Check reset email with a long email address """
+        long_mail = ('1' * 255) + '@freesound.org'
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        user.set_password('12345')
+        user.save()
+        a = self.client.login(username=user.username, password='12345')
+        resp = self.client.post(reverse('accounts-email-reset'), {
+            'email': long_mail,
+            'password': '12345',
+        })
+
+        self.assertNotEqual(resp.context['form'].errors, None)
 
 
 class ReSendActivationTestCase(TestCase):
@@ -936,6 +960,18 @@ class ReSendActivationTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
 
+    def test_resend_activation_code_from_username(self):
+        """
+        Check that resend activation code returns an error if username is too long
+        """
+        long_mail = ('1' * 255) + '@freesound.org'
+        user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
+        resp = self.client.post(reverse('accounts-resend-activation'), {
+            'user': long_mail,
+        })
+        self.assertNotEqual(resp.context['form'].errors, None)
+        self.assertEqual(len(mail.outbox), 0)  # Check email wasn't sent
+
 
 class UsernameReminderTestCase(TestCase):
     def test_username_reminder(self):
@@ -953,4 +989,14 @@ class UsernameReminderTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
+
+    def test_username_reminder_length(self):
+        """ Check that send long username reminder return an error with post request """
+        long_mail = ('1' * 255) + '@freesound.org'
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        resp = self.client.post(reverse('accounts-username-reminder'), {
+            'user': long_mail,
+        })
+        self.assertNotEqual(resp.context['form'].errors, None)
+        self.assertEqual(len(mail.outbox), 0)
 

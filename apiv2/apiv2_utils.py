@@ -90,11 +90,13 @@ class FreesoundAPIViewMixin(object):
             self.contains_www = get_authentication_details_form_request(request)
 
     def redirect_to_nowww_if_needed(self, request, response):
-        # If the user is using the interactive API browser and the www in the domain we redirect to no-www.
+        # Check if user is using the interactive API browser and www in the domain. If that is the case, we return
+        # an HttpResponseRedirect to the no-www version of this page. Otherwise we return the response as it was passed.
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer) and request.get_host().startswith('www'):
             domain = "%s://%s" % (request.scheme, Site.objects.get_current().domain)
             return_url = urlparse.urljoin(domain, request.get_full_path())
             return HttpResponseRedirect(return_url)
+        return response
 
     def throw_exception_if_not_https(self, request):
         if not settings.DEBUG:
@@ -118,7 +120,7 @@ class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         handled by 'finalize_response' method of APIView.
         """
         response = super(GenericAPIView, self).finalize_response(request, response, *args, **kwargs)
-        self.redirect_to_nowww_if_needed(request, response)
+        response = self.redirect_to_nowww_if_needed(request, response)
         return response
 
 
@@ -134,7 +136,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
         response = super(OauthRequiredAPIView, self).finalize_response(request, response, *args, **kwargs)
-        self.redirect_to_nowww_if_needed(request, response)
+        response = self.redirect_to_nowww_if_needed(request, response)
         return response
 
 

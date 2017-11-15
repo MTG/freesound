@@ -152,9 +152,6 @@ INTERNAL_IPS = ['localhost', '127.0.0.1']
 MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../freesound/../media')
 MEDIA_URL = "/media/"
 
-# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
-ADMIN_MEDIA_PREFIX = '/media/admin_media/'
-
 # Static files
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is no an installed Django app)
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]

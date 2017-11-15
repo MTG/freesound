@@ -928,8 +928,7 @@ def delete(request):
     if request.method == 'POST':
         form = DeleteUserForm(request.POST, user_id=request.user.id)
         if not form.is_valid():
-            error_message = "Sorry, you waited too long, ... try again?"
-            form = DeleteUserForm(user_id=request.user.id)
+            form.reset_encrypted_link(request.user.id)
         else:
             delete_sounds =\
                 form.cleaned_data['delete_sounds'] == 'delete_sounds'
@@ -940,7 +939,6 @@ def delete(request):
         form = DeleteUserForm(user_id=request.user.id)
 
     tvars = {
-            'error_message': error_message,
             'delete_form': form,
             'num_sounds': num_sounds,
     }

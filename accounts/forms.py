@@ -312,8 +312,15 @@ class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
     delete_sounds = forms.ChoiceField(choices = DELETE_CHOICES,
             widget=forms.RadioSelect())
+    password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
 
-    def clean_encrypted_link(self):
+    def clean_password(self):
+        user = User.objects.get(id=self.user_id)
+        if not user.check_password(self.cleaned_data["password"]):
+            raise forms.ValidationError(_("Incorrect password."))
+        return self.cleaned_data['password']
+
+    def clean(self):
         data = self.cleaned_data['encrypted_link']
         if not data:
             raise PermissionDenied
@@ -323,8 +330,11 @@ class DeleteUserForm(forms.Form):
             raise PermissionDenied
         link_generated_time = float(now)
         if abs(time.time() - link_generated_time) > 10:
-            raise forms.ValidationError("Time expired")
-        return data
+            raise forms.ValidationError("Sorry, you waited too long, ... try again?")
+
+    def reset_encrypted_link(self, user_id):
+        self.data = self.data.copy()
+        self.data["encrypted_link"] = encrypt(u"%d\t%f" % (user_id, time.time()))
 
     def __init__(self, *args, **kwargs):
         self.user_id = kwargs.pop('user_id')

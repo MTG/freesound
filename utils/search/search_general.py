@@ -82,15 +82,19 @@ def add_sounds_to_solr(sounds):
     solr.add(documents)
 
 
-def add_all_sounds_to_solr(sound_queryset, slice_size=1000):
+def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=False):
     num_correctly_indexed_sounds = 0
-    num_sounds = sound_queryset.count()
-    for i in range(0, num_sounds, slice_size):
+    all_sound_ids = sound_queryset.values_list('id', flat=True).all()
+    for i in range(0, len(all_sound_ids), slice_size):
         console_logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
         try:
-            sound_ids = tuple(sound_queryset.values_list('id', flat=True)[i:i+slice_size])
-            sounds_qs = sounds.models.Sound.objects.bulk_query_solr(tuple(sound_ids))
+            sound_ids = tuple(all_sound_ids[i:i+slice_size])
+            sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)
             add_sounds_to_solr(sounds_qs)
+
+            if mark_index_clean:
+                console_logger.info("Marking sounds as clean.")
+                sounds.models.Sound.objects.filter(pk__in=sound_ids).update(is_index_dirty=False)
             num_correctly_indexed_sounds += len(sound_ids)
         except SolrException as e:
             console_logger.error("failed to add sound batch to solr index, reason: %s", str(e))

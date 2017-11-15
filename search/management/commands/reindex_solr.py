@@ -32,12 +32,22 @@ class Command(BaseCommand):
     args = ''
     help = 'Take all sounds moderated and processed as OK and send them to Solr'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-a', '--mark_all_sounds',
+            action='store',
+            dest='mark_all_sounds',
+            default=1,
+            help='Mark all sounds as index clean.')
+
     def handle(self, *args, **options):
+        mark_all_sounds = options['mark_all_sounds'] != "0"
+
         # Get all sounds moderated and processed ok
         sounds_to_index = Sound.objects.filter(processing_state="OK", moderation_state="OK")
         console_logger.info("Reindexing %d sounds to solr", sounds_to_index.count())
 
-        add_all_sounds_to_solr(sounds_to_index)
+        add_all_sounds_to_solr(sounds_to_index, mark_index_clean=mark_all_sounds)
 
         # Get all sounds that should not be in solr and remove them if they are
         sound_qs = Sound.objects.exclude(processing_state="OK", moderation_state="OK")

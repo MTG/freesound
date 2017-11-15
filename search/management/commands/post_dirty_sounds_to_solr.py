@@ -42,10 +42,7 @@ class Command(BaseCommand):
         logger.info("Starting posting dirty sounds to solr. %i sounds to be added/updated to the solr index"
                     % num_sounds)
 
-        num_correctly_indexed_sounds = add_all_sounds_to_solr(sounds_to_index)
-
-        if num_correctly_indexed_sounds == num_sounds:
-            sounds_to_index.update(is_index_dirty=False)
+        num_correctly_indexed_sounds = add_all_sounds_to_solr(sounds_to_index, mark_index_clean=True)
 
         logger.info("Finished posting dirty sounds to solr. %i sounds have been added/updated"
                     % num_correctly_indexed_sounds)

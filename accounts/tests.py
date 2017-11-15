@@ -30,7 +30,7 @@ from django.core import mail
 from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest
 from accounts.views import handle_uploaded_image
-from accounts.forms import FsPasswordResetForm
+from accounts.forms import FsPasswordResetForm, DeleteUserForm
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
@@ -667,6 +667,17 @@ class UserDelete(TestCase):
 
         calls = [mock.call(i) for i in user_sound_ids]
         delete_sound_solr.assert_has_calls(calls, any_order=True)
+
+    def test_user_delete_using_form(self):
+        # This should set user's attribute active to false and anonymize it
+        user = self.create_user_and_content(is_index_dirty=False)
+        a = self.client.login(username=user.username, password='testpass')
+        form = DeleteUserForm(user_id=user.id)
+        encr_link = form.initial['encrypted_link']
+        resp = self.client.post(reverse('accounts-delete'),
+                {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
+
+        self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
 
 
 class UserEmailsUniqueTestCase(TestCase):

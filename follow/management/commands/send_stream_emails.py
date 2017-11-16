@@ -80,7 +80,7 @@ class Command(BaseCommand):
             user = User.objects.get(username=username)
             try:
                 users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
-            except Exception, e:
+            except Exception as e:
                 # If error occur do not send the email
                 print "could not get new sounds data for", username.encode('utf-8')
                 profile.save()  # Save last_attempt_of_sending_stream_email
@@ -98,7 +98,7 @@ class Command(BaseCommand):
             try:
                 send_mail(subject_str, text_content, email_from=settings.DEFAULT_FROM_EMAIL, email_to=[email_to],
                           reply_to=None)
-            except Exception, e:
+            except Exception as e:
                 logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to), str(e)))
                 # Do not send the email and do not update the last email sent field in the profile
                 profile.save()  # Save last_attempt_of_sending_stream_email

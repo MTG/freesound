@@ -3,7 +3,7 @@
 Terms of use
 >>>>>>>>>>>>
 
-The usage of the api is subject to the Freesound API terms of use which you can be found in http://freesound.org/help/tos_api/.
+The usage of the api is subject to the Freesound API terms of use which you can be found in https://freesound.org/help/tos_api/.
 Please read these terms and contact mtg *at* upf.edu if you have any doubts.
 As general rules, please take into account the following points:
 

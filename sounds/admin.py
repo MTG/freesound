@@ -66,5 +66,5 @@ admin.site.register(Flag, FlagAdmin)
 
 class SoundOfTheDayAdmin(admin.ModelAdmin):
     raw_id_fields = ('sound',)
-    list_display = ('sound', 'email_sent')
+    list_display = ('date_display', 'sound', 'email_sent')
 admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)

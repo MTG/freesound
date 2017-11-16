@@ -24,29 +24,48 @@ from django.contrib.auth.models import User
 import sounds
 import ratings
 
+
 class RatingsTestCase(TestCase):
 
     fixtures = ['sounds']
 
     def setUp(self):
-        self.sound = sounds.models.Sound.objects.all()[0]
+        self.sound = sounds.models.Sound.objects.get(pk=16)
         self.user1 = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
         self.user2 = User.objects.create_user("testuser2", email="testuser2@freesound.org", password="testpass")
 
     def test_rating_normal(self):
         """ Add a rating """
+        self.assertEqual(self.sound.num_ratings, 0)
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
         # One rating from a different user
         r = ratings.models.Rating.objects.create(sound_id=self.sound.id, user_id=self.user2.id, rating=2)
 
-        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 3))
+        # Test signal updated sound.avg_rating
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 2.0)
+        self.assertEqual(self.sound.num_ratings, 1)
+
+        RATING_VALUE = 3
+        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, RATING_VALUE))
         self.assertEqual(resp.content, "2")
 
         self.assertEqual(ratings.models.Rating.objects.count(), 2)
         r = ratings.models.Rating.objects.get(sound_id=self.sound.id, user_id=self.user1.id)
         # Ratings in the database are 2x the value from the web call
-        self.assertEqual(r.rating, 6)
+        self.assertEqual(r.rating, 2*RATING_VALUE)
+
+        # Check that signal updated sound.avg_rating and sound.num_ratings
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 4.0)
+        self.assertEqual(self.sound.num_ratings, 2)
+
+        # Delete one rating and check if signal updated avg_rating and num_ratings
+        r.delete()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 2.0)
+        self.assertEqual(self.sound.num_ratings, 1)
 
     def test_rating_change(self):
         """ Change your existing rating. """
@@ -61,6 +80,11 @@ class RatingsTestCase(TestCase):
         # Ratings in the database are 2x the value from the web call
         self.assertEqual(newr.rating, 10)
 
+        # Check that signal updated sound.avg_rating. Number of ratings is still the same
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.avg_rating, 10.0)
+        self.assertEqual(self.sound.num_ratings, 1)
+
     def test_rating_out_of_range(self):
         """ Change rating by a value which is not 1-5. """
         loggedin = self.client.login(username="testuser1", password="testpass")
@@ -69,3 +93,11 @@ class RatingsTestCase(TestCase):
         resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 0))
         # After doing an invalid rating, there are still none for this sound
         self.assertEqual(resp.content, "0")
+
+    def test_delete_all_ratings(self):
+        r = ratings.models.Rating.objects.create(sound=self.sound, user_id=self.user2.id, rating=2)
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.num_ratings, 1)
+        r.delete()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.num_ratings, 0)

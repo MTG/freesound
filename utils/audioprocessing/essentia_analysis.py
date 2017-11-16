@@ -67,8 +67,8 @@ def analyze(sound):
                 signal.alarm(FFMPEG_TIMEOUT)
                 p.wait()
                 signal.alarm(0)
-            except Exception, e:
-                failure("ffmpeg conversion failed ",e)
+            except Exception as e:
+                failure("ffmpeg conversion failed ", e)
                 return False
             input_path = tmp_wav_path
         tmp_ana_path = '/tmp/analysis_%s' % sound.id
@@ -83,8 +83,8 @@ def analyze(sound):
                 output_std, output_err = p.communicate()
                 failure( "Essentia extractor returned an error (%s) stdout:%s stderr: %s"%(p_result, output_std, output_err))
                 return False
-        except Exception, e:
-            failure("Essentia extractor failed ",e)
+        except Exception as e:
+            failure("Essentia extractor failed ", e)
             return False
 
         __create_dir(statistics_path)
@@ -94,8 +94,8 @@ def analyze(sound):
         #os.remove('%s.json' % tmp_ana_path)  # Current extractor does not produce the json file
         sound.set_analysis_state('OK')
         sound.set_similarity_state('PE')  # So sound gets reindexed in gaia
-    except Exception, e:
-        failure("Unexpected error in analysis ",e)
+    except Exception as e:
+        failure("Unexpected error in analysis ", e)
         return False
     finally:
         if tmp_conv:

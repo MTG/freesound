@@ -18,14 +18,14 @@ If you do not have ``curl`` installed, we recommend you to install it as it will
 Authentication
 --------------
 
-In order to start using APIv2 you'll need an API credential that you can request in http://www.freesound.org/apiv2/apply.
+In order to start using APIv2 you'll need an API credential that you can request in https://freesound.org/apiv2/apply.
 Basic API calls can be authenticated using a typical api key mechanism in which you'll need to add the key given with your APIv2
 credential into every request you make. You'll need to add the key as a ``token`` request parameter.
 For example:
 
 ::
 
-  curl "http://www.freesound.org/apiv2/search/text/?query=piano&token=YOUR_API_KEY"
+  curl "https://freesound.org/apiv2/search/text/?query=piano&token=YOUR_API_KEY"
 
 However, there are some APIv2 resources that require the use of OAuth2 authentication.
 Please, read the :ref:`authentication` docs for a complete description of both authentication methods and how to use them.
@@ -46,7 +46,7 @@ As a quick example, the following request would return all sorts of dog sounds:
 
 ::
 
-  curl "http://www.freesound.org/apiv2/search/text/?query=dogs&token=YOUR_API_KEY"
+  curl "https://freesound.org/apiv2/search/text/?query=dogs&token=YOUR_API_KEY"
 
 
 Besides text-search, you can also use the :ref:`sound-content-search` resource to perform queries and define filters based on audio features (descriptors) rather than tags and textual metadata.
@@ -56,7 +56,7 @@ As a quick example, you can retrieve sounds that feature a particular pitch mean
 
 ::
 
-  curl "http://www.freesound.org/apiv2/search/content/?descriptors_filter=lowlevel.pitch.mean:\[219.9%20TO%20220.1\]"
+  curl "https://freesound.org/apiv2/search/content/?descriptors_filter=lowlevel.pitch.mean:\[219.9%20TO%20220.1\]"
 
 
 Furthermore, you can combine both textual and content based search strategies using the :ref:`sound-combined-search` resource.
@@ -65,7 +65,7 @@ For example, you could search for loops with a particular bpm using the followin
 
 ::
 
- curl "http://www.freesound.org/apiv2/search/combined/?filter=tag:loop&descriptors_filter=rhythm.bpm:\[119%20TO%20121\]"
+ curl "https://freesound.org/apiv2/search/combined/?filter=tag:loop&descriptors_filter=rhythm.bpm:\[119%20TO%20121\]"
 
 
 Downloading sounds
@@ -114,7 +114,7 @@ Browseable API
 
 Freesound APIv2 includes a browseable API which renders responses in nice html when accessing them with your browser.
 Using the browseable api will allow you to quickly experiment with resources and learn to use Freesound APIv2.
-You can start using the browseable api pointing your browser to http://www.freesound.org/apiv2 .
+You can start using the browseable api pointing your browser to https://freesound.org/apiv2 .
 Note that the browseable API authenticates yourself with standard session authentication (instead of token or OAuth2), so you'll need to login into Freesound.
 
 
@@ -137,9 +137,9 @@ Specify the desired format in lowercase letters as follows:
 
 ::
 
-  http://www.freesound.org/apiv2/sounds/1234/?format=json
-  http://www.freesound.org/apiv2/sounds/1234/?format=xml
-  http://www.freesound.org/apiv2/sounds/1234/?format=yaml
+  https://freesound.org/apiv2/sounds/1234/?format=json
+  https://freesound.org/apiv2/sounds/1234/?format=xml
+  https://freesound.org/apiv2/sounds/1234/?format=yaml
 
 If the format is not specified, it will be automatically determined in the content-negotation phase, typically defaulting to json.
 

@@ -8,11 +8,20 @@
                 if ($("#forum_search").length) {
                     $("#show_search").show();
                 }
+                $("#show_search").click(function(event) {
+                    event.preventDefault();
+                    $("#forum_search").toggle("medium");
+                });
+                $("#show_advanced_search").click(function(event) {
+                    event.preventDefault();
+                    showAdvancedForumSearch();
+                });
+                $("#hide_advanced_search").click(function(event) {
+                    event.preventDefault();
+                    hideAdvancedForumSearch();
+                });
             });
 
-            function showSearch() {
-                $("#forum_search").toggle("medium");
-            }
             function showAdvancedForumSearch() {
                 $("#advanced_search").val(1);
                 $("#enableShowButton").hide();
@@ -34,63 +43,34 @@
                                                       dateFormat: 'dd-mm-yy',
                                                       altField: "#dt_to",
                                                       altFormat: "yy-mm-dd"
-                                                      })
+                                                      });
 
-        		// Set the date in datepicker objects (if it exists in the parameters)
-        		from_date = gup('dt_from')
-        		if ( from_date != "" ){
-        			dateParts = from_date.match(/(\d+)/g)
-            		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            		$('#date_from_forum_search').datepicker('setDate', realDate);
-        		}
-
-        		to_date = gup('dt_to')
-        		if ( to_date != "" ){
-        			dateParts = to_date.match(/(\d+)/g)
-            		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            		$('#date_to_forum_search').datepicker('setDate', realDate);
-        		}
-
-                $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name|escapejs}}'{%else%}all forums{% endif %} {% endif %}");
+                $("#forum_search input[name=q]").Watermark("search in {% if current_forum %}forum '{{current_forum.name}}'{% else %}{% if forum %}forum '{{forum.name|escapejs}}'{%else%}all forums{% endif %}{% endif %}");
 
             });
 
             function checkEmptyDates()
         	{
         		if ( $("#date_from_forum_search").val() == "" ){
-        			$("#dt_from").val("")
+        			$("#dt_from").val("");
         		}
 
         		if ( $("#date_to_forum_search").val() == "" ){
-        			$("#dt_to").val("")
+        			$("#dt_to").val("");
         		}
         	}
 
         	function clearDate(date)
         	{
-        		if (date == 0){
-        			$("#date_from_forum_search").val("Choose a Date")
-        			$("#dt_from").val("")
+        		if (date === 0){
+        			$("#date_from_forum_search").val("Choose a Date");
+        			$("#dt_from").val("");
         		}
-        		else if (date==1){
-        			$("#date_to_forum_search").val("Choose a Date")
-        			$("#dt_to").val("")
+        		else if (date === 1){
+        			$("#date_to_forum_search").val("Choose a Date");
+        			$("#dt_to").val("");
         		}
         	}
-
-            // Util to parse url parameters
-            function gup( name )
-        	{
-        	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-        	  var regexS = "[\\?&]"+name+"=([^&#]*)";
-        	  var regex = new RegExp( regexS );
-        	  var results = regex.exec( window.location.href );
-        	  if( results == null )
-        	    return "";
-        	  else
-        	    return results[1];
-        	}
-
         </script>
 {% endblock head %}
 
@@ -105,7 +85,7 @@
     <div id="breadcrumb_inner">
         <a href="{% url "forums-forums" %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
     </div>
-    <a id="show_search" style="display:none;" onclick="showSearch()" ><span class="forum_search_button">search in the forum</span></a>
+    <a id="show_search" style="display:none;"><span class="forum_search_button">search in the forum</span></a>
     <br style="clear: both;" />
 
 </div>
@@ -113,8 +93,7 @@
 {% block forum_search %}
 <div {% if forum or forums or hide_search %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
     <form method="get" action="{% url "forums-search" %}" onsubmit="checkEmptyDates()">
-    <input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
-    <input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
+    <input type="hidden" name="forum" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum.name_slug}}{% endif %}"/>
 
         <input type="hidden"
                name="advanced_search"
@@ -126,7 +105,7 @@
             <input type="text"
             	   id="forum_search_box"
                    name="q"
-                   value="{% if not invalid %}{% if request.GET.q %}{{request.GET.q}}{% endif %}{% endif %}"
+                   value="{{search_query}}"
                    size="60" />
 
             <input type="submit" value="search!" id="search_submit" />
@@ -135,16 +114,16 @@
 
 
                 <label for="date_from_forum_search">From Date:</label>
-                <input class="input_date_field" type="text" value="Choose a Date" id="date_from_forum_search" />
-                <input type="hidden" value="" name="dt_from" id="dt_from" />
-				<a onclick='clearDate(0);'>clear</a>
+                <input class="input_date_field" type="text" value="{{ date_from_display }}" id="date_from_forum_search" />
+                <input type="hidden" value="{{ date_from }}" name="dt_from" id="dt_from" />
+				<a onclick='clearDate(0);' style="cursor:pointer">clear</a>
 
                 <label for="date_to_forum_search">To Date:</label>
-                <input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
-                <input type="hidden" value="" name="dt_to" id="dt_to" />
-				<a onclick='clearDate(1);'>clear</a>
+                <input class="input_date_field" type="text" value="{{ date_to_display }}" id="date_to_forum_search" />
+                <input type="hidden" value="{{ date_to }}" name="dt_to" id="dt_to" />
+				<a onclick='clearDate(1);' style="cursor:pointer">clear</a>
                 <br>
-                <span class="advanced_search_options_button"><a onclick='hideAdvancedForumSearch();'>hide advanced search options</a></span>
+                <span class="advanced_search_options_button"><a id="hide_advanced_search" href="">hide advanced search options</a></span>
             </div>
 
 
@@ -153,7 +132,7 @@
                   {% if advanced_search == "1" %}style="display:none"{% endif%}>
 
                 <div style="margin-top:4px;"></div>
-                <a onclick='showAdvancedForumSearch();'>show advanced search options</a>
+                <a id="show_advanced_search" href="">show advanced search options</a>
             </span>
 
         </fieldset>

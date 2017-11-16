@@ -7,13 +7,6 @@
     {{sound.original_filename}}</a>
     by <a target="_blank" class="user" href="{% url "account" sound.user.username %}">
     {{sound.user.username}}</a>
-    {% comment %}
-    <strong>Tags:</strong>
-    {% for tag_link in sound.tags.all %}
-        <a href="{% url "tags" tag_link.tag.name %}">{{tag_link.tag.name}}</a>{% if forloop.last %}{% else %} | {% endif %}
-    {% endfor %}
-    <strong>Description:</strong> "{{sound.description|striptags|safe}}"<br/>
-    {% endcomment %}
     (<a href="javascript:setMaxZoomCenter(map, {{sound.geotag.lat}}, {{sound.geotag.lon}}, {{sound.geotag.zoom}})">zoom in</a>)
 </p>
 <br class="clear />

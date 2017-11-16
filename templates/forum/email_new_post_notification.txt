@@ -13,6 +13,6 @@ Post URL:
 <{% absurl "forums-post" forum.name_slug thread.id post.id %}>
 
 
-If you wish to stop recieving subscription messages, you can unsubscribe by clicking this link:
+If you wish to stop receiving subscription messages, you can unsubscribe by clicking this link:
 {% absurl "forums-thread-unsubscribe" forum.name_slug thread.id %}
 {% endblock %}

@@ -54,7 +54,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
             result = Similarity.search(sound.id, preset = preset, num_results = num_results, offset = offset)
             similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
             count = result['count']
-        except Exception, e:
+        except Exception as e:
             logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))
             result = False
@@ -137,10 +137,10 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
             not_cached_sound_ids.remove(id)
     try:
         returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
-    except Exception, e:
+    except Exception as e:
         logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
                      (e, traceback.format_exc()))
-        raise Exception(e)
+        raise
 
     # save sound analysis information in cache
     for key, item in returned_data.items():
@@ -156,7 +156,7 @@ def delete_sound_from_gaia(sound):
     logger.info("Deleting sound from gaia with id %d" % sound.id)
     try:
         Similarity.delete(sound.id)
-    except Exception, e:
+    except Exception as e:
         logger.warn("Could not delete sound from gaia with id %d (%s)" % (sound.id, str(e)))
 
 

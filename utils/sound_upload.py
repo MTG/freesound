@@ -118,7 +118,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             remove_uploaded_file_from_mirror_locations(sound.original_path)
             _remove_user_uploads_folder_if_empty(sound.user)
 
-        except IOError, e:
+        except IOError as e:
             raise CantMoveException("Failed to move file from %s to %s" % (sound.original_path, new_original_path))
         sound.original_path = new_original_path
         sound.save()

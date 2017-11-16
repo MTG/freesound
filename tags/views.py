@@ -87,7 +87,7 @@ def tags(request, multiple_tags=None):
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
-    except SolrException, e:
+    except SolrException as e:
         error = True
         search_logger.error("SOLR ERROR - %s" % e)
     except :
@@ -112,7 +112,7 @@ def old_tag_link_redirect(request):
         tags = fs1tag_id.split('_')
         try:
             fs1tags = FS1Tag.objects.filter(fs1_id__in=tags).values_list('tag', flat=True)
-        except ValueError, e:
+        except ValueError as e:
             raise Http404
 
         tags = Tag.objects.filter(id__in=fs1tags).values_list('name', flat=True)

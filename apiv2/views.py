@@ -95,9 +95,9 @@ class TextSearch(GenericAPIView):
         # Get search results
         try:
             results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(search_form, resource=self)
-        except APIException, e:
+        except APIException as e:
             raise e
-        except Exception, e:
+        except Exception as e:
             raise ServerErrorException(msg='Unexpected error', resource=self)
 
         # Paginate results
@@ -169,9 +169,9 @@ class ContentSearch(GenericAPIView):
             analysis_file = self.analysis_file.read()
         try:
             results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(search_form, target_file=analysis_file, resource=self)
-        except APIException, e:
+        except APIException as e:
             raise e # TODO pass correct exception message
-        except Exception, e:
+        except Exception as e:
             #logger_error.error('<500 Server error unexpected> %s' % str(e))
             raise ServerErrorException(msg='Unexpected error', resource=self)
 
@@ -274,9 +274,9 @@ class CombinedSearch(GenericAPIView):
                              extra_parameters=extra_parameters,
                              merging_strategy=self.merging_strategy,
                              resource=self)
-        except APIException, e:
+        except APIException as e:
             raise e # TODO pass correct resource parameter
-        except Exception, e:
+        except Exception as e:
             #logger_error.error('<500 Server error unexpected> %s' % str(e))
             raise ServerErrorException(msg='Unexpected error', resource=self)
 
@@ -776,9 +776,9 @@ class UploadSound(WriteRequiredGenericAPIView):
                                 msg = "Server error."
                             raise ServerErrorException(msg=msg, resource=self)
 
-                    except APIException, e:
+                    except APIException as e:
                         raise e # TODO pass correct resource variable
-                    except Exception, e:
+                    except Exception as e:
                         raise ServerErrorException(msg='Unexpected error', resource=self)
 
                     return Response(data={'detail': 'Audio file successfully uploaded and described (now pending processing and moderation).', 'id': int(sound.id) }, status=status.HTTP_201_CREATED)
@@ -1097,7 +1097,7 @@ class AvailableAudioDescriptors(GenericAPIView):
                 descriptor_names[key] = [item[1:] for item in value] #  remove initial dot from descriptor names
 
             return Response({'fixed-length':{'one-dimensional':descriptor_names['fixed-length'], 'multi-dimensional':descriptor_names['multidimensional']}, 'variable-length':descriptor_names['variable-length']}, status=status.HTTP_200_OK)
-        except Exception, e:
+        except Exception as e:
             raise ServerErrorException(resource=self)
 
 
@@ -1390,8 +1390,9 @@ def minimal_registration(request):
         if form.is_valid():
             user = form.save()
             send_activation(user)
-            return render(request, 'api/minimal_registration_done.html', locals())
+            return render(request, 'api/minimal_registration_done.html')
     else:
         form = RegistrationForm()
 
-    return render(request, 'api/minimal_registration.html', locals())
+    tvars = {'form': form}
+    return render(request, 'api/minimal_registration.html', tvars)

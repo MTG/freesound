@@ -21,17 +21,19 @@
 #
 
 import json
+
 import gearman
-from django.contrib import admin
-from django.shortcuts import render
-from django.contrib.auth.models import User
-from django.contrib.auth.admin import UserAdmin
-from accounts.models import Profile, UserFlag, EmailPreferenceType
-from django_object_actions import DjangoObjectActions
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import admin
+from django.contrib import messages
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse
+from django_object_actions import DjangoObjectActions
+
+from accounts.models import Profile, UserFlag, EmailPreferenceType
 
 
 def disable_active_user(modeladmin, request, queryset):
@@ -108,7 +110,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     list_display = ('username', 'email')
     list_filter = ()
     ordering = ('id', )
-    show_full_result_count=False
+    show_full_result_count = False
 
     def full_delete(self, request, obj):
         username = obj.username

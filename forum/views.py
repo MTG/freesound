@@ -111,11 +111,19 @@ def thread(request, forum_name_slug, thread_id):
     paginator = paginate(request, Post.objects.select_related('author', 'author__profile').filter(
         thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE)
 
+    has_subscription = False
     # a logged in user watching a thread can activate his subscription to that thread!
     # we assume the user has seen the latest post if he is browsing the thread
     # this is not entirely correct, but should be close enough
     if request.user.is_authenticated:
-        Subscription.objects.filter(thread=thread, subscriber=request.user, is_active=False).update(is_active=True)
+        try:
+            subscription = Subscription.objects.get(thread=thread, subscriber=request.user)
+            if not subscription.is_active:
+                subscription.is_active = True
+                subscription.save()
+            has_subscription = True
+        except Subscription.DoesNotExist:
+            pass
 
     return render(request, 'forum/thread.html', combine_dicts(locals(), paginator))
 
@@ -276,7 +284,18 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
-    return render(request, 'forum/unsubscribe_from_thread.html', locals())
+    messages.add_message(request, messages.INFO, 'You have been unsubscribed from notifications for this thread.')
+    return HttpResponseRedirect(reverse('forums-thread', args=[forum.name_slug, thread.id]))
+
+
+@login_required
+def subscribe_to_thread(request, forum_name_slug, thread_id):
+    forum = get_object_or_404(Forum, name_slug=forum_name_slug)
+    thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
+    subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
+    messages.add_message(request, messages.INFO, "You have been subscribed to this thread. You will receive an "
+                                                 "email notification every time someone makes a reply to this thread.")
+    return HttpResponseRedirect(reverse('forums-thread', args=[forum.name_slug, thread.id]))
 
 
 def old_topic_link_redirect(request):

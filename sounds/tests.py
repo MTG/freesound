@@ -740,6 +740,15 @@ class SoundPackDownloadTestCase(TestCase):
             self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
 
+            # Check num_download attribute of Sound is 1
+            self.sound.refresh_from_db()
+            self.assertEqual(self.sound.num_downloads, 1)
+
+            # Delete all Download objects and check num_download attribute of Sound is 0
+            Download.objects.all().delete()
+            self.sound.refresh_from_db()
+            self.assertEqual(self.sound.num_downloads, 0)
+
     def test_download_pack(self):
         with mock.patch('sounds.views.download_sounds', return_value=HttpResponse()):
 
@@ -759,3 +768,12 @@ class SoundPackDownloadTestCase(TestCase):
             # Download again and check n download objects is still 1
             self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
+
+            # Check num_download attribute of Sound is 1
+            self.pack.refresh_from_db()
+            self.assertEqual(self.pack.num_downloads, 1)
+
+            # Delete all Download objects and check num_download attribute of Sound is 0
+            Download.objects.all().delete()
+            self.pack.refresh_from_db()
+            self.assertEqual(self.pack.num_downloads, 0)

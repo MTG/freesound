@@ -99,6 +99,8 @@ class Thread(models.Model):
         moderated_posts = qs.filter(moderation_state='OK').order_by('-created')
         if moderated_posts.count() > 0:
             self.last_post = moderated_posts[0]
+        else:
+            self.last_post = None
 
         return has_posts
 
@@ -178,21 +180,47 @@ class Post(models.Model):
         return reverse("forums-post", args=[smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id])
 
 
+@receiver(pre_save, sender=Post)
+def update_num_posts_on_save_if_moderation_changes(sender, instance, **kwargs):
+    """If the moderation state of a post changed to or from OK, update counts."""
+    post = instance
+    if post.pk:
+        with transaction.atomic():
+            old = Post.objects.get(pk=post.pk)
+            change = 0
+            if old.moderation_state == 'NM' and instance.moderation_state == 'OK':
+                change = 1
+            elif old.moderation_state == 'OK' and instance.moderation_state == 'NM':
+                change = -1
+            if change != 0:
+                post.author.profile.num_posts = F('num_posts') + change
+                post.author.profile.save()
+                post.thread.forum.num_posts = F('num_posts') + change
+                post.thread.forum.save(update_fields=['num_posts'])
+                post.thread.num_posts = F('num_posts') + change
+                post.thread.save(update_fields=['num_posts'])
+
+
 @receiver(post_save, sender=Post)
 def update_num_posts_on_post_insert(sender, instance, created, **kwargs):
     """Increase num_posts and set last_post when a new Post is created"""
-    if created:
-        post = instance
+    post = instance
+    if created and post.moderation_state == "OK":
         with transaction.atomic():
             post.author.profile.num_posts = F('num_posts') + 1
             post.author.profile.save()
             post.thread.forum.num_posts = F('num_posts') + 1
-            post.thread.forum.set_last_post()
+            post.thread.forum.last_post = post
             post.thread.forum.save()
             post.thread.num_posts = F('num_posts') + 1
-            post.thread.set_last_post()
+            post.thread.last_post = post
             post.thread.save()
         invalidate_template_cache('latest_posts')
+    elif not created and post.moderation_state == "OK":
+        post.thread.forum.set_last_post()
+        post.thread.forum.save(update_fields=['last_post'])
+        post.thread.set_last_post()
+        post.thread.save(update_fields=['last_post'])
 
 
 @receiver(post_delete, sender=Post)
@@ -203,29 +231,32 @@ def update_last_post_on_post_delete(sender, instance, **kwargs):
     Set last_post for the forum
     Set last_post for the thread. If this was the only remaining post
     in the thread and it was deleted, also delete the thread.
+
+    If the post was not moderated, don't update the values
     """
     post = instance
     delete_post_from_solr(post)
-    try:
-        with transaction.atomic():
-            post.author.profile.num_posts = F('num_posts') - 1
-            post.author.profile.save()
-            post.thread.forum.refresh_from_db()
-            post.thread.forum.num_posts = F('num_posts') - 1
-            post.thread.forum.set_last_post()
-            post.thread.forum.save()
-            thread_has_posts = post.thread.set_last_post()
-            if thread_has_posts:
-                post.thread.num_posts = F('num_posts') - 1
-                post.thread.save()
-            else:
-                post.thread.delete()
-    except Thread.DoesNotExist:
-        # This happens when the thread has already been deleted, for example
-        # when a user is deleted through the admin interface. We don't need
-        # to update the thread, but it would be nice to get to the forum object
-        # somehow and update that one....
-        logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
+    if post.moderation_state == "OK":
+        try:
+            with transaction.atomic():
+                post.author.profile.num_posts = F('num_posts') - 1
+                post.author.profile.save()
+                post.thread.forum.refresh_from_db()
+                post.thread.forum.num_posts = F('num_posts') - 1
+                post.thread.forum.set_last_post()
+                post.thread.forum.save()
+                thread_has_posts = post.thread.set_last_post()
+                if thread_has_posts:
+                    post.thread.num_posts = F('num_posts') - 1
+                    post.thread.save()
+                else:
+                    post.thread.delete()
+        except Thread.DoesNotExist:
+            # This happens when the thread has already been deleted, for example
+            # when a user is deleted through the admin interface. We don't need
+            # to update the thread, but it would be nice to get to the forum object
+            # somehow and update that one....
+            logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
     invalidate_template_cache('latest_posts')
 
 

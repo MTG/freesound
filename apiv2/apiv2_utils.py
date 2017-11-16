@@ -167,6 +167,12 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewM
             if "write" not in request.auth.scopes:
                 raise UnauthorizedException(resource=self)
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        # See comment in GenericAPIView.finalize_response
+        response = super(WriteRequiredGenericAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = self.redirect_to_nowww_if_needed(request, response)
+        return response
+
 
 class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
@@ -176,6 +182,12 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
         super(ListAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        # See comment in GenericAPIView.finalize_response
+        response = super(ListAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = self.redirect_to_nowww_if_needed(request, response)
+        return response
+
 
 class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
@@ -184,6 +196,12 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     def initial(self, request, *args, **kwargs):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        # See comment in GenericAPIView.finalize_response
+        response = super(RetrieveAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = self.redirect_to_nowww_if_needed(request, response)
+        return response
 
 
 ##################

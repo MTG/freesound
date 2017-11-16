@@ -49,10 +49,6 @@ class Forum(OrderedModel):
 
     def set_last_post(self):
         qs = Post.objects.filter(thread__forum=self,moderation_state ='OK')
-#        if exclude_post:
-#            qs = qs.exclude(id=exclude_post.id)
-#        if exclude_thread:
-#            qs = qs.exclude(thread=exclude_thread)
         qs = qs.order_by('-created')
         if qs.count() > 0:
             self.last_post = qs[0]
@@ -63,9 +59,6 @@ class Forum(OrderedModel):
 
     def get_absolute_url(self):
         return reverse("forums-forum", args=[smart_unicode(self.name_slug)])
-
-    def get_last_post(self):
-        return Post.objects.filter(thread__forum=self,moderation_state ='OK').order_by("-created")[0]
 
 
 class Thread(models.Model):
@@ -85,8 +78,8 @@ class Thread(models.Model):
                                      related_name="latest_in_thread",
                                      on_delete=models.SET_NULL)
     first_post = models.OneToOneField('Post', null=True, blank=True, default=None,
-                                     related_name="first_in_thread",
-                                     on_delete=models.SET_NULL)
+                                      related_name="first_in_thread",
+                                      on_delete=models.SET_NULL)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -132,14 +125,14 @@ class Post(models.Model):
     MODERATION_STATE_CHOICES = (
         ("NM",_('NEEDS_MODERATION')),
         ("OK",_('OK')),
-        )
+    )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 
     class Meta:
         ordering = ('created',)
         permissions = (
             ("can_moderate_forum", "Can moderate posts."),
-            )
+        )
 
     def __unicode__(self):
         return u"Post by %s in %s" % (self.author, self.thread)

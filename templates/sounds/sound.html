@@ -7,6 +7,7 @@
 {% load cache %}
 {% load absurl %}
 {% load flag_user %}
+{% load sound_signature%}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
 
@@ -99,6 +100,11 @@
     </div>
     <div id="sound_description">
         {{sound.description|replace_img|safe|linebreaks}}
+        {% if user.profile.sound_signature %}
+        <div class="sound_signature">
+            {{user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+        </div>
+        {% endif %}
     </div>
 
     <ul class="tags">
@@ -184,7 +190,7 @@
         <br style="clear: both;">
     </div>
 
-    {% cache 3600 sound_footer_top sound.id %}
+    {% cache 3600 sound_footer_top sound.id display_random_link %}
 
 	<div id="sound_license">
         <img src="{{media_url}}images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
@@ -298,7 +304,7 @@
 
                 var tumblr_link_url = "{% absurl 'sound' sound.user.username sound.id %}";
                 var tumblr_link_name = "{{ sound.user.username }} - {{ sound.original_filename }}";
-                var tumblr_link_description = "http://www.freesound.org";
+                var tumblr_link_description = "https://freesound.org";
 
                 function selectEmbedSize(size) {
                     $('.embed_example').removeClass('embed_active');

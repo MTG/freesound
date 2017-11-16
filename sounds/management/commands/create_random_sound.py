@@ -24,7 +24,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from sounds.models import SoundOfTheDay
 
-logger = logging.getLogger("gearman_worker_processing")
+logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
@@ -51,5 +51,3 @@ class Command(BaseCommand):
                 SoundOfTheDay.objects.create_sound_for_date(datetime.date.today() + td)
                 logger.info('Created new Random Sound')
         logger.info('Create new RandomSound task ended')
-
-

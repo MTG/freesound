@@ -11,15 +11,17 @@ import logging.config
 DEBUG = False
 
 MIDDLEWARE = [
-    'freesound.middleware.PermissionDeniedHandler',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'freesound.middleware.TosAcceptanceHandler',
+    'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
+    'freesound.middleware.FrontendPreferenceHandler',
 ]
 
 INSTALLED_APPS = [
@@ -150,9 +152,10 @@ INTERNAL_IPS = ['localhost', '127.0.0.1']
 MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../freesound/../media')
 MEDIA_URL = "/media/"
 
-# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
-ADMIN_MEDIA_PREFIX = '/media/admin_media/'
-STATIC_URL = '/media/admin_media/'
+# Static files
+# Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is no an installed Django app)
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
+STATIC_URL = '/static/'
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
@@ -183,6 +186,11 @@ MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+
+# Forum restrictions
+LAST_FORUM_POST_MINIMUM_TIME = 60*5
+BASE_MAX_POSTS_PER_DAY = 5
+
 
 # Random Sound of the day settings
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
@@ -287,7 +295,7 @@ OAUTH2_PROVIDER = {
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
-# Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in
+# Set DATA_URL. You can overwrite this to point to production data ("https://freesound.org/data/") in
 # local settings if needed ;)
 DATA_URL = "/data/"
 
@@ -305,10 +313,12 @@ LOG_START_AND_END_COPYING_FILES = True
 STRIPE_PUBLIC_KEY = ""
 STRIPE_PRIVATE_KEY = ""
 
-
-# leave at bottom starting here!
-from local_settings import *
-
+# Frontend preference handling
+FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
+FRONTEND_SESSION_PARAM_NAME = 'frontend'
+FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
+FRONTEND_BEASTWHOOSH = 'bw'  # https://freesound.org/people/martian/sounds/403973/
+FRONTEND_DEFAULT = FRONTEND_NIGHTINGALE
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -329,13 +339,64 @@ TEMPLATES = [
                 'freesound.context_processor.context_extra',
             ],
         },
+        'NAME': FRONTEND_NIGHTINGALE,
     },
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(os.path.dirname(__file__), '../templates2'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.template.context_processors.request',
+                'django.contrib.messages.context_processors.messages',
+                'freesound.context_processor.context_extra',
+            ],
+        },
+        'NAME': FRONTEND_BEASTWHOOSH,
+    },
+
 ]
+
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
+# settings were loaded). We add this variable to the context processor and use it in base.html as a
+# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
+# files when we do a deploy (the url changes)
+LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
+
+# Followers notifications
+MAX_EMAILS_PER_COMMAND_RUN = 1000
+NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+]
+
+# Place settings which depend on other settings potentially modified in local_settings.py BELOW the
+# local settings import
+from local_settings import *
+
 
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
+
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
@@ -361,26 +422,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'INTERCEPT_REDIRECTS': False,
     }
 
-MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
-
-
-# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
-# settings were loaded). We add this variable to the context processor and use it in base.html as a
-# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
-# files when we do a deploy (the url changes)
-LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
-
-# Followers notifications
-MAX_EMAILS_PER_COMMAND_RUN = 1000
-NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
-
-PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
-    'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
-]
+# For using static files served by a javascript webpack server
+USE_JS_DEVELOPMENT_SERVER = DEBUG
 
 from logger import LOGGING

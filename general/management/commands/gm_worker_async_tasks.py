@@ -18,17 +18,21 @@
 #     See AUTHORS file.
 #
 
-import gearman
 import json
-import os
-from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from tickets.models import Ticket
-from tickets import TICKET_STATUS_CLOSED
 import logging
 
-logger = logging.getLogger("gearman_worker_async_tasks")
+import gearman
+import os
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
+from tickets import TICKET_STATUS_CLOSED
+from tickets.models import Ticket
+
+logger = logging.getLogger("console")
+logger_async_tasks = logging.getLogger('async_tasks')
+
 
 class Command(BaseCommand):
     help = 'Run the async tasks worker'
@@ -60,7 +64,7 @@ class Command(BaseCommand):
         self.write_stdout('Ended work\n')
 
     def task_whitelist_user(self, gearman_worker, gearman_job):
-        tickets  = json.loads(gearman_job.data)
+        tickets = json.loads(gearman_job.data)
         self.write_stdout("Whitelisting users from tickets %i tickets)" % len(tickets))
 
         count_done = 0
@@ -70,8 +74,6 @@ class Command(BaseCommand):
             if not whitelist_user.profile.is_whitelisted:
                 whitelist_user.profile.is_whitelisted = True
                 whitelist_user.profile.save()
-                self.write_stdout("User %s whitelisted" % whitelist_user.username)
-
                 pending_tickets = Ticket.objects.filter(sender=whitelist_user)\
                                                 .exclude(status=TICKET_STATUS_CLOSED)
                 # Set all sounds to OK and the tickets to closed
@@ -85,7 +87,11 @@ class Command(BaseCommand):
                     pending_ticket.status = TICKET_STATUS_CLOSED
                     pending_ticket.save()
 
-                count_done = count_done + 1
+                message = "Whitelisted user: %s" % whitelist_user.username
+                self.write_stdout(message)
+                logger_async_tasks.info(message)
+
+            count_done = count_done + 1
             self.write_stdout("Finished processing one ticket, %d remaining" % (len(tickets)-count_done))
         return 'true' if len(tickets) == count_done else 'false'
 
@@ -95,28 +101,40 @@ class Command(BaseCommand):
         data = json.loads(gearman_job.data)
         user = User.objects.get(id=data['user_id'])
 
-        if data['action'] == 'full_db_delete':
-            # This will fully delete the user and the sounds from the database.
-            # WARNING: Once the sounds are deleted NO DeletedSound object will
-            # be created.
+        try:
+            if data['action'] == 'full_db_delete':
+                # This will fully delete the user and the sounds from the database.
+                # WARNING: Once the sounds are deleted NO DeletedSound object will
+                # be created.
+                user.delete()
+                message = "Async delete user: %d (full delete)" % data['user_id']
+                self.write_stdout(message)
+                logger_async_tasks.info(message)
+                return 'true'
 
-            user.delete()
-            self.write_stdout("Fully deleted user %d" % data['user_id'])
-            return 'true'
-        elif data['action'] == 'delete_user_keep_sounds':
-            # This will anonymize the user and will keep the sounds publicly
-            # availabe
+            elif data['action'] == 'delete_user_keep_sounds':
+                # This will anonymize the user and will keep the sounds publicly
+                # availabe
+                user.profile.delete_user()
+                message = "Async delete user: %d (sounds kept)" % data['user_id']
+                self.write_stdout(message)
+                logger_async_tasks.info(message)
+                return 'true'
 
-            user.profile.delete_user()
-            self.write_stdout("Deleted user %d (sounds kept)" % data['user_id'])
-            return 'true'
-        elif data['action'] == 'delete_user_delete_sounds':
-            # This will anonymize the user and remove the sounds, a
-            # DeletedSound object will be created for each sound but kill not
-            # be publicly available
-
-            user.profile.delete_user(True)
-            self.write_stdout("Deleted user %d and her sounds" % data['user_id'])
-            return 'true'
+            elif data['action'] == 'delete_user_delete_sounds':
+                # This will anonymize the user and remove the sounds, a
+                # DeletedSound object will be created for each sound but kill not
+                # be publicly available
+                user.profile.delete_user(True)
+                message = "Async delete user: %d (including sounds)" % data['user_id']
+                self.write_stdout(message)
+                logger_async_tasks.info(message)
+                return 'true'
+        except Exception as e:
+            # This exception is broad but we catch it so that we can log that an error happened.
+            # TODO: catching more specific exceptions would be desirable
+            message = "Error in async delete user: %d (%s)" % (data['user_id'], str(e))
+            self.write_stdout(message)
+            logger_async_tasks.info(message)
 
         return 'false'

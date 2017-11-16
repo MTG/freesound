@@ -31,7 +31,7 @@ examples = {
         ('Get geotagged sounds with tag field-recording. Return only geotag and tags for each result', ['apiv2/search/text/?filter=is_geotagged:1 tag:field-recording&fields=geotag,tags']),
         ('Basic geospatial filtering', ['apiv2/search/text/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)"', 'apiv2/search/text/?filter=geotag:"IsDisjointTo(-74.093 41.042 -69.347 44.558)"']),
         ('Geospatial with customizable max error parameter (in degrees) and combinations of filters',
-                                 ['apiv2/search/text/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)" distErr=20',
+                                 ['apiv2/search/text/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558) distErr=20"',
                                   'apiv2/search/text/?filter=geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)"&fields=id,geotag,tags',
                                   'apiv2/search/text/?filter=(geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)") AND tag:field-recording&fields=id,geotag,tags']),
         ('Geospatial search for points at a maximum distance d (in km) from a latitude,longitude position and with a particular tag', ['apiv2/search/text/?filter={!geofilt sfield=geotag pt=41.3833,2.1833 d=10} tag:barcelona&fields=id,geotag,tags',]),

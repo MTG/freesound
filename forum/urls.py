@@ -33,6 +33,7 @@ urlpatterns = [
     url(r'^(?P<forum_name_slug>[\w\-]+)/new-thread/$', forum.new_thread, name="forums-new-thread"),
     url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', forum.thread, name="forums-thread"),
     url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/unsubscribe/$', forum.unsubscribe_from_thread, name="forums-thread-unsubscribe"),
+    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/subscribe/$', forum.subscribe_to_thread, name="forums-thread-subscribe"),
     url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/$', forum.post, name="forums-post"),
     url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/reply/$', forum.reply, name="forums-reply"),
     url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$', forum.reply, name="forums-reply-quote"),

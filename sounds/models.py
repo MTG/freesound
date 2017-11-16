@@ -125,6 +125,57 @@ class SoundManager(models.Manager):
         else:
             return None
 
+    def bulk_query_solr(self, sound_ids):
+        # This is used to select multiple sounds only in one query, this sounds are indexed in solr
+        # so we seelct only the fields that are going to be indexed
+        query = """SELECT
+          auth_user.username,
+          sound.user_id,
+          sound.id,
+          sound.type,
+          sound.original_filename,
+          sound.is_explicit,
+          sound.filesize,
+          sound.md5,
+          sound.channels,
+          sound.avg_rating,
+          sound.num_ratings,
+          sound.description,
+          sound.created,
+          sound.num_downloads,
+          sound.num_comments,
+          sound.duration,
+          sound.pack_id,
+          sound.geotag_id,
+          sound.bitrate,
+          sound.bitdepth,
+          sound.samplerate,
+          sounds_pack.name as pack_name,
+          sounds_license.name as license_name,
+          geotags_geotag.lat as geotag_lat,
+          geotags_geotag.lon as geotag_lon,
+          exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
+          exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
+          ARRAY(
+            SELECT tags_tag.name
+            FROM tags_tag
+            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
+          WHERE tags_tag.id = tags_taggeditem.tag_id
+           AND tags_taggeditem.content_type_id=20) AS tag_array,
+          ARRAY(
+            SELECT comments_comment.comment
+            FROM comments_comment
+            WHERE comments_comment.sound_id = sound.id) AS comments_array
+        FROM
+          sounds_sound sound
+          LEFT JOIN auth_user ON auth_user.id = sound.user_id
+          LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
+          LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+        WHERE
+          sound.id IN %s """ % (sound_ids, )
+        return self.raw(query)
+
     def bulk_query(self, where, order_by, limit, args):
         query = """SELECT
           auth_user.username,
@@ -132,7 +183,9 @@ class SoundManager(models.Manager):
           sound.type,
           sound.user_id,
           sound.original_filename,
+          sound.is_explicit,
           sound.avg_rating,
+          sound.num_ratings,
           sound.description,
           sound.moderation_state,
           sound.processing_state,
@@ -708,7 +761,7 @@ class Sound(SocialModel):
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):
-        delete_sound_from_solr(self)
+        delete_sound_from_solr(self.id)
         delete_sound_from_gaia(self)
 
     def invalidate_template_caches(self):
@@ -769,6 +822,9 @@ class SoundOfTheDay(models.Model):
     email_sent = models.BooleanField(default=False)
 
     objects = SoundOfTheDayManager()
+
+    def __unicode__(self):
+        return u'Random sound of the day {0}'.format(self.date_display)
 
     def notify_by_email(self):
         """Notify the user of this sound by email that their sound has been chosen

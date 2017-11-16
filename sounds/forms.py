@@ -118,7 +118,7 @@ class RemixForm(forms.Form):
                 )
             except Sound.DoesNotExist:
                 pass
-            except Exception, e:
+            except Exception as e:
                 # Report any other type of exception and fail silently
                 print ("Problem removing source from remix or sending mail: %s" % e)
 
@@ -131,7 +131,7 @@ class RemixForm(forms.Form):
                     {'source': source, 'action': 'added', 'remix': self.sound},
                     None, source.user.email
                 )
-            except Exception, e:
+            except Exception as e:
                 # Report any exception but fail silently
                 print ("Problem sending mail about source added to remix: %s" % e)
 

@@ -56,7 +56,7 @@ GRAYLOG_USERNAME = "apiuser"
 GRAYLOG_PASSWORD = "apiuserpassword"
 
 # To customize DATA_URL
-# DATA_URL = "http://freesound.org/data/"
+# DATA_URL = "https://freesound.org/data/"
 
 # To customize DATA_PATH
 '''

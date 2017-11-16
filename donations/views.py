@@ -4,6 +4,7 @@ import requests
 import urlparse
 import logging
 import stripe
+from requests.adapters import HTTPAdapter
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -77,6 +78,7 @@ def donation_complete_stripe(request):
     If the donation is successfully done it stores it and send the email to the user.
     """
     donation_received = False
+    donation_error = False
     if request.method == 'POST':
         form = DonateForm(request.POST, user=request.user)
 
@@ -98,9 +100,16 @@ def donation_complete_stripe(request):
                     donation_received = True
                     messages.add_message(request, messages.INFO, 'Thanks! your donation has been processed.')
                     _save_donation(form.encoded_data, email, amount, 'eur', charge['id'], 's')
+            except stripe.error.CardError as e:
+                # Since it's a decline, stripe.error.CardError will be caught
+                body = e.json_body
+                err  = body.get('error', {})
+                donation_error = err.get('message', False)
             except stripe.error.StripeError as e:
-                logger.error("Can't charge donation whith stripe", e)
-    if not donation_received:
+                logger.error("Can't charge donation whith stripe: %s", e)
+    if donation_error:
+        messages.add_message(request, messages.WARNING, 'Error processing the donation. %s' % err.get('message'))
+    elif not donation_received:
         messages.add_message(request, messages.WARNING, 'Your donation could not be processed.')
     return redirect('donate')
 
@@ -114,19 +123,25 @@ def donation_complete_paypal(request):
     params = request.POST.copy()
     params.update({'cmd': '_notify-validate'})
 
-    try:
-        req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
-    except requests.exceptions.Timeout:
-        logger.error("Can't verify donations information with paypal")
-        return HttpResponse("FAIL")
+    if "mc_gross" in params:
+        # Paypal makes notifications of different events e.g: new suscriptions,
+        # we only want to save when the actual payment happends
+        params = request.POST.copy()
+        params.update({'cmd': '_notify-validate'})
 
-    if req.text == 'VERIFIED':
-        _save_donation(params['custom'],
-            params['payer_email'],
-            params['mc_gross'],
-            params['mc_currency'],
-            params['txn_id'],
-            'p')
+        try:
+            req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
+        except requests.exceptions.Timeout:
+            logger.error("Can't verify donations information with paypal")
+            return HttpResponse("FAIL")
+
+        if req.text == 'VERIFIED':
+             _save_donation(params['custom'],
+                params['payer_email'],
+                params['mc_gross'],
+                params['mc_currency'],
+                params['txn_id'],
+                'p')
     return HttpResponse("OK")
 
 

@@ -18,26 +18,29 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, Client, RequestFactory
-from django.http import HttpRequest, HttpResponse
-from django.urls import reverse
-from django.contrib.auth.models import User, AnonymousUser
-from comments.models import Comment
+import datetime
+import time
+from itertools import count
+
+import mock
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core import mail
 from django.core.cache import cache
 from django.core.management import call_command
-from django.core import mail
-from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay, Flag, Download
-from general.templatetags.filter_img import replace_img
-from sounds.views import get_sound_of_the_day_id, sound_download, pack_download
-from utils.tags import clean_and_split_tags
-from utils.encryption import encrypt
+from django.http import HttpRequest, HttpResponse
 from django.template import Context, Template
-import accounts
-import time
-import datetime
-from itertools import count
+from django.test import TestCase, Client, RequestFactory, override_settings
+from django.urls import reverse
 from freezegun import freeze_time
-import mock
+
+import accounts
+from comments.models import Comment
+from general.templatetags.filter_img import replace_img
+from sounds.models import Pack, Sound, SoundOfTheDay, License, DeletedSound, Flag, Download
+from sounds.views import get_sound_of_the_day_id
+from utils.encryption import encrypt
+from utils.tags import clean_and_split_tags
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
@@ -82,6 +85,75 @@ class OldPackLinksRedirectTestCase(TestCase):
     def test_old_pack_link_redirect_invalid_id(self):
         response = self.client.get(reverse('old-pack-page'), data={'id': 'invalid_id'}, follow=True)
         self.assertEqual(response.status_code, 404)
+
+
+class RandomSoundAndUploaderTestCase(TestCase):
+
+    fixtures = ['sounds']
+
+    def test_random_sound(self):
+        sound_obj = Sound.objects.random()
+        self.assertEqual(isinstance(sound_obj, Sound), True)
+
+
+class RandomSoundViewTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    @mock.patch('sounds.views.get_random_sound_from_solr')
+    def test_random_sound_view(self, random_sound):
+        """ Get a sound from solr and redirect to it. """
+        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        sound = sounds[0]
+
+        # We only use the ID field from solr
+        random_sound.return_value = {'id': sound.id}
+
+        response = self.client.get(reverse('sounds-random'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
+
+    @mock.patch('sounds.views.get_random_sound_from_solr')
+    def test_random_sound_view_bad_solr(self, random_sound):
+        """ Solr may send us a sound id which no longer exists (index hasn't been updated).
+        In this case, use the database access """
+        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        sound = sounds[0]
+        # Update sound attributes to be selected by Sound.objects.random
+        sound.moderation_state = sound.processing_state = 'OK'
+        sound.is_explicit = False
+        sound.avg_rating = 8
+        sound.num_ratings = 5
+        sound.save()
+
+        # We only use the ID field from solr
+        random_sound.return_value = {'id': sound.id+100}
+
+        # Even though solr returns sound.id+100, we find we are redirected to the db sound, because
+        # we call Sound.objects.random
+        response = self.client.get(reverse('sounds-random'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
+
+    @mock.patch('sounds.views.get_random_sound_from_solr')
+    def test_random_sound_view_no_solr(self, random_sound):
+        """ If solr is down, get a random sound from the database and redirect to it. """
+        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        sound = sounds[0]
+        # Update sound attributes to be selected by Sound.objects.random
+        sound.moderation_state = sound.processing_state = 'OK'
+        sound.is_explicit = False
+        sound.avg_rating = 8
+        sound.num_ratings = 5
+        sound.save()
+
+        # Returned if there is an issue accessing solr
+        random_sound.return_value = {}
+
+        # we find the sound due to Sound.objects.random
+        response = self.client.get(reverse('sounds-random'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
 
 
 class CommentSoundsTestCase(TestCase):
@@ -164,7 +236,8 @@ class ChangeSoundOwnerTestCase(TestCase):
 
     fixtures = ['initial_data']
 
-    def test_change_sound_owner(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_change_sound_owner(self, delete_sound_solr):
         # Prepare some content
         userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
         userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
@@ -184,8 +257,9 @@ class ChangeSoundOwnerTestCase(TestCase):
         target_sound_id = target_sound.id
         target_sound_pack = target_sound.pack
         target_sound_tags = [ti.id for ti in target_sound.tags.all()]
+        remaining_sound_ids = [s.id for s in soundsA[1:]]  # Other sounds that the user owns
 
-        # Change owenership of sound
+        # Change ownership of sound
         target_sound.change_owner(userB)
 
         # Perform checks
@@ -203,13 +277,16 @@ class ChangeSoundOwnerTestCase(TestCase):
         userA.delete()  # Completely delete form db (instead of user.profile.delete_user())
         sound = Sound.objects.get(id=target_sound_id)
         self.assertItemsEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
+        calls = [mock.call(i) for i in remaining_sound_ids]
+        delete_sound_solr.assert_has_calls(calls)  # All other sounds by the user were deleted
 
 
 class ProfileNumSoundsTestCase(TestCase):
 
     fixtures = ['initial_data']
 
-    def test_moderation_and_processing_state_changes(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_moderation_and_processing_state_changes(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         self.assertEqual(user.profile.num_sounds, 0)  # Sound not yet moderated or processed
@@ -223,14 +300,18 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(user.profile.num_sounds, 1)  # Sound reprocessed second time and again set as ok
         sound.change_processing_state("FA")
         self.assertEqual(user.profile.num_sounds, 0)  # Sound failed processing
+        delete_sound_solr.assert_called_once_with(sound.id)
         sound.change_processing_state("OK")
         self.assertEqual(user.profile.num_sounds, 1)  # Sound processed again as ok
         sound.change_moderation_state("DE")
         self.assertEqual(user.profile.num_sounds, 0)  # Sound unmoderated
+        self.assertEqual(delete_sound_solr.call_count, 2) # Sound deleted once when going to FA, once when DE
 
-    def test_sound_delete(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_sound_delete(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
+        sound_id = sound.id
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         sound.add_comment(user, "some comment")
@@ -239,14 +320,17 @@ class ProfileNumSoundsTestCase(TestCase):
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
         self.assertEqual(Comment.objects.count(), 0)
+        delete_sound_solr.assert_called_once_with(sound_id)
 
-    def test_deletedsound_creation(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_deletedsound_creation(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         sound_id = sound.id
         sound.delete()
+        delete_sound_solr.assert_called_once_with(sound_id)
 
         self.assertEqual(DeletedSound.objects.filter(sound_id=sound_id).exists(), True)
         ds = DeletedSound.objects.get(sound_id=sound_id)
@@ -277,7 +361,8 @@ class PackNumSoundsTestCase(TestCase):
 
     fixtures = ['initial_data']
 
-    def test_create_and_delete_sounds(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_create_and_delete_sounds(self, delete_sound_solr):
         N_SOUNDS = 5
         user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
         pack = packs[0]
@@ -287,7 +372,10 @@ class PackNumSoundsTestCase(TestCase):
             sound.change_moderation_state("OK")
             self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, count + 1)  # Check pack has all sounds
 
-        sounds[0].delete()
+        sound_to_delete = sounds[0]
+        sound_to_delete_id = sound_to_delete.id
+        sound_to_delete.delete()
+        delete_sound_solr.assert_called_once_with(sound_to_delete_id)
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, N_SOUNDS - 1)  # Check num_sounds on delete sound
 
     def test_edit_sound(self):
@@ -356,7 +444,8 @@ class SoundViewsTestCase(TestCase):
 
     fixtures = ['initial_data']
 
-    def test_delete_sound_view(self):
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_delete_sound_view(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
         sound = sounds[0]
         sound_id = sound.id
@@ -371,7 +460,7 @@ class SoundViewsTestCase(TestCase):
         self.assertEqual(resp.status_code, 403)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
 
-        # Try delete with expried encrypted link (should not delete sound)
+        # Try delete with expired encrypted link (should not delete sound)
         encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time() - 15))
         resp = self.client.post(reverse('sound-delete',
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
@@ -384,6 +473,7 @@ class SoundViewsTestCase(TestCase):
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertRedirects(resp, reverse('accounts-home'))
+        delete_sound_solr.assert_called_once_with(sound.id)
 
     def test_embed_iframe(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
@@ -580,6 +670,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
                 self.sound = sound
                 break
 
+    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_sound_from_id(self):
         Template("{% load display_sound %}{% display_sound sound %}").render(Context({
             'sound': self.sound.id,
@@ -588,6 +679,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
+    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_sound_from_obj(self):
         Template("{% load display_sound %}{% display_sound sound %}").render(Context({
             'sound': self.sound,
@@ -596,6 +688,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
+    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_raw_sound(self):
         raw_sound = Sound.objects.bulk_query_id([self.sound.id])[0]
         Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({

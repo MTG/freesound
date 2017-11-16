@@ -11,10 +11,11 @@
     <div id="edit_account" class="content_box">
         <h3>Edit your account information</h3>
         <form method="post" action=".">{% csrf_token %}
+            <p>You can edit your account using this form. The text introduced in the 
+                <strong>about</strong>, <strong>forum signature</strong> and <strong>sound signature</strong> fields can be formatted using the following HTML tags:
+                <code>a</code>, <code>img</code>, <code>strong</code>, <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>, <code>blockquote</code>a and <code>code</code>.
+            </p>
             {{profile_form.as_p}}
-            {% include 'forum/html_explanation.html' %}
-            <p>This formatting is supported for your about text and signature.
-            <br><br>
             <input type="submit" value="Save account settings" />
         </form>
     </div><!-- #edit_account -->

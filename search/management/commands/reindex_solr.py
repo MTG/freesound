@@ -18,20 +18,35 @@
 #     See AUTHORS file.
 #
 
+import logging
+
 from django.core.management.base import BaseCommand
+
 from sounds.models import Sound
 from utils.search.search_general import add_all_sounds_to_solr, delete_sound_from_solr
+
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
     args = ''
-    help = 'Take all sounds and send them to Solr'
+    help = 'Take all sounds moderated and processed as OK and send them to Solr'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-n', '--no_index_clean',
+            action='store_true',
+            dest='no_index_clean',
+            help='Use this option to not mark sounds as is_index_dirty=False after indexing them.')
 
     def handle(self, *args, **options):
+        mark_index_clean = not options['no_index_clean']
+
         # Get all sounds moderated and processed ok
-        sound_qs = Sound.objects.select_related("pack", "user", "license") \
-                                .filter(processing_state="OK", moderation_state="OK")
-        add_all_sounds_to_solr(sound_qs, mark_index_clean=True)
+        sounds_to_index = Sound.objects.filter(processing_state="OK", moderation_state="OK")
+        console_logger.info("Reindexing %d sounds to solr", sounds_to_index.count())
+
+        add_all_sounds_to_solr(sounds_to_index, mark_index_clean=mark_index_clean)
 
         # Get all sounds that should not be in solr and remove them if they are
         sound_qs = Sound.objects.exclude(processing_state="OK", moderation_state="OK")

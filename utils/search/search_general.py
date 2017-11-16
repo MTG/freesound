@@ -37,8 +37,8 @@ console_logger = logging.getLogger("console")
 
 def convert_to_solr_document(sound):
     document = {}
-    keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels',
-            'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
+    keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels', 'md5',
+                   'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
     for key in keep_fields:
         document[key] = getattr(sound, key)
     document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
@@ -85,8 +85,9 @@ def add_sounds_to_solr(sounds):
 def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=False):
     num_correctly_indexed_sounds = 0
     all_sound_ids = sound_queryset.values_list('id', flat=True).all()
+    n_slices = int(math.ceil(float(len(all_sound_ids))/slice_size))
     for i in range(0, len(all_sound_ids), slice_size):
-        console_logger.info("Adding %i sounds to solr, slice %i", slice_size, i)
+        console_logger.info("Adding %i sounds to solr, slice %i of %i", slice_size, (i/slice_size) + 1, n_slices)
         try:
             sound_ids = tuple(all_sound_ids[i:i+slice_size])
             sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)

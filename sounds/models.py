@@ -135,6 +135,7 @@ class SoundManager(models.Manager):
           sound.original_filename,
           sound.is_explicit,
           sound.filesize,
+          sound.md5,
           sound.channels,
           sound.avg_rating,
           sound.num_ratings,
@@ -173,7 +174,6 @@ class SoundManager(models.Manager):
         WHERE
           sound.id IN %s """ % (sound_ids, )
         return self.raw(query)
-
 
     def bulk_query(self, where, order_by, limit, args):
         query = """SELECT

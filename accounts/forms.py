@@ -312,13 +312,13 @@ class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
     delete_sounds = forms.ChoiceField(choices = DELETE_CHOICES,
             widget=forms.RadioSelect())
-    password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
+    password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):
         user = User.objects.get(id=self.user_id)
         if not user.check_password(self.cleaned_data["password"]):
             raise forms.ValidationError(_("Incorrect password."))
-        return self.cleaned_data['password']
+        return None
 
     def clean(self):
         data = self.cleaned_data['encrypted_link']

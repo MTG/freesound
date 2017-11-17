@@ -16,14 +16,7 @@
     (form valid for 10 seconds only):</p>
     <form method="post">
       {% csrf_token %}
-      {{ delete_form.non_field_errors }}
-      {{delete_form.encrypted_link}}
-      {{delete_form.delete_sounds}}
-
-      {{ delete_form.password.errors }}
-      <p>Enter your password: {{delete_form.password}}</div>
-      <br />
-
+      {{delete_form.as_p}}
     <button>Send</button>
     </form>
 </div>

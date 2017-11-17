@@ -679,6 +679,18 @@ class UserDelete(TestCase):
 
         self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
 
+    def test_fail_user_delete_using_form(self):
+        # This should try to delete the account but with a wrong password
+        user = self.create_user_and_content(is_index_dirty=False)
+        a = self.client.login(username=user.username, password='testpass')
+        form = DeleteUserForm(user_id=user.id)
+        encr_link = form.initial['encrypted_link']
+        resp = self.client.post(reverse('accounts-delete'),
+                {'encrypted_link': encr_link, 'password': 'wrong_pass', 'delete_sounds': 'delete_sounds'})
+
+        self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, False)
+
+
 
 class UserEmailsUniqueTestCase(TestCase):
 

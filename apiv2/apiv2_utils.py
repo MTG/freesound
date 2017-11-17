@@ -89,13 +89,27 @@ class FreesoundAPIViewMixin(object):
         self.auth_method_name, self.developer, self.user, self.client_id, self.client_name, self.protocol, \
             self.contains_www = get_authentication_details_form_request(request)
 
-    def redirect_to_nowww_if_needed(self, request, response):
-        # Check if user is using the interactive API browser and www in the domain. If that is the case, we return
-        # an HttpResponseRedirect to the no-www version of this page. Otherwise we return the response as it was passed.
-        if isinstance(response.accepted_renderer, BrowsableAPIRenderer) and request.get_host().startswith('www'):
-            domain = "%s://%s" % (request.scheme, Site.objects.get_current().domain)
-            return_url = urlparse.urljoin(domain, request.get_full_path())
-            return HttpResponseRedirect(return_url)
+    def redirect_if_needed(self, request, response):
+        """Returns HttpResponseRedirect if the current request should be redirected
+
+        This methods returns an HttpResponseRedirect if:
+            1) user is using the browseable API and the www domain
+            2) user is using the browseable API and HTTP
+
+        The redirect is done to no-www and HTTPS. This is implemented here because, for compatibility reasons, the API
+        is the only part of Freesound which is not autotmatically redriected to HTTPS/no-www. However, when users are
+        browsing the API interactively (with the browser), we want this behvaiour top be applied.
+        """
+
+        if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
+            if request.get_host().startswith('www'):
+                domain = "https://%s" % Site.objects.get_current().domain
+                return_url = urlparse.urljoin(domain, request.get_full_path())
+                return HttpResponseRedirect(return_url)
+            if request.scheme != 'https':
+                domain = "https://%s" % Site.objects.get_current().domain
+                return_url = urlparse.urljoin(domain, request.get_full_path())
+                return HttpResponseRedirect(return_url)
         return response
 
     def throw_exception_if_not_https(self, request):
@@ -120,7 +134,7 @@ class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         handled by 'finalize_response' method of APIView.
         """
         response = super(GenericAPIView, self).finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_to_nowww_if_needed(request, response)
+        response = self.redirect_if_needed(request, response)
         return response
 
 
@@ -136,7 +150,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
         response = super(OauthRequiredAPIView, self).finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_to_nowww_if_needed(request, response)
+        response = self.redirect_if_needed(request, response)
         return response
 
 
@@ -170,7 +184,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewM
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
         response = super(WriteRequiredGenericAPIView, self).finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_to_nowww_if_needed(request, response)
+        response = self.redirect_if_needed(request, response)
         return response
 
 
@@ -185,7 +199,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
         response = super(ListAPIView, self).finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_to_nowww_if_needed(request, response)
+        response = self.redirect_if_needed(request, response)
         return response
 
 
@@ -200,7 +214,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
         response = super(RetrieveAPIView, self).finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_to_nowww_if_needed(request, response)
+        response = self.redirect_if_needed(request, response)
         return response
 
 

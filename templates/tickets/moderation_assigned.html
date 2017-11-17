@@ -46,11 +46,6 @@
     var selectAllOnClick = true;
     $(document).ready(function() {
 
-        $("#moderation-form").find("form").submit(function () {
-            $("#submit-moderation").attr("disabled", true);
-            return true;
-        });
-
         {% if moderator_tickets_count %}
 
         $("#select-all").click(function(){
@@ -243,7 +238,7 @@
                 <h4 id="moderate-form-title-label"></h4>
                 <br>
                 <div id="moderation-form">
-                    <form action="." method="post">{% csrf_token %}
+                    <form action="." method="post" class="disable-on-submit">{% csrf_token %}
 
                            <div id="moderation-decision-form">
                                {{ mod_sound_form.as_p }}

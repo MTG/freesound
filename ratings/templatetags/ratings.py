@@ -25,5 +25,5 @@ from django.urls import reverse
 register = Library()
 
 @register.filter
-def rating_url(object, rating):
-    return reverse("ratings-add", kwargs=dict(sound_id=object.id, rating=rating))
+def rating_url(sound, rating):
+    return reverse("sound-rating-add", kwargs=dict(sound_id=sound.id, rating=rating))

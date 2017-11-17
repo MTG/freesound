@@ -19,6 +19,7 @@
 #
 
 from django.contrib.auth.models import User
+from django.db.models import Max
 from django.test import TestCase
 
 import ratings.models
@@ -37,8 +38,8 @@ class RatingsTestCase(TestCase):
     def test_rating_normal(self):
         """ Add a rating """
         self.assertEqual(self.sound.num_ratings, 0)
-        loggedin = self.client.login(username="testuser1", password="testpass")
-        self.assertTrue(loggedin)
+        self.client.force_login(self.user1)
+
         # One rating from a different user
         r = ratings.models.SoundRating.objects.create(sound_id=self.sound.id, user_id=self.user2.id, rating=2)
 
@@ -48,7 +49,7 @@ class RatingsTestCase(TestCase):
         self.assertEqual(self.sound.num_ratings, 1)
 
         RATING_VALUE = 3
-        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, RATING_VALUE))
+        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, RATING_VALUE))
         self.assertEqual(resp.content, "2")
 
         self.assertEqual(ratings.models.SoundRating.objects.count(), 2)
@@ -69,12 +70,11 @@ class RatingsTestCase(TestCase):
 
     def test_rating_change(self):
         """ Change your existing rating. """
-        loggedin = self.client.login(username="testuser1", password="testpass")
-        self.assertTrue(loggedin)
+        self.client.force_login(self.user1)
 
         r = ratings.models.SoundRating.objects.create(sound_id=self.sound.id, user_id=self.user1.id, rating=4)
 
-        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 5))
+        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 5))
         newr = ratings.models.SoundRating.objects.first()
         self.assertEqual(ratings.models.SoundRating.objects.count(), 1)
         # Ratings in the database are 2x the value from the web call
@@ -87,11 +87,13 @@ class RatingsTestCase(TestCase):
 
     def test_rating_out_of_range(self):
         """ Change rating by a value which is not 1-5. """
-        loggedin = self.client.login(username="testuser1", password="testpass")
-        self.assertTrue(loggedin)
+        self.client.force_login(self.user1)
 
-        resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 0))
+        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 0))
         # After doing an invalid rating, there are still none for this sound
+        self.assertEqual(resp.content, "0")
+
+        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 6))
         self.assertEqual(resp.content, "0")
 
     def test_delete_all_ratings(self):
@@ -101,3 +103,18 @@ class RatingsTestCase(TestCase):
         r.delete()
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.num_ratings, 0)
+
+    def test_rating_no_sound(self):
+        """Test behaviour if the sound id doesn't exist"""
+        max_id = sounds.models.Sound.objects.all().aggregate(Max('id'))
+        max_id = max_id['id__max']
+        no_id = max_id + 20
+
+        self.client.force_login(self.user1)
+
+        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (no_id, 2))
+        self.assertEqual(resp.status_code, 404)
+
+        # If sound id doesn't match username
+        resp = self.client.get("/people/NotAnton/sounds/%s/rate/%s/" % (self.sound.id, 2))
+        self.assertEqual(resp.status_code, 404)

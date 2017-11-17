@@ -19,18 +19,25 @@
 #
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+from django.http import Http404
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+
 from ratings.models import SoundRating
 from sounds.models import Sound
 from utils.cache import invalidate_template_cache
-from django.db import transaction
+
 
 @login_required
 @transaction.atomic()
-def add(request, sound_id, rating):
+def rate_sound(request, username, sound_id, rating):
+    sound = get_object_or_404(Sound.objects.select_related("user"), id=sound_id)
+    if sound.user.username.lower() != username.lower():
+        raise Http404
+
     rating = int(rating)
-    if rating in range(1,6):
+    if 1 <= rating <= 5:
         # in order to keep the ratings compatible with freesound 1, we multiply by two...
         rating = rating*2
         rating_obj, created = SoundRating.objects.get_or_create(

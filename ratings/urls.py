@@ -21,8 +21,9 @@
 #
 
 from django.conf.urls import url
-import ratings.views as ratings
+
+import ratings.views
 
 urlpatterns = [
-    url(r'^add/(?P<sound_id>\d+)/(?P<rating>\d)/$', ratings.add, name="ratings-add"),
+    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/rate/(?P<rating>\d)/$', ratings.views.rate_sound, name="sound-rating-add"),
 ]

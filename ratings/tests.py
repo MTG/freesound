@@ -18,11 +18,11 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, Client
-
 from django.contrib.auth.models import User
-import sounds
-import ratings
+from django.test import TestCase
+
+import ratings.models
+import sounds.models
 
 
 class RatingsTestCase(TestCase):
@@ -40,7 +40,7 @@ class RatingsTestCase(TestCase):
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
         # One rating from a different user
-        r = ratings.models.Rating.objects.create(sound_id=self.sound.id, user_id=self.user2.id, rating=2)
+        r = ratings.models.SoundRating.objects.create(sound_id=self.sound.id, user_id=self.user2.id, rating=2)
 
         # Test signal updated sound.avg_rating
         self.sound.refresh_from_db()
@@ -51,8 +51,8 @@ class RatingsTestCase(TestCase):
         resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, RATING_VALUE))
         self.assertEqual(resp.content, "2")
 
-        self.assertEqual(ratings.models.Rating.objects.count(), 2)
-        r = ratings.models.Rating.objects.get(sound_id=self.sound.id, user_id=self.user1.id)
+        self.assertEqual(ratings.models.SoundRating.objects.count(), 2)
+        r = ratings.models.SoundRating.objects.get(sound_id=self.sound.id, user_id=self.user1.id)
         # Ratings in the database are 2x the value from the web call
         self.assertEqual(r.rating, 2*RATING_VALUE)
 
@@ -72,11 +72,11 @@ class RatingsTestCase(TestCase):
         loggedin = self.client.login(username="testuser1", password="testpass")
         self.assertTrue(loggedin)
 
-        r = ratings.models.Rating.objects.create(sound_id=self.sound.id, user_id=self.user1.id, rating=4)
+        r = ratings.models.SoundRating.objects.create(sound_id=self.sound.id, user_id=self.user1.id, rating=4)
 
         resp = self.client.get("/ratings/add/%s/%s/" % (self.sound.id, 5))
-        newr = ratings.models.Rating.objects.first()
-        self.assertEqual(ratings.models.Rating.objects.count(), 1)
+        newr = ratings.models.SoundRating.objects.first()
+        self.assertEqual(ratings.models.SoundRating.objects.count(), 1)
         # Ratings in the database are 2x the value from the web call
         self.assertEqual(newr.rating, 10)
 
@@ -95,7 +95,7 @@ class RatingsTestCase(TestCase):
         self.assertEqual(resp.content, "0")
 
     def test_delete_all_ratings(self):
-        r = ratings.models.Rating.objects.create(sound=self.sound, user_id=self.user2.id, rating=2)
+        r = ratings.models.SoundRating.objects.create(sound=self.sound, user_id=self.user2.id, rating=2)
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.num_ratings, 1)
         r.delete()

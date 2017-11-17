@@ -998,7 +998,7 @@ class RateSound(WriteRequiredGenericAPIView):
                                           'note': 'This rating has not been saved in the database as browseable API is only for testing purposes.'},
                                     status=status.HTTP_201_CREATED)
                 else:
-                    Rating.objects.create(user=self.user, sound_id=sound_id, rating=int(request.data['rating'])*2)
+                    SoundRating.objects.create(user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
                     return Response(data={'detail': 'Successfully rated sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
                 raise ConflictException(msg='User has already rated sound %s' % sound_id, resource=self)

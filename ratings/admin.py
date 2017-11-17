@@ -21,12 +21,12 @@
 #
 
 from django.contrib import admin
-from ratings.models import Rating
+from ratings.models import SoundRating
 
-class RatingAdmin(admin.ModelAdmin):
+class SoundRatingAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'rating', 'created')
     search_fields = ('=user__username', )
     list_filter = ('rating',)
 
-admin.site.register(Rating, RatingAdmin)
+admin.site.register(SoundRating, SoundRatingAdmin)

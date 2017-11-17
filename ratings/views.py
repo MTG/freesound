@@ -21,7 +21,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
-from ratings.models import Rating
+from ratings.models import SoundRating
 from sounds.models import Sound
 from utils.cache import invalidate_template_cache
 from django.db import transaction
@@ -33,7 +33,7 @@ def add(request, sound_id, rating):
     if rating in range(1,6):
         # in order to keep the ratings compatible with freesound 1, we multiply by two...
         rating = rating*2
-        rating_obj, created = Rating.objects.get_or_create(
+        rating_obj, created = SoundRating.objects.get_or_create(
                 user=request.user,
                 sound_id=sound_id, defaults={'rating': rating})
 
@@ -48,4 +48,4 @@ def add(request, sound_id, rating):
         invalidate_template_cache("display_sound", sound_id, False, 'OK')
         Sound.objects.filter(id=sound_id).update(is_index_dirty=True)  # Set index dirty to true
 
-    return HttpResponse(str(Rating.objects.filter(sound_id=sound_id).count()))
+    return HttpResponse(str(SoundRating.objects.filter(sound_id=sound_id).count()))

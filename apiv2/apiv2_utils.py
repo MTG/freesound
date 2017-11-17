@@ -103,10 +103,10 @@ class FreesoundAPIViewMixin(object):
 
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
             if request.get_host().startswith('www'):
-                domain = "https://%s" % Site.objects.get_current().domain
+                domain = "%s://%s" % ('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
                 return_url = urlparse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
-            if request.scheme != 'https':
+            if request.scheme != 'https' and not settings.DEBUG:
                 domain = "https://%s" % Site.objects.get_current().domain
                 return_url = urlparse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)

@@ -29,6 +29,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import resolve
+from django.db.utils import ProgrammingError
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
@@ -384,10 +385,15 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
         except Exception as e:
             pass
 
-    if use_https:
-        return "https://%s%s" % (Site.objects.get_current().domain, rel)
-    else:
-        return "http://%s%s" % (Site.objects.get_current().domain, rel)
+    try:
+        if use_https:
+            return "https://%s%s" % (Site.objects.get_current().domain, rel)
+        else:
+            return "http://%s%s" % (Site.objects.get_current().domain, rel)
+    except ProgrammingError:
+        # Catch this exception because when module is imported and Site does not exists yet it
+        # raises an error which doesn't allow to run the initial migrate command.
+        pass
 
 
 def get_authentication_details_form_request(request):

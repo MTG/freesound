@@ -26,6 +26,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import F, Avg
+from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
@@ -50,10 +51,9 @@ def post_delete_rating(sender, instance, **kwargs):
     try:
         with transaction.atomic():
             instance.sound.num_ratings = F('num_ratings') - 1
-            rating = SoundRating.objects.filter(
-                    sound_id=instance.sound_id).aggregate(Avg('rating')).values()[0]
-            if not rating:
-                rating = 0
+            avg_rating = SoundRating.objects.filter(
+                    sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+            rating = avg_rating['average_rating']
             instance.sound.avg_rating = rating
             instance.sound.save()
     except ObjectDoesNotExist:
@@ -61,11 +61,15 @@ def post_delete_rating(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=SoundRating)
-def update_num_ratings_on_post_insert(**kwargs):
+def update_num_ratings_on_post_save(sender, instance, created, **kwargs):
     with transaction.atomic():
-        instance = kwargs['instance']
-        if kwargs['created']:
+        # Increase the number of ratings only on insert, but recompute the average
+        # after update as well
+        if created:
             instance.sound.num_ratings = F('num_ratings') + 1
-        instance.sound.avg_rating = SoundRating.objects.filter(
-                sound_id=instance.sound_id).aggregate(Avg('rating')).values()[0]
+
+        avg_rating = SoundRating.objects.filter(
+            sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+        rating = avg_rating['average_rating']
+        instance.sound.avg_rating = rating
         instance.sound.save()

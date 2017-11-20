@@ -22,7 +22,6 @@ import cStringIO
 import math
 import struct
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -88,29 +87,41 @@ def geotags_for_pack_barray(request, pack_id):
 
 
 def geotags(request, tag=None):
-    for_user = None
-    return render(request, 'geotags/geotags.html', locals())
+    tvars = {'tag': tag,
+             'for_user': None}
+    return render(request, 'geotags/geotags.html', tvars)
+
+
+def _get_geotags_box_params(request):
+    return {
+        'm_width': request.GET.get('w', 900),
+        'm_height': request.GET.get('h', 600),
+        'clusters': request.GET.get('c', 'on'),
+        'center_lat': request.GET.get('c_lat', None),
+        'center_lon': request.GET.get('c_lon', None),
+        'zoom': request.GET.get('z', None),
+        'username': request.GET.get('username', None)
+    }
 
 
 def geotags_box(request):
-    m_width = request.GET.get("w", 900)
-    m_height = request.GET.get("h", 600)
-    clusters = request.GET.get("c", "on")
-    center_lat = request.GET.get("c_lat", None)
-    center_lon = request.GET.get("c_lon", None)
-    zoom = request.GET.get("z", None)
-    username = request.GET.get("username", None)
+    tvars = _get_geotags_box_params(request)
+    return render(request, 'geotags/geotags_box.html', tvars)
 
-    return render(request, 'geotags/geotags_box.html', locals())
+
+def embed_iframe(request):
+    tvars = _get_geotags_box_params(request)
+    return render(request, 'geotags/geotags_box_iframe.html', tvars)
 
 
 def for_user(request, username):
     try:
-        for_user = User.objects.get(username__iexact=username)
+        user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
         raise Http404
-    tag = None
-    return render(request, 'geotags/geotags.html', locals())
+    tvars = {'tag': None,
+             'for_user': user}
+    return render(request, 'geotags/geotags.html', tvars)
 
 
 def infowindow(request, sound_id):
@@ -119,16 +130,5 @@ def infowindow(request, sound_id):
     except Sound.DoesNotExist:
         raise Http404
 
-    return render(request, 'geotags/infowindow.html', locals())
-
-
-def embed_iframe(request):
-    m_width = request.GET.get("w", 900)
-    m_height = request.GET.get("h", 600)
-    clusters = request.GET.get("c", "on")
-    center_lat = request.GET.get("c_lat", None)
-    center_lon = request.GET.get("c_lon", None)
-    zoom = request.GET.get("z", None)
-    username = request.GET.get("username", None)
-
-    return render(request, 'geotags/geotags_box_iframe.html', locals())
+    tvars = {'sound': sound}
+    return render(request, 'geotags/infowindow.html', tvars)

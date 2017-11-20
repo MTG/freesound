@@ -26,7 +26,7 @@
 <!--     <meta property="og:image" content="http://{{ request.get_host }}{{sound.locations.display.wave.M.url}}" /> -->
     <meta property="og:site_name" content="Freesound.org" />
     <meta property="fb:admins" content="100002130282170" />
-    
+
     <meta name="twitter:card" content="player" />
     <meta name="twitter:site" content="@freesound_dev" />
     <meta name="twitter:title" content="{{ sound.original_filename }}" />
@@ -144,7 +144,7 @@
                 {% show_paginator paginator page current_page request "comment" %}
             </div>
         {%  else %}
-            <p><br>This sound has not been commented yet, be the first to comment!</p>
+            <p><br>This sound has not been commented on yet, be the first to comment!</p>
         {% endif %}
     </div> <!-- comments_container -->
 
@@ -237,7 +237,7 @@
                 <li><em>Sound is processing, cannot edit.</em></li>
             {% endif %}
         {% endif %}
-        
+
         {% if user.is_authenticated %}
             <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
             {% if request.user != sound.user %}
@@ -250,7 +250,7 @@
             {% endif %}
             <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
         {% endif %}
-        
+
         {% if request.user.is_staff %}
             <li><a id="admin_link" class="icon" href="{% url 'admin:sounds_sound_change' sound.id %}">Edit sound in the admin</a></li>
         {% endif %}
@@ -263,7 +263,7 @@
     <div id="flag_sound">
         Sound illegal or offensive? <a href="{% url 'sound-flag' sound.user.username sound.id %}" title="flag this sound as ilegal, offensive or other...">Flag it!</a>
     </div>
-	
+
     <div id="share_links">
         <p>
             <span style="color:#999">Share url: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />

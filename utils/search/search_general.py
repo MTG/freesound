@@ -46,7 +46,7 @@ def convert_to_solr_document(sound):
     document["tag"] = getattr(sound, "tag_array")
     document["license"] = getattr(sound, "license_name")
 
-    if getattr(sound, "pack_id"):
+    if getattr(sound, "pack_name"):
         document["pack"] = remove_control_chars(getattr(sound, "pack_name"))
         document["grouping_pack"] = str(getattr(sound, "pack_id")) + "_" + remove_control_chars(getattr(sound, "pack_name"))
     else:

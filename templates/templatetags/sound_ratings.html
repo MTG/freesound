@@ -1,0 +1,10 @@
+<ul class="star-rating">
+    <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
+    {% if is_authenticated and request_user != sound_user %}
+    <li><a href="{% url "sound-rating-add" sound_user sound.id 1 %}" title="pretty bad :-(" class="one-star">1</a></li>
+    <li><a href="{% url "sound-rating-add" sound_user sound.id 2 %}" title="quite good" class="two-stars">2</a></li>
+    <li><a href="{% url "sound-rating-add" sound_user sound.id 3 %}" title="good :-)" class="three-stars">3</a></li>
+    <li><a href="{% url "sound-rating-add" sound_user sound.id 4 %}" title="very good" class="four-stars">4</a></li>
+    <li><a href="{% url "sound-rating-add" sound_user sound.id 5 %}" title="amazing :-o" class="five-stars">5</a></li>
+    {% endif %}
+</ul>

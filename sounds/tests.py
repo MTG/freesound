@@ -24,7 +24,7 @@ from itertools import count
 
 import mock
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django.core import mail
 from django.core.cache import cache
 from django.core.management import call_command
@@ -663,27 +663,27 @@ class DisplaySoundTemplatetagTestCase(TestCase):
     fixtures = ['sounds_with_tags']
 
     def setUp(self):
-        # Find a sound which has tags to test
-
-        for sound in Sound.objects.all():
-            if sound.tags.all():
-                self.sound = sound
-                break
+        # A sound which has tags
+        self.sound = Sound.objects.get(pk=23)
 
     @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_sound_from_id(self):
+        request = HttpRequest()
+        request.user = AnonymousUser()
         Template("{% load display_sound %}{% display_sound sound %}").render(Context({
             'sound': self.sound.id,
-            'request': HttpRequest(),
+            'request': request,
             'media_url': 'http://example.org/'
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
     @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_sound_from_obj(self):
+        request = HttpRequest()
+        request.user = AnonymousUser()
         Template("{% load display_sound %}{% display_sound sound %}").render(Context({
             'sound': self.sound,
-            'request': HttpRequest(),
+            'request': request,
             'media_url': 'http://example.org/'
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
@@ -691,9 +691,11 @@ class DisplaySoundTemplatetagTestCase(TestCase):
     @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
     def test_display_raw_sound(self):
         raw_sound = Sound.objects.bulk_query_id([self.sound.id])[0]
+        request = HttpRequest()
+        request.user = AnonymousUser()
         Template("{% load display_sound %}{% display_raw_sound sound %}").render(Context({
             'sound': raw_sound,
-            'request': HttpRequest(),
+            'request': request,
             'media_url': 'http://example.org/'
         }))
         #  If the template could not be rendered, the test will have failed by that time, no need to assert anything

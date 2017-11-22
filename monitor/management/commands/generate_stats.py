@@ -94,7 +94,7 @@ class Command(BaseCommand):
             'comments': {'obj': comments.models.Comment.objects, 'attr': 'user_id'},
             'posts': {'obj': forum.models.Post.objects, 'attr': 'author_id'},
             'downloads': {'obj': sounds.models.Download.objects, 'attr': 'user_id'},
-            'rate': {'obj': ratings.models.Rating.objects, 'attr': 'user_id'},
+            'rate': {'obj': ratings.models.SoundRating.objects, 'attr': 'user_id'},
         }
         for i in active_users.keys():
             qq = active_users[i]['obj'].filter(created__gt=time_span)\
@@ -162,7 +162,7 @@ class Command(BaseCommand):
 
         downloads = sounds.models.Download.objects.all().count()
         num_comments = comments.models.Comment.objects.all().count()
-        num_ratings = ratings.models.Rating.objects.all().count()
+        num_ratings = ratings.models.SoundRating.objects.all().count()
 
         tags = Tag.objects.all().count()
         tags_used = TaggedItem.objects.all().count()

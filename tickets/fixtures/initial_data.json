@@ -1,4 +1,4 @@
-[{"pk": 2, "model": "auth.group", "fields": {"name": "core", "permissions": 
+[{"pk": 2, "model": "auth.group", "fields": {"name": "core", "permissions":
     [["add_profile", "accounts", "profile"],
     ["change_profile", "accounts", "profile"],
     ["delete_profile", "accounts", "profile"],
@@ -50,9 +50,9 @@
     ["add_messagebody", "fsmessages", "messagebody"],
     ["change_messagebody", "fsmessages", "messagebody"],
     ["delete_messagebody", "fsmessages", "messagebody"],
-    ["add_rating", "ratings", "rating"],
-    ["change_rating", "ratings", "rating"],
-    ["delete_rating", "ratings", "rating"],
+    ["add_soundrating", "ratings", "soundrating"],
+    ["change_soundrating", "ratings", "soundrating"],
+    ["delete_soundrating", "ratings", "soundrating"],
     ["add_session", "sessions", "session"],
     ["change_session", "sessions", "session"],
     ["delete_session", "sessions", "session"],

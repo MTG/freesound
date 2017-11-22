@@ -77,7 +77,7 @@ function setupStarRatings()
 
         // take the sound id from the voting url
         var splitted_href = this.href.split('/');
-        var vote_key = splitted_href[splitted_href.length-3];
+        var vote_key = splitted_href[splitted_href.length-4];
         if(!voted[vote_key]) {
             if (!isLoggedIn)
             {

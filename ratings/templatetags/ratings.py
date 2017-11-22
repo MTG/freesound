@@ -19,12 +19,22 @@
 #
 
 from django.template import Library
-from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse
 
 register = Library()
 
-@register.filter
-def rating_url(object, rating):
-    content_type = ContentType.objects.get_for_model(object.__class__)
-    return reverse("ratings-add", kwargs=dict(content_type_id=content_type.id, object_id=object.id, rating=rating))
+
+@register.inclusion_tag('templatetags/sound_ratings.html', takes_context=True)
+def sound_ratings(context):
+    sound = context['sound']
+    if hasattr(sound, 'username'):
+        sound_user = sound.username
+    else:
+        sound_user = sound.user.username
+    request = context['request']
+    request_user = request.user.username
+    is_authenticated = request.user.is_authenticated
+
+    return {'sound_user': sound_user,
+            'request_user': request_user,
+            'is_authenticated': is_authenticated,
+            'sound': sound}

@@ -21,7 +21,7 @@
 #
 
 from sounds.models import Sound, Pack
-from ratings.models import Rating
+from ratings.models import SoundRating
 from comments.models import Comment
 from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User

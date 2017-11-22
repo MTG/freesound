@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load display_license_form %}
+{% load google_maps %}
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
+    <script type="text/javascript" src="{% google_maps_js %}"></script>
     <script>
         // Maps variables
         var maps = {};

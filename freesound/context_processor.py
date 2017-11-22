@@ -41,7 +41,6 @@ def context_extra(request):
         'use_js_dev_server': settings.USE_JS_DEVELOPMENT_SERVER,
         'media_url': settings.MEDIA_URL,
         'request': request,
-        'GOOGLE_API_KEY': settings.GOOGLE_API_KEY,
         'last_restart_date': settings.LAST_RESTART_DATE,
         'new_tickets_count': new_tickets_count,
         'num_pending_sounds': num_pending_sounds,

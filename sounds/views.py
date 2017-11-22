@@ -593,7 +593,6 @@ def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    google_api_key = settings.GOOGLE_API_KEY
     return render(request, 'sounds/geotag.html', locals())
 
 

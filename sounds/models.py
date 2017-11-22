@@ -1070,6 +1070,25 @@ class Download(models.Model):
         ordering = ("-created",)
 
 
+class PackDownloadJson(models.Model):
+    user = models.ForeignKey(User)
+    pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
+    sounds = JSONField()
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+
+class PackDownload(models.Model):
+    user = models.ForeignKey(User)
+    pack = models.ForeignKey(Pack)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+
+class PackDownloadSound(models.Model):
+    sound = models.ForeignKey(Sound)
+    pack_download = models.ForeignKey(PackDownload)
+    license = models.ForeignKey(License, null=True, blank=True, default=None)
+
+
 @receiver(post_delete, sender=Download)
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']

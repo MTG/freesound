@@ -131,7 +131,6 @@
             markers.push(marker);
         });
 
-        //if (!bounds.isEmpty()) zoomToBounds(map, bounds);
         if (!bounds.isEmpty()) map.fitBounds(bounds);
         var mcOptions = { gridSize: 50, maxZoom: 12, imagePath:'/media/images/js-marker-clusterer/m' };
         var markerCluster = new MarkerClusterer(map, markers, mcOptions);

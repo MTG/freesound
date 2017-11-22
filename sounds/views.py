@@ -68,6 +68,7 @@ import os
 
 
 logger = logging.getLogger('web')
+sentry_logger = logging.getLogger('sentry')
 
 
 def get_sound_of_the_day_id():
@@ -314,6 +315,11 @@ def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
+
+    sentry_logger.info('Download sound %s' % (sound_id),exc_info=True, extra={
+        'request': request,
+    })
+
     if not Download.objects.filter(user=request.user, sound=sound).exists():
         Download.objects.create(user=request.user, sound=sound, license=sound.license)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
@@ -326,6 +332,11 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
+
+    sentry_logger.info('Download pack %s' % (pack_id), exc_info=True, extra={
+        'request': request,
+    })
+
     if not Download.objects.filter(user=request.user, pack=pack).exists():
         Download.objects.create(user=request.user, pack=pack)
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))

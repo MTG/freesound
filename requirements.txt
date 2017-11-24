@@ -1,5 +1,6 @@
 BeautifulSoup==3.2.0
 beautifulsoup4==4.6.0
+bleach==2.1.1
 #apt-get install libyaml-dev (to allow the cloader)
 PyYAML==3.11
 pycrypto==2.6.1

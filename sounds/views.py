@@ -323,6 +323,7 @@ def sound_download(request, username, sound_id):
         'session_id': request.session.session_key,
         'user_agent': request.META.get('HTTP_USER_AGENT'),
         'sound_id': sound_id,
+        'range': request.META.get('HTTP_RANGE', None),
     })
 
     if not Download.objects.filter(user=request.user, sound=sound).exists():
@@ -345,6 +346,7 @@ def pack_download(request, username, pack_id):
         'session_id': request.session.session_key,
         'user_agent': request.META.get('HTTP_USER_AGENT'),
         'pack_id': pack_id,
+        'range': request.META.get('HTTP_RANGE', None),
     })
 
     if not Download.objects.filter(user=request.user, pack=pack).exists():

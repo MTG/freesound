@@ -68,7 +68,7 @@ import os
 
 
 logger = logging.getLogger('web')
-sentry_logger = logging.getLogger('sentry')
+downloads_logger = logging.getLogger('downloads')
 
 
 def get_sound_of_the_day_id():
@@ -316,7 +316,7 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    sentry_logger.info('Download sound', exc_info=True, extra={
+    downloads_logger.info('Download sound', exc_info=True, extra={
         'request': request,
         'sound_id': sound_id,
     })
@@ -334,7 +334,7 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    sentry_logger.info('Download pack', exc_info=True, extra={
+    downloads_logger.info('Download pack', exc_info=True, extra={
         'request': request,
         'pack_id': pack_id,
     })

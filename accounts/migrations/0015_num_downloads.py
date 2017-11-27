@@ -18,6 +18,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0014_auto_20171127_1552'),
+        ('sounds', '0013_remove_triggers'),
     ]
 
     operations = [

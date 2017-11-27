@@ -23,7 +23,6 @@ import unicodedata
 import bleach
 from html5lib.filters.base import Filter
 from functools import partial
-from BeautifulSoup import BeautifulSoup, Comment
 from htmlentitydefs import name2codepoint
 from django.utils.encoding import smart_unicode
 from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, \

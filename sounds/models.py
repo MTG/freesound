@@ -279,7 +279,7 @@ class Sound(SocialModel):
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
-    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # uploaded with apiv2 client id (None if the sound was not uploaded using the api)
@@ -1050,8 +1050,8 @@ class Flag(models.Model):
 
 class Download(models.Model):
     user = models.ForeignKey(User)
-    sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
-    pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
+    sound = models.ForeignKey(Sound, null=True, blank=True, default=None, related_name='downloads')
+    pack = models.ForeignKey(Pack, null=True, blank=True, default=None, related_name='downloads')
     license = models.ForeignKey(License, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 

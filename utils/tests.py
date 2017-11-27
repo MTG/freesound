@@ -270,7 +270,7 @@ class ShouldSuggestDonationTest(TestCase):
         self.assertEqual(u'<a href="http://www.google.com" rel="nofollow">http://www.google.com</a> <a href="http://www.google.com" rel="nofollow">http://www.google.com</a>', ret)
 
         ret = clean_html(u'<ul><p id=5><a href="123">123</a>hello<strong class=156>there http://www.google.com</strong></p></ul>')
-        self.assertEqual(u'&lt;ul&gt;<p>123hello<strong>there <a href="http://www.google.com" rel="nofollow">http://www.google.com</a></strong></p>&lt;/ul&gt;', ret)
+        self.assertEqual(u'<ul><p>123hello<strong>there <a href="http://www.google.com" rel="nofollow">http://www.google.com</a></strong></p></ul>', ret)
 
         ret = clean_html(u'abc http://www.google.com abc')
         self.assertEqual(u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc', ret)
@@ -287,3 +287,8 @@ class ShouldSuggestDonationTest(TestCase):
         ret = clean_html(u'<a href="${sound_url}">my sound url</a>')
         self.assertEqual(u'<a href="${sound_url}" rel="nofollow">my sound url</a>', ret)
 
+        ret = clean_html(u'<img src="https://freesound.org/media/images/logo.png">')
+        self.assertEqual(u'<img src="https://freesound.org/media/images/logo.png">', ret)
+
+        ret = clean_html(u'<ul><li>Some list</li></ul>')
+        self.assertEqual(u'<ul><li>Some list</li></ul>', ret)

@@ -171,7 +171,7 @@ class EmptyLinkFilter(Filter):
 def clean_html(input):
     # Reaplce html tags from user input, see utils.test for examples
 
-    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br",  u"blockquote", u"code"]
+    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"ul", u"li", u"p", u"br",  u"blockquote", u"code"]
     ok_attributes = {u"a": [u"href", u"rel"], u"img": [u"src", u"alt", u"title"]}
     # all other tags: replace with the content of the tag
 

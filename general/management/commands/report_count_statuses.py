@@ -19,15 +19,15 @@
 #
 
 
+import sys
+from pprint import pprint
+
 from django.core.management.base import BaseCommand
-from django.contrib.contenttypes.models import ContentType
-from optparse import make_option
+from django.db.models import Count, Avg
+from django.contrib.auth.models import User
+
 from sounds.models import Sound, Pack
 from forum.models import Post
-from comments.models import Comment
-from accounts.models import Profile
-from pprint import pprint
-import sys
 
 
 class Command(BaseCommand):
@@ -51,12 +51,10 @@ class Command(BaseCommand):
 
     def handle(self,  *args, **options):
 
-        sound_content_type = ContentType.objects.get_for_model(Sound)
-
         # Iterate over all sounds to check: num_comments, num_downloads, avg_rating, num_ratings
         # While iterating, we keep a list of user ids and pack ids for then iterating over them
         all_user_ids = set()
-        all_pack_ids = set()
+
         mismatches_report = {
             'Sound.num_comments': 0,
             'Sound.num_downloads': 0,
@@ -79,16 +77,21 @@ class Command(BaseCommand):
         # Sounds
         total = Sound.objects.all().count()
         print "Iterating over existing %i sounds..." % total,
-        for count, sound in enumerate(Sound.objects.all().iterator()):
-            # Collect user and pack data for later use
-            all_user_ids.add(sound.user_id)
-            if sound.pack:
-                all_pack_ids.add(sound.pack_id)
+
+        annotations = {
+            'real_num_comments': Count('comments'),
+            'real_num_ratings': Count('ratings'),
+            'real_avg_rating': Avg('ratings__rating'),
+        }
+        if not options['skip-downloads']:
+            annotations['real_num_downloads'] = Count('download_set')
+
+        for count, sound in enumerate(Sound.objects.all().annotate(**annotations).iterator()):
 
             needs_save = False
 
             # Check num_comments
-            real_num_comments = sound.comments.count()
+            real_num_comments = sound.real_num_comments
             if real_num_comments != sound.num_comments:
                 mismatches_report['Sound.num_comments'] += 1
                 mismatches_object_ids['Sound.num_comments'].append(sound.id)
@@ -97,7 +100,7 @@ class Command(BaseCommand):
 
             # Check num_downloads
             if not options['skip-downloads']:
-                real_num_downloads = sound.download_set.all().count()
+                real_num_downloads = sound.real_num_downloads
                 if real_num_downloads != sound.num_downloads:
                     mismatches_report['Sound.num_downloads'] += 1
                     mismatches_object_ids['Sound.num_downloads'].append(sound.id)
@@ -105,13 +108,12 @@ class Command(BaseCommand):
                     needs_save = True
 
             # Check num_ratings and avg_rating
-            real_num_ratings = sound.ratings.all().count()
+            real_num_ratings = sound.real_num_ratings
             if real_num_ratings != sound.num_ratings:
                 mismatches_report['Sound.num_ratings'] += 1
                 mismatches_object_ids['Sound.num_ratings'].append(sound.id)
                 sound.num_ratings = real_num_ratings
-                real_avg_rating = float(sum([r.rating for r in sound.ratings.all()]))/real_num_ratings
-                sound.avg_rating = real_avg_rating
+                sound.avg_rating = sound.real_avg_rating
                 needs_save = True
 
             if needs_save and not options['no-changes']:
@@ -120,25 +122,31 @@ class Command(BaseCommand):
 
             # Report progress
             if count % 100 == 0:
-                sys.stdout.write("\rIterating over existing %i sounds... %.2f%%" % (total, 100 * float(count)/total))
+                sys.stdout.write("\rIterating over existing %i sounds... %.2f%%" % (total, 100 * float(count + 1)/total))
                 sys.stdout.flush()
         print " done!"
 
         # Packs
-        pack_ids = list(all_pack_ids)
-        total = len(pack_ids)
+        total = Pack.objects.all().count()
         print "Iterating over existing %i packs..." % total,
-        for count, pack_id in enumerate(pack_ids):
-            try:
-                pack = Pack.objects.get(id=pack_id)
-            except Pack.DoesNotExist:
-                continue
+
+        annotations = {}
+        if not options['skip-downloads']:
+            annotations['real_num_downloads'] = Count('download_set')
+
+        for count, pack in enumerate(Pack.objects.all().annotate(**annotations).extra(select={
+            'real_num_sounds': """
+                SELECT COUNT(U0."id") AS "count"
+                FROM "sounds_sound" U0
+                WHERE U0."pack_id" = ("sounds_pack"."id") 
+                AND U0."processing_state" = 'OK' AND U0."moderation_state" = 'OK'
+            """
+        }).iterator()):
+
             needs_save = False
 
             # Check num_sounds
-            real_num_sounds = Sound.objects.filter(pack=pack,
-                                                   processing_state="OK",
-                                                   moderation_state="OK").count()
+            real_num_sounds = pack.real_num_sounds
             if real_num_sounds != pack.num_sounds:
                 mismatches_report['Pack.num_sounds'] += 1
                 mismatches_object_ids['Pack.num_sounds'].append(pack.id)
@@ -148,7 +156,7 @@ class Command(BaseCommand):
             # Check num_downloads
             if not options['skip-downloads']:
                 real_num_downloads = pack.download_set.all().count()
-                if real_num_downloads != pack.num_downloads:
+                if real_num_downloads != pack.real_num_sounds:
                     mismatches_report['Pack.num_downloads'] += 1
                     mismatches_object_ids['Pack.num_downloads'].append(pack.id)
                     pack.num_downloads = real_num_downloads
@@ -159,36 +167,47 @@ class Command(BaseCommand):
 
             # Report progress
             if count % 100 == 0:
-                sys.stdout.write("\rIterating over existing %i packs... %.2f%%" % (total, 100 * float(count)/total))
+                sys.stdout.write("\rIterating over existing %i packs... %.2f%%" % (total, 100 * float(count + 1)/total))
                 sys.stdout.flush()
         print " done!"
 
         # Users
-        user_ids = list(all_user_ids)
-        total = len(user_ids)
+        potential_user_ids = set()
+        potential_user_ids.update(Sound.objects.all().values_list('user_id', flat=True))  # Add ids of uploaders
+        potential_user_ids.update(Post.objects.all().values_list('author_id', flat=True))  # Add ids of forum posters
+        total = len(potential_user_ids)
         print "Iterating over existing %i users..." % total,
-        for count, user_id in enumerate(user_ids):
-            try:
-                user_profile = Profile.objects.get(user_id=user_id)
-            except Profile.DoesNotExist:
-                continue
+
+        annotations = {
+            'real_num_posts': Count('posts'),
+        }
+
+        for count, user in enumerate(User.objects.filter(id__in=potential_user_ids)
+                                                 .select_related('profile').annotate(**annotations).extra(select={
+            'real_num_sounds': """
+                SELECT COUNT(U0."id") AS "count"
+                FROM "sounds_sound" U0
+                WHERE U0."user_id" = ("auth_user"."id") 
+                AND U0."processing_state" = 'OK' AND U0."moderation_state" = 'OK'
+            """
+        }).iterator()):
+
             needs_save = False
+            user_profile = user.profile
 
             # Check num_sounds
-            real_num_sounds = Sound.objects.filter(user_id=user_id,
-                                                   processing_state="OK",
-                                                   moderation_state="OK").count()
+            real_num_sounds = user.real_num_sounds
             if real_num_sounds != user_profile.num_sounds:
                 mismatches_report['User.num_sounds'] += 1
-                mismatches_object_ids['User.num_sounds'].append(user_id)
+                mismatches_object_ids['User.num_sounds'].append(user.id)
                 user_profile.num_sounds = real_num_sounds
                 needs_save = True
 
             # Check num_posts
-            real_num_posts = Post.objects.filter(author_id=user_id).count()
+            real_num_posts = user.real_num_posts
             if real_num_posts != user_profile.num_posts:
                 mismatches_report['User.num_posts'] += 1
-                mismatches_object_ids['User.num_posts'].append(user_id)
+                mismatches_object_ids['User.num_posts'].append(user.id)
                 user_profile.num_posts = real_num_posts
                 needs_save = True
 

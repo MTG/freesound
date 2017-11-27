@@ -49,6 +49,7 @@ from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
 from comments.models import Comment
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
+import accounts.models
 import os
 import logging
 import random
@@ -1075,8 +1076,10 @@ def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
         Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+        accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_sound_downloads=F('num_sound_downloads') - 1)
     elif download.pack_id:
         Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
+        accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_pack_downloads=F('num_pack_downloads') - 1)
 
 
 @receiver(post_save, sender=Download)
@@ -1085,8 +1088,10 @@ def update_num_downloads_on_insert(**kwargs):
     if kwargs['created']:
         if download.sound_id:
             Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+            accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_sound_downloads=F('num_sound_downloads') + 1)
         elif download.pack_id:
             Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
+            accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_pack_downloads=F('num_pack_downloads') + 1)
 
 
 class RemixGroup(models.Model):

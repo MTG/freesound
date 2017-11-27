@@ -81,6 +81,8 @@ class Profile(SocialModel):
     donations_reminder_email_sent = models.BooleanField(default=False)
     num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     num_posts = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
+    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)
+    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)
     is_deleted_user = models.BooleanField(db_index=True, default=False)
     is_adult = models.BooleanField(default=False)
 

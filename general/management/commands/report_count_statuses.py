@@ -84,7 +84,7 @@ class Command(BaseCommand):
             'real_avg_rating': Avg('ratings__rating'),
         }
         if not options['skip-downloads']:
-            annotations['real_num_downloads'] = Count('download_set')
+            annotations['real_num_downloads'] = Count('downloads')
 
         for count, sound in enumerate(Sound.objects.all().annotate(**annotations).iterator()):
 
@@ -132,7 +132,7 @@ class Command(BaseCommand):
 
         annotations = {}
         if not options['skip-downloads']:
-            annotations['real_num_downloads'] = Count('download_set')
+            annotations['real_num_downloads'] = Count('downloads')
 
         for count, pack in enumerate(Pack.objects.all().annotate(**annotations).extra(select={
             'real_num_sounds': """
@@ -155,7 +155,7 @@ class Command(BaseCommand):
 
             # Check num_downloads
             if not options['skip-downloads']:
-                real_num_downloads = pack.download_set.all().count()
+                real_num_downloads = pack.real_num_downloads
                 if real_num_downloads != pack.real_num_sounds:
                     mismatches_report['Pack.num_downloads'] += 1
                     mismatches_object_ids['Pack.num_downloads'].append(pack.id)

@@ -182,7 +182,7 @@ class PackEditForm(ModelForm):
         affected_packs = list()
         affected_packs.append(pack)
         new_sounds = self.cleaned_data['pack_sounds']
-        current_sounds = pack.sound_set.all()
+        current_sounds = pack.sounds.all()
         for snd in current_sounds:
             if snd.id not in new_sounds:
                 snd.pack = None

@@ -33,7 +33,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.six.moves.urllib.parse import urlparse
 from django.http import HttpResponse
 from django.template import loader
-from accounts.models import Profile
+from accounts.models import Profile, OldUsername
 from comments.forms import CommentForm
 from comments.models import Comment
 from forum.models import Thread
@@ -209,6 +209,8 @@ def sound(request, username, sound_id):
     try:
         sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id)
         if sound.user.username.lower() != username.lower():
+            if sound.user.old_usernames.filter(username__iexact=username).exists():
+                return HttpResponsePermanentRedirect(sound.get_absolute_url())
             raise Http404
         user_is_owner = request.user.is_authenticated and \
             (sound.user == request.user or request.user.is_superuser or request.user.is_staff or

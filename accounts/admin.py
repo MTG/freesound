@@ -33,7 +33,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_object_actions import DjangoObjectActions
 
-from accounts.models import Profile, UserFlag, EmailPreferenceType
+from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername
 
 
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -188,7 +188,14 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     change_actions = ('full_delete', 'delete_include_sounds', 'delete_preserve_sounds', )
 
+
+class OldUsernameAdmin(admin.ModelAdmin):
+    raw_id_fields = ('user', )
+
+
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
 
 admin.site.register(EmailPreferenceType)
+
+admin.site.register(OldUsername, OldUsernameAdmin)

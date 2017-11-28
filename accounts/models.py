@@ -411,3 +411,11 @@ class EmailPreferenceType(models.Model):
 class UserEmailSetting(models.Model):
     user = models.ForeignKey(User, related_name="email_settings")
     email_type = models.ForeignKey(EmailPreferenceType)
+
+
+class OldUsername(models.Model):
+    user = models.ForeignKey(User, related_name="old_usernames")
+    username = models.CharField(max_length=255)
+
+    def __unicode__(self):
+        return self.username

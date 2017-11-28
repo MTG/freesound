@@ -50,6 +50,10 @@ GEARMAN_JOB_SERVERS = ["localhost:4730"]
 STRIPE_KEY = "sk_test_..."
 PAYPAL_EMAIL = "paypal@freesound.org"
 PAYPAL_VALIDATION_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+PAYPAL_PAYMENTS_API_URL = "https://api-3t.sandbox.paypal.com/nvp"
+PAYPAL_PASSWORD = ""
+PAYPAL_USERNAME= ""
+PAYPAL_SIGNATURE = ""
 DONATIONS_PER_PAGE = 40
 
 GRAYLOG_USERNAME = "apiuser"

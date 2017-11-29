@@ -36,9 +36,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-d', '--days',
-            action='store_true',
             dest='days',
             default=1,
+            type=int,
             help='Use this option to get the donations older than 1 day.')
 
     def handle(self, **options):
@@ -65,30 +65,29 @@ class Command(BaseCommand):
             if raw_rsp['ACK'] == ['Success']:
                 campaign = DonationCampaign.objects.order_by('date_start').last()
                 Donation._meta.get_field('created').auto_now_add = False
-                for i in range(100):
-                    if ('L_EMAIL%d' % i) in raw_rsp:
-                        created = datetime.datetime.strptime(raw_rsp['L_TIMESTAMP%d' % i][0],'%Y-%m-%dT%H:%M:%SZ')
-                        donation_data = {
-                            'email': raw_rsp['L_EMAIL%d' % i][0],
-                            'display_name': 'Anonymous',
-                            'amount': raw_rsp['L_AMT%d' % i][0],
-                            'currency': raw_rsp['L_CURRENCYCODE%d' % i][0],
-                            'display_amount': False,
-                            'is_anonymous': True,
-                            'campaign': campaign,
-                            'created': created,
-                            'source': 'p'
-                        }
-                        obj, created = donations = Donation.objects.get_or_create(
-                                 transaction_id=raw_rsp['L_TRANSACTIONID%d'%i][0], defaults=donation_data)
-                        if created:
-                            del donation_data['campaign']
-                            donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
-                            logger.info('Recevied donation (%s)' % json.dumps(donation_data))
-                    else:
-                        break
 
-                    start = start + one_day
-                    params['STARTDATE'] = start
-                    params['ENDDATE'] = start + one_day
+                email_keys = [key for key in raw_rsp.keys() if key.startswith("L_EMAIL")]
+                for i in range(len(email_keys)):
+                    created = datetime.datetime.strptime(raw_rsp['L_TIMESTAMP%d' % i][0],'%Y-%m-%dT%H:%M:%SZ')
+                    donation_data = {
+                        'email': raw_rsp['L_EMAIL%d' % i][0],
+                        'display_name': 'Anonymous',
+                        'amount': raw_rsp['L_AMT%d' % i][0],
+                        'currency': raw_rsp['L_CURRENCYCODE%d' % i][0],
+                        'display_amount': False,
+                        'is_anonymous': True,
+                        'campaign': campaign,
+                        'created': created,
+                        'source': 'p'
+                    }
+                    obj, created = donations = Donation.objects.get_or_create(
+                             transaction_id=raw_rsp['L_TRANSACTIONID%d'%i][0], defaults=donation_data)
+                    if created:
+                        del donation_data['campaign']
+                        donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
+                        logger.info('Recevied donation (%s)' % json.dumps(donation_data))
+
+            start = start + one_day
+            params['STARTDATE'] = start
+            params['ENDDATE'] = start + one_day
         logger.info("Synchronizing donations from paypal ended")

@@ -415,7 +415,7 @@ class UserEmailSetting(models.Model):
 
 class OldUsername(models.Model):
     user = models.ForeignKey(User, related_name="old_usernames")
-    username = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, db_index=True)
 
     def __unicode__(self):
         return self.username

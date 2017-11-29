@@ -188,6 +188,16 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     change_actions = ('full_delete', 'delete_include_sounds', 'delete_preserve_sounds', )
 
+    def save_model(self, request, obj, form, change):
+        # If the username is changed then we store the old value in OldUsername
+        old_username = None
+        if 'username' in form.changed_data:
+            old_username = User.objects.get(pk=obj.id).username
+
+        super(FreesoundUserAdmin, self).save_model(request, obj, form, change)
+
+        if old_username:
+            OldUsername.objects.create(user=obj, username=old_username)
 
 class OldUsernameAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', )

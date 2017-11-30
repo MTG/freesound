@@ -95,8 +95,6 @@ APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
     99: [],  # No limit of requests
 }
 
-LOG_DOWNLOADS = False
-
 # Sentry
 
 RAVEN_CONFIG = {

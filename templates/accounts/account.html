@@ -147,6 +147,7 @@
                 {% if request.user.is_staff %}
                     <li class="separator">Admin only links</li>
                     <li><a id="admin_link" class="icon" href="{% url "admin:auth_user_change" user.id %}">Edit user</a> or <a href="{% url "admin:accounts_profile_change" user.profile.id %}">profile</a> in the admin</a></li>
+                    <li><a href="{% url "tickets-user-pending_sounds" user.username %}">Moderation pending sounds</a> by {{ user.username }}</li>
                 {% endif %}
 
             </ul>

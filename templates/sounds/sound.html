@@ -149,7 +149,7 @@
     </div> <!-- comments_container -->
 
     {% if request.user.is_authenticated %}
-    <form method="POST" action=".#comments" id="sound_comment_form">{% csrf_token %}
+    <form method="POST" action=".#comments" id="sound_comment_form" class="disable-on-submit">{% csrf_token %}
         <fieldset>
             <h4 id="leave_a_comment">Leave a comment:</h4>
             {{form.as_p}}

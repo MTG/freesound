@@ -5,7 +5,7 @@
 {% block salutation %}Freesounder{% endblock %}
 
 {% block body %}
-A thread you are subscribed to over at Freesound.org has been replied to by user {{post.author.username}}:
+A thread you are subscribed to over at Freesound has been replied to by user {{post.author.username}}:
 
 Thread: "{{thread.title}}"
 Post URL:

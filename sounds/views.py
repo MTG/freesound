@@ -316,7 +316,7 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if settings.FEATURE_LOG_SOUND_DOWNLOADS:
+    if settings.LOG_DOWNLOADS:
         downloads_logger.info('Download sound', extra={
             'user_id': request.user.id,
             'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
@@ -340,7 +340,7 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    if settings.FEATURE_LOG_SOUND_DOWNLOADS:
+    if settings.LOG_DOWNLOADS:
         downloads_logger.info('Download pack', extra={
             'user_id': request.user.id,
             'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),

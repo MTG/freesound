@@ -367,7 +367,7 @@ class PackNumSoundsTestCase(TestCase):
         user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
         pack = packs[0]
         self.assertEqual(pack.num_sounds, 0)
-        for count, sound in enumerate(pack.sound_set.all()):
+        for count, sound in enumerate(pack.sounds.all()):
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
             self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, count + 1)  # Check pack has all sounds
@@ -408,8 +408,8 @@ class PackNumSoundsTestCase(TestCase):
         self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 2)
 
         # Move one sound from one pack to the other
-        sound_ids_pack1 = [s.id for s in pack1.sound_set.all()]
-        sound_ids_pack2 = [s.id for s in pack2.sound_set.all()]
+        sound_ids_pack1 = [s.id for s in pack1.sounds.all()]
+        sound_ids_pack2 = [s.id for s in pack2.sounds.all()]
         sound_ids_pack2.append(sound_ids_pack1.pop())
         self.client.login(username=user.username, password='testpass')
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
@@ -430,7 +430,7 @@ class PackNumSoundsTestCase(TestCase):
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
             'submit': [u'submit'],
             'pack_sounds':
-                u','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sound_set.all()] + [str(sound.id)]),
+                u','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]),
             'name': [u'Test pack 1 (edited again)'],
             'description': [u'A new description']
         })

@@ -152,7 +152,7 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
 
 class Post(models.Model):
     thread = models.ForeignKey(Thread)
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(User, related_name='posts')
     body = models.TextField()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)

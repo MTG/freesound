@@ -278,7 +278,7 @@ class Sound(SocialModel):
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
-    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # uploaded with apiv2 client id (None if the sound was not uploaded using the api)
@@ -976,7 +976,7 @@ class Pack(SocialModel):
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
     def process(self):
-        sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").order_by("-created")
+        sounds = self.sounds.filter(processing_state="OK", moderation_state="OK").order_by("-created")
         self.num_sounds = sounds.count()
         if self.num_sounds:
             self.last_updated = sounds[0].created
@@ -1006,15 +1006,15 @@ class Pack(SocialModel):
         # Pack.delete() should never be called as it will completely erase the object from the db
         # Instead, Pack.delete_pack() should be used
         if remove_sounds:
-            for sound in self.sound_set.all():
+            for sound in self.sounds.all():
                 sound.delete()  # Create DeletedSound objects and delete original objects
         else:
-            self.sound_set.update(pack=None)
+            self.sounds.update(pack=None)
         self.is_deleted = True
         self.save()
 
     def get_attribution(self):
-        sounds_list = self.sound_set.filter(processing_state="OK",
+        sounds_list = self.sounds.filter(processing_state="OK",
                 moderation_state="OK").select_related('user', 'license')
 
         users = User.objects.filter(sounds__in=sounds_list).distinct()
@@ -1049,8 +1049,8 @@ class Flag(models.Model):
 
 class Download(models.Model):
     user = models.ForeignKey(User)
-    sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
-    pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
+    sound = models.ForeignKey(Sound, null=True, blank=True, default=None, related_name='downloads')
+    pack = models.ForeignKey(Pack, null=True, blank=True, default=None, related_name='downloads')
     license = models.ForeignKey(License, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 

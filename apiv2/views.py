@@ -693,7 +693,7 @@ class DownloadPack(DownloadAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        sounds = pack.sound_set.filter(processing_state="OK", moderation_state="OK")
+        sounds = pack.sounds.filter(processing_state="OK", moderation_state="OK")
         if not sounds:
             raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 

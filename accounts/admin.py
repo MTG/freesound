@@ -116,6 +116,13 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     list_filter = ()
     ordering = ('id', )
     show_full_result_count = False
+    fieldsets = (
+         (None, {'fields': ('username', 'password')}),
+         ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
+         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+                                    'groups')}),
+     ('Important dates', {'fields': ('last_login', 'date_joined')}),
+     )
 
     def full_delete(self, request, obj):
         username = obj.username

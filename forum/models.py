@@ -249,14 +249,17 @@ def update_last_post_on_post_delete(sender, instance, **kwargs):
                     post.thread.save()
                 else:
                     post.thread.delete()
-        except Thread.DoesNotExist, accounts.models.Profile.DoesNotExist:
+        except Thread.DoesNotExist:
             # This happens when the thread has already been deleted, for example
             # when a user is deleted through the admin interface. We don't need
             # to update the thread, but it would be nice to get to the forum object
             # somehow and update that one....
-            # The same problem happens to the Profile related to the user, if it's
-            # deleted from the admin, then we shouldn't update num_posts
             logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
+        except accounts.models.Profile.DoesNotExist:
+            # When a user is deleted using the admin, is possible that his posts are deleted after the profile has been
+            # deleted. In that case we shouldn't update the value of num_posts because the profile doesn't exists
+            # anymore, here it's safe to ignore the exception since we are deleting all the objects.
+            logger.info('Tried setting last posts for thread and forum, but the profile has already been deleted?')
     invalidate_template_cache('latest_posts')
 
 

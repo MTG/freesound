@@ -27,12 +27,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.db import models
 from favorites.models import Favorite
-from ratings.models import Rating
+from ratings.models import SoundRating
 from tags.models import TaggedItem
 
 class SocialModel(models.Model):
     tags = fields.GenericRelation(TaggedItem)
-    ratings = fields.GenericRelation(Rating)
     fans = fields.GenericRelation(Favorite)
 
     class Meta:

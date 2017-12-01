@@ -29,6 +29,8 @@ from django.core.management.base import BaseCommand
 
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
+from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
+    DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 
 logger = logging.getLogger("console")
 logger_async_tasks = logging.getLogger('async_tasks')
@@ -102,7 +104,7 @@ class Command(BaseCommand):
         user = User.objects.get(id=data['user_id'])
 
         try:
-            if data['action'] == 'full_db_delete':
+            if data['action'] == FULL_DELETE_USER_ACTION_NAME:
                 # This will fully delete the user and the sounds from the database.
                 # WARNING: Once the sounds are deleted NO DeletedSound object will
                 # be created.
@@ -112,7 +114,7 @@ class Command(BaseCommand):
                 logger_async_tasks.info(message)
                 return 'true'
 
-            elif data['action'] == 'delete_user_keep_sounds':
+            elif data['action'] == DELETE_USER_KEEP_SOUNDS_ACTION_NAME:
                 # This will anonymize the user and will keep the sounds publicly
                 # availabe
                 user.profile.delete_user()
@@ -121,7 +123,7 @@ class Command(BaseCommand):
                 logger_async_tasks.info(message)
                 return 'true'
 
-            elif data['action'] == 'delete_user_delete_sounds':
+            elif data['action'] == DELETE_USER_DELETE_SOUNDS_ACTION_NAME:
                 # This will anonymize the user and remove the sounds, a
                 # DeletedSound object will be created for each sound but kill not
                 # be publicly available

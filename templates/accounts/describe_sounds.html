@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load display_license_form %}
+{% load google_maps %}
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
+    <script type="text/javascript" src="{% google_maps_js %}"></script>
     <script>
         // Maps variables
         var maps = {};
@@ -248,7 +249,7 @@
     <p>You are not required to specify a geolocation for each sound, but if the sound is a
         field-recording it's probably a good idea to specify the location.
 
-    <form id="describe_form" action="." method="post" novalidate>{% csrf_token %}
+    <form id="describe_form" action="." method="post" novalidate class="disable-on-submit">{% csrf_token %}
     <div id="sound-accordion-alternate">
     {% for form in forms %}
         <div onclick="toggleSound({{ forloop.counter }})" class="sound-accordion-sound-alternate-header{% if form.description.errors or form.geotag.errors or form.pack.errors or form.license.errors %}-errors{% endif %}" id="sound-accordion-sound-header-{{ forloop.counter }}">

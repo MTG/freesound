@@ -15,15 +15,8 @@
     <p>If you are entirely sure you want to delete your account, please choose one of the following options
     (form valid for 10 seconds only):</p>
     <form method="post">
-        {% if error_message %}
-        <ul class="errorlist nonfield">
-            <li>{{ error_message }}</li>
-        </ul>
-        {% endif %}
       {% csrf_token %}
-      {{delete_form.encrypted_link}}
-      {{delete_form.delete_sounds}}
-
+      {{delete_form.as_p}}
     <button>Send</button>
     </form>
 </div>

@@ -219,7 +219,7 @@ The response to this request will be a brand new access token that you can use i
 a new refresh token that you will need when the newly given access token expires. There can only exist one access token per
 application/user pair at once, therefore newly created access tokens overwrite existing ones if they relate the same application/user pair.
 
-Freesound users that have granted access to your application, can revoke this access at any time using their settings page in Freesound.org.
+Freesound users that have granted access to your application, can revoke this access at any time using their settings page in Freesound.
 Revoking the access means invalidating the access token (and refresh token) that was issued to your application.
 In that case, attepting to use the access token will result in a 401 (Unauthorized) response showing an 'Invalid token' error.
 

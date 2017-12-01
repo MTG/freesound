@@ -309,6 +309,10 @@ MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, s
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
 
+
+# Turn this option on to log every time a user downloads a pack or sound
+LOG_DOWNLOADS = False
+
 # Stripe keys for testing (never set real keys here!!!)
 STRIPE_PUBLIC_KEY = ""
 STRIPE_PRIVATE_KEY = ""

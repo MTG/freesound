@@ -68,6 +68,7 @@ import os
 
 
 logger = logging.getLogger('web')
+downloads_logger = logging.getLogger('downloads')
 
 
 def get_sound_of_the_day_id():
@@ -314,6 +315,18 @@ def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
+
+    if settings.LOG_DOWNLOADS:
+        downloads_logger.info('Download sound', extra={
+            'user_id': request.user.id,
+            'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+            'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+            'session_id': request.session.session_key,
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'sound_id': sound_id,
+            'range': request.META.get('HTTP_RANGE', None),
+        })
+
     if not Download.objects.filter(user=request.user, sound=sound).exists():
         Download.objects.create(user=request.user, sound=sound, license=sound.license)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
@@ -326,6 +339,18 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
+
+    if settings.LOG_DOWNLOADS:
+        downloads_logger.info('Download pack', extra={
+            'user_id': request.user.id,
+            'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+            'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+            'session_id': request.session.session_key,
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'pack_id': pack_id,
+            'range': request.META.get('HTTP_RANGE', None),
+        })
+
     if not Download.objects.filter(user=request.user, pack=pack).exists():
         Download.objects.create(user=request.user, pack=pack)
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
@@ -483,7 +508,7 @@ def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
-    pack_sounds = ",".join([str(s.id) for s in pack.sound_set.all()])
+    pack_sounds = ",".join([str(s.id) for s in pack.sounds.all()])
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
         raise PermissionDenied
@@ -493,7 +518,7 @@ def pack_edit(request, username, pack_id):
         form = PackEditForm(request.POST, instance=pack)
         if form.is_valid():
             form.save()
-            pack.sound_set.all().update(is_index_dirty=True)
+            pack.sounds.all().update(is_index_dirty=True)
             return HttpResponseRedirect(pack.get_absolute_url())
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds))
@@ -593,7 +618,6 @@ def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    google_api_key = settings.GOOGLE_API_KEY
     return render(request, 'sounds/geotag.html', locals())
 
 

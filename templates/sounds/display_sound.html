@@ -27,14 +27,7 @@
                <a class="title" href="{% url "sound" sound_user sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
             </div><!-- .sound_filename -->
             <div class="sound_stars">
-               <ul class="star-rating">
-                   <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
-                   <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star{% if not request.user.is_authenticated or request.user.username == sound_user %}_not_logged_in{% endif %}">1</a></li>
-                   <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars{% if not request.user.is_authenticated or request.user.username == sound_user %}_not_logged_in{% endif %}">2</a></li>
-                   <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars{% if not request.user.is_authenticated or request.user.username == sound_user %}_not_logged_in{% endif %}">3</a></li>
-                   <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars{% if not request.user.is_authenticated or request.user.username == sound_user %}_not_logged_in{% endif %}">4</a></li>
-                   <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user.username == sound_user %}_not_logged_in{% endif %}">5</a></li>
-               </ul>
+               {% sound_ratings %}
             </div><!-- .sound_stars -->
 
             <div class="sound_description">

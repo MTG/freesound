@@ -22,8 +22,9 @@
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.encoding import smart_unicode
 from django.urls import reverse
+from django.utils.encoding import smart_unicode
+
 
 class GeoTag(models.Model):
     user = models.ForeignKey(User)

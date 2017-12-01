@@ -18,23 +18,12 @@
 #     See AUTHORS file.
 #
 
-from django.template import Library
+from django import template
+from django.conf import settings
 
-register = Library()
+register = template.Library()
 
 
-@register.inclusion_tag('templatetags/sound_ratings.html', takes_context=True)
-def sound_ratings(context):
-    sound = context['sound']
-    if hasattr(sound, 'username'):
-        sound_user = sound.username
-    else:
-        sound_user = sound.user.username
-    request = context['request']
-    request_user = request.user.username
-    is_authenticated = request.user.is_authenticated
-
-    return {'sound_user': sound_user,
-            'request_user': request_user,
-            'is_authenticated': is_authenticated,
-            'sound': sound}
+@register.simple_tag()
+def google_maps_js():
+    return "//maps.googleapis.com/maps/api/js?v=3&key=%s&sensor=false" % settings.GOOGLE_API_KEY

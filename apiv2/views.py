@@ -693,7 +693,7 @@ class DownloadPack(DownloadAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        sounds = pack.sound_set.filter(processing_state="OK", moderation_state="OK")
+        sounds = pack.sounds.filter(processing_state="OK", moderation_state="OK")
         if not sounds:
             raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 
@@ -998,7 +998,7 @@ class RateSound(WriteRequiredGenericAPIView):
                                           'note': 'This rating has not been saved in the database as browseable API is only for testing purposes.'},
                                     status=status.HTTP_201_CREATED)
                 else:
-                    Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.data['rating'])*2)
+                    SoundRating.objects.create(user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
                     return Response(data={'detail': 'Successfully rated sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
                 raise ConflictException(msg='User has already rated sound %s' % sound_id, resource=self)

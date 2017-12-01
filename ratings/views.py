@@ -19,37 +19,40 @@
 #
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+from django.http import Http404
 from django.http import HttpResponse
-from ratings.models import Rating
+from django.shortcuts import get_object_or_404
+
+from ratings.models import SoundRating
 from sounds.models import Sound
 from utils.cache import invalidate_template_cache
-from django.db import transaction
+
 
 @login_required
 @transaction.atomic()
-def add(request, content_type_id, object_id, rating):
+def rate_sound(request, username, sound_id, rating):
+    sound = get_object_or_404(Sound.objects.select_related("user"), id=sound_id)
+    if sound.user.username.lower() != username.lower():
+        raise Http404
+
     rating = int(rating)
-    content_type = ContentType.objects.get(id=content_type_id)
-    if rating in range(1,6):
+    if 1 <= rating <= 5:
         # in order to keep the ratings compatible with freesound 1, we multiply by two...
         rating = rating*2
-        rating_obj, created = Rating.objects.get_or_create(
+        rating_obj, created = SoundRating.objects.get_or_create(
                 user=request.user,
-                object_id=object_id,
-                content_type=content_type, defaults={'rating': rating})
+                sound_id=sound_id, defaults={'rating': rating})
 
         if not created:
             rating_obj.rating = rating
             rating_obj.save()
 
         # make sure the rating is seen on the next page load by invalidating the cache for it.
-        ct = ContentType.objects.get(id=content_type_id)
-        if ct.name == 'sound':
-            invalidate_template_cache("sound_header", object_id, True)
-            invalidate_template_cache("sound_header", object_id, False)
-            invalidate_template_cache("display_sound", object_id, True, 'OK')
-            invalidate_template_cache("display_sound", object_id, False, 'OK')
-            Sound.objects.filter(id=object_id).update(is_index_dirty=True)  # Set index dirty to true
+        invalidate_template_cache("sound_header", sound_id, True)
+        invalidate_template_cache("sound_header", sound_id, False)
+        invalidate_template_cache("display_sound", sound_id, True, 'OK')
+        invalidate_template_cache("display_sound", sound_id, False, 'OK')
+        Sound.objects.filter(id=sound_id).update(is_index_dirty=True)  # Set index dirty to true
 
-    return HttpResponse(str(Rating.objects.filter(object_id=object_id, content_type=content_type).count()))
+    return HttpResponse(str(SoundRating.objects.filter(sound_id=sound_id).count()))

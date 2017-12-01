@@ -24,9 +24,9 @@
     <meta property="og:url" content="{% absurl 'sound' sound.user.username sound.id %}" />
     <meta property="og:audio:type" content="application/mp3" />
 <!--     <meta property="og:image" content="http://{{ request.get_host }}{{sound.locations.display.wave.M.url}}" /> -->
-    <meta property="og:site_name" content="Freesound.org" />
+    <meta property="og:site_name" content="Freesound" />
     <meta property="fb:admins" content="100002130282170" />
-    
+
     <meta name="twitter:card" content="player" />
     <meta name="twitter:site" content="@freesound_dev" />
     <meta name="twitter:title" content="{{ sound.original_filename }}" />
@@ -44,19 +44,6 @@
 {% cache 3600 sound_header sound.id request.user.is_authenticated request.user.profile.is_adult %}
 <div id="single_sample_header" class="{% if is_explicit %}blur{% endif %}">
     {% if sound.pack %}<a href="{% url 'pack' username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
-    {% comment %}
-    <div class="stars">
-        <ul class="star-rating">
-            <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
-            <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">1</a></li>
-            <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">2</a></li>
-            <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">3</a></li>
-            <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">4</a></li>
-            <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">5</a></li>
-        </ul>
-        <span class="numratings">({{sound.num_ratings}})</span>
-    </div>
-    {% endcomment %}
 </div>
 
 <div id="single_sample_player">
@@ -144,12 +131,12 @@
                 {% show_paginator paginator page current_page request "comment" %}
             </div>
         {%  else %}
-            <p><br>This sound has not been commented yet, be the first to comment!</p>
+            <p><br>This sound has not been commented on yet, be the first to comment!</p>
         {% endif %}
     </div> <!-- comments_container -->
 
     {% if request.user.is_authenticated %}
-    <form method="POST" action=".#comments" id="sound_comment_form">{% csrf_token %}
+    <form method="POST" action=".#comments" id="sound_comment_form" class="disable-on-submit">{% csrf_token %}
         <fieldset>
             <h4 id="leave_a_comment">Leave a comment:</h4>
             {{form.as_p}}
@@ -164,14 +151,7 @@
 <div id="single_sample_sidebar" class="{% if is_explicit %}blur{% endif %}">
      <div id="single_sample_ratings">
          <div class="stars">
-            <ul class="star-rating">
-                <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
-                <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">1</a></li>
-                <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">2</a></li>
-                <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">3</a></li>
-                <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">4</a></li>
-                <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">5</a></li>
-            </ul>
+            {% sound_ratings %}
             <span class="numratings">({{sound.num_ratings}})</span>
         </div>
      </div>
@@ -237,7 +217,7 @@
                 <li><em>Sound is processing, cannot edit.</em></li>
             {% endif %}
         {% endif %}
-        
+
         {% if user.is_authenticated %}
             <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
             {% if request.user != sound.user %}
@@ -250,7 +230,7 @@
             {% endif %}
             <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
         {% endif %}
-        
+
         {% if request.user.is_staff %}
             <li><a id="admin_link" class="icon" href="{% url 'admin:sounds_sound_change' sound.id %}">Edit sound in the admin</a></li>
         {% endif %}
@@ -263,7 +243,7 @@
     <div id="flag_sound">
         Sound illegal or offensive? <a href="{% url 'sound-flag' sound.user.username sound.id %}" title="flag this sound as ilegal, offensive or other...">Flag it!</a>
     </div>
-	
+
     <div id="share_links">
         <p>
             <span style="color:#999">Share url: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />

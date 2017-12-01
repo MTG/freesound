@@ -21,7 +21,7 @@
 #
 
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import fields
+
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
@@ -31,52 +31,45 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 
-class Rating(models.Model):
+class SoundRating(models.Model):
     user = models.ForeignKey(User)
 
     rating = models.IntegerField()
-
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField(db_index=True)
-    content_object = fields.GenericForeignKey()
-
+    sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):
-        return u"%s rated %s - %s: %d" % (self.user, self.content_type, self.content_type, self.rating)
+        return u"%s rated %s: %d" % (self.user, self.sound, self.rating)
 
     class Meta:
-        unique_together = (('user', 'content_type', 'object_id'),)
+        unique_together = (('user', 'sound'),)
         ordering = ('-created',)
 
 
-@receiver(post_delete, sender=Rating)
+@receiver(post_delete, sender=SoundRating)
 def post_delete_rating(sender, instance, **kwargs):
     try:
         with transaction.atomic():
-            instance.content_object.num_ratings = F('num_ratings') - 1
-            avg_rating = Rating.objects.filter(
-                    content_type_id=instance.content_type_id,
-                    object_id=instance.object_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+            instance.sound.num_ratings = F('num_ratings') - 1
+            avg_rating = SoundRating.objects.filter(
+                    sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
             rating = avg_rating['average_rating']
-            instance.content_object.avg_rating = rating
-            instance.content_object.save()
+            instance.sound.avg_rating = rating
+            instance.sound.save()
     except ObjectDoesNotExist:
         pass
 
 
-@receiver(post_save, sender=Rating)
-def update_num_ratings_on_post_save(**kwargs):
-    instance = kwargs['instance']
-
+@receiver(post_save, sender=SoundRating)
+def update_num_ratings_on_post_save(sender, instance, created, **kwargs):
     with transaction.atomic():
         # Increase the number of ratings only on insert, but recompute the average
         # after update as well
-        if kwargs['created']:
-            instance.content_object.num_ratings = F('num_ratings') + 1
-        avg_rating = Rating.objects.filter(
-            content_type_id=instance.content_type_id,
-            object_id=instance.object_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+        if created:
+            instance.sound.num_ratings = F('num_ratings') + 1
+
+        avg_rating = SoundRating.objects.filter(
+            sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
         rating = avg_rating['average_rating']
-        instance.content_object.avg_rating = rating
-        instance.content_object.save()
+        instance.sound.avg_rating = rating
+        instance.sound.save()

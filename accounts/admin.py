@@ -28,6 +28,10 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
+from django.utils.functional import cached_property
+from django.db import connection
+from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -109,6 +113,24 @@ class UserFlagAdmin(admin.ModelAdmin):
 admin.site.register(UserFlag, UserFlagAdmin)
 
 
+class LargeTablePaginator(Paginator):
+    """ We use the information on postgres table 'reltuples' to avoid using count(*) for performance. """
+    @cached_property
+    def count(self):
+        try:
+            if not self.object_list.query.where:
+                cursor = connection.cursor()
+                cursor.execute("SELECT reltuples FROM pg_class WHERE relname = %s",
+                    [self.object_list.query.model._meta.db_table])
+                ret = int(cursor.fetchone()[0])
+                return ret
+            else :
+                return self.object_list.count()
+        except :
+            # AttributeError if object_list has no count() method.
+            return len(self.object_list)
+
+
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     search_fields = ('=username', '=email')
     actions = (disable_active_user, disable_active_user_preserve_sounds, )
@@ -123,6 +145,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                     'groups')}),
      ('Important dates', {'fields': ('last_login', 'date_joined')}),
      )
+
+    paginator = LargeTablePaginator
 
     def full_delete(self, request, obj):
         username = obj.username

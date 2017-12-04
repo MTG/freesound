@@ -39,7 +39,7 @@ def download_sounds(licenses_url, pack):
                                     len(attribution.encode('UTF-8')),
                                     licenses_url, "_readme_and_license.txt")
 
-    sounds_list = pack.sound_set.filter(processing_state="OK",
+    sounds_list = pack.sounds.filter(processing_state="OK",
             moderation_state="OK").select_related('user', 'license')
 
     for sound in sounds_list:

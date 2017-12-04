@@ -510,7 +510,7 @@ def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
-    pack_sounds = ",".join([str(s.id) for s in pack.sound_set.all()])
+    pack_sounds = ",".join([str(s.id) for s in pack.sounds.all()])
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
         raise PermissionDenied
@@ -520,7 +520,7 @@ def pack_edit(request, username, pack_id):
         form = PackEditForm(request.POST, instance=pack)
         if form.is_valid():
             form.save()
-            pack.sound_set.all().update(is_index_dirty=True)
+            pack.sounds.all().update(is_index_dirty=True)
             return HttpResponseRedirect(pack.get_absolute_url())
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds))

@@ -317,15 +317,16 @@ def sound_download(request, username, sound_id):
         raise Http404
 
     if settings.FEATURE_LOG_SOUND_DOWNLOADS:
-        downloads_logger.info('Download sound', extra={
-            'user_id': request.user.id,
-            'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-            'session_id': request.session.session_key,
-            'user_agent': request.META.get('HTTP_USER_AGENT'),
-            'sound_id': sound_id,
-            'range': request.META.get('HTTP_RANGE', None),
-        })
+        if 'HTTP_RANGE' not in request.META:
+            downloads_logger.info('Download sound', extra={
+                'user_id': request.user.id,
+                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+                'session_id': request.session.session_key,
+                'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'sound_id': sound_id,
+                'range': request.META.get('HTTP_RANGE', None),
+            })
 
     if not Download.objects.filter(user=request.user, sound=sound).exists():
         Download.objects.create(user=request.user, sound=sound, license=sound.license)
@@ -341,15 +342,16 @@ def pack_download(request, username, pack_id):
         raise Http404
 
     if settings.FEATURE_LOG_SOUND_DOWNLOADS:
-        downloads_logger.info('Download pack', extra={
-            'user_id': request.user.id,
-            'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-            'session_id': request.session.session_key,
-            'user_agent': request.META.get('HTTP_USER_AGENT'),
-            'pack_id': pack_id,
-            'range': request.META.get('HTTP_RANGE', None),
-        })
+        if 'HTTP_RANGE' not in request.META:
+            downloads_logger.info('Download pack', extra={
+                'user_id': request.user.id,
+                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+                'session_id': request.session.session_key,
+                'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'pack_id': pack_id,
+                'range': request.META.get('HTTP_RANGE', None),
+            })
 
     if not Download.objects.filter(user=request.user, pack=pack).exists():
         Download.objects.create(user=request.user, pack=pack)

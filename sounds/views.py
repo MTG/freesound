@@ -324,6 +324,7 @@ def sound_download(request, username, sound_id):
                 'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
                 'session_id': request.session.session_key,
                 'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'method': request.method,
                 'sound_id': sound_id,
                 'range': request.META.get('HTTP_RANGE', None),
             })
@@ -349,6 +350,7 @@ def pack_download(request, username, pack_id):
                 'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
                 'session_id': request.session.session_key,
                 'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'method': request.method,
                 'pack_id': pack_id,
                 'range': request.META.get('HTTP_RANGE', None),
             })

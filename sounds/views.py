@@ -504,6 +504,7 @@ def sound_edit(request, username, sound_id):
 
 
 @login_required
+@transaction.atomic()
 def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -532,6 +533,7 @@ def pack_edit(request, username, pack_id):
 
 
 @login_required
+@transaction.atomic()
 def pack_delete(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -565,6 +567,7 @@ def pack_delete(request, username, pack_id):
 
 
 @login_required
+@transaction.atomic()
 def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
@@ -637,6 +640,7 @@ def similar(request, username, sound_id):
     return render(request, 'sounds/similar.html', locals())
 
 
+@transaction.atomic()
 def pack(request, username, pack_id):
     try:
         pack = Pack.objects.select_related().get(id=pack_id)
@@ -703,6 +707,7 @@ def for_user(request, username):
 
 
 @login_required
+@transaction.atomic()
 def delete(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
@@ -744,6 +749,7 @@ def delete(request, username, sound_id):
     return render(request, 'sounds/delete.html', tvars)
 
 
+@transaction.atomic()
 def flag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():

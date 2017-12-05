@@ -317,7 +317,8 @@ def sound_download(request, username, sound_id):
         raise Http404
 
     if settings.LOG_DOWNLOADS:
-        if 'HTTP_RANGE' not in request.META:
+        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
+        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
             downloads_logger.info('Download sound', extra={
                 'user_id': request.user.id,
                 'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
@@ -343,7 +344,8 @@ def pack_download(request, username, pack_id):
         raise Http404
 
     if settings.LOG_DOWNLOADS:
-        if 'HTTP_RANGE' not in request.META:
+        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
+        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
             downloads_logger.info('Download pack', extra={
                 'user_id': request.user.id,
                 'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),

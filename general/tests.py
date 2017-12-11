@@ -25,8 +25,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 
-class GeneralManagementCommandTestCase(TestCase):
-    """Tests for the managment commands under the general app"""
+class ReportCountStatusesManagementCommandTestCase(TestCase):
 
     fixtures = ['initial_data']  # Needed for loading licenses, etc
 

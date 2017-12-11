@@ -18,6 +18,9 @@
 #     See AUTHORS file.
 #
 
+from forum.models import Thread, Post, Forum
+from ratings.models import SoundRating
+from sounds.tests import create_user_and_sounds
 from django.core.management import call_command
 from django.test import TestCase
 
@@ -25,16 +28,97 @@ from django.test import TestCase
 class GeneralManagementCommandTestCase(TestCase):
     """Tests for the managment commands under the general app"""
 
+    fixtures = ['initial_data']  # Needed for loading licenses, etc
+
     def test_report_count_statuses(self):
-        # TODO
-        # 1) create sound/pack/user/post objects and manually set counts to be wrong
-        # 2) run command
-        # 3) check that counts are ok
-        # 4) manually set the counts to something wrong
-        # 5) run command with -n option
-        # 6) check that counts are still wrong
-        # 7) run command with -d option
-        # 8) check that all counts are ok except for download related ones
-        # 9) run command
-        # 10) check that all counts are ok
-        call_command('report_count_statuses', '-nd')
+
+        # Create some initial data
+        user, pp, ss = create_user_and_sounds(num_sounds=1, num_packs=1)
+        pack = pp[0]
+        sound = ss[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+        SoundRating.objects.create(sound=sound, user=user, rating=4)
+        sound.refresh_from_db()  # Refresh from db after methods that use F-expressions
+        sound.add_comment(user=user, comment="testComment")
+        sound.refresh_from_db()  # Refresh from db after methods that use F-expressions
+        forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
+        thread = Thread.objects.create(forum=forum, title="testThread", author=user)
+        Post.objects.create(author=user, body="testBody", thread=thread)
+        user.profile.refresh_from_db()  # Refresh from db after methods that use F-expressions
+
+        # Assert initial counts are ok
+        self.assertEquals(user.profile.num_sounds, 1)
+        self.assertEquals(user.profile.num_posts, 1)
+        self.assertEquals(pack.num_sounds, 1)
+        self.assertEquals(pack.num_downloads, 0)
+        self.assertEquals(sound.num_ratings, 1)
+        self.assertEquals(sound.avg_rating, 4)
+        self.assertEquals(sound.num_comments, 1)
+        self.assertEquals(sound.num_downloads, 0)
+
+        # Run command and assert counts are still ok
+        call_command('report_count_statuses')
+        self.assertEquals(user.profile.num_sounds, 1)
+        self.assertEquals(user.profile.num_posts, 1)
+        self.assertEquals(pack.num_sounds, 1)
+        self.assertEquals(pack.num_downloads, 0)
+        self.assertEquals(sound.num_ratings, 1)
+        self.assertEquals(sound.avg_rating, 4)
+        self.assertEquals(sound.num_comments, 1)
+        self.assertEquals(sound.num_downloads, 0)
+
+        # Manually set the counts to something wrong
+        user.profile.num_sounds = 21
+        user.profile.num_posts = 21
+        user.profile.save()
+        pack.num_sounds = 21
+        pack.num_downloads = 21
+        pack.save()
+        sound.num_ratings = 21
+        sound.avg_rating = 21
+        sound.num_comments = 21
+        sound.num_downloads = 21
+        sound.save()
+
+        # Re-run command with -n and assert counts are still wrong
+        call_command('report_count_statuses', '--no-changes')
+        user.profile.refresh_from_db()
+        sound.refresh_from_db()
+        pack.refresh_from_db()
+        self.assertNotEquals(user.profile.num_sounds, 1)
+        self.assertNotEquals(user.profile.num_posts, 1)
+        self.assertNotEquals(pack.num_sounds, 1)
+        self.assertNotEquals(pack.num_downloads, 0)
+        self.assertNotEquals(sound.num_ratings, 1)
+        self.assertNotEquals(sound.avg_rating, 4)
+        self.assertNotEquals(sound.num_comments, 1)
+        self.assertNotEquals(sound.num_downloads, 0)
+
+        # Re-run command with -d and assert that all counts are ok except for download counts
+        call_command('report_count_statuses', '--skip-downloads')
+        user.profile.refresh_from_db()
+        sound.refresh_from_db()
+        pack.refresh_from_db()
+        self.assertEquals(user.profile.num_sounds, 1)
+        self.assertEquals(user.profile.num_posts, 1)
+        self.assertEquals(pack.num_sounds, 1)
+        self.assertNotEquals(pack.num_downloads, 0)
+        self.assertEquals(sound.num_ratings, 1)
+        self.assertEquals(sound.avg_rating, 4)
+        self.assertEquals(sound.num_comments, 1)
+        self.assertNotEquals(sound.num_downloads, 0)
+
+        # Re-run command with no options set and check that all counts are ok now
+        call_command('report_count_statuses')
+        user.profile.refresh_from_db()
+        sound.refresh_from_db()
+        pack.refresh_from_db()
+        self.assertEquals(user.profile.num_sounds, 1)
+        self.assertEquals(user.profile.num_posts, 1)
+        self.assertEquals(pack.num_sounds, 1)
+        self.assertEquals(pack.num_downloads, 0)
+        self.assertEquals(sound.num_ratings, 1)
+        self.assertEquals(sound.avg_rating, 4)
+        self.assertEquals(sound.num_comments, 1)
+        self.assertEquals(sound.num_downloads, 0)

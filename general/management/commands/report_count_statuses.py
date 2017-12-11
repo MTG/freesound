@@ -19,15 +19,17 @@
 #
 
 
-import sys
-from pprint import pprint
+import logging
+import pprint
 
+from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Avg
-from django.contrib.auth.models import User
 
-from sounds.models import Sound, Pack
 from forum.models import Post
+from sounds.models import Sound, Pack
+
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
@@ -53,12 +55,8 @@ class Command(BaseCommand):
     def handle(self,  *args, **options):
 
         def report_progress(message, total, count):
-            if count % 100 == 0:
-                sys.stdout.write(
-                    '\r' + message % (total, 100 * float(count + 1) / total))
-                sys.stdout.flush()
-            if count + 1 == total:
-                print ' done!'
+            if count % 10000 == 0:
+                console_logger.info(message % (total, 100 * float(count + 1) / total))
 
         # Iterate over all sounds to check: num_comments, num_downloads, avg_rating, num_ratings
         # While iterating, we keep a list of user ids and pack ids for then iterating over them
@@ -204,7 +202,7 @@ class Command(BaseCommand):
                     user_profile.save()
             report_progress('Checking number of posts in %i users... %.2f%%', total, count)
 
-        print "\nNumber of mismatched counts: "
-        pprint(mismatches_report)
-        mismatches_object_ids = {key:value for key, value in mismatches_object_ids.items() if value}
-        pprint(mismatches_object_ids)
+        console_logger.info("Number of mismatched counts: ")
+        console_logger.info('\n' + pprint.pformat(mismatches_report))
+        mismatches_object_ids = {key: value for key, value in mismatches_object_ids.items() if value}
+        console_logger.info('\n' + pprint.pformat(mismatches_object_ids))

@@ -779,3 +779,71 @@ class SoundPackDownloadTestCase(TestCase):
             Download.objects.all().delete()
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 0)
+
+
+class SoundSignatureTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def setUp(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1)
+        self.SOUND_DESCRIPTION = 'Simple Sound Description'
+        self.USER_SOUND_SIGNATURE = 'Sound Signature.'
+        self.USER_VISITOR_SOUND_SIGNATURE = 'Sound Visitor Signature.'
+        self.sound = sounds[0]
+        self.sound.description = self.SOUND_DESCRIPTION
+        self.sound.moderation_state = "OK"
+        self.sound.processing_state = "OK"
+        self.sound.save()
+        self.user = user
+        self.user_visitor = User.objects.create_user(
+            username='testuservisitor', password='testpassword')
+
+    def test_no_signature(self):
+        """Check signature is not present in sound page (regardless of the user who visits and the authentication)"""
+
+        # Non-logged in user
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (creator of the sound)
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (non-creator of the sound)
+        self.client.login(username='testuservisitor', password='testpassword')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Set a signature to the visitor user, check that his signature does not appear in the sound
+        self.user_visitor.profile.sound_signature = self.USER_VISITOR_SOUND_SIGNATURE
+        self.user_visitor.profile.save()
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertNotContains(resp, self.USER_VISITOR_SOUND_SIGNATURE, status_code=200, html=True)
+
+    def test_signature(self):
+        """Check signature is present in the sound page (regardless of the user who visits and the authentication)"""
+
+        self.user.profile.sound_signature = self.USER_SOUND_SIGNATURE
+        self.user.profile.save()
+
+        # Non-logged in user
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (creator of the sound)
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (non-creator of the sound)
+        self.client.login(username='testuservisitor', password='testpassword')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)

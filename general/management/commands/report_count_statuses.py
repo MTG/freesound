@@ -81,10 +81,11 @@ class Command(BaseCommand):
         }
 
         # IMPLEMENTATION NOTE: on the code below we iterate multiple times on Sounds, Packs and Users tables.
-        # This is done in this way because using the Django ORM we can't annotate counts from different tables in a
-        # single queryset (annotations that would require SQL JOINs with more than one table). If we do that, we
-        # get wrong results for the annotated fields as the generated SQL duplicates results for each table (see
-        # https://code.djangoproject.com/ticket/10060).
+        # This is done in this way because due to our DB structure and the way that Django ORM works, if we annotate
+        # counts from different tables in a single queryset (annotations that require SQL JOINs with more than one
+        # table), the result we obtain is not the count that we want (see https://code.djangoproject.com/ticket/10060)
+        # The easier solution for us is to do the queries individually for each kind of "count" that we want to
+        # annotate.
 
         # Sounds
         total = Sound.objects.all().count()

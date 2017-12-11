@@ -21,6 +21,7 @@
 
 import logging
 import pprint
+from collections import defaultdict
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -58,27 +59,8 @@ class Command(BaseCommand):
             if count % 10000 == 0:
                 console_logger.info(message % (total, 100 * float(count + 1) / total))
 
-        # Iterate over all sounds to check: num_comments, num_downloads, avg_rating, num_ratings
-        # While iterating, we keep a list of user ids and pack ids for then iterating over them
-
-        mismatches_report = {
-            'Sound.num_comments': 0,
-            'Sound.num_downloads': 0,
-            'Sound.num_ratings': 0,
-            'Pack.num_sounds': 0,
-            'Pack.num_downloads': 0,
-            'User.num_sounds': 0,
-            'User.num_posts': 0,
-        }
-        mismatches_object_ids = {
-            'Sound.num_comments': list(),
-            'Sound.num_downloads': list(),
-            'Sound.num_ratings': list(),
-            'Pack.num_sounds': list(),
-            'Pack.num_downloads': list(),
-            'User.num_sounds': list(),
-            'User.num_posts': list(),
-        }
+        mismatches_report = defaultdict(int)
+        mismatches_object_ids = defaultdict(list)
 
         # IMPLEMENTATION NOTE: on the code below we iterate multiple times on Sounds, Packs and Users tables.
         # This is done in this way because due to our DB structure and the way that Django ORM works, if we annotate
@@ -205,5 +187,4 @@ class Command(BaseCommand):
 
         console_logger.info("Number of mismatched counts: ")
         console_logger.info('\n' + pprint.pformat(mismatches_report))
-        mismatches_object_ids = {key: value for key, value in mismatches_object_ids.items() if value}
         console_logger.info('\n' + pprint.pformat(mismatches_object_ids))

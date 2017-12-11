@@ -58,7 +58,7 @@ class Command(BaseCommand):
                     '\r' + message % (total, 100 * float(count + 1) / total))
                 sys.stdout.flush()
             if count + 1 == total:
-                print 'done!'
+                print ' done!'
 
         # Iterate over all sounds to check: num_comments, num_downloads, avg_rating, num_ratings
         # While iterating, we keep a list of user ids and pack ids for then iterating over them
@@ -157,7 +157,7 @@ class Command(BaseCommand):
         if not options['skip-downloads']:
             for count, pack in enumerate(Pack.objects.all().annotate(real_num_downloads=Count('downloads')).iterator()):
                 real_num_downloads = pack.real_num_downloads
-                if real_num_downloads != pack.real_num_sounds:
+                if real_num_downloads != pack.num_downloads:
                     mismatches_report['Pack.num_downloads'] += 1
                     mismatches_object_ids['Pack.num_downloads'].append(pack.id)
                     pack.num_downloads = real_num_downloads

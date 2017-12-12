@@ -59,6 +59,7 @@
 <script src="https://d3js.org/d3-time-format.v2.min.js"></script>
 <script>
 $( document ).ready(function() {
+    var numbMonths = 6;
     $(".moderator").each(function(){
       var that = $(this);
       $.get('{% url "monitor-moderator-stats-ajax" %}', 
@@ -76,7 +77,7 @@ $( document ).ready(function() {
             .rangeRound([height, 0]);
 
             var xAxis = d3.axisBottom(x),
-            yAxis = d3.axisLeft(y);
+            yAxis = d3.axisLeft(y).ticks(5);
 
             svg.append("defs").append("clipPath")
             .attr("id", "clip")
@@ -91,7 +92,7 @@ $( document ).ready(function() {
 
             var maxDay = new Date(); 
             var minDay = new Date(); 
-            minDay.setDate(maxDay.getDate()-6*365/12); 
+            minDay.setDate(maxDay.getDate()-numbMonths*365/12); 
             x.domain([minDay, maxDay]);
             y.domain([0, d3.max(concat, function(d) { return parseInt(d['id__count'])})]);
 

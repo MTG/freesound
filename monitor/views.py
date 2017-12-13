@@ -113,7 +113,7 @@ def moderators_stats(request):
     #Maybe we should user created and not modified
     user_ids = tickets.models.Ticket.objects.filter(
             status=TICKET_STATUS_CLOSED,
-            modified__gt=time_span,
+            created__gt=time_span,
             assignee__isnull=False
     ).values_list("assignee_id", flat=True)
 
@@ -243,11 +243,10 @@ def moderator_stats_ajax(request):
     tickets_mod = tickets.models.Ticket.objects.filter(
             assignee_id=user_id,
             status=TICKET_STATUS_CLOSED,
-            modified__gt=time_span
+            created__gt=time_span
     ).extra(select={'day': 'date(modified)'}).values('day')\
             .order_by().annotate(Count('id'))
 
-    print list(tickets_mod)
     return JsonResponse(list(tickets_mod), safe=False)
 
 

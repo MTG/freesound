@@ -122,3 +122,17 @@ class SearchPageTests(TestCase):
         # Check that we perform one single query to get all sounds' information and don't do one extra query per sound
         with self.assertNumQueries(1):
             self.client.get(reverse('sounds-search'))
+
+    @mock.patch('search.views.perform_solr_query')
+    def test_search_page_with_filters(self, perform_solr_query):
+        perform_solr_query.return_value = self.perform_solr_query_response
+
+        # 200 response on sound search page access
+        resp = self.client.get(reverse('sounds-search'), {"f": 'grouping_pack:"Clutter" tag:"acoustic-guitar"'})
+        self.assertEqual(resp.status_code, 200)
+
+        # Check if grouping_pack is displayed, it shouldn't be in filter_query_split
+        self.assertEqual(resp.context['filter_query_split'][0]['name'], 'tag:acoustic-guitar')
+        self.assertEqual(len(resp.context['filter_query_split']), 1)
+
+

@@ -138,19 +138,25 @@ def search(request):
     filter_query_split = []
     if filter_query != "":
         for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
+            display_filter = True
             filter_str = filter_str + '"'
             filter_display = filter_str.replace('"', '')
             filter_name = filter_str.split(":")[0]
             if filter_name != "duration" and filter_name != "is_geotagged":
                 if filter_name == "grouping_pack":
                     val = filter_display.split(":")[1]
-                    filter_display = "pack:"+ val.split("_")[1]
+                    # If pack does not contain "_" then it's not a valid pack filter
+                    if "_" in val:
+                        filter_display = "pack:"+ val.split("_")[1]
+                    else:
+                        display_filter = False
 
-                filter = {
-                    'name': filter_display,
-                    'remove_url': filter_query.replace(filter_str, ''),
-                }
-                filter_query_split.append(filter)
+                if display_filter:
+                    filter = {
+                        'name': filter_display,
+                        'remove_url': filter_query.replace(filter_str, ''),
+                    }
+                    filter_query_split.append(filter)
 
     try:
         current_page = int(request.GET.get("page", 1))

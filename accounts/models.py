@@ -398,9 +398,12 @@ post_save.connect(create_user_profile, sender=User)
 
 
 def presave_user(sender, instance, **kwargs):
-    old_username = User.objects.get(pk=instance.id).username
-    if old_username != instance.username:
-        OldUsername.objects.create(user=instance, username=old_username)
+    try:
+        old_username = User.objects.get(pk=instance.id).username
+        if old_username != instance.username:
+            OldUsername.objects.create(user=instance, username=old_username)
+    except User.DoesNotExist:
+        pass
 
 
 pre_save.connect(presave_user, sender=User)

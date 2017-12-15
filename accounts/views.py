@@ -46,7 +46,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, OldUsername
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -140,12 +140,10 @@ def multi_email_cleanup(request):
 
 def check_username(request):
     username = request.GET.get('username', None)
-    username_valid = False
+    username_valid = True
     if username:
-        try:
-            user = User.objects.get(username__iexact=username)
-        except User.DoesNotExist:
-            username_valid = True
+        if User.objects.filter(username__iexact=username).exists() or OldUsername.objects.filter(username__iexact=username).exists():
+            username_valid = False
     return JsonResponse({'result': username_valid})
 
 

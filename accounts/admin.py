@@ -32,6 +32,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django_object_actions import DjangoObjectActions
+from django.contrib.auth.forms import UserChangeForm
+from django.forms import ValidationError
 
 from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername
 
@@ -109,6 +111,19 @@ class UserFlagAdmin(admin.ModelAdmin):
 admin.site.register(UserFlag, UserFlagAdmin)
 
 
+class AdminUserForm(UserChangeForm):
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        try:
+            User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            try:
+                OldUsername.objects.get(username__iexact=username)
+            except OldUsername.DoesNotExist:
+                return username
+        raise ValidationError("A user with that username already exists.")
+
+
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     search_fields = ('=username', '=email')
     actions = (disable_active_user, disable_active_user_preserve_sounds, )
@@ -116,6 +131,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     list_filter = ()
     ordering = ('id', )
     show_full_result_count = False
+    form = AdminUserForm
 
     def full_delete(self, request, obj):
         username = obj.username

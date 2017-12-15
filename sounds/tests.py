@@ -507,6 +507,28 @@ class SoundViewsTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.content != '')
 
+    def test_oldusername_sound_redirect(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+
+        # Add new OldUsername to the user
+        accounts.models.OldUsername.objects.create(user=sound.user, username='oldusername')
+
+        # get url of the sound with oldusername
+        url = reverse('sound', args=['oldusername', sound.id])
+        resp = self.client.get(url)
+
+        url = reverse('sound', args=[sound.user.username, sound.id])
+        # Check redirect to new username
+        self.assertRedirects(resp, url, status_code=301)
+
+        # Check using wrong username
+        url = reverse('sound', args=['wrongusername', sound.id])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
 
 class RandomSoundTestCase(TestCase):
     """ Test that sounds that don't fall under our criteria don't get selected

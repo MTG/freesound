@@ -46,7 +46,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, OldUsername
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -145,7 +145,10 @@ def check_username(request):
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            username_valid = True
+            try:
+                OldUsername.objects.get(username__iexact=username)
+            except OldUsername.DoesNotExist:
+                username_valid = True
     return JsonResponse({'result': username_valid})
 
 

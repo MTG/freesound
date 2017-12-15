@@ -37,7 +37,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import PermissionDenied
 from multiupload.fields import MultiFileField
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType
+from accounts.models import Profile, EmailPreferenceType, OldUsername
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
@@ -154,7 +154,10 @@ class RegistrationForm(forms.Form):
         try:
             User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            return username
+            try:
+                OldUsername.objects.get(username__iexact=username)
+            except OldUsername.DoesNotExist:
+                return username
         raise forms.ValidationError(_("A user with that username already exists."))
 
     def clean_password2(self):

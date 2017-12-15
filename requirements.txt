@@ -8,7 +8,7 @@ python-cjson==1.1.0
 python-memcached==1.53
 markdown==2.5.1
 django-piston==0.2.3
-psycopg2==2.5.4
+psycopg2==2.7.3.2
 networkx==1.5
 gearman==2.0.2
 recaptcha-client==1.0.6

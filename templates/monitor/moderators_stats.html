@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 
-
 {% block title %}
-    Monitor
+    Moderator's activity stats
 {% endblock title %}
 
 {% block head %}
@@ -29,8 +28,7 @@
 
 {% block content %}
 
-    <h2>Monitor</h2>
-    <h3>Moderators Stats</h3>
+    <h2>Moderator's activity stats (last 6 months)</h2>
     <div class="moderators-container">
       {% for numb_mod, moderator in moderators%}
       <div data-moderator="{{moderator.id}}" class="moderator" > 

@@ -138,7 +138,7 @@ def search(request):
     filter_query_split = []
     if filter_query != "":
         for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
-            display_filter = True
+            valid_filter = True
             filter_str = filter_str + '"'
             filter_display = filter_str.replace('"', '')
             filter_name = filter_str.split(":")[0]
@@ -149,9 +149,9 @@ def search(request):
                     if "_" in val:
                         filter_display = "pack:"+ val.split("_")[1]
                     else:
-                        display_filter = False
+                        valid_filter = False
 
-                if display_filter:
+                if valid_filter:
                     filter = {
                         'name': filter_display,
                         'remove_url': filter_query.replace(filter_str, ''),

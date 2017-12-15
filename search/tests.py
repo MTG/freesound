@@ -131,8 +131,15 @@ class SearchPageTests(TestCase):
         resp = self.client.get(reverse('sounds-search'), {"f": 'grouping_pack:"Clutter" tag:"acoustic-guitar"'})
         self.assertEqual(resp.status_code, 200)
 
-        # Check if grouping_pack is displayed, it shouldn't be in filter_query_split
+        # In this case we check if a non valid filter is applied it should be ignored.
+        # grouping_pack it shouldn't be in filter_query_split, since is a not valid filter
         self.assertEqual(resp.context['filter_query_split'][0]['name'], 'tag:acoustic-guitar')
         self.assertEqual(len(resp.context['filter_query_split']), 1)
+
+        resp = self.client.get(reverse('sounds-search'), {"f": 'grouping_pack:"19894_Clutter" tag:"acoustic-guitar"'})
+        # Now we check if two valid filters are applied, then they are present in filter_query_split
+        # Which means they are going to be displayed
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context['filter_query_split']), 2)
 
 

@@ -173,7 +173,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
             if form.is_valid():
                 may_be_spam = text_may_be_spam(form.cleaned_data.get("body", '')) or \
                               text_may_be_spam(form.cleaned_data.get("title", ''))
-                if not request.user.post_set.filter(moderation_state="OK").count() and may_be_spam:
+                if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(
                         author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
@@ -241,7 +241,7 @@ def new_thread(request, forum_name_slug):
                 may_be_spam = text_may_be_spam(form.cleaned_data["body"]) or \
                               text_may_be_spam(form.cleaned_data["title"])
 
-                if not request.user.post_set.filter(moderation_state="OK").count() and may_be_spam:
+                if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread,
                                                moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated

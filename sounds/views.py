@@ -68,7 +68,7 @@ import os
 
 
 logger = logging.getLogger('web')
-sentry_logger = logging.getLogger('sentry')
+downloads_logger = logging.getLogger('downloads')
 
 
 def get_sound_of_the_day_id():
@@ -318,10 +318,19 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    sentry_logger.info('Download sound', exc_info=True, extra={
-        'request': request,
-        'sound_id': sound_id,
-    })
+    if settings.LOG_DOWNLOADS:
+        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
+        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
+            downloads_logger.info('Download sound', extra={
+                'user_id': request.user.id,
+                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+                'session_id': request.session.session_key,
+                'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'method': request.method,
+                'sound_id': sound_id,
+                'range': request.META.get('HTTP_RANGE', None),
+            })
 
     if not Download.objects.filter(user=request.user, sound=sound).exists():
         Download.objects.create(user=request.user, sound=sound, license=sound.license)
@@ -336,10 +345,19 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    sentry_logger.info('Download pack', exc_info=True, extra={
-        'request': request,
-        'pack_id': pack_id,
-    })
+    if settings.LOG_DOWNLOADS:
+        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
+        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
+            downloads_logger.info('Download pack', extra={
+                'user_id': request.user.id,
+                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+                'session_id': request.session.session_key,
+                'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'method': request.method,
+                'pack_id': pack_id,
+                'range': request.META.get('HTTP_RANGE', None),
+            })
 
     if not Download.objects.filter(user=request.user, pack=pack).exists():
         Download.objects.create(user=request.user, pack=pack)
@@ -498,7 +516,7 @@ def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
-    pack_sounds = ",".join([str(s.id) for s in pack.sound_set.all()])
+    pack_sounds = ",".join([str(s.id) for s in pack.sounds.all()])
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
         raise PermissionDenied
@@ -508,7 +526,7 @@ def pack_edit(request, username, pack_id):
         form = PackEditForm(request.POST, instance=pack)
         if form.is_valid():
             form.save()
-            pack.sound_set.all().update(is_index_dirty=True)
+            pack.sounds.all().update(is_index_dirty=True)
             return HttpResponseRedirect(pack.get_absolute_url())
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds))

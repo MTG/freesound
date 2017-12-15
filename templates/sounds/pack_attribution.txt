@@ -1,4 +1,4 @@
-{% load absurl %}Sound pack downloaded from Freesound.org
+{% load absurl %}Sound pack downloaded from Freesound
 ----------------------------------------
 
 This pack of sounds contains sounds by the following user{{ users|pluralize }}:

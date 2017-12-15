@@ -31,6 +31,7 @@ from django.dispatch import receiver
 from utils.cache import invalidate_template_cache
 from django.utils.translation import ugettext as _
 from utils.search.search_forum import delete_post_from_solr
+import accounts
 import logging
 
 logger = logging.getLogger('web')
@@ -152,7 +153,7 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
 
 class Post(models.Model):
     thread = models.ForeignKey(Thread)
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(User, related_name='posts')
     body = models.TextField()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -254,6 +255,11 @@ def update_last_post_on_post_delete(sender, instance, **kwargs):
             # to update the thread, but it would be nice to get to the forum object
             # somehow and update that one....
             logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
+        except accounts.models.Profile.DoesNotExist:
+            # When a user is deleted using the admin, is possible that his posts are deleted after the profile has been
+            # deleted. In that case we shouldn't update the value of num_posts because the profile doesn't exists
+            # anymore, here it's safe to ignore the exception since we are deleting all the objects.
+            logger.info('Tried setting last posts for thread and forum, but the profile has already been deleted?')
     invalidate_template_cache('latest_posts')
 
 

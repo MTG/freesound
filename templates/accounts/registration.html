@@ -34,7 +34,7 @@
     We check uploads and forum posts for spam before others can see them. Any user that posts spam will be deleted.
     </h3>
 
-    <form method="post" action=".">{% csrf_token %}
+    <form method="post" action="." class="disable-on-submit">{% csrf_token %}
         {{ form.as_p }}
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
         <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>

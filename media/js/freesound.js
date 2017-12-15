@@ -65,6 +65,11 @@ function d()
 $(document).ready( function() {
     setupStarRatings();
     switchFormSubmits();
+
+    $(".disable-on-submit").submit(function () {
+       $(this).find('input[type="submit"]').attr("disabled", true);
+       return true;
+    });
 });
 
 var voted = {};

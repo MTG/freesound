@@ -140,10 +140,15 @@ def multi_email_cleanup(request):
 
 def check_username(request):
     username = request.GET.get('username', None)
-    username_valid = True
+    username_valid = False
     if username:
-        if User.objects.filter(username__iexact=username).exists() or OldUsername.objects.filter(username__iexact=username).exists():
-            username_valid = False
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            try:
+                OldUsername.objects.get(username__iexact=username)
+            except OldUsername.DoesNotExist:
+                username_valid = True
     return JsonResponse({'result': username_valid})
 
 

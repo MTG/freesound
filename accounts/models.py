@@ -83,8 +83,8 @@ class Profile(SocialModel):
     # The following 4 fields are updated using django signals (methods 'update_num_downloads*')
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
-    num_sound_downloads = models.PositiveIntegerField(editable=False, null=True)
-    num_pack_downloads = models.PositiveIntegerField(editable=False, null=True)
+    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)
+    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)
 
     is_deleted_user = models.BooleanField(db_index=True, default=False)
     is_adult = models.BooleanField(default=False)

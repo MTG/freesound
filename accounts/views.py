@@ -357,6 +357,10 @@ def edit(request):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update username, this will create an entry in OldUsername
+            request.user.username = profile_form.cleaned_data['username']
+            request.user.save()
+
             profile.save()
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
@@ -797,7 +801,11 @@ def account(request, username):
     try:
         user = User.objects.select_related('profile').get(username__iexact=username)
     except User.DoesNotExist:
-        raise Http404
+        try:
+            old_username = OldUsername.objects.get(username__iexact=username)
+            return HttpResponsePermanentRedirect(reverse("account", args=[old_username.user.username]))
+        except OldUsername.DoesNotExist:
+            raise Http404
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \

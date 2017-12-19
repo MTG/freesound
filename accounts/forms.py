@@ -236,6 +236,13 @@ class UsernameReminderForm(forms.Form):
 
 
 class ProfileForm(forms.ModelForm):
+    username = forms.RegexField(
+        label=_("Username"),
+        min_length=3,
+        max_length=30,
+        regex=r'^[\w.@+-]+$',
+        error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
+    )
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     signature = HtmlCleaningCharField(
         label="Forum signature",
@@ -262,7 +269,23 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
+
+        kwargs.update(initial={
+            'username': request.user.username
+        })
+
         super(ProfileForm, self).__init__(*args, **kwargs)
+
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        try:
+            User.objects.exclude(pk=self.request.user.id).get(username__iexact=username)
+        except User.DoesNotExist:
+            try:
+                OldUsername.objects.get(username__iexact=username)
+            except OldUsername.DoesNotExist:
+                return username
+        raise forms.ValidationError(_("A user with that username already exists."))
 
     def clean_about(self):
         about = self.cleaned_data['about']

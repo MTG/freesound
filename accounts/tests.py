@@ -429,6 +429,7 @@ class UserEditProfile(TestCase):
         self.client.login(username='testuser', password='testpass')
         self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
+            'profile-username': 'testuser',
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
             'profile-not_shown_in_online_users_list': True,

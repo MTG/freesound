@@ -1073,6 +1073,7 @@ class Download(models.Model):
 
 @receiver(post_delete, sender=Download)
 def update_num_downloads_on_delete(**kwargs):
+    # Deleting a Download object should be done in a transaction
     download = kwargs['instance']
     if download.sound_id:
         Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
@@ -1084,6 +1085,7 @@ def update_num_downloads_on_delete(**kwargs):
 
 @receiver(post_save, sender=Download)
 def update_num_downloads_on_insert(**kwargs):
+    # Creating a Download object should be done in a transaction
     download = kwargs['instance']
     if kwargs['created']:
         if download.sound_id:

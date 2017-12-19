@@ -53,4 +53,8 @@ class Command(BaseCommand):
         with connection.cursor() as c:
             c.execute(sql)
 
+        with connection.cursor() as c:
+            c.execute("UPDATE accounts_profile set num_pack_downloads=0 WHERE num_pack_downloads is NULL;")
+            c.execute("UPDATE accounts_profile set num_sound_downloads=0 WHERE num_sound_downloads is NULL;")
+
         logger.info('Copy number of Downloads finished')

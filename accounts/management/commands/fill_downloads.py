@@ -18,12 +18,9 @@
 #     See AUTHORS file.
 #
 
-import datetime
 import logging
 from django.core.management.base import BaseCommand
-from django.conf import settings
-from sounds.models import Download
-from django.contrib.auth.models import User
+from django.db import connection
 
 logger = logging.getLogger("console")
 
@@ -36,23 +33,24 @@ class Command(BaseCommand):
         # This command will copy number of all the Downloads for each user
         logger.info('Copy number of Downloads started')
 
-        td = datetime.timedelta(days=1)
+        sql =  """
+        WITH sq as (select user_id, count(*) as num_downloads from sounds_download where sound_id is not null group by user_id)
+        UPDATE accounts_profile set num_sound_downloads=sq.num_downloads
+        FROM sq
+        WHERE accounts_profile.user_id = sq.user_id;
+        """
 
-        user_ids = Download.objects.order_by().values_list('user_id', flat=True).distinct()
-        logger.info('Number of users to process: %d' % len(user_ids))
+        with connection.cursor() as c:
+            c.execute(sql)
 
-        for user_id in user_ids:
-            u = User.objects.select_related('profile').prefetch_related('download_set').get(id=user_id)
-            num_sound_downloads = 0
-            num_pack_downloads = 0
-            for download in u.download_set.all():
-                if download.pack_id == None:
-                    num_sound_downloads += 1
-                else:
-                    num_pack_downloads +=1
+        sql =  """
+        WITH sq as (select user_id, count(*) as num_downloads from sounds_download where pack_id is not null group by user_id)
+        UPDATE accounts_profile set num_pack_downloads=sq.num_downloads
+        FROM sq
+        WHERE accounts_profile.user_id = sq.user_id;
+        """
 
-            u.profile.num_sound_downloads = num_sound_downloads
-            u.profile.num_pack_downloads = num_pack_downloads
-            u.profile.save()
+        with connection.cursor() as c:
+            c.execute(sql)
 
         logger.info('Copy number of Downloads finished')

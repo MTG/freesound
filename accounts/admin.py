@@ -28,12 +28,18 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
+from django.utils.functional import cached_property
+from django.db import connection
+from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django_object_actions import DjangoObjectActions
+from django.contrib.auth.forms import UserChangeForm
+from django.forms import ValidationError
 
-from accounts.models import Profile, UserFlag, EmailPreferenceType
+from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername
 
 
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -109,6 +115,37 @@ class UserFlagAdmin(admin.ModelAdmin):
 admin.site.register(UserFlag, UserFlagAdmin)
 
 
+class LargeTablePaginator(Paginator):
+    """ We use the information on postgres table 'reltuples' to avoid using count(*) for performance. """
+    @cached_property
+    def count(self):
+        try:
+            if not self.object_list.query.where:
+                cursor = connection.cursor()
+                cursor.execute("SELECT reltuples FROM pg_class WHERE relname = %s",
+                    [self.object_list.query.model._meta.db_table])
+                ret = int(cursor.fetchone()[0])
+                return ret
+            else :
+                return self.object_list.count()
+        except :
+            # AttributeError if object_list has no count() method.
+            return len(self.object_list)
+
+
+class AdminUserForm(UserChangeForm):
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        try:
+            User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            try:
+                OldUsername.objects.get(username__iexact=username)
+            except OldUsername.DoesNotExist:
+                return username
+        raise ValidationError("A user with that username already exists.")
+
+
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     search_fields = ('=username', '=email')
     actions = (disable_active_user, disable_active_user_preserve_sounds, )
@@ -116,6 +153,16 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     list_filter = ()
     ordering = ('id', )
     show_full_result_count = False
+    form = AdminUserForm
+    fieldsets = (
+         (None, {'fields': ('username', 'password')}),
+         ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
+         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+                                    'groups')}),
+     ('Important dates', {'fields': ('last_login', 'date_joined')}),
+     )
+
+    paginator = LargeTablePaginator
 
     def full_delete(self, request, obj):
         username = obj.username
@@ -188,7 +235,14 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     change_actions = ('full_delete', 'delete_include_sounds', 'delete_preserve_sounds', )
 
+
+class OldUsernameAdmin(admin.ModelAdmin):
+    raw_id_fields = ('user', )
+
+
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
 
 admin.site.register(EmailPreferenceType)
+
+admin.site.register(OldUsername, OldUsernameAdmin)

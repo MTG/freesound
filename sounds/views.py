@@ -33,7 +33,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.six.moves.urllib.parse import urlparse
 from django.http import HttpResponse
 from django.template import loader
-from accounts.models import Profile
+from accounts.models import Profile, OldUsername
 from comments.forms import CommentForm
 from comments.models import Comment
 from forum.models import Thread
@@ -209,6 +209,8 @@ def sound(request, username, sound_id):
     try:
         sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id)
         if sound.user.username.lower() != username.lower():
+            if sound.user.old_usernames.filter(username__iexact=username).exists():
+                return HttpResponsePermanentRedirect(sound.get_absolute_url())
             raise Http404
         user_is_owner = request.user.is_authenticated and \
             (sound.user == request.user or request.user.is_superuser or request.user.is_staff or
@@ -317,15 +319,18 @@ def sound_download(request, username, sound_id):
         raise Http404
 
     if settings.LOG_DOWNLOADS:
-        downloads_logger.info('Download sound', extra={
-            'user_id': request.user.id,
-            'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-            'session_id': request.session.session_key,
-            'user_agent': request.META.get('HTTP_USER_AGENT'),
-            'sound_id': sound_id,
-            'range': request.META.get('HTTP_RANGE', None),
-        })
+        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
+        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
+            downloads_logger.info('Download sound', extra={
+                'user_id': request.user.id,
+                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+                'session_id': request.session.session_key,
+                'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'method': request.method,
+                'sound_id': sound_id,
+                'range': request.META.get('HTTP_RANGE', None),
+            })
 
     if not Download.objects.filter(user=request.user, sound=sound).exists():
         Download.objects.create(user=request.user, sound=sound, license=sound.license)
@@ -341,15 +346,18 @@ def pack_download(request, username, pack_id):
         raise Http404
 
     if settings.LOG_DOWNLOADS:
-        downloads_logger.info('Download pack', extra={
-            'user_id': request.user.id,
-            'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-            'session_id': request.session.session_key,
-            'user_agent': request.META.get('HTTP_USER_AGENT'),
-            'pack_id': pack_id,
-            'range': request.META.get('HTTP_RANGE', None),
-        })
+        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
+        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
+            downloads_logger.info('Download pack', extra={
+                'user_id': request.user.id,
+                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
+                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
+                'session_id': request.session.session_key,
+                'user_agent': request.META.get('HTTP_USER_AGENT'),
+                'method': request.method,
+                'pack_id': pack_id,
+                'range': request.META.get('HTTP_RANGE', None),
+            })
 
     if not Download.objects.filter(user=request.user, pack=pack).exists():
         Download.objects.create(user=request.user, pack=pack)

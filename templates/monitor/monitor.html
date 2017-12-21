@@ -14,6 +14,7 @@
         <li>{{new_upload_count}} new sound{{ new_upload_count|pluralize }}</li>
         <li>{{tardy_moderator_sounds_count}} tardy moderator{{ tardy_moderator_sounds_count|pluralize }} sound{{ tardy_moderator_sounds_count|pluralize }}</li>
         <li>{{tardy_user_sounds_count}} tardy user{{ tardy_moderator_sounds_count|pluralize }} sound{{ tardy_user_sounds_count|pluralize }}</li>
+        <li>See <a href="{% url 'monitor-moderators-stats' %}">moderator's activity stats</a></li>
     </ul>
 
     <h3>Processing system status</h3>

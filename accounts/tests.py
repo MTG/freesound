@@ -28,7 +28,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.core import mail
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest
+from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm, DeleteUserForm
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
@@ -269,15 +269,34 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_username_check(self):
-        username = 'test_user'
-        resp = self.client.post(reverse('check_username'),
+        username = 'test_user_new'
+        resp = self.client.get(reverse('check_username'),
                 {'username': username})
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], True)
 
-        User.objects.create_user(username, password="testpass")
-        resp = self.client.post(reverse('check_username'),
+        user = User.objects.create_user(username, password="testpass")
+        resp = self.client.get(reverse('check_username'),
                 {'username': username})
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        # Now we change the username and we check that both old and new usernames are not valid
+        user.username = 'other_username'
+        user.save()
+
+        # First we check that the OldUsername object is created
+        self.assertEqual(OldUsername.objects.filter(username=username, user=user).count(), 1)
+
+        resp = self.client.get(reverse('check_username'),
+                {'username': username})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        resp = self.client.get(reverse('check_username'),
+                {'username': user.username})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
 
 
 class OldUserLinksRedirect(TestCase):

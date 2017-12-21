@@ -26,7 +26,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.admin.utils import NestedObjects
 from django.db import models
 from django.db.models import Q
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save, post_save
 from django.utils.encoding import smart_unicode
 from django.conf import settings
 from django.urls import reverse
@@ -393,7 +393,20 @@ def create_user_profile(sender, instance, created, **kwargs):
         profile = Profile(user=instance, accepted_tos=True)
         profile.save()
 
+
 post_save.connect(create_user_profile, sender=User)
+
+
+def presave_user(sender, instance, **kwargs):
+    try:
+        old_username = User.objects.get(pk=instance.id).username
+        if old_username != instance.username:
+            OldUsername.objects.create(user=instance, username=old_username)
+    except User.DoesNotExist:
+        pass
+
+
+pre_save.connect(presave_user, sender=User)
 
 
 class EmailPreferenceType(models.Model):
@@ -411,3 +424,11 @@ class EmailPreferenceType(models.Model):
 class UserEmailSetting(models.Model):
     user = models.ForeignKey(User, related_name="email_settings")
     email_type = models.ForeignKey(EmailPreferenceType)
+
+
+class OldUsername(models.Model):
+    user = models.ForeignKey(User, related_name="old_usernames")
+    username = models.CharField(max_length=255, db_index=True)
+
+    def __unicode__(self):
+        return self.username

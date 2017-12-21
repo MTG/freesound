@@ -37,8 +37,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('filepath', type=str, help='Path to sound list')
-        parser.add_argument('-d', action='store_true', help='Delete any sounds which already exist and add them again')
+        parser.add_argument('-d', help='Delete any sounds which already exist and add them again')
         parser.add_argument('-f', action='store_true', help='Force the import if any rows are bad, skipping bad rows')
+        parser.add_argument('-s', '--soundsdir', type=str, default='', help='Directory where the sounds are located')
 
     def check_input_file(self, base_dir, lines):
         errors = []
@@ -91,7 +92,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         sound_list = options['filepath']
         print 'Importing from', sound_list
-        base_dir = os.path.dirname(sound_list)
+
+        if options['soundsdir'] == '':
+            base_dir = os.path.dirname(sound_list)
+        else:
+            base_dir = options['soundsdir']
+
         delete_already_existing = options['d']
         force_import = options['d']
 
@@ -116,14 +122,15 @@ class Command(BaseCommand):
             user = User.objects.get(username=usernamef)
 
             # 1 create dir and move sound to dir
-            directory = self.user.profile.locations()['uploads_dir']
+            directory = user.profile.locations()['uploads_dir']
             if not os.path.exists(directory):
                 os.mkdir(directory)
+
             src_path = os.path.join(base_dir, pathf)
             dest_path = os.path.join(directory, os.path.basename(pathf))
-            #print src_path,dest_path
 
-            shutil.copy(src_path, dest_path)
+            if src_path != dest_path:
+                shutil.copy(src_path, dest_path)
 
 
             sound_fields = {

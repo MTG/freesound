@@ -156,6 +156,10 @@ class Command(BaseCommand):
         num_donations = donations.models.Donation.objects\
             .aggregate(Sum('amount'))['amount__sum']
 
+        time_span = datetime.datetime.now()-datetime.timedelta(30)
+        sum_donations_month = donations.models.Donation.objects\
+            .filter(created__gt=time_span).aggregate(Sum('amount'))['amount__sum']
+
         num_sounds = sounds.models.Sound.objects.filter(processing_state="OK",
             moderation_state="OK").count()
         packs = sounds.models.Pack.objects.all().count()
@@ -174,6 +178,7 @@ class Command(BaseCommand):
             "total_users": users_num,
             "users_with_sounds": users_with_sounds,
             "total_donations": num_donations,
+            "donations_last_month": sum_donations_month,
             "sounds": num_sounds,
             "packs": packs,
             "downloads": downloads,

@@ -24,6 +24,7 @@ import requests
 import json
 from urlparse import parse_qs
 from django.conf import settings
+from django.contrib.auth.models import User
 from donations.models import Donation, DonationCampaign
 from django.core.management.base import BaseCommand
 
@@ -66,26 +67,38 @@ class Command(BaseCommand):
                 campaign = DonationCampaign.objects.order_by('date_start').last()
                 Donation._meta.get_field('created').auto_now_add = False
 
-                email_keys = [key for key in raw_rsp.keys() if key.startswith("L_EMAIL")]
-                for i in range(len(email_keys)):
-                    created = datetime.datetime.strptime(raw_rsp['L_TIMESTAMP%d' % i][0],'%Y-%m-%dT%H:%M:%SZ')
-                    donation_data = {
-                        'email': raw_rsp['L_EMAIL%d' % i][0],
-                        'display_name': 'Anonymous',
-                        'amount': raw_rsp['L_AMT%d' % i][0],
-                        'currency': raw_rsp['L_CURRENCYCODE%d' % i][0],
-                        'display_amount': False,
-                        'is_anonymous': True,
-                        'campaign': campaign,
-                        'created': created,
-                        'source': 'p'
-                    }
-                    obj, created = donations = Donation.objects.get_or_create(
-                             transaction_id=raw_rsp['L_TRANSACTIONID%d'%i][0], defaults=donation_data)
-                    if created:
-                        del donation_data['campaign']
-                        donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
-                        logger.info('Recevied donation (%s)' % json.dumps(donation_data))
+                # Only consider 'Donation' and 'Payment' entries
+                # TODO: explore the other types of entries like "transfer"
+                max_range = len([key for key in raw_rsp.keys() if key.startswith("L_TYPE")])
+                if raw_rsp['L_TYPE%d' % i][0] in [u'Donation', u'Payment']:
+                    for i in range(max_range):
+                        amount = raw_rsp['L_AMT%d' % i][0]
+                        if float(amount) < 0:
+                            continue  # Don't create objects for donations with negative amounts
+                        created_dt = datetime.datetime.strptime(raw_rsp['L_TIMESTAMP%d' % i][0], '%Y-%m-%dT%H:%M:%SZ')
+                        donation_data = {
+                            'email': raw_rsp['L_EMAIL%d' % i][0],
+                            'display_name': 'Anonymous',
+                            'amount': amount,
+                            'currency': raw_rsp['L_CURRENCYCODE%d' % i][0],
+                            'display_amount': False,
+                            'is_anonymous': True,
+                            'campaign': campaign,
+                            'created': created_dt,
+                            'source': 'p'
+                        }
+                        try:
+                            user = User.objects.get(email=raw_rsp['L_EMAIL%d' % i][0])
+                            donation_data['user'] = user
+                        except User.DoesNotExist:
+                            pass  # Don't link donation object to user object
+
+                        obj, created = Donation.objects.get_or_create(
+                                 transaction_id=raw_rsp['L_TRANSACTIONID%d'%i][0], defaults=donation_data)
+                        if created:
+                            del donation_data['campaign']
+                            donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
+                            logger.info('Recevied donation (%s)' % json.dumps(donation_data))
 
             start = start + one_day
             params['STARTDATE'] = start

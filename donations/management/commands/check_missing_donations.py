@@ -45,6 +45,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         days = options['days']
         logger.info("Synchronizing donations from paypal")
+        n_donations_created = 0
 
         td = datetime.timedelta(days=days)
         start = datetime.datetime.now() - td
@@ -96,6 +97,7 @@ class Command(BaseCommand):
                         obj, created = Donation.objects.get_or_create(
                                  transaction_id=raw_rsp['L_TRANSACTIONID%d'%i][0], defaults=donation_data)
                         if created:
+                            n_donations_created += 1
                             del donation_data['campaign']
                             donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
                             logger.info('Recevied donation (%s)' % json.dumps(donation_data))
@@ -103,4 +105,4 @@ class Command(BaseCommand):
             start = start + one_day
             params['STARTDATE'] = start
             params['ENDDATE'] = start + one_day
-        logger.info("Synchronizing donations from paypal ended")
+        logger.info("Synchronizing donations from paypal ended (%i objects created)" % n_donations_created)

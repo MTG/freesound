@@ -122,18 +122,19 @@ class FileChoiceForm(forms.Form):
 def get_user_by_email(email):
     return User.objects.get(email__iexact=email)
 
+username_field = forms.RegexField(
+    label=_("Username"),
+    min_length=3,
+    max_length=30,
+    regex=r'^[\w.@+-]+$',
+    help_text=_("Required. 30 characters or fewer. Alphanumeric characters only (letters, digits and underscores)."),
+    error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
+)
 
 class RegistrationForm(forms.Form):
     captcha_key = settings.RECAPTCHA_PUBLIC_KEY
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
-    username = forms.RegexField(
-        label=_("Username"),
-        min_length=3,
-        max_length=30,
-        regex=r'^[\w.@+-]+$',
-        help_text=_("Required. 30 characters or fewer. Alphanumeric characters only (letters, digits and underscores)."),
-        error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
-    )
+    username = username_field
 
     first_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     last_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
@@ -236,13 +237,8 @@ class UsernameReminderForm(forms.Form):
 
 
 class ProfileForm(forms.ModelForm):
-    username = forms.RegexField(
-        label=_("Username"),
-        min_length=3,
-        max_length=30,
-        regex=r'^[\w.@+-]+$',
-        error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
-    )
+
+    username = username_field
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     signature = HtmlCleaningCharField(
         label="Forum signature",
@@ -275,6 +271,7 @@ class ProfileForm(forms.ModelForm):
         })
 
         super(ProfileForm, self).__init__(*args, **kwargs)
+        self.fields['username'].help_text = None
 
     def clean_username(self):
         username = self.cleaned_data["username"]

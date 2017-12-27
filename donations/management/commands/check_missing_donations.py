@@ -100,6 +100,8 @@ class Command(BaseCommand):
                             n_donations_created += 1
                             del donation_data['campaign']
                             donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
+                            if 'user' in donation_data:
+                                donation_data['user'] = donation_data['user'].username  # Only log username in graylog
                             logger.info('Recevied donation (%s)' % json.dumps(donation_data))
 
             start = start + one_day

@@ -775,8 +775,8 @@ def flag(request, username, sound_id):
                 user_email = flag_form.cleaned_data["email"]
 
             from_email = settings.DEFAULT_FROM_EMAIL
-            send_mail_template(u"[flag] flagged file", "sounds/email_flag.txt",
-                               {"flag": flag}, from_email, reply_to=user_email)
+            send_mail_template(u"Sound flag: %s - %s" % (sound.user.username, sound.original_filename),
+                    "sounds/email_flag.txt", {"flag": flag}, from_email, reply_to=user_email)
 
             return redirect(sound)
     else:

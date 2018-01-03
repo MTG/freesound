@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load display_license_form %}
+
+{% block title %}{{ block.super }}Describe - pick license{% endblock %}
+
+{% block content %}
+<h1>Bulk Describe Sounds</h1>
+<h3>Sounds in CSV file</h3>
+{% if bulk.progress_type == 'N' %}
+  <p> The file was not validated yet, please wait a few minutes.</p>
+  <script>
+    setTimeout(function(){ window.location.reload(1); }, 5000);
+  </script>
+{% elif bulk.progress_type == 'V' %}
+
+  {% if bulk.validation_errors %}
+
+  <p> The file was validated, {{ bulk.validation_errors|length }} sound{{ bulk.validation_errors|pluralize }} were not valid and are going to be ommited if you continue. Only the first 5 errors are shown.</p>
+
+  <table>
+    <tr><th>File</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack Name</th><th>Username</th><th>Error</th></tr>
+    {% for line in bulk.validation_errors|slice:"5" %}
+      <tr>
+      {% for v in line|slice:"8"%}
+      <td>{{ v }}</td>
+      {% endfor %}
+      <td><img src="/media/images/cancel.png" title="{% for error in line.8%}{{error|escape}}&#010;{% endfor %}"/></td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  {% else %}
+
+  <p> The file was successfully validated, all sounds are valid. This are the first five sounds:</p>
+
+  <table>
+    <tr><th>File</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack Name</th><th>Username</th></tr>
+    {% for line in lines|slice:"5" %}
+      <tr>
+      {% for v in line%}
+      <td>{{ v }}</td>
+      {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+
+
+  {% endif %}
+
+  <p> The number of valid sounds is {{ bulk.sounds_valid }} </p>
+  
+  <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET">
+    <input type="hidden" name="action" value="start" />
+    <input type="submit" value="Start processing sounds"/>
+  </form>
+
+{% elif bulk.progress_type == 'S' %}
+<p> The processing of sounds started, please check the status in the following page: <a href="{% url "accounts-pending" %}">Pending Sounds</a></p>
+{% endif %}
+{% endblock %}

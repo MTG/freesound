@@ -22,6 +22,8 @@ import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
 import utils.sound_upload
 import errno
+import uuid
+import csv
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -45,12 +47,12 @@ from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, OldUsername
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
+from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory, BulkUploadProgress
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
@@ -445,8 +447,25 @@ def describe(request):
     file_structure.name = ''
 
     if request.method == 'POST':
-        form = FileChoiceForm(files, request.POST)
-        if form.is_valid():
+        form = FileChoiceForm(files, request.POST, prefix='sound')
+        csv_form = BulkDescribeForm(request.POST, request.FILES, prefix='bulk')
+        if csv_form.is_valid():
+            directory = os.path.join(settings.CSV_PATH, str(request.user.id))
+            try:
+                os.mkdir(directory)
+            except:
+                pass
+
+            path = os.path.join(directory, str(uuid.uuid4())+'.csv')
+            destination = open(path, 'wb')
+
+            f = csv_form.cleaned_data['csv_file']
+            for chunk in f.chunks():
+                destination.write(chunk)
+
+            bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path)
+            return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
+        elif form.is_valid():
             if "delete" in request.POST:
                 filenames = [files[x].name for x in form.cleaned_data["files"]]
                 tvars = {'form': form, 'filenames': filenames}
@@ -484,8 +503,9 @@ def describe(request):
                 tvars = {'form': form, 'file_structure': file_structure}
                 return render(request, 'accounts/describe.html', tvars)
     else:
-        form = FileChoiceForm(files)
-    tvars = {'form': form, 'file_structure': file_structure}
+        csv_form = BulkDescribeForm(prefix='bulk')
+        form = FileChoiceForm(files, prefix='sound')
+    tvars = {'form': form, 'file_structure': file_structure, 'csv_form': csv_form}
     return render(request, 'accounts/describe.html', tvars)
 
 
@@ -899,21 +919,21 @@ def upload_file(request):
 
 @login_required
 def upload(request, no_flash=False):
-    form = UploadFileForm()
     successes = 0
     errors = []
     uploaded_file = None
-    if no_flash:
-        if request.method == 'POST':
-            form = UploadFileForm(request.POST, request.FILES)
-            if form.is_valid():
-                submitted_files = request.FILES.getlist('files')
-                for file_ in submitted_files:
-                    if handle_uploaded_file(request.user.id, file_):
-                        uploaded_file = file_
-                        successes += 1
-                    else:
-                        errors.append(file_)
+    if request.method == 'POST' and no_flash:
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            submitted_files = request.FILES.getlist('files')
+            for file_ in submitted_files:
+                if handle_uploaded_file(request.user.id, file_):
+                    uploaded_file = file_
+                    successes += 1
+                else:
+                    errors.append(file_)
+    else:
+        form = UploadFileForm()
     tvars = {
         'form': form,
         'uploaded_file': uploaded_file,
@@ -922,6 +942,17 @@ def upload(request, no_flash=False):
         'no_flash': no_flash,
     }
     return render(request, 'accounts/upload.html', tvars)
+
+def bulk_describe(request, bulk_id):
+    bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id))
+    reader = csv.reader(open(bulk.csv_path, 'rU'))
+    reader.next() # Skip header
+    lines = list(reader)
+    if request.GET.get('action', False) == 'start' and bulk.progress_type == 'V':
+        bulk.progress_type = 'S'
+        bulk.save()
+
+    return render(request, 'accounts/bulk_describe.html', {'lines': lines, 'bulk': bulk})
 
 
 @login_required

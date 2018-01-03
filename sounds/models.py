@@ -1105,3 +1105,19 @@ class SoundLicenseHistory(models.Model):
 
     class Meta:
         ordering = ("-created",)
+
+class BulkUploadProgress(models.Model):
+    """Store sounds bulk describe by CSV upload"""
+    user = models.ForeignKey(User)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+    CSV_CHOICES = (
+        ("N", 'Not Started'),
+        ("E", 'Error'),
+        ("F", 'Finished'),
+        ("S", 'Started'),
+        ("V", 'Validated'),
+    )
+    progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
+    csv_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+    validation_errors = JSONField(null=True)
+    sounds_valid = models.PositiveIntegerField(null=False, default=0)

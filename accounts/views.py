@@ -919,21 +919,21 @@ def upload_file(request):
 
 @login_required
 def upload(request, no_flash=False):
+    form = UploadFileForm()
     successes = 0
     errors = []
     uploaded_file = None
-    if request.method == 'POST' and no_flash:
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            submitted_files = request.FILES.getlist('files')
-            for file_ in submitted_files:
-                if handle_uploaded_file(request.user.id, file_):
-                    uploaded_file = file_
-                    successes += 1
-                else:
-                    errors.append(file_)
-    else:
-        form = UploadFileForm()
+    if no_flash:
+        if request.method == 'POST':
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                submitted_files = request.FILES.getlist('files')
+                for file_ in submitted_files:
+                    if handle_uploaded_file(request.user.id, file_):
+                        uploaded_file = file_
+                        successes += 1
+                    else:
+                        errors.append(file_)
     tvars = {
         'form': form,
         'uploaded_file': uploaded_file,

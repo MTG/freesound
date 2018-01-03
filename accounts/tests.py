@@ -527,14 +527,14 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting one file redirects to /home/describe/sounds/
         resp = self.client.post('/home/describe/', {
             'describe': [u'Describe selected files'],
-            'files': [u'file1'],
+            'sound-files': [u'file1'],
         })
         self.assertRedirects(resp, '/home/describe/sounds/')
 
         # Selecting multiple file redirects to /home/describe/license/
         resp = self.client.post('/home/describe/', {
             'describe': [u'Describe selected files'],
-            'files': [u'file1', u'file0'],
+            'sound-files': [u'file1', u'file0'],
         })
         self.assertRedirects(resp, '/home/describe/license/')
 
@@ -542,7 +542,7 @@ class UserUploadAndDescribeSounds(TestCase):
         filenames_to_delete = [u'file1', u'file0']
         resp = self.client.post('/home/describe/', {
             'delete': [u'Delete selected files'],
-            'files': filenames_to_delete,
+            'sound-files': filenames_to_delete,
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.context['filenames']), len(filenames_to_delete))
@@ -550,7 +550,7 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting confirmation of files to delete
         resp = self.client.post('/home/describe/', {
             'delete_confirm': [u'delete_confirm'],
-            'files': filenames_to_delete,
+            'sound-files': filenames_to_delete,
         })
         self.assertRedirects(resp, '/home/describe/')
         self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(filenames_to_delete))

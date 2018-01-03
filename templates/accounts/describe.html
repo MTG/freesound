@@ -60,5 +60,15 @@
     </div>
 </div>
 <br style="clear: both;">
+<div id="describe-sounds">
+  <h1>Describe sounds in Bulk</h1>
+  <p>Upload a <b>csv</b> file with the data for each sounds (file,namef,tags,geotag,description,license,packname,username)</p>
+   <form method="POST" enctype="multipart/form-data" action="">
+     {% csrf_token %}
+     {{csv_form}}
+     <input type="submit" name="Submit" />
+   </form>
+</div>
+
 </div><!-- #describe_page -->
 {% endblock %}

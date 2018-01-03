@@ -222,6 +222,7 @@ DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum vie
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
+CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 

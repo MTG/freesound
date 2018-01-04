@@ -441,6 +441,31 @@ class UserEditProfile(TestCase):
         self.assertEqual(user.profile.signature, 'Signature test text')
         self.assertEqual(user.profile.not_shown_in_online_users_list, True)
 
+        # Now we change the username the maximum allowed times
+        for i in range(settings.USERNAME_CHANGE_MAX_TIMES):
+            self.client.post("/home/edit/", {
+                'profile-home_page': 'http://www.example.com/',
+                'profile-username': 'testuser%d' % i,
+                'profile-about': 'About test text',
+                'profile-signature': 'Signature test text',
+                'profile-not_shown_in_online_users_list': True,
+            })
+
+            user = User.objects.get(username="testuser%d" % i)
+            self.assertEqual(user.old_usernames.count(), i+1)
+
+        # Now the form should fail when we try to change the username
+        resp = self.client.post("/home/edit/", {
+            'profile-home_page': 'http://www.example.com/',
+            'profile-username': 'testuser-error',
+            'profile-about': 'About test text',
+            'profile-signature': 'Signature test text',
+            'profile-not_shown_in_online_users_list': True,
+        })
+
+        self.assertNotEqual(resp.context['profile_form'].errors, None)
+
+
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
         User.objects.create_user("testuser", password="testpass")

@@ -271,7 +271,7 @@ class ProfileForm(forms.ModelForm):
         })
 
         super(ProfileForm, self).__init__(*args, **kwargs)
-        self.fields['username'].help_text = None
+        self.fields['username'].help_text = "Can change up to %d times" % settings.USERNAME_CHANGE_MAX_TIMES
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -281,6 +281,8 @@ class ProfileForm(forms.ModelForm):
             try:
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
+                if OldUsername.objects.filter(user_id=self.request.user.id).count() >= settings.USERNAME_CHANGE_MAX_TIMES:
+                    raise forms.ValidationError("The username was changed more than the allowed times.")
                 return username
         raise forms.ValidationError(_("A user with that username already exists."))
 

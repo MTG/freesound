@@ -168,7 +168,7 @@ class SoundManager(models.Manager):
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
-          LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
+          LEFT JOIN sounds_pack ON (sound.pack_id = sounds_pack.id AND sounds_pack.is_deleted = False)
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
         WHERE

@@ -1068,3 +1068,146 @@ class UsernameReminderTestCase(TestCase):
         self.assertNotEqual(resp.context['form'].errors, None)
         self.assertEqual(len(mail.outbox), 0)
 
+
+class ChangeUsernameTests(TestCase):
+
+    def test_change_username_creates_old_username(self):
+
+        # Create user and check no OldUsername objects exist
+        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
+
+        # Change username and check a OldUsername is created
+        userA.username = 'userANewUsername'
+        userA.save()
+        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
+
+        # Save again user and check no new OldUsername are created
+        userA.save()
+        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
+
+        # Change username again and check a new OldUsername has been created
+        userA.username = 'userANewNewUsername'
+        userA.save()
+        self.assertEqual(OldUsername.objects.filter(username='userANewUsername', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Change username back to the previous one (won't be allowed in admin or profile form) and check that a new
+        # OldUsername object has been created for the last username
+        userA.username = "userANewUsername"
+        userA.save()
+        self.assertEqual(OldUsername.objects.filter(username='userANewNewUsername', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
+
+        # Change again the username to another previosuly used username and check that no new OldUsername is created
+        userA.username = 'userA'
+        userA.save()
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
+
+    @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
+    def test_change_username_form_profile_page(self):
+
+        # Create user and login
+        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        self.client.login(username='userA', password='testpass')
+
+        # Test save profile without changing username
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userA']})
+        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
+
+        # Now rename user for the first time
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewName']})
+        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
+
+        # Now rename user for the second time
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewName']})
+        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        self.assertEqual(OldUsername.objects.filter(username='userANewName', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try rename user with an existing username from another user
+        userB = User.objects.create_user('userB', email='userB@freesound.org')
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [userB.username]})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try rename user with a username that was already used by the same user in the past
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userA']})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try to rename for a third time to a valid username but can't rename anymore because exceeded maximum
+        # USERNAME_CHANGE_MAX_TIMES (which is set to 2 for this test)
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewNewName']})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+    @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
+    def test_change_username_form_admin(self):
+
+        User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
+        self.client.login(username='superuser', password='testpass')
+
+        # Create user and get admin change url
+        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        admin_change_url = reverse('admin:auth_user_change', args=[userA.id])
+
+        post_data = {'username': u'userA',
+                     'email': userA.email,  # Required to avoid breaking unique constraint with empty email
+                     'date_joined_0': "2015-10-06", 'date_joined_1': "16:42:00"}  # date_joined required
+
+        # Test save user without changing username
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
+
+        # Now rename user for the first time
+        post_data.update({'username': u'userANewName'})
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
+        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
+
+        # Now rename user for the second time
+        post_data.update({'username': u'userANewNewName'})
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
+        self.assertEqual(OldUsername.objects.filter(username='userANewName', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try rename user with an existing username from another user
+        userB = User.objects.create_user('userB', email='userB@freesound.org')
+        post_data.update({'username': userB.username})
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try rename user with a username that was already used by the same user in the past
+        post_data.update({'username': u'userA'})
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try to rename for a third time to a valid username. Because we are in admin now, the USERNAME_CHANGE_MAX_TIMES
+        # restriciton does not apply so rename should work correctly
+        post_data.update({'username': u'userANewNewNewName'})
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
+        self.assertEqual(OldUsername.objects.filter(username='userANewNewName', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)

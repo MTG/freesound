@@ -281,7 +281,7 @@ class ProfileForm(forms.ModelForm):
                         % (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username,
                            's' if (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username) != 1 else '')
         else:
-            help_text = "<br><b>WARNING:</b> your username can't be further chaneged"
+            help_text = "<br><b>WARNING:</b> your username can't be further changed"
             self.fields['username'].disabled = True
         self.fields['username'].help_text = help_text
 

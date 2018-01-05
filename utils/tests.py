@@ -227,9 +227,12 @@ class ShouldSuggestDonationTest(TestCase):
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
     def test_clean_html(self):
+        # Test if the text input contains allowed html tags
+        # The only supported tags are : a, img, strong, b, em, li, u, p, br, blockquotea and code
         ret = clean_html(u'a b c d')
         self.assertEqual(u'a b c d', ret)
 
+        # Also make sure links contains rel="nofollow"
         ret = clean_html(u'<a href="http://www.google.com" rel="squeek">google</a>')
         self.assertEqual(u'<a href="http://www.google.com" rel="nofollow">google</a>', ret)
 
@@ -237,10 +240,10 @@ class ShouldSuggestDonationTest(TestCase):
         self.assertEqual(u'<a href="http://www.google.com" rel="nofollow">google</a>', ret)
 
         ret = clean_html(u'<h1>this should return the <strong>substring</strong> just <b>fine</b></h1>')
-        self.assertEqual(u'&lt;h1&gt;this should return the <strong>substring</strong> just <b>fine</b>&lt;/h1&gt;', ret)
+        self.assertEqual(u'this should return the <strong>substring</strong> just <b>fine</b>', ret)
 
         ret = clean_html(u'<table><tr><td>amazing</td><td>grace</td></tr></table>')
-        self.assertEqual(u'&lt;table&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;amazing&lt;/td&gt;&lt;td&gt;grace&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;', ret)
+        self.assertEqual(u'amazinggrace', ret)
 
         ret = clean_html(u'<a href="javascript:void(0)">click me</a>')
         self.assertEqual(u'click me', ret)
@@ -275,12 +278,14 @@ class ShouldSuggestDonationTest(TestCase):
         ret = clean_html(u'abc http://www.google.com abc')
         self.assertEqual(u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc', ret)
 
+        # The links inside <> are encoded by &lt; and &gt;
         ret = clean_html(u'abc <http://www.google.com> abc')
         self.assertEqual(u'abc &lt; <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> &gt; abc', ret)
 
         ret = clean_html(u'GALORE: https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
         self.assertEqual(u'GALORE: <a href="https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator', ret)
 
+        # Allow custom placeholders
         ret = clean_html(u'<a href="${sound_id}">my sound id</a>')
         self.assertEqual(u'<a href="${sound_id}" rel="nofollow">my sound id</a>', ret)
 

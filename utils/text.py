@@ -184,7 +184,8 @@ def clean_html(input):
                 partial(bleach.linkifier.LinkifyFilter, callbacks=[nofollow]),
                 ],
             attributes=ok_attributes,
-            tags=ok_tags)
+            tags=ok_tags,
+            strip=True)
     output = cleaner.clean(input)
     return output
 

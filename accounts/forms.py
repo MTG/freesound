@@ -287,6 +287,11 @@ class ProfileForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data["username"]
+        # Check that:
+        #   1) It is not taken by another user
+        #   2) It was not used in the past by another (or the same) user
+        #   3) It has not been changed the maximum number of allowed times
+        # Only if the three conditions are met we allow to change the username
         try:
             User.objects.exclude(pk=self.request.user.id).get(username__iexact=username)
         except User.DoesNotExist:
@@ -297,7 +302,7 @@ class ProfileForm(forms.ModelForm):
                     raise forms.ValidationError("Your username can't be changed any further. Please contact support "
                                                 "if you still need to change it.")
                 return username
-        raise forms.ValidationError(_("A user with that username already exists."))
+        raise forms.ValidationError(_("This username is already taken or has been in used in the past."))
 
     def clean_about(self):
         about = self.cleaned_data['about']

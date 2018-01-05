@@ -122,6 +122,7 @@ class FileChoiceForm(forms.Form):
 def get_user_by_email(email):
     return User.objects.get(email__iexact=email)
 
+
 username_field = forms.RegexField(
     label=_("Username"),
     min_length=3,
@@ -130,6 +131,7 @@ username_field = forms.RegexField(
     help_text=_("Required. 30 characters or fewer. Alphanumeric characters only (letters, digits and underscores)."),
     error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
 )
+
 
 class RegistrationForm(forms.Form):
     captcha_key = settings.RECAPTCHA_PUBLIC_KEY
@@ -256,10 +258,10 @@ class ProfileForm(forms.ModelForm):
         required=False
     )
     is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inappropriate content warnings",
-            label="", required=False)
+                                  label="", required=False)
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
-        label = "",
+        label="",
         required=False
     )
 
@@ -281,7 +283,8 @@ class ProfileForm(forms.ModelForm):
             try:
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
-                if OldUsername.objects.filter(user_id=self.request.user.id).count() >= settings.USERNAME_CHANGE_MAX_TIMES:
+                if OldUsername.objects.filter(user_id=self.request.user.id).count() \
+                        >= settings.USERNAME_CHANGE_MAX_TIMES:
                     raise forms.ValidationError("The username was changed more than the allowed times.")
                 return username
         raise forms.ValidationError(_("A user with that username already exists."))
@@ -303,8 +306,8 @@ class ProfileForm(forms.ModelForm):
     def clean_sound_signature(self):
         sound_signature = self.cleaned_data['sound_signature']
         if is_spam(self.request, sound_signature):
-            raise forms.ValidationError("Your sound signature was considered spam, please edit and resubmit. If it keeps "
-                                        "failing please contact the admins.")
+            raise forms.ValidationError("Your sound signature was considered spam, please edit and resubmit. If it "
+                                        "keeps failing please contact the admins.")
         if len(sound_signature) > 256:
             raise forms.ValidationError("Your sound signature must not exeed 256 chars, please edit and resubmit.")
 
@@ -330,13 +333,16 @@ class EmailResetForm(forms.Form):
         return self.cleaned_data['password']
 
 
-DELETE_CHOICES = [('only_user', mark_safe(u'Delete only my user account information :)  (see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a> for more information)')),
+DELETE_CHOICES = [('only_user',
+                   mark_safe(u'Delete only my user account information :)  '
+                             u'(see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a>'
+                             u' for more information)')),
                   ('delete_sounds', u'Delete also my sounds and packs :(')]
+
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
-    delete_sounds = forms.ChoiceField(choices = DELETE_CHOICES,
-            widget=forms.RadioSelect())
+    delete_sounds = forms.ChoiceField(choices=DELETE_CHOICES, widget=forms.RadioSelect())
     password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):
@@ -384,10 +390,10 @@ class FsPasswordResetForm(forms.Form):
     """
     This form is a modification of django's PasswordResetForm. The only difference is that here we allow the user
     to enter an email or a username (insetad of only a username) to send the reset password email.
-    Methods `send_email` and `save` are very similar to the original methods from `django.contrib.auth.forms.PasswordResetForm`
-    We could not inherit from the original form because we don't want the old `username` field to be present.
-    When migrating to a new version of django (current is 1.11) we should check for updates in this code in case we also
-    have to apply them.
+    Methods `send_email` and `save` are very similar to the original methods from
+    `django.contrib.auth.forms.PasswordResetForm`. We could not inherit from the original form because we don't want
+    the old `username` field to be present. When migrating to a new version of django (current is 1.11) we should check
+    for updates in this code in case we also have to apply them.
     """
     email_or_username = forms.CharField(label="Email or Username", max_length=254)
 
@@ -401,11 +407,11 @@ class FsPasswordResetForm(forms.Form):
         """
         UserModel = get_user_model()
         active_users = UserModel._default_manager.filter(Q(**{
-            '%s__iexact' % UserModel.get_email_field_name(): email_or_username,
-            'is_active': True,
+                '%s__iexact' % UserModel.get_email_field_name(): email_or_username,
+                'is_active': True,
             }) | Q(**{
-            'username__iexact': email_or_username,
-            'is_active': True,
+                'username__iexact': email_or_username,
+                'is_active': True,
             })
         )
         return (u for u in active_users)
@@ -444,4 +450,3 @@ class FsPasswordResetForm(forms.Form):
                 subject_template_name, email_template_name, context, from_email,
                 user.email, html_email_template_name=html_email_template_name,
             )
-

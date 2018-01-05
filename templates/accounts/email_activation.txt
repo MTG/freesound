@@ -5,7 +5,7 @@
 {% block salutation %}{{user.username}}{% endblock %}
 
 {% block body %}
-Thank you for signing up at Freesound.org!
+Thank you for signing up at Freesound!
 
 In order to activate your Freesound account, please click this link:
 

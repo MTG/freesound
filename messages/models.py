@@ -60,7 +60,7 @@ send message >> creates 2 mails in database:
         to gerard
         sent = 1
         archived = 0
-        read = 0 (although this doesn't mattrer for "sent" mails)
+        read = 0 (although this doesn't matter for "sent" mails)
     
     in inbox gerard:
         from bram

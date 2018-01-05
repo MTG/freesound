@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-import base64
+
 import requests
 from django.shortcuts import render
 from django.conf import settings
@@ -93,6 +93,12 @@ def monitor_home(request):
     }
 
     return render(request, 'monitor/monitor.html', tvars)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def monitor_stats(request):
+    return render(request, 'monitor/stats.html')
 
 
 def queries_stats_ajax(request):

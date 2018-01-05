@@ -401,7 +401,8 @@ def presave_user(sender, instance, **kwargs):
     try:
         old_username = User.objects.get(pk=instance.id).username
         if old_username != instance.username:
-            OldUsername.objects.create(user=instance, username=old_username)
+            # We use .get_or_create below to avoid having 2 OldUsername objects with the same user/username pair
+            OldUsername.objects.get_or_create(user=instance, username=old_username)
     except User.DoesNotExist:
         pass
 

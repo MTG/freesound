@@ -267,13 +267,23 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
-
         kwargs.update(initial={
             'username': request.user.username
         })
-
         super(ProfileForm, self).__init__(*args, **kwargs)
-        self.fields['username'].help_text = "Can change up to %d times" % settings.USERNAME_CHANGE_MAX_TIMES
+
+        self.n_times_changed_username = OldUsername.objects.filter(user_id=self.request.user.id).count()
+        if self.n_times_changed_username < 1:
+            help_text = "<br><b>WARNING:</b> you can only change your username a maximum of %i times" \
+                        % settings.USERNAME_CHANGE_MAX_TIMES
+        elif 1 <= self.n_times_changed_username < settings.USERNAME_CHANGE_MAX_TIMES:
+            help_text = "<br><b>WARNING:</b> you can only change your username %i more time%s" \
+                        % (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username,
+                           's' if (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username) != 1 else '')
+        else:
+            help_text = "<br><b>WARNING:</b> your username can't be further chaneged"
+            self.fields['username'].disabled = True
+        self.fields['username'].help_text = help_text
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -283,9 +293,9 @@ class ProfileForm(forms.ModelForm):
             try:
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
-                if OldUsername.objects.filter(user_id=self.request.user.id).count() \
-                        >= settings.USERNAME_CHANGE_MAX_TIMES:
-                    raise forms.ValidationError("The username was changed more than the allowed times.")
+                if self.n_times_changed_username >= settings.USERNAME_CHANGE_MAX_TIMES:
+                    raise forms.ValidationError("Your username can't be changed any further. Please contact support "
+                                                "if you still need to change it.")
                 return username
         raise forms.ValidationError(_("A user with that username already exists."))
 

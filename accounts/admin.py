@@ -134,16 +134,23 @@ class LargeTablePaginator(Paginator):
 
 
 class AdminUserForm(UserChangeForm):
+
     def clean_username(self):
         username = self.cleaned_data["username"]
+        # Check that:
+        #   1) It is not taken by another user
+        #   2) It was not used in the past by another (or the same) user
+        # NOTE: as opposed as in accounts.forms.ProfileForm, here we don't impose the limitation of changing the
+        # username a maximum number of times.
         try:
-            User.objects.get(username__iexact=username)
+            User.objects.exclude(pk=self.instance.id).get(username__iexact=username)
         except User.DoesNotExist:
             try:
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
                 return username
-        raise ValidationError("A user with that username already exists.")
+        raise ValidationError("This username is already taken or has been in used in the past by this or some other "
+                              "user.")
 
 
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
@@ -237,7 +244,9 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
 
 class OldUsernameAdmin(admin.ModelAdmin):
+    search_fields = ('=username', )
     raw_id_fields = ('user', )
+    list_display = ('user', 'username')
 
 
 admin.site.unregister(User)

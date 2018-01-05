@@ -33,7 +33,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.six.moves.urllib.parse import urlparse
 from django.http import HttpResponse
 from django.template import loader
-from accounts.models import Profile, OldUsername
+from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from forum.models import Thread
@@ -49,6 +49,7 @@ from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
 from utils.search.search_general import get_random_sound_from_solr
 from tickets.models import Ticket, TicketComment
+from utils.username import get_user_from_oldusername
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
@@ -209,7 +210,8 @@ def sound(request, username, sound_id):
     try:
         sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id)
         if sound.user.username.lower() != username.lower():
-            if sound.user.old_usernames.filter(username__iexact=username).exists():
+            user = get_user_from_oldusername(username)
+            if user != None and user.id == sound.user_id:
                 return HttpResponsePermanentRedirect(sound.get_absolute_url())
             raise Http404
         user_is_owner = request.user.is_authenticated and \
@@ -316,7 +318,9 @@ def sound_download(request, username, sound_id):
                                                     reverse("sound", args=[username, sound_id])))
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
 
     if settings.LOG_DOWNLOADS:
         range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
@@ -343,7 +347,9 @@ def pack_download(request, username, pack_id):
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != pack.user_id:
+            raise Http404
 
     if settings.LOG_DOWNLOADS:
         range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
@@ -376,7 +382,9 @@ def pack_licenses(request, username, pack_id):
 def sound_edit(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, processing_state='OK')
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
@@ -515,7 +523,9 @@ def sound_edit(request, username, sound_id):
 def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or  user.id != pack.user_id:
+            raise Http404
     pack_sounds = ",".join([str(s.id) for s in pack.sounds.all()])
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
@@ -543,7 +553,9 @@ def pack_edit(request, username, pack_id):
 def pack_delete(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != pack.user_id:
+            raise Http404
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
         raise PermissionDenied
@@ -576,7 +588,9 @@ def pack_delete(request, username, pack_id):
 def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
@@ -600,7 +614,9 @@ def sound_edit_sources(request, username, sound_id):
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
     try:
         remix_group = sound.remix_group.all()[0]
     except:
@@ -625,7 +641,9 @@ def remix_group(request, group_id):
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
     return render(request, 'sounds/geotag.html', locals())
 
 
@@ -637,7 +655,9 @@ def similar(request, username, sound_id):
                               analysis_state="OK",
                               similarity_state="OK")
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
 
     similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     logger.debug('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
@@ -649,7 +669,9 @@ def pack(request, username, pack_id):
     try:
         pack = Pack.objects.select_related().get(id=pack_id)
         if pack.user.username.lower() != username.lower():
-            raise Http404
+            user = get_user_from_oldusername(username)
+            if user == None or user.id != pack.user_id:
+                raise Http404
     except Pack.DoesNotExist:
         raise Http404
 
@@ -673,7 +695,7 @@ def pack(request, username, pack_id):
 
     # If user is owner of pack, display form to add description
     enable_description_form = False
-    if request.user.username == username:
+    if request.user.id == pack.user_id:
         enable_description_form = True
         form = PackDescriptionForm(instance = pack)
 
@@ -690,7 +712,9 @@ def pack(request, username, pack_id):
 
 
 def packs_for_user(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = get_user_from_oldusername(username)
+    if user == None:
+        raise Http404
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
@@ -699,7 +723,9 @@ def packs_for_user(request, username):
 
 
 def for_user(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = get_user_from_oldusername(username)
+    if user == None:
+        raise Http404
     qs = Sound.public.only('id').filter(user=user)
     paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     paginator = paginate_data['paginator']
@@ -714,7 +740,9 @@ def for_user(request, username):
 def delete(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
 
     if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied
@@ -755,7 +783,9 @@ def delete(request, username, sound_id):
 def flag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
-        raise Http404
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound.user_id:
+            raise Http404
 
     user = None
     if request.user.is_authenticated:
@@ -818,7 +848,11 @@ def old_pack_link_redirect(request):
 
 
 def display_sound_wrapper(request, username, sound_id):
-    sound_obj = get_object_or_404(Sound, id=sound_id, user__username__iexact=username)
+    sound_obj = get_object_or_404(Sound, id=sound_id)
+    if sound_obj.user.username.lower() != username.lower():
+        user = get_user_from_oldusername(username)
+        if user == None or user.id != sound_obj.user_id:
+            raise Http404
 
     # The following code is duplicated in sounds.tempaltetags.display_sound. This could be optimized.
     is_explicit = False

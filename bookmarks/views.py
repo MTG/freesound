@@ -21,8 +21,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 
@@ -31,11 +30,14 @@ from bookmarks.models import *
 from sounds.models import Sound
 from utils.functional import combine_dicts
 from utils.pagination import paginate
+from utils.username import get_user_from_oldusername
 
 
 def bookmarks(request, username, category_id=None):
+    user = get_user_from_oldusername(username)
+    if user == None:
+        raise Http404
 
-    user = get_object_or_404(User, username__iexact=username)
     is_owner = request.user.is_authenticated and user == request.user
 
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()

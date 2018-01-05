@@ -274,14 +274,16 @@ class ProfileForm(forms.ModelForm):
 
         self.n_times_changed_username = OldUsername.objects.filter(user_id=self.request.user.id).count()
         if self.n_times_changed_username < 1:
-            help_text = "<br><b>WARNING:</b> you can only change your username a maximum of %i times" \
+            help_text = "You can only change your username %i times<br><b>Warning</b>: once you " \
+                        "change your username, you can't change it back to the previous username " \
                         % settings.USERNAME_CHANGE_MAX_TIMES
         elif 1 <= self.n_times_changed_username < settings.USERNAME_CHANGE_MAX_TIMES:
-            help_text = "<br><b>WARNING:</b> you can only change your username %i more time%s" \
+            help_text = "You can only change your username %i more time%s<br><b>Warning</b>: once " \
+                        "you change your username, you can't change it back to the previous username " \
                         % (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username,
                            's' if (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username) != 1 else '')
         else:
-            help_text = "<br><b>WARNING:</b> your username can't be further changed"
+            help_text = "You already changed your username the maximum times allowed"
             self.fields['username'].disabled = True
         self.fields['username'].help_text = help_text
 

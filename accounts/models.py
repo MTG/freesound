@@ -432,4 +432,4 @@ class OldUsername(models.Model):
     username = models.CharField(max_length=255, db_index=True)
 
     def __unicode__(self):
-        return self.username
+        return '{0} > {1}'.format(self.username, self.user.username)

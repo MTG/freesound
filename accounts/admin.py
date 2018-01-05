@@ -143,7 +143,8 @@ class AdminUserForm(UserChangeForm):
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
                 return username
-        raise ValidationError("A user with that username already exists.")
+        raise ValidationError("This username is already taken or has been in used in the past by this or some other "
+                              "user.")
 
 
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
@@ -237,7 +238,9 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
 
 class OldUsernameAdmin(admin.ModelAdmin):
+    search_fields = ('=username', )
     raw_id_fields = ('user', )
+    list_display = ('user', 'username')
 
 
 admin.site.unregister(User)

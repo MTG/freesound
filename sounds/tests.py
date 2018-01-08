@@ -773,6 +773,22 @@ class SoundPackDownloadTestCase(TestCase):
             self.sound.refresh_from_db()
             self.assertEqual(self.sound.num_downloads, 0)
 
+    def test_download_sound_oldusername(self):
+        # Test if download works if username changed
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            self.sound.user.username = 'other_username'
+            self.sound.user.save()
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]))
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+
     def test_download_pack(self):
         with mock.patch('sounds.views.download_sounds', return_value=HttpResponse()):
 
@@ -801,6 +817,21 @@ class SoundPackDownloadTestCase(TestCase):
             Download.objects.all().delete()
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 0)
+
+    def test_download_pack_oldusername(self):
+        # Test if download pack works if username changed
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            self.pack.user.username = 'other_username'
+            self.pack.user.save()
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]))
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
 
 
 class SoundSignatureTestCase(TestCase):

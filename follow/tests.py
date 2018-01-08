@@ -43,6 +43,14 @@ class FollowTestCase(TestCase):
         resp = self.client.get("/people/nouser/following_users/")
         self.assertEqual(resp.status_code, 404)
 
+    def test_following_users_oldusername(self):
+        user = User.objects.get(username='User2')
+        user.username = "new-username"
+        user.save()
+        # If we get following users for someone who exists by it's old username
+        resp = self.client.get("/people/User2/following_users/")
+        self.assertEqual(resp.status_code, 200)
+
     def test_followers(self):
         # If we get following users for someone who exists, OK
         resp = self.client.get("/people/User2/followers/")
@@ -52,6 +60,14 @@ class FollowTestCase(TestCase):
         resp = self.client.get("/people/nouser/followers/")
         self.assertEqual(resp.status_code, 404)
 
+    def test_followers_oldusername(self):
+        user = User.objects.get(username='User2')
+        user.username = "new-username"
+        user.save()
+        # If we get following users for someone who exists by it's old username
+        resp = self.client.get("/people/User2/followers/")
+        self.assertEqual(resp.status_code, 200)
+
     def test_following_tags(self):
         # If we get following tags for someone who exists, OK
         resp = self.client.get("/people/User2/following_tags/")
@@ -60,6 +76,14 @@ class FollowTestCase(TestCase):
         # Someone who doesn't exist should give 404
         resp = self.client.get("/people/nouser/following_tags/")
         self.assertEqual(resp.status_code, 404)
+
+    def test_following_tags_oldusename(self):
+        user = User.objects.get(username='User2')
+        user.username = "new-username"
+        user.save()
+        # If we get following tags for someone who exists by it's old username
+        resp = self.client.get("/people/User2/following_tags/")
+        self.assertEqual(resp.status_code, 200)
 
     def test_follow_user(self):
         # Start following unexisting user

@@ -26,8 +26,9 @@ from apiv2.models import ApiV2Client
 
 class ApiV2ClientAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
-    search_fields = ('=user__username', )
+    search_fields = ('user__username', 'name')
     list_filter = ('status', )
-    list_display = ("user", "status", "allow_oauth_passoword_grant")
+    list_display = ("name", "url", "user", "status", "throttling_level")
+
 
 admin.site.register(ApiV2Client, ApiV2ClientAdmin)

@@ -58,7 +58,7 @@ class Command(BaseCommand):
         more_downloads = True
         while start < datetime.datetime.now():
             downloads = Download.objects.filter(pack_id__isnull=False, created__gte=start, created__lt=start+td)\
-                    .prefetch_related('pack__sound_set')
+                    .prefetch_related('pack__sounds')
             start += td
             more_downloads = downloads.count() != 0
             with transaction.atomic():
@@ -67,7 +67,7 @@ class Command(BaseCommand):
                     sounds = []
                     pd = PackDownload.objects.create(user=download.user, created=download.created, pack_id=download.pack_id)
                     pds = []
-                    for sound in download.pack.sound_set.all():
+                    for sound in download.pack.sounds.all():
                         pds.append(PackDownloadSound(sound=sound, license=sound.license, pack_download=pd))
                         sounds.append({'sound_id': sound.id, 'license_id': sound.license_id})
                     PackDownloadSound.objects.bulk_create(pds, batch_size=1000)

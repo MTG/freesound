@@ -73,5 +73,5 @@ class Command(BaseCommand):
                     PackDownloadSound.objects.bulk_create(pds, batch_size=1000)
                     PackDownloadJson.objects.create(user=download.user, created=download.created, pack_id=download.pack_id, sounds=sounds)
 
-            logger.info("Copy of Download for %d sounds of the date: %s " % (downloads.count(), start.strftime("%Y-%m-%d")))
+            logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(), start.strftime("%Y-%m-%d")))
         logger.info('Copy Downloads to new PackDownload finished')

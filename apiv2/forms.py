@@ -144,9 +144,12 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return group_by_pack
 
     def clean_page_size(self):
-        requested_paginate_by = self.cleaned_data[settings.APIV2['PAGE_SIZE_QUERY_PARAM']] or \
-                                settings.APIV2['PAGE_SIZE']
-        return min(int(requested_paginate_by), settings.APIV2['MAX_PAGE_SIZE'])
+        requested_paginate_by = self.cleaned_data[settings.APIV2['PAGE_SIZE_QUERY_PARAM']]
+        try:
+            paginate_by = min(int(requested_paginate_by), settings.APIV2['MAX_PAGE_SIZE'])
+        except (ValueError, TypeError):  # TypeError if None, ValueError if bad input
+            paginate_by = settings.APIV2['PAGE_SIZE']
+        return paginate_by
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']

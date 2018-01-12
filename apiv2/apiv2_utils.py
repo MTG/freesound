@@ -27,6 +27,7 @@ from urllib import unquote
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.core.cache import cache
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import resolve
 from django.utils.encoding import smart_text
@@ -73,8 +74,15 @@ class FsClientIdGenerator(BaseHashGenerator):
 def get_view_description(cls, html=False):
     description = ''
     if getattr(cls, 'get_description', None):
-        description = cls.get_description()
-    description = formatting.dedent(smart_text(description))
+        cache_key = cls.__name__
+        cached_description = cache.get(cache_key)
+        if not cached_description:
+            description = cls.get_description()
+            description = formatting.dedent(smart_text(description))
+            # Cache for 1 hour (if we update description, it will take 1 hour to show)
+            cache.set(cache_key, description, 60*60)
+        else:
+            description = cached_description
     if html:
         return formatting.markup_description(description)
     return description

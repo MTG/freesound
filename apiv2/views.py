@@ -951,7 +951,10 @@ class DescribeSound(WriteRequiredGenericAPIView):
                 # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
                 if self.auth_method_name == 'OAuth2':
                     apiv2_client = request.auth.client.apiv2_client
-                sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client)
+                sound_fields = serializer.data.copy()
+                sound_fields['dest_path'] = os.path.join(self.user.profile.locations()['uploads_dir'],
+                                                         sound_fields['upload_filename'])
+                sound = utils.sound_upload.create_sound(self.user, sound_fields, apiv2_client=apiv2_client)
                 return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).',
                                       'id': int(sound.id)}, status=status.HTTP_201_CREATED)
         else:

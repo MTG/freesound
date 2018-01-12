@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import time
 import datetime
 import logging
 from django.core.management.base import BaseCommand
@@ -32,12 +33,19 @@ logger = logging.getLogger("console")
 class Command(BaseCommand):
 
     help = 'Copy Downloads to new models'
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-s','--sleep',
+            dest='sleep',
+            default="0",
+            help='Time in (seconds) to sleep after each day of Downlaods processed.')
 
     def handle(self, *args, **options):
         # This command will copy all the Downloads to the new models, it can be executed multiple
         # times and it will continue from the last period.
         logger.info('Copy Downloads to new PackDownload')
 
+        sleep_time = int(options['sleep'])
         td = datetime.timedelta(days=1)
 
         # PackDownload disable created auto date
@@ -74,4 +82,5 @@ class Command(BaseCommand):
                     PackDownloadJson.objects.create(user=download.user, created=download.created, pack_id=download.pack_id, sounds=sounds)
 
             logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(), start.strftime("%Y-%m-%d")))
+            time.sleep(sleep_time)
         logger.info('Copy Downloads to new PackDownload finished')

@@ -11,15 +11,7 @@ module.exports = {
     loaders: [
       common.loaders.jsLoader,
       {
-        test: /\.css$/,
-        loader: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: ['css-loader', common.loaders.postCssLoader],
-          publicPath: '',
-        }),
-      },
-      {
-        test: /\.scss$/,
+        test: /\.s?css$/,
         loader: ExtractTextPlugin.extract({
           fallback: 'style-loader',
           use: ['css-loader', common.loaders.postCssLoader, 'sass-loader'],

@@ -7,7 +7,7 @@
     "start": "webpack-dev-server --config freesound/static/webpack/webpack.config.dev.js",
     "build": "webpack --config freesound/static/webpack/webpack.config.js",
     "build:prod": "webpack --config freesound/static/webpack/webpack.config.prod.js",
-    "prettier": "prettier freesound/static/src/**/**.js --write",
+    "prettier": "prettier freesound/static/src/**/**.js freesound/static/styles/**/**.scss --write",
     "eslint": "eslint freesound/static/src",
     "styleguide": "styleguidist server --config freesound/static/styleguide.config.js",
     "styleguide:build": "styleguidist build --config freesound/static/styleguide.config.js"
@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
+    "bootstrap": "^4.0.0-beta.3",
     "normalize.css": "^7.0.0",
     "whatwg-fetch": "^2.0.3"
   }

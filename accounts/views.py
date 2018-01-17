@@ -52,7 +52,7 @@ from comments.models import Comment
 from forum.models import Post
 from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
-from utils.username import get_user_or_404, get_user_from_oldusername
+from utils.username import get_user_from_oldusername, redirect_old_username
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
@@ -684,8 +684,9 @@ def attribution(request):
     return render(request, 'accounts/attribution.html', tvars)
 
 
+@redirect_old_username
 def downloaded_sounds(request, username):
-    user = get_user_or_404(username)
+    user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     page = paginator["page"]
@@ -698,8 +699,9 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
+@redirect_old_username
 def downloaded_packs(request, username):
-    user = get_user_or_404(username)
+    user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
     page = paginator["page"]
@@ -796,10 +798,9 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
+@redirect_old_username
 def account(request, username):
-    user = get_user_or_404(username)
-    if user.username != username:
-        return HttpResponsePermanentRedirect(reverse("account", args=[user.username]))
+    user = User.objects.select_related('profile').get(username__iexact=username)
 
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
@@ -1046,9 +1047,10 @@ def email_reset_complete(request, uidb36=None, token=None):
 
 @login_required
 @transaction.atomic()
+@redirect_old_username
 def flag_user(request, username=None):
     if request.POST:
-        flagged_user = get_user_or_404(request.POST["username"])
+        flagged_user = User.objects.get(username__iexact=request.POST["username"])
         reporting_user = request.user
         object_id = request.POST["object_id"]
         if object_id:
@@ -1109,10 +1111,10 @@ def flag_user(request, username=None):
 
 
 @login_required
+@redirect_old_username
 def clear_flags_user(request, username):
     if request.user.is_superuser or request.user.is_staff:
-        user = get_user_or_404(username)
-        flags = UserFlag.objects.filter(user = user)
+        flags = UserFlag.objects.filter(user__username = username)
         num = len(flags)
         for flag in flags:
             flag.delete()

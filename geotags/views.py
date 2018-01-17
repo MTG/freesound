@@ -28,7 +28,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 
 from sounds.models import Sound
-from utils.username import get_user_or_404
+from utils.username import get_user_or_404, redirect_old_username
 
 
 def generate_bytearray(sound_queryset):
@@ -72,17 +72,15 @@ def geotags_box_barray(request):
 
 
 @cache_page(60 * 15)
+@redirect_old_username
 def geotags_for_user_barray(request, username):
-    user = get_user_or_404(username)
-
-    sounds = user.sound.select_related('geotag').exclude(geotag=None)
+    sounds = Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)
     return generate_bytearray(sounds)
 
 
+@redirect_old_username
 def geotags_for_user_latest_barray(request, username):
-    user = get_user_or_404(username)
-
-    sounds = user.sound.select_related('geotag').exclude(geotag=None)[0:10]
+    sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
     return generate_bytearray(sounds)
 
 

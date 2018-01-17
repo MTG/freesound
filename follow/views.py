@@ -31,11 +31,12 @@ from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from socket import error as socket_error
-from utils.username import get_user_or_404
+from utils.username import redirect_old_username
 
 
+@redirect_old_username
 def following_users(request, username):
-    user = get_user_or_404(username)
+    user = get_object_or_404(User, username=username)
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -47,8 +48,9 @@ def following_users(request, username):
     return render(request, 'follow/following_users.html', tvars)
 
 
+@redirect_old_username
 def followers(request, username):
-    user = get_user_or_404(username)
+    user = get_object_or_404(User, username=username)
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -60,8 +62,9 @@ def followers(request, username):
     return render(request, 'follow/followers.html', tvars)
 
 
+@redirect_old_username
 def following_tags(request, username):
-    user = get_user_or_404(username)
+    user = get_object_or_404(User, username=username)
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -85,18 +88,20 @@ def following_tags(request, username):
 
 
 @login_required
+@redirect_old_username
 def follow_user(request, username):
     # create following user item relation
     user_from = request.user
-    user = get_user_or_404(username)
+    user_to = get_object_or_404(User, username=username)
     FollowingUserItem.objects.get_or_create(user_from=user_from, user_to=user_to)
     return HttpResponse()
 
 
 @login_required
+@redirect_old_username
 def unfollow_user(request, username):
     user_from = request.user
-    user = get_user_or_404(username)
+    user_to = get_object_or_404(User, username=username)
     try:
         FollowingUserItem.objects.get(user_from=user_from, user_to=user_to).delete()
     except FollowingUserItem.DoesNotExist:

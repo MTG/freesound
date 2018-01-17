@@ -23,6 +23,7 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from follow import follow_utils
 from follow.models import FollowingUserItem
 from follow.models import FollowingQueryItem
@@ -124,6 +125,7 @@ def unfollow_tags(request, slash_tags):
 
 
 @login_required
+@transaction.atomic()
 def stream(request):
 
     SELECT_OPTIONS = OrderedDict([

@@ -21,6 +21,7 @@
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.db.models import Q
+from django.db import transaction
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.template import RequestContext
@@ -82,6 +83,7 @@ def archived_messages(request):
 
 
 @login_required
+@transaction.atomic()
 def message(request, message_id):
     try:
         message = base_qs.get(id=message_id)
@@ -99,6 +101,7 @@ def message(request, message_id):
     return render(request, 'messages/message.html', locals())
 
 @login_required
+@transaction.atomic()
 def new_message(request, username=None, message_id=None):
     
     if request.method == 'POST':

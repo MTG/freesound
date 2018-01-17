@@ -49,7 +49,7 @@ class FollowTestCase(TestCase):
         user.save()
         # If we get following users for someone who exists by it's old username
         resp = self.client.get("/people/User2/following_users/")
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 301)
 
     def test_followers(self):
         # If we get following users for someone who exists, OK
@@ -66,7 +66,7 @@ class FollowTestCase(TestCase):
         user.save()
         # If we get following users for someone who exists by it's old username
         resp = self.client.get("/people/User2/followers/")
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 301)
 
     def test_following_tags(self):
         # If we get following tags for someone who exists, OK
@@ -83,7 +83,7 @@ class FollowTestCase(TestCase):
         user.save()
         # If we get following tags for someone who exists by it's old username
         resp = self.client.get("/people/User2/following_tags/")
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 301)
 
     def test_follow_user(self):
         # Start following unexisting user

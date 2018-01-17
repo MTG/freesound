@@ -780,9 +780,14 @@ class SoundPackDownloadTestCase(TestCase):
             self.sound.user.username = 'other_username'
             self.sound.user.save()
 
-            # Check donwload works successfully if user logged in
+            # Check download works successfully if user logged in
             self.client.login(username=self.user.username, password='testpass')
             resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]))
+            # Check if response is 301
+            self.assertEqual(resp.status_code, 301)
+
+            # Now follow redirect
+            resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]), follow=True)
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1
@@ -827,7 +832,13 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check donwload works successfully if user logged in
             self.client.login(username=self.user.username, password='testpass')
+
+            # First check that the response is a 301
             resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]))
+            self.assertEqual(resp.status_code, 301)
+
+            # Now follow the redirect
+            resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]), follow=True)
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1

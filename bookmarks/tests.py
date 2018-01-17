@@ -53,7 +53,12 @@ class BookmarksTest(TestCase):
         user = User.objects.get(username='Anton')
         user.username = "new-username"
         user.save()
+        # The response should be a 301
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
+        self.assertEqual(301, resp.status_code)
+
+        # Now follow the redirect
+        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}), follow=True)
         context = resp.context
 
         self.assertEqual(200, resp.status_code)
@@ -136,8 +141,16 @@ class BookmarksTest(TestCase):
 
         response = self.client.get(reverse('bookmarks-for-user-for-category',
                                            kwargs={'username': 'Anton', 'category_id': category.id}))
+        # The response is a 301
+        self.assertEqual(301, response.status_code)
 
+        # Now follow the redirect
+        response = self.client.get(reverse('bookmarks-for-user-for-category',
+                                kwargs={'username': 'Anton', 'category_id': category.id}), follow=True)
+        # The response is a 200
         self.assertEqual(200, response.status_code)
+
+
         self.assertEquals(2, len(response.context['bookmarked_sounds']))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')

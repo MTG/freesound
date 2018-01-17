@@ -105,6 +105,7 @@ def login(request, template_name, authentication_form):
 
 
 @login_required
+@transaction.atomic()
 def multi_email_cleanup(request):
 
     # If user does not have shared email problems, then it should have not visited this page
@@ -335,6 +336,7 @@ def edit_email_settings(request):
 
 
 @login_required
+@transaction.atomic()
 def edit(request):
     profile = request.user.profile
 
@@ -391,6 +393,7 @@ def edit(request):
     return render(request, 'accounts/edit.html', tvars)
 
 
+@transaction.atomic()
 def handle_uploaded_image(profile, f):
     logger.info("\thandling profile image upload")
     try:
@@ -931,6 +934,7 @@ def upload(request, no_flash=False):
 
 
 @login_required
+@transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
     error_message = None
@@ -967,6 +971,7 @@ def old_user_link_redirect(request):
 
 
 @login_required
+@transaction.atomic()
 def email_reset(request):
     if request.method == "POST":
         form = EmailResetForm(request.POST, user=request.user)
@@ -1017,6 +1022,7 @@ def email_reset_done(request):
 
 
 @never_cache
+@transaction.atomic()
 def email_reset_complete(request, uidb36=None, token=None):
     # Check that the link is valid and the base36 corresponds to a user id
     assert uidb36 is not None and token is not None  # checked by URLconf
@@ -1045,6 +1051,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 
 
 @login_required
+@transaction.atomic()
 def flag_user(request, username=None):
     if request.POST:
         flagged_user = get_user_from_oldusername(request.POST["username"])

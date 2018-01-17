@@ -8,28 +8,14 @@ module.exports = {
   entry: common.entries,
   output: Object.assign({}, common.output, {
     filename: '[name].min.js',
+    pathinfo: false,
   }),
+  bail: true,
   module: {
     loaders: [
       common.loaders.jsLoader,
       {
-        test: /\.css$/,
-        loader: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [
-            {
-              loader: 'css-loader',
-              options: {
-                minimize: true,
-              },
-            },
-            common.loaders.postCssLoader,
-          ],
-          publicPath: '',
-        }),
-      },
-      {
-        test: /\.scss$/,
+        test: /\.s?css$/,
         loader: ExtractTextPlugin.extract({
           fallback: 'style-loader',
           use: [

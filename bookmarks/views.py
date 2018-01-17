@@ -21,6 +21,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -63,6 +64,7 @@ def bookmarks(request, username, category_id=None):
 
 
 @login_required
+@transaction.atomic()
 def delete_bookmark_category(request, category_id):
 
     category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
@@ -78,6 +80,7 @@ def delete_bookmark_category(request, category_id):
 
 
 @login_required
+@transaction.atomic()
 def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
 

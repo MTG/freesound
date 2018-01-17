@@ -20,7 +20,9 @@
 
 import re
 import unicodedata
-from BeautifulSoup import BeautifulSoup, Comment
+import bleach
+from html5lib.filters.base import Filter
+from functools import partial
 from htmlentitydefs import name2codepoint
 from django.utils.encoding import smart_unicode
 from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, \
@@ -30,7 +32,7 @@ from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHO
 def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slug_field='slug', filter_dict=None):
     """ slugify with character translation which translates foreign characters to regular ascii equivalents """
     s = smart_unicode(s)
-    
+
     #  character entity reference
     if entities:
         s = re.sub('&(%s);' % '|'.join(name2codepoint), lambda m: unichr(name2codepoint[m.group(1)]), s)
@@ -72,7 +74,7 @@ def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slu
         while get_query():
             slug = "%s-%s" % (s, counter)
             counter += 1
-    
+
     return slug.lower()
 
 
@@ -117,10 +119,10 @@ def replace_element_by_children(soup, element):
     replace an element in the DOM with it's child nodes
     """
     parent = element.parent
-        
+
     if not parent:
         parent = soup
-    
+
     # afterwards we need to insert the children where the parent used to be!
     position_in_parent = 0
     for c in parent.contents:
@@ -128,7 +130,7 @@ def replace_element_by_children(soup, element):
             break
         else:
             position_in_parent += 1
-    
+
     # in reverse order, insert the child elements in their place.
     for el in element.contents[::-1]:
         parent.insert(position_in_parent, el)
@@ -137,101 +139,55 @@ def replace_element_by_children(soup, element):
     element.extract()
 
 
+def nofollow(attrs, new=False):
+    attrs[(None, u'rel')] = u'nofollow'
+    return attrs
+
+
+def is_valid_url(url):
+    url_exceptions = [SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER]
+    return url_regex.match(url) or url in url_exceptions
+
+
+class EmptyLinkFilter(Filter):
+    def __iter__(self):
+        remove_end_tag = False
+        for token in Filter.__iter__(self):
+            # only check anchor tags
+            if 'name' in token and token['name'] == 'a' and token['type'] in ['StartTag', 'EndTag']:
+                if token['type'] == 'StartTag':
+                    remove_end_tag = True
+                    for attr, value in token['data'].items():
+                        if attr == (None, 'href') and value != '' and is_valid_url(value):
+                            remove_end_tag = False
+                    if remove_end_tag:
+                        continue
+                elif token['type'] == 'EndTag' and remove_end_tag:
+                    remove_end_tag = False
+                    continue
+            yield token
+
 def clean_html(input):
-    """
-    >>> clean_html(u'a b c d')
-    u'a b c d'
-    >>> clean_html(u'<a href="http://www.google.com" rel="squeek">google</a>')
-    u'<a href="http://www.google.com" rel="nofollow">google</a>'
-    >>> clean_html(u'<a href="http://www.google.com">google</a>')
-    u'<a href="http://www.google.com" rel="nofollow">google</a>'
-    >>> clean_html(u'<h1>this should return the <strong>substring</strong> just <b>fine</b></h1>')
-    u'this should return the <strong>substring</strong> just <b>fine</b>'
-    >>> clean_html(u'<table><tr><td>amazing</td><td>grace</td></tr></table>')
-    u'amazinggrace'
-    >>> clean_html(u'<a href="javascript:void(0)">click me</a>')
-    u'click me'
-    >>> clean_html(u'<p class="hello">click me</p>')
-    u'<p>click me</p>'
-    >>> clean_html(u'<a></a>')
-    u''
-    >>> clean_html(u'<p>         </p>')
-    u'<p> </p>'
-    >>> clean_html(u'<a>hello</a>')
-    u'hello'
-    >>> clean_html(u'<p class="hello" id="1">a<br/>b<br/></a>')
-    u'<p>a<br />b<br /></p>'
-    >>> clean_html(u'<p></p>')
-    u'<p></p>'
-    >>> clean_html(u'<A REL="nofollow" hREF="http://www.google.com"><strong>http://www.google.com</strong></a>')
-    u'<a href="http://www.google.com" rel="nofollow"><strong>http://www.google.com</strong></a>'
-    >>> clean_html(u'<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>')
-    u'<a href="http://www.google.com" rel="nofollow"><strong>http://www.google.com</strong></a>'
-    >>> clean_html(u'http://www.google.com <a href="">http://www.google.com</a>')
-    u'<a href="http://www.google.com" rel="nofollow">http://www.google.com</a> <a href="http://www.google.com" rel="nofollow">http://www.google.com</a>'
-    >>> clean_html(u'<ul><p id=5><a href="123">123</a>hello<tr></tr><strong class=156>there http://www</strong></p></ul>')
-    u'<p>123hello<strong>there <a href="http://www" rel="nofollow">http://www</a></strong></p>'
-    >>> clean_html(u'abc http://www.google.com abc')
-    u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc'
-    >>> clean_html(u'GALORE: https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
-    u'GALORE: <a href="https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator'
-    >>> clean_html(u'<a href="${sound_id}">my sound id</a>')
-    u'<a href="${sound_id}" rel="nofollow">my sound id</a>'
-    >>> clean_html(u'<a href="${sound_url}">my sound url</a>')
-    u'<a href="${sound_url}" rel="nofollow">my sound url</a>'
-    """
+    # Reaplce html tags from user input, see utils.test for examples
 
-    def is_valid_url(url):
-        url_exceptions = [SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER]
-        return url_regex.match(url) or url in url_exceptions
-    
-    delete_tags = [u"script", u"style", u"head"]
-    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br",  u"blockquote", u"code"]
-    ok_attributes = {u"a": [u"href"], u"img": [u"src", u"alt", u"title"]}
+    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"ul", u"li", u"p", u"br",  u"blockquote", u"code"]
+    ok_attributes = {u"a": [u"href", u"rel"], u"img": [u"src", u"alt", u"title"]}
     # all other tags: replace with the content of the tag
-    
-    soup = BeautifulSoup(input, fromEncoding="utf-8")
-    
-    # delete all comments
-    [comment.extract() for comment in soup.findAll(text=lambda text:isinstance(text, Comment))]
 
-    for element in soup.findAll():
-        if element.name in delete_tags:
-            element.extract()
-            continue
-        
-        if element.name not in ok_tags:
-            replace_element_by_children(soup, element)
-            continue
-            
-        try:
-            if element.name in ok_attributes.keys():
-                # delete all attributes we don't want
-                for (attr_name, attr_value) in element.attrs:
-                    if attr_name not in ok_attributes[element.name]:
-                        del element[attr_name]
+    # If input contains link in the format: <http://> then convert it to < http:// >
+    # This is because otherwise the library recognizes it as a tag and breaks the link.
+    input = re.sub("\<(http\S+?)\>", r'< \1 >', input)
 
-                if element.name == "a":
-                    if u"href" not in dict(element.attrs) or not is_valid_url(element[u"href"]):
-                        replace_element_by_children(soup, element)
-                    else:
-                        element["rel"] = u"nofollow"
-                elif element.name == u"img":
-                    if u"src" not in dict(element.attrs) or not is_valid_url(element[u"src"]):
-                        replace_element_by_children(soup, element)
-            else:
-                # these should not have any attributes
-                element.attrs = []
-        except AttributeError:
-            if element.name in ok_attributes.keys():
-                replace_element_by_children(soup, element)
-
-    for text in soup.findAll(text=url_regex):
-        if not text.findParents(u'a'):
-            text.replaceWith(url_regex.sub(r'<a href="\1" rel="nofollow">\1</a>', text))
-    
-    return unicode(soup)
-
+    cleaner = bleach.Cleaner(
+            filters=[
+                EmptyLinkFilter,
+                partial(bleach.linkifier.LinkifyFilter, callbacks=[nofollow]),
+                ],
+            attributes=ok_attributes,
+            tags=ok_tags,
+            strip=True)
+    output = cleaner.clean(input)
+    return output
 
 def remove_control_chars(text):
     return ''.join(c for c in text if (ord(c) >= 32 or ord(c) in [9,10,13]))

@@ -27,14 +27,17 @@ from urllib import unquote
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.core.cache import cache
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import resolve
+from django.utils.encoding import smart_text
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, \
     ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from rest_framework.renderers import BrowsableAPIRenderer
+from rest_framework.utils import formatting
 
 import combined_search_strategies
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
@@ -62,6 +65,27 @@ class FsClientIdGenerator(BaseHashGenerator):
         a setting.
         """
         return oauthlib_generate_client_id(length=20, chars=UNICODE_ASCII_CHARACTER_SET)
+
+
+#########################################################################################
+# Rest Framework custom function for getting descriptions from function instead docstring
+#########################################################################################
+
+def get_view_description(cls, html=False):
+    description = ''
+    if getattr(cls, 'get_description', None):
+        cache_key = cls.__name__
+        cached_description = cache.get(cache_key)
+        if not cached_description:
+            description = cls.get_description()
+            description = formatting.dedent(smart_text(description))
+            # Cache for 1 hour (if we update description, it will take 1 hour to show)
+            cache.set(cache_key, description, 60*60)
+        else:
+            description = cached_description
+    if html:
+        return formatting.markup_description(description)
+    return description
 
 
 #############################

@@ -1069,13 +1069,6 @@ class Download(models.Model):
         ordering = ("-created",)
 
 
-class PackDownloadJson(models.Model):
-    user = models.ForeignKey(User)
-    pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
-    sounds = JSONField()
-    created = models.DateTimeField(db_index=True, auto_now_add=True)
-
-
 class PackDownload(models.Model):
     user = models.ForeignKey(User)
     pack = models.ForeignKey(Pack)

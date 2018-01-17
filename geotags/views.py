@@ -28,7 +28,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 
 from sounds.models import Sound
-from utils.username import get_user_from_oldusername
+from utils.username import get_user_or_404
 
 
 def generate_bytearray(sound_queryset):
@@ -73,18 +73,14 @@ def geotags_box_barray(request):
 
 @cache_page(60 * 15)
 def geotags_for_user_barray(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
 
     sounds = user.sound.select_related('geotag').exclude(geotag=None)
     return generate_bytearray(sounds)
 
 
 def geotags_for_user_latest_barray(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
 
     sounds = user.sound.select_related('geotag').exclude(geotag=None)[0:10]
     return generate_bytearray(sounds)
@@ -124,9 +120,7 @@ def embed_iframe(request):
 
 
 def for_user(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     tvars = {'tag': None,
              'for_user': user}
     return render(request, 'geotags/geotags.html', tvars)

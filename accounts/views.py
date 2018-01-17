@@ -52,7 +52,7 @@ from comments.models import Comment
 from forum.models import Post
 from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
-from utils.username import get_user_from_oldusername
+from utils.username import get_user_or_404, get_user_from_oldusername
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
@@ -685,9 +685,7 @@ def attribution(request):
 
 
 def downloaded_sounds(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     page = paginator["page"]
@@ -701,9 +699,7 @@ def downloaded_sounds(request, username):
 
 
 def downloaded_packs(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
     page = paginator["page"]
@@ -801,10 +797,8 @@ def accounts(request):
 
 
 def account(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
-    elif user.username != username:
+    user = get_user_or_404(username)
+    if user.username != username:
         return HttpResponsePermanentRedirect(reverse("account", args=[user.username]))
 
     tags = user.profile.get_user_tags() if user.profile else []
@@ -1054,7 +1048,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 @transaction.atomic()
 def flag_user(request, username=None):
     if request.POST:
-        flagged_user = get_user_from_oldusername(request.POST["username"])
+        flagged_user = get_user_or_404(request.POST["username"])
         reporting_user = request.user
         object_id = request.POST["object_id"]
         if object_id:
@@ -1117,7 +1111,7 @@ def flag_user(request, username=None):
 @login_required
 def clear_flags_user(request, username):
     if request.user.is_superuser or request.user.is_staff:
-        user = get_user_from_oldusername(username)
+        user = get_user_or_404(username)
         flags = UserFlag.objects.filter(user = user)
         num = len(flags)
         for flag in flags:

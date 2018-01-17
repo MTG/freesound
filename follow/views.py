@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -31,13 +31,11 @@ from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from socket import error as socket_error
-from utils.username import get_user_from_oldusername
+from utils.username import get_user_or_404
 
 
 def following_users(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -50,9 +48,7 @@ def following_users(request, username):
 
 
 def followers(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -65,9 +61,7 @@ def followers(request, username):
 
 
 def following_tags(request, username):
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -94,9 +88,7 @@ def following_tags(request, username):
 def follow_user(request, username):
     # create following user item relation
     user_from = request.user
-    user_to = get_user_from_oldusername(username)
-    if user_to == None:
-        raise Http404
+    user = get_user_or_404(username)
     FollowingUserItem.objects.get_or_create(user_from=user_from, user_to=user_to)
     return HttpResponse()
 
@@ -104,9 +96,7 @@ def follow_user(request, username):
 @login_required
 def unfollow_user(request, username):
     user_from = request.user
-    user_to = get_user_from_oldusername(username)
-    if user_to == None:
-        raise Http404
+    user = get_user_or_404(username)
     try:
         FollowingUserItem.objects.get(user_from=user_from, user_to=user_to).delete()
     except FollowingUserItem.DoesNotExist:

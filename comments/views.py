@@ -24,14 +24,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response, render
 from django.template.context import RequestContext
 from django.db import transaction
 from sounds.models import Sound
 from utils.functional import combine_dicts
 from utils.pagination import paginate
-from utils.username import get_user_from_oldusername
+from utils.username import get_user_or_404
 
 
 @login_required
@@ -53,9 +53,7 @@ def delete(request, comment_id):
 
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     sounds = Sound.objects.filter(user=user)
     qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
@@ -71,9 +69,7 @@ def for_user(request, username):
 
 def by_user(request, username):
     """ Display all comments made by the user """
-    user = get_user_from_oldusername(username)
-    if user == None:
-        raise Http404
+    user = get_user_or_404(username)
     qs = Comment.objects.filter(user=user).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list

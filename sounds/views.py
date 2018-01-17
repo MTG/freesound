@@ -318,22 +318,13 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if settings.LOG_DOWNLOADS:
-        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
-        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
-            downloads_logger.info('Download sound', extra={
-                'user_id': request.user.id,
-                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-                'session_id': request.session.session_key,
-                'user_agent': request.META.get('HTTP_USER_AGENT'),
-                'method': request.method,
-                'sound_id': sound_id,
-                'range': request.META.get('HTTP_RANGE', None),
-            })
+    if 'HTTP_RANGE' not in request.META:
+        cache_key = 'sdwn_%s_%d' % (sound_id, request.user.id)
+        if cache.get(cache_key, None) == None:
+            if not Download.objects.filter(user=request.user, sound=sound).exists():
+                Download.objects.create(user=request.user, sound=sound, license=sound.license)
 
-    if not Download.objects.filter(user=request.user, sound=sound).exists():
-        Download.objects.create(user=request.user, sound=sound, license=sound.license)
+            cache.set(cache_key, True, 60*60*5) # Don't save downloads for the same user/sound in 5 minutes
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
@@ -345,22 +336,14 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    if settings.LOG_DOWNLOADS:
-        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
-        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
-            downloads_logger.info('Download pack', extra={
-                'user_id': request.user.id,
-                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-                'session_id': request.session.session_key,
-                'user_agent': request.META.get('HTTP_USER_AGENT'),
-                'method': request.method,
-                'pack_id': pack_id,
-                'range': request.META.get('HTTP_RANGE', None),
-            })
+    if 'HTTP_RANGE' not in request.META:
+        cache_key = 'pdwn_%s_%d' % (pack_id, request.user.id)
+        if cache.get(cache_key, None) == None:
+            if not Download.objects.filter(user=request.user, pack=pack).exists():
+                Download.objects.create(user=request.user, pack=pack)
 
-    if not Download.objects.filter(user=request.user, pack=pack).exists():
-        Download.objects.create(user=request.user, pack=pack)
+            cache.set(cache_key, True, 60*60*5) # Don't save downloads for the same user/sound in 5 minutes
+
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
 

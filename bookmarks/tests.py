@@ -53,11 +53,16 @@ class BookmarksTest(TestCase):
         user = User.objects.get(username='Anton')
         user.username = "new-username"
         user.save()
-        # The response should be a 301
+
+        # Check that with the new-username should work, returning a 200
+        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'new-username'}))
+        self.assertEqual(200, resp.status_code)
+
+        # But with the old username the response should be a 301
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
         self.assertEqual(301, resp.status_code)
 
-        # Now follow the redirect
+        # Now follow the redirect of the last case
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}), follow=True)
         context = resp.context
 

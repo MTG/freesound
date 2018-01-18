@@ -1045,6 +1045,7 @@ def email_reset_complete(request, uidb36=None, token=None):
     return render(request, 'accounts/email_reset_complete.html', tvars)
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 @transaction.atomic()
 def flag_user(request, username=None):
@@ -1109,6 +1110,7 @@ def flag_user(request, username=None):
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 def clear_flags_user(request, username):
     if request.user.is_superuser or request.user.is_staff:

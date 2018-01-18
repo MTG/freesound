@@ -87,6 +87,7 @@ def following_tags(request, username):
     return render(request, 'follow/following_tags.html', tvars)
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 def follow_user(request, username):
     # create following user item relation
@@ -96,6 +97,7 @@ def follow_user(request, username):
     return HttpResponse()
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 def unfollow_user(request, username):
     user_from = request.user

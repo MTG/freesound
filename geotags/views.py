@@ -71,8 +71,8 @@ def geotags_box_barray(request):
         raise Http404
 
 
-@cache_page(60 * 15)
 @redirect_if_old_username_or_404
+@cache_page(60 * 15)
 def geotags_for_user_barray(request, username):
     sounds = Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)
     return generate_bytearray(sounds)

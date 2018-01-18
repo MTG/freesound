@@ -31,7 +31,7 @@ from django.db import transaction
 from sounds.models import Sound
 from utils.functional import combine_dicts
 from utils.pagination import paginate
-from utils.username import redirect_old_username
+from utils.username import redirect_if_old_username_or_404
 
 
 @login_required
@@ -51,7 +51,7 @@ def delete(request, comment_id):
     return HttpResponseRedirect(next+"?page="+page)
 
 
-@redirect_old_username
+@redirect_if_old_username_or_404
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
     user = get_object_or_404(User, username__iexact=username)
@@ -68,7 +68,7 @@ def for_user(request, username):
     return render(request, 'sounds/comments.html', tvars)
 
 
-@redirect_old_username
+@redirect_if_old_username_or_404
 def by_user(request, username):
     """ Display all comments made by the user """
     user = get_object_or_404(User, username__iexact=username)

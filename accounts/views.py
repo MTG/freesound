@@ -52,7 +52,7 @@ from comments.models import Comment
 from forum.models import Post
 from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
-from utils.username import get_user_from_oldusername, redirect_old_username
+from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
@@ -144,7 +144,7 @@ def check_username(request):
     username = request.GET.get('username', None)
     username_valid = False
     if username:
-        user = get_user_from_oldusername(username)
+        user = get_user_from_username_or_oldusername(username)
         username_valid = user == None
     return JsonResponse({'result': username_valid})
 
@@ -684,7 +684,7 @@ def attribution(request):
     return render(request, 'accounts/attribution.html', tvars)
 
 
-@redirect_old_username
+@redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
@@ -699,7 +699,7 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
-@redirect_old_username
+@redirect_if_old_username_or_404
 def downloaded_packs(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
@@ -798,7 +798,7 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
-@redirect_old_username
+@redirect_if_old_username_or_404
 def account(request, username):
     user = User.objects.select_related('profile').get(username__iexact=username)
 
@@ -1047,7 +1047,6 @@ def email_reset_complete(request, uidb36=None, token=None):
 
 @login_required
 @transaction.atomic()
-@redirect_old_username
 def flag_user(request, username=None):
     if request.POST:
         flagged_user = User.objects.get(username__iexact=request.POST["username"])
@@ -1111,7 +1110,6 @@ def flag_user(request, username=None):
 
 
 @login_required
-@redirect_old_username
 def clear_flags_user(request, username):
     if request.user.is_superuser or request.user.is_staff:
         flags = UserFlag.objects.filter(user__username = username)

@@ -1,7 +1,21 @@
 Buttons rule!
 
-```js
-<button className="button">
-  A button (not styled yet, be patient, your FE of choice will eventually work on it)
-</button>;
+```jsx
+<div className="row">
+  <div class="col">
+    <button className="btn-primary">
+      Primary
+    </button>
+  </div>
+  <div class="col">
+    <button className="btn-secondary">
+      Secondary
+    </button>
+  </div>
+  <div class="col">
+    <button>
+      Default
+    </button>
+  </div>
+</div>
 ```

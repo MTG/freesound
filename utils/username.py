@@ -26,6 +26,7 @@ from django.shortcuts import redirect
 from django.core.urlresolvers import NoReverseMatch
 from django.urls import reverse
 
+
 def get_user_from_username_or_oldusername(username):
     # Helper to get the user from an username that could have changed
     user = None
@@ -46,7 +47,15 @@ def get_user_or_404(username):
         raise Http404
     return user
 
+
 def redirect_if_old_username_or_404(func):
+    """
+    This is a decorator to return redirects when accessing a URL with the username in the pattern and that usernames
+    corresonds to an old username. We re-build the URL with the current username of that user and return a redirect.
+    Note that we don't use this decorator in views with @login_redirect because we don't want to apply redirects to
+    internal URL that require users being logged in. This is because there should not be public links pointing to
+    internal URLs.
+    """
     def inner(request, *args, **kwargs):
         new_user = get_user_or_404(kwargs['username'])
         if kwargs['username'] != new_user.username:

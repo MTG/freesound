@@ -354,7 +354,6 @@ def pack_licenses(request, username, pack_id):
     return HttpResponse(attribution, content_type="text/plain")
 
 
-# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def sound_edit(request, username, sound_id):
@@ -495,7 +494,6 @@ def sound_edit(request, username, sound_id):
     return render(request, 'sounds/sound_edit.html', tvars)
 
 
-# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def pack_edit(request, username, pack_id):
@@ -525,7 +523,6 @@ def pack_edit(request, username, pack_id):
     return render(request, 'sounds/pack_edit.html', tvars)
 
 
-# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def pack_delete(request, username, pack_id):
@@ -706,7 +703,6 @@ def for_user(request, username):
     return render(request, 'sounds/for_user.html', locals())
 
 
-# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def delete(request, username, sound_id):

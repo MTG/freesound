@@ -300,7 +300,8 @@ def after_download_modal(request):
         if should_suggest_donation(request.user, len(modal_shown_timestamps)):
             logger.info('Showing after download donate modal (%s)' % json.dumps({'user_id': request.user.id}))
             modal_shown_timestamps.append(time.time())
-            cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps)
+            cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps,
+                      60 * 60 * 24)  # 24 lifetime cache
             template = loader.get_template('sounds/after_download_modal_donation.html')
             response_content = template.render({'sound_name': sound_name})
 
@@ -341,7 +342,7 @@ def pack_download(request, username, pack_id):
         if cache.get(cache_key, None) == None:
             if not Download.objects.filter(user=request.user, pack=pack).exists():
                 Download.objects.create(user=request.user, pack=pack)
-                cache.set(cache_key, True, 60*60*5) # Don't save downloads for the same user/sound in 5 minutes
+                cache.set(cache_key, True, 60*60*5)  # Don't save downloads for the same user/sound in 5 minutes
 
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)

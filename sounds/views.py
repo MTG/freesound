@@ -328,8 +328,6 @@ def sound_download(request, username, sound_id):
         cache_key = 'sdwn_%d_%d' % (sound_id, request.user.id)
         if cache.get(cache_key, None) is None:
             Download.objects.create(user=request.user, sound=sound, license=sound.license)
-            cache.set(cache_key, True, 60*60*5)  # Don't save downloads for the same user/sound in the next 5 minutes
-
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
@@ -355,8 +353,7 @@ def pack_download(request, username, pack_id):
         cache_key = 'pdwn_%d_%d' % (pack_id, request.user.id)
         if cache.get(cache_key, None) is None:
             Download.objects.create(user=request.user, pack=pack)
-            cache.set(cache_key, True, 60*60*5)  # Don't save downloads for the same user/pack in the next 5 minutes
-
+            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/pack in the next 5 minutes
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
 

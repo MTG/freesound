@@ -205,6 +205,7 @@ def front_page(request):
     }
     return render(request, 'index.html', tvars)
 
+
 @redirect_if_old_username_or_404
 def sound(request, username, sound_id):
     try:
@@ -261,9 +262,7 @@ def sound(request, username, sound_id):
         users_following = follow_utils.get_users_following(request.user)
         if sound.user in users_following:
             is_following = True
-    is_explicit = sound.is_explicit and (not request.user.is_authenticated \
-                        or not request.user.profile.is_adult)
-
+    is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
     tvars = {
         'sound': sound,
@@ -307,6 +306,7 @@ def after_download_modal(request):
 
     return JsonResponse({'content': response_content})
 
+
 @redirect_if_old_username_or_404
 @transaction.atomic()
 def sound_download(request, username, sound_id):
@@ -323,7 +323,7 @@ def sound_download(request, username, sound_id):
             if not Download.objects.filter(user=request.user, sound=sound).exists():
                 Download.objects.create(user=request.user, sound=sound, license=sound.license)
 
-            cache.set(cache_key, True, 60*60*5) # Don't save downloads for the same user/sound in 5 minutes
+            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 

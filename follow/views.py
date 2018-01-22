@@ -31,8 +31,10 @@ from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from socket import error as socket_error
+from utils.username import redirect_if_old_username_or_404
 
 
+@redirect_if_old_username_or_404
 def following_users(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
@@ -46,6 +48,7 @@ def following_users(request, username):
     return render(request, 'follow/following_users.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def followers(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
@@ -59,6 +62,7 @@ def followers(request, username):
     return render(request, 'follow/followers.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def following_tags(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
@@ -83,6 +87,7 @@ def following_tags(request, username):
     return render(request, 'follow/following_tags.html', tvars)
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 def follow_user(request, username):
     # create following user item relation
@@ -92,6 +97,7 @@ def follow_user(request, username):
     return HttpResponse()
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 def unfollow_user(request, username):
     user_from = request.user

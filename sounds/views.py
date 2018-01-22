@@ -33,7 +33,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.six.moves.urllib.parse import urlparse
 from django.http import HttpResponse
 from django.template import loader
-from accounts.models import Profile, OldUsername
+from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from forum.models import Thread
@@ -49,6 +49,7 @@ from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
 from utils.search.search_general import get_random_sound_from_solr
 from tickets.models import Ticket, TicketComment
+from utils.username import redirect_if_old_username_or_404
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
@@ -204,14 +205,10 @@ def front_page(request):
     }
     return render(request, 'index.html', tvars)
 
-
+@redirect_if_old_username_or_404
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id)
-        if sound.user.username.lower() != username.lower():
-            if sound.user.old_usernames.filter(username__iexact=username).exists():
-                return HttpResponsePermanentRedirect(sound.get_absolute_url())
-            raise Http404
+        sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id, user__username=username)
         user_is_owner = request.user.is_authenticated and \
             (sound.user == request.user or request.user.is_superuser or request.user.is_staff or
              Group.objects.get(name='moderators') in request.user.groups.all())
@@ -310,7 +307,7 @@ def after_download_modal(request):
 
     return JsonResponse({'content': response_content})
 
-
+@redirect_if_old_username_or_404
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
@@ -330,6 +327,8 @@ def sound_download(request, username, sound_id):
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
+@redirect_if_old_username_or_404
+@transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
@@ -343,8 +342,7 @@ def pack_download(request, username, pack_id):
         if cache.get(cache_key, None) == None:
             if not Download.objects.filter(user=request.user, pack=pack).exists():
                 Download.objects.create(user=request.user, pack=pack)
-
-            cache.set(cache_key, True, 60*60*5) # Don't save downloads for the same user/sound in 5 minutes
+                cache.set(cache_key, True, 60*60*5)  # Don't save downloads for the same user/sound in 5 minutes
 
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
@@ -356,6 +354,7 @@ def pack_licenses(request, username, pack_id):
     return HttpResponse(attribution, content_type="text/plain")
 
 
+# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def sound_edit(request, username, sound_id):
@@ -496,6 +495,7 @@ def sound_edit(request, username, sound_id):
     return render(request, 'sounds/sound_edit.html', tvars)
 
 
+# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def pack_edit(request, username, pack_id):
@@ -525,6 +525,7 @@ def pack_edit(request, username, pack_id):
     return render(request, 'sounds/pack_edit.html', tvars)
 
 
+# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def pack_delete(request, username, pack_id):
@@ -585,6 +586,7 @@ def sound_edit_sources(request, username, sound_id):
     return render(request, 'sounds/sound_edit_sources.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -610,6 +612,7 @@ def remix_group(request, group_id):
     return render(request, 'sounds/remixes.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -617,6 +620,7 @@ def geotag(request, username, sound_id):
     return render(request, 'sounds/geotag.html', locals())
 
 
+@redirect_if_old_username_or_404
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound,
                               id=sound_id,
@@ -633,6 +637,7 @@ def similar(request, username, sound_id):
     return render(request, 'sounds/similar.html', locals())
 
 
+@redirect_if_old_username_or_404
 @transaction.atomic()
 def pack(request, username, pack_id):
     try:
@@ -662,7 +667,7 @@ def pack(request, username, pack_id):
 
     # If user is owner of pack, display form to add description
     enable_description_form = False
-    if request.user.username == username:
+    if request.user.id == pack.user_id:
         enable_description_form = True
         form = PackDescriptionForm(instance = pack)
 
@@ -678,6 +683,7 @@ def pack(request, username, pack_id):
     return render(request, 'sounds/pack.html', locals())
 
 
+@redirect_if_old_username_or_404
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     order = request.GET.get("order", "name")
@@ -687,6 +693,7 @@ def packs_for_user(request, username):
     return render(request, 'sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()))
 
 
+@redirect_if_old_username_or_404
 def for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Sound.public.only('id').filter(user=user)
@@ -699,6 +706,7 @@ def for_user(request, username):
     return render(request, 'sounds/for_user.html', locals())
 
 
+# Don't use @redirect_if_old_username_or_404 here because we don't want redirect when accessing URLs that require login
 @login_required
 @transaction.atomic()
 def delete(request, username, sound_id):
@@ -742,6 +750,7 @@ def delete(request, username, sound_id):
     return render(request, 'sounds/delete.html', tvars)
 
 
+@redirect_if_old_username_or_404
 @transaction.atomic()
 def flag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
@@ -808,8 +817,11 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 
+@redirect_if_old_username_or_404
 def display_sound_wrapper(request, username, sound_id):
-    sound_obj = get_object_or_404(Sound, id=sound_id, user__username__iexact=username)
+    sound_obj = get_object_or_404(Sound, id=sound_id)
+    if sound_obj.user.username.lower() != username.lower():
+        raise Http404
 
     # The following code is duplicated in sounds.tempaltetags.display_sound. This could be optimized.
     is_explicit = False

@@ -46,12 +46,13 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, OldUsername
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
 from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
+from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
@@ -143,13 +144,8 @@ def check_username(request):
     username = request.GET.get('username', None)
     username_valid = False
     if username:
-        try:
-            user = User.objects.get(username__iexact=username)
-        except User.DoesNotExist:
-            try:
-                OldUsername.objects.get(username__iexact=username)
-            except OldUsername.DoesNotExist:
-                username_valid = True
+        user = get_user_from_username_or_oldusername(username)
+        username_valid = user == None
     return JsonResponse({'result': username_valid})
 
 
@@ -688,6 +684,7 @@ def attribution(request):
     return render(request, 'accounts/attribution.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
@@ -702,6 +699,7 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def downloaded_packs(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
@@ -800,15 +798,10 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def account(request, username):
-    try:
-        user = User.objects.select_related('profile').get(username__iexact=username)
-    except User.DoesNotExist:
-        try:
-            old_username = OldUsername.objects.get(username__iexact=username)
-            return HttpResponsePermanentRedirect(reverse("account", args=[old_username.user.username]))
-        except OldUsername.DoesNotExist:
-            raise Http404
+    user = User.objects.select_related('profile').get(username__iexact=username)
+
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
@@ -1052,6 +1045,7 @@ def email_reset_complete(request, uidb36=None, token=None):
     return render(request, 'accounts/email_reset_complete.html', tvars)
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 @transaction.atomic()
 def flag_user(request, username=None):
@@ -1071,19 +1065,19 @@ def flag_user(request, username=None):
         else:
             return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
 
-        previous_reports_count = UserFlag.objects.filter(user__username=flagged_user.username)\
+        previous_reports_count = UserFlag.objects.filter(user=flagged_user)\
             .values('reporting_user').distinct().count()
         uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
         uflag.save()
 
-        reports_count = UserFlag.objects.filter(user__username = flagged_user.username)\
+        reports_count = UserFlag.objects.filter(user = flagged_user)\
             .values('reporting_user').distinct().count()
         if reports_count != previous_reports_count and \
                 (reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or
                  reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING):
 
             # Get all flagged objects by the user, create links to admin pages and send email
-            flagged_objects = UserFlag.objects.filter(user__username=flagged_user.username)
+            flagged_objects = UserFlag.objects.filter(user=flagged_user)
             urls = []
             added_objects = []
             for f_object in flagged_objects:
@@ -1116,6 +1110,7 @@ def flag_user(request, username=None):
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
 
 
+# We don't use @redirect_if_old_username_or_404 here because we don't want to redirect for internal links
 @login_required
 def clear_flags_user(request, username):
     if request.user.is_superuser or request.user.is_staff:

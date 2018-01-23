@@ -24,6 +24,7 @@ import utils.sound_upload
 import errno
 import uuid
 import csv
+import gearman
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -464,6 +465,9 @@ def describe(request):
                 destination.write(chunk)
 
             bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path)
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("bulk_describe_sound", str(bulk.id),
+                    wait_until_complete=False, background=True)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
             if "delete" in request.POST:

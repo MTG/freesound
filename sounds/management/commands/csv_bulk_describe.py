@@ -31,27 +31,6 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
-        # Validate BulkUploadProgess obj with state N (initial state)
-        for bulk in BulkUploadProgress.objects.filter(progress_type='N'):
-            # Validate CSV file and update state
-            reader = csv.reader(open(bulk.csv_path, 'rU'))
-            reader.next() # Skip header
-            lines = list(reader)
-
-            cmd = csv_bulk_upload.Command()
-            base_dir = os.path.join(settings.UPLOADS_PATH, str(bulk.user_id))
-            valid_lines, errors = cmd.check_input_file(base_dir, lines, restrict_username=bulk.user.username)
-            validation_errors = {}
-            # validation_errors will contain the row data and the errors in the position 9
-            for error in errors:
-                line_number = error[0] - 2
-                validation_errors.setdefault(line_number, lines[line_number]+[[]])
-                validation_errors[line_number][8].append(error[1])
-            bulk.validation_errors = validation_errors.values()
-            bulk.sounds_valid = len(valid_lines)
-            bulk.progress_type = 'V'
-            bulk.save()
-
         # Once the user changed the state from BulkUploadProgess obj to 'S' (start) we process it
         for bulk in BulkUploadProgress.objects.filter(progress_type='S'):
             cmd = csv_bulk_upload.Command()

@@ -23,12 +23,15 @@ import logging
 
 import gearman
 import os
+import csv
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
+from sounds.models import BulkUploadProgress
+from sounds.management.commands import csv_bulk_upload
 from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
     DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 
@@ -139,4 +142,36 @@ class Command(BaseCommand):
             self.write_stdout(message)
             logger_async_tasks.info(message)
 
+        return 'false'
+
+    def task_bulk_describe_sound(self, gearman_worker, gearman_job):
+        # Validate BulkUploadProgess obj with state N (initial state)
+        self.write_stdout("Data received: %s" % gearman_job.data)
+        try:
+            bulk = BulkUploadProgress.objects.get(id=gearman_job.data)
+            # Validate CSV file and update state
+            reader = csv.reader(open(bulk.csv_path, 'rU'))
+            reader.next() # Skip header
+            lines = list(reader)
+
+            cmd = csv_bulk_upload.Command()
+            base_dir = os.path.join(settings.UPLOADS_PATH, str(bulk.user_id))
+            valid_lines, errors = cmd.check_input_file(base_dir, lines, restrict_username=bulk.user.username)
+            validation_errors = {}
+            # validation_errors will contain the row data and the errors in the position 9
+            for error in errors:
+                line_number = error[0] - 2
+                # if the line is not valid complete it with empty values
+                while len(lines[line_number]) < 8:
+                    lines[line_number].append("")
+                validation_errors.setdefault(line_number, lines[line_number]+[[]])
+                validation_errors[line_number][8].append(error[1])
+            bulk.validation_errors = validation_errors.values()
+            bulk.sounds_valid = len(valid_lines)
+            bulk.progress_type = 'V'
+            bulk.save()
+            return 'true'
+        except BulkUploadProgress.DoesNotExist as e:
+            message = "Error in async validate Bulk describe: %s (%s)" % (data, str(e))
+            self.write_stdout(message)
         return 'false'

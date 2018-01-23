@@ -62,7 +62,7 @@
 <br style="clear: both;">
 <div id="describe-sounds">
   <h1>Describe sounds in Bulk</h1>
-  <p>Upload a <b>csv</b> file with the data for each sounds (file,namef,tags,geotag,description,license,packname,username)</p>
+  <p>Upload a <b>csv</b> file with the data for each sounds (file,namef,tags,geotag,description,license,packname,username). Download a <a href="{{media_url}}sample.csv">Sample file here</a></p>
    <form method="POST" enctype="multipart/form-data" action="">
      {% csrf_token %}
      {{csv_form}}

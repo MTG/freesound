@@ -41,7 +41,7 @@ class Command(BaseCommand):
         parser.add_argument('-f', action='store_true', help='Force the import if any rows are bad, skipping bad rows')
         parser.add_argument('-s', '--soundsdir', type=str, default='', help='Directory where the sounds are located')
 
-    def check_input_file(self, base_dir, lines):
+    def check_input_file(self, base_dir, lines, restrict_username=None):
         errors = []
         return_lines = []
         for n, line in enumerate(lines, 2): # Count from the header
@@ -52,6 +52,12 @@ class Command(BaseCommand):
                 continue
 
             pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef = line
+
+            if restrict_username is not None:
+                if usernamef != restrict_username:
+                    anyerror = True
+                    errors.append((n, "Username '%s' is not allowed" % usernamef))
+
             try:
                 User.objects.get(username=usernamef)
             except User.DoesNotExist:

@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
             cmd = csv_bulk_upload.Command()
             base_dir = os.path.join(settings.UPLOADS_PATH, str(bulk.user_id))
-            valid_lines, errors = cmd.check_input_file(base_dir, lines)
+            valid_lines, errors = cmd.check_input_file(base_dir, lines, restrict_username=bulk.user.username)
             validation_errors = {}
             # validation_errors will contain the row data and the errors in the position 9
             for error in errors:

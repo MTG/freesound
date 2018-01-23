@@ -1,0 +1,23 @@
+@mixin sm-and-above() {
+  @media screen and (min-width: $sm) {
+    @content;
+  }
+}
+
+@mixin md-and-above() {
+  @media screen and (min-width: $md) {
+    @content;
+  }
+}
+
+@mixin lg-and-above() {
+  @media screen and (min-width: $lg) {
+    @content;
+  }
+}
+
+@mixin xl-and-above() {
+  @media screen and (min-width: $xl) {
+    @content;
+  }
+}

@@ -49,6 +49,30 @@ class BookmarksTest(TestCase):
 
         self.assertEqual(404, resp.status_code)
 
+    def test_bookmarks_oldusername(self):
+        user = User.objects.get(username='Anton')
+        user.username = "new-username"
+        user.save()
+
+        # Check that with the new-username should work, returning a 200
+        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'new-username'}))
+        self.assertEqual(200, resp.status_code)
+
+        # But with the old username the response should be a 301
+        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
+        self.assertEqual(301, resp.status_code)
+
+        # Now follow the redirect of the last case
+        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}), follow=True)
+        context = resp.context
+
+        self.assertEqual(200, resp.status_code)
+        expected_keys = ['bookmark_categories', 'bookmarked_sounds', 'current_page', 'is_owner',
+                         'n_uncat', 'page', 'paginator', 'user']
+        context_keys = context.keys()
+        for k in expected_keys:
+            self.assertIn(k, context_keys)
+
     def test_your_bookmarks(self):
         user = User.objects.get(username='Anton')
         self.client.force_login(user)
@@ -102,6 +126,36 @@ class BookmarksTest(TestCase):
                                            kwargs={'username': user.username, 'category_id': category.id}))
 
         self.assertEqual(200, response.status_code)
+        self.assertEquals(2, len(response.context['bookmarked_sounds']))
+        self.assertContains(response, 'Your bookmarks')
+        self.assertContains(response, 'Bookmarks in "Category1"')
+        self.assertContains(response, 'Uncategorized</a> (1 bookmark)')
+        self.assertContains(response, 'Category1</a> (2 bookmarks)')
+
+    def test_bookmark_category_oldusername(self):
+        user = User.objects.get(username='Anton')
+        self.client.force_login(user)
+
+        category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category, name='BookmarkedSound')
+
+        user.username = "new-username"
+        user.save()
+
+        response = self.client.get(reverse('bookmarks-for-user-for-category',
+                                           kwargs={'username': 'Anton', 'category_id': category.id}))
+        # The response is a 301
+        self.assertEqual(301, response.status_code)
+
+        # Now follow the redirect
+        response = self.client.get(reverse('bookmarks-for-user-for-category',
+                                kwargs={'username': 'Anton', 'category_id': category.id}), follow=True)
+        # The response is a 200
+        self.assertEqual(200, response.status_code)
+
+
         self.assertEquals(2, len(response.context['bookmarked_sounds']))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')

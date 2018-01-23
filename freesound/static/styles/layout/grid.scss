@@ -1,0 +1,14 @@
+@import "node_modules/bootstrap/scss/mixins/_grid";
+@import "node_modules/bootstrap/scss/mixins/_breakpoints";
+@import "node_modules/bootstrap/scss/mixins/_grid-framework";
+
+.container {
+  @include make-container();
+  @include make-container-max-widths();
+}
+
+.row {
+  @include make-row();
+}
+
+@include make-grid-columns();

@@ -279,6 +279,7 @@ REST_FRAMEWORK = {
         'apiv2.throttling.ClientBasedThrottlingSustained',
         'apiv2.throttling.IpBasedThrottling',
     ),
+    'VIEW_DESCRIPTION_FUNCTION': 'apiv2.apiv2_utils.get_view_description',
 }
 
 DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour

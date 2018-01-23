@@ -340,6 +340,9 @@ div.infowindow {
 #admin_link {
     background-image: url(../images/fugue-icons/icons/application-detail.png);
 }
+#ticket_link {
+    background-image: url(../images/fugue-icons/icons/balance.png);
+}
 #follow_link_sound {
     background-image: url(../images/fugue-icons/icons/user--plus.png);
     cursor: pointer;

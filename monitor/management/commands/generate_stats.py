@@ -67,7 +67,7 @@ class Command(BaseCommand):
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Count('id'))
 
-        new_downloads_pack = sounds.models.Download.objects\
+        new_downloads_pack = sounds.models.PackDownload.objects\
             .filter(created__gt=time_span, sound=None)\
             .extra({'day': 'date("sounds_download".created)'}).values('day').order_by()\
             .annotate(id__count=Sum('pack__num_sounds'))
@@ -93,7 +93,8 @@ class Command(BaseCommand):
             'sounds': {'obj': sounds.models.Sound.objects, 'attr': 'user_id'},
             'comments': {'obj': comments.models.Comment.objects, 'attr': 'user_id'},
             'posts': {'obj': forum.models.Post.objects, 'attr': 'author_id'},
-            'downloads': {'obj': sounds.models.Download.objects, 'attr': 'user_id'},
+            'sound_downloads': {'obj': sounds.models.Download.objects, 'attr': 'user_id'},
+            'pack_downloads': {'obj': sounds.models.PackDownload.objects, 'attr': 'user_id'},
             'rate': {'obj': ratings.models.SoundRating.objects, 'attr': 'user_id'},
         }
         for i in active_users.keys():
@@ -164,7 +165,9 @@ class Command(BaseCommand):
             moderation_state="OK").count()
         packs = sounds.models.Pack.objects.all().count()
 
-        downloads = sounds.models.Download.objects.all().count()
+        downloads_sounds = sounds.models.Download.objects.all().count()
+        downloads_packs = sounds.models.PackDownload.objects.all().count()
+        downloads = downloads_sounds + downloads_packs
         num_comments = comments.models.Comment.objects.all().count()
         num_ratings = ratings.models.SoundRating.objects.all().count()
 

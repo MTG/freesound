@@ -25,14 +25,10 @@
 		<h2>Downloaded on {{group.grouper}}</h2>
 		<ul>
 			{% for download_item in group.list %}
-				{% if download_item.sound %}
-					{% with download_item.sound as sound %}
-						<li>S: <a href="{% url "sound" sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url "account" sound.user.username %}">{{sound.user.username}}</a>  | <span style="color:gray">License: </span>{{ download_item.get_license }}</li>
-					{% endwith %}
+				{% if download_item.0 == 'sound' %}
+                                    <li>S: <a href="{% absurl 'sound' download_item.2 download_item.1 %}">{{download_item.3 }}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2 }}</a> | <span style="color:gray">License: </span>{% if download_item.4 %}{{ download_item.4 }}{% else %}{{ download_item.5 }}{% endif %}</li>
 				{% else %}
-					{% with download_item.pack as pack %}
-						<li>P: <a href="{% url "pack" pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url "account" pack.user.username %}">{{pack.user.username}}</a></li>
-					{% endwith %}
+			      	    <li>P: <a href="{% absurl 'pack' download_item.2 download_item.1 %}">{{download_item.3}}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2}}</a></li>
 				{% endif %}
 			{% endfor %}
 		</ul>
@@ -46,14 +42,10 @@
 		{% filter force_escape %}<ul>{% endfilter %}<br />
 			{% for download_item in group.list %}
 				&nbsp;&nbsp;&nbsp;&nbsp;{% filter force_escape %}
-				{% if download_item.sound %}
-					{% with download_item.sound as sound %}
-						<li>S: <a href="{% absurl 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% absurl 'account' sound.user.username %}">{{sound.user.username}}</a> | License: {{ download_item.get_license }}</li>
-					{% endwith %}
+				{% if download_item.0 == 'sound' %}
+                                    <li>S: <a href="{% absurl 'sound' download_item.2 download_item.1 %}">{{download_item.3 }}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2 }}</a> | License: {% if download_item.4 %}{{ download_item.4 }}{% else %}{{ download_item.5 }}{% endif %}</li>
 				{% else %}
-					{% with download_item.pack as pack %}
-						<li>P: <a href="{% absurl 'pack' pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% absurl 'account' pack.user.username %}">{{pack.user.username}}</a></li>
-					{% endwith %}
+			      	    <li>P: <a href="{% absurl 'pack' download_item.2 download_item.1 %}">{{download_item.3}}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2}}</a></li>
 				{% endif %}
 				{% endfilter %}<br />
 			{% endfor %}
@@ -68,14 +60,10 @@
     Downloaded on {{group.grouper}}<br />
 			{% for download_item in group.list %}
 			    &nbsp;&nbsp;&nbsp;&nbsp;
-				{% if download_item.sound %}
-					{% with download_item.sound as sound %}
-		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl 'short-sound-link' sound.id %} -- License: {{ download_item.get_license }}<br />
-					{% endwith %}
+				{% if download_item.0 == 'sound' %}
+                                S: {{download_item.3}} by {{download_item.2}} -- {% absurl 'short-sound-link' download_item.1 %} -- License: {% if download_item.4 %}{{ download_item.4 }}{% else %}{{ download_item.5 }}{% endif %}<br />
 				{% else %}
-					{% with download_item.pack as pack %}
-		                P: {{pack.name}} by {{pack.user.username}} -- {% absurl 'pack' pack.user.username pack.id %}<br/>
-					{% endwith %}
+		                P: {{download_item.3}} by {{download_item.2}} -- {% absurl 'pack' download_item.2 download_item.1 %}<br/>
 				{% endif %}
 			{% endfor %}
 	{% endfor %}

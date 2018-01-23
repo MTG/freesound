@@ -1050,7 +1050,6 @@ class Flag(models.Model):
 class Download(models.Model):
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None, related_name='downloads')
-    pack = models.ForeignKey(Pack, null=True, blank=True, default=None, related_name='downloads')
     license = models.ForeignKey(License, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -1069,9 +1068,24 @@ class Download(models.Model):
         ordering = ("-created",)
 
 
+@receiver(post_delete, sender=Download)
+def update_num_downloads_on_delete(**kwargs):
+    download = kwargs['instance']
+    if download.sound_id:
+        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+
+
+@receiver(post_save, sender=Download)
+def update_num_downloads_on_insert(**kwargs):
+    download = kwargs['instance']
+    if kwargs['created']:
+        if download.sound_id:
+            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+
+
 class PackDownload(models.Model):
     user = models.ForeignKey(User)
-    pack = models.ForeignKey(Pack)
+    pack = models.ForeignKey(Pack, related_name='downloads')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
 
@@ -1081,23 +1095,17 @@ class PackDownloadSound(models.Model):
     license = models.ForeignKey(License, null=True, blank=True, default=None)
 
 
-@receiver(post_delete, sender=Download)
-def update_num_downloads_on_delete(**kwargs):
+@receiver(post_delete, sender=PackDownload)
+def update_num_downloads_on_delete_pack(**kwargs):
     download = kwargs['instance']
-    if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
-    elif download.pack_id:
-        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
+    Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
 
 
-@receiver(post_save, sender=Download)
-def update_num_downloads_on_insert(**kwargs):
+@receiver(post_save, sender=PackDownload)
+def update_num_downloads_on_insert_pack(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
-        if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
-        elif download.pack_id:
-            Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
+        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
 
 
 class RemixGroup(models.Model):

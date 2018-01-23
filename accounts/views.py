@@ -22,6 +22,9 @@ import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
 import utils.sound_upload
 import errno
+from itertools import chain
+from django.db.models.expressions import Value
+from django.db.models.fields import CharField
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -50,7 +53,7 @@ from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetti
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
+from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory, PackDownload, PackDownloadSound
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
 from utils.cache import invalidate_template_cache
@@ -677,10 +680,11 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.select_related('sound', 'sound__user', 'license', 'pack',
-                                         'pack__user').filter(user=request.user)
+    qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField())).values_list('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename', 'license__name', 'sound__license__name', 'created').filter(user=request.user)
+
+    qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField())).values_list('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name','pack__name', 'created',).filter(user=request.user)
     tvars = {'format': request.GET.get("format", "regular")}
-    tvars.update(paginate(request, qs, 40))
+    tvars.update(paginate(request, qs_sounds.union(qs_packs).order_by('created'), 40))
     return render(request, 'accounts/attribution.html', tvars)
 
 
@@ -702,7 +706,7 @@ def downloaded_sounds(request, username):
 @redirect_if_old_username_or_404
 def downloaded_packs(request, username):
     user = get_object_or_404(User, username__iexact=username)
-    qs = Download.objects.filter(user=user.id, pack__isnull=False)
+    qs = PackDownload.objects.filter(user=user.id)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]

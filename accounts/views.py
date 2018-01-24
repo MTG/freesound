@@ -52,6 +52,7 @@ from comments.models import Comment
 from forum.models import Post
 from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
+from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
@@ -104,6 +105,7 @@ def login(request, template_name, authentication_form):
 
 
 @login_required
+@transaction.atomic()
 def multi_email_cleanup(request):
 
     # If user does not have shared email problems, then it should have not visited this page
@@ -142,10 +144,8 @@ def check_username(request):
     username = request.GET.get('username', None)
     username_valid = False
     if username:
-        try:
-            user = User.objects.get(username__iexact=username)
-        except User.DoesNotExist:
-            username_valid = True
+        user = get_user_from_username_or_oldusername(username)
+        username_valid = user == None
     return JsonResponse({'result': username_valid})
 
 
@@ -336,6 +336,7 @@ def edit_email_settings(request):
 
 
 @login_required
+@transaction.atomic()
 def edit(request):
     profile = request.user.profile
 
@@ -354,6 +355,10 @@ def edit(request):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update username, this will create an entry in OldUsername
+            request.user.username = profile_form.cleaned_data['username']
+            request.user.save()
+
             profile.save()
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
@@ -388,6 +393,7 @@ def edit(request):
     return render(request, 'accounts/edit.html', tvars)
 
 
+@transaction.atomic()
 def handle_uploaded_image(profile, f):
     logger.info("\thandling profile image upload")
     try:
@@ -678,6 +684,7 @@ def attribution(request):
     return render(request, 'accounts/attribution.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
@@ -692,6 +699,7 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def downloaded_packs(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
@@ -790,11 +798,10 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def account(request, username):
-    try:
-        user = User.objects.select_related('profile').get(username__iexact=username)
-    except User.DoesNotExist:
-        raise Http404
+    user = User.objects.select_related('profile').get(username__iexact=username)
+
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
@@ -922,6 +929,7 @@ def upload(request, no_flash=False):
 
 
 @login_required
+@transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
     error_message = None
@@ -958,6 +966,7 @@ def old_user_link_redirect(request):
 
 
 @login_required
+@transaction.atomic()
 def email_reset(request):
     if request.method == "POST":
         form = EmailResetForm(request.POST, user=request.user)
@@ -1008,6 +1017,7 @@ def email_reset_done(request):
 
 
 @never_cache
+@transaction.atomic()
 def email_reset_complete(request, uidb36=None, token=None):
     # Check that the link is valid and the base36 corresponds to a user id
     assert uidb36 is not None and token is not None  # checked by URLconf
@@ -1036,6 +1046,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 
 
 @login_required
+@transaction.atomic()
 def flag_user(request, username=None):
     if request.POST:
         flagged_user = User.objects.get(username__iexact=request.POST["username"])
@@ -1053,19 +1064,19 @@ def flag_user(request, username=None):
         else:
             return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
 
-        previous_reports_count = UserFlag.objects.filter(user__username=flagged_user.username)\
+        previous_reports_count = UserFlag.objects.filter(user=flagged_user)\
             .values('reporting_user').distinct().count()
         uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
         uflag.save()
 
-        reports_count = UserFlag.objects.filter(user__username = flagged_user.username)\
+        reports_count = UserFlag.objects.filter(user = flagged_user)\
             .values('reporting_user').distinct().count()
         if reports_count != previous_reports_count and \
                 (reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or
                  reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING):
 
             # Get all flagged objects by the user, create links to admin pages and send email
-            flagged_objects = UserFlag.objects.filter(user__username=flagged_user.username)
+            flagged_objects = UserFlag.objects.filter(user=flagged_user)
             urls = []
             added_objects = []
             for f_object in flagged_objects:

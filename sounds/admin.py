@@ -43,6 +43,7 @@ class SoundAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'pack', 'sources')
     list_display = ('id', 'user', 'original_filename', 'license', 'created', 'moderation_state')
     list_filter = ('moderation_state', 'license', 'processing_state')
+    ordering = ['id']
 admin.site.register(Sound, SoundAdmin)
 
 

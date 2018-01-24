@@ -26,7 +26,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.admin.utils import NestedObjects
 from django.db import models
 from django.db.models import Q
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save, post_save
 from django.utils.encoding import smart_unicode
 from django.conf import settings
 from django.urls import reverse
@@ -233,24 +233,24 @@ class Profile(SocialModel):
                  ORDER BY tags_tag.name;""" % self.user_id)
 
     def can_post_in_forum(self):
-        user_has_posts_pending_to_moderate = self.user.post_set.filter(moderation_state="NM").count() > 0
+        user_has_posts_pending_to_moderate = self.user.posts.filter(moderation_state="NM").count() > 0
         if user_has_posts_pending_to_moderate:
             return False, "We're sorry but you can't post to the forum because you have previous posts still " \
                           "pending to moderate"
 
-        if self.user.post_set.all().count() >= 1 and self.user.sounds.all().count() == 0:
+        if self.user.posts.all().count() >= 1 and self.user.sounds.all().count() == 0:
             today = datetime.datetime.today()
-            reference_date = self.user.post_set.all()[0].created
+            reference_date = self.user.posts.all()[0].created
 
             # Do not allow posts if last post is not older than 5 minutes
             seconds_per_post = settings.LAST_FORUM_POST_MINIMUM_TIME
-            if (today - self.user.post_set.all().reverse()[0].created).seconds < seconds_per_post:
+            if (today - self.user.posts.all().reverse()[0].created).seconds < seconds_per_post:
                 return False, "We're sorry but you can't post to the forum because your last post was less than 5 " \
                               "minutes ago"
 
             # Do not allow posts if user has already posyted N posts that day
             max_posts_per_day = settings.BASE_MAX_POSTS_PER_DAY + pow((today - reference_date).days, 2)
-            if self.user.post_set.filter(created__range=(today-datetime.timedelta(days=1), today)).count() > \
+            if self.user.posts.filter(created__range=(today-datetime.timedelta(days=1), today)).count() > \
                     max_posts_per_day:
                 return False, "We're sorry but you can't post to the forum because you exceeded your maximum number " \
                               "of posts per day"
@@ -398,7 +398,21 @@ def create_user_profile(sender, instance, created, **kwargs):
         profile = Profile(user=instance, accepted_tos=True)
         profile.save()
 
+
 post_save.connect(create_user_profile, sender=User)
+
+
+def presave_user(sender, instance, **kwargs):
+    try:
+        old_username = User.objects.get(pk=instance.id).username
+        if old_username != instance.username:
+            # We use .get_or_create below to avoid having 2 OldUsername objects with the same user/username pair
+            OldUsername.objects.get_or_create(user=instance, username=old_username)
+    except User.DoesNotExist:
+        pass
+
+
+pre_save.connect(presave_user, sender=User)
 
 
 class EmailPreferenceType(models.Model):
@@ -416,3 +430,12 @@ class EmailPreferenceType(models.Model):
 class UserEmailSetting(models.Model):
     user = models.ForeignKey(User, related_name="email_settings")
     email_type = models.ForeignKey(EmailPreferenceType)
+
+
+class OldUsername(models.Model):
+    user = models.ForeignKey(User, related_name="old_usernames")
+    username = models.CharField(max_length=255, db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return '{0} > {1}'.format(self.username, self.user.username)

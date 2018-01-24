@@ -367,7 +367,7 @@ class PackNumSoundsTestCase(TestCase):
         user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
         pack = packs[0]
         self.assertEqual(pack.num_sounds, 0)
-        for count, sound in enumerate(pack.sound_set.all()):
+        for count, sound in enumerate(pack.sounds.all()):
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
             self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, count + 1)  # Check pack has all sounds
@@ -408,8 +408,8 @@ class PackNumSoundsTestCase(TestCase):
         self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 2)
 
         # Move one sound from one pack to the other
-        sound_ids_pack1 = [s.id for s in pack1.sound_set.all()]
-        sound_ids_pack2 = [s.id for s in pack2.sound_set.all()]
+        sound_ids_pack1 = [s.id for s in pack1.sounds.all()]
+        sound_ids_pack2 = [s.id for s in pack2.sounds.all()]
         sound_ids_pack2.append(sound_ids_pack1.pop())
         self.client.login(username=user.username, password='testpass')
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
@@ -430,7 +430,7 @@ class PackNumSoundsTestCase(TestCase):
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
             'submit': [u'submit'],
             'pack_sounds':
-                u','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sound_set.all()] + [str(sound.id)]),
+                u','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]),
             'name': [u'Test pack 1 (edited again)'],
             'description': [u'A new description']
         })
@@ -506,6 +506,28 @@ class SoundViewsTestCase(TestCase):
         resp = self.client.get(reverse('oembed-sound')+'?url='+url)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.content != '')
+
+    def test_oldusername_sound_redirect(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+
+        # Add new OldUsername to the user
+        accounts.models.OldUsername.objects.create(user=sound.user, username='oldusername')
+
+        # get url of the sound with oldusername
+        url = reverse('sound', args=['oldusername', sound.id])
+        resp = self.client.get(url)
+
+        url = reverse('sound', args=[sound.user.username, sound.id])
+        # Check redirect to new username
+        self.assertRedirects(resp, url, status_code=301)
+
+        # Check using wrong username
+        url = reverse('sound', args=['wrongusername', sound.id])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
 
 
 class RandomSoundTestCase(TestCase):
@@ -751,6 +773,27 @@ class SoundPackDownloadTestCase(TestCase):
             self.sound.refresh_from_db()
             self.assertEqual(self.sound.num_downloads, 0)
 
+    def test_download_sound_oldusername(self):
+        # Test if download works if username changed
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            self.sound.user.username = 'other_username'
+            self.sound.user.save()
+
+            # Check download works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]))
+            # Check if response is 301
+            self.assertEqual(resp.status_code, 301)
+
+            # Now follow redirect
+            resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]), follow=True)
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+
     def test_download_pack(self):
         with mock.patch('sounds.views.download_sounds', return_value=HttpResponse()):
 
@@ -779,3 +822,92 @@ class SoundPackDownloadTestCase(TestCase):
             Download.objects.all().delete()
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 0)
+
+    def test_download_pack_oldusername(self):
+        # Test if download pack works if username changed
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            self.pack.user.username = 'other_username'
+            self.pack.user.save()
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+
+            # First check that the response is a 301
+            resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]))
+            self.assertEqual(resp.status_code, 301)
+
+            # Now follow the redirect
+            resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]), follow=True)
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
+
+
+class SoundSignatureTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def setUp(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1)
+        self.SOUND_DESCRIPTION = 'Simple Sound Description'
+        self.USER_SOUND_SIGNATURE = 'Sound Signature.'
+        self.USER_VISITOR_SOUND_SIGNATURE = 'Sound Visitor Signature.'
+        self.sound = sounds[0]
+        self.sound.description = self.SOUND_DESCRIPTION
+        self.sound.moderation_state = "OK"
+        self.sound.processing_state = "OK"
+        self.sound.save()
+        self.user = user
+        self.user_visitor = User.objects.create_user(
+            username='testuservisitor', password='testpassword')
+
+    def test_no_signature(self):
+        """Check signature is not present in sound page (regardless of the user who visits and the authentication)"""
+
+        # Non-logged in user
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (creator of the sound)
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (non-creator of the sound)
+        self.client.login(username='testuservisitor', password='testpassword')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Set a signature to the visitor user, check that his signature does not appear in the sound
+        self.user_visitor.profile.sound_signature = self.USER_VISITOR_SOUND_SIGNATURE
+        self.user_visitor.profile.save()
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertNotContains(resp, self.USER_VISITOR_SOUND_SIGNATURE, status_code=200, html=True)
+
+    def test_signature(self):
+        """Check signature is present in the sound page (regardless of the user who visits and the authentication)"""
+
+        self.user.profile.sound_signature = self.USER_SOUND_SIGNATURE
+        self.user.profile.save()
+
+        # Non-logged in user
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (creator of the sound)
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+        # Logged-in user (non-creator of the sound)
+        self.client.login(username='testuservisitor', password='testpassword')
+        resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
+        self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)

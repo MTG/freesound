@@ -58,6 +58,14 @@ class GeoTagsTests(TestCase):
         check_values = {'tag': None, 'for_user': user}
         self.check_context(resp.context, check_values)
 
+    def test_browse_geotags_for_user_oldusername(self):
+        user = User.objects.get(username='Anton')
+        user.username = "new_username"
+        user.save()
+        resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
+        check_values = {'tag': None, 'for_user': user}
+        self.check_context(resp.context, check_values)
+
     def test_geotags_infowindow(self):
         sound = Sound.objects.first()
         gt = GeoTag.objects.create(user=sound.user, lat=45.8498, lon=-62.6879, zoom=9)

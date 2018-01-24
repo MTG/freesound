@@ -1,5 +1,7 @@
 BeautifulSoup==3.2.0
 beautifulsoup4==4.6.0
+html5lib==1.0b10 # this is required for bleach, but needs to be installed separately to avoid this bug: https://github.com/mozilla/bleach/issues/337
+bleach==2.1.2
 #apt-get install libyaml-dev (to allow the cloader)
 PyYAML==3.11
 pycrypto==2.6.1
@@ -8,7 +10,7 @@ python-cjson==1.1.0
 python-memcached==1.53
 markdown==2.5.1
 django-piston==0.2.3
-psycopg2==2.5.4
+psycopg2==2.7.3.2
 networkx==1.5
 gearman==2.0.2
 recaptcha-client==1.0.6

@@ -127,8 +127,7 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        # This is used to select multiple sounds only in one query, this sounds are indexed in solr
-        # so we seelct only the fields that are going to be indexed
+        """Get data to insert into solr for many sounds in a single query"""
         query = """SELECT
           auth_user.username,
           sound.user_id,
@@ -174,8 +173,8 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
         WHERE
-          sound.id IN %s """ % (sound_ids, )
-        return self.raw(query)
+          sound.id IN %s """
+        return self.raw(query, [sound_ids])
 
     def bulk_query(self, where, order_by, limit, args):
         query = """SELECT
@@ -280,7 +279,7 @@ class Sound(SocialModel):
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
-    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # uploaded with apiv2 client id (None if the sound was not uploaded using the api)
@@ -978,7 +977,7 @@ class Pack(SocialModel):
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
     def process(self):
-        sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").order_by("-created")
+        sounds = self.sounds.filter(processing_state="OK", moderation_state="OK").order_by("-created")
         self.num_sounds = sounds.count()
         if self.num_sounds:
             self.last_updated = sounds[0].created
@@ -1008,15 +1007,15 @@ class Pack(SocialModel):
         # Pack.delete() should never be called as it will completely erase the object from the db
         # Instead, Pack.delete_pack() should be used
         if remove_sounds:
-            for sound in self.sound_set.all():
+            for sound in self.sounds.all():
                 sound.delete()  # Create DeletedSound objects and delete original objects
         else:
-            self.sound_set.update(pack=None)
+            self.sounds.update(pack=None)
         self.is_deleted = True
         self.save()
 
     def get_attribution(self):
-        sounds_list = self.sound_set.filter(processing_state="OK",
+        sounds_list = self.sounds.filter(processing_state="OK",
                 moderation_state="OK").select_related('user', 'license')
 
         users = User.objects.filter(sounds__in=sounds_list).distinct()
@@ -1051,8 +1050,8 @@ class Flag(models.Model):
 
 class Download(models.Model):
     user = models.ForeignKey(User)
-    sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
-    pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
+    sound = models.ForeignKey(Sound, null=True, blank=True, default=None, related_name='downloads')
+    pack = models.ForeignKey(Pack, null=True, blank=True, default=None, related_name='downloads')
     license = models.ForeignKey(License, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -1069,6 +1068,18 @@ class Download(models.Model):
 
     class Meta:
         ordering = ("-created",)
+
+
+class PackDownload(models.Model):
+    user = models.ForeignKey(User)
+    pack = models.ForeignKey(Pack)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+
+class PackDownloadSound(models.Model):
+    sound = models.ForeignKey(Sound)
+    pack_download = models.ForeignKey(PackDownload)
+    license = models.ForeignKey(License, null=True, blank=True, default=None)
 
 
 @receiver(post_delete, sender=Download)

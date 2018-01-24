@@ -320,6 +320,7 @@ def moderation_assign_user(request, user_id):
 
 
 @permission_required('tickets.can_moderate')
+@transaction.atomic()
 def moderation_assign_single_ticket(request, user_id, ticket_id):
     # REASSIGN SINGLE TICKET
     ticket = Ticket.objects.get(id=ticket_id)
@@ -493,6 +494,7 @@ def moderation_assigned(request, user_id):
 
 
 @permission_required('tickets.can_moderate')
+@transaction.atomic()
 def user_annotations(request, user_id):
     user = get_object_or_404(User, id=user_id)
     num_sounds_ok = Sound.objects.filter(user=user, moderation_state="OK").count()

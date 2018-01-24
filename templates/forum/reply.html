@@ -10,7 +10,7 @@
 
 {% block section_content %}
 
-<form method="post" action=".">{% csrf_token %}
+<form method="post" action="." class="disable-on-submit">{% csrf_token %}
 {% include 'forum/html_explanation.html' %}
 {{form.as_p}}
 <input type="submit" value="reply" />

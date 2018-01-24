@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from django.views.generic import TemplateView
-from django.contrib.auth.decorators import login_required
 from django.conf.urls import url
 import monitor.views
 
@@ -27,28 +25,19 @@ urlpatterns = [
 
     url(r'^$', monitor.views.monitor_home, name='monitor-home'),
 
-    url(r'^processing/process_sounds/$', monitor.views.process_sounds,
-        name='monitor-processing-process'),
-    url(r'^stats/$',
-        login_required(TemplateView.as_view(template_name='monitor/stats.html')),
-        name='monitor-stats'),
-    url(r'^totals_stats_ajax/$', monitor.views.totals_stats_ajax,
-        name='monitor-totals-stats-ajax'),
-    url(r'^ajax_tags_stats/$', monitor.views.tags_stats_ajax,
-        name='monitor-tags-stats-ajax'),
-    url(r'^ajax_queries_stats/$', monitor.views.queries_stats_ajax,
-        name='monitor-queries-stats-ajax'),
-    url(r'^ajax_api_usage_stats/(?P<client_id>[0-9A-Za-z]+)/$', monitor.views.api_usage_stats_ajax,
-        name='monitor-api-stats-ajax'),
-    url(r'^ajax_downloads_stats/$', monitor.views.downloads_stats_ajax,
-        name='monitor-downloads-stats-ajax'),
-    url(r'^ajax_donations_stats/$', monitor.views.donations_stats_ajax,
-        name='monitor-donations-stats-ajax'),
-    url(r'^ajax_sounds_stats/$', monitor.views.sounds_stats_ajax,
-        name='monitor-sounds-stats-ajax'),
-    url(r'^ajax_users_stats/$', monitor.views.users_stats_ajax,
-        name='monitor-users-stats-ajax'),
-    url(r'^ajax_active_users_stats/$', monitor.views.active_users_stats_ajax,
-        name='monitor-active-users-stats-ajax'),
+    url(r'^processing/process_sounds/$', monitor.views.process_sounds, name='monitor-processing-process'),
+    url(r'^stats/$', monitor.views.monitor_stats, name='monitor-stats'),
+    url(r'^moderators_stats/$', monitor.views.moderators_stats, name='monitor-moderators-stats'),
+    url(r'^totals_stats_ajax/$', monitor.views.totals_stats_ajax, name='monitor-totals-stats-ajax'),
+    url(r'^ajax_tags_stats/$', monitor.views.tags_stats_ajax, name='monitor-tags-stats-ajax'),
+    url(r'^ajax_queries_stats/$', monitor.views.queries_stats_ajax, name='monitor-queries-stats-ajax'),
+    url(r'^ajax_api_usage_stats/(?P<client_id>[0-9A-Za-z]+)/$',
+        monitor.views.api_usage_stats_ajax, name='monitor-api-stats-ajax'),
+    url(r'^ajax_downloads_stats/$', monitor.views.downloads_stats_ajax, name='monitor-downloads-stats-ajax'),
+    url(r'^ajax_donations_stats/$', monitor.views.donations_stats_ajax, name='monitor-donations-stats-ajax'),
+    url(r'^ajax_sounds_stats/$', monitor.views.sounds_stats_ajax, name='monitor-sounds-stats-ajax'),
+    url(r'^ajax_users_stats/$', monitor.views.users_stats_ajax, name='monitor-users-stats-ajax'),
+    url(r'^ajax_active_users_stats/$', monitor.views.active_users_stats_ajax, name='monitor-active-users-stats-ajax'),
+    url(r'^ajax_moderator_stats/$', monitor.views.moderator_stats_ajax, name='monitor-moderator-stats-ajax'),
 
 ]

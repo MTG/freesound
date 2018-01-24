@@ -17,17 +17,22 @@
 # Authors:
 #     See AUTHORS file.
 #
-import base64
+
 import requests
+import datetime
+import tickets
+import gearman
 from django.shortcuts import render
 from django.conf import settings
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.http import HttpResponse, JsonResponse
+from django.db.models import Count
+from tickets import TICKET_STATUS_CLOSED
 from sounds.models import Sound
-import gearman
-import tickets.views
+from collections import Counter
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
@@ -93,6 +98,32 @@ def monitor_home(request):
     }
 
     return render(request, 'monitor/monitor.html', tvars)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def monitor_stats(request):
+    return render(request, 'monitor/stats.html')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def moderators_stats(request):
+    time_span = datetime.datetime.now()-datetime.timedelta(6*365/12)
+    #Maybe we should user created and not modified
+    user_ids = tickets.models.Ticket.objects.filter(
+            status=TICKET_STATUS_CLOSED,
+            created__gt=time_span,
+            assignee__isnull=False
+    ).values_list("assignee_id", flat=True)
+
+    counter = Counter(user_ids)
+    moderators = User.objects.filter(id__in=counter.keys())
+
+    moderators = [(counter.get(m.id), m) for m in moderators.all()]
+    ordered = sorted(moderators, key=lambda m: m[0], reverse=True)
+    tvars = {"moderators": ordered}
+    return render(request, 'monitor/moderators_stats.html', tvars)
 
 
 def queries_stats_ajax(request):
@@ -204,3 +235,18 @@ def process_sounds(request):
                 sound.process()
 
     return redirect("monitor-home")
+
+
+def moderator_stats_ajax(request):
+    user_id = request.GET.get('user_id', None)
+    time_span = datetime.datetime.now()-datetime.timedelta(6*365/12)
+    tickets_mod = tickets.models.Ticket.objects.filter(
+            assignee_id=user_id,
+            status=TICKET_STATUS_CLOSED,
+            created__gt=time_span
+    ).extra(select={'day': 'date(modified)'}).values('day')\
+            .order_by().annotate(Count('id'))
+
+    return JsonResponse(list(tickets_mod), safe=False)
+
+

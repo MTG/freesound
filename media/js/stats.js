@@ -4,6 +4,7 @@ $( document ).ready(function() {
     $('#total-users').html(data.total_users);
     $('#users-with-sounds').html(data.users_with_sounds);
     $('#total-donations').html(data.total_donations);
+    $('#proj-donations').html((data.donations_last_month * 12).toFixed(2));
     $('#total-sounds').html(data.sounds);
     $('#total-packs').html(data.packs);
     $('#total-downloads').html(data.downloads);

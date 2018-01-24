@@ -28,6 +28,7 @@ from django.http import HttpResponseRedirect, Http404, \
 from django.shortcuts import render, get_object_or_404
 from django.template import loader
 from django.urls import reverse
+from django.db import transaction
 
 from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
@@ -104,6 +105,7 @@ def forum(request, forum_name_slug):
 
 
 @last_action
+@transaction.atomic()
 def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
@@ -150,6 +152,7 @@ def post(request, forum_name_slug, thread_id, post_id):
 
 
 @login_required
+@transaction.atomic()
 def reply(request, forum_name_slug, thread_id, post_id=None):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, id=thread_id, forum=forum, first_post__moderation_state="OK")
@@ -173,7 +176,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
             if form.is_valid():
                 may_be_spam = text_may_be_spam(form.cleaned_data.get("body", '')) or \
                               text_may_be_spam(form.cleaned_data.get("title", ''))
-                if not request.user.post_set.filter(moderation_state="OK").count() and may_be_spam:
+                if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(
                         author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
@@ -228,6 +231,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 
 
 @login_required
+@transaction.atomic()
 def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     user_can_post_in_forum = request.user.profile.can_post_in_forum()
@@ -241,7 +245,7 @@ def new_thread(request, forum_name_slug):
                 may_be_spam = text_may_be_spam(form.cleaned_data["body"]) or \
                               text_may_be_spam(form.cleaned_data["title"])
 
-                if not request.user.post_set.filter(moderation_state="OK").count() and may_be_spam:
+                if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread,
                                                moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
@@ -346,6 +350,7 @@ def post_delete_confirm(request, post_id):
 
 
 @login_required
+@transaction.atomic()
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author == request.user or request.user.has_perm('forum.change_post'):
@@ -366,6 +371,7 @@ def post_edit(request, post_id):
 
 
 @permission_required('forum.can_moderate_forum')
+@transaction.atomic()
 def moderate_posts(request):
     if request.method == 'POST':
         mod_form = PostModerationForm(request.POST)

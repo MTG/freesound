@@ -186,6 +186,7 @@ MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+USERNAME_CHANGE_MAX_TIMES = 3
 
 # Forum restrictions
 LAST_FORUM_POST_MINIMUM_TIME = 60*5
@@ -278,6 +279,7 @@ REST_FRAMEWORK = {
         'apiv2.throttling.ClientBasedThrottlingSustained',
         'apiv2.throttling.IpBasedThrottling',
     ),
+    'VIEW_DESCRIPTION_FUNCTION': 'apiv2.apiv2_utils.get_view_description',
 }
 
 DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
@@ -308,6 +310,10 @@ MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, s
 MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
+
+
+# Turn this option on to log every time a user downloads a pack or sound
+LOG_DOWNLOADS = False
 
 # Stripe keys for testing (never set real keys here!!!)
 STRIPE_PUBLIC_KEY = ""

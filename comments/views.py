@@ -27,12 +27,15 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response, render
 from django.template.context import RequestContext
+from django.db import transaction
 from sounds.models import Sound
 from utils.functional import combine_dicts
 from utils.pagination import paginate
+from utils.username import redirect_if_old_username_or_404
 
 
 @login_required
+@transaction.atomic()
 def delete(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     # User can delete if has permission or if is the owner of the comment
@@ -48,6 +51,7 @@ def delete(request, comment_id):
     return HttpResponseRedirect(next+"?page="+page)
 
 
+@redirect_if_old_username_or_404
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
     user = get_object_or_404(User, username__iexact=username)
@@ -64,6 +68,7 @@ def for_user(request, username):
     return render(request, 'sounds/comments.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def by_user(request, username):
     """ Display all comments made by the user """
     user = get_object_or_404(User, username__iexact=username)

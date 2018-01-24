@@ -63,13 +63,13 @@ class Command(BaseCommand):
 
         # Compute stats related with downloads:
         new_downloads_sound = sounds.models.Download.objects\
-            .filter(created__gt=time_span, pack=None)\
+            .filter(created__gt=time_span)\
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Count('id'))
 
         new_downloads_pack = sounds.models.PackDownload.objects\
-            .filter(created__gt=time_span, sound=None)\
-            .extra({'day': 'date("sounds_download".created)'}).values('day').order_by()\
+            .filter(created__gt=time_span)\
+            .extra({'day': 'date("sounds_packdownload".created)'}).values('day').order_by()\
             .annotate(id__count=Sum('pack__num_sounds'))
 
         downloads_stats = {

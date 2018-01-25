@@ -130,8 +130,8 @@
                 {% if user.profile.num_posts %}
                 <li>Number of forum posts: {{user.profile.num_posts}}</li>
                 {% endif %}
-                <li><a href="{% url "user-downloaded-sounds" user.username %}">Sounds downloaded</a> by {{user.username}}</li>
-                <li><a href="{% url "user-downloaded-packs" user.username %}">Packs downloaded</a> by {{user.username}}</li>
+                <li><a href="{% url "user-downloaded-sounds" user.username %}">Sounds downloaded</a> ({{ user.profile.num_sound_downloads}}) by {{user.username}}</li>
+                <li><a href="{% url "user-downloaded-packs" user.username %}">Packs downloaded</a> ({{ user.profile.num_pack_downloads}}) by {{user.username}}</li>
                 {% if user.profile.num_sounds %}
                 <li><a href="{% url "comments-for-user" user.username %}">All comments</a> on {{user.username}}'s sounds</li>
                 {% endif %}
@@ -153,7 +153,7 @@
             </ul>
             </div>
             <br style="clear: both;" />
-            {% if user.profile.about %}
+            {% if user.profile.about and user.profile.get_total_downloads > 0 %}
                 <div class="about">
                     {{user.profile.about|replace_img|safe|linebreaksbr }}
                 </div>

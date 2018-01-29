@@ -63,3 +63,4 @@ LOGSERVER_PORT = 0000
 
 # Set to true to log to stdout in addition to files and graylog
 LOG_TO_STDOUT = False
+LOG_TO_GRAYLOG = True

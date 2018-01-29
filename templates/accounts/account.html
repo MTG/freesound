@@ -232,8 +232,19 @@
 
         </div><!-- #unprocessed_sounds -->
         {% endif %}
-    {% endif %}
 
+        {% if unfinished_bulkdescribe %}
+        <div class="content_box">
+          <h3>Uploaded files with sounds bulk description</h3>
+            {% for bulk_describe in unfinished_bulkdescribe %}
+            <li style="padding: 4px;font-size: 11px">
+              <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">CSV file</a> uploaded on <span class="date">{{bulk_describe.created}}</span>
+              Processing state: {{bulk_describe.get_progress_type_display}}
+            </li>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endif %}
 </div><!-- #content -->
 
 <div id="sidebar">

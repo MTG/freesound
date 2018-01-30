@@ -17,16 +17,18 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from django.urls import reverse
 
 from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
 from sounds.tests import create_user_and_sounds
+from forms import SoundCombinedSearchFormAPI
+
+from exceptions import BadRequestException
 
 
 class TestAPiViews(TestCase):
-
     fixtures = ['initial_data']
 
     def test_pack_views_response_ok(self):
@@ -91,7 +93,6 @@ class TestAPiViews(TestCase):
 
 
 class TestAPI(TestCase):
-
     fixtures = ['initial_data']
 
     def test_cors_header(self):
@@ -148,3 +149,57 @@ class ApiSearchPaginatorTest(TestCase):
                                  'next_page_number': 3,
                                  'previous_page_number': 1,
                                  'page_num': 2})
+
+
+class TestSoundCombinedSearchFormAPI(SimpleTestCase):
+    def test_query_empty_valid(self):
+        for query in [' ', '', '" "', '""', "' '", "''"]:
+            form = SoundCombinedSearchFormAPI(data={'query': query})
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.clean_query(), '')
+
+    def test_filter_empty_invalid(self):
+        for filt in ['', ' ']:
+            form = SoundCombinedSearchFormAPI(data={'filter': filt})
+            with self.assertRaisesMessage(BadRequestException, 'Invalid filter.'):
+                self.assertFalse(form.is_valid())
+
+    def test_filter_valid(self):
+        filt = 'text'
+        form = SoundCombinedSearchFormAPI(data={'filter': 'text'})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.clean_filter(), filt)
+
+    def test_descriptors_empty_valid(self):
+        form = SoundCombinedSearchFormAPI(data={})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.clean_descriptors(), '')
+
+    def test_descriptors_valid(self):
+        descriptors = 'text'
+        form = SoundCombinedSearchFormAPI(data={'descriptors': descriptors})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.clean_descriptors(), descriptors)
+
+    def test_normalized_valid(self):
+        normalized = '1'
+        form = SoundCombinedSearchFormAPI(data={'normalized': normalized})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.clean_normalized(), normalized)
+
+    def test_normalized_bogus_valid(self):
+        for normalized in ['0', '', 'bla', 'true', '11']:
+            form = SoundCombinedSearchFormAPI(data={'normalized': normalized})
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.clean_normalized(), '')
+
+    def test_page_empty_valid(self):
+        form = SoundCombinedSearchFormAPI(data={})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.clean_page(), 1)
+
+    def test_page_bogus_valid(self):
+        for page in ['', 'test']:
+            form = SoundCombinedSearchFormAPI(data={'page': page})
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.clean_page(), 1)

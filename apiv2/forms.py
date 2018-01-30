@@ -96,7 +96,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_descriptors(self):
         descriptors = self.cleaned_data['descriptors']
-        return my_quote(descriptors) if descriptors is not None else ""
+        return descriptors if descriptors is not None else ""
 
     def clean_normalized(self):
         normalized = self.cleaned_data['normalized']
@@ -164,7 +164,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def construct_link(self, base_url, page=None, filt=None, group_by_pack=None, include_page=True):
         link = "?"
-        if self.cleaned_data['query'] is not None:
+        if self.cleaned_data['query'] is not None:  # TODO: should we allow dangling ?query=&
             link += '&query=%s' % my_quote(self.cleaned_data['query'])
         if not filt:
             if self.cleaned_data['filter']:
@@ -189,7 +189,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
         if self.cleaned_data['fields']:
             link += '&fields=%s' % my_quote(self.cleaned_data['fields'])
         if self.cleaned_data['descriptors']:
-            link += '&descriptors=%s' % self.cleaned_data['descriptors']
+            link += '&descriptors=%s' % my_quote(self.cleaned_data['descriptors'])
         if self.cleaned_data['normalized']:
             link += '&normalized=%s' % self.cleaned_data['normalized']
         if not group_by_pack:

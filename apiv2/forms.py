@@ -99,10 +99,9 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return my_quote(descriptors) if descriptors is not None else ""
 
     def clean_normalized(self):
-        requested_normalized = self.cleaned_data['normalized']
-        normalized = ''
-        if requested_normalized:
-            normalized = '1'
+        normalized = self.cleaned_data['normalized']
+        if normalized != '1':
+            normalized = ''
         return normalized
 
     def clean_page(self):

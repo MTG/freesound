@@ -957,6 +957,8 @@ def bulk_describe(request, bulk_id):
     if request.GET.get('action', False) == 'start' and bulk.progress_type == 'V':
         bulk.progress_type = 'S'
         bulk.save()
+        messages.add_message(request, messages.INFO, 'The csv file was succesfully submitted for processing.')
+        return HttpResponseRedirect(reverse('accounts-home'))
 
     return render(request, 'accounts/bulk_describe.html', {'lines': lines, 'bulk': bulk})
 

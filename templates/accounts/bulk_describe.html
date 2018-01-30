@@ -21,8 +21,8 @@
     <tr><th>File</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack Name</th><th>Username</th><th>Error</th></tr>
     {% for line in bulk.validation_errors|slice:"5" %}
       <tr>
-      {% for v in line|slice:"8"%}
-      <td>{{ v }}</td>
+      {% for v, higlight in line|slice:"8"%}
+      <td {% if higlight %}style="background-color: #d14836"{% endif %}>{{ v }}</td>
       {% endfor %}
       <td><img src="/media/images/cancel.png" title="{% for error in line.8%}{{error|escape}}&#010;{% endfor %}"/></td>
       </tr>

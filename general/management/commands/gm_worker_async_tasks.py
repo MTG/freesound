@@ -161,10 +161,16 @@ class Command(BaseCommand):
             # validation_errors will contain the row data and the errors in the position 9
             for error in errors:
                 line_number = error[0] - 2
-                # if the line is not valid complete it with empty values
-                while len(lines[line_number]) < 8:
-                    lines[line_number].append("")
-                validation_errors.setdefault(line_number, lines[line_number]+[[]])
+                validation_errors[line_number] = []
+                # copy the line and if is not valid complete it with empty values
+                for i in range(8):
+                    line_row = ("", True)
+                    if len(lines[line_number]) > i:
+                        # Mark field with error to be highlighted
+                        line_row = (lines[line_number][i], error[2] == i)
+                    validation_errors[line_number].append(line_row)
+                if len(validation_errors[line_number]) == 8:
+                    validation_errors[line_number].append([])
                 validation_errors[line_number][8].append(error[1])
             bulk.validation_errors = validation_errors.values()
             bulk.sounds_valid = len(valid_lines)

@@ -47,7 +47,7 @@ class Command(BaseCommand):
         for n, line in enumerate(lines, 2): # Count from the header
             anyerror = False
             if len(line) != 8:
-                errors.append((n, 'Line does not have 8 fields'))
+                errors.append((n, 'Line does not have 8 fields', None))
                 anyerror = True
                 continue
 
@@ -56,24 +56,24 @@ class Command(BaseCommand):
             if restrict_username is not None:
                 if usernamef != restrict_username:
                     anyerror = True
-                    errors.append((n, "Username '%s' is not allowed" % usernamef))
+                    errors.append((n, "Username '%s' is not allowed" % usernamef, 7))
 
             try:
                 User.objects.get(username=usernamef)
             except User.DoesNotExist:
                 anyerror = True
-                errors.append((n, "User '%s' does not exist" % usernamef))
+                errors.append((n, "User '%s' does not exist" % usernamef, 7))
 
             src_path = os.path.join(base_dir, pathf)
             if not os.path.exists(src_path):
                 anyerror = True
-                errors.append((n, "Source file '%s' does not exist" % pathf))
+                errors.append((n, "Source file '%s' does not exist" % pathf, 0))
 
             try:
                 License.objects.get(name=licensef)
             except License.DoesNotExist:
                 anyerror = True
-                errors.append((n, "Licence with name '%s' does not exist" % licensef))
+                errors.append((n, "Licence with name '%s' does not exist" % licensef, 5))
 
             geoparts = geotagf.split()
             if len(geoparts) == 3:
@@ -83,10 +83,10 @@ class Command(BaseCommand):
                     float(lon)
                     int(zoom)
                 except ValueError:
-                    errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf))
+                    errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf, 3))
                     anyerror = True
             elif len(geoparts) != 0:
-                errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf))
+                errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf, 3))
                 anyerror = True
 
             if not anyerror:
@@ -114,12 +114,12 @@ class Command(BaseCommand):
         lines_to_import, bad_lines = self.check_input_file(base_dir, lines)
         if bad_lines and not force_import:
             print 'Some lines contain invalid data. Fix them or re-run with -f to import skipping these lines:'
-            for lineno, error in bad_lines:
+            for lineno, error, field in bad_lines:
                 print 'l%s: %s' % (lineno, error)
             return
         elif bad_lines:
             print 'Skipping the following lines due to invalid data'
-            for lineno, error in bad_lines:
+            for lineno, error, field in bad_lines:
                 print 'l%s: %s' % (lineno, error)
 
         for line in lines_to_import:

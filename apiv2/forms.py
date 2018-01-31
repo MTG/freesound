@@ -96,13 +96,11 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_descriptors(self):
         descriptors = self.cleaned_data['descriptors']
-        return descriptors if descriptors is not None else ""
+        return my_quote(descriptors) if descriptors is not None else ""
 
     def clean_normalized(self):
         normalized = self.cleaned_data['normalized']
-        if normalized != '1':
-            normalized = ''
-        return normalized
+        return '1' if normalized == '1' else ''
 
     def clean_page(self):
         try:
@@ -133,14 +131,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return fields
 
     def clean_group_by_pack(self):
-        requested_group_by_pack = self.cleaned_data['group_by_pack']
-        group_by_pack = ''
-        try:
-            if int(requested_group_by_pack):
-                group_by_pack = '1'
-        except ValueError:
-            pass
-        return group_by_pack
+        group_by_pack = self.cleaned_data['group_by_pack']
+        return '1' if group_by_pack == '1' else ''
 
     def clean_page_size(self):
         requested_paginate_by = self.cleaned_data[settings.APIV2['PAGE_SIZE_QUERY_PARAM']]
@@ -153,7 +145,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']
         if 'descriptors_filter' in self.data and (not descriptors_filter or descriptors_filter.isspace()):
-            raise BadRequestException('Invalid descriptiors_filter.')
+            raise BadRequestException('Invalid descriptors_filter.')
         return my_quote(descriptors_filter) if descriptors_filter is not None else ""
 
     def clean_target(self):
@@ -189,7 +181,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
         if self.cleaned_data['fields']:
             link += '&fields=%s' % my_quote(self.cleaned_data['fields'])
         if self.cleaned_data['descriptors']:
-            link += '&descriptors=%s' % my_quote(self.cleaned_data['descriptors'])
+            link += '&descriptors=%s' % self.cleaned_data['descriptors']
         if self.cleaned_data['normalized']:
             link += '&normalized=%s' % self.cleaned_data['normalized']
         if not group_by_pack:

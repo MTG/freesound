@@ -156,7 +156,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def construct_link(self, base_url, page=None, filt=None, group_by_pack=None, include_page=True):
         link = "?"
-        if self.cleaned_data['query'] is not None:  # TODO: should we allow dangling ?query=&
+        if self.cleaned_data['query'] is not None:
             link += '&query=%s' % my_quote(self.cleaned_data['query'])
         if not filt:
             if self.cleaned_data['filter']:

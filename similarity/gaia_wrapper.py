@@ -63,23 +63,10 @@ class GaiaWrapper:
             self.__calculate_descriptor_names()
             if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
 
-                # if we have loaded a dataset of the correct size but it is unprepared, prepare it
-                if self.original_dataset.history().size() <= 0:
-                    #self.__prepare_original_dataset()
-                    #self.__normalize_original_dataset()
-                    self.original_dataset.save(self.original_dataset_path)
+                # NOTE: we assume that loaded datasets will have been prepared and normalized (see_
+                # _prepare_original_dataset() and __normalize_original_dataset()) on due time and before saving to disk.
+                # See add_point() below.
 
-                # if we have loaded a dataset which has not been normalized, normalize it
-                '''
-                normalized = False
-                for element in self.original_dataset.history().toPython():
-                    if element['Analyzer name'] == 'normalize':
-                        normalized = True
-                        break
-                if not normalized:
-                    self.__normalize_original_dataset()
-                    self.original_dataset.save(self.original_dataset_path)
-                '''
                 # Save transformation history so we do not need to compute it every time we need it
                 self.transformations_history = self.original_dataset.history().toPython()
                 # build metrics for the different similarity presets
@@ -106,7 +93,6 @@ class GaiaWrapper:
             self.original_dataset.save(self.original_dataset_path)
             self.__calculate_descriptor_names()
             logger.info('Created new dataset, size: %s points (should be 0)' % (self.original_dataset.size()))
-
 
     def __prepare_original_dataset(self):
         logger.info('Preparing the original dataset.')
@@ -155,7 +141,15 @@ class GaiaWrapper:
     @staticmethod
     def normalize_dataset_helper(ds, descriptor_names):
         # Add normalization
-        normalization_params = {"descriptorNames": descriptor_names, "independent": True, "outliers": -1}
+        # NOTE: The "execept" list of descriptors below should be reviewed if a new extarctor is used. The point is to
+        # remove descriptors can potentially break normalize transform (e.g. descriptors with value = 0)
+        normalization_params = {"descriptorNames": descriptor_names,
+                                "except": [
+                                    "*.min",
+                                    "*.max",
+                                    "tonal.chords_histogram",
+                                ],
+                                "independent": True, "outliers": -1}
         ds = transform(ds, 'normalize', normalization_params)
         return ds
 
@@ -220,8 +214,8 @@ class GaiaWrapper:
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
         if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
-            #self.__prepare_original_dataset()
-            #self.__normalize_original_dataset()
+            self.__prepare_original_dataset()
+            self.__normalize_original_dataset()
             self.transformations_history = self.original_dataset.history().toPython()
             self.save_index(msg="(reaching 2000 points)")
 

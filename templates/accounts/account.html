@@ -240,6 +240,9 @@
             <li style="padding: 4px;font-size: 11px">
               <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">CSV file</a> uploaded on <span class="date">{{bulk_describe.created}}</span>
               Processing state: {{bulk_describe.get_progress_type_display}}
+              {% if bulk_describe.progress_type == 'E' %}
+                <a href="{% url "accounts-bulkfile-delete" bulk_describe.id %}" >x</a>
+              {% endif %}
             </li>
             {% endfor %}
         </div>

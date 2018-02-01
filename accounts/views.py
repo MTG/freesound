@@ -176,6 +176,13 @@ def bulk_license_change(request):
 
 
 @login_required
+def bulkfile_delete(request, bulk_id):
+    bulkfile = get_object_or_404(BulkUploadProgress, user=request.user, id=bulk_id, progress_type='E')
+    bulkfile.delete()
+    return HttpResponseRedirect(reverse('accounts-home'))
+
+
+@login_required
 def tos_acceptance(request):
     if request.method == 'POST':
         form = TermsOfServiceForm(request.POST)

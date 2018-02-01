@@ -23,7 +23,7 @@ import os
 
 # SERVER SETTINGS
 INDEX_DIR                   = '/home/fsweb/freesound/freesound-similarity/'
-INDEX_NAME                  = 'fs_index'
+INDEX_NAME                  = 'fs_index'  # Don't include .db extension in the name here
 INDEXING_SERVER_INDEX_NAME  = 'background_index'
 PRESET_DIR                  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
 PRESETS                     = ['lowlevel', 'pca']

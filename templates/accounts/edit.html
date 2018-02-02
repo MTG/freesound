@@ -66,8 +66,9 @@
 
 <script>
   $(function() {
-    unsecureImageCheck($('#id_profile-about'));
-    unsecureImageCheck($('#id_profile-signature'));
+      {% for field in profile_form.get_img_fields %}
+          unsecureImageCheck($('#{{ field.id_for_label }}'));
+      {% endfor %}
   })
 </script>
 

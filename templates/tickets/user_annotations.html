@@ -34,3 +34,9 @@
                    function(data) { $('#user-annotations-section').html(data); });">
     </form>
 </div>
+
+<script>
+  $(function() {
+    unsecureImageCheck($('#{{ form.text.id_for_label }}'));
+  })
+</script>

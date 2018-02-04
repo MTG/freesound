@@ -4,7 +4,7 @@ const path = require('path')
 module.exports = {
   webpackConfig: require('./webpack/webpack.config'),
   require: [
-    path.join(__dirname, 'src/base'),
+    path.join(__dirname, 'base')
   ],
   theme: {
     color: {
@@ -12,19 +12,30 @@ module.exports = {
       linkHover: '#FF4958'
     },
   },
-  sections: [
-    {
+  styles: {
+    TabButton: {
+      button: {
+        position: 'relative',
+        padding: '14px 30px',
+        textTransform: 'none',
+      }
+    },
+    Heading: {
+      heading: {
+        margin: '10px 0 20px',
+      }
+    }
+  },
+  sections: [{
       name: 'Introduction',
       content: 'styleguide/introduction.md',
     },
     {
       name: 'UI components',
-      sections: [
-        {
-          name: 'Buttons',
-          content: 'styleguide/buttons.md',
-        },
-      ],
+      sections: [{
+        name: 'Buttons',
+        content: 'styleguide/buttons.md',
+      }, ],
     },
   ],
 };

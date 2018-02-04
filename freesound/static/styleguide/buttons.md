@@ -2,17 +2,17 @@ Buttons rule!
 
 ```jsx
 <div className="row">
-  <div class="col">
+  <div className="col">
     <button className="btn-primary">
       Primary
     </button>
   </div>
-  <div class="col">
+  <div className="col">
     <button className="btn-secondary">
       Secondary
     </button>
   </div>
-  <div class="col">
+  <div className="col">
     <button>
       Default
     </button>

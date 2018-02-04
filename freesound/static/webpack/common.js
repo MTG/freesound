@@ -4,7 +4,7 @@ const SUPPORTED_BROWSERS = ['>1%', 'last 4 versions', 'Firefox ESR', 'not ie < 1
 
 module.exports = {
   entries: {
-    base: path.join(__dirname, '..', 'src/base.js'),
+    base: path.join(__dirname, '..', 'base.js'),
     index: path.join(__dirname, '..', 'src/index.js'),
   },
   output: {

@@ -27,6 +27,7 @@ module.exports = {
             },
             common.loaders.postCssLoader,
             'sass-loader',
+            'import-glob-loader'
           ],
           publicPath: '',
         }),

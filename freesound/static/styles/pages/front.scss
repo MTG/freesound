@@ -1,0 +1,15 @@
+.bw-front__hero-container {
+  display: flex;
+  justify-content: center;
+  max-width: 780px;
+  padding-top: 80px;
+  padding-bottom: 88px;
+
+  header {
+    text-align: center;
+  }
+}
+
+.bw-front__subheader {
+  color: $navy-grey;
+}

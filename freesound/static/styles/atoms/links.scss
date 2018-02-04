@@ -24,12 +24,12 @@ a {
 
   @include active {
     &:before {
-      opacity: 1; 
+      opacity: 1;
     }
   }
 }
 
-.bw__link-grey {
+.bw-link--grey {
   color: $navy-grey;
 
   @include active {
@@ -37,11 +37,20 @@ a {
   }
 }
 
-.bw__link-black {
+.bw-link--black {
   color: $black;
+
+  .dropdown-menu & {
+    @include active {
+      color: $red;
+      &:before {
+        opacity: 0;
+      }
+    }
+  }
 }
 
-.bw__link-white {
+.bw-link--white {
   color: $white;
 }
 

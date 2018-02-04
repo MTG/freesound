@@ -18,6 +18,8 @@ module.exports = {
           publicPath: '',
         }),
       },
+      common.loaders.fileLoader,
+      common.loaders.iconsLoader,
     ],
   },
   plugins: [

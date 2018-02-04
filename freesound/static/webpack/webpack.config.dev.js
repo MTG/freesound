@@ -15,6 +15,8 @@ module.exports = {
         test: /\.s?css$/,
         use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader', 'import-glob-loader'],
       },
+      common.loaders.fileLoader,
+      common.loaders.iconsLoader,
     ],
   },
   plugins: [

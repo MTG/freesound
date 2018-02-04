@@ -13,7 +13,7 @@ module.exports = {
       common.loaders.jsLoader,
       {
         test: /\.s?css$/,
-        use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader'],
+        use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader', 'import-glob-loader'],
       },
     ],
   },

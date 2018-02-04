@@ -28,7 +28,7 @@ button {
     left: 0;
     border-radius: $button-border-radius;
     box-shadow: 0 0 10px $black-hover;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease-in-out;
   }
 
   @include active() {

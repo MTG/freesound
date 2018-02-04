@@ -32,3 +32,6 @@ with `build:prod` will have the `.min` suffix.
 ## Styles
 This project uses the grid system from Bootstrap 4, with custom variables.
 Classnames follow the [BEM](http://getbem.com/naming/) convention, while the folder structure is inspired by [ITCSS](https://www.xfive.co/blog/itcss-scalable-maintainable-css-architecture/).
+
+## Some tips on this styleguide
+Each component has a `View code` at its bottom. You can click it to check the HTML code of the component.

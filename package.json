@@ -52,6 +52,7 @@
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^4.0.0",
+    "classlist-polyfill": "^1.2.0",
     "normalize.css": "^7.0.0",
     "whatwg-fetch": "^2.0.3"
   }

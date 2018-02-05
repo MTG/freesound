@@ -2,7 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const common = require('./common');
+const common = require('./webpack.common');
 
 module.exports = {
   devtool: 'cheap-module-source-map',
@@ -13,8 +13,10 @@ module.exports = {
       common.loaders.jsLoader,
       {
         test: /\.s?css$/,
-        use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader'],
+        use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader', 'import-glob-loader'],
       },
+      common.loaders.fileLoader,
+      common.loaders.iconsLoader,
     ],
   },
   plugins: [

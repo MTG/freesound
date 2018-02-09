@@ -63,6 +63,8 @@ $( document ).ready(function() {
           ])
         }
       }
+      new_users_active.sort(function(a, b) { return a[0] - b[0];});
+      new_users_inactive.sort(function(a, b) { return a[0] - b[0];});
       Highcharts.chart($('.users')[0], {
           title:{
               text:''
@@ -102,6 +104,7 @@ $( document ).ready(function() {
               d.new_sounds[i]['id__count']
           ])
       }
+      new_sounds.sort(function(a, b) { return a[0] - b[0];});
       var new_sounds_mod = [];
       for (var i=0 ; i<d.new_sounds_mod.length; i++) {
           new_sounds_mod.push([
@@ -109,6 +112,7 @@ $( document ).ready(function() {
               d.new_sounds_mod[i]['id__count']
           ])
       }
+      new_sounds_mod.sort(function(a, b) { return a[0] - b[0];});
       Highcharts.chart($('.uploads')[0], {
           title:{
               text:''
@@ -148,6 +152,7 @@ $( document ).ready(function() {
               d.new_downloads_sound[i]['id__count']
           ])
       }
+      downloads_data.sort(function(a, b) { return a[0] - b[0];});
       var downloads_data_pack = [];
       for (var i=0 ; i<d.new_downloads_pack.length; i++) {
           downloads_data_pack.push([
@@ -155,6 +160,7 @@ $( document ).ready(function() {
               d.new_downloads_pack[i]['id__count']
           ])
       }
+      downloads_data_pack.sort(function(a, b) { return a[0] - b[0];});
       Highcharts.chart($('.downloads')[0], {
           title:{
               text:''
@@ -204,6 +210,7 @@ $( document ).ready(function() {
               d.sound_downloads[i]['amount__sum']
           ])
       }
+      sound_downloads.sort(function(a, b) { return a[0] - b[0];});
       var pack_downloads = [];
       for (var i=0 ; i<d.pack_downloads.length; i++) {
           pack_downloads.push([
@@ -211,6 +218,7 @@ $( document ).ready(function() {
               d.pack_downloads[i]['amount__sum']
           ])
       }
+      pack_downloads.sort(function(a, b) { return a[0] - b[0];});
       var sounds = [];
       for (var i=0 ; i<d.sounds.length; i++) {
           sounds.push([
@@ -218,6 +226,7 @@ $( document ).ready(function() {
               d.sounds[i]['amount_sum']
           ])
       }
+      sounds.sort(function(a, b) { return a[0] - b[0];});
       var posts = [];
       for (var i=0 ; i<d.posts.length; i++) {
           posts.push([
@@ -225,6 +234,7 @@ $( document ).ready(function() {
               d.posts[i]['amount_sum']
           ])
       }
+      posts.sort(function(a, b) { return a[0] - b[0];});
       var rate = [];
       for (var i=0 ; i<d.rate.length; i++) {
           rate.push([
@@ -232,6 +242,7 @@ $( document ).ready(function() {
               d.rate[i]['amount_sum']
           ])
       }
+      rate.sort(function(a, b) { return a[0] - b[0];});
       var comments = [];
       for (var i=0 ; i<d.comments.length; i++) {
           rate.push([
@@ -239,6 +250,7 @@ $( document ).ready(function() {
               d.comments[i]['amount_sum']
           ])
       }
+      comments.sort(function(a, b) { return a[0] - b[0];});
       Highcharts.chart($('.active-users')[0], {
           title:{
               text:''

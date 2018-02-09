@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, override_settings, Client
 from django.test.utils import override_settings, skipIf
@@ -30,7 +31,7 @@ from django.core import mail
 from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername
 from accounts.views import handle_uploaded_image
-from accounts.forms import FsPasswordResetForm, DeleteUserForm
+from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
@@ -1028,12 +1029,11 @@ class ReSendActivationTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
 
-    def test_resend_activation_code_from_username(self):
+    def test_resend_activation_code_from_long_username(self):
         """
         Check that resend activation code returns an error if username is too long
         """
         long_mail = ('1' * 255) + '@freesound.org'
-        user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
         resp = self.client.post(reverse('accounts-resend-activation'), {
             'user': long_mail,
         })
@@ -1205,9 +1205,35 @@ class ChangeUsernameTests(TestCase):
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Try to rename for a third time to a valid username. Because we are in admin now, the USERNAME_CHANGE_MAX_TIMES
-        # restriciton does not apply so rename should work correctly
+        # restriction does not apply so rename should work correctly
         post_data.update({'username': u'userANewNewNewName'})
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
         self.assertEqual(OldUsername.objects.filter(username='userANewNewName', user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
+
+
+class UsernameValidatorTests(TestCase):
+    """ Makes sure that username validation works as intended """
+    class TestForm(forms.Form):
+        username = UsernameField()
+
+    def test_valid(self):
+        """ Alphanumerics, _, - and + are ok"""
+        form = self.TestForm(data={'username': 'normal_user.name+'})
+        self.assertTrue(form.is_valid())
+
+    def test_email_like_invalid(self):
+        """ We don't allow @ character """
+        form = self.TestForm(data={'username': 'email@username'})
+        self.assertFalse(form.is_valid())
+
+    def test_short_invalid(self):
+        """ Should be longer than 3 characters """
+        form = self.TestForm(data={'username': 'a'})
+        self.assertFalse(form.is_valid())
+
+    def test_long_invalid(self):
+        """ Should be shorter than 3 characters """
+        form = self.TestForm(data={'username': 'a'*31})
+        self.assertFalse(form.is_valid())

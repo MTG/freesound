@@ -22,9 +22,7 @@ import time
 import datetime
 import logging
 from django.core.management.base import BaseCommand
-from django.conf import settings
-from sounds.models import Download, PackDownload, PackDownloadSound
-from django.db import transaction
+from sounds.models import Download, PackDownload
 
 
 logger = logging.getLogger("console")
@@ -33,9 +31,10 @@ logger = logging.getLogger("console")
 class Command(BaseCommand):
 
     help = 'Copy Downloads to new models'
+
     def add_arguments(self, parser):
         parser.add_argument(
-            '-s','--sleep',
+            '-s', '--sleep',
             dest='sleep',
             default="0",
             help='Time in (seconds) to sleep after each day of Downlaods processed.')
@@ -45,7 +44,7 @@ class Command(BaseCommand):
         # times and it will continue from the last period.
         logger.info('Copy Downloads to new PackDownload')
 
-        sleep_time = int(options['sleep'])
+        sleep_time = float(options['sleep'])
         td = datetime.timedelta(days=1)
 
         # PackDownload disable created auto date
@@ -62,17 +61,18 @@ class Command(BaseCommand):
             first_downloads = Download.objects.order_by('created')
             start = first_downloads.first().created
 
-        more_downloads = True
+        print start, raw_input()
+
         while start < datetime.datetime.now():
             downloads = Download.objects.filter(pack_id__isnull=False, created__gte=start, created__lt=start+td)\
                     .prefetch_related('pack__sounds')
             start += td
-            more_downloads = downloads.count() != 0
             pds = []
             for download in downloads.all():
                 # create PackDownload
                 pds.append(PackDownload(user=download.user, created=download.created, pack_id=download.pack_id))
             PackDownload.objects.bulk_create(pds, batch_size=1000)
-            logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(), start.strftime("%Y-%m-%d")))
+            logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(),
+                                                                            start.strftime("%Y-%m-%d")))
             time.sleep(sleep_time)
         logger.info('Copy Downloads to new PackDownload finished')

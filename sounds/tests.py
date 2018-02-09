@@ -185,6 +185,10 @@ class CommentSoundsTestCase(TestCase):
         comment = 'Test <img src="https://test.com/img.png" /> test'
         self.assertEqual(replace_img(comment), comment)
 
+        # make sure lack of src doesn't break anything
+        comment = 'Test <img/> test, http://test.com/img.png'
+        self.assertEqual(replace_img(comment), comment)
+
     def test_post_delete_comment(self):
         sound = Sound.objects.get(id=19)
         sound.is_index_dirty = False

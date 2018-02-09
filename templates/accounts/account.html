@@ -120,8 +120,8 @@
             <div class="account_information_and_home_options">
             <ul>
                 <li><a href="{% url "messages-new" user.username %}">Send a private message to this user</a></li>
-                {% if user.profile.home_page %}
-                <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
+                {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
+                    <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
                 {% endif %}
                 <li>Has been a user for {{user.date_joined|timesince}}</li>
                 {% if user.profile.num_sounds %}

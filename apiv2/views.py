@@ -282,7 +282,7 @@ class CombinedSearch(GenericAPIView):
             not search_form.cleaned_data['descriptors_filter'] and
             not self.analysis_file) \
                 or (search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None):
-            raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from '
+            raise BadRequestException(msg='At least one parameter from Text Search and one parameter from '
                                           'Content Search should be included in the request.', resource=self)
         if search_form.cleaned_data['target'] and search_form.cleaned_data['query']:
             raise BadRequestException(msg='Request parameters \'target\' and \'query\' can not be used at '
@@ -1215,9 +1215,14 @@ class AvailableAudioDescriptors(GenericAPIView):
             for key, value in descriptor_names.items():
                 descriptor_names[key] = [item[1:] for item in value]  # remove initial dot from descriptor names
 
-            return Response({'fixed-length': {'one-dimensional':descriptor_names['fixed-length'],
-                                              'multi-dimensional':descriptor_names['multidimensional']},
-                             'variable-length': descriptor_names['variable-length']}, status=status.HTTP_200_OK)
+            return Response({
+                'fixed-length': {
+                    'one-dimensional': [item for item in descriptor_names['fixed-length']
+                                        if item not in descriptor_names['multidimensional']],
+                    'multi-dimensional': descriptor_names['multidimensional']
+                },
+                'variable-length': descriptor_names['variable-length']
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             raise ServerErrorException(resource=self)
 

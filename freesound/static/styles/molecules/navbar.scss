@@ -1,0 +1,40 @@
+$navbar-height: 80px;
+
+.bw-nav {
+  height: $navbar-height;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bw-nav__logo {
+  width: 190px;
+  height: 48px;
+  background-image: url("assets/logos/logo-text.svg");
+  background-size: 100%;
+  background-repeat: no-repeat;
+
+  a {
+    display: block;
+    height: 100%;
+  }
+}
+
+.bw-nav__actions {
+
+  @include md-and-above {
+    list-style: none;
+    display: flex;
+  }
+}
+
+.bw-nav__action {
+  display: flex;
+  align-items: center;
+
+  @include md-and-above {
+    &:not(:last-child) {
+      margin-right: 20px;
+    }
+  }
+}

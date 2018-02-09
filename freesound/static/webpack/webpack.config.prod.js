@@ -1,7 +1,7 @@
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
-const common = require('./common');
+const common = require('./webpack.common');
 
 module.exports = {
   devtool: false,
@@ -27,10 +27,13 @@ module.exports = {
             },
             common.loaders.postCssLoader,
             'sass-loader',
+            'import-glob-loader'
           ],
           publicPath: '',
         }),
       },
+      common.loaders.fileLoader,
+      common.loaders.iconsLoader,
     ],
   },
   plugins: [

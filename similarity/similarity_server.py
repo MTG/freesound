@@ -22,7 +22,9 @@ from __future__ import print_function
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
-from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, \
+    BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT, \
+    LOG_TO_GRAYLOG
 import logging
 import graypy
 from logging.handlers import RotatingFileHandler
@@ -241,8 +243,9 @@ if __name__ == '__main__':
         std_handler.setLevel(logging.DEBUG)
         std_handler.setFormatter(formatter)
         logger.addHandler(std_handler)
-    handler_graypy = graypy.GELFHandler(LOGSERVER_IP_ADDRESS, LOGSERVER_PORT)
-    logger.addHandler(handler_graypy)
+    if LOG_TO_GRAYLOG:
+        handler_graypy = graypy.GELFHandler(LOGSERVER_IP_ADDRESS, LOGSERVER_PORT)
+        logger.addHandler(handler_graypy)
 
     # Start service
     logger.info('Configuring similarity service...')

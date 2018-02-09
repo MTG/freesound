@@ -11,7 +11,7 @@ def replace_img(string):
 
     soup = BeautifulSoup(string,  "html.parser")
     for img in soup.find_all('img'):
-        if not img['src'].lower().startswith("https"):
+        if img.has_attr('src') and not img['src'].lower().startswith("https"):
             a = soup.new_tag("a", href=img['src'])
             a.string = img['src']
             img.replace_with(a)

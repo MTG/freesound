@@ -282,7 +282,7 @@ class CombinedSearch(GenericAPIView):
             not search_form.cleaned_data['descriptors_filter'] and
             not self.analysis_file) \
                 or (search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None):
-            raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from '
+            raise BadRequestException(msg='At least one parameter from Text Search and one parameter from '
                                           'Content Search should be included in the request.', resource=self)
         if search_form.cleaned_data['target'] and search_form.cleaned_data['query']:
             raise BadRequestException(msg='Request parameters \'target\' and \'query\' can not be used at '

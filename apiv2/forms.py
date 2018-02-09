@@ -99,11 +99,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return my_quote(descriptors) if descriptors is not None else ""
 
     def clean_normalized(self):
-        requested_normalized = self.cleaned_data['normalized']
-        normalized = ''
-        if requested_normalized:
-            normalized = '1'
-        return normalized
+        normalized = self.cleaned_data['normalized']
+        return '1' if normalized == '1' else ''
 
     def clean_page(self):
         try:
@@ -134,24 +131,21 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return fields
 
     def clean_group_by_pack(self):
-        requested_group_by_pack = self.cleaned_data['group_by_pack']
-        group_by_pack = ''
-        try:
-            if int(requested_group_by_pack):
-                group_by_pack = '1'
-        except ValueError:
-            pass
-        return group_by_pack
+        group_by_pack = self.cleaned_data['group_by_pack']
+        return '1' if group_by_pack == '1' else ''
 
     def clean_page_size(self):
-        requested_paginate_by = self.cleaned_data[settings.APIV2['PAGE_SIZE_QUERY_PARAM']] or \
-                                settings.APIV2['PAGE_SIZE']
-        return min(int(requested_paginate_by), settings.APIV2['MAX_PAGE_SIZE'])
+        requested_paginate_by = self.cleaned_data[settings.APIV2['PAGE_SIZE_QUERY_PARAM']]
+        try:
+            paginate_by = min(int(requested_paginate_by), settings.APIV2['MAX_PAGE_SIZE'])
+        except (ValueError, TypeError):  # TypeError if None, ValueError if bad input
+            paginate_by = settings.APIV2['PAGE_SIZE']
+        return paginate_by
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']
         if 'descriptors_filter' in self.data and (not descriptors_filter or descriptors_filter.isspace()):
-            raise BadRequestException('Invalid descriptiors_filter.')
+            raise BadRequestException('Invalid descriptors_filter.')
         return my_quote(descriptors_filter) if descriptors_filter is not None else ""
 
     def clean_target(self):

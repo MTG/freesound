@@ -106,6 +106,10 @@ class Profile(SocialModel):
             return True
         except SameUser.DoesNotExist:
             return False
+    @property
+    def get_total_downloads(self):
+        # We consider each pack download as a single download
+        return self.num_sound_downloads + self.num_pack_downloads
 
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])

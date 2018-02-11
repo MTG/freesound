@@ -1,4 +1,3 @@
-import './components/navbar';
-import './components/dropdown';
+import './components';
 
 console.log('Hello, new Freesound!');

@@ -3,7 +3,7 @@ Home, not logged: (the ellipsis icon and the dropdowns won't load correctly insi
 ```jsx
 require('../../src/components/navbar');
 
-<nav class="bw-nav container">
+<nav class="bw-nav bw-nav--home container">
   <div class="bw-nav__logo">
     <a href="" class="no-hover" />
   </div>
@@ -92,7 +92,7 @@ require('../../src/components/navbar');
 Home, logged (with notifications):
 
 ```jsx
-<nav class="bw-nav container">
+<nav class="bw-nav bw-nav--home container">
   <div class="bw-nav__logo">
     <a href="" class="no-hover" />
   </div>
@@ -235,7 +235,7 @@ Home, logged (with notifications):
 Home, logged (no notifications):
 
 ```jsx
-<nav class="bw-nav container">
+<nav class="bw-nav bw-nav--home container">
   <div class="bw-nav__logo">
     <a href="" class="no-hover" />
   </div>

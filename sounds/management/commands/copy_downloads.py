@@ -39,6 +39,16 @@ class Command(BaseCommand):
             dest='sleep',
             default="0",
             help='Time in (seconds) to sleep after each day of Downlaods processed.')
+        parser.add_argument(
+            '-sd', '--start-date',
+            dest='start_date',
+            type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d'),
+            help='Only copy download objects created after this date. Use format YYYY-MM-DD.')
+        parser.add_argument(
+            '-ed', '--end-date',
+            dest='end_date',
+            type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d'),
+            help='Only copy download objects created before this date. Use format YYYY-MM-DD. Defaults to "today".')
 
     def handle(self, *args, **options):
 
@@ -55,17 +65,25 @@ class Command(BaseCommand):
         # get last date processed or if it's the first time executed use first date in downloads
         last_downloads = PackDownload.objects.order_by('-created')
 
-        if last_downloads.count():
-            start = last_downloads[0].created
-            start = start.replace(hour=0, minute=0, second=0)
-        else:
-            first_downloads = Download.objects.order_by('created')
-            start = first_downloads.first().created
+        start_date = options.get('start_date', None)
+        if start_date is None:
+            # If no start date is specified, determine it automatically. Either get date of last processed dowwnload
+            # or get date of first existing download object (if none have been processed yet)
+            if last_downloads.count():
+                start_date = last_downloads[0].created
+                start_date = start_date.replace(hour=0, minute=0, second=0)
+            else:
+                first_downloads = Download.objects.order_by('created')
+                start_date = first_downloads.first().created
 
-        end = datetime.datetime.now()
-        while start < end:
-            downloads = Download.objects.filter(pack_id__isnull=False, created__gte=start, created__lt=start+td)\
-                .prefetch_related('pack__sounds')
+        end_date = options.get('end_date')
+        if end_date is None:
+            end_date = datetime.datetime.now()  # end_date defaults to "today"
+
+        while start_date < end_date:
+            downloads = Download.objects.filter(pack_id__isnull=False,
+                                                created__gte=start_date,
+                                                created__lt=start_date+td).prefetch_related('pack__sounds')
 
             with transaction.atomic():
                 for download in downloads.all():
@@ -81,8 +99,8 @@ class Command(BaseCommand):
                         pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
                     PackDownloadSound.objects.bulk_create(pds, batch_size=1000)
 
-            start += td
             logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(),
-                                                                            start.strftime("%Y-%m-%d")))
+                                                                            start_date.strftime("%Y-%m-%d")))
+            start_date += td
             time.sleep(sleep_time)
         logger.info('Copy Downloads to new PackDownload finished')

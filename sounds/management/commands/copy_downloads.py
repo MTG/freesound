@@ -41,6 +41,7 @@ class Command(BaseCommand):
             help='Time in (seconds) to sleep after each day of Downlaods processed.')
 
     def handle(self, *args, **options):
+
         # This command will copy all the Downloads to the new models, it can be executed multiple
         # times and it will continue from the last period.
         logger.info('Copy Downloads to new PackDownload')
@@ -61,21 +62,23 @@ class Command(BaseCommand):
             first_downloads = Download.objects.order_by('created')
             start = first_downloads.first().created
 
-        while start < datetime.datetime.now():
+        end = datetime.datetime.now()
+        while start < end:
             downloads = Download.objects.filter(pack_id__isnull=False, created__gte=start, created__lt=start+td)\
-                    .prefetch_related('pack__sounds')
+                .prefetch_related('pack__sounds')
 
             with transaction.atomic():
                 for download in downloads.all():
+
                     # Create PackDownload object
-                    pd = PackDownload.objects.create(user=download.user, created=download.created,
+                    pd = PackDownload.objects.create(user_id=download.user_id, created=download.created,
                                                      pack_id=download.pack_id)
 
                     # Create PackDownloadSound objects and bulk insert them
                     # NOTE: this needs to be created after PackDownload to fill in the foreign key
                     pds = []
                     for sound in download.pack.sounds.all():
-                        pds.append(PackDownloadSound(sound=sound, license=sound.license, pack_download=pd))
+                        pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
                     PackDownloadSound.objects.bulk_create(pds, batch_size=1000)
 
             start += td

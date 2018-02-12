@@ -33,7 +33,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.six.moves.urllib.parse import urlparse
 from django.http import HttpResponse
 from django.template import loader
-from accounts.models import Profile, OldUsername
+from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from forum.models import Thread
@@ -49,6 +49,7 @@ from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
 from utils.search.search_general import get_random_sound_from_solr
 from tickets.models import Ticket, TicketComment
+from utils.username import redirect_if_old_username_or_404
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
@@ -205,13 +206,10 @@ def front_page(request):
     return render(request, 'index.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id)
-        if sound.user.username.lower() != username.lower():
-            if sound.user.old_usernames.filter(username__iexact=username).exists():
-                return HttpResponsePermanentRedirect(sound.get_absolute_url())
-            raise Http404
+        sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id, user__username=username)
         user_is_owner = request.user.is_authenticated and \
             (sound.user == request.user or request.user.is_superuser or request.user.is_staff or
              Group.objects.get(name='moderators') in request.user.groups.all())
@@ -264,9 +262,7 @@ def sound(request, username, sound_id):
         users_following = follow_utils.get_users_following(request.user)
         if sound.user in users_following:
             is_following = True
-    is_explicit = sound.is_explicit and (not request.user.is_authenticated \
-                        or not request.user.profile.is_adult)
-
+    is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
     tvars = {
         'sound': sound,
@@ -303,12 +299,15 @@ def after_download_modal(request):
         if should_suggest_donation(request.user, len(modal_shown_timestamps)):
             logger.info('Showing after download donate modal (%s)' % json.dumps({'user_id': request.user.id}))
             modal_shown_timestamps.append(time.time())
-            cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps)
+            cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps,
+                      60 * 60 * 24)  # 24 lifetime cache
             template = loader.get_template('sounds/after_download_modal_donation.html')
             response_content = template.render({'sound_name': sound_name})
 
     return JsonResponse({'content': response_content})
 
+
+@redirect_if_old_username_or_404
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
@@ -318,25 +317,23 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if settings.LOG_DOWNLOADS:
-        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
-        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
-            downloads_logger.info('Download sound', extra={
-                'user_id': request.user.id,
-                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-                'session_id': request.session.session_key,
-                'user_agent': request.META.get('HTTP_USER_AGENT'),
-                'method': request.method,
-                'sound_id': sound_id,
-                'range': request.META.get('HTTP_RANGE', None),
-            })
-
-    if not Download.objects.filter(user=request.user, sound=sound).exists():
-        Download.objects.create(user=request.user, sound=sound, license=sound.license)
+    if 'HTTP_RANGE' not in request.META:
+        '''
+        Download managers and some browsers use the range header to download files in multiple parts. We have observed 
+        that all clients first make a GET with no range header (to get the file length) and then make multiple other 
+        requests. We ignore all requests that have range header because we assume that a first query has already been 
+        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the 
+        cache for 5 minutes.
+        '''
+        cache_key = 'sdwn_%s_%d' % (sound_id, request.user.id)
+        if cache.get(cache_key, None) is None:
+            Download.objects.create(user=request.user, sound=sound, license=sound.license)
+            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
+@redirect_if_old_username_or_404
+@transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
@@ -345,22 +342,18 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    if settings.LOG_DOWNLOADS:
-        range_header = request.META.get('HTTP_RANGE', '').replace('bytes=', '').split('-')
-        if 'HTTP_RANGE' not in request.META or range_header[0] == "0":
-            downloads_logger.info('Download pack', extra={
-                'user_id': request.user.id,
-                'user_ip': request.META.get('HTTP_X_FORWARDED_FOR'),
-                'protocol': request.META.get('HTTP_X_FORWARDED_PROTOCOL'),
-                'session_id': request.session.session_key,
-                'user_agent': request.META.get('HTTP_USER_AGENT'),
-                'method': request.method,
-                'pack_id': pack_id,
-                'range': request.META.get('HTTP_RANGE', None),
-            })
-
-    if not Download.objects.filter(user=request.user, pack=pack).exists():
-        Download.objects.create(user=request.user, pack=pack)
+    if 'HTTP_RANGE' not in request.META:
+        '''
+        Download managers and some browsers use the range header to download files in multiple parts. We have observed 
+        that all clients first make a GET with no range header (to get the file length) and then make multiple other 
+        requests. We ignore all requests that have range header because we assume that a first query has already been 
+        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the 
+        cache for 5 minutes.
+        '''
+        cache_key = 'pdwn_%s_%d' % (pack_id, request.user.id)
+        if cache.get(cache_key, None) is None:
+            Download.objects.create(user=request.user, pack=pack)
+            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/pack in the next 5 minutes
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
 
@@ -512,6 +505,7 @@ def sound_edit(request, username, sound_id):
 
 
 @login_required
+@transaction.atomic()
 def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -540,6 +534,7 @@ def pack_edit(request, username, pack_id):
 
 
 @login_required
+@transaction.atomic()
 def pack_delete(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -573,6 +568,7 @@ def pack_delete(request, username, pack_id):
 
 
 @login_required
+@transaction.atomic()
 def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
@@ -597,6 +593,7 @@ def sound_edit_sources(request, username, sound_id):
     return render(request, 'sounds/sound_edit_sources.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -622,6 +619,7 @@ def remix_group(request, group_id):
     return render(request, 'sounds/remixes.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -629,6 +627,7 @@ def geotag(request, username, sound_id):
     return render(request, 'sounds/geotag.html', locals())
 
 
+@redirect_if_old_username_or_404
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound,
                               id=sound_id,
@@ -645,6 +644,8 @@ def similar(request, username, sound_id):
     return render(request, 'sounds/similar.html', locals())
 
 
+@redirect_if_old_username_or_404
+@transaction.atomic()
 def pack(request, username, pack_id):
     try:
         pack = Pack.objects.select_related().get(id=pack_id)
@@ -673,7 +674,7 @@ def pack(request, username, pack_id):
 
     # If user is owner of pack, display form to add description
     enable_description_form = False
-    if request.user.username == username:
+    if request.user.id == pack.user_id:
         enable_description_form = True
         form = PackDescriptionForm(instance = pack)
 
@@ -689,6 +690,7 @@ def pack(request, username, pack_id):
     return render(request, 'sounds/pack.html', locals())
 
 
+@redirect_if_old_username_or_404
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     order = request.GET.get("order", "name")
@@ -698,6 +700,7 @@ def packs_for_user(request, username):
     return render(request, 'sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()))
 
 
+@redirect_if_old_username_or_404
 def for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Sound.public.only('id').filter(user=user)
@@ -711,6 +714,7 @@ def for_user(request, username):
 
 
 @login_required
+@transaction.atomic()
 def delete(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
@@ -752,6 +756,8 @@ def delete(request, username, sound_id):
     return render(request, 'sounds/delete.html', tvars)
 
 
+@redirect_if_old_username_or_404
+@transaction.atomic()
 def flag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -775,8 +781,8 @@ def flag(request, username, sound_id):
                 user_email = flag_form.cleaned_data["email"]
 
             from_email = settings.DEFAULT_FROM_EMAIL
-            send_mail_template(u"[flag] flagged file", "sounds/email_flag.txt",
-                               {"flag": flag}, from_email, reply_to=user_email)
+            send_mail_template(u"Sound flag: %s - %s" % (sound.user.username, sound.original_filename),
+                    "sounds/email_flag.txt", {"flag": flag}, from_email, reply_to=user_email)
 
             return redirect(sound)
     else:
@@ -817,8 +823,11 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 
+@redirect_if_old_username_or_404
 def display_sound_wrapper(request, username, sound_id):
-    sound_obj = get_object_or_404(Sound, id=sound_id, user__username__iexact=username)
+    sound_obj = get_object_or_404(Sound, id=sound_id)
+    if sound_obj.user.username.lower() != username.lower():
+        raise Http404
 
     # The following code is duplicated in sounds.tempaltetags.display_sound. This could be optimized.
     is_explicit = False

@@ -185,6 +185,10 @@ class CommentSoundsTestCase(TestCase):
         comment = 'Test <img src="https://test.com/img.png" /> test'
         self.assertEqual(replace_img(comment), comment)
 
+        # make sure lack of src doesn't break anything
+        comment = 'Test <img/> test, http://test.com/img.png'
+        self.assertEqual(replace_img(comment), comment)
+
     def test_post_delete_comment(self):
         sound = Sound.objects.get(id=19)
         sound.is_index_dirty = False
@@ -773,6 +777,27 @@ class SoundPackDownloadTestCase(TestCase):
             self.sound.refresh_from_db()
             self.assertEqual(self.sound.num_downloads, 0)
 
+    def test_download_sound_oldusername(self):
+        # Test if download works if username changed
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            self.sound.user.username = 'other_username'
+            self.sound.user.save()
+
+            # Check download works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+            resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]))
+            # Check if response is 301
+            self.assertEqual(resp.status_code, 301)
+
+            # Now follow redirect
+            resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]), follow=True)
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+
     def test_download_pack(self):
         with mock.patch('sounds.views.download_sounds', return_value=HttpResponse()):
 
@@ -801,6 +826,27 @@ class SoundPackDownloadTestCase(TestCase):
             Download.objects.all().delete()
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 0)
+
+    def test_download_pack_oldusername(self):
+        # Test if download pack works if username changed
+        with mock.patch('sounds.views.sendfile', return_value=HttpResponse()):
+
+            self.pack.user.username = 'other_username'
+            self.pack.user.save()
+
+            # Check donwload works successfully if user logged in
+            self.client.login(username=self.user.username, password='testpass')
+
+            # First check that the response is a 301
+            resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]))
+            self.assertEqual(resp.status_code, 301)
+
+            # Now follow the redirect
+            resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]), follow=True)
+            self.assertEqual(resp.status_code, 200)
+
+            # Check n download objects is 1
+            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
 
 
 class SoundSignatureTestCase(TestCase):

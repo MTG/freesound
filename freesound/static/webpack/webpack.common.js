@@ -1,21 +1,20 @@
 const path = require('path');
 
-const rootPath = path.resolve('.');
-
-const SUPPORTED_BROWSERS = [
-  '>1%',
-  'last 4 versions',
-  'Firefox ESR',
-  'not ie < 10',
-];
+const SUPPORTED_BROWSERS = ['>1%', 'last 4 versions', 'Firefox ESR', 'not ie < 10'];
 
 module.exports = {
   entries: {
-    index: path.join(__dirname, '..', 'src/index.js'),
+    base: path.join(__dirname, '..', 'base.js'),
+    index: path.join(__dirname, '..', 'src/common.js'),
   },
   output: {
     filename: '[name].js',
     path: path.join(__dirname, '..', 'dist'),
+    pathinfo: true,
+    devtoolModuleFilenameTemplate: info =>
+      path
+        .relative(path.join(__dirname, '..', 'src'), info.absoluteResourcePath)
+        .replace(/\\/g, '/'),
   },
   loaders: {
     jsLoader: {
@@ -52,5 +51,15 @@ module.exports = {
         ],
       },
     },
+    fileLoader: {
+      test: /\.svg$/,
+      exclude: /icons/,
+      loaders: ['file-loader']
+    },
+    iconsLoader: {
+      test: /\.svg$/,
+      include: /icons/,
+      loaders: ['raw-loader']
+    }
   },
 };

@@ -2,23 +2,21 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const common = require('./common');
+const common = require('./webpack.common');
 
 module.exports = {
-  devtool: 'source-map',
+  devtool: 'cheap-module-source-map',
   entry: common.entries,
   output: common.output,
   module: {
     loaders: [
       common.loaders.jsLoader,
       {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader', common.loaders.postCssLoader],
+        test: /\.s?css$/,
+        use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader', 'import-glob-loader'],
       },
-      {
-        test: /\.scss$/,
-        use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader'],
-      },
+      common.loaders.fileLoader,
+      common.loaders.iconsLoader,
     ],
   },
   plugins: [

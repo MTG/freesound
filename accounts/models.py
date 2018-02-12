@@ -79,8 +79,13 @@ class Profile(SocialModel):
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
     last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
     donations_reminder_email_sent = models.BooleanField(default=False)
-    num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
-    num_posts = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
+
+    # The following 4 fields are updated using django signals (methods 'update_num_downloads*')
+    num_sounds = models.PositiveIntegerField(editable=False, default=0)
+    num_posts = models.PositiveIntegerField(editable=False, default=0)
+    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)
+    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)
+
     is_deleted_user = models.BooleanField(db_index=True, default=False)
     is_adult = models.BooleanField(default=False)
 
@@ -101,6 +106,10 @@ class Profile(SocialModel):
             return True
         except SameUser.DoesNotExist:
             return False
+    @property
+    def get_total_downloads(self):
+        # We consider each pack download as a single download
+        return self.num_sound_downloads + self.num_pack_downloads
 
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])
@@ -401,7 +410,8 @@ def presave_user(sender, instance, **kwargs):
     try:
         old_username = User.objects.get(pk=instance.id).username
         if old_username != instance.username:
-            OldUsername.objects.create(user=instance, username=old_username)
+            # We use .get_or_create below to avoid having 2 OldUsername objects with the same user/username pair
+            OldUsername.objects.get_or_create(user=instance, username=old_username)
     except User.DoesNotExist:
         pass
 
@@ -429,6 +439,7 @@ class UserEmailSetting(models.Model):
 class OldUsername(models.Model):
     user = models.ForeignKey(User, related_name="old_usernames")
     username = models.CharField(max_length=255, db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return self.username
+        return '{0} > {1}'.format(self.username, self.user.username)

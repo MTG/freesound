@@ -1,4 +1,4 @@
-.. _resources:
+cd _do.. _resources:
 
 Resources
 <<<<<<<<<
@@ -9,6 +9,11 @@ Resources
 
 Search resources
 >>>>>>>>>>>>>>>>
+
+.. warning:: When using the search resources make sure to include the ``fields`` parameter (see :ref:`sound-list-response`)
+  so that you get all needed metadata for each search result in a single request. In this way you'll **avoid  having to perform
+  one extra API request** to retreive the desired metadata for each individual result.
+
 
 .. _sound-text-search:
 
@@ -410,6 +415,10 @@ Sound Instance
 
 This resource allows the retrieval of detailed information about a sound.
 
+.. warning:: If you're using this resource to get metadata for each individual result returned **after a search request**, try
+  instead to include the ``fields`` parameter in your search request (see :ref:`sound-list-response`). This will allow
+  you to specify which metadata is to be returned for each search result, and **remove the need of making an extra query
+  for each individual result**.
 
 .. _sound-instance-response:
 

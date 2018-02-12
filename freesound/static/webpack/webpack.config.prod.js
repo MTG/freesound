@@ -1,35 +1,21 @@
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
-const common = require('./common');
+const common = require('./webpack.common');
 
 module.exports = {
   devtool: false,
   entry: common.entries,
   output: Object.assign({}, common.output, {
     filename: '[name].min.js',
+    pathinfo: false,
   }),
+  bail: true,
   module: {
     loaders: [
       common.loaders.jsLoader,
       {
-        test: /\.css$/,
-        loader: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [
-            {
-              loader: 'css-loader',
-              options: {
-                minimize: true,
-              },
-            },
-            common.loaders.postCssLoader,
-          ],
-          publicPath: '',
-        }),
-      },
-      {
-        test: /\.scss$/,
+        test: /\.s?css$/,
         loader: ExtractTextPlugin.extract({
           fallback: 'style-loader',
           use: [
@@ -41,10 +27,13 @@ module.exports = {
             },
             common.loaders.postCssLoader,
             'sass-loader',
+            'import-glob-loader'
           ],
           publicPath: '',
         }),
       },
+      common.loaders.fileLoader,
+      common.loaders.iconsLoader,
     ],
   },
   plugins: [

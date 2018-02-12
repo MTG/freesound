@@ -21,62 +21,76 @@
 #
 
 
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser
-from rest_framework.decorators import api_view, authentication_classes, throttle_classes, permission_classes
-from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
-from oauth2_provider.models import Grant, AccessToken
-from apiv2.serializers import *
-from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
-from apiv2.exceptions import *
-from apiv2.forms import *
-from apiv2.models import ApiV2Client
-from sounds.models import Sound, Pack, License
-from geotags.models import GeoTag
-from bookmarks.models import Bookmark, BookmarkCategory
-from accounts.views import handle_uploaded_file, send_activation
-from accounts.forms import RegistrationForm
-from utils.downloads import download_sounds
-from utils.filesystem import generate_tree
-from utils.cache import invalidate_template_cache
-from utils.nginxsendfile import sendfile
-from utils.tags import clean_and_split_tags
-from similarity.client import Similarity
-from django.db import IntegrityError
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render
-from django.http import HttpResponseRedirect, Http404
-from django.urls import reverse
+import datetime
+import logging
 from collections import OrderedDict
 from urllib import quote
-from django.conf import settings
-import utils.sound_upload
-import logging
-import datetime
-import os
+
 import jwt
+import os
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render
+from django.urls import reverse
+from oauth2_provider.models import Grant, AccessToken
+from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
+from rest_framework.decorators import api_view, authentication_classes, throttle_classes, permission_classes
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
+from rest_framework import status
+
+import utils.sound_upload
+from accounts.forms import RegistrationForm
+from accounts.views import handle_uploaded_file, send_activation
+from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
+from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
+    UnauthorizedException, ServerErrorException, OtherException, APIException
+from apiv2.forms import ApiV2ClientForm, SoundCombinedSearchFormAPI, SoundTextSearchFormAPI, \
+    SoundContentSearchFormAPI, SimilarityFormAPI
+from apiv2.models import ApiV2Client
+from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFileSerializer, \
+    EditSoundDescriptionSerializer, SoundDescriptionSerializer, CreateCommentSerializer, SoundCommentsSerializer, \
+    CreateRatingSerializer, CreateBookmarkSerializer, BookmarkCategorySerializer, PackSerializer, UserSerializer, \
+    SoundSerializer, SoundListSerializer
+from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, \
+    OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, \
+    ApiSearchPaginator, get_sounds_descriptors, prepend_base, get_formatted_examples_for_view
+from bookmarks.models import Bookmark, BookmarkCategory
+from geotags.models import GeoTag
+from similarity.client import Similarity
+from sounds.models import Sound, Pack, License
+from comments.models import Comment
+from ratings.models import SoundRating
+from utils.cache import invalidate_template_cache
+from utils.downloads import download_sounds
+from utils.filesystem import generate_tree
+from utils.nginxsendfile import sendfile
+from utils.tags import clean_and_split_tags
 
 logger = logging.getLogger("api")
-docs_base_url = prepend_base('/docs/api')
 resources_doc_filename = 'resources_apiv2.html'
 
 
 class AuthorizationView(ProviderAuthorizationView):
-    login_url='/apiv2/login/'
+    login_url = '/apiv2/login/'
 
 ####################################
 # SEARCH AND SIMILARITY SEARCH VIEWS
 ####################################
 
+
 class TextSearch(GenericAPIView):
 
-    __doc__ = 'Search sounds in Freesound based on their tags and other metadata.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#text-search' % resources_doc_filename,
-                 get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
+    @classmethod
+    def get_description(cls):
+        return 'Search sounds in Freesound based on their tags and other metadata.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#text-search' % resources_doc_filename,
+                  get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
@@ -85,8 +99,9 @@ class TextSearch(GenericAPIView):
         search_form = SoundTextSearchFormAPI(request.query_params)
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
-        if search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None:
-            raise BadRequestException(msg='At lesast one request parameter from Text Search should be included in the request.', resource=self)
+        if search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None:
+            raise BadRequestException(msg='At lesast one request parameter from Text Search should be included '
+                                          'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
         if search_form.cleaned_data['page_size'] < 1:
@@ -94,7 +109,8 @@ class TextSearch(GenericAPIView):
 
         # Get search results
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(search_form, resource=self)
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = \
+                api_search(search_form, resource=self)
         except APIException as e:
             raise e
         except Exception as e:
@@ -111,9 +127,11 @@ class TextSearch(GenericAPIView):
         response_data['next'] = None
         if page['has_other_pages']:
                 if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['previous_page_number'])
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-text-search'),
+                                                                           page=page['previous_page_number'])
                 if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['next_page_number'])
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-text-search'),
+                                                                       page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
@@ -126,7 +144,12 @@ class TextSearch(GenericAPIView):
                 sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
-                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=1, filt='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
+                        sound['more_from_same_pack'] = search_form.construct_link(
+                            reverse('apiv2-sound-text-search'),
+                            page=1,
+                            filt='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]),
+                                                            more_from_pack_data[sid][2]),
+                            group_by_pack='0')
                         sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
             except KeyError:
@@ -143,10 +166,12 @@ class TextSearch(GenericAPIView):
 
 class ContentSearch(GenericAPIView):
 
-    __doc__ = 'Search sounds in Freesound based on their content descriptors.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#content-search' % resources_doc_filename,
-                 get_formatted_examples_for_view('ContentSearch', 'apiv2-sound-content-search', max=5))
+    @classmethod
+    def get_description(cls):
+        return 'Search sounds in Freesound based on their content descriptors.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#content-search' % resources_doc_filename,
+                  get_formatted_examples_for_view('ContentSearch', 'apiv2-sound-content-search', max=5))
 
     serializer_class = SimilarityFileSerializer
     analysis_file = None
@@ -158,8 +183,11 @@ class ContentSearch(GenericAPIView):
         search_form = SoundContentSearchFormAPI(request.query_params)
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
-        if not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file:
-            raise BadRequestException(msg='At lesast one parameter from Content Search should be included in the request.', resource=self)
+        if not search_form.cleaned_data['target'] and \
+                not search_form.cleaned_data['descriptors_filter'] and \
+                not self.analysis_file:
+            raise BadRequestException(msg='At lesast one parameter from Content Search should be included '
+                                          'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
 
@@ -168,11 +196,11 @@ class ContentSearch(GenericAPIView):
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(search_form, target_file=analysis_file, resource=self)
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = \
+                api_search(search_form, target_file=analysis_file, resource=self)
         except APIException as e:
             raise e # TODO pass correct exception message
         except Exception as e:
-            #logger_error.error('<500 Server error unexpected> %s' % str(e))
             raise ServerErrorException(msg='Unexpected error', resource=self)
 
         # Paginate results
@@ -182,15 +210,18 @@ class ContentSearch(GenericAPIView):
         page = paginator.page(search_form.cleaned_data['page'])
         response_data = dict()
         if self.analysis_file:
-            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
+            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
+                                                                    self.analysis_file._size/1024)
         response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
         if page['has_other_pages']:
                 if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-content-search'), page=page['previous_page_number'])
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-content-search'),
+                                                                           page=page['previous_page_number'])
                 if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-content-search'), page=page['next_page_number'])
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-content-search'),
+                                                                       page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
@@ -229,10 +260,12 @@ class ContentSearch(GenericAPIView):
 
 class CombinedSearch(GenericAPIView):
 
-    __doc__ = 'Search sounds in Freesound based on their tags, metadata and content-based descriptors.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#combined-search' % resources_doc_filename,
-                 get_formatted_examples_for_view('CombinedSearch', 'apiv2-sound-combined-search', max=5))
+    @classmethod
+    def get_description(cls):
+        return 'Search sounds in Freesound based on their tags, metadata and content-based descriptors.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#combined-search' % resources_doc_filename,
+                  get_formatted_examples_for_view('CombinedSearch', 'apiv2-sound-combined-search', max=5))
 
     serializer_class = SimilarityFileSerializer
     analysis_file = None
@@ -245,10 +278,15 @@ class CombinedSearch(GenericAPIView):
         search_form = SoundCombinedSearchFormAPI(request.query_params)
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
-        if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None):
-            raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.', resource=self)
-        if (search_form.cleaned_data['target'] and search_form.cleaned_data['query']):
-            raise BadRequestException(msg='Request parameters \'target\' and \'query\' can not be used at the same time.', resource=self)
+        if (not search_form.cleaned_data['target'] and
+            not search_form.cleaned_data['descriptors_filter'] and
+            not self.analysis_file) \
+                or (search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None):
+            raise BadRequestException(msg='At least one parameter from Text Search and one parameter from '
+                                          'Content Search should be included in the request.', resource=self)
+        if search_form.cleaned_data['target'] and search_form.cleaned_data['query']:
+            raise BadRequestException(msg='Request parameters \'target\' and \'query\' can not be used at '
+                                          'the same time.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
 
@@ -262,22 +300,15 @@ class CombinedSearch(GenericAPIView):
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
         try:
-            results, \
-            count, \
-            distance_to_target_data, \
-            more_from_pack_data, \
-            note, \
-            params_for_next_page, \
-            debug_note \
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note \
                 = api_search(search_form,
                              target_file=analysis_file,
                              extra_parameters=extra_parameters,
                              merging_strategy=self.merging_strategy,
                              resource=self)
         except APIException as e:
-            raise e # TODO pass correct resource parameter
+            raise e  # TODO pass correct resource parameter
         except Exception as e:
-            #logger_error.error('<500 Server error unexpected> %s' % str(e))
             raise ServerErrorException(msg='Unexpected error', resource=self)
 
         if params_for_next_page:
@@ -291,16 +322,20 @@ class CombinedSearch(GenericAPIView):
 
         response_data = dict()
         if self.analysis_file:
-            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
+            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
+                                                                    self.analysis_file._size/1024)
 
         # Build 'more' link (only add it if we know there might be more results)
         if 'no_more_results' not in extra_parameters:
             if self.merging_strategy == 'merge_optimized':
-                response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), include_page=False)
+                response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
+                                                                   include_page=False)
             else:
-                num_pages = count / search_form.cleaned_data['page_size'] + int(count % search_form.cleaned_data['page_size'] != 0)
+                num_pages = count / search_form.cleaned_data['page_size'] + \
+                            int(count % search_form.cleaned_data['page_size'] != 0)
                 if search_form.cleaned_data['page'] < num_pages:
-                    response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=search_form.cleaned_data['page'] + 1)
+                    response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
+                                                                       page=search_form.cleaned_data['page'] + 1)
                 else:
                     response_data['more'] = None
             if extra_parameters_string:
@@ -351,10 +386,13 @@ class CombinedSearch(GenericAPIView):
 #############
 
 class SoundInstance(RetrieveAPIView):
-    __doc__ = 'Detailed sound information.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#sound-instance' % resources_doc_filename,
-                 get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
+
+    @classmethod
+    def get_description(cls):
+        return 'Detailed sound information.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#sound-instance' % resources_doc_filename,
+                  get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
 
     serializer_class = SoundSerializer
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
@@ -365,10 +403,13 @@ class SoundInstance(RetrieveAPIView):
 
 
 class SoundAnalysis(GenericAPIView):
-    __doc__ = 'Sound analysis information.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#sound-analysis' % resources_doc_filename,
-                 get_formatted_examples_for_view('SoundAnalysis', 'apiv2-sound-analysis', max=5))
+
+    @classmethod
+    def get_description(cls):
+        return 'Sound analysis information.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#sound-analysis' % resources_doc_filename,
+                  get_formatted_examples_for_view('SoundAnalysis', 'apiv2-sound-analysis', max=5))
 
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -387,10 +428,13 @@ class SoundAnalysis(GenericAPIView):
 
 
 class SimilarSounds(GenericAPIView):
-    __doc__ = 'Similar sounds to a given Freesound sound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#similar-sounds' % resources_doc_filename,
-                 get_formatted_examples_for_view('SimilarSounds', 'apiv2-similarity-sound', max=5))
+
+    @classmethod
+    def get_description(cls):
+        return 'Similar sounds to a given Freesound sound.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#similar-sounds' % resources_doc_filename,
+                  get_formatted_examples_for_view('SimilarSounds', 'apiv2-similarity-sound', max=5))
 
     def get(self, request,  *args, **kwargs):
 
@@ -406,7 +450,8 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data['target'] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(similarity_sound_form, resource=self)
+        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = \
+            api_search(similarity_sound_form, resource=self)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, similarity_sound_form.cleaned_data['page_size'])
@@ -419,9 +464,11 @@ class SimilarSounds(GenericAPIView):
         response_data['next'] = None
         if page['has_other_pages']:
                 if page['has_previous']:
-                    response_data['previous'] = similarity_sound_form.construct_link(reverse('apiv2-similarity-sound', args=[sound_id]), page=page['previous_page_number'])
+                    response_data['previous'] = similarity_sound_form.construct_link(
+                        reverse('apiv2-similarity-sound', args=[sound_id]), page=page['previous_page_number'])
                 if page['has_next']:
-                    response_data['next'] = similarity_sound_form.construct_link(reverse('apiv2-similarity-sound', args=[sound_id]), page=page['next_page_number'])
+                    response_data['next'] = similarity_sound_form.construct_link(
+                        reverse('apiv2-similarity-sound', args=[sound_id]), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
@@ -448,11 +495,14 @@ class SimilarSounds(GenericAPIView):
 
 
 class SoundComments(ListAPIView):
-    __doc__ = 'Sounds comments.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#sound-comments' % resources_doc_filename,
-                 get_formatted_examples_for_view('SoundComments', 'apiv2-sound-comments', max=5))
     serializer_class = SoundCommentsSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Sounds comments.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#sound-comments' % resources_doc_filename,
+                  get_formatted_examples_for_view('SoundComments', 'apiv2-sound-comments', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('sound:%i comments' % (int(self.kwargs['pk']))))
@@ -463,10 +513,13 @@ class SoundComments(ListAPIView):
 
 
 class DownloadSound(DownloadAPIView):
-    __doc__ = 'Download a sound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#download-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('DownloadSound', 'apiv2-sound-download', max=5))
+
+    @classmethod
+    def get_description(cls):
+        return 'Download a sound.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#download-sound-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('DownloadSound', 'apiv2-sound-download', max=5))
 
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -483,7 +536,10 @@ class DownloadSound(DownloadAPIView):
 
 
 class DownloadLink(DownloadAPIView):
-    __doc__ = 'Get a url to download a sound without authentication.'
+
+    @classmethod
+    def get_description(cls):
+        return 'Get a url to download a sound without authentication.'
 
     def get(self, request, *args, **kwargs):
         sound_id = kwargs['pk']
@@ -500,7 +556,8 @@ class DownloadLink(DownloadAPIView):
             'client_id': self.client_id,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
         }, settings.SECRET_KEY, algorithm='HS256')
-        download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token]), request_is_secure=request.is_secure())
+        download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token]),
+                                     request_is_secure=request.is_secure())
         return Response({'download_link': download_link}, status=status.HTTP_200_OK)
 
 
@@ -509,10 +566,13 @@ class DownloadLink(DownloadAPIView):
 ############
 
 class UserInstance(RetrieveAPIView):
-    __doc__ = 'Detailed user information.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-instance' % resources_doc_filename,
-                 get_formatted_examples_for_view('UserInstance', 'apiv2-user-instance', max=5))
+
+    @classmethod
+    def get_description(cls):
+        return 'Detailed user information.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#user-instance' % resources_doc_filename,
+                  get_formatted_examples_for_view('UserInstance', 'apiv2-user-instance', max=5))
 
     lookup_field = "username"
     serializer_class = UserSerializer
@@ -524,13 +584,15 @@ class UserInstance(RetrieveAPIView):
 
 
 class UserSounds(ListAPIView):
-    __doc__ = 'Sounds uploaded by a user.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-sounds' % resources_doc_filename,
-                 get_formatted_examples_for_view('UserSounds', 'apiv2-user-sound-list', max=5))
-
     lookup_field = "username"
     serializer_class = SoundListSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Sounds uploaded by a user.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#user-sounds' % resources_doc_filename,
+                  get_formatted_examples_for_view('UserSounds', 'apiv2-user-sound-list', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('user:%s sounds' % (self.kwargs['username'])))
@@ -542,21 +604,22 @@ class UserSounds(ListAPIView):
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
-                                                                                  processing_state="OK",
-                                                                                  user__username=self.kwargs['username'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license')\
+            .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 
 class UserPacks(ListAPIView):
-    __doc__ = 'Packs created by a user.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-packs' % resources_doc_filename,
-                 get_formatted_examples_for_view('UserPacks', 'apiv2-user-packs', max=5))
-
     serializer_class = PackSerializer
     queryset = Pack.objects.exclude(is_deleted=True)
+
+    @classmethod
+    def get_description(cls):
+        return 'Packs created by a user.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#user-packs' % resources_doc_filename,
+                  get_formatted_examples_for_view('UserPacks', 'apiv2-user-packs', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('user:%s packs' % (self.kwargs['username'])))
@@ -574,12 +637,14 @@ class UserPacks(ListAPIView):
 
 
 class UserBookmarkCategories(ListAPIView):
-    __doc__ = 'Bookmark categories created by a user.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-bookmark-categories' % resources_doc_filename,
-                 get_formatted_examples_for_view('UserBookmarkCategories', 'apiv2-user-bookmark-categories', max=5))
-
     serializer_class = BookmarkCategorySerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Bookmark categories created by a user.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#user-bookmark-categories' % resources_doc_filename,
+                  get_formatted_examples_for_view('UserBookmarkCategories', 'apiv2-user-bookmark-categories', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('user:%s bookmark_categories' % (self.kwargs['username'])))
@@ -592,7 +657,8 @@ class UserBookmarkCategories(ListAPIView):
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        if Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'], category=None).count():
+        if Bookmark.objects.select_related("sound")\
+                .filter(user__username=self.kwargs['username'], category=None).count():
             uncategorized = BookmarkCategory(name='Uncategorized', user=user, id=0)
             return [uncategorized] + list(categories)
         else:
@@ -600,15 +666,19 @@ class UserBookmarkCategories(ListAPIView):
 
 
 class UserBookmarkCategorySounds(ListAPIView):
-    __doc__ = 'Sounds bookmarked by a user under a particular category.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-bookmark-category-sounds' % resources_doc_filename,
-                 get_formatted_examples_for_view('UserBookmarkCategorySounds', 'apiv2-user-bookmark-category-sounds', max=5))
-
     serializer_class = SoundListSerializer
 
+    @classmethod
+    def get_description(cls):
+        return 'Sounds bookmarked by a user under a particular category.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#user-bookmark-category-sounds' % resources_doc_filename,
+                  get_formatted_examples_for_view('UserBookmarkCategorySounds', 'apiv2-user-bookmark-category-sounds',
+                                                  max=5))
+
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s' % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
+        logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
+                                     % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
         return super(UserBookmarkCategorySounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -623,15 +693,11 @@ class UserBookmarkCategorySounds(ListAPIView):
                 kwargs['category'] = None
         else:
             kwargs['category'] = None
-
         try:
             queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException(resource=self)
-
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
-        #[bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'],category=None)]
-
         return queryset
 
 
@@ -640,13 +706,15 @@ class UserBookmarkCategorySounds(ListAPIView):
 ############
 
 class PackInstance(RetrieveAPIView):
-    __doc__ = 'Detailed pack information.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#pack-instance' % resources_doc_filename,
-                 get_formatted_examples_for_view('PackInstance', 'apiv2-pack-instance', max=5))
-
     serializer_class = PackSerializer
     queryset = Pack.objects.exclude(is_deleted=True)
+
+    @classmethod
+    def get_description(cls):
+        return 'Detailed pack information.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#pack-instance' % resources_doc_filename,
+                  get_formatted_examples_for_view('PackInstance', 'apiv2-pack-instance', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('pack:%i instance' % (int(kwargs['pk']))))
@@ -654,12 +722,14 @@ class PackInstance(RetrieveAPIView):
 
 
 class PackSounds(ListAPIView):
-    __doc__ = 'Sounds included in a pack.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#pack-sounds' % resources_doc_filename,
-                 get_formatted_examples_for_view('PackSounds', 'apiv2-pack-sound-list', max=5))
-
     serializer_class = SoundListSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Sounds included in a pack.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#pack-sounds' % resources_doc_filename,
+                  get_formatted_examples_for_view('PackSounds', 'apiv2-pack-sound-list', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('pack:%i sounds' % (int(kwargs['pk']))))
@@ -679,11 +749,13 @@ class PackSounds(ListAPIView):
 
 
 class DownloadPack(DownloadAPIView):
-    __doc__ = 'Download a pack.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#download-pack-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('DownloadPack', 'apiv2-pack-download', max=5))
 
+    @classmethod
+    def get_description(cls):
+        return 'Download a pack.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#download-pack-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('DownloadPack', 'apiv2-pack-download', max=5))
 
     def get(self, request,  *args, **kwargs):
         pack_id = kwargs['pk']
@@ -695,7 +767,8 @@ class DownloadPack(DownloadAPIView):
 
         sounds = pack.sounds.filter(processing_state="OK", moderation_state="OK")
         if not sounds:
-            raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
+            raise NotFoundException(
+                msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 
         licenses_url = (reverse('pack-licenses', args=[pack.user.username, pack.id]))
         return download_sounds(licenses_url, pack)
@@ -707,13 +780,15 @@ class DownloadPack(DownloadAPIView):
 
 
 class UploadSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Upload an audiofile and (optionally) describe  it.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#upload-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
-
     serializer_class = UploadAndDescribeAudioFileSerializer
     parser_classes = (MultiPartParser,)
+
+    @classmethod
+    def get_description(cls):
+        return 'Upload an audiofile and (optionally) describe  it.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#upload-sound-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('upload_sound'))
@@ -733,13 +808,16 @@ class UploadSound(WriteRequiredGenericAPIView):
                     msg = 'Audio file successfully uploaded (%i Bytes, now pending description).' % audiofile.size
                 return Response(data={'detail': msg,
                                       'id': None,
-                                      'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
+                                      'note': 'Sound has not been saved in the database as browseable API is only '
+                                              'for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 if is_providing_description:
                     try:
                         apiv2_client = None
-                        if self.auth_method_name == 'OAuth2': # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
+                        # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION
+                        # is False
+                        if self.auth_method_name == 'OAuth2':
                             apiv2_client = request.auth.application.apiv2_client
 
                         sound_fields = {}
@@ -766,9 +844,11 @@ class UploadSound(WriteRequiredGenericAPIView):
                                     apiv2_client=apiv2_client
                             )
                         except utils.sound_upload.NoAudioException:
-                            raise OtherException('Something went wrong with accessing the file %s.' % sound_fields['name'])
+                            raise OtherException('Something went wrong with accessing the file %s.'
+                                                 % sound_fields['name'])
                         except utils.sound_upload.AlreadyExistsException:
-                            raise OtherException("Sound could not be created because the uploaded file is already part of freesound.", resource=self)
+                            raise OtherException("Sound could not be created because the uploaded file is "
+                                                 "already part of freesound.", resource=self)
                         except utils.sound_upload.CantMoveException:
                             if settings.DEBUG:
                                 msg = "File could not be copied to the correct destination."
@@ -781,18 +861,26 @@ class UploadSound(WriteRequiredGenericAPIView):
                     except Exception as e:
                         raise ServerErrorException(msg='Unexpected error', resource=self)
 
-                    return Response(data={'detail': 'Audio file successfully uploaded and described (now pending processing and moderation).', 'id': int(sound.id) }, status=status.HTTP_201_CREATED)
+                    return Response(data={'detail': 'Audio file successfully uploaded and described (now pending '
+                                                    'processing and moderation).', 'id': int(sound.id) },
+                                    status=status.HTTP_201_CREATED)
                 else:
-                    return Response(data={'filename': audiofile.name, 'detail': 'Audio file successfully uploaded (%i Bytes, now pending description).' % audiofile.size}, status=status.HTTP_201_CREATED)
+                    return Response(data={'filename': audiofile.name,
+                                          'detail': 'Audio file successfully uploaded (%i Bytes, '
+                                                    'now pending description).' % audiofile.size},
+                                    status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PendingUploads(OauthRequiredAPIView):
-    __doc__ = 'List of uploaded files which have not yet been described, processed or moderated.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#pending-uploads-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('PendingUploads', 'apiv2-uploads-pending', max=5))
+
+    @classmethod
+    def get_description(cls):
+        return 'List of uploaded files which have not yet been described, processed or moderated.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#pending-uploads-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('PendingUploads', 'apiv2-uploads-pending', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('pending_uploads'))
@@ -825,25 +913,26 @@ class PendingUploads(OauthRequiredAPIView):
                 if key == 'images':
                     sound_data[key] = value
         if processing_state:
-            PROCESSING_STATE_API = {
+            sound_data['processing_state'] = {
                 'QU': 'Queued',
                 'PE': 'Pending',
                 'PR': 'Processing',
                 'FA': 'Failed',
                 'OK': 'Processed'
-            }
-            sound_data['processing_state'] = PROCESSING_STATE_API[str(sound.processing_state)]
+            }[str(sound.processing_state)]
 
         return sound_data
 
 
 class DescribeSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Describe a previously uploaded sound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#describe-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('DescribeSound', 'apiv2-uploads-describe', max=5))
-
     serializer_class = SoundDescriptionSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Describe a previously uploaded sound.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#describe-sound-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('DescribeSound', 'apiv2-uploads-describe', max=5))
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('describe_sound'))
@@ -854,25 +943,33 @@ class DescribeSound(WriteRequiredGenericAPIView):
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).',
                                       'id': None,
-                                      'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
+                                      'note': 'Sound has not been saved in the database as browseable API is only for '
+                                              'testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 apiv2_client = None
-                if self.auth_method_name == 'OAuth2': # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
+                # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
+                if self.auth_method_name == 'OAuth2':
                     apiv2_client = request.auth.client.apiv2_client
-                sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client)
-                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).', 'id': int(sound.id)}, status=status.HTTP_201_CREATED)
+                sound_fields = serializer.data.copy()
+                sound_fields['dest_path'] = os.path.join(self.user.profile.locations()['uploads_dir'],
+                                                         sound_fields['upload_filename'])
+                sound = utils.sound_upload.create_sound(self.user, sound_fields, apiv2_client=apiv2_client)
+                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).',
+                                      'id': int(sound.id)}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EditSoundDescription(WriteRequiredGenericAPIView):
-    __doc__ = 'Edit the description of an existing sound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#edit-sound-description-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('EditSoundDescription', 'apiv2-sound-edit', max=5))
-
     serializer_class = EditSoundDescriptionSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Edit the description of an existing sound.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#edit-sound-description-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('EditSoundDescription', 'apiv2-sound-edit', max=5))
 
     def post(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -883,14 +980,16 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
             raise NotFoundException(resource=self)
         # Check that sound belongs to current end user
         if sound.user != self.user:
-            raise UnauthorizedException(msg='Not authorized. The sound you\'re trying to edit is not owned by the OAuth2 logged in user.', resource=self)
+            raise UnauthorizedException(msg='Not authorized. The sound you\'re trying to edit is not owned by '
+                                            'the OAuth2 logged in user.', resource=self)
 
         logger.info(self.log_message('sound:%s edit_description' % sound_id))
         serializer = EditSoundDescriptionSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id,
-                                      'note': 'Description of sound %s has not been saved in the database as browseable API is only for testing purposes.' % sound_id},
+                                      'note': 'Description of sound %s has not been saved in the database as '
+                                              'browseable API is only for testing purposes.' % sound_id},
                                 status=status.HTTP_200_OK)
             else:
                 if 'name' in serializer.data:
@@ -919,7 +1018,8 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         sound.geotag = geotag
                 if 'pack' in serializer.data:
                     if serializer.data['pack']:
-                        if Pack.objects.filter(name=serializer.data['pack'], user=self.user).exclude(is_deleted=True).exists():
+                        if Pack.objects.filter(name=serializer.data['pack'], user=self.user)\
+                                .exclude(is_deleted=True).exists():
                             p = Pack.objects.get(name=serializer.data['pack'], user=self.user)
                         else:
                             p, created = Pack.objects.get_or_create(user=self.user, name=serializer.data['pack'])
@@ -932,21 +1032,26 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 invalidate_template_cache("sound_header", sound.id, False)
                 invalidate_template_cache("sound_footer_top", sound.id)
                 invalidate_template_cache("sound_footer_bottom", sound.id)
-                invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-                invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+                invalidate_template_cache(
+                    "display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+                invalidate_template_cache(
+                    "display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
 
-                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id}, status=status.HTTP_200_OK)
+                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id},
+                                status=status.HTTP_200_OK)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookmarkSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Bookmark a sound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#bookmark-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('BookmarkSound', 'apiv2-user-create-bookmark', max=5))
-
     serializer_class = CreateBookmarkSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Bookmark a sound.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#bookmark-sound-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('BookmarkSound', 'apiv2-user-create-bookmark', max=5))
 
     def post(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -959,7 +1064,8 @@ class BookmarkSound(WriteRequiredGenericAPIView):
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id,
-                                      'note': 'This bookmark has not been saved in the database as browseable API is only for testing purposes.'},
+                                      'note': 'This bookmark has not been saved in the database as browseable API is '
+                                              'only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 name = serializer.data.get('name', sound.original_filename)
@@ -970,18 +1076,21 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                 else:
                     bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id)
                 bookmark.save()
-                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id},
+                                status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RateSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Rate a sound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#rate-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('RateSound', 'apiv2-user-create-rating', max=5))
-
     serializer_class = CreateRatingSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Rate a sound.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#rate-sound-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('RateSound', 'apiv2-user-create-rating', max=5))
 
     def post(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -995,11 +1104,14 @@ class RateSound(WriteRequiredGenericAPIView):
             try:
                 if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                     return Response(data={'detail': 'Successfully rated sound %s.' % sound_id,
-                                          'note': 'This rating has not been saved in the database as browseable API is only for testing purposes.'},
+                                          'note': 'This rating has not been saved in the database as browseable API '
+                                                  'is only for testing purposes.'},
                                     status=status.HTTP_201_CREATED)
                 else:
-                    SoundRating.objects.create(user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
-                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
+                    SoundRating.objects.create(
+                        user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
+                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id},
+                                    status=status.HTTP_201_CREATED)
             except IntegrityError:
                 raise ConflictException(msg='User has already rated sound %s' % sound_id, resource=self)
             except:
@@ -1009,12 +1121,14 @@ class RateSound(WriteRequiredGenericAPIView):
 
 
 class CommentSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Add a comment to a sound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#comment-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('CommentSound', 'apiv2-user-create-comment', max=5))
-
     serializer_class = CreateCommentSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Add a comment to a sound.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#comment-sound-oauth2-required' % resources_doc_filename,
+                  get_formatted_examples_for_view('CommentSound', 'apiv2-user-create-comment', max=5))
 
     def post(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -1027,11 +1141,13 @@ class CommentSound(WriteRequiredGenericAPIView):
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Successfully commented sound %s.' % sound_id,
-                                      'note': 'This comment has not been saved in the database as browseable API is only for testing purposes.'},
+                                      'note': 'This comment has not been saved in the database as browseable API is '
+                                              'only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 sound.add_comment(self.user, request.data['comment'])
-                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id},
+                                status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1039,7 +1155,6 @@ class CommentSound(WriteRequiredGenericAPIView):
 #############
 # OTHER VIEWS
 #############
-
 
 @api_view(['GET'])
 @throttle_classes([])
@@ -1061,13 +1176,15 @@ def download_from_token(request, token):
     return sendfile(sound.locations('path'), sound.friendly_filename(), sound.locations('sendfile_url'))
 
 
-### Me View
 class Me(OauthRequiredAPIView):
-    __doc__ = 'Get some information about the end-user logged into the api.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
-              % (docs_base_url, '%s#me-information-about-user-authenticated-using-oauth2-oauth2-required' % resources_doc_filename)
+    # authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
-    #authentication_classes = (OAuth2Authentication, SessionAuthentication)
+    @classmethod
+    def get_description(cls):
+        return 'Get some information about the end-user logged into the api.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
+               % (prepend_base('/docs/api'), '%s#me-information-about-user-authenticated-using-oauth2-oauth2-required'
+                  % resources_doc_filename)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('me'))
@@ -1082,11 +1199,13 @@ class Me(OauthRequiredAPIView):
             raise ServerErrorException(resource=self)
 
 
-### Available descriptors view
 class AvailableAudioDescriptors(GenericAPIView):
-    __doc__ = 'Get a list of valid audio descriptor names that can be used in content/combined search, in sound analysis<br>and in the analysis field of any sound list response. ' \
-              'Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
-              % (docs_base_url, '%s#available-audio-descriptors' % resources_doc_filename)
+    @classmethod
+    def get_description(cls):
+        return 'Get a list of valid audio descriptor names that can be used in content/combined search, in sound ' \
+               'analysis<br>and in the analysis field of any sound list response. ' \
+               'Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
+               % (prepend_base('/docs/api'), '%s#available-audio-descriptors' % resources_doc_filename)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('available_audio_descriptors'))
@@ -1094,54 +1213,93 @@ class AvailableAudioDescriptors(GenericAPIView):
             descriptor_names = Similarity.get_descriptor_names()
             del descriptor_names['all']
             for key, value in descriptor_names.items():
-                descriptor_names[key] = [item[1:] for item in value] #  remove initial dot from descriptor names
+                descriptor_names[key] = [item[1:] for item in value]  # remove initial dot from descriptor names
 
-            return Response({'fixed-length':{'one-dimensional':descriptor_names['fixed-length'], 'multi-dimensional':descriptor_names['multidimensional']}, 'variable-length':descriptor_names['variable-length']}, status=status.HTTP_200_OK)
+            return Response({
+                'fixed-length': {
+                    'one-dimensional': [item for item in descriptor_names['fixed-length']
+                                        if item not in descriptor_names['multidimensional']],
+                    'multi-dimensional': descriptor_names['multidimensional']
+                },
+                'variable-length': descriptor_names['variable-length']
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             raise ServerErrorException(resource=self)
 
 
-
-### Root view
 class FreesoundApiV2Resources(GenericAPIView):
-    __doc__ = 'List of resources available in the Freesound APIv2. ' \
-              '<br>Full APIv2 documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
-              '<br>Note that urls containing elements in brackets (<>) should be replaced with the corresponding variables.' \
-              % (docs_base_url, 'index.html')
+    @classmethod
+    def get_description(cls):
+        return 'List of resources available in the Freesound APIv2. ' \
+               '<br>Full APIv2 documentation can be found <a href="%s/%s" target="_blank">here</a>.<br>Note that ' \
+               'urls containing elements in brackets (<>) should be replaced with the corresponding variables.' \
+               % (prepend_base('/docs/api'), 'index.html')
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('api_root'))
         api_index = [
             {'Search resources': OrderedDict(sorted(dict({
-                    '01 Text Search': prepend_base(reverse('apiv2-sound-text-search'), request_is_secure=request.is_secure()),
-                    '02 Content Search': prepend_base(reverse('apiv2-sound-content-search'), request_is_secure=request.is_secure()),
-                    '03 Combined Search': prepend_base(reverse('apiv2-sound-combined-search'), request_is_secure=request.is_secure()),
+                    '01 Text Search': prepend_base(
+                        reverse('apiv2-sound-text-search'), request_is_secure=request.is_secure()),
+                    '02 Content Search': prepend_base(
+                        reverse('apiv2-sound-content-search'), request_is_secure=request.is_secure()),
+                    '03 Combined Search': prepend_base(
+                        reverse('apiv2-sound-combined-search'), request_is_secure=request.is_secure()),
                 }).items(), key=lambda t: t[0]))},
                 {'Sound resources': OrderedDict(sorted(dict({
-                    '01 Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
-                    '02 Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
-                    '03 Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
-                    '04 Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
-                    '05 Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
-                    '06 Bookmark sound': prepend_base(reverse('apiv2-user-create-bookmark', args=[0]).replace('0', '<sound_id>')),
-                    '07 Rate sound': prepend_base(reverse('apiv2-user-create-rating', args=[0]).replace('0', '<sound_id>')),
-                    '08 Comment sound': prepend_base(reverse('apiv2-user-create-comment', args=[0]).replace('0', '<sound_id>')),
+                    '01 Sound instance': prepend_base(
+                        reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'),
+                        request_is_secure=request.is_secure()),
+                    '02 Similar sounds': prepend_base(
+                        reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>'),
+                        request_is_secure=request.is_secure()),
+                    '03 Sound analysis': prepend_base(
+                        reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>'),
+                        request_is_secure=request.is_secure()),
+                    '04 Sound comments': prepend_base(
+                        reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>'),
+                        request_is_secure=request.is_secure()),
+                    '05 Download sound': prepend_base(
+                        reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
+                    '06 Bookmark sound': prepend_base(
+                        reverse('apiv2-user-create-bookmark', args=[0]).replace('0', '<sound_id>')),
+                    '07 Rate sound': prepend_base(
+                        reverse('apiv2-user-create-rating', args=[0]).replace('0', '<sound_id>')),
+                    '08 Comment sound': prepend_base(
+                        reverse('apiv2-user-create-comment', args=[0]).replace('0', '<sound_id>')),
                     '09 Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
                     '10 Describe sound': prepend_base(reverse('apiv2-uploads-describe')),
                     '11 Pending uploads': prepend_base(reverse('apiv2-uploads-pending')),
-                    '12 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
+                    '12 Edit sound description': prepend_base(
+                        reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'User resources': OrderedDict(sorted(dict({
-                    '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
-                    '02 User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
-                    '03 User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
-                    '04 User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
-                    '05 User bookmark category sounds': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>'), request_is_secure=request.is_secure()),
+                    '01 User instance': prepend_base(
+                        reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'),
+                        request_is_secure=request.is_secure()),
+                    '02 User sounds': prepend_base(
+                        reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>'),
+                        request_is_secure=request.is_secure()),
+                    '03 User packs': prepend_base(
+                        reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'),
+                        request_is_secure=request.is_secure()),
+                    '04 User bookmark categories': prepend_base(
+                        reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'),
+                        request_is_secure=request.is_secure()),
+                    '05 User bookmark category sounds': prepend_base(
+                        reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
+                            .replace('uname', '<username>'),
+                        request_is_secure=request.is_secure()),
                 }).items(), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted(dict({
-                    '01 Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.is_secure()),
-                    '02 Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.is_secure()),
-                    '03 Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
+                    '01 Pack instance': prepend_base(
+                        reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'),
+                        request_is_secure=request.is_secure()),
+                    '02 Pack sounds': prepend_base(
+                        reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>'),
+                        request_is_secure=request.is_secure()),
+                    '03 Download pack': prepend_base(
+                        reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'Other resources': OrderedDict(sorted(dict({
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
@@ -1175,16 +1333,16 @@ class FreesoundApiV2Resources(GenericAPIView):
         return Response(api_index)
 
 
-### View for returning "Invalid url" 400 responses
 @api_view(['GET'])
 @authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
 def invalid_url(request):
+    """View for returning "Invalid url" 400 responses"""
     raise InvalidUrlException(request=request)
 
 
-### View for applying for an apikey
 @login_required
 def create_apiv2_key(request):
+    """View for applying for an apikey"""
 
     if request.method == 'POST':
         form = ApiV2ClientForm(request.POST)
@@ -1198,7 +1356,8 @@ def create_apiv2_key(request):
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
             form = ApiV2ClientForm()
-            logger.info('%s <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' % ('new_credential', None, request.user.username, None, api_client.client_id))
+            logger.info('%s <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
+                        ('new_credential', None, request.user.username, None, api_client.client_id))
     else:
         form = ApiV2ClientForm()
 
@@ -1207,18 +1366,17 @@ def create_apiv2_key(request):
     use_https_in_callback = True
     if settings.DEBUG:
         use_https_in_callback = False
-    fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)  #request.build_absolute_uri(reverse('permission-granted'))
+    fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)
+
+    tvars = {
+        'user': request.user,
+        'form': form,
+        'user_credentials': user_credentials,
+        'fs_callback_url': fs_callback_url,
+    }
+    return render(request, 'api/apply_key_apiv2.html', tvars)
 
 
-    return render(request, 'api/apply_key_apiv2.html',
-                              {'user': request.user,
-                               'form': form,
-                               'user_credentials': user_credentials,
-                               'fs_callback_url': fs_callback_url,
-                               })
-
-
-### View for editing client (works both for apiv2 and apiv1)
 @login_required
 def edit_api_credential(request, key):
     client = None
@@ -1281,23 +1439,19 @@ def monitor_api_credential(request, key):
         raise Http404
 
 
-### View for deleting api clients (works both for apiv2 and apiv1)
 @login_required
 def delete_api_credential(request, key):
     name = ""
-
     try:
         client = ApiV2Client.objects.get(key=key)
         name = client.name
         client.delete()
     except ApiV2Client.DoesNotExist:
         pass
-
     messages.add_message(request, messages.INFO, "Credentials with name %s have been deleted." % name)
     return HttpResponseRedirect(reverse("apiv2-apply"))
 
 
-### View for managing permissions granted to apps
 @login_required
 def granted_permissions(request):
     user = request.user
@@ -1305,10 +1459,11 @@ def granted_permissions(request):
     tokens = []
     token_names = []
 
-    # If settings.OAUTH_SINGLE_ACCESS_TOKEN is set to false it is possible that one single user have more than one active
-    # access token per application. In that case we only show the one that expires later (and all are removed if permissions
-    # revoked). If settings.OAUTH_SINGLE_ACCESS_TOKEN is set to true we don't need the token name check below because
-    # there can only be one access token per client-user pair. Nevertheless the code below works in both cases.
+    # If settings.OAUTH_SINGLE_ACCESS_TOKEN is set to false it is possible that one single user have more than one
+    # active access token per application. In that case we only show the one that expires later (and all are removed
+    # if permissions revoked). If settings.OAUTH_SINGLE_ACCESS_TOKEN is set to true we don't need the token name check
+    # below because there can only be one access token per client-user pair. Nevertheless the code below works in
+    # both cases.
 
     for token in tokens_raw:
         if not token.application.apiv2_client.name in token_names:
@@ -1323,7 +1478,8 @@ def granted_permissions(request):
             })
             token_names.append(token.application.apiv2_client.name)
 
-    grants_pending_access_token_request_raw = Grant.objects.select_related('application').filter(user=user).order_by('-expires')
+    grants_pending_access_token_request_raw = \
+        Grant.objects.select_related('application').filter(user=user).order_by('-expires')
     grants = []
     grant_and_token_names = token_names[:]
     for grant in grants_pending_access_token_request_raw:
@@ -1344,7 +1500,6 @@ def granted_permissions(request):
                               {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False})
 
 
-### View to revoke permissions granted to an application
 @login_required
 def revoke_permission(request, client_id):
     user = request.user
@@ -1359,7 +1514,6 @@ def revoke_permission(request, client_id):
     return HttpResponseRedirect(reverse("access-tokens"))
 
 
-### View to show grant code (pin code) if application does not support redirection
 @login_required
 def permission_granted(request):
     user = request.user
@@ -1382,8 +1536,8 @@ def permission_granted(request):
         {'code': code, 'app_name': app_name, 'logout_next': logout_next})
 
 
-### View for registration using minimal template
 def minimal_registration(request):
+    """View for registration using minimal template"""
 
     if request.method == "POST":
         form = RegistrationForm(request.POST)

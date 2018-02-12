@@ -23,6 +23,7 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from follow import follow_utils
 from follow.models import FollowingUserItem
 from follow.models import FollowingQueryItem
@@ -30,8 +31,10 @@ from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from socket import error as socket_error
+from utils.username import redirect_if_old_username_or_404
 
 
+@redirect_if_old_username_or_404
 def following_users(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
@@ -45,6 +48,7 @@ def following_users(request, username):
     return render(request, 'follow/following_users.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def followers(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
@@ -58,6 +62,7 @@ def followers(request, username):
     return render(request, 'follow/followers.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def following_tags(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
@@ -124,6 +129,7 @@ def unfollow_tags(request, slash_tags):
 
 
 @login_required
+@transaction.atomic()
 def stream(request):
 
     SELECT_OPTIONS = OrderedDict([

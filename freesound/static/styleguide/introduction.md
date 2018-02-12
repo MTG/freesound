@@ -29,4 +29,9 @@ You have several options:
 You will find all the generated files inside the folder `freesound/static/dist`. The ones generated
 with `build:prod` will have the `.min` suffix.
 
-That's all for now folks! So much more to come in the next few weeks.
+## Styles
+This project uses the grid system from Bootstrap 4, with custom variables.
+Classnames follow the [BEM](http://getbem.com/naming/) convention, while the folder structure is inspired by [ITCSS](https://www.xfive.co/blog/itcss-scalable-maintainable-css-architecture/).
+
+## Some tips on this styleguide
+Each component has a `View code` at its bottom. You can click it to check the HTML code of the component.

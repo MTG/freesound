@@ -1,7 +1,7 @@
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
-const common = require('./common');
+const common = require('./webpack.common');
 
 module.exports = {
   devtool: 'source-map',
@@ -11,21 +11,15 @@ module.exports = {
     loaders: [
       common.loaders.jsLoader,
       {
-        test: /\.css$/,
+        test: /\.s?css$/,
         loader: ExtractTextPlugin.extract({
           fallback: 'style-loader',
-          use: ['css-loader', common.loaders.postCssLoader],
+          use: ['css-loader', common.loaders.postCssLoader, 'sass-loader', 'import-glob-loader'],
           publicPath: '',
         }),
       },
-      {
-        test: /\.scss$/,
-        loader: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: ['css-loader', common.loaders.postCssLoader, 'sass-loader'],
-          publicPath: '',
-        }),
-      },
+      common.loaders.fileLoader,
+      common.loaders.iconsLoader,
     ],
   },
   plugins: [

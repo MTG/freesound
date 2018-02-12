@@ -235,6 +235,11 @@
             <li><a id="admin_link" class="icon" href="{% url 'admin:sounds_sound_change' sound.id %}">Edit sound in the admin</a></li>
         {% endif %}
 
+        {% if perms.tickets.can_moderate or sound.user == request.user %}
+            {% if sound.ticket %}
+                <li><a id="ticket_link" class="icon" href="{% url 'tickets-ticket' sound.ticket.key %}">Go to sound moderation ticket</a></li>
+            {% endif %}
+        {% endif %}
 
     {% cache 3600 sound_footer_bottom sound.id %}
 

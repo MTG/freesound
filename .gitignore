@@ -29,3 +29,4 @@ similarity/similarity_settings.py
 start_freesound_services.sh
 node_modules
 freesound/static/dist
+npm-debug.log

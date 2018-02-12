@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('sounds', '0015_auto_20171124_1651'),
+        ('sounds', '0017_auto_20180117_1553'),
     ]
 
     operations = [

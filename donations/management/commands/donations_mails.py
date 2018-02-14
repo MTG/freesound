@@ -22,7 +22,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 from django.core.management.base import BaseCommand
 from donations.models import DonationsEmailSettings
-from sounds.models import Download
+from sounds.models import Download, PackDownload
 from donations.models import Donation
 from utils.mail import send_mail_template
 import datetime
@@ -92,18 +92,29 @@ class Command(BaseCommand):
         #   - Downloaded more than M sounds during 'email_timespan' (3 months)
         #   - Have not donated during 'donation_timespan' (12 months)
         #   - Have not received any email regarding donations during 'email_timespan' (3 months)
-        potential_users = Download.objects.filter(created__gte=email_timespan)\
+        potential_users_sound = Download.objects.filter(created__gte=email_timespan)\
             .exclude(user_id__in=user_received_donation_email_within_email_timespan)\
             .exclude(user_id__in=donors_within_donation_timespan) \
             .exclude(user_id__in=uploaders) \
             .values('user_id').annotate(num_download=Count('user_id')).order_by('num_download')
 
-        for user_dict in potential_users.all():
+        potential_users_pack = PackDownload.objects.filter(created__gte=email_timespan)\
+            .exclude(user_id__in=user_received_donation_email_within_email_timespan)\
+            .exclude(user_id__in=donors_within_donation_timespan) \
+            .exclude(user_id__in=uploaders) \
+            .values('user_id').annotate(num_download=Count('user_id')).order_by('num_download')
 
-            if user_dict['num_download'] > donation_settings.downloads_in_period:
-                user = User.objects.get(id=user_dict['user_id'])
+        # Merge downloads from Download and PackDownload tables
+        potential_users = {}
+        for x in potential_users_sound.union(potential_users_pack):
+            potential_users[str(x['user_id'])] = potential_users.get(str(x['user_id']), 0) + x['num_download']
 
-                # Check if user downloaded more than M sounds during the relevant period
+        for user_id in potential_users.keys():
+
+            if potential_users[user_id] > donation_settings.downloads_in_period:
+                user = User.objects.get(id=user_id)
+
+                # Check if user downloaded more than M sounds or packs during the relevant period
                 # relevant period is time since last donation + donation_timespan or email_timespan (3 mo)
                 # (the take the closer one)
 
@@ -116,7 +127,9 @@ class Command(BaseCommand):
                         last_donation.created + datetime.timedelta(days=donation_settings.minimum_days_since_last_donation),
                         email_timespan
                     )
-                    user_downloads = Download.objects.filter(created__gte=relevant_period, user=user).count()
+                    user_sound_downloads = Download.objects.filter(created__gte=relevant_period, user=user).count()
+                    user_pack_downloads = PackDownload.objects.filter(created__gte=relevant_period, user=user).count()
+                    user_downloads = user_sound_downloads + user_pack_downloads
 
                     if user_downloads > donation_settings.downloads_in_period:
                         send_email = True

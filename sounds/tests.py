@@ -37,7 +37,8 @@ from freezegun import freeze_time
 import accounts
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
-from sounds.models import Pack, Sound, SoundOfTheDay, License, DeletedSound, Flag, Download
+from sounds.models import Pack, Sound, SoundOfTheDay, License, DeletedSound, Flag
+from sounds.models import Download, PackDownload, PackDownloadSound
 from sounds.views import get_sound_of_the_day_id
 from utils.encryption import encrypt
 from utils.tags import clean_and_split_tags
@@ -812,18 +813,22 @@ class SoundPackDownloadTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1
-            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
+            self.assertEqual(PackDownload.objects.filter(user=self.user, pack=self.pack).count(), 1)
+
+            # Check the number of PackDownloadSounds
+            self.assertEqual(PackDownloadSound.objects.filter(
+                pack_download__user=self.user, pack_download__pack=self.pack).count(), 1)
 
             # Download again and check n download objects is still 1
             self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
-            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
+            self.assertEqual(PackDownload.objects.filter(user=self.user, pack=self.pack).count(), 1)
 
             # Check num_download attribute of Sound is 1
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 1)
 
             # Delete all Download objects and check num_download attribute of Sound is 0
-            Download.objects.all().delete()
+            PackDownload.objects.all().delete()
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 0)
 
@@ -846,7 +851,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1
-            self.assertEqual(Download.objects.filter(user=self.user, pack=self.pack).count(), 1)
+            self.assertEqual(PackDownload.objects.filter(user=self.user, pack=self.pack).count(), 1)
 
 
 class SoundSignatureTestCase(TestCase):

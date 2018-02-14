@@ -49,7 +49,6 @@ from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
 from comments.models import Comment
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
-import accounts.models
 import os
 import logging
 import random
@@ -1028,6 +1027,7 @@ class Pack(SocialModel):
                 sound_list=sounds_list))
         return attribution
 
+
 class Flag(models.Model):
     sound = models.ForeignKey(Sound)
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
@@ -1051,7 +1051,7 @@ class Flag(models.Model):
 class Download(models.Model):
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None, related_name='downloads')
-    pack = models.ForeignKey(Pack, null=True, blank=True, default=None, related_name='downloads')
+    pack = models.ForeignKey(Pack, null=True, blank=True, default=None, related_name='downloads_old_fied')
     license = models.ForeignKey(License, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -1070,9 +1070,24 @@ class Download(models.Model):
         ordering = ("-created",)
 
 
+@receiver(post_delete, sender=Download)
+def update_num_downloads_on_delete(**kwargs):
+    download = kwargs['instance']
+    if download.sound_id:
+        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+
+
+@receiver(post_save, sender=Download)
+def update_num_downloads_on_insert(**kwargs):
+    download = kwargs['instance']
+    if kwargs['created']:
+        if download.sound_id:
+            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+
+
 class PackDownload(models.Model):
     user = models.ForeignKey(User)
-    pack = models.ForeignKey(Pack)
+    pack = models.ForeignKey(Pack, related_name='downloads')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
 
@@ -1082,29 +1097,17 @@ class PackDownloadSound(models.Model):
     license = models.ForeignKey(License, null=True, blank=True, default=None)
 
 
-@receiver(post_delete, sender=Download)
-def update_num_downloads_on_delete(**kwargs):
-    # Deleting a Download object should be done in a transaction
+@receiver(post_delete, sender=PackDownload)
+def update_num_downloads_on_delete_pack(**kwargs):
     download = kwargs['instance']
-    if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
-        accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_sound_downloads=F('num_sound_downloads') - 1)
-    elif download.pack_id:
-        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
-        accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_pack_downloads=F('num_pack_downloads') - 1)
+    Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
 
 
-@receiver(post_save, sender=Download)
-def update_num_downloads_on_insert(**kwargs):
-    # Creating a Download object should be done in a transaction
+@receiver(post_save, sender=PackDownload)
+def update_num_downloads_on_insert_pack(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
-        if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
-            accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_sound_downloads=F('num_sound_downloads') + 1)
-        elif download.pack_id:
-            Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
-            accounts.models.Profile.objects.filter(user_id=download.user_id).update(num_pack_downloads=F('num_pack_downloads') + 1)
+        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
 
 
 class RemixGroup(models.Model):

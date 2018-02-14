@@ -252,6 +252,9 @@ class DonationTest(TestCase):
         for sound in sounds.models.Sound.objects.all():
             sounds.models.Download.objects.create(user=self.user_b, sound=sound)
 
+        pack = sounds.models.Pack.objects.create(user=self.user_c, name="pack")
+        sounds.models.PackDownload.objects.create(user=self.user_b, pack=pack)
+
         # Now run the command for sending donation emails again
         call_command('donations_mails')
 

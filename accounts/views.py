@@ -680,7 +680,7 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
+    qs_sounds = Download.objects.filter(sound_id__isnull=False).annotate(download_type=Value("sound", CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
                 'license__name', 'sound__license__name', 'created').filter(user=request.user)
     qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\

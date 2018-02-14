@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
         # Compute stats related with downloads:
         new_downloads_sound = sounds.models.Download.objects\
-            .filter(created__gt=time_span)\
+            .filter(created__gt=time_span, sound_id__isnull=False)\
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Count('id'))
 
@@ -165,7 +165,7 @@ class Command(BaseCommand):
             moderation_state="OK").count()
         packs = sounds.models.Pack.objects.all().count()
 
-        downloads_sounds = sounds.models.Download.objects.all().count()
+        downloads_sounds = sounds.models.Download.objects.filter(sound_id__isnull=False).count()
         downloads_packs = sounds.models.PackDownload.objects.all().count()
         downloads = downloads_sounds + downloads_packs
         num_comments = comments.models.Comment.objects.all().count()

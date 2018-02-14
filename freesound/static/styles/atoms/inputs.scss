@@ -1,0 +1,17 @@
+input[type='search'] {
+  border: none;
+  background: $search-bg;
+  color: $black;
+  border-radius: 100px;
+
+  &:placeholder {
+    color: $navy-grey;
+  }
+}
+
+input {
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 10px transparentize($black-hover, $amount: 0.8);
+  }
+}

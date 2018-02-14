@@ -12,6 +12,7 @@ button {
   -webkit-appearance: none;
   -moz-appearance: none;
   cursor: pointer;
+  font-weight: bold;
 
   &:focus {
     outline: 0;
@@ -42,7 +43,7 @@ button {
   background-color: $red;
   color: $white;
   transition: background-color 0.2s ease;
-  
+
   @include active() {
     background-color: $red-hover;
   }

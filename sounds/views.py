@@ -44,6 +44,7 @@ from utils.frontend_handling import render
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundOfTheDay, SoundLicenseHistory
+from sounds.models import  PackDownload, PackDownloadSound
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
@@ -352,7 +353,11 @@ def pack_download(request, username, pack_id):
         '''
         cache_key = 'pdwn_%s_%d' % (pack_id, request.user.id)
         if cache.get(cache_key, None) is None:
-            Download.objects.create(user=request.user, pack=pack)
+            pd = PackDownload.objects.create(user=request.user, pack=pack)
+            pds = []
+            for sound in pack.sounds.all():
+                pds.append(PackDownloadSound(sound=sound, license=sound.license, pack_download=pd))
+            PackDownloadSound.objects.bulk_create(pds)
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/pack in the next 5 minutes
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     return download_sounds(licenses_url, pack)
@@ -944,5 +949,5 @@ def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id = pack_id)
 
     # Retrieve all users that downloaded a sound
-    qs = Download.objects.filter(pack=pack_id)
+    qs = PackDownload.objects.filter(pack_id=pack_id)
     return render(request, 'sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()))

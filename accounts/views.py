@@ -22,6 +22,9 @@ import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
 import utils.sound_upload
 import errno
+from itertools import chain
+from django.db.models.expressions import Value
+from django.db.models.fields import CharField
 import uuid
 import csv
 import gearman
@@ -53,7 +56,7 @@ from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetti
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory, BulkUploadProgress
+from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory, BulkUploadProgress, PackDownload, PackDownloadSound
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
 from utils.cache import invalidate_template_cache
@@ -710,8 +713,20 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.select_related('sound', 'sound__user', 'license', 'pack',
-                                         'pack__user').filter(user=request.user)
+    qs_sounds = Download.objects.filter(sound_id__isnull=False).annotate(download_type=Value("sound", CharField()))\
+        .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
+                'license__name', 'sound__license__name', 'created').filter(user=request.user)
+    qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
+        .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
+                'pack__name', 'created').filter(user=request.user)
+    # NOTE: in the query above we duplciate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
+    # a requirement for doing QuerySet.union below. Also as a result of using QuerySet.union, the names of the columns
+    # (keys in each dictionary element) are unified and taken from the main query set. This means that after the union,
+    # queryset entries corresponding to PackDownload will have corresponding field names from entries corresponding to
+    # Download. Therefre to access the pack_id (which is the second value in the list), you'll need to do
+    # item['sound_id'] instead of item ['pack_id']. See the template of this view for an example of this.
+    qs = qs_sounds.union(qs_packs).order_by('-created')
+
     tvars = {'format': request.GET.get("format", "regular")}
     tvars.update(paginate(request, qs, 40))
     return render(request, 'accounts/attribution.html', tvars)
@@ -735,7 +750,7 @@ def downloaded_sounds(request, username):
 @redirect_if_old_username_or_404
 def downloaded_packs(request, username):
     user = get_object_or_404(User, username__iexact=username)
-    qs = Download.objects.filter(user=user.id, pack__isnull=False)
+    qs = PackDownload.objects.filter(user=user.id)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]

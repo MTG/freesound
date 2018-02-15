@@ -22,7 +22,7 @@
 import datetime
 import zlib
 from django.http import HttpResponse
-from sounds.models import Download
+from sounds.models import Download, PackDownload
 from donations.models import DonationsModalSettings
 import random
 
@@ -78,10 +78,16 @@ def should_suggest_donation(user, times_shown_in_last_day):
         # If there has never been a donation or last donation is older than settings.DONATION_MODAL_DAYS_AFTER_DONATION,
         # check if the number of downloads in the last settings.DONATION_MODAL_DOWNLOAD_DAYS days if bigger than
         # settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD. If that is the case, show the modal.
-        num_downloads_in_period = Download.objects.filter(
+        num_sound_downloads = Download.objects.filter(
+            sound_id__isnull=False,
             user=user,
             created__gt=datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.download_days)
         ).count()
+        num_pack_downloads = PackDownload.objects.filter(
+            user=user,
+            created__gt=datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.download_days)
+        ).count()
+        num_downloads_in_period = num_sound_downloads + num_pack_downloads
         if num_downloads_in_period > donation_modal_settings.downloads_in_period:
             if random.random() <= donation_modal_settings.display_probability:
                 return True

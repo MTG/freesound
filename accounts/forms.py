@@ -334,6 +334,9 @@ class ProfileForm(forms.ModelForm):
         model = Profile
         fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
 
+    def get_img_check_fields(self):
+        """ Returns fields that should show JS notification for unsafe `img` sources links (http://) """
+        return [self['about'], self['signature'], self['sound_signature']]
 
 class EmailResetForm(forms.Form):
     email = forms.EmailField(label=_("New e-mail address"), max_length=254)

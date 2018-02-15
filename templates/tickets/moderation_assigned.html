@@ -108,8 +108,10 @@
           $('#row_'+ selectedTickets[t]).find('.ticket-check').attr("checked", true);
         }
         updateSelectedTickets();
-        
+
       {% endif %}
+
+        unsecureImageCheck($('#{{ msg_form.message.id_for_label }}'));
     });
 
     function updateSelectedTickets() {

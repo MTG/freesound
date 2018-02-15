@@ -332,8 +332,7 @@
     document.getElementById("tumblr_button_abc123").appendChild(tumblr_button);
 
     $(function() {
-        unsecureImageCheck($('#id_comment'));
-
+        unsecureImageCheck($('#{{ form.comment.id_for_label }}'));
 
         var is_following;
         if ("{{ is_following }}" == "True") is_following = true;

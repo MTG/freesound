@@ -20,5 +20,11 @@
 <input type="submit" value="create thread" />
 </form>
 
+<script>
+  $(function() {
+    unsecureImageCheck($('#{{ form.body.id_for_label }}'));
+  })
+</script>
+
 
 {% endblock %}

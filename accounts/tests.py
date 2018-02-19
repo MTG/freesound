@@ -1234,6 +1234,6 @@ class UsernameValidatorTests(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_long_invalid(self):
-        """ Should be shorter than 3 characters """
+        """ Should be shorter than 30 characters """
         form = self.TestForm(data={'username': 'a'*31})
         self.assertFalse(form.is_valid())

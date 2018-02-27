@@ -47,7 +47,7 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
         """
         try:
             super_response = super(OAuth2Authentication, self).authenticate(request)
-        except UnicodeDecodeError:
+        except ValueError:
             # If the request contains html entities that don't decode to valid UTF8,
             # an exception is raised during oauth validation, even if it's on a field/parameter unrelated to oauth (#793)
             # TODO: Check if this is still needed with Python3/oauthlib2

@@ -81,6 +81,13 @@
         have any uploaded sounds awaiting moderation.</p>
     {% endfor %}
 
+    {# TODO: provide info on how many sounds by this user are assigned to you, and if all - don't show 'assign to me' #}
+    <div class="moderation-user-list"><p>
+        <a href="{% url "tickets-moderation-assign-user" user.id %}">
+        <img src="{{media_url}}images/moderation_plus.png"/>
+            Assign all to me</a>
+    </p></div>
+
     {% if show_pagination %}
         {% show_paginator paginator page current_page request "moderation ticket" %}
     {% endif %}

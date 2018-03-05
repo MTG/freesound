@@ -48,7 +48,7 @@ urlpatterns = [
 
     url(r'^moderation/assign/ticket/(?P<user_id>\d+)/(?P<ticket_id>\d+)/$',
         moderation_assign_single_ticket,
-        name='tickets-moderation-assign-signle-ticket'),
+        name='tickets-moderation-assign-single-ticket'),
 
     url(r'^moderation/annotations/(?P<user_id>\d+)/$',
         user_annotations,

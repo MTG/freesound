@@ -24,7 +24,13 @@
                      {{ ticket.assignee.username }}
                  {% else %}
                      no one
-                 {% endif %}</li>
+                 {% endif %}
+
+                 {# Show 'assign to me' link if the assigned moderator is not you #}
+                 {% if ticket.assignee.id != user.id %}
+                 (<a href="{% url 'tickets-moderation-assign-single-ticket' ticket.sender.id ticket.id %}?next=ticket">assign to me</a>)
+                 {% endif %}
+            </li>
             <li><em>status is</em> {{ ticket.status|capfirst }}</li>
             <li><em>queue is</em> {{ ticket.queue.name }}</li>
         </ul>

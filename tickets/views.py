@@ -342,6 +342,8 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
             return redirect("tickets-moderation-tardy-users")
         elif next == "tardy_moderators":
             return redirect(reverse("tickets-moderation-tardy-moderators")+"?page=%s" % p)
+        elif next == "ticket":
+            return redirect(reverse("tickets-ticket", kwargs={'ticket_key': ticket.key}))
         else:
             return redirect(reverse("tickets-moderation-home")+"?page=%s" % p)
     else:

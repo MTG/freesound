@@ -302,21 +302,31 @@ def moderation_tardy_moderators_sounds(request):
 
 
 @permission_required('tickets.can_moderate')
-def moderation_assign_user(request, user_id):
+def moderation_assign_user(request, user_id, only_unassigned=True):
+    """
+    With only_unassigned set to True this function will assign only sounds that have no assignee.
+    Otherwise it will target all pending sounds from that user.
+    """
     sender = User.objects.get(id=user_id)
 
-    Ticket.objects.filter(sound__processing_state='OK',\
-            sound__moderation_state='PE', assignee=None,\
-            status=TICKET_STATUS_NEW, sound__user=sender).update(\
-                assignee=request.user,\
-                status=TICKET_STATUS_ACCEPTED,\
-                modified=datetime.datetime.now())
+    tickets = Ticket.objects.filter(sound__processing_state='OK', sound__moderation_state='PE', sound__user=sender)\
+        .exclude(status=TICKET_STATUS_CLOSED)
+
+    if only_unassigned:
+        tickets = tickets.filter(assignee=None, status=TICKET_STATUS_NEW)
+
+    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
 
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     invalidate_all_moderators_header_cache()
 
     return redirect("tickets-moderation-home")
+
+
+@permission_required('tickets.can_moderate')
+def moderation_assign_user_pending(request, user_id):
+    return moderation_assign_user(request, user_id, only_unassigned=False)
 
 
 @permission_required('tickets.can_moderate')

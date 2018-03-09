@@ -21,7 +21,7 @@
                  {% endif %}</li>
             <li><em>assigned to</em>
                  {% if ticket.assignee %}
-                     {{ ticket.assignee.username }}
+                     <a href="{% url "account" ticket.assignee.username %}">{{ ticket.assignee.username }}</a>
                  {% else %}
                      no one
                  {% endif %}

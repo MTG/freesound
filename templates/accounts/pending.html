@@ -43,6 +43,13 @@
                     </div>
                 </div>
                 <div class="sample_information" style="width: 250px;">
+                    <span>
+                        {% if ticket.assignee %}
+                            Assigned to {{ ticket.assignee.username }}
+                        {% else %}
+                            Not assigned yet
+                        {% endif %}
+                    </span><br />
 
                     <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
                     {% if not moderators_version %}

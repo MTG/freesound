@@ -10,6 +10,9 @@ Add the classes `btn-primary` and `btn-secondary` to get primary and secondary s
     <button class="btn-secondary">Secondary</button>
   </div>
   <div class="col">
+    <button class="btn-inverse">Inverse</button>
+  </div>
+  <div class="col">
     <button>Default</button>
   </div>
 </div>

@@ -54,5 +54,14 @@ module.exports = {
         },
       ],
     },
+    {
+      name: 'Modifiers',
+      sections: [
+        {
+          name: 'Spacing',
+          content: 'styleguide/modifiers/spacing.md',
+        },
+      ],
+    },
   ],
 };

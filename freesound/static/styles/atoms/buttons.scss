@@ -19,3 +19,9 @@ button {
 .btn-secondary {
   @include rounded-button($black, $black-hover);
 }
+
+.btn-inverse {
+  @include rounded-button(transparent, transparent);
+  color: $navy-grey;
+  border: 1px solid $navy-light-grey;
+}

@@ -3,8 +3,16 @@
     margin-right: nth($spacing-values-list, $i);
   }
 
+  .h-spacing-left-#{$i} {
+    margin-left: nth($spacing-values-list, $i);
+  }
+
   .v-spacing-#{$i} {
     margin-bottom: nth($spacing-values-list, $i);
+  }
+
+  .v-spacing-top-#{$i} {
+    margin-top: nth($spacing-values-list, $i);
   }
 
   .spacing-#{$i} {

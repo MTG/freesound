@@ -20,12 +20,20 @@ body {
 // headers
 @for $i from 1 through 5 {
   h#{$i} {
+    margin-top: 0;
+    margin-bottom: 0;
     font-size: nth(nth($list: $headers-list, $n: $i), 3);
     line-height: nth(nth($list: $headers-list, $n: $i), 4);
 
     @include md-and-above {
       font-size: nth(nth($list: $headers-list, $n: $i), 1);
-      line-height: nth(nth($list: $headers-list, $n: $i), 2); 
+      line-height: nth(nth($list: $headers-list, $n: $i), 2);
     }
   }
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background-color: $navy-light-grey;
 }

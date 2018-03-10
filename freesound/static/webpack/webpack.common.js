@@ -6,6 +6,7 @@ module.exports = {
   entries: {
     base: path.join(__dirname, '..', 'base.js'),
     index: path.join(__dirname, '..', 'src/common.js'),
+    front: path.join(__dirname, '../src/pages/front.js'),
   },
   output: {
     filename: '[name].js',
@@ -54,12 +55,12 @@ module.exports = {
     fileLoader: {
       test: /\.svg$/,
       exclude: /icons/,
-      loaders: ['file-loader']
+      loaders: ['file-loader'],
     },
     iconsLoader: {
       test: /\.svg$/,
       include: /icons/,
-      loaders: ['raw-loader']
-    }
+      loaders: ['raw-loader'],
+    },
   },
 };

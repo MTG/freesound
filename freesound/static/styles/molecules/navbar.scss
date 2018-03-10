@@ -2,6 +2,22 @@ $navbar-height: 80px;
 
 .bw-nav {
   height: $navbar-height;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  background: $white;
+  z-index: get-z-index('navbar');
+  transition: box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.bw-nav--scrolled {
+  box-shadow: 0 2px 5px transparentize($navy-light-grey, 0.6);
+}
+
+.bw-nav__container {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -73,18 +89,6 @@ $navbar-height: 80px;
   // to make sure its hover area is the same of other elements
   height: 24px;
   align-items: center;
-}
-
-.bw-nav__menu--avatar {
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-
-  img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-  }
 }
 
 .bw-nav__menu--avatar-with-notifications {

@@ -14,115 +14,117 @@
   <noscript>
     You need to enable JavaScript to run this app.
   </noscript>
-  <nav class="bw-nav container">
-    <div class="bw-nav__logo-search-container">
-      <div class="bw-nav__logo">
-        <a href="" class="no-hover"></a>
+  <nav class="bw-nav bw-nav--expanded">
+    <div class="container bw-nav__container">
+      <div class="bw-nav__logo-search-container">
+        <div class="bw-nav__logo">
+          <a href="" class="no-hover"></a>
+        </div>
+        <div class="input-wrapper">
+          <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+        </div>
       </div>
-      <div class="input-wrapper">
-        <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
-      </div>
+      <ul class="bw-nav__actions">
+        <li class="bw-nav__action">
+          <a class="bw-link--grey" href="">Sounds</a>
+        </li>
+        <li class="bw-nav__action">
+          <a class="bw-link--grey" href="">Packs</a>
+        </li>
+        <li class="bw-nav__action">
+          <a class="bw-link--grey" href="">Forum</a>
+        </li>
+        <li class="bw-nav__action">
+          <a class="bw-link--grey" href="">Map</a>
+        </li>
+        <li class="bw-nav__action dropdown">
+          <a class="bw-link--grey bw-nav__menu dropdown-toggle no-hover" id="three-dots-menu" aria-haspopup="true" aria-expanded="false"
+            data-toggle="dropdown"></a>
+          <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Tags
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Charts
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Donors
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Help
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Developers
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Freesound Blog
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Freesound Labs
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">
+                Freesound t-Shirt
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="bw-nav__action dropdown">
+          <a class="bw-link--grey avatar bw-nav__menu--avatar-with-notifications dropdown-toggle no-hover" id="avatar-menu" aria-haspopup="true"
+            aria-expanded="false" data-toggle="dropdown">
+            <img src="avatar.jpg" />
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="avatar-menu">
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">View profile</a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">Manage uploads</a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">Bookmarks</a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">My messages
+                <span class="text-red">(3)</span>
+              </a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">Account settings</a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">Manage API settings</a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--black" href="">Donate</a>
+            </li>
+            <li class="bw-nav__action dropdown-item">
+              <a class="bw-link--grey" href="">Logout</a>
+            </li>
+          </ul>
+        </li>
+        <li class="bw-nav__action">
+          <button class="btn-secondary">Donate</button>
+        </li>
+        <li class="bw-nav__action">
+          <button class="btn-primary">Upload sound</button>
+        </li>
+      </ul>
     </div>
-    <ul class="bw-nav__actions">
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Sounds</a>
-      </li>
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Packs</a>
-      </li>
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Forum</a>
-      </li>
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Map</a>
-      </li>
-      <li class="bw-nav__action dropdown">
-        <a class="bw-link--grey bw-nav__menu dropdown-toggle no-hover" id="three-dots-menu" aria-haspopup="true" aria-expanded="false"
-          data-toggle="dropdown"></a>
-        <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Tags
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Charts
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Donors
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Help
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Developers
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Freesound Blog
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Freesound Labs
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-              Freesound t-Shirt
-            </a>
-          </li>
-        </ul>
-      </li>
-      <li class="bw-nav__action dropdown">
-        <a class="bw-link--grey bw-nav__menu--avatar bw-nav__menu--avatar-with-notifications dropdown-toggle no-hover" id="avatar-menu"
-          aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
-          <img src="avatar.jpg" />
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="avatar-menu">
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">View profile</a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Manage uploads</a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Bookmarks</a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">My messages
-              <span class="text-red">(3)</span>
-            </a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Account settings</a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Manage API settings</a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Donate</a>
-          </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--grey" href="">Logout</a>
-          </li>
-        </ul>
-      </li>
-      <li class="bw-nav__action">
-        <button class="btn-secondary">Donate</button>
-      </li>
-      <li class="bw-nav__action">
-        <button class="btn-primary">Upload sound</button>
-      </li>
-    </ul>
   </nav>
 
   <div class="container">
@@ -133,9 +135,82 @@
       </header>
       <div class="bw-front__hero-container--search">
         <div class="input-wrapper">
-          <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+          <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." />
         </div>
       </div>
+    </div>
+    <div class="row bw-front__content">
+      <main class="col-md-9">
+        <section class="border-grey-light padding-5 v-spacing-6">
+          <h2 class="text-center v-spacing-2">Maintenance downtime</h2>
+          <p class="text-grey text-center">
+            Dear Freesounders, On Monday 3rd at 10:30 a.m. CEST Freesound will be down for approximately two hours while we perform some
+            maintenance on our servers. We’re sorry for the inconvenience this may cause.
+          </p>
+          <div class="center">
+            <button class="btn-primary h-spacing-2">Read more</button>
+            <button class="btn-inverse">More stories</button>
+          </div>
+        </section>
+        <section>
+          <h2 class="v-spacing-4">For you</h2>
+          <div class="row">
+            <div class="col">1</div>
+            <div class="col">1</div>
+            <div class="col">1</div>
+          </div>
+        </section>
+      </main>
+      <aside class="col-md-3">
+        <section class="v-spacing-7">
+          <h4>Enjoying Freesound?</h4>
+          <p class="text-grey v-spacing-2">Please consider donating some money</p>
+          <div class="between v-spacing-5">
+            <button class="btn-inverse bw-front__donate-amount-button">5€</button>
+            <button class="btn-inverse bw-front__donate-amount-button">10€</button>
+            <button class="btn-inverse bw-front__donate-amount-button">50€</button>
+            <button class="btn-inverse bw-front__donate-amount-button">Other</button>
+          </div>
+          <div class="h-spacing-left-3">
+            <div>Top donor this week:</div>
+            <div class="middle">
+              <div class="avatar h-spacing-2">
+                <img src="avatar.jpg" />
+              </div>
+              <div>
+                <a>giuband</a>
+                <br />
+                <div class="text-light-grey">10 sounds &middot; 0 posts</div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <hr />
+        <section class="v-padding-7">
+          <h4 class="v-spacing-3">Hot forum threads</h4>
+          <article class="v-padding-2">
+            <div class="v-spacing-1">
+              <a class="bw-link--black">Using sounds, making money</a>
+            </div>
+            <div class="text-grey">Started by
+              <a>Rosmars</a>
+            </div>
+            <a class="bw-link--grey">20 answers</a>
+          </article>
+          <article class="v-padding-2">
+            <div class="v-spacing-1">
+              <a class="bw-link--black">40 subscribers!</a>
+            </div>
+            <div class="text-grey">Started by
+              <a>Mudkip2016</a>
+            </div>
+            <a class="bw-link--grey">3 answers</a>
+          </article>
+          <div class="center v-spacing-top-4">
+            <button class="btn-inverse">More posts here</button>
+          </div>
+        </section>
+      </aside>
     </div>
   </div>
 </body>

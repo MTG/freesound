@@ -30,7 +30,7 @@ $navbar-height: 80px;
     height: 100%;
   }
 
-  .bw-nav--home:not(.collapsed) & {
+  .bw-nav--expanded & {
     width: 190px;
     background-image: url('assets/logos/logo-text.svg');
   }
@@ -40,7 +40,7 @@ $navbar-height: 80px;
   opacity: 1;
   transition: opacity 0.3s ease-in;
 
-  .bw-nav--home:not(.collapsed) & {
+  .bw-nav--expanded & {
     display: none;
     opacity: 0;
   }
@@ -105,5 +105,14 @@ $navbar-height: 80px;
     top: calc(100% + 6px);
     left: 50%;
     transform: translateX(-50%);
+  }
+}
+
+.bw-nav:not(.bw-nav--expanded) {
+  .btn-primary {
+    @include reset-rounded-button($red, $red-hover)
+  }
+  .btn-secondary {
+    @include reset-rounded-button($black, $black-hover);
   }
 }

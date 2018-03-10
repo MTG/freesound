@@ -3,58 +3,19 @@ $button-border-radius: 100px;
 button {
   position: relative;
   margin: 0;
-  padding-top: 14px;
-  padding-right: 30px;
-  padding-bottom: 14px;
-  padding-left: 30px;
   border: 0;
-  border-radius: $button-border-radius;
   -webkit-appearance: none;
   -moz-appearance: none;
   cursor: pointer;
   font-weight: bold;
 
-  &:focus {
-    outline: 0;
-  }
-
-  &:before {
-    content: '';
-    display: block;
-    opacity: 0;
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    border-radius: $button-border-radius;
-    box-shadow: 0 0 10px $black-hover;
-    transition: opacity 0.2s ease-in-out;
-  }
-
-  @include active() {
-    &:before {
-      opacity: 0.5;
-    }
-  }
+  @include border-bottom-on-hover;
 }
 
 .btn-primary {
-  background-color: $red;
-  color: $white;
-  transition: background-color 0.2s ease;
-
-  @include active() {
-    background-color: $red-hover;
-  }
+  @include rounded-button($red, $red-hover);
 }
 
 .btn-secondary {
-  background: $black;
-  color: $white;
-  transition: background-color 0.2s ease;
-
-  @include active() {
-    background-color: $black-hover;
-  }
+  @include rounded-button($black, $black-hover);
 }

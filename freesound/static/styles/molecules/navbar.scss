@@ -36,13 +36,9 @@ $navbar-height: 80px;
   }
 }
 
-.bw-nav__search {
-  opacity: 1;
-  transition: opacity 0.3s ease-in;
-
+.input-wrapper {
   .bw-nav--expanded & {
     display: none;
-    opacity: 0;
   }
 }
 
@@ -110,7 +106,7 @@ $navbar-height: 80px;
 
 .bw-nav:not(.bw-nav--expanded) {
   .btn-primary {
-    @include reset-rounded-button($red, $red-hover)
+    @include reset-rounded-button($red, $red-hover);
   }
   .btn-secondary {
     @include reset-rounded-button($black, $black-hover);

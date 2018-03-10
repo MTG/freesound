@@ -4,19 +4,13 @@ Add the classes `btn-primary` and `btn-secondary` to get primary and secondary s
 ```jsx
 <div class="row">
   <div class="col">
-    <button class="btn-primary">
-      Primary
-    </button>
+    <button class="btn-primary">Primary</button>
   </div>
   <div class="col">
-    <button class="btn-secondary">
-      Secondary
-    </button>
+    <button class="btn-secondary">Secondary</button>
   </div>
   <div class="col">
-    <button>
-      Default
-    </button>
+    <button>Default</button>
   </div>
 </div>
 ```

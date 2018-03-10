@@ -1,11 +1,14 @@
 Home, not logged in, expanded: (the ellipsis icon and the dropdowns won't load correctly inside styleguidist)
 
 ```jsx
-require('../../src/components/navbar');
-
 <nav class="bw-nav bw-nav--home bw-nav--expanded container">
-  <div class="bw-nav__logo">
-    <a href="" class="no-hover" />
+  <div class="bw-nav__logo-search-container">
+    <div class="bw-nav__logo">
+      <a href="" class="no-hover" />
+    </div>
+    <div class="input-wrapper">
+      <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+    </div>
   </div>
   <ul class="bw-nav__actions">
     <li class="bw-nav__action">
@@ -86,15 +89,20 @@ require('../../src/components/navbar');
     </li>
     <button class="btn-primary">Join</button>
   </ul>
-</nav>;
+</nav>
 ```
 
 Home, logged in, expanded (with notifications):
 
 ```jsx
 <nav class="bw-nav bw-nav--home bw-nav--expanded container">
-  <div class="bw-nav__logo">
-    <a href="" class="no-hover" />
+  <div class="bw-nav__logo-search-container">
+    <div class="bw-nav__logo">
+      <a href="" class="no-hover" />
+    </div>
+    <div class="input-wrapper">
+      <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+    </div>
   </div>
   <ul class="bw-nav__actions">
     <li class="bw-nav__action">
@@ -236,8 +244,13 @@ Home, logged in, expanded (no notifications):
 
 ```jsx
 <nav class="bw-nav bw-nav--home bw-nav--expanded container">
-  <div class="bw-nav__logo">
-    <a href="" class="no-hover" />
+  <div class="bw-nav__logo-search-container">
+    <div class="bw-nav__logo">
+      <a href="" class="no-hover" />
+    </div>
+    <div class="input-wrapper">
+      <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+    </div>
   </div>
   <ul class="bw-nav__actions">
     <li class="bw-nav__action">
@@ -380,8 +393,13 @@ Home, not logged in, non-expanded:
 require('../../src/components/navbar');
 
 <nav class="bw-nav bw-nav--home container">
-  <div class="bw-nav__logo">
-    <a href="" class="no-hover" />
+  <div class="bw-nav__logo-search-container">
+    <div class="bw-nav__logo">
+      <a href="" class="no-hover" />
+    </div>
+    <div class="input-wrapper">
+      <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+    </div>
   </div>
   <ul class="bw-nav__actions">
     <li class="bw-nav__action">
@@ -469,8 +487,13 @@ Home, not logged in, non-expanded:
 
 ```jsx
 <nav class="bw-nav bw-nav--home container">
-  <div class="bw-nav__logo">
-    <a href="" class="no-hover" />
+  <div class="bw-nav__logo-search-container">
+    <div class="bw-nav__logo">
+      <a href="" class="no-hover" />
+    </div>
+    <div class="input-wrapper">
+      <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+    </div>
   </div>
   <ul class="bw-nav__actions">
     <li class="bw-nav__action">

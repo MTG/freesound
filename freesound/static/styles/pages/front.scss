@@ -13,3 +13,11 @@
 .bw-front__subheader {
   color: $navy-grey;
 }
+
+.bw-front__hero-container--search {
+  margin-top: 100px;
+
+  .input-wrapper {
+    height: 50px;
+  }
+}

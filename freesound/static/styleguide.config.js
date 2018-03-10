@@ -39,6 +39,10 @@ module.exports = {
           name: 'Links',
           content: 'styleguide/atoms/links.md',
         },
+        {
+          name: 'Inputs',
+          content: 'styleguide/atoms/inputs.md',
+        },
       ],
     },
     {

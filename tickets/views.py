@@ -551,9 +551,11 @@ def pending_tickets_per_user(request, username):
     user = get_object_or_404(User, username=username)
     tickets_sounds = get_pending_sounds(user)
     pendings = []
+    mods = set()
     for ticket, sound in tickets_sounds:
         last_comments = ticket.get_n_last_non_moderator_only_comments(3)
         pendings.append( (ticket, sound, last_comments) )
+        mods.add(ticket.assignee)
 
     show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
 
@@ -567,12 +569,14 @@ def pending_tickets_per_user(request, username):
 
     moderators_version = True
     own_page = user == request.user
+    no_assign_button = len(mods) == 0 or (len(mods) == 1 and request.user in mods)
 
     paginated = paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
     tvars = {"show_pagination": show_pagination,
              "moderators_version": moderators_version,
              "user": user,
-             "own_page": own_page}
+             "own_page": own_page,
+             "no_assign_button": no_assign_button}
     tvars.update(paginated)
 
     return render(request, 'accounts/pending.html', tvars)

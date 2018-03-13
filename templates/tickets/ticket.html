@@ -66,10 +66,9 @@
         </div> <!-- /#ticket-left -->
 
         <div id="ticket-right">
-            {% if perms.tickets.can_moderate %}
+            {% if perms.tickets.can_moderate and ticket.sound %}
             <h3>Ticket controls</h3>
             <form action="." method="post">{% csrf_token %}
-                {{ ticket_form.as_p }}
                 {{ sound_form.as_p }}
                 <input type="submit" value="send" />
             </form>

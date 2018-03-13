@@ -155,3 +155,5 @@ class TicketsTest(TestCase):
                                 })
         self.assertEqual(resp.status_code, 200)
         delete_sound_solr.assert_called_once_with(sound.id)
+
+    # TODO: write moderation state change tests from mod queue as well as from ticket

@@ -108,51 +108,66 @@ def ticket(request, ticket_key):
             else:
                 clean_comment_form = False
         # update sound ticket
-        elif is_selected(request, 'tm') or is_selected(request, 'ss'):
-            ticket_form = TicketModerationForm(request.POST, prefix="tm")
-            sound_form = SoundStateForm(request.POST, prefix="ss")
-            if ticket_form.is_valid() and sound_form.is_valid():
+        elif is_selected(request, 'ss'):
+            sound_form = SoundStateForm(request.POST, prefix='ss')
+            if sound_form.is_valid():
                 clean_status_forms = True
                 clean_comment_form = True
-                sound_state = sound_form.cleaned_data.get('state')
-                # Sound should be deleted
-                if sound_state == 'DE':
+                sound_action = sound_form.cleaned_data.get('action')
+                comment = 'Moderator {} '.format(request.user)
+                notification = None
+
+                # If there is no one assigned, then changing the state self-assigns the ticket
+                if ticket.assignee is None:
+                    ticket.assignee = request.user
+
+                if sound_action == 'Delete':
                     if ticket.sound:
                         ticket.sound.delete()
                         ticket.sound = None
                     ticket.status = TICKET_STATUS_CLOSED
-                    tc = TicketComment(sender=request.user,
-                                       text="Moderator %s deleted the sound and closed the ticket" % request.user,
-                                       ticket=ticket,
-                                       moderator_only=False)
-                    tc.save()
-                    ticket.send_notification_emails(ticket.NOTIFICATION_DELETED,
+                    comment += 'deleted the sound and closed the ticket'
+                    notification = ticket.NOTIFICATION_DELETED
+
+                elif sound_action == 'Defer':
+                    ticket.status = TICKET_STATUS_DEFERRED
+                    ticket.sound.change_moderation_state('PE')  # not sure if this state have been used before
+                    comment += 'deferred the ticket'
+
+                elif sound_action == "Return":
+                    ticket.status = TICKET_STATUS_NEW
+                    ticket.assignee = None
+                    ticket.sound.change_moderation_state('PE')
+                    comment += 'returned the ticket to new sounds queue'
+
+                elif sound_action == 'Approve':
+                    ticket.status = TICKET_STATUS_CLOSED
+                    ticket.sound.change_moderation_state('OK')
+                    comment += 'approved the sound and closed the ticket'
+                    notification = ticket.NOTIFICATION_APPROVED
+
+                elif sound_action == 'Whitelist':
+                    _whitelist_gearman([ticket.id])  # async job should take care of whitelisting
+                    comment += 'whitelisted all sounds from user {}'.format(ticket.sender)
+                    notification = ticket.NOTIFICATION_WHITELISTED
+
+                if notification is not None:
+                    ticket.send_notification_emails(notification,
                                                     ticket.USER_ONLY)
-                # Set another sound state that's not delete
-                else:
-                    if ticket.sound:
-                        ticket.sound.moderation_state = sound_state
-                        # Mark the index as dirty so it'll be indexed in Solr
-                        if sound_state == "OK":
-                            ticket.sound.mark_index_dirty()
-                        ticket.sound.save()
-                    ticket.status = ticket_form.cleaned_data.get('status')
-                    tc = TicketComment(sender=request.user,
-                                       text="Moderator %s set the sound to %s and the ticket to %s." %
-                                            (request.user,
-                                             'pending' if sound_state == 'PE' else sound_state,
-                                             ticket.status),
-                                       ticket=ticket,
-                                       moderator_only=False)
-                    tc.save()
-                    ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
-                                                    ticket.USER_ONLY)
+
+                if ticket.sound is not None:
+                    ticket.sound.save()
+
                 ticket.save()
+                tc = TicketComment(sender=request.user,
+                                   text=comment,
+                                   ticket=ticket,
+                                   moderator_only=False)
+                tc.save()
 
     if clean_status_forms:
-        ticket_form = TicketModerationForm(initial={'status': ticket.status}, prefix="tm")
-        state = ticket.sound.moderation_state if ticket.sound else 'DE'
-        sound_form = SoundStateForm(initial={'state': state}, prefix="ss")
+        default_action = 'Return' if ticket.sound and ticket.sound.moderation_state == 'OK' else 'Approve'
+        sound_form = SoundStateForm(initial={'action': default_action}, prefix="ss")
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
 
@@ -160,7 +175,6 @@ def ticket(request, ticket_key):
     tvars = {"ticket": ticket,
              "num_sounds_pending": num_sounds_pending,
              "tc_form": tc_form,
-             "ticket_form": ticket_form,
              "sound_form": sound_form,
              "can_view_moderator_only_messages": can_view_moderator_only_messages}
     return render(request, 'tickets/ticket.html', tvars)
@@ -360,6 +374,12 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
         return redirect("tickets-moderation-home")
 
 
+def _whitelist_gearman(ticket_ids):
+    gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+    gm_client.submit_job("whitelist_user", json.dumps(ticket_ids),
+                         wait_until_complete=False, background=True)
+
+
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def moderation_assigned(request, user_id):
@@ -422,9 +442,7 @@ def moderation_assigned(request, user_id):
 
             elif action == "Whitelist":
                 ticket_ids = list(tickets.values_list('id',flat=True))
-                gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-                gm_client.submit_job("whitelist_user", json.dumps(ticket_ids),
-                        wait_until_complete=False, background=True)
+                _whitelist_gearman(ticket_ids)
                 notification = Ticket.NOTIFICATION_WHITELISTED
 
                 users = set(tickets.values_list('sender__username', flat=True))

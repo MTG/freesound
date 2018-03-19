@@ -40,5 +40,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(populate_sameuser, migrations.RunPython.noop)
+        migrations.RunPython(populate_sameuser, migrations.RunPython.noop),
+        migrations.RunSQL('CREATE UNIQUE INDEX "auth_user_email_upper_uniq" on "auth_user" (UPPER(email));')
     ]

@@ -39,6 +39,10 @@ module.exports = {
           name: 'Links',
           content: 'styleguide/atoms/links.md',
         },
+        {
+          name: 'Inputs',
+          content: 'styleguide/atoms/inputs.md',
+        },
       ],
     },
     {
@@ -47,6 +51,15 @@ module.exports = {
         {
           name: 'Navbar',
           content: 'styleguide/molecules/navbar.md',
+        },
+      ],
+    },
+    {
+      name: 'Modifiers',
+      sections: [
+        {
+          name: 'Spacing',
+          content: 'styleguide/modifiers/spacing.md',
         },
       ],
     },

@@ -3,29 +3,8 @@ a {
   color: $red;
   position: relative;
 
-  &:before {
-    content: '';
-    position: absolute;
-    display: block;
-    top: calc(100% + 2px);
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: currentColor;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  &.no-hover {
-    &:before {
-      display: none;
-    }
-  }
-
-  @include active {
-    &:before {
-      opacity: 1;
-    }
+  &:not(.no-hover) {
+    @include border-bottom-on-hover;
   }
 
   .dropdown-menu & {

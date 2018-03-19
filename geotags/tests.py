@@ -74,3 +74,21 @@ class GeoTagsTests(TestCase):
         resp = self.client.get(reverse('geotags-infowindow', kwargs={'sound_id': sound.id}))
         self.check_context(resp.context, {'sound': sound})
         self.assertInHTML('<a class="title" target="_blank" href="/people/Anton/sounds/16/">Glass A mf.wav</a>', resp.content)
+
+    def test_browse_geotags_case_insensitive(self):
+        user = User.objects.get(username='Anton')
+        sounds = list(Sound.objects.filter(user=user)[:2])
+
+        tag = 'uniqueTag'
+        sounds[1].set_tags([tag])
+        sounds[0].set_tags([tag.upper()])
+
+        gt = GeoTag.objects.create(user=user, lat=45.8498, lon=-62.6879, zoom=9)
+        for sound in sounds:
+            sound.geotag = gt
+            sound.save()
+
+        resp = self.client.get(reverse('geotags-barray', kwargs={'tag': tag}))
+        # Response contains 3 int32 objects per sound: id, lat and lng. Total size = 3 * 4 bytes = 12 bytes
+        n_sounds = len(resp.content) / 12
+        self.assertEqual(n_sounds, 2)

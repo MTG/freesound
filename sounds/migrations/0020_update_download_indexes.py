@@ -12,9 +12,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Drop existing index for unique user_id/sound_id/pack_id and create a new one with only user_id/sound_id
+        # Drop existing index for unique user_id/sound_id/pack_id (no longer used, and we don't want unique
+        # sound_id/user_id either)
         migrations.RunSQL('drop index if exists sounds_download_user_id_key;'),
-        migrations.RunSQL('create unique index "sounds_download_user_id_key" on sounds_download(user_id, sound_id);'),
 
         # Drop existing indexs for pack downloads (now using another table)
         migrations.RunSQL('drop index if exists sounds_download_user_pack;'),

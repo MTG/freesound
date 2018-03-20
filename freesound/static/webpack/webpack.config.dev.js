@@ -13,7 +13,13 @@ module.exports = {
       common.loaders.jsLoader,
       {
         test: /\.s?css$/,
-        use: ['style-loader', 'css-loader', common.loaders.postCssLoader, 'sass-loader', 'import-glob-loader'],
+        use: [
+          'style-loader',
+          'css-loader',
+          common.loaders.postCssLoader,
+          'sass-loader',
+          'import-glob-loader',
+        ],
       },
       common.loaders.fileLoader,
       common.loaders.iconsLoader,
@@ -26,6 +32,7 @@ module.exports = {
       title: 'Front page',
       filename: 'front.html',
       template: path.join(__dirname, '..', 'dev-templates/front.html'),
+      chunks: ['base', 'index', 'front'],
     }),
   ],
   devServer: {

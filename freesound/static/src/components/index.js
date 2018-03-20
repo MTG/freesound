@@ -1,1 +1,4 @@
-import './navbar'
+import './dropdown';
+import './input';
+import './navbar';
+import './player';

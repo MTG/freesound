@@ -26,7 +26,7 @@ from django.core.mail import get_connection
 
 def transform_unique_email(email):
     """
-    To avoid duplicated emails, in migration accounts.0009_sameuser we automatically chage existing
+    To avoid duplicated emails, in migration accounts.0009_sameuser we automatically change existing
     duplicated user emails by the contents returned in this function. This is reused for further
     checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup. 
     """

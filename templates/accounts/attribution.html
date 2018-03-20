@@ -24,13 +24,15 @@
 	{% for group in downloads %}
 		<h2>Downloaded on {{group.grouper}}</h2>
 		<ul>
-			{% for download_item in group.list %}
-				{% if download_item.0 == 'sound' %}
-                                    <li>S: <a href="{% absurl 'sound' download_item.2 download_item.1 %}">{{download_item.3 }}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2 }}</a> | <span style="color:gray">License: </span>{% if download_item.4 %}{{ download_item.4 }}{% else %}{{ download_item.5 }}{% endif %}</li>
-				{% else %}
-			      	    <li>P: <a href="{% absurl 'pack' download_item.2 download_item.1 %}">{{download_item.3}}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2}}</a></li>
-				{% endif %}
-			{% endfor %}
+        {% for download_item in group.list %}
+            {% if download_item.download_type == 'sound' %}
+                <li>S: <a href="{% absurl 'sound' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__original_filename }}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username }}</a> | <span style="color:gray">License: </span>{% if download_item.license__name %}{{ download_item.license__name }}{% else %}{{ download_item.sound__license__name }}{% endif %}</li>
+            {% else %}
+                {% comment %}NOTE: in the line below, even though we're displaying information about a pack download, we use download_item.X where X takes the same names as in the line above when we were displaying
+                information about sound download. This is beacuse after doing the uninon of the two QuerySets (see accounts.views.attribution) the names of the columns are "unified" and taken from the main QuerySet{% endcomment %}
+                <li>P: <a href="{% absurl 'pack' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__original_filename}}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username}}</a></li>
+            {% endif %}
+        {% endfor %}
 		</ul>
 	{% endfor %}
 {% endifequal %}
@@ -42,10 +44,12 @@
 		{% filter force_escape %}<ul>{% endfilter %}<br />
 			{% for download_item in group.list %}
 				&nbsp;&nbsp;&nbsp;&nbsp;{% filter force_escape %}
-				{% if download_item.0 == 'sound' %}
-                                    <li>S: <a href="{% absurl 'sound' download_item.2 download_item.1 %}">{{download_item.3 }}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2 }}</a> | License: {% if download_item.4 %}{{ download_item.4 }}{% else %}{{ download_item.5 }}{% endif %}</li>
+				{% if download_item.download_type == 'sound' %}
+                    <li>S: <a href="{% absurl 'sound' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__original_filename }}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username }}</a> | License: {% if download_item.license__name %}{{ download_item.license__name }}{% else %}{{ download_item.sound__license__name }}{% endif %}</li>
 				{% else %}
-			      	    <li>P: <a href="{% absurl 'pack' download_item.2 download_item.1 %}">{{download_item.3}}</a> by <a href="{% absurl 'account' download_item.2  %}">{{download_item.2}}</a></li>
+                    {% comment %}NOTE: in the line below, even though we're displaying information about a pack download, we use download_item.X where X takes the same names as in the line above when we were displaying
+                    information about sound download. This is beacuse after doing the uninon of the two QuerySets (see accounts.views.attribution) the names of the columns are "unified" and taken from the main QuerySet{% endcomment %}
+                    <li>P: <a href="{% absurl 'pack' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__name}}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username}}</a></li>
 				{% endif %}
 				{% endfilter %}<br />
 			{% endfor %}
@@ -58,14 +62,16 @@
 <p>
 	{% for group in downloads %}
     Downloaded on {{group.grouper}}<br />
-			{% for download_item in group.list %}
-			    &nbsp;&nbsp;&nbsp;&nbsp;
-				{% if download_item.0 == 'sound' %}
-                                S: {{download_item.3}} by {{download_item.2}} -- {% absurl 'short-sound-link' download_item.1 %} -- License: {% if download_item.4 %}{{ download_item.4 }}{% else %}{{ download_item.5 }}{% endif %}<br />
-				{% else %}
-		                P: {{download_item.3}} by {{download_item.2}} -- {% absurl 'pack' download_item.2 download_item.1 %}<br/>
-				{% endif %}
-			{% endfor %}
+    {% for download_item in group.list %}
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        {% if download_item.download_type == 'sound' %}
+            S: {{download_item.sound__original_filename}} by {{download_item.sound__user__username}} -- {% absurl 'short-sound-link' download_item.sound_id %} -- License: {% if download_item.license__name %}{{ download_item.license__name }}{% else %}{{ download_item.sound__license__name }}{% endif %}<br />
+        {% else %}
+            {% comment %}NOTE: in the line below, even though we're displaying information about a pack download, we use download_item.X where X takes the same names as in the line above when we were displaying
+            information about sound download. This is beacuse after doing the uninon of the two QuerySets (see accounts.views.attribution) the names of the columns are "unified" and taken from the main QuerySet{% endcomment %}
+            P: {{download_item.sound__name}} by {{download_item.sound__user__username}} -- {% absurl 'pack' download_item.sound__user__username download_item.sound_id %}<br/>
+        {% endif %}
+    {% endfor %}
 	{% endfor %}
 </p>
 {% endifequal %}

@@ -5,3 +5,6 @@ $base-spacing: 32px;
 $medium-spacing: 40px;
 $large-spacing: 56px;
 $super-spacing: 64px;
+
+$spacing-values-list: $tiny-spacing, $small-spacing, $smedium-spacing, $base-spacing,
+  $medium-spacing, $large-spacing, $super-spacing;

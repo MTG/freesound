@@ -95,4 +95,11 @@
         </div> <!-- /#ticket-right -->
         <br style="clear: both;">
     </div> <!-- /#ticket-wrapper -->
+
+<script>
+  $(function() {
+    unsecureImageCheck($('#{{ tc_form.message.id_for_label }}'));
+  })
+</script>
+
 {% endblock content %}

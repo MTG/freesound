@@ -1051,7 +1051,7 @@ class Flag(models.Model):
 class Download(models.Model):
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None, related_name='downloads')
-    license = models.ForeignKey(License, null=True, blank=True, default=None)
+    license = models.ForeignKey(License)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def get_license(self):
@@ -1093,7 +1093,7 @@ class PackDownload(models.Model):
 class PackDownloadSound(models.Model):
     sound = models.ForeignKey(Sound)
     pack_download = models.ForeignKey(PackDownload)
-    license = models.ForeignKey(License, null=True, blank=True, default=None)
+    license = models.ForeignKey(License)
 
 
 @receiver(post_delete, sender=PackDownload)

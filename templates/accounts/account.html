@@ -153,7 +153,7 @@
             </ul>
             </div>
             <br style="clear: both;" />
-            {% if user.profile.about and user.profile.get_total_downloads > 0 %}
+            {% if user.profile.about and show_about %}
                 <div class="about">
                     {{user.profile.about|replace_img|safe|linebreaksbr }}
                 </div>

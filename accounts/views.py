@@ -834,6 +834,12 @@ def account(request, username):
     else:
         num_sounds_pending_count = None
 
+    show_about = ((request.user == user)  # user is looking at own page
+                  or request.user.is_superuser  # admins should always see about fields
+                  or user.is_superuser  # no reason to hide admin's about fields
+                  or user.profile.get_total_downloads > 0  # user has downloads
+                  or user.profile.num_sounds > 0)  # user has uploads
+
     tvars = {
         'home': False,
         'user': user,
@@ -851,6 +857,7 @@ def account(request, username):
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
         'num_sounds_pending_count': num_sounds_pending_count,
+        'show_about': show_about,
     }
     return render(request, 'accounts/account.html', tvars)
 

@@ -680,7 +680,7 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs_sounds = Download.objects.filter(sound_id__isnull=False).annotate(download_type=Value("sound", CharField()))\
+    qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
                 'license__name', 'sound__license__name', 'created').filter(user=request.user)
     qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
@@ -702,7 +702,7 @@ def attribution(request):
 @redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
-    qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
+    qs = Download.objects.filter(user_id=user.id)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     page = paginator["page"]
     sound_ids = [d.sound_id for d in page]

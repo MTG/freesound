@@ -5,11 +5,8 @@
 {% block section_content %}
 <h1>Resend activation</h1>
 <form method="post" action=".">{% csrf_token %}
-    {{form.as_p}}
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
-    <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
-    <input type="submit" value="Resend activation code" />
+{{form.as_p}}
+<input type="submit" value="Resend activation code" />
 </form>
 
 {% endblock %}

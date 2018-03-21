@@ -224,7 +224,17 @@ class RegistrationForm(forms.Form):
 
 
 class ReactivationForm(forms.Form):
+    captcha_key = settings.RECAPTCHA_PUBLIC_KEY
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
+
     user = forms.CharField(label="The username or email you signed up with", max_length=254)
+
+    def clean(self):
+        cleaned_data = super(ReactivationForm, self).clean()
+        captcha_response = cleaned_data.get("recaptcha_response")
+        if not captcha_response:
+            raise forms.ValidationError(_("Captcha is not correct"))
+        return cleaned_data
 
 
 class FsAuthenticationForm(AuthenticationForm):

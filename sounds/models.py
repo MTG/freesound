@@ -1054,17 +1054,6 @@ class Download(models.Model):
     license = models.ForeignKey(License)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def get_license(self):
-        """
-        Return self.license if it's not null. Otherwise, return self.sound.license if self.sound is not null, or return
-        None if there is no license and no sound.
-        """
-        if self.license:
-            return self.license
-        if self.sound:
-            return self.sound.license
-        return None
-
     class Meta:
         ordering = ("-created",)
 

@@ -1237,3 +1237,48 @@ class UsernameValidatorTests(TestCase):
         """ Should be shorter than 30 characters """
         form = self.TestForm(data={'username': 'a'*31})
         self.assertFalse(form.is_valid())
+
+
+class AboutFieldVisibilityTests(object):  # temporarily disable this test because of about field shown unconditionally
+    """Verifies visibility of about field"""
+    def setUp(self):
+        self.spammer = User.objects.create_user(username='spammer', email='spammer@example.com', password='testpass')
+        self.downloader = User.objects.create_user(username='downloader', email='downloader@example.com',
+                                                   password='testpass')
+        self.uploader = User.objects.create_user(username='uploader', email='uploader@example.com', password='testpass')
+        self.admin = User.objects.create_user(username='admin', email='admin@example.com', password='testpass',
+                                              is_superuser=True)
+
+        self.downloader.profile.num_sound_downloads = 1
+        self.uploader.profile.num_sounds = 1
+
+        self.about = 'Non-empty about field'
+        for user in [self.spammer, self.downloader, self.uploader, self.admin]:
+            user.profile.about = self.about
+            user.profile.save()
+
+    def _check_visibility(self, username, condition):
+        resp = self.client.get(reverse('account', kwargs={'username': username}))
+        if condition:
+            self.assertIn(self.about, resp.content)
+        else:
+            self.assertNotIn(self.about, resp.content)
+
+    def _check_visible(self):
+        self._check_visibility('downloader', True)
+        self._check_visibility('uploader', True)
+        self._check_visibility('admin', True)
+
+    def test_anonymous(self):
+        self._check_visibility('spammer', False)
+        self._check_visible()
+
+    def test_spammer(self):
+        self.client.login(username='spammer', password='testpass')
+        self._check_visibility('spammer', True)
+        self._check_visible()
+
+    def test_admin(self):
+        self.client.login(username='admin', password='testpass')
+        self._check_visibility('spammer', True)
+        self._check_visible()

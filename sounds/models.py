@@ -1056,6 +1056,9 @@ class Download(models.Model):
 
     class Meta:
         ordering = ("-created",)
+        indexes = [
+            models.Index(fields=['user', 'sound']),
+        ]
 
 
 @receiver(post_delete, sender=Download)

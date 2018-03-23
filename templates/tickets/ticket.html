@@ -74,7 +74,7 @@
             </form>
             {% endif %}
             
-            <h3>Ticket linked content</h3>
+            <h3>Ticket sound</h3>
             {% if ticket.sound %}
                   <div class="sound_list_moderation">
                       {% display_sound ticket.sound %}
@@ -90,12 +90,10 @@
                                                               Pending {% else %} OK {% endif %}</b>
                   <br>Sound's processing state is set to <b>{% if ticket.sound.processing_state == 'PE' %}
                                                               Pending {% else %} OK {% endif %}</b>
+                  </p>
             {% else %}
-                <p>No linked content
+                <p>This ticket has no assigned sound or the sound assigned to this ticket was deleted.</p>
             {% endif %}
-
-            
-
 
         </div> <!-- /#ticket-right -->
         <br style="clear: both;">

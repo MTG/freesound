@@ -50,7 +50,7 @@
                 <div class="sample_information" style="width: 250px;">
                     <span>
                         {% if ticket.assignee %}
-                            Assigned to <a href="{% url "account" ticket.assignee.username %}">{{ ticket.assignee.username }}</a>
+                            Assigned to moderator <a href="{% url "account" ticket.assignee.username %}">{{ ticket.assignee.username }}</a>
                         {% else %}
                             <b>New</b>
                         {% endif %}

@@ -2,13 +2,39 @@ import once from '../../utils/once';
 
 const players = [...document.getElementsByClassName('bw-player')];
 
+const usePlayingStatus = (audioElement, parentNode) => {
+  const progressIndicator = parentNode.getElementsByClassName('bw-player__progress-indicator')[0];
+  const { duration } = audioElement;
+  progressIndicator.style.animationDuration = `${duration}s`;
+  parentNode.classList.add('bw-player--playing');
+};
+
+const removePlayingStatus = (audioElement, parentNode) => {
+  parentNode.classList.remove('bw-player--playing');
+};
+
+const onPlayerTimeUpdate = (audioElement, parentNode) => {
+  // TODO
+};
+
+const createProgressIndicator = () => {
+  const progressIndicator = document.createElement('div');
+  progressIndicator.className = 'bw-player__progress-indicator';
+  return progressIndicator;
+};
+
 const createWaveformImage = parentNode => {
+  const imageContainer = document.createElement('div');
+  imageContainer.className = 'bw-player__img-container';
   const { waveform, title } = parentNode.dataset;
   const waveformImage = document.createElement('img');
-  waveformImage.className = 'bw-player-img';
+  waveformImage.className = 'bw-player__img';
   waveformImage.src = waveform;
   waveformImage.alt = title;
-  return waveformImage;
+  const progressIndicator = createProgressIndicator();
+  imageContainer.appendChild(waveformImage);
+  imageContainer.appendChild(progressIndicator);
+  return imageContainer;
 };
 
 const createAudioElement = parentNode => {
@@ -24,6 +50,15 @@ const createAudioElement = parentNode => {
   oggSource.setAttribute('type', 'audio/ogg');
   audioElement.appendChild(mp3Source);
   audioElement.appendChild(oggSource);
+  audioElement.addEventListener('play', () => {
+    usePlayingStatus(audioElement, parentNode);
+  });
+  audioElement.addEventListener('pause', () => {
+    removePlayingStatus(audioElement, parentNode);
+  });
+  audioElement.addEventListener('timeupdate', () => {
+    onPlayerTimeUpdate(audioElement, parentNode);
+  });
   return audioElement;
 };
 

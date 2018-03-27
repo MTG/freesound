@@ -487,10 +487,7 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
                 break
 
             if element[0:5] == 'apiv2':
-                if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
-                    url = prepend_base('/' + element, dynamic_resolve=False, use_https=True)
-                else:
-                    url = prepend_base('/' + element, dynamic_resolve=False, use_https=False)
+                url = prepend_base('/' + element, dynamic_resolve=False, use_https=True)
                 output += '<span class="pln"><a href="%s">%s</a></span><br>' % (url, url)
             else:
                 # This is only apiv2 oauth examples

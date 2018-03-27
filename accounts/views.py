@@ -238,7 +238,7 @@ def resend_activation(request):
                 send_activation(user)
             except User.DoesNotExist:
                 pass
-            return render(request, 'accounts/registration_done.html')
+            return render(request, 'accounts/resend_activation_done.html')
     else:
         form = ReactivationForm()
 

@@ -21,10 +21,16 @@
                  {% endif %}</li>
             <li><em>assigned to</em>
                  {% if ticket.assignee %}
-                     {{ ticket.assignee.username }}
+                     <a href="{% url "account" ticket.assignee.username %}">{{ ticket.assignee.username }}</a>
                  {% else %}
                      no one
-                 {% endif %}</li>
+                 {% endif %}
+
+                 {# Show 'assign to me' link if the assigned moderator is not you #}
+                 {% if ticket.assignee.id != user.id %}
+                 (<a href="{% url 'tickets-moderation-assign-single-ticket' ticket.sender.id ticket.id %}?next=ticket">assign to me</a>)
+                 {% endif %}
+            </li>
             <li><em>status is</em> {{ ticket.status|capfirst }}</li>
             <li><em>queue is</em> {{ ticket.queue.name }}</li>
         </ul>
@@ -60,16 +66,15 @@
         </div> <!-- /#ticket-left -->
 
         <div id="ticket-right">
-            {% if perms.tickets.can_moderate %}
+            {% if perms.tickets.can_moderate and ticket.sound %}
             <h3>Ticket controls</h3>
             <form action="." method="post">{% csrf_token %}
-                {{ ticket_form.as_p }}
                 {{ sound_form.as_p }}
                 <input type="submit" value="send" />
             </form>
             {% endif %}
             
-            <h3>Ticket linked content</h3>
+            <h3>Ticket sound</h3>
             {% if ticket.sound %}
                   <div class="sound_list_moderation">
                       {% display_sound ticket.sound %}
@@ -85,12 +90,10 @@
                                                               Pending {% else %} OK {% endif %}</b>
                   <br>Sound's processing state is set to <b>{% if ticket.sound.processing_state == 'PE' %}
                                                               Pending {% else %} OK {% endif %}</b>
+                  </p>
             {% else %}
-                <p>No linked content
+                <p>This ticket has no assigned sound or the sound assigned to this ticket was deleted.</p>
             {% endif %}
-
-            
-
 
         </div> <!-- /#ticket-right -->
         <br style="clear: both;">

@@ -20,8 +20,8 @@
                     <div class="moderation-user-list-user-right">
                         <p>
                             <a href="{% url "account" user.username %}">{{ user.username }}</a>
-                            <br><a href="{% url "tickets-user-pending_sounds" user.username %}">{{ new_count }} new sounds</a>, {{ time }} day{{ time|pluralize }} in queue
-                            <br><a href="{% url "tickets-moderation-assign-user" user.id %}">
+                            <br><a href="{% url "tickets-user-pending_sounds" user.username %}">{{ new_count }} new sound{{ new_count|pluralize }}</a>, {{ time }} day{{ time|pluralize }} in queue
+                            <br><a href="{% url 'tickets-moderation-assign-user-new' user.id %}">
                             <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
                         </p>
                     </div>
@@ -45,7 +45,7 @@
             <div style="margin-top:-20px;height:30px;width:100px;margin-bottom:18px">
             {% if ticket.assignee.id != request.user.id %}
                 <p>
-                    <a href="{% url "tickets-moderation-assign-signle-ticket" user.id ticket.id %}">
+                    <a href="{% url 'tickets-moderation-assign-single-ticket' user.id ticket.id %}">
                         <img style="position: relative; top: 5px;" src="{{media_url}}images/moderation_plus.png" />Assign to me
                     </a>
                 </p>
@@ -65,7 +65,7 @@
             <div style="margin-top:-20px;height:30px;width:100px;margin-bottom:18px">
             {% if ticket.assignee.id != request.user.id %}
                 <p>
-                    <a href="{% url "tickets-moderation-assign-signle-ticket" user.id ticket.id %}">
+                    <a href="{% url 'tickets-moderation-assign-single-ticket' user.id ticket.id %}">
                         <img style="position: relative; top: 5px;" src="{{media_url}}images/moderation_plus.png" />Assign to me
                     </a>
                 </p>
@@ -82,7 +82,7 @@
                 {% include 'tickets/ticket_sound.html' %}
                 <div style="margin-top:-20px;height:30px;width:100px;margin-bottom:18px">
                 <p>
-                    <a href="{% url "tickets-moderation-assign-signle-ticket" user.id ticket.id %}">
+                    <a href="{% url 'tickets-moderation-assign-single-ticket' user.id ticket.id %}">
                         <img style="position: relative; top: 5px;" src="{{media_url}}images/moderation_plus.png" />Assign to me
                     </a>
                 </p>

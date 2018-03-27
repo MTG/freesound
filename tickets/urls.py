@@ -38,9 +38,13 @@ urlpatterns = [
         moderation_tardy_moderators_sounds,
         name='tickets-moderation-tardy-moderators'),
 
-    url(r'^moderation/assign/(?P<user_id>\d+)/$',
+    url(r'^moderation/assign/(?P<user_id>\d+)/new$',
         moderation_assign_user,
-        name='tickets-moderation-assign-user'),
+        name='tickets-moderation-assign-user-new'),
+
+    url(r'^moderation/assign/(?P<user_id>\d+)/pending$',
+        moderation_assign_user_pending,
+        name='tickets-moderation-assign-user-pending'),
 
     url(r'^moderation/assigned/(?P<user_id>\d+)/$',
         moderation_assigned,
@@ -48,7 +52,7 @@ urlpatterns = [
 
     url(r'^moderation/assign/ticket/(?P<user_id>\d+)/(?P<ticket_id>\d+)/$',
         moderation_assign_single_ticket,
-        name='tickets-moderation-assign-signle-ticket'),
+        name='tickets-moderation-assign-single-ticket'),
 
     url(r'^moderation/annotations/(?P<user_id>\d+)/$',
         user_annotations,

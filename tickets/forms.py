@@ -63,8 +63,9 @@ class AnonymousContactForm(AnonymousMessageForm):
         super(AnonymousContactForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder = ['email', 'title', 'message']
 
+
 # Sound moderation forms
-MODERATION_CHOICES = [(x,x) for x in \
+MODERATION_CHOICES = [(x, x) for x in
                       ['Approve',
                        'Delete',
                        'Defer',
@@ -96,27 +97,7 @@ class UserAnnotationForm(forms.Form):
                                  label='')
 
 
-TICKET_STATUS_CHOICES = [(x,x.capitalize()) for x in \
-                         [TICKET_STATUS_ACCEPTED,
-                          TICKET_STATUS_CLOSED,
-                          TICKET_STATUS_DEFERRED,
-                          TICKET_STATUS_NEW]]
-
-class TicketModerationForm(forms.Form):
-    status      = forms.ChoiceField(choices=TICKET_STATUS_CHOICES,
-                                    required=False,
-                                    label='Ticket status')
-
-    def __init__(self, *args, **kwargs):
-        super(TicketModerationForm, self).__init__(*args, **kwargs)
-        if 'initial' in kwargs:
-            state = kwargs['initial']['status']
-            if state == TICKET_STATUS_CLOSED:
-                self.fields['status'].widget.attrs['disabled'] = 'disabled'
-
 class SoundStateForm(forms.Form):
-    state       = forms.ChoiceField(choices=[("OK", "OK"),
-                                             ("PE", "Pending"),
-                                             ("DE", "Delete")],
-                                    required=False,
-                                    label='Sound state')
+    action = forms.ChoiceField(choices=MODERATION_CHOICES,
+                               required=False,
+                               label='Action:')

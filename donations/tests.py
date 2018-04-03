@@ -6,7 +6,9 @@ from django.core.management import call_command
 import mock
 import sounds.models
 import donations.models
+from sounds.models import License
 import views
+
 
 class DonationTest(TestCase):
     fixtures = ['initial_data']
@@ -250,7 +252,7 @@ class DonationTest(TestCase):
 
         # Simulate downloads from user_b
         for sound in sounds.models.Sound.objects.all():
-            sounds.models.Download.objects.create(user=self.user_b, sound=sound)
+            sounds.models.Download.objects.create(user=self.user_b, sound=sound, license=License.objects.first())
 
         pack = sounds.models.Pack.objects.create(user=self.user_c, name="pack")
         sounds.models.PackDownload.objects.create(user=self.user_b, pack=pack)
@@ -273,7 +275,7 @@ class DonationTest(TestCase):
 
         # Simulate downloads from user_c
         for sound in sounds.models.Sound.objects.all():
-            sounds.models.Download.objects.create(user=self.user_c, sound=sound)
+            sounds.models.Download.objects.create(user=self.user_c, sound=sound, license=License.objects.first())
 
         # Run the command for sending donation emails again
         call_command('donations_mails')
@@ -351,9 +353,9 @@ class DonationTest(TestCase):
 
         # Now simulate downloads for all users and check again
         for sound in sounds.models.Sound.objects.all():
-            sounds.models.Download.objects.create(user=self.user_a, sound=sound)
-            sounds.models.Download.objects.create(user=self.user_b, sound=sound)
-            sounds.models.Download.objects.create(user=self.user_c, sound=sound)
+            sounds.models.Download.objects.create(user=self.user_a, sound=sound, license=License.objects.first())
+            sounds.models.Download.objects.create(user=self.user_b, sound=sound, license=License.objects.first())
+            sounds.models.Download.objects.create(user=self.user_c, sound=sound, license=License.objects.first())
 
         # Run command again
         call_command('donations_mails')
@@ -378,7 +380,7 @@ class DonationTest(TestCase):
         self.user_a.profile.donations_reminder_email_sent = False
         self.user_a.profile.save()
         for sound in sounds.models.Sound.objects.all():
-            sounds.models.Download.objects.create(user=self.user_a, sound=sound)
+            sounds.models.Download.objects.create(user=self.user_a, sound=sound, license=License.objects.first())
 
         # Run command again
         call_command('donations_mails')

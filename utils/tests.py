@@ -156,9 +156,9 @@ class ShouldSuggestDonationTest(TestCase):
             license=License.objects.all()[0],
             md5="fakemd5_10")
         for i in range(0, donations_settings.downloads_in_period):
-            Download.objects.create(user=user, sound=sound)
+            Download.objects.create(user=user, sound=sound, license=License.objects.first())
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
-        Download.objects.create(user=user, sound=sound)  # downloads > donations_settings.downloads_in_period (modal shows)
+        Download.objects.create(user=user, sound=sound, license=License.objects.first())  # downloads > donations_settings.downloads_in_period (modal shows)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
         # if the download objects are older than donations_settings.download_days, don't consider them
@@ -206,9 +206,9 @@ class ShouldSuggestDonationTest(TestCase):
             license=License.objects.all()[0],
             md5="fakemd5_10")
         for i in range(0, donations_settings.downloads_in_period):
-            Download.objects.create(user=user, sound=sound)
+            Download.objects.create(user=user, sound=sound, license=License.objects.first())
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
-        Download.objects.create(user=user, sound=sound)  # n downloads > donations_settings.downloads_in_period
+        Download.objects.create(user=user, sound=sound, license=License.objects.first())  # n downloads > donations_settings.downloads_in_period
         # In this case still not shown the modal as probability is 0.0
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 

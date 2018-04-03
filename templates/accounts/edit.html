@@ -12,8 +12,10 @@
         <h3>Edit your account information</h3>
         <form method="post" action=".">{% csrf_token %}
             <p>You can edit your account using this form. The text introduced in the 
-                <strong>about</strong>, <strong>forum signature</strong> and <strong>sound signature</strong> fields can be formatted using the following HTML tags:
-                <code>a</code>, <code>img</code>, <code>strong</code>, <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>, <code>blockquote</code>a and <code>code</code>.
+                <strong>about</strong>, <strong>forum signature</strong> and <strong>sound signature</strong> fields can
+                be formatted using the following HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
+                <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
+                <code>blockquote</code> and <code>code</code>.
             </p>
             {{profile_form.as_p}}
             <input type="submit" value="Save account settings" />
@@ -66,8 +68,9 @@
 
 <script>
   $(function() {
-    unsecureImageCheck($('#id_profile-about'));
-    unsecureImageCheck($('#id_profile-signature'));
+      {% for field in profile_form.get_img_check_fields %}
+          unsecureImageCheck($('#{{ field.id_for_label }}'));
+      {% endfor %}
   })
 </script>
 

@@ -10,6 +10,11 @@
 
     <h2>Uploaded sounds awaiting moderation {% if moderators_version %} by  <a class="title" href="{% url "account" user.username %}">{{user.username}}</a>{% endif %}</h2>
 
+    {% if not no_assign_button and moderators_version %}
+    <p><a href="{% url 'tickets-moderation-assign-user-pending' user.id %}">
+        <img src="{{media_url}}images/moderation_plus.png" style="position: relative; top: 5px;"/>Assign all to me</a></p>
+    {% endif %}
+
     {% if show_pagination %}
         {% show_paginator paginator page current_page request "moderation ticket" %}
     {% endif %}
@@ -43,16 +48,30 @@
                     </div>
                 </div>
                 <div class="sample_information" style="width: 250px;">
+                    <span>
+                        {% if ticket.assignee %}
+                            Assigned to moderator <a href="{% url "account" ticket.assignee.username %}">{{ ticket.assignee.username }}</a>
+                        {% else %}
+                            <b>New</b>
+                        {% endif %}
+                    </span><br />
 
                     <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
                     {% if not moderators_version %}
                         <a href="{% url "sound-edit" sound.user.username sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a><br />
                     {% endif %}
                     See full <a href="{% url "tickets-ticket" ticket.key %}">moderation ticket</a><br />
+
                     {% with comments|first as last_comment %}
                         {% ifnotequal last_comment.sender_id user.id %}
                             <br><img src="{{media_url}}images/info_red.png" width="12" height="12" valign="middle" />
-                            <span style="color:#c65c56">The moderator handling this upload is waiting you to answer his last comment on the ticket ({{ last_comment.created|timesince}} ago).</span>
+                            <span style="color:#c65c56">The moderator handling this upload is waiting for
+                                {% if own_page %}
+                                you
+                                {%  else %}
+                                user
+                                {% endif %}
+                                to answer his last comment on the ticket ({{ last_comment.created|timesince}} ago).</span>
                         {% endifnotequal %}
                     {% endwith %}
                 </div>

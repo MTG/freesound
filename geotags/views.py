@@ -47,7 +47,7 @@ def generate_bytearray(sound_queryset):
 def geotags_barray(request, tag=None):
     sounds = Sound.objects.select_related('geotag')
     if tag:
-        sounds = sounds.filter(tags__tag__name=tag)
+        sounds = sounds.filter(tags__tag__name__iexact=tag)
     return generate_bytearray(sounds.exclude(geotag=None).all())
 
 

@@ -143,6 +143,9 @@
                     <li>Uploaded sounds <a href="{% url "tickets-user-pending_sounds" user.username %}">pending moderation ({{ num_sounds_pending_count }})</a></li>
                     <li><a href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22">All forum posts</a> by {{ user.username }}</li>
                     <li><a href="{% url "comments-by-user" user.username %}">All comments</a> by {{ user.username }}</li>
+                    {% if user.profile.is_whitelisted %}
+                        <li>This user is whitelisted</li>
+                    {% endif %}
                 {% endif %}
                 {% if request.user.is_staff %}
                     <li class="separator">Admin only links</li>
@@ -153,7 +156,7 @@
             </ul>
             </div>
             <br style="clear: both;" />
-            {% if user.profile.about and user.profile.get_total_downloads > 0 %}
+            {% if user.profile.about and show_about %}
                 <div class="about">
                     {{user.profile.about|replace_img|safe|linebreaksbr }}
                 </div>

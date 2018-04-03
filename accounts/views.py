@@ -248,7 +248,7 @@ def resend_activation(request):
                 send_activation(user)
             except User.DoesNotExist:
                 pass
-            return render(request, 'accounts/registration_done.html')
+            return render(request, 'accounts/resend_activation_done.html')
     else:
         form = ReactivationForm()
 
@@ -713,7 +713,7 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs_sounds = Download.objects.filter(sound_id__isnull=False).annotate(download_type=Value("sound", CharField()))\
+    qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
                 'license__name', 'sound__license__name', 'created').filter(user=request.user)
     qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
@@ -735,7 +735,7 @@ def attribution(request):
 @redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
-    qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
+    qs = Download.objects.filter(user_id=user.id)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     page = paginator["page"]
     sound_ids = [d.sound_id for d in page]
@@ -867,6 +867,14 @@ def account(request, username):
     else:
         num_sounds_pending_count = None
 
+    # show_about = ((request.user == user)  # user is looking at own page
+    #               or request.user.is_superuser  # admins should always see about fields
+    #               or user.is_superuser  # no reason to hide admin's about fields
+    #               or user.profile.get_total_downloads > 0  # user has downloads
+    #               or user.profile.num_sounds > 0)  # user has uploads
+
+    show_about = True  # temporary fix until get_total_downloads is fixed
+
     tvars = {
         'home': False,
         'user': user,
@@ -884,6 +892,7 @@ def account(request, username):
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
         'num_sounds_pending_count': num_sounds_pending_count,
+        'show_about': show_about,
     }
     return render(request, 'accounts/account.html', tvars)
 

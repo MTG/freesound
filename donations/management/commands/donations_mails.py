@@ -92,7 +92,7 @@ class Command(BaseCommand):
         #   - Downloaded more than M sounds during 'email_timespan' (3 months)
         #   - Have not donated during 'donation_timespan' (12 months)
         #   - Have not received any email regarding donations during 'email_timespan' (3 months)
-        potential_users_sound = Download.objects.filter(created__gte=email_timespan, sound_id__isnull=False)\
+        potential_users_sound = Download.objects.filter(created__gte=email_timespan)\
             .exclude(user_id__in=user_received_donation_email_within_email_timespan)\
             .exclude(user_id__in=donors_within_donation_timespan) \
             .exclude(user_id__in=uploaders) \
@@ -128,8 +128,7 @@ class Command(BaseCommand):
                             days=donation_settings.minimum_days_since_last_donation),
                         email_timespan
                     )
-                    user_sound_downloads = Download.objects.filter(created__gte=relevant_period, user=user,
-                                                                   sound_id__isnull=False).count()
+                    user_sound_downloads = Download.objects.filter(created__gte=relevant_period, user=user).count()
                     user_pack_downloads = PackDownload.objects.filter(created__gte=relevant_period, user=user).count()
                     user_downloads = user_sound_downloads + user_pack_downloads
 

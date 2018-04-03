@@ -35,6 +35,7 @@ from django.template import loader
 from django.urls import reverse
 from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import PermissionDenied
+from django.core.validators import RegexValidator
 from multiupload.fields import MultiFileField
 from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, OldUsername
@@ -128,20 +129,27 @@ def get_user_by_email(email):
     return User.objects.get(email__iexact=email)
 
 
-username_field = forms.RegexField(
-    label=_("Username"),
-    min_length=3,
-    max_length=30,
-    regex=r'^[\w.@+-]+$',
-    help_text=_("Required. 30 characters or fewer. Alphanumeric characters only (letters, digits and underscores)."),
-    error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
-)
+class UsernameField(forms.CharField):
+    """ Username field, 3~30 characters, allows only alphanumeric chars, required by default """
+    def __init__(self, required=True):
+        required_str = _("Required. ") if required else ""
+
+        super(UsernameField, self).__init__(
+            label=_("Username"),
+            min_length=3,
+            max_length=30,
+            validators=[RegexValidator(r'^[\w.+-]+$')],  # is the same as Django UsernameValidator except for '@' symbol
+            help_text=_(required_str + _("30 characters or fewer. Can contain: letters, digits, underscores, dots, "
+                                         "dashes and plus signs.")),
+            error_messages={'invalid': _("This value must contain only letters, digits, underscores, dots, dashes and "
+                                         "plus signs.")},
+            required=required)
 
 
 class RegistrationForm(forms.Form):
     captcha_key = settings.RECAPTCHA_PUBLIC_KEY
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
-    username = username_field
+    username = UsernameField()
 
     first_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     last_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
@@ -152,7 +160,7 @@ class RegistrationForm(forms.Form):
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
         label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
-                    'Freesound website'),
+                        'Freesound website'),
         required=True,
         error_messages={'required': _('You must accept the terms of use in order to register to Freesound.')}
     )
@@ -245,7 +253,7 @@ class UsernameReminderForm(forms.Form):
 
 class ProfileForm(forms.ModelForm):
 
-    username = username_field
+    username = UsernameField(required=False)
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     signature = HtmlCleaningCharField(
         label="Forum signature",
@@ -290,10 +298,15 @@ class ProfileForm(forms.ModelForm):
         else:
             help_text = "You already changed your username the maximum times allowed"
             self.fields['username'].disabled = True
-        self.fields['username'].help_text = help_text
+        self.fields['username'].help_text += " " + help_text
 
     def clean_username(self):
         username = self.cleaned_data["username"]
+
+        # If user has accidentally cleared the field, treat it as unchanged
+        if not username:
+            username = self.request.user.username
+
         # Check that:
         #   1) It is not taken by another user
         #   2) It was not used in the past by another (or the same) user
@@ -339,6 +352,9 @@ class ProfileForm(forms.ModelForm):
         model = Profile
         fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
 
+    def get_img_check_fields(self):
+        """ Returns fields that should show JS notification for unsafe `img` sources links (http://) """
+        return [self['about'], self['signature'], self['sound_signature']]
 
 class EmailResetForm(forms.Form):
     email = forms.EmailField(label=_("New e-mail address"), max_length=254)

@@ -1,4 +1,4 @@
-$z-indexes-lower-to-higher: dropdown, modals;
+$z-indexes-lower-to-higher: dropdown, navbar, modals;
 
 @function get-z-index($element) {
   @return index($z-indexes-lower-to-higher, $element);

@@ -1,0 +1,23 @@
+.footer-logo-container {
+  max-width: 300px;
+
+  img {
+    object-fit: cover;
+  }
+}
+
+.bw-footer .bw-link--grey {
+  @include active {
+    color: $navy-grey;
+  }
+}
+
+.bw-footer {
+  color: $navy-grey;
+}
+
+.bw-footer-links {
+  @include md-and-above {
+    justify-content: space-between;
+  }
+}

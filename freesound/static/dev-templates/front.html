@@ -14,71 +14,296 @@
   <noscript>
     You need to enable JavaScript to run this app.
   </noscript>
-  <!-- navbar starts here -->
-  <nav class="bw-nav container">
-    <div class="bw-nav__logo">
-      <a href="" class="no-hover"></a>
-    </div>
-    <ul class="bw-nav__actions">
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Sounds</a>
-      </li>
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Packs</a>
-      </li>
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Forum</a>
-      </li>
-      <li class="bw-nav__action">
-        <a class="bw-link--grey" href="">Map</a>
-      </li>
-      <!-- three dots dropdown starts here -->
-      <li class="bw-nav__action dropdown">
-        <a class="bw-link--grey bw-nav__menu dropdown-toggle no-hover" id="three-dots-menu" aria-haspopup="true" aria-expanded="false"
-          data-toggle="dropdown"></a>
-        <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Tags</a>
+  <div class="notifications-wrapper"></div>
+  <div class="bw-page">
+    <nav class="bw-nav bw-nav--expanded">
+      <div class="container bw-nav__container">
+        <div class="bw-nav__logo-search-container">
+          <div class="bw-nav__logo">
+            <a href="" class="no-hover"></a>
+          </div>
+          <div class="input-wrapper">
+            <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+          </div>
+        </div>
+        <ul class="bw-nav__actions">
+          <li class="bw-nav__action">
+            <a class="bw-link--grey" href="">Sounds</a>
           </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Charts</a>
+          <li class="bw-nav__action">
+            <a class="bw-link--grey" href="">Packs</a>
           </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Donors</a>
+          <li class="bw-nav__action">
+            <a class="bw-link--grey" href="">Forum</a>
           </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Help</a>
+          <li class="bw-nav__action">
+            <a class="bw-link--grey" href="">Map</a>
           </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Developers</a>
+          <li class="bw-nav__action dropdown">
+            <a class="bw-link--grey bw-nav__menu dropdown-toggle no-hover" id="three-dots-menu" aria-haspopup="true" aria-expanded="false"
+              data-toggle="dropdown"></a>
+            <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Tags
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Charts
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Donors
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Help
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Developers
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Freesound Blog
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Freesound Labs
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">
+                  Freesound t-Shirt
+                </a>
+              </li>
+            </ul>
           </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Freesound Blog</a>
+          <li class="bw-nav__action dropdown">
+            <a class="bw-link--grey avatar bw-nav__menu--avatar-with-notifications dropdown-toggle no-hover" id="avatar-menu" aria-haspopup="true"
+              aria-expanded="false" data-toggle="dropdown">
+              <img src="avatar.jpg" />
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="avatar-menu">
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">View profile</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">Manage uploads</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">Bookmarks</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">My messages
+                  <span class="text-red">(3)</span>
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">Account settings</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">Manage API settings</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="">Donate</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--grey" href="">Logout</a>
+              </li>
+            </ul>
           </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Freesound Labs</a>
+          <li class="bw-nav__action">
+            <button class="btn-secondary">Donate</button>
           </li>
-          <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">Freesound t-Shirt</a>
+          <li class="bw-nav__action">
+            <button class="btn-primary">Upload sound</button>
           </li>
         </ul>
-      </li>
-      <!-- three dots dropdown ends here -->
-      <li class="bw-nav__action">
-        <a class="bw-link--black" href="">Log in</a>
-      </li>
-      <button class="btn-primary">Join</button>
-    </ul>
-  </nav>
-  <!-- navbar ends here -->
+      </div>
+    </nav>
 
-  <div class="container">
-    <div class="bw-front__hero-container">
-      <header>
-        <h1>Find any sound, for free</h1>
-        <p class="bw-front__subheader">In a collaborative database crafted by our community</p>
-      </header>
+    <div class="container">
+      <div class="bw-front__hero-container">
+        <header>
+          <h1>Find any sound, for free</h1>
+          <p class="bw-front__subheader">In a collaborative database crafted by our community</p>
+        </header>
+        <div class="bw-front__hero-container--search">
+          <div class="input-wrapper">
+            <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." />
+          </div>
+        </div>
+      </div>
+      <div class="row bw-front__content">
+        <main class="col-md-9">
+          <section class="border-grey-light padding-5 v-spacing-6">
+            <h2 class="text-center v-spacing-2">Maintenance downtime</h2>
+            <p class="text-grey text-center">
+              Dear Freesounders, On Monday 3rd at 10:30 a.m. CEST Freesound will be down for approximately two hours while we perform some
+              maintenance on our servers. We’re sorry for the inconvenience this may cause.
+            </p>
+            <div class="center">
+              <button class="btn-primary h-spacing-2">Read more</button>
+              <button class="btn-inverse">More stories</button>
+            </div>
+          </section>
+          <section class="v-spacing-6">
+            <h2 class="v-spacing-4">For you</h2>
+            <div class="row">
+              <div class="col">
+                <div class="bw-player" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3" data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg"
+                  data-waveform="waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" data-spectrum="spectrogram_39452.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"
+                  data-title="Lettre_A_Junglise.wav"></div>
+                <h5 class="v-spacing-top-1">Tennis match</h5>
+                <a>Marvin_Payne</a>
+                <p class="text-grey">Recording of an unusual tennis match</p>
+              </div>
+              <div class="col">
+                <div class="bw-player" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3" data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg"
+                  data-waveform="waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" data-spectrum="spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"></div>
+                <h5 class="v-spacing-top-1">Bass Guitar Solo 01</h5>
+                <a>Baltasarelrey</a>
+                <p class="text-grey">My amazing skills at bass</p>
+              </div>
+              <div class="col">
+                <div class="bw-player" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3" data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg"
+                  data-waveform="waveform_100269.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" data-spectrum="spectrogram_100269.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"></div>
+                <h5 class="v-spacing-top-1">Bass Guitar Solo 02</h5>
+                <a>Baltasarelrey</a>
+                <p class="text-grey">Some more of my amazing skills at bass</p>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="v-spacing-6">
+            <h2 class="v-spacing-4 v-spacing-top-4">Popular searches</h2>
+            <div class="row">
+              <div class="col">
+                <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Field-recording</button>
+              </div>
+              <div class="col">
+                <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Ambience</button>
+              </div>
+              <div class="col">
+                <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Loop</button>
+              </div>
+              <div class="col">
+                <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Voice</button>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="v-spacing-6">
+            <h2 class="v-spacing-4 v-spacing-top-4">Trending sounds</h2>
+            <div class="row">
+              <div class="col">
+                <div class="bw-player" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3" data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg"
+                  data-waveform="waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" data-spectrum="spectrogram_39452.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"
+                  data-title="Lettre_A_Junglise.wav"></div>
+                <h5 class="v-spacing-top-1">Tennis match</h5>
+                <a>Marvin_Payne</a>
+                <p class="text-grey">Recording of an unusual tennis match</p>
+              </div>
+              <div class="col">
+                <div class="bw-player" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3" data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg"
+                  data-waveform="waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" data-spectrum="spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"></div>
+                <h5 class="v-spacing-top-1">Bass Guitar Solo 01</h5>
+                <a>Baltasarelrey</a>
+                <p class="text-grey">My amazing skills at bass</p>
+              </div>
+              <div class="col">
+                <div class="bw-player" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3" data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg"
+                  data-waveform="waveform_100269.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" data-spectrum="spectrogram_100269.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"></div>
+                <h5 class="v-spacing-top-1">Bass Guitar Solo 02</h5>
+                <a>Baltasarelrey</a>
+                <p class="text-grey">Some more of my amazing skills at bass</p>
+              </div>
+            </div>
+          </section>
+        </main>
+        <aside class="col-md-3">
+          <section class="v-spacing-7">
+            <h4>Enjoying Freesound?</h4>
+            <p class="text-grey v-spacing-2">Please consider donating some money</p>
+            <div class="between v-spacing-5 wrap">
+              <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button>
+              <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button>
+              <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button>
+              <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button>
+            </div>
+            <div class="h-spacing-left-3">
+              <div>Top donor this week:</div>
+              <div class="middle">
+                <div class="avatar h-spacing-2">
+                  <img src="avatar.jpg" />
+                </div>
+                <div>
+                  <a>giuband</a>
+                  <br />
+                  <div class="text-light-grey">10 sounds &middot; 0 posts</div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="v-padding-7">
+            <h4 class="v-spacing-3">Hot forum threads</h4>
+            <article class="v-padding-2">
+              <div class="v-spacing-1">
+                <a class="bw-link--black">Using sounds, making money</a>
+              </div>
+              <div class="text-grey">Started by
+                <a>Rosmars</a>
+              </div>
+              <a class="bw-link--grey">20 answers</a>
+            </article>
+            <article class="v-padding-2">
+              <div class="v-spacing-1">
+                <a class="bw-link--black">40 subscribers!</a>
+              </div>
+              <div class="text-grey">Started by
+                <a>Mudkip2016</a>
+              </div>
+              <a class="bw-link--grey">3 answers</a>
+            </article>
+            <div class="center v-spacing-top-4">
+              <button class="btn-inverse">More posts here</button>
+            </div>
+          </section>
+        </aside>
+      </div>
     </div>
+    <footer class="bw-footer bg-black padding-7">
+      <div class="center">
+        <div class="footer-logo-container">
+          <img class="w-100" src="upf_logo.png" />
+        </div>
+      </div>
+      <div class="row v-spacing-top-4 center">
+        <a class="bw-link--grey h-spacing-1">About Freesound</a>
+        <a class="bw-link--grey h-spacing-1">Donors</a>
+        <a class="bw-link--grey h-spacing-1">Help</a>
+        <a class="bw-link--grey h-spacing-1">Developers</a>
+        <a class="bw-link--grey h-spacing-1">Freesound Blog</a>
+        <a class="bw-link--grey h-spacing-1">Freesound Labs</a>
+        <a class="bw-link--grey h-spacing-1">Get your Freesound T-shirt</a>
+        <a class="bw-link--grey h-spacing-1">Terms of use</a>
+      </div>
+      <div class="center v-spacing-top-4">
+        <span>© 2018</span>
+      </div>
+      <div class="center">
+        <span>Freesound</span>
+      </div>
+
+    </footer>
   </div>
 </body>
 

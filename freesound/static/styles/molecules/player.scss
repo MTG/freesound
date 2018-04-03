@@ -1,0 +1,82 @@
+@keyframes progress-indicator-animation {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.bw-player__img-container {
+  position: relative;
+}
+
+.bw-player__img {
+  width: 100%;
+  max-width: 100%;
+}
+
+.bw-player__progress-indicator {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  top: 0;
+  left: 0;
+  border-left: 1px solid $black;
+  animation-name: progress-indicator-animation;
+  animation-timing-function: linear;
+  animation-play-state: paused;
+  animation-iteration-count: infinite;
+  transition: opacity 0.2s ease;
+
+  .bw-player--playing & {
+    opacity: 1;
+  }
+}
+
+.bw-player__controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  background: $white;
+  color: $navy-grey;
+  transition: opacity 0.2s ease;
+
+  button:focus {
+    outline: none;
+    color: $black;
+  }
+}
+
+.bw-player__progress {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: $white;
+  padding: $tiny-spacing;
+  color: $navy-grey;
+  border-radius: 10px;
+  opacity: 0.7;
+}
+
+.bw-player {
+  user-select: none;
+
+  audio {
+    display: none;
+  }
+
+  &:hover {
+    .bw-player__controls {
+      opacity: 0.7;
+    }
+    .bw-player__progress {
+      opacity: 0.85;
+    }
+    .bw-player__progress-indicator {
+      opacity: 1;
+    }
+  }
+}

@@ -33,8 +33,8 @@ class Command(BaseCommand):
         # This command will copy number of all the Downloads for each user
         logger.info('Copy number of Downloads started')
 
-        sql =  """
-        WITH sq as (select user_id, count(*) as num_downloads from sounds_download where sound_id is not null group by user_id)
+        sql = """
+        WITH sq as (select user_id, count(*) as num_downloads from sounds_download group by user_id)
         UPDATE accounts_profile set num_sound_downloads=sq.num_downloads
         FROM sq
         WHERE accounts_profile.user_id = sq.user_id;
@@ -43,8 +43,8 @@ class Command(BaseCommand):
         with connection.cursor() as c:
             c.execute(sql)
 
-        sql =  """
-        WITH sq as (select user_id, count(*) as num_downloads from sounds_download where pack_id is not null group by user_id)
+        sql = """
+        WITH sq as (select user_id, count(*) as num_downloads from sounds_packdownload group by user_id)
         UPDATE accounts_profile set num_pack_downloads=sq.num_downloads
         FROM sq
         WHERE accounts_profile.user_id = sq.user_id;

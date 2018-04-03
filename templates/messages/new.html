@@ -11,6 +11,8 @@
 <script type="text/javascript" src="{{media_url}}js/jquery.autocomplete.min.js"></script>
 <script>
     $(function() {
+      unsecureImageCheck($('#{{ form.body.id_for_label }}'));
+
       $.get('{% url "messages-username_lookup" %}', function(data){
         $('#id_to').autocomplete(data);
       });

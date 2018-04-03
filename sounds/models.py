@@ -1050,24 +1050,15 @@ class Flag(models.Model):
 
 class Download(models.Model):
     user = models.ForeignKey(User)
-    sound = models.ForeignKey(Sound, null=True, blank=True, default=None, related_name='downloads')
-    pack = models.ForeignKey(Pack, null=True, blank=True, default=None, related_name='downloads_old_fied')
-    license = models.ForeignKey(License, null=True, blank=True, default=None)
+    sound = models.ForeignKey(Sound, related_name='downloads')
+    license = models.ForeignKey(License)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-
-    def get_license(self):
-        """
-        Return self.license if it's not null. Otherwise, return self.sound.license if self.sound is not null, or return
-        None if there is no license and no sound.
-        """
-        if self.license:
-            return self.license
-        if self.sound:
-            return self.sound.license
-        return None
 
     class Meta:
         ordering = ("-created",)
+        indexes = [
+            models.Index(fields=['user', 'sound']),
+        ]
 
 
 @receiver(post_delete, sender=Download)
@@ -1094,7 +1085,7 @@ class PackDownload(models.Model):
 class PackDownloadSound(models.Model):
     sound = models.ForeignKey(Sound)
     pack_download = models.ForeignKey(PackDownload)
-    license = models.ForeignKey(License, null=True, blank=True, default=None)
+    license = models.ForeignKey(License)
 
 
 @receiver(post_delete, sender=PackDownload)

@@ -41,7 +41,7 @@
     left: 0;
     height: unset;
     box-shadow: 0 0 10px $black-hover;
-    border-radius: $button-border-radius;
+    border-radius: inherit;
     transition: opacity 0.2s ease-in-out;
     background-color: transparent;
   }

@@ -9,7 +9,9 @@ button {
   cursor: pointer;
   font-weight: bold;
 
-  @include border-bottom-on-hover;
+  &:not(.no-border-bottom-on-hover):not(.btn-inverse) {
+    @include border-bottom-on-hover;
+  }
 }
 
 .btn-primary {

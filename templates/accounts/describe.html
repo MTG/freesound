@@ -25,50 +25,104 @@
             option.selected = false;
     }
 
+    function showCSVInstructions(){
+        $('#csv-instructions').show();
+    }
+
+    function hideCSVInstructions(){
+        $('#csv-instructions').hide();
+    }
+
 </script>
 {% endblock %}
 
 {% block content %}
 <div id="describe_page">
-<h1>Describe</h1>
-<h3>Pick files</h3>
-<p>You've uploaded these files, but they won't appear on the website until you've described them.
-    <br>Select the files you want to describe, click on "describe selected files", and follow the instructions on the following pages.
-    <br> You can also delete files by selecting them and pressing the "delete selected files" button.
-<div id="content">
-    <div class="content_box">
-        <h3>Your uploaded files</h3>
+    <h1>Describe</h1>
+    <h3>Pick files</h3>
+    <p>You've uploaded these files, but they won't appear on the website until you've described them.
+        <br>Select the files you want to describe, click on "describe selected files", and follow the instructions on the following pages.
+        <br> You can also delete files by selecting them and pressing the "delete selected files" button.
+    <div id="content">
+        <div class="content_box">
+            <h3>Your uploaded files</h3>
+            <p>
+            <ul id="root_file" class="upload">
+                {% show_file file_structure 1 %}
+            </ul>
+            </p>
+        </div>
+    </div>
+    <div id="sidebar">
+        <div class="content_box">
+            <h3>Actions</h3>
+            <p>
+            <form action="." method="post" id="fileform">{% csrf_token %}
+                <div style="display:none">
+                {{form.as_p}}
+                </div>
+                <input class="describe_page_action_button" type="submit" value="Describe selected files" name="describe">
+                <br><input class="describe_page_action_button" type="submit" value="Delete selected files" name="delete">
+            </form>
+            </p>
+        </div>
+    </div>
+
+    <!-- Bulk upload part -->
+    <br style="clear: both;">
+    <h3>Describe sounds in bulk</h3>
+    <p>
+        You can also provide descriptions for several files at once by <b>uploading a CSV file</b> containing
+        all the necessary metadata fields. The uploaded CSV file must be created using this <a href="{{media_url}}sample.csv">
+        CSV file template</a> so that it is properly formatted and our servers can understand it.
+    </p><p>
+        The CSV file should contain one row per sound to be described, with the first column corresponding to the
+        filename of the audio file to be described. Only the sounds included in the CSV file will be described, the
+        rest will remain untouched.
+    </p><p>
+        After uploading your CSV file, it will be validated before sounds are actually described and we will let you
+        know if there are any issues. <a href="javascript:void(0);" onclick="showCSVInstructions();">Click here for
+        further instructions</a> about the formatting of the CSV file.
+    </p>
+    <div id="csv-instructions" style="display:none; padding-left:40px; padding-top: 10px; background-color: #fafafa;">
         <p>
-        <ul id="root_file" class="upload">
-            {% show_file file_structure 1 %}
-        </ul>
+            The uploaded CSV file must include a header row and use <b>;</b> as delimiter. These are the expected
+            columns for the file (those marked with <b>*</b> are required):
+            <ul>
+                <li><b>audio_filename*</b>: filename of the sound to describe (must be one of the filenames listed above
+                    in "Your uploaded files" section).</li>
+                <li><b>name</b>: name to be given to the sound. If left blank, <i>audio_filename</i> will be taken as
+                    a default.</li>
+                <li><b>tags*</b>: tags for the sound, separated with spaces like in the standard audio description
+                    forms.</li>
+                <li><b>geotag</b>: geotag information for the sound. The geotag should be indicated as
+                    <i>latitude,longitude,zoom</i> (separated by commas).
+                    Latitude must be in the range [-90, 90]. Longitude must be in the range [-180, 180]. Zoom must
+                    be in the range [11, 21]. If this field is left blank, no geotag will be added to the sound.
+                    For example: <i>41.40348,2.189420,18</i> is a valid geotag.</li>
+                <li><b>description*</b>: textual description given to the sound. Can be multiline like sound descriptions
+                    introduced using the standard describe interface.</li>
+                <li><b>license*</b>: name of the license to be given to the sound. Must be one of
+                    <i>Creative Commons 0</i>, <i>Attribution</i>, or <i>Attribution Noncommercial</i>.</li>
+                <li><b>pack_name</b>: name of the pack in which the sound should be included. If there exists no pack
+                    with this name, a new pack will be created. If this field is left blank, the sound won't be
+                    included in any pack.</li>
+            </ul>
+        </p>
+        <p>
+            <a href="javascript:void(0);" onclick="hideCSVInstructions();">Hide these instructions</a>
         </p>
     </div>
-</div>
-<div id="sidebar">
-    <div class="content_box">
-        <h3>Actions</h3>
-        <p>
-        <form action="." method="post" id="fileform">{% csrf_token %}
-            <div style="display:none">
-            {{form.as_p}}
-            </div>
-            <input class="describe_page_action_button" type="submit" value="Describe selected files" name="describe">
-            <br><input class="describe_page_action_button" type="submit" value="Delete selected files" name="delete">
-        </form>
-        </p>
-    </div>
-</div>
-<br style="clear: both;">
-<div id="describe-sounds">
-  <h1>Describe sounds in Bulk</h1>
-  <p>Upload a <b>csv</b> file with the data for each sounds (file,namef,tags,geotag,description,license,packname,username). Download a <a href="{{media_url}}sample.csv">Sample file here</a></p>
-   <form method="POST" enctype="multipart/form-data" action="">
-     {% csrf_token %}
-     {{csv_form}}
-     <input type="submit" name="Submit" />
-   </form>
-</div>
+    <form method="POST" enctype="multipart/form-data" action="">
+    {% csrf_token %}
+    {{csv_form}}
+    <input type="submit" name="Submit" value="Upload CSV file"/>
+    </form>
+
+    <ul class="messages">
+        <li>Bulk describe functionality is still in <b>beta phase</b>. If you experience any problems using it, please
+            don't hesitate to <a href="{% url 'contact' %}">contact us</a> and report.</li>
+    </ul>
 
 </div><!-- #describe_page -->
 {% endblock %}

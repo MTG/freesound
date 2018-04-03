@@ -1,2 +1,2 @@
-pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef
-"filename.wav","filename.wav","tag1,tag2,tag3","lat,lng,zoom","Description...","Creative Commons 0","","myusername"
+audio_filename;name;tags;geotag;description;license;pack_name
+"filename.wav";"A cool name for my sound";"tag1 tag2 tag3 separated-by-spaces";"lat,lng,zoom";"The textual description for the sound.";"Creative Commons 0";"My pack"

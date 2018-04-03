@@ -75,10 +75,9 @@ def validate_file_extension(audiofiles):
         if not filename_has_valid_extension(str(audiofiles)):
             raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
 
-class BulkDescribeForm(forms.Form):
-    csv_file = forms.FileField()
 
-    # Check content on csv?
+class BulkDescribeForm(forms.Form):
+    csv_file = forms.FileField(label='')
 
 
 class UploadFileForm(forms.Form):

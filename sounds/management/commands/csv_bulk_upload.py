@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 errors.append((n, "Source file '%s' does not exist" % pathf, 0))
 
             try:
-                License.objects.get(name=licensef)
+                License.objects.exclude(name='Sampling+').get(name=licensef)
             except License.DoesNotExist:
                 anyerror = True
                 errors.append((n, "Licence with name '%s' does not exist" % licensef, 5))

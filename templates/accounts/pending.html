@@ -10,7 +10,7 @@
 
     <h2>Uploaded sounds awaiting moderation {% if moderators_version %} by  <a class="title" href="{% url "account" user.username %}">{{user.username}}</a>{% endif %}</h2>
 
-    {% if not no_assign_button %}
+    {% if not no_assign_button and moderators_version %}
     <p><a href="{% url 'tickets-moderation-assign-user-pending' user.id %}">
         <img src="{{media_url}}images/moderation_plus.png" style="position: relative; top: 5px;"/>Assign all to me</a></p>
     {% endif %}

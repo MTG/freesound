@@ -26,7 +26,6 @@ from itertools import chain
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 import uuid
-import csv
 import gearman
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -479,10 +478,9 @@ def describe(request):
             for chunk in f.chunks():
                 destination.write(chunk)
 
-            bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path)
+            bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path, original_csv_filename=f.name)
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("bulk_describe_sound", str(bulk.id),
-                    wait_until_complete=False, background=True)
+            gm_client.submit_job("bulk_describe_sound", str(bulk.id), wait_until_complete=False, background=True)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
             if "delete" in request.POST:
@@ -984,18 +982,30 @@ def upload(request, no_flash=False):
     }
     return render(request, 'accounts/upload.html', tvars)
 
+
+@login_required()
 def bulk_describe(request, bulk_id):
-    bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id))
-    reader = csv.reader(open(bulk.csv_path, 'rU'))
-    reader.next() # Skip header
-    lines = list(reader)
+    bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
+    _, lines = bulk.get_csv_lines()
     if request.GET.get('action', False) == 'start' and bulk.progress_type == 'V':
+        # Mark BulkUploadProgress as "stared" and start processing
+        # TODO: currently processing will happen when a command 'csv_bulk_describe' runs, we should move that
+        # TODO: to an async task
         bulk.progress_type = 'S'
         bulk.save()
-        messages.add_message(request, messages.INFO, 'The csv file was succesfully submitted for processing.')
-        return HttpResponseRedirect(reverse('accounts-home'))
+    elif request.GET.get('action', False) == 'delete' and bulk.progress_type == 'V':
+        # Delete current BulkUploadProgress object and go back to describe page
+        bulk.delete()
+        return HttpResponseRedirect(reverse('accounts-describe'))
 
-    return render(request, 'accounts/bulk_describe.html', {'lines': lines, 'bulk': bulk})
+    tvars = {
+        'lines': lines,
+        'bulk': bulk,
+        'lines_validated_ok': bulk.get_lines_validated_ok_for_display(lines),
+        'lines_failed_validation': bulk.get_lines_failed_validation_for_display(),
+        'global_errors': bulk.get_global_errors_for_display()
+    }
+    return render(request, 'accounts/bulk_describe.html', tvars)
 
 
 @login_required

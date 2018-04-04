@@ -20,15 +20,14 @@
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from django.conf import settings
-from sounds.models import Sound, Pack, License
-from utils.mirror_files import copy_sound_to_mirror_locations
-from utils.audioprocessing import get_sound_type
-from geotags.models import GeoTag
-from utils.filesystem import md5file
-from utils.text import slugify
+from django.apps import apps
+from utils.tags import clean_and_split_tags
 import shutil, os, csv
 import utils.sound_upload
+
+
+EXPECTED_HEADER_NO_USERNAME = ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name']
+EXPECTED_HEADER = ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'username']
 
 
 class Command(BaseCommand):
@@ -41,41 +40,73 @@ class Command(BaseCommand):
         parser.add_argument('-f', action='store_true', help='Force the import if any rows are bad, skipping bad rows')
         parser.add_argument('-s', '--soundsdir', type=str, default='', help='Directory where the sounds are located')
 
-    def check_input_file(self, base_dir, lines, restrict_username=None):
-        errors = []
-        return_lines = []
-        for n, line in enumerate(lines, 2): # Count from the header
+    @staticmethod
+    def get_csv_lines(csv_file_path):
+        # Get CSV contents as a list of dictionaries in which each dictionary has as rows the header values
+        reader = csv.reader(open(csv_file_path, 'rU'), delimiter=';')
+        header = next(reader)
+        lines = [dict(zip(header, row)) for row in reader]
+        return header, lines
+
+    @staticmethod
+    def check_input_file(sounds_base_dir, header, lines, skip_username_check=False):
+        lines_ok = []
+        lines_with_errors = []
+        global_errors = []
+        filenames_to_describe = []
+
+        # Check headers
+        if (skip_username_check and header != EXPECTED_HEADER_NO_USERNAME) or \
+                (not skip_username_check and header != EXPECTED_HEADER):
+            global_errors.append('CSV file has wrong header.')
+
+        # Check individual rows
+        for n, line in enumerate(lines):
+            line_errors = {}
             anyerror = False
-            if len(line) != 8:
-                errors.append((n, 'Line does not have 8 fields', None))
-                anyerror = True
+
+            # Check that number of columns is ok
+            if len(line) != len(EXPECTED_HEADER) and not skip_username_check:
+                line_errors['header'] = 'Row should have %i columns (has %i).' % (len(EXPECTED_HEADER), len(line))
+                continue
+            if len(line) != len(EXPECTED_HEADER_NO_USERNAME) and skip_username_check:
+                line_errors['header'] = 'Row should have %i columns (has %i).' \
+                                        % (len(EXPECTED_HEADER_NO_USERNAME), len(line))
                 continue
 
-            pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef = line
-
-            if restrict_username is not None:
-                if usernamef != restrict_username:
+            # Check user exists
+            if not skip_username_check:
+                username = line['username']
+                try:
+                    User.objects.get(username=username)
+                except User.DoesNotExist:
                     anyerror = True
-                    errors.append((n, "Username '%s' is not allowed" % usernamef, 7))
+                    line_errors['username'] = "User does not exist."
 
-            try:
-                User.objects.get(username=usernamef)
-            except User.DoesNotExist:
-                anyerror = True
-                errors.append((n, "User '%s' does not exist" % usernamef, 7))
-
-            src_path = os.path.join(base_dir, pathf)
+            # Check that audio file exists in disk and that it has not been described yet in another line
+            audio_filename = line['audio_filename']
+            src_path = os.path.join(sounds_base_dir, audio_filename)
             if not os.path.exists(src_path):
                 anyerror = True
-                errors.append((n, "Source file '%s' does not exist" % pathf, 0))
+                line_errors['audio_filename'] = "Audio file does not exist."
+            else:
+                if src_path in filenames_to_describe:
+                    anyerror = True
+                    line_errors['audio_filename'] = "Audio file can only be described once."
+                else:
+                    filenames_to_describe.append(src_path)
 
-            try:
-                License.objects.exclude(name='Sampling+').get(name=licensef)
-            except License.DoesNotExist:
+            # Check license is valid
+            license = line['license']
+            License = apps.get_model('sounds', 'License')  # Import model here to avoid circular import problems
+            available_licenses = License.objects.exclude(name='Sampling+').values_list('name', flat=True)
+            if license not in available_licenses:
                 anyerror = True
-                errors.append((n, "Licence with name '%s' does not exist" % licensef, 5))
+                line_errors['license'] = "Licence must be one of [%s]." % ', '.join(available_licenses)
 
-            geoparts = geotagf.split()
+            # Check geotag is valid
+            geotag = line['geotag']
+            geoparts = geotag.split()
             if len(geoparts) == 3:
                 lat, lon, zoom = geoparts
                 try:
@@ -83,17 +114,33 @@ class Command(BaseCommand):
                     float(lon)
                     int(zoom)
                 except ValueError:
-                    errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf, 3))
+                    line_errors['geotag'] = "Geotag must be in format 'float float int' for latitude, " \
+                                            "longitude and zoom."
                     anyerror = True
             elif len(geoparts) != 0:
-                errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf, 3))
+                line_errors['geotag'] = "Geotag must be in format 'float float int' for latitude, " \
+                                        "longitude and zoom."
                 anyerror = True
 
-            if not anyerror:
-                return_lines.append(line)
+            # Check tags are valid
+            tags = line['tags']
+            cleaned_tags = clean_and_split_tags(tags)
+            if len(cleaned_tags) < 3 or len(cleaned_tags) > 30:
+                line_errors['tags'] = "Incorrect number of tags (less than 3 or more than 30). " \
+                                      "Remember tags must be separated by spaces."
+                anyerror = True
 
-        # Check format of geotags
-        return return_lines, errors
+            # Append line data to the corresponding list
+            if not anyerror:
+                lines_ok.append(line)
+            else:
+                lines_with_errors.append((line, line_errors))
+
+        # Return lines which validated ok and lines that have errors in two separate lists. Return also a list of
+        # global errors. Note that the list of lines with errors is in fact a list of tuples where the first element
+        # of each tuple is a dictionary of the line fields and the second element is a dictionary with errors (if any)
+        # for each line field.
+        return lines_ok, lines_with_errors, global_errors
 
     def handle(self, *args, **options):
         sound_list = options['filepath']
@@ -107,11 +154,9 @@ class Command(BaseCommand):
         delete_already_existing = options['d']
         force_import = options['d']
 
-        reader = csv.reader(open(sound_list, 'rU'))
-        reader.next() # Skip header
-        lines = list(reader)
+        header, lines = self.get_csv_lines(sound_list)
 
-        lines_to_import, bad_lines = self.check_input_file(base_dir, lines)
+        lines_to_import, bad_lines, global_errors = self.check_input_file(base_dir, header, lines)
         if bad_lines and not force_import:
             print 'Some lines contain invalid data. Fix them or re-run with -f to import skipping these lines:'
             for lineno, error, field in bad_lines:
@@ -137,7 +182,6 @@ class Command(BaseCommand):
 
             if src_path != dest_path:
                 shutil.copy(src_path, dest_path)
-
 
             sound_fields = {
                 'name': namef,

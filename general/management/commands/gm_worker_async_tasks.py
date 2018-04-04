@@ -23,7 +23,6 @@ import logging
 
 import gearman
 import os
-import csv
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -61,7 +60,7 @@ class Command(BaseCommand):
                 task_name = str(task_name)
                 t_name = task_name.replace('task_', '');
                 self.write_stdout('Task: %s\n' % t_name)
-                task_func = lambda i:(lambda x, y: getattr(Command, i)(self, x, y))
+                task_func = lambda i: (lambda x, y: getattr(Command, i)(self, x, y))
                 gm_worker.register_task(t_name, task_func(task_name))
 
         self.write_stdout('Starting work\n')
@@ -145,39 +144,14 @@ class Command(BaseCommand):
         return 'false'
 
     def task_bulk_describe_sound(self, gearman_worker, gearman_job):
-        # Validate BulkUploadProgess obj with state N (initial state)
-        self.write_stdout("Data received: %s" % gearman_job.data)
+        bulk_upload_progress_object_id = int(gearman_job.data)
+        self.write_stdout("Starting to validate BulkUploadProgress with id: %s" % bulk_upload_progress_object_id)
         try:
-            bulk = BulkUploadProgress.objects.get(id=gearman_job.data)
-            # Validate CSV file and update state
-            reader = csv.reader(open(bulk.csv_path, 'rU'))
-            reader.next() # Skip header
-            lines = list(reader)
-
-            cmd = csv_bulk_upload.Command()
-            base_dir = os.path.join(settings.UPLOADS_PATH, str(bulk.user_id))
-            valid_lines, errors = cmd.check_input_file(base_dir, lines, restrict_username=bulk.user.username)
-            validation_errors = {}
-            # validation_errors will contain the row data and the errors in the position 9
-            for error in errors:
-                line_number = error[0] - 2
-                validation_errors[line_number] = []
-                # copy the line and if is not valid complete it with empty values
-                for i in range(8):
-                    line_row = ("", True)
-                    if len(lines[line_number]) > i:
-                        # Mark field with error to be highlighted
-                        line_row = (lines[line_number][i], error[2] == i)
-                    validation_errors[line_number].append(line_row)
-                if len(validation_errors[line_number]) == 8:
-                    validation_errors[line_number].append([])
-                validation_errors[line_number][8].append(error[1])
-            bulk.validation_errors = validation_errors.values()
-            bulk.sounds_valid = len(valid_lines)
-            bulk.progress_type = 'V'
-            bulk.save()
+            bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
+            bulk.validate_csv_file()
             return 'true'
         except BulkUploadProgress.DoesNotExist as e:
-            message = "Error in async validate Bulk describe: %s (%s)" % (data, str(e))
+            message = "Error in async validate BulkUploadProgress object with id %s (%s)" % \
+                      (bulk_upload_progress_object_id, str(e))
             self.write_stdout(message)
         return 'false'

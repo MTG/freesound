@@ -347,6 +347,10 @@ div.infowindow {
     background-image: url(../images/fugue-icons/icons/user--plus.png);
     cursor: pointer;
 }
+.warning_icon {
+    background-image: url(../images/info_red.png);
+    cursor: pointer;
+}
 
 
 
@@ -4231,4 +4235,10 @@ ul.messages {
     padding: 10px;
     margin-bottom: 10px;
     margin-top: 10px;
+}
+
+.csv-validation-table {
+   overflow-y:scroll;
+   max-height:300px;
+   display:block;
 }

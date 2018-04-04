@@ -21,14 +21,13 @@
 import os
 import shutil
 from django.urls import reverse
-from sounds.models import Sound, Pack, License, SoundLicenseHistory
+from django.apps import apps
 from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from utils.filesystem import md5file, remove_directory_if_empty
 from utils.text import slugify
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
-from django.conf import settings
 from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from gearman.errors import ServerUnavailable
@@ -62,6 +61,11 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
     This function is used by the upload handler to create a sound object with
     the information provided through sound_fields parameter.
     '''
+
+    # 0 import sound models here to avoid circular dependencies
+    License = apps.get_model('sounds', 'License')
+    Sound = apps.get_model('sounds', 'Sound')
+    Pack = apps.get_model('sounds', 'Pack')
 
     # 1 make sound object
     sound = Sound()

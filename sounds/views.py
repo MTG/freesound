@@ -257,7 +257,7 @@ def sound(request, username, sound_id):
 
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
-    display_random_link = request.GET.get('random_browsing')
+    display_random_link = request.GET.get('random_browsing', False)
     is_following = False
     if request.user.is_authenticated:
         users_following = follow_utils.get_users_following(request.user)
@@ -271,7 +271,7 @@ def sound(request, username, sound_id):
         'form': form,
         'display_random_link': display_random_link,
         'is_following': is_following,
-        'is_explicit': is_explicit,
+        'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))

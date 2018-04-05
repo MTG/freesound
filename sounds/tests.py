@@ -27,6 +27,7 @@ from django.conf import settings
 from django.contrib.auth.models import User, AnonymousUser
 from django.core import mail
 from django.core.cache import cache
+from django.core.cache.backends import locmem
 from django.core.management import call_command
 from django.http import HttpRequest, HttpResponse
 from django.template import Context, Template
@@ -42,6 +43,7 @@ from sounds.models import Download, PackDownload, PackDownloadSound
 from sounds.views import get_sound_of_the_day_id
 from utils.encryption import encrypt
 from utils.tags import clean_and_split_tags
+from utils.cache import get_template_cache_key
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
@@ -920,3 +922,44 @@ class SoundSignatureTestCase(TestCase):
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
+
+
+class SoundTemplateCacheTestCase(TestCase):
+    fixtures = ['sounds']
+
+    def setUp(self):
+        cache.clear()
+
+    def test_update_description(self):
+        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+
+        # TODO: add more template caches and scenarios
+        cache_key = get_template_cache_key('sound_footer_bottom', sound.id)
+
+        self.assertIsNone(cache.get(cache_key))
+        resp = self.client.get(reverse('sound', args=[sound.user.username, sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        print([key for key in locmem._caches['']])
+        print(cache_key)
+
+        self.assertIsNotNone(cache.get(cache_key))
+
+        # Edit sound
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
+            'submit': [u'submit'],
+            'description-description': [u'New description'],
+            'description-name': [u'New name'],
+            'description-tags': u'tag1 tag2 tag3'
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        # Check that keys are no longer in cache
+        self.assertIsNone(cache.get(cache_key))
+        print([key for key in locmem._caches['']])
+
+        # TODO: check that the sound page has updated info

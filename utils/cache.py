@@ -19,13 +19,21 @@
 #
 
 from django.core.cache import cache
-#from hashlib import md5
-
 from hashlib import md5
 from django.utils.http import urlquote
 from functional import compose
+from django.core.cache.utils import make_template_fragment_key
+
+
+def get_template_cache_key(fragment_name, *variables):
+    args = md5(u':'.join(map(compose(urlquote, unicode), variables)))
+    old = 'template.cache.%s.%s' % (fragment_name, args.hexdigest())
+    new = make_template_fragment_key(fragment_name, variables)
+    # TODO: check that it works for multiple variables
+    return old
+
 
 def invalidate_template_cache(fragment_name, *variables):
-    args = md5(u':'.join(map(compose(urlquote, unicode), variables)))
-    cache_key = 'template.cache.%s.%s' % (fragment_name, args.hexdigest())
-    cache.delete(cache_key) 
+    cache_key = get_template_cache_key(fragment_name, *variables)
+    # print('Invalidating: ', cache_key)
+    cache.delete(cache_key)

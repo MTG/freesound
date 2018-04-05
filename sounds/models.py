@@ -764,10 +764,14 @@ class Sound(SocialModel):
         delete_sound_from_gaia(self)
 
     def invalidate_template_caches(self):
-        invalidate_template_cache("sound_header", self.id, True)
-        invalidate_template_cache("sound_header", self.id, False)
-        invalidate_template_cache("sound_footer_top", self.id)
+        for is_explicit in [True, False]:
+            invalidate_template_cache("sound_header", self.id, is_explicit)
+
+        for display_random_link in [True, False]:
+            invalidate_template_cache("sound_footer_top", self.id, display_random_link)
+
         invalidate_template_cache("sound_footer_bottom", self.id)
+
         invalidate_template_cache("display_sound", self.id, True, self.processing_state, self.moderation_state)
         invalidate_template_cache("display_sound", self.id, False, self.processing_state, self.moderation_state)
 

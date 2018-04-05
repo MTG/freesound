@@ -31,8 +31,9 @@
     {% if lines_failed_validation %}
         <p>
             The following <b>{{ lines_failed_validation|length }} sound{{ lines_failed_validation|pluralize }}
-            ha{{ lines_failed_validation|pluralize:"s,ve" }} failed validation</b> and are not going to be described
-            if you continue with the bulk describe process. Check the specific errors marked in red.
+            ha{{ lines_failed_validation|pluralize:"s,ve" }} failed validation</b> and are not going to be added
+            to Freesound if you continue now with the bulk describe process. Specific errors are maked in red in the
+            following table:
         </p>
         <table class="csv-validation-table">
         <thead>
@@ -56,7 +57,7 @@
         <p>
             The following <b>{{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }}
             ha{{ lines_validated_ok|pluralize:"s,ve" }} validated correctly</b> and will be described and added to
-            Freesound if you continue with the bulk describe process.
+            Freesound with the metadata shown in the following table:
         </p>
         <table class="csv-validation-table">
         <thead>
@@ -76,9 +77,10 @@
 
     <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET">
         <input id="hidden_action" type="hidden" name="action" value="" />
-        <input type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this CSV file and upload a new one" />
-        <input type="submit" onclick="$('#hidden_action').attr('value', 'start');" value="Continue with bluk description of {{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }}"
+        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this CSV file and upload a new one" />
+        <input style="float:right;" type="submit" onclick="$('#hidden_action').attr('value', 'start');" value="Continue and add the {{ lines_validated_ok|length }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound"
             {% if not lines_validated_ok|length %}disabled="disabled"{% endif %}/>
+        <br style="clear:both;"/>
     </form>
 
 {% elif bulk.progress_type == 'S' %}

@@ -75,44 +75,47 @@
         You can also provide descriptions for several files at once by <b>uploading a CSV file</b> containing
         all the necessary metadata fields. The uploaded CSV file must be created using this <a href="{{media_url}}sample.csv">
         CSV file template</a> so that it is properly formatted and our servers can understand it.
-    </p><p>
-        The CSV file should contain one row per sound to be described, with the first column corresponding to the
-        filename of the audio file to be described. Only the sounds included in the CSV file will be described, the
-        rest will remain untouched.
-    </p><p>
-        After uploading your CSV file, it will be validated before sounds are actually described and we will let you
-        know if there are any issues. <a href="javascript:void(0);" onclick="showCSVInstructions();">Click here for
-        further instructions</a> about the formatting of the CSV file.
+        <a href="javascript:void(0);" onclick="showCSVInstructions();">Click here for instructions</a> about the
+        formatting of the CSV file.
     </p>
     <div id="csv-instructions" style="display:none; padding-left:40px; padding-top: 10px; background-color: #fafafa;">
         <p>
-            The uploaded CSV file must include a header row and use <b>;</b> as delimiter. These are the expected
-            columns for the file (those marked with <b>*</b> are required):
-            <ul>
-                <li><b>audio_filename*</b>: filename of the sound to describe (must be one of the filenames listed above
-                    in "Your uploaded files" section).</li>
-                <li><b>name</b>: name to be given to the sound. If left blank, <i>audio_filename</i> will be taken as
-                    a default.</li>
-                <li><b>tags*</b>: tags for the sound, separated with spaces like in the standard audio description
-                    forms.</li>
-                <li><b>geotag</b>: geotag information for the sound. The geotag should be indicated as
-                    <i>latitude longitude zoom</i> (separated by spaces).
-                    Latitude must be in the range [-90, 90]. Longitude must be in the range [-180, 180]. Zoom must
-                    be in the range [11, 21]. If this field is left blank, no geotag will be added to the sound.
-                    For example: <i>41.40348 2.189420 18</i> is a valid geotag.</li>
-                <li><b>description*</b>: textual description given to the sound. Can be multiline like sound descriptions
-                    introduced using the standard describe interface.</li>
-                <li><b>license*</b>: name of the license to be given to the sound. Must be one of
-                    <i>Creative Commons 0</i>, <i>Attribution</i>, or <i>Attribution Noncommercial</i>.</li>
-                <li><b>pack_name</b>: name of the pack in which the sound should be included. If there exists no pack
-                    with this name, a new pack will be created. If this field is left blank, the sound won't be
-                    included in any pack.</li>
-            </ul>
+            The CSV file should contain one row per sound to be described.
+            Only the sounds included in the CSV file will be described, the rest will remain untouched.
+            The uploaded CSV file must include a header row and use semi-colon character <b>;</b> as as delimiter.
+            These are the expected columns for the file (those marked with <b>*</b> are required, others can be left
+            blank):
         </p>
+        <ul>
+            <li><b>audio_filename*</b>: filename of the sound to describe (must be one of the filenames listed above
+                in "Your uploaded files" section).</li>
+            <li><b>name</b>: name to be given to the sound. If left blank, <i>audio_filename</i> will be taken as
+                a default.</li>
+            <li><b>tags*</b>: tags for the sound, separated with spaces like in the standard audio description
+                forms.</li>
+            <li><b>geotag</b>: geotag information for the sound. The geotag should be indicated as
+                <i>latitude longitude zoom</i> (separated by spaces).
+                Latitude must be in the range [-90, 90]. Longitude must be in the range [-180, 180]. Zoom must
+                be in the range [11, 21]. If this field is left blank, no geotag will be added to the sound.
+                For example: <i>41.40348 2.189420 18</i> is a valid geotag.</li>
+            <li><b>description*</b>: textual description given to the sound. Can be multiline like sound descriptions
+                introduced using the standard describe interface.</li>
+            <li><b>license*</b>: name of the license to be given to the sound. Must be one of
+                <i>Creative Commons 0</i>, <i>Attribution</i>, or <i>Attribution Noncommercial</i>.</li>
+            <li><b>pack_name</b>: name of the pack in which the sound should be included. If there exists no pack
+                with this name, a new pack will be created. If this field is left blank, the sound won't be
+                included in any pack.</li>
+        </ul>
         <p>
             <a href="javascript:void(0);" onclick="hideCSVInstructions();">Hide these instructions</a>
         </p>
     </div>
+    <p>
+        After uploading your CSV file, it will be validated before sounds are actually described and added to Freesound,
+        and you'll have the chance to review the provided metadata. Select a CSV file and click on the <i>Upload CSV file</i>
+        below to start the bulk describe process.
+    </p>
+
     <form method="POST" enctype="multipart/form-data" action="">
     {% csrf_token %}
     {{csv_form}}

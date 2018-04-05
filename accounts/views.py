@@ -983,7 +983,7 @@ def upload(request, no_flash=False):
     return render(request, 'accounts/upload.html', tvars)
 
 
-@login_required()
+@login_required
 def bulk_describe(request, bulk_id):
     bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
     _, lines = bulk.get_csv_lines()

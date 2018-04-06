@@ -154,7 +154,10 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     # 6 set description, tags
     sound.description = sound_fields['description']
-    sound.set_tags(clean_and_split_tags(sound_fields['tags']))
+    tags = sound_fields['tags']
+    if type(tags) is not set:  # If tags have not been cleaned and splitted, do it now
+        tags = clean_and_split_tags(sound_fields['tags'])
+    sound.set_tags(tags)
 
     if 'is_explicit' in sound_fields:
         sound.is_explicit = sound_fields['is_explicit']

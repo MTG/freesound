@@ -39,7 +39,10 @@ class Command(BaseCommand):
         parser.add_argument('-d', help='Delete any sounds which already exist and add them again')
         parser.add_argument('-f', action='store_true', help='Force the import if any rows are bad, skipping bad rows')
         parser.add_argument('-s', '--soundsdir', type=str, default=None, help='Directory where the sounds are located')
-        parser.add_argument('-u', '--uname', type=str, default=None, help='Username of the user to assign the sounds to')
+        parser.add_argument('-u', '--uname', type=str, default=None,
+                            help='Username of the user to assign the sounds to')
+        parser.add_argument('-b', '--bulkuploadid', type=int, default=None,
+                            help='Object ID for the BulkUploadProgress object where to store progress')
 
     @staticmethod
     def get_csv_lines(csv_file_path):
@@ -164,10 +167,12 @@ class Command(BaseCommand):
             base_dir = options['soundsdir']
         username = options['uname']
 
-        header, lines = self.get_csv_lines(csv_file_path)  # Read CSV
+        # Read and validate CSV
+        header, lines = self.get_csv_lines(csv_file_path)
         lines_ok, lines_with_errors, global_errors = self.check_input_file(
-            base_dir, header, lines, username_arg=username)  # Validate CSV
+            base_dir, header, lines, username_arg=username)
 
+        # Print error messages if any
         if global_errors:
             print 'Major issues were found while validating the CSV file. Fix them and re-run the command.'
             for error in global_errors:
@@ -188,10 +193,22 @@ class Command(BaseCommand):
                 errors = '; '.join(line_errs.values())
                 print 'l%s: %s' % (line_no, errors)
 
+        # If passed as an option, get corresponding BulkUploadProgress object to store progress of command
+        bulk_upload_progress_object = None
+        if options['bulkuploadid']:
+            BulkUploadProgress = apps.get_model('sounds', 'BulkUploadProgress')
+            try:
+                bulk_upload_progress_object = BulkUploadProgress.objects.get(id=options['bulkuploadid'])
+            except BulkUploadProgress.DoesNotExist:
+                print 'BulkUploadProgress object with id %i can\'t be found, wont store progress information.' \
+                      % options['bulkuploadid']
+                pass
+
+        # Start the actual process of uploading files
         print 'Adding %i sounds to Freesound' % len(lines_ok)
         for line, line_no in lines_ok:
 
-            # 0 get data from csv
+            # Get data from csv
             pathf = line['audio_filename']
             namef = line['name'] if line['name'].strip() else line['audio_filename']
             tagsf = line['tags']
@@ -201,56 +218,70 @@ class Command(BaseCommand):
             packnamef = line['pack_name'] if line['pack_name'].strip() else None
             usernamef = line.get('username', username)  # If username not in CSV file, get from parameter
 
-            # get user object
+            # Get user object
             user = User.objects.get(username=usernamef)
 
-            # 1 create dir and move sound to dir
-            directory = user.profile.locations()['uploads_dir']
-            if not os.path.exists(directory):
-                os.mkdir(directory)
-
+            # Move sounds to the user upload directory (if sounds are not already there)
+            user_uploads_directory = user.profile.locations()['uploads_dir']
+            if not os.path.exists(user_uploads_directory):
+                os.mkdir(user_uploads_directory)
             src_path = os.path.join(base_dir, pathf)
-            dest_path = os.path.join(directory, os.path.basename(pathf))
-
+            dest_path = os.path.join(user_uploads_directory, os.path.basename(pathf))
             if src_path != dest_path:
                 shutil.copy(src_path, dest_path)
 
-            sound_fields = {
-                'name': namef,
-                'dest_path': dest_path,
-                'license': licensef,
-                'pack': packnamef,
-                'description': descriptionf,
-                'tags': clean_and_split_tags(tagsf),
-                'geotag': geotagf,
-            }
-
             try:
                 sound = utils.sound_upload.create_sound(
-                        user,
-                        sound_fields,
+                        user=user,
+                        sound_fields={
+                            'name': namef,
+                            'dest_path': dest_path,
+                            'license': licensef,
+                            'pack': packnamef,
+                            'description': descriptionf,
+                            'tags': tagsf,
+                            'geotag': geotagf,
+                        },
                         process=False,
                         remove_exists=delete_already_existing,
                 )
+                if bulk_upload_progress_object:
+                    bulk_upload_progress_object.store_progress_for_line(line_no, sound.id)
 
-                # Process
+                # Process sound and pack
+                error_sending_to_process = None
                 try:
                     sound.process()
                 except Exception as e:
-                    print 'l%i: Sound with id %s could not be scheduled for processing. (%s)' % (line_no,
-                                                                                                 sound.id,
-                                                                                                 str(e))
+                    error_sending_to_process = str(e)
                 if sound.pack:
                     sound.pack.process()
 
-                print 'l%i: Successfully added sound \'%s\' to Freesound' % (line_no, sound.original_filename,)
+                message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (line_no, sound.original_filename,)
+                if error_sending_to_process is not None:
+                    message += ' Sound could have not been sent to process (%s).' % error_sending_to_process
+                print message
 
             except utils.sound_upload.NoAudioException:
-                print 'l%i: Sound for file %s can\'t be created as file does seem ot have any content' % (line_no,
-                                                                                                          dest_path,)
-                continue
+                message = 'l%i: Sound for file %s can\'t be created as file does seem ot have any content.' \
+                      % (line_no, dest_path,)
+                print message
+                if bulk_upload_progress_object:
+                    bulk_upload_progress_object.store_progress_for_line(line_no, message)
             except utils.sound_upload.AlreadyExistsException:
-                print 'l%i: The file %s is already part of freesound, not uploading it' % (line_no, dest_path,)
-                continue
+                message = 'l%i: The file %s is already part of freesound, not uploading it.' % (line_no, dest_path,)
+                print message
+                if bulk_upload_progress_object:
+                    bulk_upload_progress_object.store_progress_for_line(line_no, message)
             except utils.sound_upload.CantMoveException as e:
-                print e.message
+                message = 'l%i: %s.' % (line_no, e.message,)
+                print message
+                if bulk_upload_progress_object:
+                    bulk_upload_progress_object.store_progress_for_line(line_no, message)
+            except Exception:
+                # If another unexpected exception happens, show a message and continue with the process so that
+                # other sounds can be added
+                message = 'l%i: Unexpected error %s.' % (line_no, e.message,)
+                print message
+                if bulk_upload_progress_object:
+                    bulk_upload_progress_object.store_progress_for_line(line_no, message)

@@ -8,7 +8,7 @@
 <h1>Bulk Describe Sounds</h1>
 
 {% if bulk.progress_type == 'N' %}
-    <h3>CSV file "{{ bulk.original_csv_filename }}" not yet validated</h3>
+    <h3>Validating CSV file "{{ bulk.original_csv_filename }}"...</h3>
     <p>
         The uploaded CSV file has not yet been validated. If there are many sounds to be described, this process
         could take a few minutes. This page will reload automatically when CSV validation has fininshed.
@@ -83,11 +83,27 @@
         <br style="clear:both;"/>
     </form>
 
-{% elif bulk.progress_type == 'S' %}
+{% elif bulk.progress_type == 'S' or bulk.progress_type == 'F' %}
     <h3>Your {{ lines_validated_ok|length }} sounds are being described and processed</h3>
     <p>
-        Congratulations! The sounds for this bulk description process are being described and processed.
-        <br>Please check the status of your sound uploads in the <a href="{% url "accounts-pending" %}">pending
+        Congratulations! The sounds for this bulk description process are being described and processed. This is the
+        current status of the process:
+    </p>
+    {% with bulk.get_description_progress_info as progress_info %}
+        <ul>
+            <li>Sounds successfully described: {{ progress_info.sound_ids_ok|length }}</li>
+            {% if progress_info.sound_errors %}
+            <li>Failed rows: {{ progress_info.sound_errors|length }}</li>
+            <ul>
+                {% for line_no, error in progress_info.sound_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </ul>
+    {% endwith %}
+    <p>
+        For more details, please check the status of your sound uploads in the <a href="{% url "accounts-pending" %}">pending
         uploads</a> page or in your <a href="{% url "accounts-home" %}">home</a> page.
     </p>
 {% endif %}

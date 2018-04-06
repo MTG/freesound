@@ -158,10 +158,12 @@ class Command(BaseCommand):
 
     def task_bulk_describe(self, gearman_worker, gearman_job):
         bulk_upload_progress_object_id = int(gearman_job.data)
-        self.write_stdout("Starting to describe sounds for BulkUploadProgress with id: %s" % bulk_upload_progress_object_id)
+        self.write_stdout("Starting to describe sounds for BulkUploadProgress with id: %s"
+                          % bulk_upload_progress_object_id)
         try:
             bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
             bulk.describe_sounds()
+            bulk.refresh_from_db()  # Refresh from db as describe_sounds() method will change fields of bulk
             bulk.progress_type = 'F'  # Set to finished when one
             bulk.save()
             return 'true'

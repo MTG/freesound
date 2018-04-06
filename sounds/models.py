@@ -1203,7 +1203,6 @@ class BulkUploadProgress(models.Model):
     def describe_sounds(self):
         """
         Start the actual description of the sounds and add them to Freesound
-        TODO: store information about staus in 'describe_output' filed?
         """
         cmd = csv_bulk_upload.Command()
         opts = {
@@ -1212,5 +1211,28 @@ class BulkUploadProgress(models.Model):
             'filepath': self.csv_path,
             'soundsdir': os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
             'uname': self.user.username,
+            'bulkuploadid': self.id,
         }
         cmd.handle(**opts)
+
+    def store_progress_for_line(self, line_no, message):
+        if self.description_output is None:
+            self.description_output = {}
+        self.description_output[line_no] = message
+        self.save()
+
+    def get_description_progress_info(self):
+        sound_ids_ok = []
+        sound_errors = []
+        for line_no, value in self.description_output.items():
+            if type(value) == int:
+                # Sound id, meaning a sound that was successfully uploaded
+                sound_ids_ok.append(value)
+            else:
+                # If not sound ID, then it means there were errors with these sounds
+                sound_errors.append((line_no, value))
+        return {
+            'sound_ids_ok': sound_ids_ok,
+            'sound_errors': sound_errors,
+        }
+

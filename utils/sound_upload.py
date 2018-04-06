@@ -29,6 +29,7 @@ from utils.text import slugify
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
 from utils.cache import invalidate_template_cache
+from utils.tags import clean_and_split_tags
 from django.contrib.auth.models import Group
 from gearman.errors import ServerUnavailable
 
@@ -153,7 +154,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     # 6 set description, tags
     sound.description = sound_fields['description']
-    sound.set_tags(sound_fields['tags'])
+    sound.set_tags(clean_and_split_tags(sound_fields['tags']))
 
     if 'is_explicit' in sound_fields:
         sound.is_explicit = sound_fields['is_explicit']

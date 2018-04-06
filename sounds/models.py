@@ -1138,6 +1138,7 @@ class BulkUploadProgress(models.Model):
     original_csv_filename = models.CharField(max_length=255)
     validation_output = JSONField(null=True)
     sounds_valid = models.PositiveIntegerField(null=False, default=0)
+    description_output = JSONField(null=True)
 
     def get_csv_lines(self):
         return csv_bulk_upload.Command().get_csv_lines(self.csv_path)

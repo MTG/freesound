@@ -38,7 +38,8 @@ class Command(BaseCommand):
         parser.add_argument('filepath', type=str, help='Path to sound list')
         parser.add_argument('-d', help='Delete any sounds which already exist and add them again')
         parser.add_argument('-f', action='store_true', help='Force the import if any rows are bad, skipping bad rows')
-        parser.add_argument('-s', '--soundsdir', type=str, default='', help='Directory where the sounds are located')
+        parser.add_argument('-s', '--soundsdir', type=str, default=None, help='Directory where the sounds are located')
+        parser.add_argument('-u', '--uname', type=str, default=None, help='Username of the user to assign the sounds to')
 
     @staticmethod
     def get_csv_lines(csv_file_path):
@@ -49,16 +50,19 @@ class Command(BaseCommand):
         return header, lines
 
     @staticmethod
-    def check_input_file(sounds_base_dir, header, lines, skip_username_check=False):
+    def check_input_file(sounds_base_dir, header, lines, username_arg=None):
         lines_ok = []
         lines_with_errors = []
         global_errors = []
         filenames_to_describe = []
 
         # Check headers
-        if (skip_username_check and header != EXPECTED_HEADER_NO_USERNAME) or \
-                (not skip_username_check and header != EXPECTED_HEADER):
-            global_errors.append('CSV file has wrong header.')
+        if username_arg is not None and header != EXPECTED_HEADER_NO_USERNAME:
+            global_errors.append('Invalid header. Header should have the following %i columns: %s'
+                                 % (len(EXPECTED_HEADER_NO_USERNAME),','.join(EXPECTED_HEADER_NO_USERNAME)))
+        elif username_arg is None and header != EXPECTED_HEADER:
+            global_errors.append('Invalid header. Header should have the following %i columns: %s'
+                                 % (len(EXPECTED_HEADER), ','.join(EXPECTED_HEADER)))
 
         # Check individual rows
         for n, line in enumerate(lines):
@@ -66,22 +70,26 @@ class Command(BaseCommand):
             anyerror = False
 
             # Check that number of columns is ok
-            if len(line) != len(EXPECTED_HEADER) and not skip_username_check:
+            if len(line) != len(EXPECTED_HEADER) and username_arg is None:
                 line_errors['header'] = 'Row should have %i columns (has %i).' % (len(EXPECTED_HEADER), len(line))
                 continue
-            if len(line) != len(EXPECTED_HEADER_NO_USERNAME) and skip_username_check:
+            if len(line) != len(EXPECTED_HEADER_NO_USERNAME) and username_arg is not None:
                 line_errors['header'] = 'Row should have %i columns (has %i).' \
                                         % (len(EXPECTED_HEADER_NO_USERNAME), len(line))
                 continue
 
             # Check user exists
-            if not skip_username_check:
+            if username_arg is not None:
+                # If username provided via arg, take it from there
+                username = username_arg
+            else:
+                # If no arg username provided, take it from CSV
                 username = line['username']
-                try:
-                    User.objects.get(username=username)
-                except User.DoesNotExist:
-                    anyerror = True
-                    line_errors['username'] = "User does not exist."
+            try:
+                User.objects.get(username=username)
+            except User.DoesNotExist:
+                anyerror = True
+                line_errors['username'] = "User does not exist."
 
             # Check that audio file exists in disk and that it has not been described yet in another line
             audio_filename = line['audio_filename']
@@ -106,21 +114,23 @@ class Command(BaseCommand):
 
             # Check geotag is valid
             geotag = line['geotag']
-            geoparts = geotag.split()
-            if len(geoparts) == 3:
-                lat, lon, zoom = geoparts
-                try:
-                    float(lat)
-                    float(lon)
-                    int(zoom)
-                except ValueError:
-                    line_errors['geotag'] = "Geotag must be in format 'float float int' for latitude, " \
+            if geotag.strip():
+                # Only validate geotag if provided
+                geoparts = geotag.split(',')
+                if len(geoparts) == 3:
+                    lat, lon, zoom = geoparts
+                    try:
+                        float(lat)
+                        float(lon)
+                        int(zoom)
+                    except ValueError:
+                        line_errors['geotag'] = "Geotag must be in format 'float,float,int' for latitude, " \
+                                                "longitude and zoom."
+                        anyerror = True
+                elif len(geoparts) != 0:
+                    line_errors['geotag'] = "Geotag must be in format 'float,float,int' for latitude, " \
                                             "longitude and zoom."
                     anyerror = True
-            elif len(geoparts) != 0:
-                line_errors['geotag'] = "Geotag must be in format 'float float int' for latitude, " \
-                                        "longitude and zoom."
-                anyerror = True
 
             # Check tags are valid
             tags = line['tags']
@@ -132,44 +142,66 @@ class Command(BaseCommand):
 
             # Append line data to the corresponding list
             if not anyerror:
-                lines_ok.append(line)
+                lines_ok.append((line, n + 1))  # Add 1 to line number so first row is line 1
             else:
-                lines_with_errors.append((line, line_errors))
+                lines_with_errors.append((line, line_errors, n + 1))  # Add 1 to line number so first row is line 1
 
         # Return lines which validated ok and lines that have errors in two separate lists. Return also a list of
-        # global errors. Note that the list of lines with errors is in fact a list of tuples where the first element
-        # of each tuple is a dictionary of the line fields and the second element is a dictionary with errors (if any)
-        # for each line field.
+        # global errors. Note that the list of lines that validated ok is in fact a list of tuples where the first
+        # element is dictionary of the line fields and the second element is the line number. Similarly, the list of
+        # lines with errors is in fact a list of tuples where the first element is a dictionary of the line fields,
+        # the second element is a dictionary with errors (if any), and the third element is the original line number.
         return lines_ok, lines_with_errors, global_errors
 
     def handle(self, *args, **options):
-        sound_list = options['filepath']
-        print 'Importing from', sound_list
-
-        if options['soundsdir'] == '':
-            base_dir = os.path.dirname(sound_list)
+        csv_file_path = options['filepath']
+        delete_already_existing = options['d']
+        force_import = options['f']
+        if options['soundsdir'] is None:
+            # If soundsdir is not provided, assume the same dir as the CSV file
+            base_dir = os.path.dirname(csv_file_path)
         else:
             base_dir = options['soundsdir']
+        username = options['uname']
 
-        delete_already_existing = options['d']
-        force_import = options['d']
+        header, lines = self.get_csv_lines(csv_file_path)  # Read CSV
+        lines_ok, lines_with_errors, global_errors = self.check_input_file(
+            base_dir, header, lines, username_arg=username)  # Validate CSV
 
-        header, lines = self.get_csv_lines(sound_list)
-
-        lines_to_import, bad_lines, global_errors = self.check_input_file(base_dir, header, lines)
-        if bad_lines and not force_import:
-            print 'Some lines contain invalid data. Fix them or re-run with -f to import skipping these lines:'
-            for lineno, error, field in bad_lines:
-                print 'l%s: %s' % (lineno, error)
+        if global_errors:
+            print 'Major issues were found while validating the CSV file. Fix them and re-run the command.'
+            for error in global_errors:
+                print '- %s' % error
             return
-        elif bad_lines:
-            print 'Skipping the following lines due to invalid data'
-            for lineno, error, field in bad_lines:
-                print 'l%s: %s' % (lineno, error)
 
-        for line in lines_to_import:
+        if lines_with_errors and not force_import:
+            print 'The following %i lines contain invalid data. Fix them or re-run with -f to import ' \
+                  'skipping these lines:' % len(lines_with_errors)
+            for _, line_errs, line_no in lines_with_errors:
+                errors = '; '.join(line_errs.values())
+                print 'l%s: %s' % (line_no, errors)
+            return
+
+        elif lines_with_errors:
+            print 'Skipping the following %i lines due to invalid data' % len(lines_with_errors)
+            for _, line_errs, line_no in lines_with_errors:
+                errors = '; '.join(line_errs.values())
+                print 'l%s: %s' % (line_no, errors)
+
+        print 'Adding %i sounds to Freesound' % len(lines_ok)
+        for line, line_no in lines_ok:
+
             # 0 get data from csv
-            pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef = line
+            pathf = line['audio_filename']
+            namef = line['name'] if line['name'].strip() else line['audio_filename']
+            tagsf = line['tags']
+            geotagf = line['geotag'] if line['geotag'].strip() else None
+            descriptionf = line['description']
+            licensef = line['license']
+            packnamef = line['pack_name'] if line['pack_name'].strip() else None
+            usernamef = line.get('username', username)  # If username not in CSV file, get from parameter
+
+            # get user object
             user = User.objects.get(username=usernamef)
 
             # 1 create dir and move sound to dir
@@ -189,8 +221,8 @@ class Command(BaseCommand):
                 'license': licensef,
                 'pack': packnamef,
                 'description': descriptionf,
-                'tags': tagsf.split(),
-                'geotag': geotagf
+                'tags': clean_and_split_tags(tagsf),
+                'geotag': geotagf,
             }
 
             try:
@@ -198,24 +230,27 @@ class Command(BaseCommand):
                         user,
                         sound_fields,
                         process=False,
-                        remove_exists=delete_already_existing
+                        remove_exists=delete_already_existing,
                 )
 
                 # Process
                 try:
                     sound.process()
                 except Exception as e:
-                    print 'Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e))
-
+                    print 'l%i: Sound with id %s could not be scheduled for processing. (%s)' % (line_no,
+                                                                                                 sound.id,
+                                                                                                 str(e))
                 if sound.pack:
                     sound.pack.process()
 
-                print 'Successfully uploaded sound ' + sound.original_filename
+                print 'l%i: Successfully added sound \'%s\' to Freesound' % (line_no, sound.original_filename,)
 
             except utils.sound_upload.NoAudioException:
+                print 'l%i: Sound for file %s can\'t be created as file does seem ot have any content' % (line_no,
+                                                                                                          dest_path,)
                 continue
             except utils.sound_upload.AlreadyExistsException:
-                print 'The file %s is already part of freesound, not uploading it' % (dest_path,)
+                print 'l%i: The file %s is already part of freesound, not uploading it' % (line_no, dest_path,)
                 continue
             except utils.sound_upload.CantMoveException as e:
                 print e.message

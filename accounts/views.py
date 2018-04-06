@@ -480,7 +480,7 @@ def describe(request):
 
             bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path, original_csv_filename=f.name)
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("bulk_describe_sound", str(bulk.id), wait_until_complete=False, background=True)
+            gm_client.submit_job("validate_bulk_describe_csv", str(bulk.id), wait_until_complete=False, background=True)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
             if "delete" in request.POST:
@@ -986,18 +986,20 @@ def upload(request, no_flash=False):
 @login_required
 def bulk_describe(request, bulk_id):
     bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
-    _, lines = bulk.get_csv_lines()
+
     if request.GET.get('action', False) == 'start' and bulk.progress_type == 'V':
-        # Mark BulkUploadProgress as "stared" and start processing
-        # TODO: currently processing will happen when a command 'csv_bulk_describe' runs, we should move that
-        # TODO: to an async task
+        # If action is "start" and CSV is validated, mark BulkUploadProgress as "stared" and start describing sounds
         bulk.progress_type = 'S'
         bulk.save()
-    elif request.GET.get('action', False) == 'delete' and bulk.progress_type == 'V':
-        # Delete current BulkUploadProgress object and go back to describe page
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        gm_client.submit_job("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
+
+    elif request.GET.get('action', False) == 'delete':
+        # If action is "delete", delete BulkUploadProgress object and go back to describe page
         bulk.delete()
         return HttpResponseRedirect(reverse('accounts-describe'))
 
+    _, lines = bulk.get_csv_lines()
     tvars = {
         'lines': lines,
         'bulk': bulk,

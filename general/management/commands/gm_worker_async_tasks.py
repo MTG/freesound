@@ -143,7 +143,7 @@ class Command(BaseCommand):
 
         return 'false'
 
-    def task_bulk_describe_sound(self, gearman_worker, gearman_job):
+    def task_validate_bulk_describe_csv(self, gearman_worker, gearman_job):
         bulk_upload_progress_object_id = int(gearman_job.data)
         self.write_stdout("Starting to validate BulkUploadProgress with id: %s" % bulk_upload_progress_object_id)
         try:
@@ -152,6 +152,21 @@ class Command(BaseCommand):
             return 'true'
         except BulkUploadProgress.DoesNotExist as e:
             message = "Error in async validate BulkUploadProgress object with id %s (%s)" % \
+                      (bulk_upload_progress_object_id, str(e))
+            self.write_stdout(message)
+        return 'false'
+
+    def task_bulk_describe(self, gearman_worker, gearman_job):
+        bulk_upload_progress_object_id = int(gearman_job.data)
+        self.write_stdout("Starting to describe sounds for BulkUploadProgress with id: %s" % bulk_upload_progress_object_id)
+        try:
+            bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
+            bulk.describe_sounds()
+            bulk.progress_type = 'F'  # Set to finished when one
+            bulk.save()
+            return 'true'
+        except BulkUploadProgress.DoesNotExist as e:
+            message = "Error in async describe sounds for BulkUploadProgress object with id %s (%s)" % \
                       (bulk_upload_progress_object_id, str(e))
             self.write_stdout(message)
         return 'false'

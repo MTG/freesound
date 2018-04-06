@@ -37,11 +37,11 @@
         </p>
         <table class="csv-validation-table">
         <thead>
-            <tr><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
+            <tr><th>#</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
         </thead>
         <tbody>
-            {% for line in lines_failed_validation %}
-                <tr>
+            {% for line, line_no in lines_failed_validation %}
+                <tr><td>{{ line_no }}</td>
                 {% for value, error in line %}
                     <td {% if error %}style="background-color: rgba(255,64,60,0.65)"{% endif %}>{% if error %}
                         <a href="#" class="icon warning_icon" title="{{ error }}"></a>{% endif %}{{ value }}</td>
@@ -61,11 +61,11 @@
         </p>
         <table class="csv-validation-table">
         <thead>
-            <tr><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
+            <tr><th>#</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
         </thead>
         <tbody>
-            {% for line in lines_validated_ok %}
-                <tr>
+            {% for line, line_no in lines_validated_ok %}
+                <tr><td>{{ line_no }}</td>
                 {% for value in line %}
                     <td>{{ value }}</td>
                 {% endfor %}

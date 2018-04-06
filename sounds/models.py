@@ -772,8 +772,10 @@ class Sound(SocialModel):
 
         invalidate_template_cache("sound_footer_bottom", self.id)
 
-        invalidate_template_cache("display_sound", self.id, True, self.processing_state, self.moderation_state)
-        invalidate_template_cache("display_sound", self.id, False, self.processing_state, self.moderation_state)
+        for authenticated in [True, False]:
+            for is_explicit in [True, False]:
+                invalidate_template_cache("display_sound", self.id, authenticated, is_explicit, self.processing_state,
+                                          self.moderation_state, self.similarity_state)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

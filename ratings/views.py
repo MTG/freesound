@@ -49,10 +49,7 @@ def rate_sound(request, username, sound_id, rating):
             rating_obj.save()
 
         # make sure the rating is seen on the next page load by invalidating the cache for it.
-        invalidate_template_cache("sound_header", sound_id, True)
-        invalidate_template_cache("sound_header", sound_id, False)
-        invalidate_template_cache("display_sound", sound_id, True, 'OK')
-        invalidate_template_cache("display_sound", sound_id, False, 'OK')
+        sound.invalidate_template_caches()
         Sound.objects.filter(id=sound_id).update(is_index_dirty=True)  # Set index dirty to true
 
     return HttpResponse(str(SoundRating.objects.filter(sound_id=sound_id).count()))

@@ -924,42 +924,63 @@ class SoundSignatureTestCase(TestCase):
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
 
-class SoundTemplateCacheTestCase(TestCase):
+class SoundTemplateCacheTests(TestCase):
     fixtures = ['sounds']
 
     def setUp(self):
         cache.clear()
+        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        self.sound = sounds[0]
+        self.sound.change_processing_state("OK")
+        self.sound.change_moderation_state("OK")
+        self.sound.set_similarity_state("OK")
+
+    def _get_sound_view_cache_keys(self, is_authenticated, is_explicit):
+        return [get_template_cache_key('sound_footer_bottom', self.sound.id),
+                get_template_cache_key('sound_footer_top', self.sound.id,  is_authenticated),
+                get_template_cache_key('sound_header', self.sound.id, is_explicit)]
+
+    def _get_sound_display_cache_keys(self, is_authenticated, is_explicit):
+        return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit,
+                                       self.sound.processing_state, self.sound.moderation_state,
+                                       self.sound.similarity_state)]
+
+    def _assertCacheAbsent(self, cache_keys):
+        for cache_key in cache_keys:
+            self.assertIsNone(cache.get(cache_key))
+
+    def _assertCachePresent(self, cache_keys):
+        for cache_key in cache_keys:
+            self.assertIsNotNone(cache.get(cache_key))
+
+    def _get_sound_view(self):
+        return self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
 
     def test_update_description(self):
-        users, packs, sounds = create_user_and_sounds(num_sounds=1)
-        sound = sounds[0]
-        sound.change_processing_state("OK")
-        sound.change_moderation_state("OK")
+        cache_keys = self._get_sound_view_cache_keys(False, False)
+        self._assertCacheAbsent(cache_keys)
 
-        # TODO: add more template caches and scenarios
-        cache_key = get_template_cache_key('sound_footer_bottom', sound.id)
-
-        self.assertIsNone(cache.get(cache_key))
-        resp = self.client.get(reverse('sound', args=[sound.user.username, sound.id]))
+        resp = self._get_sound_view()
         self.assertEqual(resp.status_code, 200)
-
-        print([key for key in locmem._caches['']])
-        print(cache_key)
-
-        self.assertIsNotNone(cache.get(cache_key))
+        self._assertCachePresent(cache_keys)
 
         # Edit sound
         self.client.login(username='testuser', password='testpass')
-        resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
+        new_description = u'New description'
+        new_name = u'New name'
+        resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]), {
             'submit': [u'submit'],
-            'description-description': [u'New description'],
-            'description-name': [u'New name'],
+            'description-description': [new_description],
+            'description-name': [new_name],
             'description-tags': u'tag1 tag2 tag3'
         })
         self.assertEqual(resp.status_code, 302)
 
         # Check that keys are no longer in cache
-        self.assertIsNone(cache.get(cache_key))
-        print([key for key in locmem._caches['']])
+        self._assertCacheAbsent(cache_keys)
 
-        # TODO: check that the sound page has updated info
+        resp = self._get_sound_view()
+        self.assertEqual(resp.status_code, 200)
+        self.assertInHTML(new_description, resp.content)
+        self.assertInHTML(new_name, resp.content)
+

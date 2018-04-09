@@ -45,6 +45,7 @@ from utils.encryption import encrypt
 from utils.tags import clean_and_split_tags
 from utils.cache import get_template_cache_key
 
+from bs4 import BeautifulSoup
 
 class OldSoundLinksRedirectTestCase(TestCase):
 
@@ -933,11 +934,10 @@ class SoundTemplateCacheTests(TestCase):
         self.sound = sounds[0]
         self.sound.change_processing_state("OK")
         self.sound.change_moderation_state("OK")
-        self.sound.set_similarity_state("OK")
 
-    def _get_sound_view_cache_keys(self, is_authenticated, is_explicit):
+    def _get_sound_view_cache_keys(self, is_explicit, display_random_link):
         return [get_template_cache_key('sound_footer_bottom', self.sound.id),
-                get_template_cache_key('sound_footer_top', self.sound.id,  is_authenticated),
+                get_template_cache_key('sound_footer_top', self.sound.id, display_random_link),
                 get_template_cache_key('sound_header', self.sound.id, is_explicit)]
 
     def _get_sound_display_cache_keys(self, is_authenticated, is_explicit):
@@ -953,11 +953,21 @@ class SoundTemplateCacheTests(TestCase):
         for cache_key in cache_keys:
             self.assertIsNotNone(cache.get(cache_key))
 
+    def _get_sound_url(self, viewname):
+        return reverse(viewname, args=[self.sound.user.username, self.sound.id])
+
     def _get_sound_view(self):
-        return self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
+        return self.client.get(self._get_sound_url('sound'))
+
+    def _get_sound_display(self):
+        return self.client.get(self._get_sound_url('sound-display'))
+
+    def _print_cache(self, cache_keys):
+        print(locmem._caches[''].keys())
+        print(cache_keys)
 
     def test_update_description(self):
-        cache_keys = self._get_sound_view_cache_keys(False, False)
+        cache_keys = self._get_sound_view_cache_keys(is_explicit=False, display_random_link=False)
         self._assertCacheAbsent(cache_keys)
 
         resp = self._get_sound_view()
@@ -968,19 +978,100 @@ class SoundTemplateCacheTests(TestCase):
         self.client.login(username='testuser', password='testpass')
         new_description = u'New description'
         new_name = u'New name'
-        resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]), {
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
             'submit': [u'submit'],
             'description-description': [new_description],
             'description-name': [new_name],
             'description-tags': u'tag1 tag2 tag3'
         })
         self.assertEqual(resp.status_code, 302)
+        self.client.logout()
 
         # Check that keys are no longer in cache
         self._assertCacheAbsent(cache_keys)
 
+        # Check that the information is updated properly
         resp = self._get_sound_view()
         self.assertEqual(resp.status_code, 200)
         self.assertInHTML(new_description, resp.content)
         self.assertInHTML(new_name, resp.content)
 
+    def _get_delete_comment_url(self, html):
+        soup = BeautifulSoup(html, "html.parser")
+        tag = soup.find('a', {'id': 'delete_button'})
+        return tag['href']
+
+    def test_add_remove_comment(self):
+        cache_keys = self._get_sound_display_cache_keys(is_authenticated=True, is_explicit=False)
+        self._assertCacheAbsent(cache_keys)
+        self.client.login(username='testuser', password='testpass')
+
+        # Check the initial state (0 comments)
+        resp = self._get_sound_display()
+        self.assertInHTML('0 comments', resp.content)
+        self.assertEqual(resp.status_code, 200)
+        self._assertCachePresent(cache_keys)
+
+        # Add comment
+        resp = self.client.post(self._get_sound_url('sound'), {
+            'comment': u'Test comment'
+        }, follow=True)  # we are testing sound-display, rendering sound view is ok
+        delete_url = self._get_delete_comment_url(resp.content)
+        self._assertCacheAbsent(cache_keys)
+
+        # Verify that sound display has updated number of comments
+        resp = self._get_sound_display()
+        self.assertInHTML('1 comment', resp.content)
+        self._assertCachePresent(cache_keys)
+
+        # Delete the comment
+        resp = self.client.get(delete_url)
+        self.assertEqual(resp.status_code, 302)
+        self._assertCacheAbsent(cache_keys)
+
+        # Verify that sound display has no comments
+        resp = self._get_sound_display()
+        self.assertInHTML('0 comments', resp.content)
+
+    @mock.patch('sounds.views.sendfile', return_value=HttpResponse(''))
+    def test_download(self, sendfile):
+        cache_keys = self._get_sound_display_cache_keys(is_authenticated=True, is_explicit=False)
+        self._assertCacheAbsent(cache_keys)
+
+        self.client.login(username='testuser', password='testpass')
+        resp = self._get_sound_display()
+        self.assertInHTML('0 downloads', resp.content)
+        self.assertEqual(resp.status_code, 200)
+        self._assertCachePresent(cache_keys)
+
+        # Download
+        resp = self.client.get(self._get_sound_url('sound-download'))
+        sendfile.assert_called_once()
+        self.assertEqual(resp.status_code, 200)
+        self._assertCacheAbsent(cache_keys)
+
+        # Verify that sound display has updated number of downloads
+        resp = self._get_sound_display()
+        self.assertInHTML('1 download', resp.content)
+
+    # TODO:
+    def test_similarity_update(self):
+        pass
+
+    def test_add_remove_pack(self):
+        pass
+
+    def test_add_remove_remixes(self):
+        pass
+
+    def test_add_remove_geotag(self):
+        pass
+
+    def test_change_license(self):
+        pass
+
+    def test_processing_state_change(self):
+        pass
+
+    def test_moderation_state_change(self):
+        pass

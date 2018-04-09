@@ -239,6 +239,7 @@ def sound(request, username, sound_id):
                 if form.is_valid():
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
+                    sound.invalidate_template_caches()
                     try:
                         if request.user.profile.email_not_disabled("new_comment"):
                             # Send the user an email to notify him of the new comment!
@@ -329,6 +330,7 @@ def sound_download(request, username, sound_id):
         cache_key = 'sdwn_%s_%d' % (sound_id, request.user.id)
         if cache.get(cache_key, None) is None:
             Download.objects.create(user=request.user, sound=sound, license=sound.license)
+            sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
@@ -848,7 +850,8 @@ def display_sound_wrapper(request, username, sound_id):
         'license_name': sound_obj.license.name,
         'media_url': settings.MEDIA_URL,
         'request': request,
-        'is_explicit': is_explicit
+        'is_explicit': is_explicit,
+        'is_authenticated': request.user.is_authenticated()  # cache computation is weird with CallableBool
     }
     return render(request, 'sounds/display_sound.html', tvars)
 

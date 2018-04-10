@@ -175,13 +175,6 @@ def bulk_license_change(request):
 
 
 @login_required
-def bulkfile_delete(request, bulk_id):
-    bulkfile = get_object_or_404(BulkUploadProgress, user=request.user, id=bulk_id, progress_type='E')
-    bulkfile.delete()
-    return HttpResponseRedirect(reverse('accounts-home'))
-
-
-@login_required
 def tos_acceptance(request):
     if request.method == 'POST':
         form = TermsOfServiceForm(request.POST)
@@ -1006,12 +999,17 @@ def bulk_describe(request, bulk_id):
         return HttpResponseRedirect(reverse('accounts-home'))
 
     _, lines = bulk.get_csv_lines()
+
+    # Auto-reload if in "not yet validated" or in "started" state
+    auto_reload_page = bulk.progress_type == 'N' or bulk.progress_type == 'S'
+
     tvars = {
         'lines': lines,
         'bulk': bulk,
         'lines_validated_ok': bulk.get_lines_validated_ok_for_display(),
         'lines_failed_validation': bulk.get_lines_failed_validation_for_display(),
-        'global_errors': bulk.get_global_errors_for_display()
+        'global_errors': bulk.get_global_errors_for_display(),
+        'auto_reload_page': auto_reload_page,
     }
     return render(request, 'accounts/bulk_describe.html', tvars)
 

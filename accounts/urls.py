@@ -64,7 +64,6 @@ urlpatterns = [
     url(r'^upload/flash/$', accounts.upload, name="accounts-upload-flash"),
     url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
     url(r'^upload/bulk-describe/(?P<bulk_id>[0-9]+)/$', accounts.bulk_describe, name="accounts-bulk-describe"),
-    url(r'^upload/bulkcsv-delete/(?P<bulk_id>\d+)/$', accounts.bulkfile_delete, name="accounts-bulkfile-delete"),
 
     url(r'^describe/$', accounts.describe, name="accounts-describe"),
     url(r'^describe/license/$', accounts.describe_license, name="accounts-describe-license"),

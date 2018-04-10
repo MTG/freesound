@@ -1132,6 +1132,7 @@ class BulkUploadProgress(models.Model):
         ("F", 'Finished'),
         ("S", 'Sounds being described and processed'),
         ("V", 'Finished validation.'),
+        ("C", 'Closed.'),
     )
     progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
     csv_path = models.CharField(max_length=512, null=True, blank=True, default=None)

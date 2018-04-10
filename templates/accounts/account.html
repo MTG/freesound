@@ -236,12 +236,12 @@
         </div><!-- #unprocessed_sounds -->
         {% endif %}
 
-        {% if unfinished_bulkdescribe %}
+        {% if current_bulkdescribe %}
         <div class="content_box">
-          <h3>Unfinished Bulk Describe Sound processes</h3>
-            {% for bulk_describe in unfinished_bulkdescribe %}
+          <h3>Bulk Describe Sound processes</h3>
+            {% for bulk_describe in current_bulkdescribe %}
             <li style="padding: 4px;font-size: 11px">
-              <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">{{ bulk_describe.original_csv_filename }}</a> uploaded on <span class="date">{{bulk_describe.created}}</span>
+              <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">{{ bulk_describe.original_csv_filename }}</a> created on <span class="date">{{bulk_describe.created}}</span>
               Status: {{bulk_describe.get_progress_type_display}}
               {% if bulk_describe.progress_type == 'E' %}
                 <a href="{% url "accounts-bulkfile-delete" bulk_describe.id %}" >x</a>

@@ -83,12 +83,27 @@
         <br style="clear:both;"/>
     </form>
 
-{% elif bulk.progress_type == 'S' or bulk.progress_type == 'F' %}
-    <h3>Your {{ lines_validated_ok|length }} sounds are being described and processed</h3>
-    <p>
-        Congratulations! The sounds for this bulk description process are being described and processed. This is the
-        current status of the process:
-    </p>
+{% elif bulk.progress_type == 'S' or bulk.progress_type == 'F' or bulk.progress_type == 'C' %}
+
+    {% if bulk.progress_type == 'S' %}
+        <h3>Your sounds are being described and processed</h3>
+        <p>
+            The {{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
+            description process are being described and processed. This is the current status of the process:
+        </p>
+    {% elif bulk.progress_type == 'F' %}
+        <h3>The bulk description process has finished!</h3>
+        <p>
+            The {{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
+            description process have been described and processed. Here are the results of the process:
+        </p>
+    {% elif bulk.progress_type == 'C' %}
+        <h3>This bulk description process is closed</h3>
+        <p>
+            The bulk description of sounds has been fininshed and the process closed. Here are the results of the
+            process:
+        </p>
+    {% endif %}
     {% with bulk.get_description_progress_info as progress_info %}
         <ul>
             <li>Sounds successfully described: {{ progress_info.sound_ids_ok|length }}</li>
@@ -102,10 +117,17 @@
             {% endif %}
         </ul>
     {% endwith %}
-    <p>
-        For more details, please check the status of your sound uploads in the <a href="{% url "accounts-pending" %}">pending
-        uploads</a> page or in your <a href="{% url "accounts-home" %}">home</a> page.
-    </p>
+    {% if bulk.progress_type == 'F' %}
+        {% comment %}
+        If the process has finished, give the option to close it
+        {% endcomment %}
+        <p>
+            Click on the button below to close this bulk description process and stop showing it in your home screen.
+        </p>
+        <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET">
+            <input id="hidden_action" type="hidden" name="action" value="" />
+            <input type="submit" onclick="$('#hidden_action').attr('value', 'close');" value="Close this process" />
+        </form>
+    {% endif %}
 {% endif %}
-
 {% endblock %}

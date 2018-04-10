@@ -306,11 +306,11 @@ def home(request):
     following, followers, following_tags, following_count, followers_count, following_tags_count \
         = follow_utils.get_vars_for_home_view(user)
 
-    unfinished_bulkdescribe = BulkUploadProgress.objects.filter(user=user).exclude(progress_type="F")
+    current_bulkdescribe = BulkUploadProgress.objects.filter(user=user).exclude(progress_type="C")
     tvars = {
         'home': True,
         'latest_sounds': latest_sounds,
-        'unfinished_bulkdescribe': unfinished_bulkdescribe,
+        'current_bulkdescribe': current_bulkdescribe,
         'unprocessed_sounds': unprocessed_sounds,
         'unmoderated_sounds': unmoderated_sounds,
         'unmoderated_sounds_count': unmoderated_sounds_count,
@@ -998,6 +998,12 @@ def bulk_describe(request, bulk_id):
         # If action is "delete", delete BulkUploadProgress object and go back to describe page
         bulk.delete()
         return HttpResponseRedirect(reverse('accounts-describe'))
+
+    elif request.GET.get('action', False) == 'close':
+        # If action is "close", set the BulkUploadProgress object to closed state and redirect to home
+        bulk.progress_type = 'C'
+        bulk.save()
+        return HttpResponseRedirect(reverse('accounts-home'))
 
     _, lines = bulk.get_csv_lines()
     tvars = {

@@ -24,6 +24,9 @@ from django.apps import apps
 from utils.tags import clean_and_split_tags
 import shutil, os, csv
 import utils.sound_upload
+import logging
+
+console_logger = logging.getLogger("console")
 
 
 EXPECTED_HEADER_NO_USERNAME = ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name']
@@ -174,24 +177,25 @@ class Command(BaseCommand):
 
         # Print error messages if any
         if global_errors:
-            print 'Major issues were found while validating the CSV file. Fix them and re-run the command.'
+            console_logger.info('Major issues were found while validating the CSV file. '
+                                'Fix them and re-run the command.')
             for error in global_errors:
-                print '- %s' % error
+                console_logger.info('- %s' % error)
             return
 
         if lines_with_errors and not force_import:
-            print 'The following %i lines contain invalid data. Fix them or re-run with -f to import ' \
-                  'skipping these lines:' % len(lines_with_errors)
+            console_logger.info('The following %i lines contain invalid data. Fix them or re-run with -f to import ' \
+                                'skipping these lines:' % len(lines_with_errors))
             for _, line_errs, line_no in lines_with_errors:
                 errors = '; '.join(line_errs.values())
-                print 'l%s: %s' % (line_no, errors)
+                console_logger.info('l%s: %s' % (line_no, errors))
             return
 
         elif lines_with_errors:
-            print 'Skipping the following %i lines due to invalid data' % len(lines_with_errors)
+            console_logger.info('Skipping the following %i lines due to invalid data' % len(lines_with_errors))
             for _, line_errs, line_no in lines_with_errors:
                 errors = '; '.join(line_errs.values())
-                print 'l%s: %s' % (line_no, errors)
+                console_logger.info('l%s: %s' % (line_no, errors))
 
         # If passed as an option, get corresponding BulkUploadProgress object to store progress of command
         bulk_upload_progress_object = None
@@ -200,12 +204,11 @@ class Command(BaseCommand):
             try:
                 bulk_upload_progress_object = BulkUploadProgress.objects.get(id=options['bulkuploadid'])
             except BulkUploadProgress.DoesNotExist:
-                print 'BulkUploadProgress object with id %i can\'t be found, wont store progress information.' \
-                      % options['bulkuploadid']
-                pass
+                console_logger.info('BulkUploadProgress object with id %i can\'t be found, wont store progress '
+                                    'information.' % options['bulkuploadid'])
 
         # Start the actual process of uploading files
-        print 'Adding %i sounds to Freesound' % len(lines_ok)
+        console_logger.info('Adding %i sounds to Freesound' % len(lines_ok))
         for line, line_no in lines_ok:
 
             # Get data from csv
@@ -260,28 +263,28 @@ class Command(BaseCommand):
                 message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (line_no, sound.original_filename,)
                 if error_sending_to_process is not None:
                     message += ' Sound could have not been sent to process (%s).' % error_sending_to_process
-                print message
+                console_logger.info(message)
 
             except utils.sound_upload.NoAudioException:
-                message = 'l%i: Sound for file %s can\'t be created as file does seem ot have any content.' \
+                message = 'l%i: Sound for file %s can\'t be created as file does not seem to have any content.' \
                       % (line_no, dest_path,)
-                print message
+                console_logger.info(message)
                 if bulk_upload_progress_object:
                     bulk_upload_progress_object.store_progress_for_line(line_no, message)
             except utils.sound_upload.AlreadyExistsException:
                 message = 'l%i: The file %s is already part of freesound, not uploading it.' % (line_no, dest_path,)
-                print message
+                console_logger.info(message)
                 if bulk_upload_progress_object:
                     bulk_upload_progress_object.store_progress_for_line(line_no, message)
             except utils.sound_upload.CantMoveException as e:
                 message = 'l%i: %s.' % (line_no, e.message,)
-                print message
+                console_logger.info(message)
                 if bulk_upload_progress_object:
                     bulk_upload_progress_object.store_progress_for_line(line_no, message)
             except Exception:
                 # If another unexpected exception happens, show a message and continue with the process so that
                 # other sounds can be added
                 message = 'l%i: Unexpected error %s.' % (line_no, e.message,)
-                print message
+                console_logger.info(message)
                 if bulk_upload_progress_object:
                     bulk_upload_progress_object.store_progress_for_line(line_no, message)

@@ -1009,7 +1009,7 @@ def bulk_describe(request, bulk_id):
     tvars = {
         'lines': lines,
         'bulk': bulk,
-        'lines_validated_ok': bulk.get_lines_validated_ok_for_display(lines),
+        'lines_validated_ok': bulk.get_lines_validated_ok_for_display(),
         'lines_failed_validation': bulk.get_lines_failed_validation_for_display(),
         'global_errors': bulk.get_global_errors_for_display()
     }

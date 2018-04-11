@@ -936,9 +936,9 @@ class SoundTemplateCacheTests(TestCase):
         self.sound.change_moderation_state("OK")
 
     def _get_sound_view_cache_keys(self, is_explicit=False, display_random_link=False):
-        return [get_template_cache_key('sound_footer_bottom', self.sound.id),
-                self._get_sound_view_footer_top(display_random_link),
-                get_template_cache_key('sound_header', self.sound.id, is_explicit)]
+        return ([get_template_cache_key('sound_footer_bottom', self.sound.id),
+                get_template_cache_key('sound_header', self.sound.id, is_explicit)] +
+                self._get_sound_view_footer_top(display_random_link))
 
     def _get_sound_view_footer_top(self, display_random_link=False):
         return [get_template_cache_key('sound_footer_top', self.sound.id, display_random_link)]
@@ -1062,7 +1062,6 @@ class SoundTemplateCacheTests(TestCase):
     # Similarity icon
     @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
     def _test_similarity_update(self, cache_keys, check_present, similarity_add):
-        print(cache_keys, check_present)
         # Default analysis_state is 'PE', but for similarity update it should be 'OK', otherwise sound gets ignored
         self.sound.analysis_state = 'OK'
         self.sound.save()

@@ -102,6 +102,7 @@ class Command(BaseCommand):
                 else:
                     result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
                     sound.set_similarity_state('OK')
+                    sound.invalidate_template_caches()
                 print "%s (%i of %i)" % (result, count+1, N)
 
                 # Every 2000 added sounds, save the index

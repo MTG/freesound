@@ -935,12 +935,15 @@ class SoundTemplateCacheTests(TestCase):
         self.sound.change_processing_state("OK")
         self.sound.change_moderation_state("OK")
 
-    def _get_sound_view_cache_keys(self, is_explicit, display_random_link):
+    def _get_sound_view_cache_keys(self, is_explicit=False, display_random_link=False):
         return [get_template_cache_key('sound_footer_bottom', self.sound.id),
-                get_template_cache_key('sound_footer_top', self.sound.id, display_random_link),
+                self._get_sound_view_footer_top(display_random_link),
                 get_template_cache_key('sound_header', self.sound.id, is_explicit)]
 
-    def _get_sound_display_cache_keys(self, is_authenticated, is_explicit):
+    def _get_sound_view_footer_top(self, display_random_link=False):
+        return [get_template_cache_key('sound_footer_top', self.sound.id, display_random_link)]
+
+    def _get_sound_display_cache_keys(self, is_authenticated=True, is_explicit=False):
         return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit,
                                        self.sound.processing_state, self.sound.moderation_state,
                                        self.sound.similarity_state)]
@@ -967,25 +970,26 @@ class SoundTemplateCacheTests(TestCase):
         print(cache_keys)
 
     def test_update_description(self):
-        cache_keys = self._get_sound_view_cache_keys(is_explicit=False, display_random_link=False)
+        cache_keys = self._get_sound_view_cache_keys()
         self._assertCacheAbsent(cache_keys)
+
+        # Test as an authenticated user, although it doesn't matter in this case because cache templates are the same
+        # for both logged in and anonymous user.
+        self.client.login(username='testuser', password='testpass')
 
         resp = self._get_sound_view()
         self.assertEqual(resp.status_code, 200)
         self._assertCachePresent(cache_keys)
 
         # Edit sound
-        self.client.login(username='testuser', password='testpass')
         new_description = u'New description'
         new_name = u'New name'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'submit': [u'submit'],
-            'description-description': [new_description],
-            'description-name': [new_name],
+            'description-description': new_description,
+            'description-name': new_name,
             'description-tags': u'tag1 tag2 tag3'
         })
         self.assertEqual(resp.status_code, 302)
-        self.client.logout()
 
         # Check that keys are no longer in cache
         self._assertCacheAbsent(cache_keys)
@@ -1002,7 +1006,7 @@ class SoundTemplateCacheTests(TestCase):
         return tag['href']
 
     def test_add_remove_comment(self):
-        cache_keys = self._get_sound_display_cache_keys(is_authenticated=True, is_explicit=False)
+        cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
         self.client.login(username='testuser', password='testpass')
 
@@ -1033,12 +1037,13 @@ class SoundTemplateCacheTests(TestCase):
         resp = self._get_sound_display()
         self.assertInHTML('0 comments', resp.content)
 
-    @mock.patch('sounds.views.sendfile', return_value=HttpResponse(''))
+    @mock.patch('sounds.views.sendfile', return_value=HttpResponse('Dummy response'))
     def test_download(self, sendfile):
-        cache_keys = self._get_sound_display_cache_keys(is_authenticated=True, is_explicit=False)
+        cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
 
         self.client.login(username='testuser', password='testpass')
+
         resp = self._get_sound_display()
         self.assertInHTML('0 downloads', resp.content)
         self.assertEqual(resp.status_code, 200)
@@ -1054,12 +1059,83 @@ class SoundTemplateCacheTests(TestCase):
         resp = self._get_sound_display()
         self.assertInHTML('1 download', resp.content)
 
-    # TODO:
-    def test_similarity_update(self):
-        pass
+    # Similarity icon
+    @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
+    def _test_similarity_update(self, cache_keys, check_present, similarity_add):
+        print(cache_keys, check_present)
+        # Default analysis_state is 'PE', but for similarity update it should be 'OK', otherwise sound gets ignored
+        self.sound.analysis_state = 'OK'
+        self.sound.save()
 
+        self._assertCacheAbsent(cache_keys)
+
+        self.client.login(username='testuser', password='testpass')
+
+        # Initial check
+        self.assertEqual(self.sound.similarity_state, 'PE')
+        self.assertFalse(check_present())
+        self._assertCachePresent(cache_keys)
+
+        # Update similarity
+        call_command('similarity_update', freesound_extractor_version=None)
+        similarity_add.assert_called_once()
+        self._assertCacheAbsent(cache_keys)
+
+        # Check similarity icon
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.similarity_state, 'OK')
+        self.assertTrue(check_present())
+
+    def test_similarity_update_display(self):
+        self._test_similarity_update(
+            self._get_sound_display_cache_keys(),
+            lambda: '<a class="similar"' in self._get_sound_display().content)
+
+    def test_similarity_update_view(self):
+        self._test_similarity_update(
+            self._get_sound_view_footer_top(),
+            lambda: '<a id="similar_sounds_link"' in self._get_sound_view().content)
+
+    # Pack icon
     def test_add_remove_pack(self):
-        pass
+        cache_keys = self._get_sound_display_cache_keys()
+        self._assertCacheAbsent(cache_keys)
+
+        self.client.login(username='testuser', password='testpass')
+
+        self.assertIsNone(self.sound.pack)
+        resp = self._get_sound_display()
+        text = '<a class="pack"'
+        self.assertNotIn(text, resp.content)
+        self._assertCachePresent(cache_keys)
+
+        # Add sound to pack
+        pack_name = 'New pack'
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            'pack-new_pack': pack_name,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self._assertCacheAbsent(cache_keys)
+
+        # Check pack icon
+        self.sound.refresh_from_db()
+        self.assertIsNotNone(self.sound.pack)
+        resp = self._get_sound_display()
+        self.assertIn(text, resp.content)
+        self._assertCachePresent(cache_keys)
+
+        # Remove sound from pack
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            'pack-pack': '',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self._assertCacheAbsent(cache_keys)
+
+        # Check pack icon being absent
+        self.sound.refresh_from_db()
+        self.assertIsNone(self.sound.pack)
+        resp = self._get_sound_display()
+        self.assertNotIn(text, resp.content)
 
     def test_add_remove_remixes(self):
         pass

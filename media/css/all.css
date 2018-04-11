@@ -3428,6 +3428,11 @@ ul.messages {
 /* Upload pages
 ------------------------------------------------------*/
 
+#describe_page ul.upload {
+    max-height: 295px;
+    overflow-y: scroll;
+}
+
 #describe_page ul.upload ul {
     list-style: none;
     padding-left: 0;

@@ -515,7 +515,7 @@ def describe(request):
     else:
         csv_form = BulkDescribeForm(prefix='bulk')
         form = FileChoiceForm(files, prefix='sound')
-    tvars = {'form': form, 'file_structure': file_structure, 'csv_form': csv_form}
+    tvars = {'form': form, 'file_structure': file_structure, 'n_files': len(files), 'csv_form': csv_form}
     return render(request, 'accounts/describe.html', tvars)
 
 

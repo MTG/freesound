@@ -201,6 +201,9 @@ NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
 
+# Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
+BULK_UPLOAD_MIN_SOUNDS = 40
+
 # Graylog stream ids and domain
 GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
 GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'

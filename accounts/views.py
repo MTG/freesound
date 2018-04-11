@@ -978,6 +978,12 @@ def upload(request, no_flash=False):
 
 @login_required
 def bulk_describe(request, bulk_id):
+    if not request.user.profile.can_do_bulk_upload():
+        messages.add_message(request, messages.INFO, "Your user does not have permission to use the bulk describe "
+                                                     "feature. You must upload at least %i sounds before being able"
+                                                     "to use that feature." % settings.BULK_UPLOAD_MIN_SOUNDS)
+        return HttpResponseRedirect(reverse('accounts-home'))
+
     bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
 
     if request.GET.get('action', False) == 'start' and bulk.progress_type == 'V':

@@ -4244,6 +4244,6 @@ ul.messages {
 
 .csv-validation-table {
    overflow-y:scroll;
-   max-height:300px;
+   max-height:400px;
    display:block;
 }

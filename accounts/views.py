@@ -1006,8 +1006,16 @@ def bulk_describe(request, bulk_id):
 
     _, lines = bulk.get_csv_lines()
 
+    # Get progress info to be display if sound descirption process has started
+    progress_info = bulk.get_description_progress_info()
+
     # Auto-reload if in "not yet validated" or in "started" state
     auto_reload_page = bulk.progress_type == 'N' or bulk.progress_type == 'S'
+
+    if bulk.progress_type == 'F' and progress_info['progress_percentage'] < 100:
+        # If the description process has finished but progress is still not 100 (some sounds are still processing),
+        # then do the auto-reload
+        auto_reload_page = True
 
     tvars = {
         'lines': lines,
@@ -1016,6 +1024,7 @@ def bulk_describe(request, bulk_id):
         'lines_failed_validation': bulk.get_lines_failed_validation_for_display(),
         'global_errors': bulk.get_global_errors_for_display(),
         'auto_reload_page': auto_reload_page,
+        'progress_info': progress_info,
     }
     return render(request, 'accounts/bulk_describe.html', tvars)
 

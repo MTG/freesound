@@ -1260,8 +1260,10 @@ class BulkUploadProgress(models.Model):
                 else:
                     # If not sound ID, then it means there were errors with these sounds
                     sound_errors.append((line_no, value))
+        n_sounds_described_ok = len(sound_ids_described_ok)
+        n_sounds_error = len(sound_errors)
         n_sounds_remaining_to_describe = \
-            len(self.get_lines_failed_validation_for_display()) - len(sound_ids_described_ok) - len(sound_errors)
+            len(self.get_lines_validated_ok_for_display()) - n_sounds_described_ok - n_sounds_error
 
         n_sounds_published = Sound.objects.filter(
             id__in=sound_ids_described_ok, processing_state="OK", moderation_state="OK").count()
@@ -1274,14 +1276,30 @@ class BulkUploadProgress(models.Model):
         n_sounds_failed_processing = Sound.objects.filter(
             id__in=sound_ids_described_ok, processing_state="FA").count()
 
+        progress = 0
+        if self.description_output is not None:
+            progress = 100.0 * (n_sounds_published +
+                                n_sounds_moderation +
+                                n_sounds_failed_processing +
+                                n_sounds_error) / \
+                       (n_sounds_described_ok +
+                        n_sounds_error +
+                        n_sounds_remaining_to_describe)
+            progress = int(progress)
+            # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
+            # number of sounds that should have been described and processed. Sounds that fail processing or description
+            # are also counted as "done" as their status won't change.
+            # After the 'describe_sounds' method finishes, progress should always be 100.
+
         return {
             'n_sounds_remaining_to_describe': n_sounds_remaining_to_describe,
-            'n_sounds_described_ok': len(sound_ids_described_ok),
+            'n_sounds_described_ok': n_sounds_described_ok,
             'sound_errors': sound_errors,
-            'n_sounds_error': len(sound_errors),
+            'n_sounds_error': n_sounds_error,
             'n_sounds_published': n_sounds_published,
             'n_sounds_moderation': n_sounds_moderation,
             'n_sounds_pending_processing': n_sounds_pending_processing,
             'n_sounds_currently_processing': n_sounds_currently_processing,
             'n_sounds_failed_processing': n_sounds_failed_processing,
+            'progress_percentage': progress,
         }

@@ -4247,3 +4247,9 @@ ul.messages {
    max-height:400px;
    display:block;
 }
+
+.csv-bulk-upload-progress-label {
+    padding: 10px;
+    text-align: center;
+    font-size: 25px;
+}

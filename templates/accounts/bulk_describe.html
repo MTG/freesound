@@ -26,10 +26,10 @@
          </ul>
     {% endif %}
 
-    {% if lines_failed_validation %}
+    {% if lines_failed_validation and not global_errors %}
         <p>
             The following <b>{{ lines_failed_validation|length }} sound{{ lines_failed_validation|pluralize }}
-            ha{{ lines_failed_validation|pluralize:"s,ve" }} failed validation</b> and are not going to be added
+            ha{{ lines_failed_validation|pluralize:"s,ve" }} failed validation</b> and won't be added
             to Freesound if you continue now with the bulk describe process. Specific errors are maked in red in the
             following table (hover the <i>i</i> symbol to see the error):
         </p>
@@ -52,7 +52,7 @@
 
     {% endif %}
 
-    {% if lines_validated_ok %}
+    {% if lines_validated_ok and not global_errors %}
         <p>
             The following <b>{{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }}
             ha{{ lines_validated_ok|pluralize:"s,ve" }} validated correctly</b> and will be described and added to

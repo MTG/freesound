@@ -1188,7 +1188,9 @@ class BulkUploadProgress(models.Model):
                 if not line_for_display[name_idx]:
                     line_for_display[name_idx] = line_for_display[filename_idx]
 
-                lines_for_display.append((line_for_display, line_no))
+                # Insert new element with line number
+                line_for_display = [line_no] + line_for_display
+                lines_for_display.append(line_for_display)
         return lines_for_display
 
     def get_lines_failed_validation_for_display(self):
@@ -1199,7 +1201,7 @@ class BulkUploadProgress(models.Model):
         lines_for_display = []
         if self.validation_output is not None:
             for line, line_errors, line_no in self.validation_output['lines_with_errors']:
-                line_for_display = [(line[header_key], line_errors.get(header_key, ''))
+                line_for_display = [(line.get(header_key, ''), line_errors.get(header_key, ''))
                                     for header_key in csv_bulk_upload.EXPECTED_HEADER_NO_USERNAME]
 
                 # Replace tags by cleaned version so user gets better feedback
@@ -1207,7 +1209,9 @@ class BulkUploadProgress(models.Model):
                 cleaned_tags = clean_and_split_tags(line_for_display[tags_idx][0])
                 line_for_display[tags_idx] = (' '.join(cleaned_tags), line_for_display[tags_idx][1])
 
-                lines_for_display.append((line_for_display, line_no))
+                # Insert new element with line number and potential "number of columns" errors
+                line_for_display = [(line_no, line_errors.get('columns', ''))] + line_for_display
+                lines_for_display.append(line_for_display)
         return lines_for_display
 
     def get_global_errors_for_display(self):

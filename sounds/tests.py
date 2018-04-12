@@ -926,11 +926,11 @@ class SoundSignatureTestCase(TestCase):
 
 
 class SoundTemplateCacheTests(TestCase):
-    fixtures = ['sounds']
+    fixtures = ['initial_data']
 
     def setUp(self):
         cache.clear()
-        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        users, packs, sounds = create_user_and_sounds(num_sounds=2)
         self.sound = sounds[0]
         self.sound.change_processing_state("OK")
         self.sound.change_moderation_state("OK")
@@ -969,6 +969,7 @@ class SoundTemplateCacheTests(TestCase):
         print(locmem._caches[''].keys())
         print(cache_keys)
 
+    # Make sure the sound name and description are updated
     def test_update_description(self):
         cache_keys = self._get_sound_view_cache_keys()
         self._assertCacheAbsent(cache_keys)
@@ -1005,6 +1006,7 @@ class SoundTemplateCacheTests(TestCase):
         tag = soup.find('a', {'id': 'delete_button'})
         return tag['href']
 
+    # Comments are only cached in display
     def test_add_remove_comment(self):
         cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
@@ -1037,6 +1039,7 @@ class SoundTemplateCacheTests(TestCase):
         resp = self._get_sound_display()
         self.assertInHTML('0 comments', resp.content)
 
+    # Downloads are only cached in display
     @mock.patch('sounds.views.sendfile', return_value=HttpResponse('Dummy response'))
     def test_download(self, sendfile):
         cache_keys = self._get_sound_display_cache_keys()
@@ -1059,7 +1062,7 @@ class SoundTemplateCacheTests(TestCase):
         resp = self._get_sound_display()
         self.assertInHTML('1 download', resp.content)
 
-    # Similarity icon
+    # Similarity link (cached in display and view)
     @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
     def _test_similarity_update(self, cache_keys, check_present, similarity_add):
         # Default analysis_state is 'PE', but for similarity update it should be 'OK', otherwise sound gets ignored
@@ -1095,17 +1098,14 @@ class SoundTemplateCacheTests(TestCase):
             self._get_sound_view_footer_top(),
             lambda: '<a id="similar_sounds_link"' in self._get_sound_view().content)
 
-    # Pack icon
-    def test_add_remove_pack(self):
-        cache_keys = self._get_sound_display_cache_keys()
+    # Pack link (cached in display and view)
+    def _test_add_remove_pack(self, cache_keys, check_present):
         self._assertCacheAbsent(cache_keys)
 
         self.client.login(username='testuser', password='testpass')
 
         self.assertIsNone(self.sound.pack)
-        resp = self._get_sound_display()
-        text = '<a class="pack"'
-        self.assertNotIn(text, resp.content)
+        self.assertFalse(check_present())
         self._assertCachePresent(cache_keys)
 
         # Add sound to pack
@@ -1119,8 +1119,7 @@ class SoundTemplateCacheTests(TestCase):
         # Check pack icon
         self.sound.refresh_from_db()
         self.assertIsNotNone(self.sound.pack)
-        resp = self._get_sound_display()
-        self.assertIn(text, resp.content)
+        self.assertTrue(check_present())  # check_present should render the template
         self._assertCachePresent(cache_keys)
 
         # Remove sound from pack
@@ -1133,16 +1132,105 @@ class SoundTemplateCacheTests(TestCase):
         # Check pack icon being absent
         self.sound.refresh_from_db()
         self.assertIsNone(self.sound.pack)
-        resp = self._get_sound_display()
-        self.assertNotIn(text, resp.content)
+        self.assertFalse(check_present())
+
+    def test_add_remove_pack_display(self):
+        self._test_add_remove_pack(
+            self._get_sound_display_cache_keys(),
+            lambda: '<a class="pack"' in self._get_sound_display().content
+        )
+
+    def test_add_remove_pack_view(self):
+        self._test_add_remove_pack(
+            self._get_sound_view_footer_top(),
+            lambda: '<a id="pack_link"' in self._get_sound_view().content
+        )
+
+    # Geotag link (cached in display and view)
+    def _test_add_remove_geotag(self, cache_keys, check_present):
+        self._assertCacheAbsent(cache_keys)
+
+        self.client.login(username='testuser', password='testpass')
+
+        self.assertIsNone(self.sound.geotag)
+        self.assertFalse(check_present())
+        self._assertCachePresent(cache_keys)
+
+        # Add a geotag to the sound
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            'geotag-lat': 20,
+            'geotag-lon': 20,
+            'geotag-zoom': 18
+        })
+        self.assertEqual(resp.status_code, 302)
+        self._assertCacheAbsent(cache_keys)
+
+        # Check geotag icon
+        self.sound.refresh_from_db()
+        self.assertIsNotNone(self.sound.geotag)
+        self.assertTrue(check_present())
+        self._assertCachePresent(cache_keys)
+
+        # Remove geotag from the sound
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            'geotag-remove_geotag': 'on',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self._assertCacheAbsent(cache_keys)
+
+        # Check geotag icon being absent
+        self.sound.refresh_from_db()
+        self.assertIsNone(self.sound.geotag)
+        self.assertFalse(check_present())
+
+    def test_add_remove_geotag_display(self):
+        self._test_add_remove_geotag(
+            self._get_sound_display_cache_keys(),
+            lambda: '<a class="geotag"' in self._get_sound_display().content
+        )
+
+    def test_add_remove_geotag_view(self):
+        self._test_add_remove_geotag(
+            self._get_sound_view_footer_top(),
+            lambda: '<a id="geotag_link"' in self._get_sound_view().content
+        )
+
+    # Changing license
+    def _test_change_license(self, cache_keys, new_license, check_present):
+        self._assertCacheAbsent(cache_keys)
+
+        self.client.login(username='testuser', password='testpass')
+
+        self.assertNotEqual(self.sound.license, new_license)
+        self.assertFalse(check_present())
+        self._assertCachePresent(cache_keys)
+
+        # Change license
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            'license': new_license.id,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self._assertCacheAbsent(cache_keys)
+
+        # Check that license is updated
+        self.assertTrue(check_present())
+
+    def test_change_license_display(self):
+        self._test_change_license(
+            self._get_sound_display_cache_keys(),
+            License.objects.get(name='Attribution'),
+            lambda: 'images/licenses/by.png' in self._get_sound_display().content
+        )
+
+    def test_change_license_view(self):
+        license = License.objects.get(name='Attribution')
+        self._test_change_license(
+            self._get_sound_view_footer_top(),
+            license,
+            lambda: str(license.name) in self._get_sound_view().content
+        )
 
     def test_add_remove_remixes(self):
-        pass
-
-    def test_add_remove_geotag(self):
-        pass
-
-    def test_change_license(self):
         pass
 
     def test_processing_state_change(self):
@@ -1150,3 +1238,4 @@ class SoundTemplateCacheTests(TestCase):
 
     def test_moderation_state_change(self):
         pass
+

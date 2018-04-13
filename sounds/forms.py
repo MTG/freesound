@@ -78,11 +78,6 @@ class SoundDescriptionForm(forms.Form):
         self.fields['is_explicit'].disabled = explicit_disable
 
 
-class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm):
-    pack_name = forms.CharField(max_length=512, min_length=5)
-    pass
-
-
 class RemixForm(forms.Form):
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
@@ -268,3 +263,13 @@ class DeleteSoundForm(forms.Form):
                 }
         super(DeleteSoundForm, self).__init__(*args, **kwargs)
 
+
+class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseForm):
+    """
+    This is the form that we use to validate sound metadata provided via CSV bulk description.
+    This form inherits from other existing forms to consolidate all sound description related fields in one single form.
+    None of the forms from which SoundCSVDescriptionForm inherits are ModelForms, therefore this form is only intented
+    to validate metadata fields passed to it (i.e. does not have save() method).
+    The field "pack_name" is added manually because there is no logic that we want to replicate from PackForm.
+    """
+    pack_name = forms.CharField(min_length=5)

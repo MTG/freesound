@@ -22,6 +22,7 @@ import os
 import shutil
 import csv
 import logging
+import json
 from django.urls import reverse
 from django.contrib.auth.models import User
 from utils.audioprocessing import get_sound_type
@@ -35,6 +36,7 @@ from utils.tags import clean_and_split_tags
 from django.contrib.auth.models import Group
 from gearman.errors import ServerUnavailable
 from django.apps import apps
+from collections import defaultdict
 
 
 console_logger = logging.getLogger("console")
@@ -246,8 +248,12 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
     global_errors = []
     filenames_to_describe = []
 
-    # Import models using apps.get_model (to avoid circular dependencies)
+    # Import required sound models using apps.get_model (to avoid circular dependencies)
     License = apps.get_model('sounds', 'License')
+
+    # Import sound form here to avoid circular dependecy problems between sounds.models, sounds.forms and
+    # utils.sound_upload.
+    from sounds.forms import SoundCSVDescriptionForm
 
     # Check headers
     if username is not None and csv_header != EXPECTED_HEADER_NO_USERNAME:
@@ -260,7 +266,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
     # Check individual rows
     if not global_errors:
         for n, line in enumerate(csv_lines):
-            line_errors = {}
+            line_errors = defaultdict(str)
             anyerror = False
             n_columns_is_ok = True
 
@@ -275,10 +281,9 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 n_columns_is_ok = False
 
             if n_columns_is_ok:
-                # If the number of columns of the current row is ok, we can proceed to validate each individual
-                # column
+                # If the number of columns of the current row is ok, we can proceed to validate each individual column
 
-                # Check user exists
+                # 1) Check that user exists
                 if username is None:
                     # If no arg username provided, take it from CSV
                     username = line['username']
@@ -288,7 +293,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     anyerror = True
                     line_errors['username'] = "User does not exist."
 
-                # Check that audio file exists in disk and that it has not been described yet in another line
+                # 2) Check that audio file exists in disk and that it has not been described yet in CSV another line
                 audio_filename = line['audio_filename']
                 src_path = os.path.join(sounds_base_dir, audio_filename)
                 if not os.path.exists(src_path):
@@ -301,40 +306,40 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     else:
                         filenames_to_describe.append(src_path)
 
-                # Check license is valid
-                license = line['license']
-                available_licenses = License.objects.exclude(name='Sampling+').values_list('name', flat=True)
-                if license not in available_licenses:
-                    anyerror = True
-                    line_errors['license'] = "Licence must be one of [%s]." % ', '.join(available_licenses)
+                # 3) Check that all the other sound fields are ok
+                try:
+                    license_id = License.objects.get(name=line['license']).id
+                except License.DoesNotExist:
+                    license_id = 0
+                sound_fields = {
+                    'name': line['name'] or audio_filename,
+                    'description': line['description'],
+                    'license': license_id,
+                    'tags': line['tags'],
+                    'pack_name': line['pack_name'] or None,
+                }
 
-                # Check geotag is valid
-                geotag = line['geotag']
-                if geotag.strip():
-                    # Only validate geotag if provided
-                    geoparts = geotag.split(',')
+                if line['geotag'].strip():
+                    geoparts = str(line['geotag']).split(',')
                     if len(geoparts) == 3:
                         lat, lon, zoom = geoparts
-                        try:
-                            float(lat)
-                            float(lon)
-                            int(zoom)
-                        except ValueError:
-                            line_errors['geotag'] = "Geotag must be in format 'float,float,int' for latitude, " \
-                                                    "longitude and zoom."
-                            anyerror = True
-                    elif len(geoparts) != 0:
-                        line_errors['geotag'] = "Geotag must be in format 'float,float,int' for latitude, " \
-                                                "longitude and zoom."
+                        sound_fields['lat'] = lat
+                        sound_fields['lon'] = lon
+                        sound_fields['zoom'] = zoom
+                    else:
                         anyerror = True
+                        line_errors['geotag'] = "Invalid geotag format. Must be latitude, longitude and zoom " \
+                                                "separated by commas (e.g. 41.40348, 2.189420, 18)."
 
-                # Check tags are valid
-                tags = line['tags']
-                cleaned_tags = clean_and_split_tags(tags)
-                if len(cleaned_tags) < 3 or len(cleaned_tags) > 30:
-                    line_errors['tags'] = "Incorrect number of tags (less than 3 or more than 30). " \
-                                          "Remember tags must be separated by spaces."
+                form = SoundCSVDescriptionForm(sound_fields)
+                if not form.is_valid():
+                    # If there are errors, add them to line_errors
                     anyerror = True
+                    for field, errors in json.loads(form.errors.as_json()).items():
+                        if field in ['lat', 'lon', 'zoom']:
+                            line_errors['geotag'] += ' '.join([e['message'] for e in errors])
+                        else:
+                            line_errors[field] = ' '.join([e['message'] for e in errors])
 
             # Append line data to the corresponding list
             if not anyerror and n_columns_is_ok:

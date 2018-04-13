@@ -35,8 +35,16 @@ import re
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
-    lat = forms.FloatField(min_value=-90, max_value=90, required=False)
-    lon = forms.FloatField(min_value=-180, max_value=180, required=False)
+    lat = forms.FloatField(min_value=-90, max_value=90, required=False,
+                           error_messages={
+                               'min_value': 'Latitude must be between -90 and 90.',
+                               'max_value': 'Latitude must be between -90 and 90.'
+                           })
+    lon = forms.FloatField(min_value=-180, max_value=180, required=False,
+                           error_messages={
+                               'min_value': 'Longitude must be between -180 and 180.',
+                               'max_value': 'Longitude must be between -180 and 180.'
+                           })
     zoom = forms.IntegerField(min_value=11,
                               error_messages={'min_value': "You should zoom in more until you reach at least zoom 11."},
                               required=False)
@@ -272,4 +280,9 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
     to validate metadata fields passed to it (i.e. does not have save() method).
     The field "pack_name" is added manually because there is no logic that we want to replicate from PackForm.
     """
-    pack_name = forms.CharField(min_length=5)
+    pack_name = forms.CharField(min_length=5, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(SoundCSVDescriptionForm, self).__init__(*args, **kwargs)
+        self.fields['name'].required = False  # Make sound name not required
+

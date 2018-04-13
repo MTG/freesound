@@ -148,8 +148,8 @@ class PackChoiceField(forms.ModelChoiceField):
 
 class PackForm(forms.Form):
     pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
-    new_pack = HtmlCleaningCharField(widget=forms.TextInput(attrs={'size': 45}),
-                                     label="Or fill in the name of a new pack:", required=False, min_length=1)
+    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
+                               label="Or fill in the name of a new pack:", required=False, min_length=5)
 
     def __init__(self, pack_choices, *args, **kwargs):
         super(PackForm, self).__init__(*args, **kwargs)
@@ -160,6 +160,7 @@ class PackEditForm(ModelForm):
     pack_sounds = forms.CharField(min_length=1,
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
                                   required=False)
+    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
     def clean_pack_sounds(self):
         pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])

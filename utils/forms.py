@@ -32,9 +32,10 @@ def filename_has_valid_extension(filename):
 
 
 class HtmlCleaningCharField(forms.CharField):
+    """ A field that removes disallowed HTML tags as implemented in utils.text.clean_html and checks for
+     too many upper chase characters"""
     def clean(self, value):
         value = super(HtmlCleaningCharField, self).clean(value)
-
         if is_shouting(value):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
         try:
@@ -44,14 +45,14 @@ class HtmlCleaningCharField(forms.CharField):
 
 
 class TagField(forms.CharField):
+    """ Gets the value of tags as a single string (with tags separated by spaces or commas) and cleans it to a set of
+    unique tag strings """
     def clean(self, value):
-        tags = clean_and_split_tags(value)
-
+        tags = clean_and_split_tags(str(value))
         if len(tags) < 3:
             raise forms.ValidationError('You should add at least 3 tags...')
         elif len(tags) > 30:
             raise forms.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-
         return tags
 
 
@@ -61,6 +62,7 @@ class RecaptchaWidget(forms.Widget):
         if settings.RECAPTCHA_PUBLIC_KEY == '':
             return ''
         return captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY).strip()
+
 
 class RecaptchaWidgetSSL(forms.Widget):
     """ A Widget which "renders" the output of captcha.displayhtml using SSL option"""

@@ -15,56 +15,17 @@
 
 {% block section_content %}
 
-<script type="text/javascript">
-    function showDescriptionForm()
-    {
-        $("#description_form").show('blind', {}, 500, function() {});
-	$("#add_description_label").hide();
-    }
-
-    //function hideDescriptionForm()
-    //{
-    //    $("#description_form").hide('blind', {}, 500, function() {});
-    //}
-</script>
-
 <h1>Pack: {{pack.name}} by <a href="{% url 'account' pack.user.username %}">{{pack.user.username}}</a></h1>
-
-
-{% comment %}
-{% if not pack.is_dirty %}
-	{% if num_sounds_ok > 0 %}
-		<div id="single_pack_sidebar">
-		<div id="download">
-		    {% if request.user.is_authenticated %}
-		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
-		    {% else %}
-		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" id="download_login_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
-		    {% endif %}
-		</div>
-
-		</div>
-	{% endif %}
-{% endif %}
-{% endcomment %}
-
-
-
 
 <div id="content">
     <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
-    <p>
-    {{pack.description|replace_img|safe|linebreaksbr}}
-    </p>
-
+    <p>{{pack.description|replace_img|safe|linebreaksbr}}</p>
     <ul>
-            <li>Pack created on: <b>{{ pack.created }}</b></li>
-            <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
-            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
+        <li>Pack created on: <b>{{ pack.created }}</b></li>
+        <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
+        <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
     </ul>
 
     {% if perms.pack.can_edit or pack.user == request.user %}
@@ -79,7 +40,6 @@
                 </a>
             </p>
     {% endif %}
-
 
     </div>
 </div><!-- #pack_info -->

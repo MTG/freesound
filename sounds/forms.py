@@ -73,9 +73,14 @@ class SoundDescriptionForm(forms.Form):
             del kwargs['explicit_disable']
 
         super(SoundDescriptionForm, self).__init__(*args, **kwargs)
-        # Disable is_explcit field if is already marked
+        # Disable is_explicit field if is already marked
         self.initial['is_explicit'] = explicit_disable
         self.fields['is_explicit'].disabled = explicit_disable
+
+
+class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm):
+    pack_name = forms.CharField(max_length=512, min_length=5)
+    pass
 
 
 class RemixForm(forms.Form):
@@ -151,16 +156,6 @@ class PackForm(forms.Form):
         self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
 
 
-class PackDescriptionForm(ModelForm):
-
-    class Meta:
-        model = Pack
-        fields = ('description',)
-        widgets = {
-            'description': Textarea(attrs={'rows': 5, 'cols':60}),
-        }
-
-
 class PackEditForm(ModelForm):
     pack_sounds = forms.CharField(min_length=1,
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
@@ -203,10 +198,10 @@ class PackEditForm(ModelForm):
 
     class Meta:
         model = Pack
-        fields = ('name','description',)
+        fields = ('name', 'description',)
         widgets = {
             'name': TextInput(),
-            'description': Textarea(attrs={'rows': 5, 'cols':50}),
+            'description': Textarea(attrs={'rows': 5, 'cols': 50}),
         }
 
 

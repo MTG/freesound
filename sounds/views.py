@@ -673,24 +673,10 @@ def pack(request, username, pack_id):
     num_sounds_ok = len(qs)
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
-    else :
+    else:
         if num_sounds_ok < pack.num_sounds :
-            messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
-
-    # If user is owner of pack, display form to add description
-    enable_description_form = False
-    if request.user.id == pack.user_id:
-        enable_description_form = True
-        form = PackDescriptionForm(instance = pack)
-
-    # Manage POST info (if adding a description)
-    if request.method == 'POST':
-        form = PackDescriptionForm(request.POST, pack)
-        if form.is_valid():
-            pack.description = form.cleaned_data['description']
-            pack.save()
-        else:
-            pass
+            messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been '
+                                                         'moderated</b> yet.')
 
     return render(request, 'sounds/pack.html', locals())
 

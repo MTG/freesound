@@ -34,7 +34,6 @@ from django.db.models.signals import pre_delete, post_delete, post_save, pre_sav
 from django.dispatch import receiver
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
-from sounds.management.commands import csv_bulk_upload
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -46,6 +45,8 @@ from utils.search.search_general import delete_sound_from_solr
 from utils.similarity_utilities import delete_sound_from_gaia
 from utils.mail import send_mail_template
 from utils.tags import clean_and_split_tags
+from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, \
+    EXPECTED_HEADER_NO_USERNAME
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
@@ -1142,22 +1143,20 @@ class BulkUploadProgress(models.Model):
 
     def get_csv_lines(self):
         """
-        Read lines form CSV file. To do that, use the 'get_csv_lines' method implemented in csv_bulk_upload
-        management command.
+        Read lines form CSV file and return a tuple with the header and a list of dictionaries.
         """
-        return csv_bulk_upload.Command().get_csv_lines(self.csv_path)
+        return get_csv_lines(self.csv_path)
 
     def validate_csv_file(self):
         """
-        Validate CSV file and store output in self.validation_output. To validate the CSV file, we use
-        the 'check_input_file' method implemented in csv_bulk_upload management command.
+        Validate CSV file and store output in self.validation_output.
         """
         header, lines = self.get_csv_lines()
-        lines_ok, lines_with_errors, global_errors = csv_bulk_upload.Command().check_input_file(
-            os.path.join(settings.UPLOADS_PATH, str(self.user_id)),  # Base directory for sounds
-            header,
-            lines,
-            username_arg=self.user.username)
+        lines_ok, lines_with_errors, global_errors = validate_input_csv_file(
+            csv_header=header,
+            csv_lines=lines,
+            sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
+            username=self.user.username)
         self.validation_output = {
             'lines_ok': lines_ok,
             'lines_with_errors': lines_with_errors,
@@ -1175,16 +1174,16 @@ class BulkUploadProgress(models.Model):
         if self.validation_output is not None:
             for line, line_no in self.validation_output['lines_ok']:
                 line_for_display = [line[header_key] for header_key in
-                                    csv_bulk_upload.EXPECTED_HEADER_NO_USERNAME]
+                                    EXPECTED_HEADER_NO_USERNAME]
 
                 # Replace tags by cleaned version so user gets better feedback
-                tags_idx = csv_bulk_upload.EXPECTED_HEADER_NO_USERNAME.index('tags')
+                tags_idx = EXPECTED_HEADER_NO_USERNAME.index('tags')
                 cleaned_tags = clean_and_split_tags(line_for_display[tags_idx])
                 line_for_display[tags_idx] = ' '.join(cleaned_tags)
 
                 # Replace name with default of audio filename so user gets better feedback
-                name_idx = csv_bulk_upload.EXPECTED_HEADER_NO_USERNAME.index('name')
-                filename_idx = csv_bulk_upload.EXPECTED_HEADER_NO_USERNAME.index('audio_filename')
+                name_idx = EXPECTED_HEADER_NO_USERNAME.index('name')
+                filename_idx = EXPECTED_HEADER_NO_USERNAME.index('audio_filename')
                 if not line_for_display[name_idx]:
                     line_for_display[name_idx] = line_for_display[filename_idx]
 
@@ -1202,10 +1201,10 @@ class BulkUploadProgress(models.Model):
         if self.validation_output is not None:
             for line, line_errors, line_no in self.validation_output['lines_with_errors']:
                 line_for_display = [(line.get(header_key, ''), line_errors.get(header_key, ''))
-                                    for header_key in csv_bulk_upload.EXPECTED_HEADER_NO_USERNAME]
+                                    for header_key in EXPECTED_HEADER_NO_USERNAME]
 
                 # Replace tags by cleaned version so user gets better feedback
-                tags_idx = csv_bulk_upload.EXPECTED_HEADER_NO_USERNAME.index('tags')
+                tags_idx = EXPECTED_HEADER_NO_USERNAME.index('tags')
                 cleaned_tags = clean_and_split_tags(line_for_display[tags_idx][0])
                 line_for_display[tags_idx] = (' '.join(cleaned_tags), line_for_display[tags_idx][1])
 
@@ -1227,18 +1226,14 @@ class BulkUploadProgress(models.Model):
     def describe_sounds(self):
         """
         Start the actual description of the sounds and add them to Freesound.
-        To do that invoque the csv_bulk_upload management command.
         """
-        cmd = csv_bulk_upload.Command()
-        opts = {
-            'd': False,
-            'f': True,  # Skip lines with validation errors
-            'filepath': self.csv_path,
-            'soundsdir': os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
-            'uname': self.user.username,
-            'bulkuploadid': self.id,
-        }
-        cmd.handle(**opts)
+        bulk_describe_from_csv(
+            self.csv_path,
+            delete_already_existing=False,
+            force_import=True,
+            sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
+            username=self.user.username,
+            bulkupload_progress_id=self.id)
 
     def store_progress_for_line(self, line_no, message):
         """

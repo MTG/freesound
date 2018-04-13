@@ -330,6 +330,9 @@ div.infowindow {
 #edit_link {
     background-image: url(../images/fugue-icons/icons/quill.png);
 }
+#delete_link {
+    background-image: url(../images/cancel.png);
+}
 #comments_link {
     background-image: url(../images/fugue-icons/icons/pencil.png);
 }

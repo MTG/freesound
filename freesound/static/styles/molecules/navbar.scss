@@ -1,7 +1,8 @@
 $navbar-height: 80px;
+$navbar-height-mobile: 64px;
 
 .bw-nav {
-  height: $navbar-height;
+  height: $navbar-height-mobile;
   position: fixed;
   top: 0;
   right: 0;
@@ -11,6 +12,10 @@ $navbar-height: 80px;
   transition: box-shadow 0.2s ease;
   display: flex;
   align-items: center;
+
+  @include md-and-above {
+    height: $navbar-height;
+  }
 }
 
 .bw-nav--scrolled {
@@ -47,8 +52,10 @@ $navbar-height: 80px;
   }
 
   .bw-nav--expanded & {
-    width: 190px;
-    background-image: url('assets/logos/logo-text.svg');
+    @include md-and-above {
+      width: 190px;
+      background-image: url('assets/logos/logo-text.svg');
+    }
   }
 }
 
@@ -59,6 +66,8 @@ $navbar-height: 80px;
 }
 
 .bw-nav__actions {
+  display: none;
+
   @include md-and-above {
     list-style: none;
     display: flex;

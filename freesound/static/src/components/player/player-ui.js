@@ -5,18 +5,34 @@ import { getIcon } from '../../utils/icons';
 
 const players = [...document.getElementsByClassName('bw-player')];
 
+const usePlayIcon = parentNode => {
+  const bwPlayBtn = parentNode.getElementsByClassName('bw-player__play-btn')[0];
+  const playerStatusIcon = bwPlayBtn.getElementsByTagName('svg')[0];
+  const playIcon = getIcon('play');
+  bwPlayBtn.replaceChild(playIcon, playerStatusIcon);
+};
+
+const usePauseIcon = parentNode => {
+  const bwPlayBtn = parentNode.getElementsByClassName('bw-player__play-btn')[0];
+  const playerStatusIcon = bwPlayBtn.getElementsByTagName('svg')[0];
+  const pauseIcon = getIcon('pause');
+  bwPlayBtn.replaceChild(pauseIcon, playerStatusIcon);
+};
+
 const usePlayingStatus = (audioElement, parentNode) => {
   const progressIndicator = parentNode.getElementsByClassName('bw-player__progress-indicator')[0];
   const { duration } = audioElement;
   progressIndicator.style.animationDuration = `${duration}s`;
   progressIndicator.style.animationPlayState = 'running';
   parentNode.classList.add('bw-player--playing');
+  usePauseIcon(parentNode);
 };
 
 const removePlayingStatus = (audioElement, parentNode) => {
   parentNode.classList.remove('bw-player--playing');
   const progressIndicator = parentNode.getElementsByClassName('bw-player__progress-indicator')[0];
   progressIndicator.style.animationPlayState = 'paused';
+  usePlayIcon(parentNode);
 };
 
 const onPlayerTimeUpdate = (audioElement, parentNode) => {
@@ -44,23 +60,18 @@ const createProgressStatus = audioElement => {
   return progressStatus;
 };
 
-const createPlayerControls = audioElement => {
+const createPlayerControls = (parentNode, audioElement) => {
   const playerControls = document.createElement('div');
   playerControls.className = 'bw-player__controls';
   const playButton = document.createElement('button');
-  playButton.className = 'no-border-bottom-on-hover';
+  playButton.className = 'bw-player__play-btn no-border-bottom-on-hover';
   playButton.appendChild(getIcon('play'));
   playButton.addEventListener('click', () => {
     const isPlaying = !audioElement.paused;
-    const playerStatusIcon = playButton.getElementsByTagName('svg')[0];
-    const playIcon = getIcon('play');
-    const pauseIcon = getIcon('pause');
     if (isPlaying) {
       audioElement.pause();
-      playButton.replaceChild(playIcon, playerStatusIcon);
     } else {
       audioElement.play();
-      playButton.replaceChild(pauseIcon, playerStatusIcon);
     }
   });
   playerControls.appendChild(playButton);
@@ -76,7 +87,7 @@ const createWaveformImage = (parentNode, audioElement) => {
   waveformImage.src = waveform;
   waveformImage.alt = title;
   const progressIndicator = createProgressIndicator();
-  const playerControls = createPlayerControls(audioElement, progressIndicator);
+  const playerControls = createPlayerControls(parentNode, audioElement);
   imageContainer.appendChild(waveformImage);
   imageContainer.appendChild(progressIndicator);
   imageContainer.appendChild(playerControls);

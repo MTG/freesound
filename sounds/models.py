@@ -1152,76 +1152,18 @@ class BulkUploadProgress(models.Model):
         Validate CSV file and store output in self.validation_output.
         """
         header, lines = self.get_csv_lines()
-        lines_ok, lines_with_errors, global_errors = validate_input_csv_file(
+        lines_validated, global_errors = validate_input_csv_file(
             csv_header=header,
             csv_lines=lines,
             sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
             username=self.user.username)
         self.validation_output = {
-            'lines_ok': lines_ok,
-            'lines_with_errors': lines_with_errors,
+            'lines_ok': [line for line in lines_validated if not line['line_errors']],
+            'lines_with_errors': [line for line in lines_validated if line['line_errors']],
             'global_errors': global_errors,
         }
         self.progress_type = 'V'  # Set progress to 'validated'
         self.save()
-
-    def get_lines_validated_ok_for_display(self):
-        """
-        Get the lines from the validation output that validated ok and prepare them to be displayed in a table
-        to be shown to users.
-        """
-        lines_for_display = []
-        if self.validation_output is not None:
-            for line, line_no in self.validation_output['lines_ok']:
-                line_for_display = [line[header_key] for header_key in
-                                    EXPECTED_HEADER_NO_USERNAME]
-
-                # Replace tags by cleaned version so user gets better feedback
-                tags_idx = EXPECTED_HEADER_NO_USERNAME.index('tags')
-                cleaned_tags = clean_and_split_tags(line_for_display[tags_idx])
-                line_for_display[tags_idx] = ' '.join(cleaned_tags)
-
-                # Replace name with default of audio filename so user gets better feedback
-                name_idx = EXPECTED_HEADER_NO_USERNAME.index('name')
-                filename_idx = EXPECTED_HEADER_NO_USERNAME.index('audio_filename')
-                if not line_for_display[name_idx]:
-                    line_for_display[name_idx] = line_for_display[filename_idx]
-
-                # Insert new element with line number
-                line_for_display = [line_no] + line_for_display
-                lines_for_display.append(line_for_display)
-        return lines_for_display
-
-    def get_lines_failed_validation_for_display(self):
-        """
-        Get the lines from the validation output that failed validated ok and prepare them to be displayed in a table
-        to be shown to users.
-        """
-        lines_for_display = []
-        if self.validation_output is not None:
-            for line, line_errors, line_no in self.validation_output['lines_with_errors']:
-                line_for_display = [(line.get(header_key, ''), line_errors.get(header_key, ''))
-                                    for header_key in EXPECTED_HEADER_NO_USERNAME]
-
-                # Replace tags by cleaned version so user gets better feedback
-                tags_idx = EXPECTED_HEADER_NO_USERNAME.index('tags')
-                cleaned_tags = clean_and_split_tags(line_for_display[tags_idx][0])
-                line_for_display[tags_idx] = (' '.join(cleaned_tags), line_for_display[tags_idx][1])
-
-                # Insert new element with line number and potential "number of columns" errors
-                line_for_display = [(line_no, line_errors.get('columns', ''))] + line_for_display
-                lines_for_display.append(line_for_display)
-        return lines_for_display
-
-    def get_global_errors_for_display(self):
-        """
-        Get global errors reported in the validation output and prepare them to be displayed in a table to be shown
-        to users.
-        """
-        if self.validation_output is not None:
-            return self.validation_output['global_errors']
-        else:
-            return []
 
     def describe_sounds(self):
         """
@@ -1261,8 +1203,8 @@ class BulkUploadProgress(models.Model):
                     sound_errors.append((line_no, value))
         n_sounds_described_ok = len(sound_ids_described_ok)
         n_sounds_error = len(sound_errors)
-        n_sounds_remaining_to_describe = \
-            len(self.get_lines_validated_ok_for_display()) - n_sounds_described_ok - n_sounds_error
+        n_lines_validated_ok = len(self.validation_output['lines_ok']) if self.validation_output is not None else 0
+        n_sounds_remaining_to_describe = n_lines_validated_ok - n_sounds_described_ok - n_sounds_error
 
         n_sounds_published = Sound.objects.filter(
             id__in=sound_ids_described_ok, processing_state="OK", moderation_state="OK").count()

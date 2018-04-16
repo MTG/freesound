@@ -149,23 +149,29 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             sound.pack = p
 
     # 5 create geotag objects
-    # format: lat#lon#zoom
     if 'geotag' in sound_fields:
+        # Create geotag from lat,lon,zoom text format
         if sound_fields['geotag']:
             lat, lon, zoom = sound_fields['geotag'].split(',')
             geotag = GeoTag(user=user,
-                lat=float(lat),
-                lon=float(lon),
-                zoom=int(zoom))
+                            lat=float(lat),
+                            lon=float(lon),
+                            zoom=int(zoom))
+            geotag.save()
+            sound.geotag = geotag
+    else:
+        # Create geotag from lat, lon, zoom separated fields
+        if 'lat' in sound_fields and 'lon' in sound_fields and 'zoom' in sound_fields:
+            geotag = GeoTag(user=user,
+                            lat=float(sound_fields['lat']),
+                            lon=float(sound_fields['lon']),
+                            zoom=int(sound_fields['zoom']))
             geotag.save()
             sound.geotag = geotag
 
     # 6 set description, tags
     sound.description = sound_fields['description']
-    tags = sound_fields['tags']
-    if type(tags) is not set:  # If tags have not been cleaned and splitted, do it now
-        tags = clean_and_split_tags(sound_fields['tags'])
-    sound.set_tags(tags)
+    sound.set_tags(sound_fields['tags'])
 
     if 'is_explicit' in sound_fields:
         sound.is_explicit = sound_fields['is_explicit']
@@ -228,23 +234,20 @@ EXPECTED_HEADER = ['audio_filename', 'name', 'tags', 'geotag', 'description', 'l
 def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=None):
     """
     Reads through the lines of a CSV file containing metadata to describe (and create) new Sound objects and returns
-    the lines that are ok, the lines that contain errors and a list of global errors (if any).
+    the list of lines after the validation process and a list of global errors (if any).
 
-    This function returns the lines which validated ok, the lines that have errors and the global errors in three
-    separate lists. The list of lines that validated ok is in fact a list of tuples where the first
-    element is the dictionary of the line fields and the second element is the line number. Similarly, the list of
-    lines with errors is in fact a list of tuples where the first element is a dictionary of the line fields,
-    the second element is a dictionary with errors (if any), and the third element is the line number. The list of
-    global errors is a simple list of strings describing each error (if any).
+    Each element in the returned list of lines after the validation process is a dictionary which inclues the original
+    line content, the cleaned line content (i.e. fields with cleaned data), and a dictionary of errors for the line
+    (if any). Lines that validated ok form lines that did not validate ok can be separated by checking whether there
+    are any errors for them.
 
     :param csv_header: header of the CSV (as returned by 'get_csv_lines' funtion above).
     :param csv_lines: lines of the CSV (as returned by 'get_csv_lines' funtion above).
     :param sounds_base_dir: directory where audio files referenced in CSV file lines should be found.
     :param username: username of the User to which sounds should be assigned to.
-    :return: tuple - (lines_ok, lines_with_errors, global_errors)
+    :return: tuple - (lines_validated, global_errors)
     """
-    lines_ok = []
-    lines_with_errors = []
+    lines_validated = []
     global_errors = []
     filenames_to_describe = []
 
@@ -267,16 +270,16 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
     if not global_errors:
         for n, line in enumerate(csv_lines):
             line_errors = defaultdict(str)
-            anyerror = False
+            line_cleaned = None
             n_columns_is_ok = True
 
             # Check that number of columns is ok
             if len(line) != len(EXPECTED_HEADER) and username is None:
-                line_errors['columns'] = 'Row should have %i columns (has %i).' % (len(EXPECTED_HEADER), len(line))
+                line_errors['columns'] = 'Row should have %i columns but it has %i.' % (len(EXPECTED_HEADER), len(line))
                 n_columns_is_ok = False
 
             if len(line) != len(EXPECTED_HEADER_NO_USERNAME) and username is not None:
-                line_errors['columns'] = 'Row should have %i columns (has %i).' \
+                line_errors['columns'] = 'Row should have %i columns but it has %i.' \
                                         % (len(EXPECTED_HEADER_NO_USERNAME), len(line))
                 n_columns_is_ok = False
 
@@ -290,27 +293,27 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 try:
                     User.objects.get(username=username)
                 except User.DoesNotExist:
-                    anyerror = True
                     line_errors['username'] = "User does not exist."
 
                 # 2) Check that audio file exists in disk and that it has not been described yet in CSV another line
                 audio_filename = line['audio_filename']
                 src_path = os.path.join(sounds_base_dir, audio_filename)
                 if not os.path.exists(src_path):
-                    anyerror = True
                     line_errors['audio_filename'] = "Audio file does not exist."
                 else:
                     if src_path in filenames_to_describe:
-                        anyerror = True
                         line_errors['audio_filename'] = "Audio file can only be described once."
                     else:
                         filenames_to_describe.append(src_path)
 
                 # 3) Check that all the other sound fields are ok
                 try:
-                    license_id = License.objects.get(name=line['license']).id
+                    license = License.objects.get(name=line['license'])
+                    license_id = license.id
+                    license_name = license.name
                 except License.DoesNotExist:
                     license_id = 0
+                    license_name = ''
                 sound_fields = {
                     'name': line['name'] or audio_filename,
                     'description': line['description'],
@@ -327,27 +330,34 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                         sound_fields['lon'] = lon
                         sound_fields['zoom'] = zoom
                     else:
-                        anyerror = True
                         line_errors['geotag'] = "Invalid geotag format. Must be latitude, longitude and zoom " \
                                                 "separated by commas (e.g. 41.40348, 2.189420, 18)."
 
                 form = SoundCSVDescriptionForm(sound_fields)
                 if not form.is_valid():
                     # If there are errors, add them to line_errors
-                    anyerror = True
                     for field, errors in json.loads(form.errors.as_json()).items():
                         if field in ['lat', 'lon', 'zoom']:
                             line_errors['geotag'] += ' '.join([e['message'] for e in errors])
                         else:
                             line_errors[field] = ' '.join([e['message'] for e in errors])
+                line_cleaned = form.cleaned_data
+                line_cleaned.update({  # Update line_cleaned with the fields not returned by SoundCSVDescriptionForm
+                    'username': username,
+                    'audio_filename': audio_filename,
+                    'license': license_name,  # Overwrite license with license name as License is not JSON serializable
+                    'tags': list(line_cleaned.get('tags', [])),  # Convert tags to List as Set is not JSON serializable
+                })
 
             # Append line data to the corresponding list
-            if not anyerror and n_columns_is_ok:
-                lines_ok.append((line, n + 1))  # Add 1 to line number so first row is line 1
-            else:
-                lines_with_errors.append((line, line_errors, n + 1))  # Add 1 to line number so first row is line 1
+            lines_validated.append({
+                'line_no': n + 2,  # Show line number with l1 = header, l2 = first sound, and soon
+                'line_original': line,
+                'line_cleaned': line_cleaned,
+                'line_errors': line_errors,
+            })
 
-    return lines_ok, lines_with_errors, global_errors
+    return lines_validated, global_errors
 
 
 def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_import=False, sounds_base_dir=None,
@@ -370,13 +380,13 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
     # Read and validate CSV
     header, lines = get_csv_lines(csv_file_path)
-    lines_ok, lines_with_errors, global_errors = validate_input_csv_file(
+    lines_validated, global_errors = validate_input_csv_file(
         csv_header=header,
         csv_lines=lines,
         sounds_base_dir=sounds_base_dir,
         username=username)
 
-    # Print error messages if any
+    # Print global error messages if any
     if global_errors:
         console_logger.info('Major issues were found while validating the CSV file. '
                             'Fix them and re-run the command.')
@@ -384,55 +394,44 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             console_logger.info('- %s' % error)
         return
 
-    if lines_with_errors and not force_import:
-        console_logger.info('The following %i lines contain invalid data. Fix them or re-run with -f to import '
-                            'skipping these lines:' % len(lines_with_errors))
-        for _, line_errs, line_no in lines_with_errors:
-            errors = '; '.join(line_errs.values())
-            console_logger.info('l%s: %s' % (line_no, errors))
-        return
+    # Print line error messages if any
+    lines_with_errors = [line for line in lines_validated if line['line_errors']]
+    if lines_with_errors:
+        if not force_import:
+            console_logger.info('The following %i lines contain invalid data. Fix them or re-run with -f to import '
+                                'skipping these lines:' % len(lines_with_errors))
+        else:
+            console_logger.info('Skipping the following %i lines due to invalid data' % len(lines_with_errors))
+        for line in lines_with_errors:
+            errors = '; '.join(line['line_errors'].values())
+            console_logger.info('l%s: %s' % (line['line_no'], errors))
+        if not force_import:
+            return
 
-    elif lines_with_errors:
-        console_logger.info('Skipping the following %i lines due to invalid data' % len(lines_with_errors))
-        for _, line_errs, line_no in lines_with_errors:
-            errors = '; '.join(line_errs.values())
-            console_logger.info('l%s: %s' % (line_no, errors))
-
-    # If passed as an option, get corresponding BulkUploadProgress object to store progress of command
+    # If bulkupload_progress_id is not None, get corresponding BulkUploadProgress object to store progress information
     bulk_upload_progress_object = None
     if bulkupload_progress_id:
         try:
             bulk_upload_progress_object = BulkUploadProgress.objects.get(id=bulkupload_progress_id)
         except BulkUploadProgress.DoesNotExist:
             console_logger.info('BulkUploadProgress object with id %i can\'t be found, wont store progress information.'
-                        % bulkupload_progress_id)
+                                % bulkupload_progress_id)
 
     # Start the actual process of uploading files
+    lines_ok = [line for line in lines_validated if not line['line_errors']]
     console_logger.info('Adding %i sounds to Freesound' % len(lines_ok))
-    for line, line_no in lines_ok:
-
-        # Get data from csv
-        pathf = line['audio_filename']
-        namef = line['name'] if line['name'].strip() else line['audio_filename']
-        tagsf = line['tags']
-        geotagf = line['geotag'] if line['geotag'].strip() else None
-        descriptionf = line['description']
-        licensef = line['license']
-        packnamef = line['pack_name'] if line['pack_name'].strip() else None
-        if username is not None:
-            usernamef = username  # If username is given via parameter, take that username
-        else:
-            usernamef = line['username']  # Otherwise take username from CSV file
+    for line in lines_ok:
+        line_cleaned = line['line_cleaned']
 
         # Get user object
-        user = User.objects.get(username=usernamef)
+        user = User.objects.get(username=username or line_cleaned['username'])
 
         # Move sounds to the user upload directory (if sounds are not already there)
         user_uploads_directory = user.profile.locations()['uploads_dir']
         if not os.path.exists(user_uploads_directory):
             os.mkdir(user_uploads_directory)
-        src_path = os.path.join(sounds_base_dir, pathf)
-        dest_path = os.path.join(user_uploads_directory, os.path.basename(pathf))
+        src_path = os.path.join(sounds_base_dir, line_cleaned['audio_filename'])
+        dest_path = os.path.join(user_uploads_directory, os.path.basename(line_cleaned['audio_filename']))
         if src_path != dest_path:
             shutil.copy(src_path, dest_path)
 
@@ -440,19 +439,21 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             sound = create_sound(
                     user=user,
                     sound_fields={
-                        'name': namef,
+                        'name': line_cleaned['name'],
                         'dest_path': dest_path,
-                        'license': licensef,
-                        'pack': packnamef,
-                        'description': descriptionf,
-                        'tags': tagsf,
-                        'geotag': geotagf,
+                        'license': line_cleaned['license'],
+                        'pack': line_cleaned['pack_name'],
+                        'description': line_cleaned['description'],
+                        'tags': line_cleaned['tags'],
+                        'lat': line_cleaned['lat'],
+                        'lon': line_cleaned['lon'],
+                        'zoom': line_cleaned['zoom']
                     },
                     process=False,
                     remove_exists=delete_already_existing,
             )
             if bulk_upload_progress_object:
-                bulk_upload_progress_object.store_progress_for_line(line_no, sound.id)
+                bulk_upload_progress_object.store_progress_for_line(line['line_no'], sound.id)
 
             # Process sound and pack
             error_sending_to_process = None
@@ -463,31 +464,31 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             if sound.pack:
                 sound.pack.process()
 
-            message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (line_no, sound.original_filename,)
+            message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (line['line_no'], sound.original_filename,)
             if error_sending_to_process is not None:
                 message += ' Sound could have not been sent to process (%s).' % error_sending_to_process
             console_logger.info(message)
 
         except NoAudioException:
             message = 'l%i: Sound for file %s can\'t be created as file does not seem to have any content.' \
-                  % (line_no, dest_path,)
+                  % (line['line_no'], dest_path,)
             console_logger.info(message)
             if bulk_upload_progress_object:
-                bulk_upload_progress_object.store_progress_for_line(line_no, message)
+                bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except AlreadyExistsException:
-            message = 'l%i: The file %s is already part of freesound, not uploading it.' % (line_no, dest_path,)
+            message = 'l%i: The file %s is already part of freesound, not uploading it.' % (line['line_no'], dest_path,)
             console_logger.info(message)
             if bulk_upload_progress_object:
-                bulk_upload_progress_object.store_progress_for_line(line_no, message)
+                bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except CantMoveException as e:
-            message = 'l%i: %s.' % (line_no, e.message,)
+            message = 'l%i: %s.' % (line['line_no'], e.message,)
             console_logger.info(message)
             if bulk_upload_progress_object:
-                bulk_upload_progress_object.store_progress_for_line(line_no, message)
+                bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except Exception as e:
             # If another unexpected exception happens, show a message and continue with the process so that
             # other sounds can be added
-            message = 'l%i: Unexpected error %s.' % (line_no, e.message,)
+            message = 'l%i: Unexpected error %s.' % (line['line_no'], e.message,)
             console_logger.info(message)
             if bulk_upload_progress_object:
-                bulk_upload_progress_object.store_progress_for_line(line_no, message)
+                bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)

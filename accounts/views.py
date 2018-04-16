@@ -1020,9 +1020,9 @@ def bulk_describe(request, bulk_id):
     tvars = {
         'lines': lines,
         'bulk': bulk,
-        'lines_validated_ok': bulk.get_lines_validated_ok_for_display(),
-        'lines_failed_validation': bulk.get_lines_failed_validation_for_display(),
-        'global_errors': bulk.get_global_errors_for_display(),
+        'lines_validated_ok': bulk.validation_output['lines_ok'] if bulk.validation_output else [],
+        'lines_failed_validation': bulk.validation_output['lines_with_errors'] if bulk.validation_output else [],
+        'global_errors': bulk.validation_output['global_errors'] if bulk.validation_output else [],
         'auto_reload_page': auto_reload_page,
         'progress_info': progress_info,
     }

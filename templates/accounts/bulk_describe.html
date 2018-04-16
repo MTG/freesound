@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load display_license_form %}
+{% load filter_img %}
 
 {% block title %}{{ block.super }}Describe - Bulk Describe Sounds{% endblock %}
 
@@ -35,21 +36,54 @@
         </p>
         <table class="csv-validation-table">
         <thead>
-            <tr><th>#</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
+            <tr><th>Line</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
         </thead>
         <tbody>
             {% for line in lines_failed_validation %}
+
                 <tr>
-                {% for value, error in line %}
-                    <td {% if error %}style="background-color: rgba(255,64,60,0.65)"{% endif %} title="{{ value }}{% if error %} - {{ error }}{% endif %}">{% if error %}
-                        <a href="#" class="icon warning_icon" title="{{ error }}"></a>{% endif %}{{ value|truncatewords:8 }}
+                    <td {% if line.line_errors.columns %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.columns %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.columns }}"></a>{% endif %}
+                        {{ line.line_no }}
                     </td>
-                {% endfor %}
+                    <td {% if line.line_errors.audio_filename %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.audio_filename %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.audio_filename }}"></a>{% endif %}
+                        {{ line.line_cleaned.audio_filename }}
+                    </td>
+                    <td {% if line.line_errors.name %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.name %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.name }}"></a>{% endif %}
+                        {{ line.line_cleaned.name }}
+                    </td>
+                    <td {% if line.line_errors.tags %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.tags %}
+                            <a href="#" class="icon warning_icon" title="{{ line.line_errors.tags }}"></a>{{ line.line_original.tags }}
+                        {% else %}
+                            {{ line.line_cleaned.tags|join:" " }}
+                        {% endif %}
+                    </td>
+                    <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.geotag %}
+                            <a href="#" class="icon warning_icon" title="{{ line.line_errors.geotag }}"></a>{{ line.line_original.geotag }}
+                        {% else %}
+                            {% if line.line_cleaned.lat %}{{ line.line_cleaned.lat }}, {{ line.line_cleaned.lon }}, {{ line.line_cleaned.zoom }}{% endif %}
+                        {% endif %}
+                    </td>
+                    <td {% if line.line_errors.description %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.description %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.description }}"></a>{% endif %}
+                        {{ line.line_cleaned.description|striptags|safe|truncatewords:20 }}
+                    </td>
+                    <td {% if line.line_errors.license %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.license %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.license }}"></a>{% endif %}
+                        {{ line.line_cleaned.license }}
+                    </td>
+                    <td {% if line.line_errors.pack_name %}class="csv-bulk-upload-error-cell"{% endif %}>
+                        {% if line.line_errors.pack_name %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.pack_name }}"></a>{% endif %}
+                        {{ line.line_cleaned.pack_name }}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
         </table>
-
     {% endif %}
 
     {% if lines_validated_ok and not global_errors %}
@@ -60,14 +94,19 @@
         </p>
         <table class="csv-validation-table">
         <thead>
-            <tr><th>#</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
+            <tr><th>Line</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag (lat, lon, zoom)</th><th>Description</th><th>License</th><th>Pack</th></tr>
         </thead>
         <tbody>
             {% for line in lines_validated_ok %}
                 <tr>
-                {% for value in line %}
-                    <td title="{{ value }}">{{ value|truncatewords:8 }}</td>
-                {% endfor %}
+                    <td>{{ line.line_no }}</td>
+                    <td>{{ line.line_cleaned.audio_filename }}</td>
+                    <td>{{ line.line_cleaned.name }}</td>
+                    <td>{{ line.line_cleaned.tags|join:" " }}</td>
+                    <td>{% if line.line_cleaned.lat %}{{ line.line_cleaned.lat }}, {{ line.line_cleaned.lon }}, {{ line.line_cleaned.zoom }}{% endif %}</td>
+                    <td>{{ line.line_cleaned.description|striptags|safe|truncatewords:20 }}</td>
+                    <td>{{ line.line_cleaned.license }}</td>
+                    <td>{{ line.line_cleaned.pack_name }}</td>
                 </tr>
             {% endfor %}
         </tbody>

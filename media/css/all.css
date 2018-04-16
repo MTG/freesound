@@ -4256,3 +4256,7 @@ ul.messages {
     text-align: center;
     font-size: 25px;
 }
+
+.csv-bulk-upload-error-cell {
+    background-color: rgba(255,64,60,0.65);
+}

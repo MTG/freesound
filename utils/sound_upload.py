@@ -160,12 +160,15 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             geotag.save()
             sound.geotag = geotag
     else:
-        # Create geotag from lat, lon, zoom separated fields
-        if 'lat' in sound_fields and 'lon' in sound_fields and 'zoom' in sound_fields:
+        # Create geotag from lat, lon, zoom separated fields (if available)
+        lat = sound_fields.get('lat', None)
+        lon = sound_fields.get('lon', None)
+        zoom = sound_fields.get('zoom', None)
+        if lat is not None and lon is not None and zoom is not None:
             geotag = GeoTag(user=user,
-                            lat=float(sound_fields['lat']),
-                            lon=float(sound_fields['lon']),
-                            zoom=int(sound_fields['zoom']))
+                            lat=float(lat),
+                            lon=float(lon),
+                            zoom=int(zoom))
             geotag.save()
             sound.geotag = geotag
 

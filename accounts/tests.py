@@ -35,6 +35,7 @@ from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
+from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 from tags.models import Tag
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
@@ -1290,45 +1291,75 @@ class BulkDescribe(TestCase):
 
     @staticmethod
     def create_audio_files(filenames, base_path):
-        os.mkdir(base_path)
         for filename in filenames:
             f = open(base_path + filename, 'a')
             f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
             f.close()
 
+    @staticmethod
+    def create_csv_file(filename, lines, base_path):
+        csv_file_path = '%s/%s' % (base_path, filename)
+        csv_fid = open(csv_file_path, 'w')
+        for line in lines:
+            csv_fid.write(line + '\n')
+        csv_fid.close()
+        return csv_file_path
+
     @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
     @override_settings(CSV_PATH=tempfile.mkdtemp())
     def test_validate_input_csv_file(self):
-        # Create user and test audio files
+        # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        os.mkdir(user_upload_path)
         self.create_audio_files(['file1.wav', 'file2.wav', 'file3.wav'], user_upload_path)
 
-        # Create CSV file with descriptions
+        # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
         os.mkdir(csv_file_base_path)
-        csv_file_path = '%s/test_descriptions.csv' % csv_file_base_path
-        csv_fid = open(csv_file_path, 'w')
-        for line in [
+
+        # Test CSV with al lines and metadata ok
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
             'audio_filename;name;tags;geotag;description;license;pack_name',
             'file1.wav;New name for file1.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file1.wav.";Creative Commons 0;ambient',
             'file2.wav;New name for file2.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file2.wav.";Creative Commons 0;ambient',
             'file3.wav;New name for file3.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file3.wav.";Creative Commons 0;ambient',
-        ]:
-            csv_fid.write(line + '\n')
-        csv_fid.close()
-
-        # Test functions
-        from utils.sound_upload import get_csv_lines, validate_input_csv_file
+        ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
-            validate_input_csv_file(header, csv_file_path, user_upload_path, username=user.username)
+            validate_input_csv_file(header, lines, user_upload_path, username=user.username)
+        self.assertEqual(len(global_errors), 0)  # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 0)  # No line errors
 
-        print lines_validated
-        print global_errors
-
-
+        # Test missing audiofile
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+            'audio_filename;name;tags;geotag;description;license;pack_name',
+            'file1.wav;;tag1 tag2 tag3;;"Descrtipion for file1.wav.";Creative Commons 0;',
+            'file2.wav;;tag1 tag2 tag3;;"Descrtipion for file2.wav.";Creative Commons 0;',
+            'file3.wav;;tag1 tag2 tag3;;"Descrtipion for file3.wav.";Creative Commons 0;',
+            'file4.wav;;tag1 tag2 tag3;;"Descrtipion for file4.wav.";Creative Commons 0;',  # Audiofile does not exist
+        ], csv_file_base_path)
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = \
+            validate_input_csv_file(header, lines, user_upload_path, username=user.username)
+        self.assertEqual(len(global_errors), 0)  # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 1)  # One line has errors
+        self.assertTrue('audio_filename' in lines_validated[3]['line_errors'])  # Audiofile not exist error reported
 
         # Delete tmp directories
         shutil.rmtree(settings.UPLOADS_PATH)
         shutil.rmtree(settings.CSV_PATH)
+
+        # 1) test util functions
+        # Line ok
+        #   optional fields on and off
+        # Line with field errors (each of them)
+        # Line with audio file does not exist
+        # Line with wrong rows
+        # With user does not exist
+        # Test global errors (wrong header)
+
+        # 2) Test actually creating objects
+        # make sure objects are created
+
+        # 3) test views (?)

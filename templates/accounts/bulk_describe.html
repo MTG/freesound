@@ -171,6 +171,13 @@
         </ul>
         <li>Sounds remaining to be described: {{ progress_info.n_sounds_remaining_to_describe }}</li>
     </ul>
+    {% if bulk.progress_type == 'S' or bulk.progress_type == 'F' %}
+        {% if progress_info.progress_percentage < 100 %}
+            <br>
+            <p><b>NOTE:</b> You can safely abandon this page and come back at a later time. You'll find a link
+            to this page in your <a href="{% url 'accounts-home' %}">home page</a>.</p>
+        {% endif %}
+    {% endif %}
     {% if bulk.progress_type != 'C' and progress_info.progress_percentage == 100 %}
         {% comment %}If the process has finished, give the option to close it{% endcomment %}
         <p>

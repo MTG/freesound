@@ -1282,3 +1282,53 @@ class AboutFieldVisibilityTests(object):  # temporarily disable this test becaus
         self.client.login(username='admin', password='testpass')
         self._check_visibility('spammer', True)
         self._check_visible()
+
+
+class BulkDescribe(TestCase):
+
+    fixtures = ['initial_data']
+
+    @staticmethod
+    def create_audio_files(filenames, base_path):
+        os.mkdir(base_path)
+        for filename in filenames:
+            f = open(base_path + filename, 'a')
+            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
+            f.close()
+
+    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    @override_settings(CSV_PATH=tempfile.mkdtemp())
+    def test_validate_input_csv_file(self):
+        # Create user and test audio files
+        user = User.objects.create_user("testuser", password="testpass")
+        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        self.create_audio_files(['file1.wav', 'file2.wav', 'file3.wav'], user_upload_path)
+
+        # Create CSV file with descriptions
+        csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
+        os.mkdir(csv_file_base_path)
+        csv_file_path = '%s/test_descriptions.csv' % csv_file_base_path
+        csv_fid = open(csv_file_path, 'w')
+        for line in [
+            'audio_filename;name;tags;geotag;description;license;pack_name',
+            'file1.wav;New name for file1.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file1.wav.";Creative Commons 0;ambient',
+            'file2.wav;New name for file2.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file2.wav.";Creative Commons 0;ambient',
+            'file3.wav;New name for file3.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file3.wav.";Creative Commons 0;ambient',
+        ]:
+            csv_fid.write(line + '\n')
+        csv_fid.close()
+
+        # Test functions
+        from utils.sound_upload import get_csv_lines, validate_input_csv_file
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = \
+            validate_input_csv_file(header, csv_file_path, user_upload_path, username=user.username)
+
+        print lines_validated
+        print global_errors
+
+
+
+        # Delete tmp directories
+        shutil.rmtree(settings.UPLOADS_PATH)
+        shutil.rmtree(settings.CSV_PATH)

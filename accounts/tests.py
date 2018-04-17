@@ -20,7 +20,7 @@
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase, override_settings, Client
+from django.test import TestCase
 from django.test.utils import override_settings, skipIf
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import PasswordResetForm
@@ -1283,3 +1283,5 @@ class AboutFieldVisibilityTests(object):  # temporarily disable this test becaus
         self.client.login(username='admin', password='testpass')
         self._check_visibility('spammer', True)
         self._check_visible()
+
+

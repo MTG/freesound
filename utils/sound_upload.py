@@ -290,11 +290,9 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 # If the number of columns of the current row is ok, we can proceed to validate each individual column
 
                 # 1) Check that user exists
-                if username is None:
-                    # If no arg username provided, take it from CSV
-                    username = line['username']
+                sound_username = username or line['username']
                 try:
-                    User.objects.get(username=username)
+                    User.objects.get(username=sound_username)
                 except User.DoesNotExist:
                     line_errors['username'] = "User does not exist."
 
@@ -346,7 +344,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                             line_errors[field] = ' '.join([e['message'] for e in errors])
                 line_cleaned = form.cleaned_data
                 line_cleaned.update({  # Update line_cleaned with the fields not returned by SoundCSVDescriptionForm
-                    'username': username,
+                    'username': sound_username,
                     'audio_filename': audio_filename,
                     'license': license_name,  # Overwrite license with license name as License is not JSON serializable
                     'tags': list(line_cleaned.get('tags', [])),  # Convert tags to List as Set is not JSON serializable

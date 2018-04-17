@@ -35,7 +35,6 @@ from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
-from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 from tags.models import Tag
 from comments.models import Comment
 from forum.models import Thread, Post, Forum

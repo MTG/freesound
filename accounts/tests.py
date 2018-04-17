@@ -1427,3 +1427,82 @@ class BulkDescribe(TestCase):
         # Delete tmp directories
         shutil.rmtree(settings.UPLOADS_PATH)
         shutil.rmtree(settings.CSV_PATH)
+
+    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    @override_settings(CSV_PATH=tempfile.mkdtemp())
+    def test_bulk_describe_from_csv(self):
+
+        # Create user uploads folder and test audio files
+        user = User.objects.create_user("testuser", password="testpass")
+        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        os.mkdir(user_upload_path)
+        self.create_audio_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
+
+        # Create CSV files folder with descriptions
+        csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
+        os.mkdir(csv_file_base_path)
+
+        # Create Test CSV with some lines ok and some wrong lines
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+            'audio_filename;name;tags;geotag;description;license;pack_name',
+            'file1.wav;;tag1 tag2 tag3;41.4065, 2.19504, 23;"Description for file";Creative Commons 0;ambient',  # OK
+            'file2.wav;;tag1 tag2 tag3;;"Description for file";Invalid license;',  # Invalid license
+            'file3.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0',  # Wrong number of columns
+            'file4.wav;;tag1 tag2 tag3;dg;"Description for file";Creative Commons 0;',  # Invalid geotag
+            'file5.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;',  # OK
+        ], csv_file_base_path)
+
+        # Test case when no sounds are been created because CSV file has some errors and 'force_import' is set to False
+        bulk_describe_from_csv(csv_file_path,
+                               delete_already_existing=False,
+                               force_import=False,
+                               sounds_base_dir=user_upload_path,
+                               username=user.username)
+        self.assertEqual(user.sounds.count(), 0)  # User has no sounds
+
+        # Test case using 'force_import' (only sounds for lines that validate ok will be created)
+        bulk_describe_from_csv(csv_file_path,
+                               delete_already_existing=False,
+                               force_import=True,
+                               sounds_base_dir=user_upload_path,
+                               username=user.username)
+        self.assertEqual(user.sounds.count(), 2)  # The two sounds that had correct metadata have been added
+        sound1 = Sound.objects.get(user=user, original_filename='file1.wav')  # Get first correct sound
+        sound1_id = sound1.id  # This is used in a test below
+        self.assertTrue(sound1.geotag)  # Check sound has geotag object assigned
+        self.assertEquals(sound1.pack.name, 'ambient')  # Check sound has pack and name of pack is 'ambient'
+        sound2 = Sound.objects.get(user=user, original_filename='file5.wav')  # Get last correct sound
+        sound2_id = sound2.id  # This is used in a test below
+        self.assertIsNone(sound2.geotag)  # Check sound has no geotag
+        self.assertIsNone(sound2.pack)  # Check sound has no pack
+
+        # Run again using 'force_import' and sounds won't be created because sounds already exist and md5 check fails
+        # NOTE: first we copy back the files that were already successfully added because otherwise these don't exist
+        shutil.copy(sound1.locations()['path'], os.path.join(user_upload_path, 'file1.wav'))
+        shutil.copy(sound2.locations()['path'], os.path.join(user_upload_path, 'file5.wav'))
+        bulk_describe_from_csv(csv_file_path,
+                               delete_already_existing=False,
+                               force_import=True,
+                               sounds_base_dir=user_upload_path,
+                               username=user.username)
+        self.assertEqual(user.sounds.count(), 2)  # User still has two sounds, no new sounds added
+
+        # Run again using 'force_import' AND 'delete_already_existing' and existing sounds will be removed before
+        # creating the new ones
+        # NOTE: first we copy back the files that failed MD5 check as files are discarted (deleted) when MD5 fails
+        shutil.copy(sound1.locations()['path'], os.path.join(user_upload_path, 'file1.wav'))
+        shutil.copy(sound2.locations()['path'], os.path.join(user_upload_path, 'file5.wav'))
+        bulk_describe_from_csv(csv_file_path,
+                               delete_already_existing=True,
+                               force_import=True,
+                               sounds_base_dir=user_upload_path,
+                               username=user.username)
+        self.assertEqual(user.sounds.count(), 2)  # User still has two sounds
+        new_sound1 = Sound.objects.get(user=user, original_filename='file1.wav')  # New version of first correct sound
+        new_sound2 = Sound.objects.get(user=user, original_filename='file5.wav')  # New version of last correct sound
+        self.assertNotEqual(new_sound1.id, sound1_id)  # Check that IDs are not the same
+        self.assertNotEqual(new_sound2.id, sound2_id)  # Check that IDs are not the same
+
+        # Delete tmp directories
+        shutil.rmtree(settings.UPLOADS_PATH)
+        shutil.rmtree(settings.CSV_PATH)

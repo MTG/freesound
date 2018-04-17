@@ -1004,8 +1004,6 @@ def bulk_describe(request, bulk_id):
         bulk.save()
         return HttpResponseRedirect(reverse('accounts-home'))
 
-    _, lines = bulk.get_csv_lines()
-
     # Get progress info to be display if sound descirption process has started
     progress_info = bulk.get_description_progress_info()
 
@@ -1018,7 +1016,6 @@ def bulk_describe(request, bulk_id):
         auto_reload_page = True
 
     tvars = {
-        'lines': lines,
         'bulk': bulk,
         'lines_validated_ok': bulk.validation_output['lines_ok'] if bulk.validation_output else [],
         'lines_failed_validation': bulk.validation_output['lines_with_errors'] if bulk.validation_output else [],

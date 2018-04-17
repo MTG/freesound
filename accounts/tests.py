@@ -1286,7 +1286,10 @@ class AboutFieldVisibilityTests(object):  # temporarily disable this test becaus
 
 class BulkDescribe(TestCase):
 
+    fixtures = ['initial_data']
+
     @override_settings(CSV_PATH=tempfile.mkdtemp())
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     @mock.patch('gearman.GearmanClient.submit_job')
     def test_upload_csv(self, submit_job):
         user = User.objects.create_user("testuser", password="testpass")
@@ -1309,6 +1312,7 @@ class BulkDescribe(TestCase):
         # Delete tmp directory
         shutil.rmtree(settings.CSV_PATH)
 
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_view_permissions(self):
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
@@ -1327,6 +1331,14 @@ class BulkDescribe(TestCase):
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertEqual(resp.status_code, 404)  # User without permission (not owner of object) gets 404
 
+        with self.settings(BULK_UPLOAD_MIN_SOUNDS=10):
+            # Now user is not allowed to load the page as user.profile.can_do_bulk_upload() returns False
+            self.client.login(username='testuser', password='testpass')
+            resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]), follow=True)
+            self.assertRedirects(resp, reverse('accounts-home'))
+            self.assertIn('Your user does not have permission to use the bulk describe', resp.content)
+
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_validating(self):
         # Test that when BulkUploadProgress has not finished validation we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
@@ -1336,6 +1348,7 @@ class BulkDescribe(TestCase):
         self.assertIn('The uploaded CSV file has not yet been validated', resp.content)
 
     @mock.patch('gearman.GearmanClient.submit_job')
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_finished_validation(self, submit_job):
         # Test that when BulkUploadProgress has finished validation we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
@@ -1350,9 +1363,12 @@ class BulkDescribe(TestCase):
         self.assertEquals(BulkUploadProgress.objects.filter(user=user).count(), 0)
 
         # Test that chosing option to start describing files triggers bulk describe gearmnan job
-        # Test gearman job is triggered
+        bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
+        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=start')
+        self.assertEqual(resp.status_code, 200)
         submit_job.assert_called_once_with("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
 
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_description_in_progress(self):
         # Test that when BulkUploadProgress has started description and processing we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
@@ -1395,6 +1411,7 @@ class BulkDescribe(TestCase):
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertIn('The bulk description process has finished!', resp.content)
 
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_closed(self):
         # Test that when BulkUploadProgress object is closed we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")

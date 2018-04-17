@@ -1312,7 +1312,7 @@ class BulkDescribe(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
-        self.create_audio_files(['file1.wav', 'file2.wav', 'file3.wav'], user_upload_path)
+        self.create_audio_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
@@ -1321,9 +1321,11 @@ class BulkDescribe(TestCase):
         # Test CSV with al lines and metadata ok
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
             'audio_filename;name;tags;geotag;description;license;pack_name',
-            'file1.wav;New name for file1.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file1.wav.";Creative Commons 0;ambient',
-            'file2.wav;New name for file2.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file2.wav.";Creative Commons 0;ambient',
-            'file3.wav;New name for file3.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;"Descrtipion for file3.wav.";Creative Commons 0;ambient',
+            'file1.wav;New name for file1.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;'
+            '"Descrtipion for file";Creative Commons 0;ambient',  # All fields valid
+            'file2.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;',  # Only mandatory fields
+            'file3.wav;;tag1 tag2 tag3;;'
+            '"Descrtipion for file";Creative Commons 0;ambient',  # All mandatory fields and some optional fields
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
@@ -1331,35 +1333,96 @@ class BulkDescribe(TestCase):
         self.assertEqual(len(global_errors), 0)  # No global errors
         self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 0)  # No line errors
 
-        # Test missing audiofile
+        # Test username does not exist
+        lines_validated, global_errors = \
+            validate_input_csv_file(header, lines, user_upload_path, username="unexisting username")
+        self.assertEqual(len(global_errors), 0)  # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 3)  # Three line errors
+        self.assertTrue('username' in lines_validated[0]['line_errors'])  # User does not exist error reported
+        self.assertTrue('username' in lines_validated[1]['line_errors'])  # User does not exist error reported
+        self.assertTrue('username' in lines_validated[2]['line_errors'])  # User does not exist error reported
+
+        # Test missing/duplicated audiofile and wrong number of rows
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
             'audio_filename;name;tags;geotag;description;license;pack_name',
-            'file1.wav;;tag1 tag2 tag3;;"Descrtipion for file1.wav.";Creative Commons 0;',
-            'file2.wav;;tag1 tag2 tag3;;"Descrtipion for file2.wav.";Creative Commons 0;',
-            'file3.wav;;tag1 tag2 tag3;;"Descrtipion for file3.wav.";Creative Commons 0;',
-            'file4.wav;;tag1 tag2 tag3;;"Descrtipion for file4.wav.";Creative Commons 0;',  # Audiofile does not exist
+            'file1.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;',  # File exists, fields ok
+            'file2.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;',  # File exists, fields ok
+            'file3.wav;;tag1 tag2 tag3;;"Descrtipion for file";',  # Wrong number of columns
+            'file6.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;',  # Audiofile does not exist
+            'file2.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;',  # Audiofile already described
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
         self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 1)  # One line has errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 3)  # Three lines have errors
+        self.assertTrue('columns' in lines_validated[2]['line_errors'])  # Wrong number of columns reported
         self.assertTrue('audio_filename' in lines_validated[3]['line_errors'])  # Audiofile not exist error reported
+        self.assertTrue('audio_filename' in lines_validated[4]['line_errors'])  # File already described error reported
+
+        # Test validation errors in individual fields
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+            'audio_filename;name;tags;geotag;description;license;pack_name',
+            'file1.wav;;tag1 tag2;;"Descrtipion for file";Creative Commons 0;',  # Wrong tags (less than 3)
+            'file2.wav;;tag1,tag2;;"Descrtipion for file";Creative Commons 0;',  # Wrong tags (less than 3)
+            'file3.wav;;tag1,tag2;gr87g;"Descrtipion for file2";Creative Commons 0;',  # Wrong geotag
+            'file4.wav;;tag1,tag2;42.34,190.45,15;"Descrtipion for file";Creative Commons 0;',  # Wrong geotag
+            'file5.wav;;tag1 tag2 tag3;;"Descrtipion for file";Sampling+;',  # Invalid license
+        ], csv_file_base_path)
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = \
+            validate_input_csv_file(header, lines, user_upload_path, username=user.username)
+        self.assertEqual(len(global_errors), 0)  # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 5)  # Five lines have errors
+        self.assertTrue('tags' in lines_validated[0]['line_errors'])  # Wrong tags
+        self.assertTrue('tags' in lines_validated[1]['line_errors'])  # Wrong tags
+        self.assertTrue('geotag' in lines_validated[2]['line_errors'])  # Wrong geotag
+        self.assertTrue('geotag' in lines_validated[3]['line_errors'])  # Wrong geotag
+        self.assertTrue('license' in lines_validated[4]['line_errors'])  # Wrong license
+
+        # Test wrong header global errors
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+            'audio_filename;name;tags;geotag;description;license;unknown_field',
+        ], csv_file_base_path)
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = \
+            validate_input_csv_file(header, lines, user_upload_path, username=user.username)
+        self.assertEqual(len(global_errors), 1)  # One global error
+        self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
+
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+            'audio_filename;name;tags;geotag;description;license;pack_name',
+        ], csv_file_base_path)
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = \
+            validate_input_csv_file(header, lines, user_upload_path,
+                                    username=None)  # Not passing username, header should now include 'username' field
+        self.assertEqual(len(global_errors), 1)  # One global error
+        self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
+
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+            'audio_filename;name;tags;geotag;description;license;pack_name;username',
+        ], csv_file_base_path)
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = \
+            validate_input_csv_file(header, lines, user_upload_path,
+                                    username=None)  # Not passing username, header should now include 'username' field
+        self.assertEqual(len(global_errors), 0)  # No global errors
+
+        # Test username errors when not passing username argument to validate_input_csv_file
+        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+            'audio_filename;name;tags;geotag;description;license;pack_name;username',
+            'file1.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;;new_username',  # User does not exist
+            'file2.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;',  # Invlaid num columns
+            'file3.wav;;tag1 tag2 tag3;;"Descrtipion for file";Creative Commons 0;;testuser',  # All fields OK
+        ], csv_file_base_path)
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = validate_input_csv_file(header, lines, user_upload_path, username=None)
+        self.assertEqual(len(global_errors), 0)  # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 2)  # Two lines have errors
+        self.assertTrue('username' in lines_validated[0]['line_errors'])  # User does not exist
+        self.assertTrue('columns' in lines_validated[1]['line_errors'])  # Invalid number of columns
 
         # Delete tmp directories
         shutil.rmtree(settings.UPLOADS_PATH)
         shutil.rmtree(settings.CSV_PATH)
-
-        # 1) test util functions
-        # Line ok
-        #   optional fields on and off
-        # Line with field errors (each of them)
-        # Line with audio file does not exist
-        # Line with wrong rows
-        # With user does not exist
-        # Test global errors (wrong header)
-
-        # 2) Test actually creating objects
-        # make sure objects are created
-
-        # 3) test views (?)

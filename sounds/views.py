@@ -590,6 +590,7 @@ def sound_edit_sources(request, username, sound_id):
         form = RemixForm(sound, request.POST)
         if form.is_valid():
             form.save()
+            sound.invalidate_template_caches()
     else:
         form = RemixForm(sound, initial=dict(sources=sources_string))
     tvars = {

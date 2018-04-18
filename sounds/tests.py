@@ -932,15 +932,16 @@ class SoundTemplateCacheTests(TestCase):
         cache.clear()
         users, packs, sounds = create_user_and_sounds(num_sounds=2)
         self.sound = sounds[0]
+        self.another_sound = sounds[1]
         self.sound.change_processing_state("OK")
         self.sound.change_moderation_state("OK")
 
     def _get_sound_view_cache_keys(self, is_explicit=False, display_random_link=False):
         return ([get_template_cache_key('sound_footer_bottom', self.sound.id),
                 get_template_cache_key('sound_header', self.sound.id, is_explicit)] +
-                self._get_sound_view_footer_top(display_random_link))
+                self._get_sound_view_footer_top_cache_keys(display_random_link))
 
-    def _get_sound_view_footer_top(self, display_random_link=False):
+    def _get_sound_view_footer_top_cache_keys(self, display_random_link=False):
         return [get_template_cache_key('sound_footer_top', self.sound.id, display_random_link)]
 
     def _get_sound_display_cache_keys(self, is_authenticated=True, is_explicit=False):
@@ -956,8 +957,8 @@ class SoundTemplateCacheTests(TestCase):
         for cache_key in cache_keys:
             self.assertIsNotNone(cache.get(cache_key))
 
-    def _get_sound_url(self, viewname):
-        return reverse(viewname, args=[self.sound.user.username, self.sound.id])
+    def _get_sound_url(self, viewname, username=None, sound_id=None):
+        return reverse(viewname, args=[username or self.sound.user.username, sound_id or self.sound.id])
 
     def _get_sound_view(self):
         return self.client.get(self._get_sound_url('sound'))
@@ -1095,7 +1096,7 @@ class SoundTemplateCacheTests(TestCase):
 
     def test_similarity_update_view(self):
         self._test_similarity_update(
-            self._get_sound_view_footer_top(),
+            self._get_sound_view_footer_top_cache_keys(),
             lambda: '<a id="similar_sounds_link"' in self._get_sound_view().content)
 
     # Pack link (cached in display and view)
@@ -1142,7 +1143,7 @@ class SoundTemplateCacheTests(TestCase):
 
     def test_add_remove_pack_view(self):
         self._test_add_remove_pack(
-            self._get_sound_view_footer_top(),
+            self._get_sound_view_footer_top_cache_keys(),
             lambda: '<a id="pack_link"' in self._get_sound_view().content
         )
 
@@ -1191,7 +1192,7 @@ class SoundTemplateCacheTests(TestCase):
 
     def test_add_remove_geotag_view(self):
         self._test_add_remove_geotag(
-            self._get_sound_view_footer_top(),
+            self._get_sound_view_footer_top_cache_keys(),
             lambda: '<a id="geotag_link"' in self._get_sound_view().content
         )
 
@@ -1225,13 +1226,59 @@ class SoundTemplateCacheTests(TestCase):
     def test_change_license_view(self):
         license = License.objects.get(name='Attribution')
         self._test_change_license(
-            self._get_sound_view_footer_top(),
+            self._get_sound_view_footer_top_cache_keys(),
             license,
             lambda: str(license.name) in self._get_sound_view().content
         )
 
-    def test_add_remove_remixes(self):
-        pass
+    def _test_add_remove_remixes(self, cache_keys, check_present):
+        self._assertCacheAbsent(cache_keys)
+
+        self.client.login(username='testuser', password='testpass')
+
+        self.assertEqual(self.sound.remix_group.count(), 0)
+        self.assertFalse(check_present())
+        self._assertCachePresent(cache_keys)
+
+        # Indicate another sound as source
+        resp = self.client.post(self._get_sound_url('sound-edit-sources'), {
+            'sources': str(self.another_sound.id)
+        })
+        self.assertEqual(resp.status_code, 200)
+        call_command('create_remix_groups')
+        self._assertCacheAbsent(cache_keys)
+
+        # Check remix icon
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.remix_group.count(), 1)
+        self.assertTrue(check_present())
+        self._assertCachePresent(cache_keys)
+
+        # Remove remix from the sound
+        resp = self.client.post(self._get_sound_url('sound-edit-sources'), {
+            'sources': ''
+        })
+        self.assertEqual(resp.status_code, 200)
+        call_command('create_remix_groups')
+        self._assertCacheAbsent(cache_keys)
+
+        # Check remix icon being absent
+        self.sound.refresh_from_db()
+        self.assertEquals(self.sound.remix_group.count(), 0)
+        self.assertFalse(check_present())
+
+    # TODO: investigate why this test fails
+    # def test_add_remove_remixes_display(self):
+    #     self._test_add_remove_remixes(
+    #         self._get_sound_display_cache_keys(),
+    #         lambda: '<a class="remixes"' in self._get_sound_display().content
+    #     )
+
+    def test_add_remove_remixes_view(self):
+        self._test_add_remove_remixes(
+            self._get_sound_view_footer_top_cache_keys(),
+            lambda: '<a id="remixes_link"' in self._get_sound_view().content
+        )
 
     def test_processing_state_change(self):
         pass

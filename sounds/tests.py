@@ -945,9 +945,7 @@ class SoundTemplateCacheTests(TestCase):
         return [get_template_cache_key('sound_footer_top', self.sound.id, display_random_link)]
 
     def _get_sound_display_cache_keys(self, is_authenticated=True, is_explicit=False):
-        return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit,
-                                       self.sound.processing_state, self.sound.moderation_state,
-                                       self.sound.similarity_state)]
+        return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit)]
 
     def _assertCacheAbsent(self, cache_keys):
         for cache_key in cache_keys:
@@ -1281,34 +1279,35 @@ class SoundTemplateCacheTests(TestCase):
             lambda: '<a id="remixes_link"' in self._get_sound_view().content
         )
 
-    def _test_state_change(self, get_cache_keys, change_state, check_present):
+    def _test_state_change(self, cache_keys, change_state, check_present):
+        """@:param check_present - function that checks presence of indication of not 'OK' state"""
         self.client.login(username='testuser', password='testpass')
 
-        cache_keys = get_cache_keys()
         self._assertCacheAbsent(cache_keys)
-        self.assertFalse(check_present())
+        self.assertTrue(check_present())
         self._assertCachePresent(cache_keys)
 
         # Change processing state
         change_state()
 
-        cache_keys = get_cache_keys()
         self._assertCacheAbsent(cache_keys)
-        self.assertTrue(check_present())
+        self.assertFalse(check_present())
         self._assertCachePresent(cache_keys)
 
     def test_processing_state_change_display(self):
+        self.sound.change_processing_state('PE')
         self._test_state_change(
-            self._get_sound_display_cache_keys,
-            lambda: self.sound.change_processing_state('PE'),
+            self._get_sound_display_cache_keys(),
+            lambda: self.sound.change_processing_state('OK'),
             lambda: all([text in self.client.get(self._get_sound_url('sound-display')).content
                          for text in ['Processing state:', 'Pending']])
         )
 
     def test_moderation_state_change_display(self):
+        self.sound.change_moderation_state('PE')
         self._test_state_change(
-            self._get_sound_display_cache_keys,
-            lambda: self.sound.change_moderation_state('PE'),
+            self._get_sound_display_cache_keys(),
+            lambda: self.sound.change_moderation_state('OK'),
             lambda: all([text in self.client.get(self._get_sound_url('sound-display')).content
                          for text in ['Moderation state:', 'Pending']])
         )

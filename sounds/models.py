@@ -605,6 +605,8 @@ class Sound(SocialModel):
             if commit:
                 self.save()
 
+        self.invalidate_template_caches()
+
     def change_processing_state(self, new_state, commit=True, use_set_instead_of_save=False):
         """
         Change the processing state of a sound and perform related tasks such as set the sound as index dirty if
@@ -641,6 +643,8 @@ class Sound(SocialModel):
                 self.processing_date = datetime.datetime.now()
                 if commit:
                     self.save()
+
+        self.invalidate_template_caches()
 
     def change_owner(self, new_owner):
         def replace_user_id_in_path(path, old_owner_id, new_owner_id):
@@ -772,10 +776,9 @@ class Sound(SocialModel):
 
         invalidate_template_cache("sound_footer_bottom", self.id)
 
-        for authenticated in [True, False]:
+        for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
-                invalidate_template_cache("display_sound", self.id, authenticated, is_explicit, self.processing_state,
-                                          self.moderation_state, self.similarity_state)
+                invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

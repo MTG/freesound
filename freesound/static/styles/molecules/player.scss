@@ -24,13 +24,13 @@
   top: 0;
   left: 0;
   border-left: 1px solid $black;
-  animation-name: progress-indicator-animation;
   animation-timing-function: linear;
   animation-play-state: paused;
-  animation-iteration-count: infinite;
+  animation-iteration-count: 1;
   transition: opacity 0.2s ease;
 
   .bw-player--playing & {
+    animation-name: progress-indicator-animation;
     opacity: 1;
   }
 }

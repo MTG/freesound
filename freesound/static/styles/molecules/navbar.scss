@@ -125,3 +125,11 @@ $navbar-height-mobile: 64px;
     @include reset-rounded-button($black, $black-hover);
   }
 }
+
+.navbar-space-filler {
+  padding-top: $navbar-height-mobile;
+
+  @include md-and-above {
+    padding-top: $navbar-height;
+  }
+}

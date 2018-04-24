@@ -703,7 +703,7 @@ def attribution(request):
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user_id=user.id)
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
     page = paginator["page"]
     sound_ids = [d.sound_id for d in page]
     sounds = Sound.objects.ordered_ids(sound_ids)
@@ -718,7 +718,7 @@ def downloaded_sounds(request, username):
 def downloaded_packs(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = PackDownload.objects.filter(user=user.id)
-    paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
+    paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
     packs = Pack.objects.ordered_ids(pack_ids, select_related="user")

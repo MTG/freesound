@@ -246,7 +246,7 @@ def sound(request, username, sound_id):
                                                                                        request.user.username))
                             send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
                                                {'sound': sound, 'user': request.user, 'comment': comment_text},
-                                               None, sound.user.email)
+                                               None, sound.user)
                     except Exception as e:
                         # If the email sending fails, ignore...
                         logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.email, e))

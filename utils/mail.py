@@ -65,14 +65,18 @@ def replace_email_to(func):
 def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=None):
     """
     Sends email with a lot of defaults
-    'reply_to' parameter can only be a single email address that will be added as a header
+    @:param email_to can be either string, or user object, or a list of those. If it is a user object, the function will
+    check if email is valid based on bounce info 
+    @:param reply_to parameter can only be a single email address that will be added as a header
     to all mails being sent.
+    @:returns False if an exception occurred during email sending procedure, or if there are users with valid emails in 
+    email_to parameter; True otherwise
     """
     if not email_from:
         email_from = settings.DEFAULT_FROM_EMAIL
 
     if not email_to:
-        # If email is emprty email, don't send email, otherwise (email 'False' but not '',
+        # If email_to is empty, don't send email, otherwise (email_to 'False' but not '',
         # send to default support emails)
         if email_to == '':
             return True
@@ -80,12 +84,23 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
     elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
         email_to = [email_to]
 
+    email_list = []
+    for item in email_to:
+        try:  # assume it is a User object
+            if item.profile.email_is_valid():
+                email_list.append(item.email)
+        except AttributeError:  # probably explicit string
+            email_list.append(item)
+
+    if len(email_list) == 0:
+        return False
+
     if settings.ALLOWED_EMAILS:
-        email_to = [email for email in email_to if email in settings.ALLOWED_EMAILS]
+        email_list = [email for email in email_list if email in settings.ALLOWED_EMAILS]
 
     try:
         emails = tuple(
-            ((settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_to)
+            ((settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_list)
         )
 
         # Replicating send_mass_mail functionality and adding reply-to header if requires
@@ -105,7 +120,7 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
         return False
 
 
-def send_mail_template(subject, template, context, email_from=None, email_to=[], reply_to=None):
+def send_mail_template(subject, template, context, email_from=None, email_to=list(), reply_to=None):
     context["settings"] = settings
     return send_mail(subject, render_to_string(template, context), email_from, email_to, reply_to=reply_to)
 

@@ -28,6 +28,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.utils.encoding import smart_unicode
+from django.utils.timezone import now
 from django.conf import settings
 from django.urls import reverse
 from general.models import SocialModel
@@ -346,6 +347,9 @@ class Profile(SocialModel):
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
 
+    def email_is_valid(self):
+        return self.user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() == 0
+
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
 
@@ -443,3 +447,18 @@ class OldUsername(models.Model):
 
     def __unicode__(self):
         return '{0} > {1}'.format(self.username, self.user.username)
+
+
+class EmailBounce(models.Model):
+    user = models.ForeignKey(User, related_name="email_bounces")
+
+    # Bounce types
+    UNDETERMINED = 'UD'
+    PERMANENT = 'PE'
+    TRANSIENT = 'TR'
+    type = models.CharField(db_index=True, max_length=2, default=UNDETERMINED)
+
+    timestamp = models.DateTimeField(default=now)
+
+    class Meta:
+        ordering = ("-timestamp",)

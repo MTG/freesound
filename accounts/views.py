@@ -49,7 +49,8 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, \
+    EmailBounce
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -223,7 +224,7 @@ def send_activation(user):
         'username': username,
         'hash': uid_hash
     }
-    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, None, user.email)
+    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, None, user)
 
 
 def resend_activation(request):
@@ -254,7 +255,7 @@ def username_reminder(request):
             try:
                 user = User.objects.get(email__iexact=email)
                 send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt',
-                        {'user': user}, None, user.email)
+                                   {'user': user}, None, user)
             except User.DoesNotExist:
                 pass
 
@@ -1064,6 +1065,9 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     # Remove temporal mail change information ftom the DB
     ResetEmailRequest.objects.get(user=user).delete()
+
+    # Clear saved email bounces for old email
+    EmailBounce.objects.filter(user=user).delete()
 
     tvars = {'old_email': old_email, 'user': user}
     return render(request, 'accounts/email_reset_complete.html', tvars)

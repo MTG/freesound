@@ -194,18 +194,18 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 
                 # figure out if there are active subscriptions in this thread
                 if not set_to_moderation:
-                    emails_to_notify = []
+                    users_to_notify = []
                     for subscription in Subscription.objects\
                             .filter(thread=thread, is_active=True).exclude(subscriber=request.user):
-                        emails_to_notify.append(subscription.subscriber.email)
+                        users_to_notify.append(subscription.subscriber)
                         subscription.is_active = False
                         subscription.save()
 
-                    if emails_to_notify and post.thread.get_status_display() != u'Sunk':
+                    if users_to_notify and post.thread.get_status_display() != u'Sunk':
                         send_mail_template(
                             u"topic reply notification - " + thread.title,
                             "forum/email_new_post_notification.txt",
-                            dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify
+                            dict(post=post, thread=thread, forum=forum), email_from=None, email_to=users_to_notify
                         )
 
                 if not set_to_moderation:

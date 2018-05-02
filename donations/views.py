@@ -61,7 +61,7 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
                     'user': user,
                     'amount': amount,
                     'display_name': display_name
-                    }, None, email)
+                    }, None, user)
 
         log_data = donation_data
         log_data.update({'user_id': user_id})

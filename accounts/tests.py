@@ -29,7 +29,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.core import mail
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername
+from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername, EmailBounce
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
@@ -45,7 +45,7 @@ import os
 import tempfile
 import shutil
 import datetime
-from utils.mail import transform_unique_email, replace_email_to
+from utils.mail import transform_unique_email, replace_email_to, send_mail_template
 
 
 class SimpleUserTest(TestCase):
@@ -1282,3 +1282,29 @@ class AboutFieldVisibilityTests(object):  # temporarily disable this test becaus
         self.client.login(username='admin', password='testpass')
         self._check_visibility('spammer', True)
         self._check_visible()
+
+
+class EmailBounceTests(TestCase):
+    @staticmethod
+    def _send_email(user):
+        return send_mail_template('Username reminder', 'accounts/email_username_reminder.txt', {'user': user},
+                                  None, user)
+
+    @mock.patch('utils.mail.get_connection')
+    def test_send_mail(self, get_connection):
+        user = User.objects.create_user('user', email='user@freesound.org')
+        self.assertTrue(self._send_email(user))
+
+        email_bounce = EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        self.assertFalse(user.profile.email_is_valid())
+        self.assertFalse(self._send_email(user))
+
+        email_bounce.delete()
+        self.assertTrue(user.profile.email_is_valid())
+        self.assertTrue(self._send_email(user))
+
+    def test_unactivated_user_deleted(self):
+        pass  # TODO
+
+    def test_request_email_change(self):
+        pass  # TODO

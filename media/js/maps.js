@@ -14,3 +14,26 @@ function setMaxZoomCenter(map, lat, lng, zoom)
         }
     });
 }
+
+function getSoundsLocations(url, callback){
+    var resp = [];
+    var oReq = new XMLHttpRequest();
+    oReq.open("GET", url, true);
+    oReq.responseType = "arraybuffer";
+    oReq.onload = function(oEvent) {
+        var raw_data = new Int32Array(oReq.response);
+
+        var id = null;
+        var lat = null;
+        var lon = null;
+
+        for (var i = 0; i < raw_data.length; i += 3) {
+            id = raw_data[i];
+            lat = raw_data[i+1] / 1000000;
+            lon = raw_data[i+2] / 1000000;
+            resp.push([id, lat, lon]);
+        }
+        callback(resp);
+    };
+    oReq.send();
+}

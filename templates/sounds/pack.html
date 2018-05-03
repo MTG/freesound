@@ -10,7 +10,6 @@
 {% block head %}
     {{ block.super }}
     <script type="text/javascript" src="{% google_maps_js %}"></script>
-    <script src="{{media_url}}js/sounds_location.js?v={{ last_restart_date }}" type="text/javascript"></script>
 {% endblock head %}
 
 {% block section_content %}
@@ -19,54 +18,24 @@
     function showDescriptionForm()
     {
         $("#description_form").show('blind', {}, 500, function() {});
-	$("#add_description_label").hide();
+	    $("#add_description_label").hide();
     }
-
-    //function hideDescriptionForm()
-    //{
-    //    $("#description_form").hide('blind', {}, 500, function() {});
-    //}
 </script>
 
 <h1>Pack: {{pack.name}} by <a href="{% url 'account' pack.user.username %}">{{pack.user.username}}</a></h1>
-
-
-{% comment %}
-{% if not pack.is_dirty %}
-	{% if num_sounds_ok > 0 %}
-		<div id="single_pack_sidebar">
-		<div id="download">
-		    {% if request.user.is_authenticated %}
-		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
-		    {% else %}
-		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" id="download_login_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
-		    {% endif %}
-		</div>
-
-		</div>
-	{% endif %}
-{% endif %}
-{% endcomment %}
-
-
-
 
 <div id="content">
     <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
     <p>
-    {{pack.description|replace_img|safe|linebreaksbr}}
+        {{pack.description|replace_img|safe|linebreaksbr}}
     </p>
-
     <ul>
             <li>Pack created on: <b>{{ pack.created }}</b></li>
             <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
             <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
     </ul>
-
     {% if perms.pack.can_edit or pack.user == request.user %}
             <p>
                 <a href="{% url 'pack-edit' pack.user.username pack.id %}" class="icon" id="edit_link" title="edit pack">
@@ -79,8 +48,6 @@
                 </a>
             </p>
     {% endif %}
-
-
     </div>
 </div><!-- #pack_info -->
 
@@ -91,13 +58,10 @@
 
 {% if pack.num_sounds > 0 %}
 	{% show_paginator paginator page current_page request "sound" %}
-
 	{% for sound in pack_sounds %}
     	{% display_raw_sound sound %}
 	{% endfor %}
-
 	{% show_paginator paginator page current_page request "sound" %}
-
 {% else %}
 	<p>This pack does not contain any sounds.</p>
 {% endif %}
@@ -109,84 +73,26 @@
         <h3>Geotags in this pack</h3>
         <div id="map_canvas"></div>
         <script type="text/javascript">
-            var map = new google.maps.Map(
-                document.getElementById('map_canvas'), {
-                  mapTypeId: google.maps.MapTypeId.SATELLITE,
-                  scrollwheel: false,
-                  streetViewControl: false,
-            });
-            var infowindow = new google.maps.InfoWindow();
-            google.maps.event.addListener(infowindow, 'closeclick', function() {
-                stopAll();
-            });
-
-            getSoundsLocations('{% url 'geotags-for-pack-barray' pack.id %}', function(data){
-                var bounds = new google.maps.LatLngBounds();
-                // We'll need to know the number of sounds to correctly display the map
-                // in case there is only one sound with geotag
-                var nSounds = data.length;
-                var lastPoint;
-
-                $.each(data, function(index, item) {
-                    var id = item[0];
-                    var lat = item[1];
-                    var lon = item[2];
-
-                    var point = new google.maps.LatLng(lat, lon);
-                    lastPoint = point;
-                    bounds.extend(point);
-                    var marker = new google.maps.Marker({'position': point, 'map': map});
-
-                    google.maps.event.addListener(marker, 'click', function()
-                    {
-                        stopAll();
-                        ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
-                        {
-                            infowindow.setContent(data.response);
-                            infowindow.open(map, marker);
-                            setTimeout(function() {
-                                makePlayer('.infowindow_player .player');
-                            }, 500);
-                        });
-                    });
-                });
-
-                // Show map div if sounds in it
-                if (nSounds > 0) {
-                    $("#latest_geotags").show();
-                    google.maps.event.trigger(map, 'resize');
-                }
-
-                if (nSounds > 1){
-                    if (!bounds.isEmpty()) map.fitBounds(bounds);
-                }else{
-                    // Center the map in the geotag
-                    map.setCenter(lastPoint);
-                    map.setZoom(4);
-                }
-            });
+            make_map('{% url "geotags-for-pack-barray" pack.id %}', '#latest_geotags');
         </script>
     </div><!-- #pack_geotags -->
 
     {% if not pack.is_dirty %}
-	{% if num_sounds_ok > 0 %}
-		<!--<div id="single_pack_sidebar">-->
-		{% if pack_geotags %}
-		    <div id="download" style="margin-top:-40px">
-		{% else %}
-		    <div id="download">
-		{% endif %}
-		    {% if request.user.is_authenticated %}
-		    	<a href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
-		    {% else %}
-		    	<a href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" id="download_login_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
-		    {% endif %}
-		</div>
-
-		<!--</div>-->
-	{% endif %}
+        {% if num_sounds_ok > 0 %}
+            {% if pack_geotags %}
+                <div id="download" style="margin-top:-40px">
+            {% else %}
+                <div id="download">
+            {% endif %}
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
+                    <div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+                {% else %}
+                    <a href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" id="download_login_button" title="download pack"></a>
+                    <div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+                {% endif %}
+            </div>
+        {% endif %}
     {% endif %}
 </div>
 

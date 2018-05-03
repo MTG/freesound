@@ -26,4 +26,4 @@ register = template.Library()
 
 @register.simple_tag()
 def google_maps_js():
-    return "//maps.googleapis.com/maps/api/js?v=3&key=%s&sensor=false" % settings.GOOGLE_API_KEY
+    return "//maps.googleapis.com/maps/api/js?v=3&key=%s" % settings.GOOGLE_API_KEY

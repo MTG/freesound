@@ -28,5 +28,4 @@ def get_template_cache_key(fragment_name, *variables):
 
 def invalidate_template_cache(fragment_name, *variables):
     cache_key = get_template_cache_key(fragment_name, *variables)
-    # print('Invalidating: ', cache_key)
     cache.delete(cache_key)

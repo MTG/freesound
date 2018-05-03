@@ -110,6 +110,8 @@ class RemixForm(forms.Form):
                 source = Sound.objects.get(id=sid)
                 self.sound.sources.remove(source)
 
+                source.invalidate_template_caches()
+
                 # modify remix_group
                 send_mail_template(
                     u'Sound removed as remix source', 'sounds/email_remix_update.txt',
@@ -124,6 +126,9 @@ class RemixForm(forms.Form):
 
         for sid in new_sources - old_sources:  # in new but not in old
             source = Sound.objects.get(id=sid)
+
+            source.invalidate_template_caches()
+
             self.sound.sources.add(source)
             try:
                 send_mail_template(

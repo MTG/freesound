@@ -239,6 +239,7 @@ def sound(request, username, sound_id):
                 if form.is_valid():
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
+                    sound.invalidate_template_caches()
                     try:
                         if request.user.profile.email_not_disabled("new_comment"):
                             # Send the user an email to notify him of the new comment!
@@ -257,7 +258,7 @@ def sound(request, username, sound_id):
 
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
-    display_random_link = request.GET.get('random_browsing')
+    display_random_link = request.GET.get('random_browsing', False)
     is_following = False
     if request.user.is_authenticated:
         users_following = follow_utils.get_users_following(request.user)
@@ -271,7 +272,7 @@ def sound(request, username, sound_id):
         'form': form,
         'display_random_link': display_random_link,
         'is_following': is_following,
-        'is_explicit': is_explicit,
+        'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
@@ -329,6 +330,7 @@ def sound_download(request, username, sound_id):
         cache_key = 'sdwn_%s_%d' % (sound_id, request.user.id)
         if cache.get(cache_key, None) is None:
             Download.objects.create(user=request.user, sound=sound, license=sound.license)
+            sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
@@ -588,6 +590,7 @@ def sound_edit_sources(request, username, sound_id):
         form = RemixForm(sound, request.POST)
         if form.is_valid():
             form.save()
+            sound.invalidate_template_caches()
     else:
         form = RemixForm(sound, initial=dict(sources=sources_string))
     tvars = {
@@ -848,7 +851,8 @@ def display_sound_wrapper(request, username, sound_id):
         'license_name': sound_obj.license.name,
         'media_url': settings.MEDIA_URL,
         'request': request,
-        'is_explicit': is_explicit
+        'is_explicit': is_explicit,
+        'is_authenticated': request.user.is_authenticated()  # cache computation is weird with CallableBool
     }
     return render(request, 'sounds/display_sound.html', tvars)
 

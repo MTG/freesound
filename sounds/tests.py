@@ -760,7 +760,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.assertRedirects(resp, '%s?next=%s' % (
             reverse('login'), reverse('sound', args=[self.sound.user.username, self.sound.id])))
 
-            # Check donwload works successfully if user logged in
+            # Check download works successfully if user logged in
             self.client.login(username=self.user.username, password='testpass')
             resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(resp.status_code, 200)
@@ -776,10 +776,18 @@ class SoundPackDownloadTestCase(TestCase):
             self.sound.refresh_from_db()
             self.assertEqual(self.sound.num_downloads, 1)
 
+            # Check num_sound_downloads in user profile has been updated
+            self.user.profile.refresh_from_db()
+            self.assertEquals(self.user.profile.num_sound_downloads, 1)
+
             # Delete all Download objects and check num_download attribute of Sound is 0
             Download.objects.all().delete()
             self.sound.refresh_from_db()
             self.assertEqual(self.sound.num_downloads, 0)
+
+            # Check num_sound_downloads in user profile has been updated
+            self.user.profile.refresh_from_db()
+            self.assertEquals(self.user.profile.num_sound_downloads, 0)
 
     def test_download_sound_oldusername(self):
         # Test if download works if username changed
@@ -800,7 +808,6 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check n download objects is 1
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
-
 
     def test_download_pack(self):
         with mock.patch('sounds.views.download_sounds', return_value=HttpResponse()):
@@ -830,10 +837,18 @@ class SoundPackDownloadTestCase(TestCase):
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 1)
 
+            # Check num_pack_downloads in user profile has been updated
+            self.user.profile.refresh_from_db()
+            self.assertEquals(self.user.profile.num_pack_downloads, 1)
+
             # Delete all Download objects and check num_download attribute of Sound is 0
             PackDownload.objects.all().delete()
             self.pack.refresh_from_db()
             self.assertEqual(self.pack.num_downloads, 0)
+
+            # Check num_pack_downloads in user profile has been updated
+            self.user.profile.refresh_from_db()
+            self.assertEquals(self.user.profile.num_pack_downloads, 0)
 
     def test_download_pack_oldusername(self):
         # Test if download pack works if username changed

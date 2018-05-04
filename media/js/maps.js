@@ -38,13 +38,13 @@ function getSoundsLocations(url, callback){
     oReq.send();
 }
 
-function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clusters, on_built_callback, on_bounds_changed_callback){
+function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clusters, on_built_callback, on_bounds_changed_callback, center_lat, center_lon, zoom){
     /*
     This function is used to display maps in the user home/profile and in the pack page.
     'geotags_url' is a Freesound URL that returns the list of geotags that will be shown in the map.
     'element_id' is the DOM element where the map will be shown.
     Google Maps API is only called if 'geotags_url' returns at least one geotag.
-    TODO: generalize this function so that it can be used in all places where maps are shown (geotags page, map embeds...)
+    TODO: update docs of this function
      */
     getSoundsLocations(geotags_url, function(data){
         var nSounds = data.length;
@@ -105,11 +105,17 @@ function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clust
             }
 
             // Set map boundaries
-            google.maps.event.trigger(map, 'resize');
-            if (nSounds > 1){
-                if (!bounds.isEmpty()) map.fitBounds(bounds);
-            }else{
-                map.setCenter(lastPoint, 4); // Center the map in the geotag
+            if ((center_lat !== undefined) && (center_lon !== undefined) && (zoom !== undefined)){
+                // If these parameters are specified, do center using them
+                map.setCenter(new google.maps.LatLng(center_lat, center_lon));
+                map.setZoom(zoom);
+            } else {
+                google.maps.event.trigger(map, 'resize');
+                if (nSounds > 1){
+                    if (!bounds.isEmpty()) map.fitBounds(bounds);
+                } else {
+                    map.setCenter(lastPoint, 4); // Center the map in the geotag
+                }
             }
 
             // Cluster map points

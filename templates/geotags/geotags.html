@@ -79,16 +79,19 @@
 <script type="text/javascript">
 
     var url;
+    var extend_initial_bounds = false;
     {% if for_user %}
         url = '{% url "geotags-for-user-barray" for_user.username %}';
+        extend_initial_bounds = true;
     {% else %}
         {% if tag %}
             url = '{% url "geotags-barray" tag %}';
+            extend_initial_bounds = true;
         {% else %}
             url = '{% url "geotags-barray" %}';
         {% endif %}
     {% endif %}
-    make_map(url, undefined, false, true, toggleIndicator, updateEmbedCode);
+    make_map(url, undefined, extend_initial_bounds, true, toggleIndicator, updateEmbedCode);
 
     function updateEmbedCode(lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
 
@@ -96,8 +99,8 @@
         var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;
         var width = 910;
         var height = 600;
-        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if username %} "&username={{ username }}" +{% endif %} box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
-        var link_code = "{% absurl 'geotags-box' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if username %} "&username={{ username }}" +{% endif %} box;
+        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if for_user %} "&username={{ for_user.username }}" +{% endif %} box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
+        var link_code = "{% absurl 'geotags-box' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if for_user %} "&username={{ for_user.username }}" +{% endif %} box;
 
         // Display code in elements
         var share_control_element = $("#share_control_link");

@@ -103,7 +103,8 @@ def _get_geotags_box_params(request):
         'center_lat': request.GET.get('c_lat', None),
         'center_lon': request.GET.get('c_lon', None),
         'zoom': request.GET.get('z', None),
-        'username': request.GET.get('username', None)
+        'username': request.GET.get('username', None),
+        'tag': request.GET.get('tag', None),
     }
 
 

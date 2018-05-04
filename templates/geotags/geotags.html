@@ -99,8 +99,8 @@
         var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;
         var width = 910;
         var height = 600;
-        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if for_user %} "&username={{ for_user.username }}" +{% endif %} box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
-        var link_code = "{% absurl 'geotags-box' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if for_user %} "&username={{ for_user.username }}" +{% endif %} box;
+        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom {% if for_user %}+ "&username={{ for_user.username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
+        var link_code = "{% absurl 'geotags-box' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom {% if for_user %}+ "&username={{ for_user.username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box;
 
         // Display code in elements
         var share_control_element = $("#share_control_link");

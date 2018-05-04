@@ -24,10 +24,12 @@
 
 <body>
 
-{% if not username %}
-    {% display_geotags "/geotags/geotags_box_barray/" m_width m_height clusters center_lat center_lon zoom username %}
-{% else %}
-    {% display_geotags "/geotags/sounds_barray/user/" m_width m_height clusters center_lat center_lon zoom username %}
+{% if not username and not tag %}
+    {% display_geotags "/geotags/geotags_box_barray/" m_width m_height clusters center_lat center_lon zoom username tag %}
+{% elif username  %}
+    {% display_geotags "/geotags/sounds_barray/user/" m_width m_height clusters center_lat center_lon zoom username tag %}
+{% elif tag %}
+    {% display_geotags "/geotags/sounds_barray/" m_width m_height clusters center_lat center_lon zoom username tag %}
 {% endif %}
 
 </body>

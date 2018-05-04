@@ -23,12 +23,17 @@
     });
     
     var box = document.location.hash.slice(5,document.location.hash.length);
-    {% if not username %}
-        var url = "{{url}}?box="+box // TODO: the template tag could use other URLs
-    {%  else %}
-        var url = "{{url}}{{ username }}"
-    {%  endif %}
- 
+
+    {% if username %}
+        var url = "{{url}}{{ username }}";
+    {% else %}
+        {% if tag %}
+            var url = "{{url}}{{ tag }}";
+        {% else %}
+            var url = "{{url}}?box="+box // TODO: the template tag could use other URLs
+        {% endif %}
+    {% endif %}
+
     var bounds = new google.maps.LatLngBounds();
     var markers = [];
 

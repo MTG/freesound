@@ -316,7 +316,7 @@
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
         <div id="map_canvas"></div>
         <script type="text/javascript">
-            make_map('{% url "geotags-for-user-latest-barray" user.username %}', '#latest_geotags');
+            make_map('{% url "geotags-for-user-latest-barray" user.username %}', '#latest_geotags', true);
         </script>
         <p><a href="{% url "geotags-for-user" user.username %}">more...</a></p>
     </div><!-- #latest_geotags -->

@@ -2,6 +2,7 @@
 
 {% load absurl %}
 {% load google_maps %}
+{% load display_geotags %}
 
 {% block title %}geotags{% endblock title %}
 
@@ -44,6 +45,8 @@
 {% endif %}
 
 <div id="map_canvas" style="width: 910px; height: 600px; border: 1px solid black;"></div>
+
+
 <div id="indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></div>
 {% if for_user or tag %}
     <p>You can also view <a href="{% url "geotags" %}">all geotags</a></p>
@@ -72,100 +75,44 @@
 
     </div>
 
+
 <script type="text/javascript">
 
-    var width = 910;
-    var height = 600;
-    var map = new google.maps.Map(
-        document.getElementById('map_canvas'), {
-          center: new google.maps.LatLng(24, 22),
-          zoom: 2,
-          mapTypeId: google.maps.MapTypeId.SATELLITE,
-          scrollwheel: false,
-          streetViewControl: false,
-    });
-    var infowindow = new google.maps.InfoWindow();
-    google.maps.event.addListener(infowindow, 'closeclick', function() {
-        stopAll();
-    });
-
+    var url;
     {% if for_user %}
-        var url = '{% url "geotags-for-user-barray" for_user.username %}';
+        url = '{% url "geotags-for-user-barray" for_user.username %}';
     {% else %}
         {% if tag %}
-            var url = '{% url "geotags-barray" tag %}';
+            url = '{% url "geotags-barray" tag %}';
         {% else %}
-            var url = '{% url "geotags-barray" %}';
+            url = '{% url "geotags-barray" %}';
         {% endif %}
     {% endif %}
-    var bounds = new google.maps.LatLngBounds();
-    var markers = [];
-    
-    getSoundsLocations(url, function(data){
-        $.each(data, function(index, item) {
-            var id = item[0];
-            var lat = item[1];
-            var lon = item[2];
+    make_map(url, undefined, false, true, toggleIndicator, updateEmbedCode);
 
-            var point = new google.maps.LatLng(lat, lon);
-            var marker = new google.maps.Marker({'position': point});
+    function updateEmbedCode(lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
 
-            {% if tag or for_user %}
-                bounds.extend(point);
-            {% endif %}
+        // Generate embed and link codes
+        var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;
+        var width = 910;
+        var height = 600;
+        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if username %} "&username={{ username }}" +{% endif %} box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
+        var link_code = "{% absurl 'geotags-box' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + {% if username %} "&username={{ username }}" +{% endif %} box;
 
-            google.maps.event.addListener(marker, 'click', function()
-            {
-                stopAll();
-                ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
-                {
-                    infowindow.setContent(data.response);
-                    infowindow.open(map, marker);
-                    setTimeout(function() {
-                        makePlayer('.infowindow_player .player');
-                    }, 500);
-                });
-            });
-            markers.push(marker);
-        });
-
-        if (!bounds.isEmpty()) map.fitBounds(bounds);
-        var mcOptions = { gridSize: 50, maxZoom: 12, imagePath:'/media/images/js-marker-clusterer/m' };
-        var markerCluster = new MarkerClusterer(map, markers, mcOptions);
-
-        // Hide loading indicator
-        toggleIndicator();
-
-    });
-
-    //google.maps.event.addListener( map, 'zoomend',   function() {updateEmbedCode(map)} );
-    //google.maps.event.addListener( map, 'moveend', function() {updateEmbedCode(map)});
-    google.maps.event.addListener( map, 'bounds_changed', function() {updateEmbedCode(map)});
-
-
-    function updateEmbedCode(map){
-            var bounds = map.getBounds()
-            var box = "#box="+bounds.getSouthWest().lat()+","+
-            bounds.getSouthWest().lng()+","+
-            bounds.getNorthEast().lat()+","+
-            bounds.getNorthEast().lng()
-
-            var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
-            box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>"
-
-            var link_code = "{% absurl 'geotags-box' %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
-            box
-
-            if (map.getZoom() > 2){
-                $("#embed_code").text(embed_code)
-                $("#link_code").text(link_code)
-                $("#share_control_link").text("")
-                $("#share_control_link").append('<br><a onClick = "toggleShareControls()">Share this map</a>')
-            }else{
-                $("#embed_code").text("")
-                $("#link_code").text("")
-                $("#share_control_link").text("")
-            }
+        // Display code in elements
+        var share_control_element = $("#share_control_link");
+        var embed_code_element = $("#embed_code");
+        var link_code_element = $("#link_code");
+        if (zoom > 2){
+            embed_code_element.text(embed_code);
+            link_code_element.text(link_code);
+            share_control_element.html('<br><a onClick = "toggleShareControls()">Share this map</a>');
+        }else{
+            embed_code_element.text("");
+            link_code_element.text("");
+            share_control_element.text("");
+        }
 	}
 </script>
+
 {% endblock %}

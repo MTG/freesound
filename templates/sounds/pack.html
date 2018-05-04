@@ -73,7 +73,7 @@
         <h3>Geotags in this pack</h3>
         <div id="map_canvas"></div>
         <script type="text/javascript">
-            make_map('{% url "geotags-for-pack-barray" pack.id %}', '#latest_geotags');
+            make_map('{% url "geotags-for-pack-barray" pack.id %}', '#latest_geotags', true);
         </script>
     </div><!-- #pack_geotags -->
 

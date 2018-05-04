@@ -38,7 +38,7 @@ function getSoundsLocations(url, callback){
     oReq.send();
 }
 
-function make_map(geotags_url, element_id){
+function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clusters, on_built_callback, on_bounds_changed_callback){
     /*
     This function is used to display maps in the user home/profile and in the pack page.
     'geotags_url' is a Freesound URL that returns the list of geotags that will be shown in the map.
@@ -67,6 +67,8 @@ function make_map(geotags_url, element_id){
             // Add markers for each sound
             var bounds = new google.maps.LatLngBounds();
             var lastPoint;
+            var markers = [];  // only used for clustering
+
             $.each(data, function(index, item) {
                 var id = item[0];
                 var lat = item[1];
@@ -74,8 +76,14 @@ function make_map(geotags_url, element_id){
 
                 var point = new google.maps.LatLng(lat, lon);
                 lastPoint = point;
-                bounds.extend(point);
+                if (extend_initial_bounds){
+                    bounds.extend(point);
+                }
+
                 var marker = new google.maps.Marker({'position': point, 'map': map});
+                if (show_clusters) {
+                    markers.push(marker);
+                }
 
                 google.maps.event.addListener(marker, 'click', function()
                 {
@@ -91,13 +99,44 @@ function make_map(geotags_url, element_id){
                 });
             });
 
-            // Show map and set boundaries
-            $(element_id).show();
+            // Show map element id (if provided)
+            if (map_element_id !== undefined){
+                $(map_element_id).show();
+            }
+
+            // Set map boundaries
             google.maps.event.trigger(map, 'resize');
             if (nSounds > 1){
                 if (!bounds.isEmpty()) map.fitBounds(bounds);
             }else{
                 map.setCenter(lastPoint, 4); // Center the map in the geotag
+            }
+
+            // Cluster map points
+            if (show_clusters) {
+                var mcOptions = { gridSize: 50, maxZoom: 12, imagePath:'/media/images/js-marker-clusterer/m' };
+                new MarkerClusterer(map, markers, mcOptions);
+            }
+
+            // Run callback function (if passed) after map is built
+            if (on_built_callback !== undefined){
+                on_built_callback();
+            }
+
+            // Add listener for callback on bounds changed
+            if (on_bounds_changed_callback !== undefined){
+                google.maps.event.addListener( map, 'bounds_changed', function() {
+                    var bounds = map.getBounds();
+                    on_bounds_changed_callback(  // The callback is called with the following arguments:
+                        map.getCenter().lat(),  // Latitude (at map center)
+                        map.getCenter().lng(),  // Longitude (at map center)
+                        map.getZoom(),  // Zoom
+                        bounds.getSouthWest().lat(),  // Latidude (at bottom left of map)
+                        bounds.getSouthWest().lng(),  // Longitude (at bottom left of map)
+                        bounds.getNorthEast().lat(),  // Latidude (at top right of map)
+                        bounds.getNorthEast().lng()   // Longitude (at top right  of map)
+                    )
+                });
             }
         }
     });

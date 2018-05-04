@@ -49,6 +49,7 @@ from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
 from comments.models import Comment
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
+import accounts.models
 import os
 import logging
 import random
@@ -605,6 +606,8 @@ class Sound(SocialModel):
             if commit:
                 self.save()
 
+        self.invalidate_template_caches()
+
     def change_processing_state(self, new_state, commit=True, use_set_instead_of_save=False):
         """
         Change the processing state of a sound and perform related tasks such as set the sound as index dirty if
@@ -641,6 +644,8 @@ class Sound(SocialModel):
                 self.processing_date = datetime.datetime.now()
                 if commit:
                     self.save()
+
+        self.invalidate_template_caches()
 
     def change_owner(self, new_owner):
         def replace_user_id_in_path(path, old_owner_id, new_owner_id):
@@ -764,12 +769,17 @@ class Sound(SocialModel):
         delete_sound_from_gaia(self)
 
     def invalidate_template_caches(self):
-        invalidate_template_cache("sound_header", self.id, True)
-        invalidate_template_cache("sound_header", self.id, False)
-        invalidate_template_cache("sound_footer_top", self.id)
+        for is_explicit in [True, False]:
+            invalidate_template_cache("sound_header", self.id, is_explicit)
+
+        for display_random_link in [True, False]:
+            invalidate_template_cache("sound_footer_top", self.id, display_random_link)
+
         invalidate_template_cache("sound_footer_bottom", self.id)
-        invalidate_template_cache("display_sound", self.id, True, self.processing_state, self.moderation_state)
-        invalidate_template_cache("display_sound", self.id, False, self.processing_state, self.moderation_state)
+
+        for is_authenticated in [True, False]:
+            for is_explicit in [True, False]:
+                invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
@@ -1049,7 +1059,7 @@ class Flag(models.Model):
 
 
 class Download(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, related_name='sound_downloads')
     sound = models.ForeignKey(Sound, related_name='downloads')
     license = models.ForeignKey(License)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -1066,6 +1076,8 @@ def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
         Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+        accounts.models.Profile.objects.filter(user_id=download.user_id).update(
+            num_sound_downloads=F('num_sound_downloads') - 1)
 
 
 @receiver(post_save, sender=Download)
@@ -1074,10 +1086,12 @@ def update_num_downloads_on_insert(**kwargs):
     if kwargs['created']:
         if download.sound_id:
             Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+            accounts.models.Profile.objects.filter(user_id=download.user_id).update(
+                num_sound_downloads=F('num_sound_downloads') + 1)
 
 
 class PackDownload(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, related_name='pack_downloads')
     pack = models.ForeignKey(Pack, related_name='downloads')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -1092,6 +1106,8 @@ class PackDownloadSound(models.Model):
 def update_num_downloads_on_delete_pack(**kwargs):
     download = kwargs['instance']
     Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
+    accounts.models.Profile.objects.filter(user_id=download.user_id).update(
+        num_pack_downloads=F('num_pack_downloads') - 1)
 
 
 @receiver(post_save, sender=PackDownload)
@@ -1099,6 +1115,8 @@ def update_num_downloads_on_insert_pack(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
         Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
+        accounts.models.Profile.objects.filter(user_id=download.user_id).update(
+            num_pack_downloads=F('num_pack_downloads') + 1)
 
 
 class RemixGroup(models.Model):

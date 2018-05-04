@@ -1239,7 +1239,7 @@ class UsernameValidatorTests(TestCase):
         self.assertFalse(form.is_valid())
 
 
-class AboutFieldVisibilityTests(object):  # temporarily disable this test because of about field shown unconditionally
+class AboutFieldVisibilityTests(TestCase):
     """Verifies visibility of about field"""
     def setUp(self):
         self.spammer = User.objects.create_user(username='spammer', email='spammer@example.com', password='testpass')

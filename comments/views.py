@@ -45,6 +45,7 @@ def delete(request, comment_id):
         if not comment.sound or comment.sound.user != request.user:
             raise PermissionDenied
     comment.delete()
+    comment.sound.invalidate_template_caches()
     messages.success(request, 'Comment deleted.')
     next = request.GET.get("next")
     page = request.GET.get("page")

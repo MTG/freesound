@@ -25,10 +25,7 @@ from django.utils.safestring import mark_safe
 register = template.Library()
 
 
-@register.simple_tag()
+@register.inclusion_tag('templatetags/maps_js_scripts.html')
 def maps_js_scripts():
-    html = '<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key=%s"></script>' \
-           % settings.GOOGLE_API_KEY
-    html += '<script src="%s/js/markerclustererV3.js" type="text/javascript"></script>' % settings.MEDIA_URL
-    html += '<script src="%s/js/maps.js?v={{ last_restart_date }}" type="text/javascript"></script>' % settings.MEDIA_URL
-    return mark_safe(html)
+    return {'google_maps_key': settings.GOOGLE_API_KEY, 'media_url': settings.MEDIA_URL}
+

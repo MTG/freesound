@@ -1,18 +1,8 @@
-function setMaxZoomCenter(map, lat, lng, zoom)
-{
-    var latlng = new GLatLng(lat, lng);
-
-    map.getCurrentMapType().getMaxZoomAtLatLng(latlng, function(response)
-    {
-        if (response && response['status'] == G_GEO_SUCCESS)
-        {
-            map.setCenter(latlng, response['zoom']);
-        }
-        else
-        {
-            map.setCenter(latlng, zoom);
-        }
-    });
+function setMaxZoomCenter(lat, lng, zoom) {
+    /*  Center a map to a given latitude, longitude and zoom.  */
+    var latlng = new google.maps.LatLng(lat, lng);
+    window.map.setCenter(latlng);
+    window.map.setZoom(zoom);
 }
 
 function getSoundsLocations(url, callback){
@@ -60,6 +50,10 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
     This function first calls the Freesound endpoint which returns the list of geotags to be displayed as markers.
     Once the data is received, it creates the map and does all necessary stuff to display it.
+
+    NOTE: the map created using this function is assigned to window.map to make it accessible from everywhere. This is
+    needed for the "zoom in" method in info windows. If more than one map is shown in a single page (which does not
+    happen in Freesound) the "zoom in" method in inforwindows won't work properly.
      */
 
     getSoundsLocations(geotags_url, function(data){
@@ -75,6 +69,8 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                 scrollwheel: false,
                 streetViewControl: false
                 });
+            window.map = map;  // Make map a property of window, accessible from anywhere
+
             var infowindow = new google.maps.InfoWindow();
             google.maps.event.addListener(infowindow, 'closeclick', function() {
                 stopAll();

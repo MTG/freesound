@@ -89,6 +89,11 @@ def geotags_for_pack_barray(request, pack_id):
     return generate_bytearray(sounds)
 
 
+def geotag_for_sound_barray(request, sound_id):
+    sounds = Sound.objects.filter(id=sound_id).exclude(geotag=None)
+    return generate_bytearray(sounds)
+
+
 def geotags(request, tag=None):
     tvars = {'tag': tag,
              'for_user': None}

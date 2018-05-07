@@ -79,6 +79,9 @@
 <script type="text/javascript">
 
     var url;
+    var center_lat;
+    var center_lon;
+    var zoom;
     {% if for_user %}
         url = '{% url "geotags-for-user-barray" for_user.username %}';
     {% else %}
@@ -86,9 +89,12 @@
             url = '{% url "geotags-barray" tag %}';
         {% else %}
             url = '{% url "geotags-barray" %}';
+            center_lat = 24;
+            center_lon = 20;
+            zoom = 2;
         {% endif %}
     {% endif %}
-    make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode);
+    make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom);
 
     function updateEmbedCode(lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
 

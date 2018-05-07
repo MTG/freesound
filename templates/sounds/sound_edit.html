@@ -271,15 +271,12 @@
         zoom = {{sound.geotag.zoom}};
     {% endif %}
 
-    make_geotag_edit_map('map', '{{media_url}}/images/arrow.png', undefined, updateAndAddCenter, center_lat, center_lon, zoom);
+    make_geotag_edit_map('map', '{{media_url}}/images/arrow.png', updateLatLonZoomFields, center_lat, center_lon, zoom);
 
-    function updateAndAddCenter(lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
-        if (!$("#{{geotag_form.remove_geotag.auto_id}}").checked)
-        {
-            $("#{{geotag_form.lon.auto_id}}").val(lon);
-            $("#{{geotag_form.lat.auto_id}}").val(lat);
-            $("#{{geotag_form.zoom.auto_id}}").val(zoom);
-        }
+    function updateLatLonZoomFields(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
+        $("#{{geotag_form.lon.auto_id}}").val(lon);
+        $("#{{geotag_form.lat.auto_id}}").val(lat);
+        $("#{{geotag_form.zoom.auto_id}}").val(zoom);
     }
 
     $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {

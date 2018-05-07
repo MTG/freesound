@@ -95,7 +95,7 @@
     {% endif %}
     make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom);
 
-    function updateEmbedCode(lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
+    function updateEmbedCode(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
 
         // Generate embed and link codes
         var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;

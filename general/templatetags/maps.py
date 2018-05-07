@@ -29,5 +29,6 @@ register = template.Library()
 def maps_js_scripts():
     html = '<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key=%s"></script>' \
            % settings.GOOGLE_API_KEY
-    html += '\n<script src="%s/js/markerclustererV3.js" type="text/javascript"></script>' % settings.MEDIA_URL
+    html += '<script src="%s/js/markerclustererV3.js" type="text/javascript"></script>' % settings.MEDIA_URL
+    html += '<script src="%s/js/maps.js?v={{ last_restart_date }}" type="text/javascript"></script>' % settings.MEDIA_URL
     return mark_safe(html)

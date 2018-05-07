@@ -319,6 +319,9 @@ LOG_DOWNLOADS = False
 STRIPE_PUBLIC_KEY = ""
 STRIPE_PRIVATE_KEY = ""
 
+# Mapbox access token
+MAPBOX_ACCESS_TOKEN = ""
+
 # Frontend preference handling
 FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
 FRONTEND_SESSION_PARAM_NAME = 'frontend'

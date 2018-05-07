@@ -148,3 +148,72 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
         }
     });
 }
+
+
+function make_geotag_edit_map(map_element_id, arrow_url, on_built_callback, on_bounds_changed_callback,
+                              center_lat, center_lon, zoom){
+
+    /*
+    This function is used to display the map used to add a geotag to a sound maps with sounds. It is used in the sound
+    edit page and the sound describe page.
+
+    - map_element_id: DOM element id where the map will be placed.
+    - on_built_callback: function to be called once the map has been built (takes no parameters)
+    - on_bounds_changed_callback: function called when the bounds of the map change (because of user interaction). As
+        parameters it gets updated center latitude, center longitude and zoom, as well as bottom left corder latitude
+        and longitude, and top right corner latitude and longitude (see code below for more specific details).
+    - center_lat: latitude where to center the map (if not specified, it uses a default one)
+    - center_lon: latitude where to center the map (if not specified, it uses a default one)
+    - zoom: initial zoom for the map (if not specified, it uses a default one)
+     */
+
+    // Initialize map
+    if (center_lat === undefined){  // Load default center
+        center_lat = 23.8858;
+        center_lon = 21.7968;
+        zoom = 2;
+    }
+    var initial_center = new google.maps.LatLng(center_lat, center_lon);
+    var map = new google.maps.Map(
+        document.getElementById(map_element_id), {
+          center: initial_center,
+          zoom: zoom,
+          mapTypeId: google.maps.MapTypeId.SATELLITE,
+          scrollwheel: false,
+          streetViewControl: false,
+    });
+
+    // Add arrow marker
+    var image = {
+        url: arrow_url,
+        size: new google.maps.Size(25, 24),
+        anchor: new google.maps.Point(0, 24)
+    };
+    var centerMarker = new google.maps.Marker({
+          position: initial_center,
+          map: map,
+          icon: image
+    });
+
+    // Run callback function (if passed) after map is built
+    if (on_built_callback !== undefined){
+        on_built_callback();
+    }
+
+    // Add listener for callback on bounds changed
+    google.maps.event.addListener(map, 'bounds_changed', function() {
+        var bounds = map.getBounds();
+        if (on_bounds_changed_callback !== undefined) {
+            on_bounds_changed_callback(  // The callback is called with the following arguments:
+                map.getCenter().lat(),  // Latitude (at map center)
+                map.getCenter().lng(),  // Longitude (at map center)
+                map.getZoom(),  // Zoom
+                bounds.getSouthWest().lat(),  // Latidude (at bottom left of map)
+                bounds.getSouthWest().lng(),  // Longitude (at bottom left of map)
+                bounds.getNorthEast().lat(),  // Latidude (at top right of map)
+                bounds.getNorthEast().lng()   // Longitude (at top right  of map)
+            );
+        }
+        centerMarker.setPosition(map.getCenter());  // Update arrow marker
+    });
+}

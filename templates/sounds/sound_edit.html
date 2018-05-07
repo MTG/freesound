@@ -1,13 +1,13 @@
 {% extends "sounds/_section.html" %}
 {% load display_license_form %}
-{% load google_maps %}
+{% load maps %}
 
 {% block title %}&quot;editing {{sound.original_filename}}{% endblock title %}
 
 {% block head %}
 {{ block.super }}
 
-<script type="text/javascript" src="{% google_maps_js %}"></script>
+{% maps_js_scripts %}
 <script type="text/javascript">
 
     var doLog = true;

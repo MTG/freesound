@@ -20,10 +20,14 @@
 
 from django import template
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
 
 @register.simple_tag()
-def google_maps_js():
-    return "//maps.googleapis.com/maps/api/js?v=3&key=%s" % settings.GOOGLE_API_KEY
+def maps_js_scripts():
+    html = '<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key=%s"></script>' \
+           % settings.GOOGLE_API_KEY
+    html += '\n<script src="%s/js/markerclustererV3.js" type="text/javascript"></script>' % settings.MEDIA_URL
+    return mark_safe(html)

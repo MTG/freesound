@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load display_license_form %}
-{% load google_maps %}
+{% load maps %}
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="{% google_maps_js %}"></script>
+    {% maps_js_scripts %}
     <script>
         // Maps variables
         var maps = {};

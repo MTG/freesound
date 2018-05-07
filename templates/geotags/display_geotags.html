@@ -11,7 +11,7 @@
             url = "{{url}}?box="+box; // TODO: the template tag could use other URLs
         {% endif %}
     {% endif %}
-    make_map(url, undefined, true, true, updateHash, updateHash, {{center_lat}}, {{center_lon}}, {{ zoom }});
+    make_sounds_map(url, 'map_canvas', updateHash, updateHash, {{center_lat}}, {{center_lon}}, {{ zoom }});
 
     function updateHash(lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
         document.location.hash = "box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;

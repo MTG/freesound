@@ -16,6 +16,10 @@ function setMaxZoomCenter(map, lat, lng, zoom)
 }
 
 function getSoundsLocations(url, callback){
+    /*
+    Loads geotag data from Freesound endpoint and returns as list of tuples with:
+      [(sound_id, sound_latitude, sound_longitude), ...]
+     */
     var resp = [];
     var oReq = new XMLHttpRequest();
     oReq.open("GET", url, true);
@@ -38,23 +42,35 @@ function getSoundsLocations(url, callback){
     oReq.send();
 }
 
-function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clusters, on_built_callback, on_bounds_changed_callback, center_lat, center_lon, zoom){
+function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_bounds_changed_callback,
+                         center_lat, center_lon, zoom){
     /*
-    This function is used to display maps in the user home/profile and in the pack page.
-    'geotags_url' is a Freesound URL that returns the list of geotags that will be shown in the map.
-    'element_id' is the DOM element where the map will be shown.
-    Google Maps API is only called if 'geotags_url' returns at least one geotag.
-    TODO: update docs of this function
+    This function is used to display maps with sounds. It is used in all pages where maps with markers (which represent
+    sounds) are shown: user home/profile, pack page, geotags map, embeds. Parameters:
+
+    - geotags_url: Freesound URL that returns the list of geotags that will be shown in the map.
+    - map_element_id: DOM element id where the map will be placed.
+    - on_built_callback: function to be called once the map has been built (takes no parameters)
+    - on_bounds_changed_callback: function called when the bounds of the map change (because of user interaction). As
+        parameters it gets updated center latitude, center longitude and zoom, as well as bottom left corder latitude
+        and longitude, and top right corner latitude and longitude (see code below for more specific details).
+    - center_lat: latitude where to center the map (if not specified, it is automatically determined based on markers)
+    - center_lon: latitude where to center the map (if not specified, it is automatically determined based on markers)
+    - zoom: initial zoom for the map (if not specified, it is automatically determined based on markers)
+
+    This function first calls the Freesound endpoint which returns the list of geotags to be displayed as markers.
+    Once the data is received, it creates the map and does all necessary stuff to display it.
      */
+
     getSoundsLocations(geotags_url, function(data){
         var nSounds = data.length;
         if (nSounds > 0) {  // only if the user has sounds, we render a map
 
             // Init map and info window objects
             var map = new google.maps.Map(
-                document.getElementById('map_canvas'), {
+                document.getElementById(map_element_id), {
                 center: new google.maps.LatLng(24, 22),
-                zoom: 2,
+                zoom: 2, minZoom: 2,
                 mapTypeId: google.maps.MapTypeId.SATELLITE,
                 scrollwheel: false,
                 streetViewControl: false
@@ -65,7 +81,7 @@ function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clust
             });
 
             // Add markers for each sound
-            var bounds = new google.maps.LatLngBounds();
+            var markers_bounds = new google.maps.LatLngBounds();
             var lastPoint;
             var markers = [];  // only used for clustering
 
@@ -76,14 +92,10 @@ function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clust
 
                 var point = new google.maps.LatLng(lat, lon);
                 lastPoint = point;
-                if (extend_initial_bounds){
-                    bounds.extend(point);
-                }
+                markers_bounds.extend(point);
 
                 var marker = new google.maps.Marker({'position': point, 'map': map});
-                if (show_clusters) {
-                    markers.push(marker);
-                }
+                markers.push(marker);
 
                 google.maps.event.addListener(marker, 'click', function()
                 {
@@ -99,11 +111,6 @@ function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clust
                 });
             });
 
-            // Show map element id (if provided)
-            if (map_element_id !== undefined){
-                $(map_element_id).show();
-            }
-
             // Set map boundaries
             if ((center_lat !== undefined) && (center_lon !== undefined) && (zoom !== undefined)){
                 // If these parameters are specified, do center using them
@@ -112,17 +119,15 @@ function make_map(geotags_url, map_element_id, extend_initial_bounds, show_clust
             } else {
                 google.maps.event.trigger(map, 'resize');
                 if (nSounds > 1){
-                    if (!bounds.isEmpty()) map.fitBounds(bounds);
+                    map.fitBounds(markers_bounds);
                 } else {
                     map.setCenter(lastPoint, 4); // Center the map in the geotag
                 }
             }
 
             // Cluster map points
-            if (show_clusters) {
-                var mcOptions = { gridSize: 50, maxZoom: 12, imagePath:'/media/images/js-marker-clusterer/m' };
-                new MarkerClusterer(map, markers, mcOptions);
-            }
+            var mcOptions = { gridSize: 50, maxZoom: 12, imagePath:'/media/images/js-marker-clusterer/m' };
+            new MarkerClusterer(map, markers, mcOptions);
 
             // Run callback function (if passed) after map is built
             if (on_built_callback !== undefined){

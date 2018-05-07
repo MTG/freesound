@@ -3,13 +3,13 @@
 {% load display_sound %}
 {% load paginator %}
 {% load filter_img %}
-{% load google_maps %}
+{% load maps %}
 
 {% block title %}pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="{% google_maps_js %}"></script>
+    {% maps_js_scripts %}
 {% endblock head %}
 
 {% block section_content %}
@@ -73,7 +73,9 @@
         <h3>Geotags in this pack</h3>
         <div id="map_canvas"></div>
         <script type="text/javascript">
-            make_map('{% url "geotags-for-pack-barray" pack.id %}', '#latest_geotags', true);
+            make_sounds_map('{% url "geotags-for-pack-barray" pack.id %}', 'map_canvas', function(){
+                $('#latest_geotags').show(); // Once map is ready, show geotags section
+            });
         </script>
     </div><!-- #pack_geotags -->
 

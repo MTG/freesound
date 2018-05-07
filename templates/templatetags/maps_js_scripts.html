@@ -1,4 +1,4 @@
-{% if mapbox_access_token %}
+{% if not use_gmaps %}
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
     <script type="text/javascript" src="{{ media_url }}/js/maps-mapbox.js?v={{ last_restart_date }}"></script>

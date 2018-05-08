@@ -173,11 +173,11 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                                 ["get", "point_count"],
                                 12,  // 0 to 10
                                 10,
-                                16,  // 10 to 100
+                                14,  // 10 to 100
                                 100,
-                                18,  // 100 to 1000
+                                16,  // 100 to 1000
                                 1000,
-                                20  // 1000+
+                                18  // 1000+
                             ]
                         }
                     });

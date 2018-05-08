@@ -276,7 +276,7 @@
     function updateLatLonZoomFields(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
         $("#{{geotag_form.lon.auto_id}}").val(lon);
         $("#{{geotag_form.lat.auto_id}}").val(lat);
-        $("#{{geotag_form.zoom.auto_id}}").val(zoom);
+        $("#{{geotag_form.zoom.auto_id}}").val(Math.floor(zoom));
     }
 
     $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {

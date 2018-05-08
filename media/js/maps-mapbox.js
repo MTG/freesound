@@ -89,7 +89,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
             // Init map and info window objects
             var map = new mapboxgl.Map({
-              container: 'map_canvas', // HTML container id
+              container: map_element_id, // HTML container id
               style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL (custom style with satellite and labels)
               center: [init_lon, init_lat], // starting position as [lng, lat]
               zoom: init_zoom,
@@ -126,8 +126,6 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
             map.on('load', function() {
                 map.loadImage('/media/images/map_marker.png', function(error, image) {
-
-                    if (error) throw error;
                     map.addImage("custom-marker", image);
 
                     // Add a new source from our GeoJSON data and set the
@@ -244,7 +242,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                     if (center_lat === undefined){
                         // If initital center and zoom were not given, adjust map boundaries now based on the sounds
                         if (nSounds > 1){
-                            map.fitBounds(bounds, {duration:0});
+                            map.fitBounds(bounds, {duration:0, padding: {top:40, right:40, left:40, bottom:40}});
                         } else {
                             map.setZoom(4);
                             map.setCenter([geojson_features[0].geometry.coordinates]);
@@ -259,7 +257,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                     // Add listener for callback on bounds changed
                     if (on_bounds_changed_callback !== undefined) {
                         call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
-                        map.on('move', function(e) {
+                        map.on('moveend', function(e) {
                             call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
                         });
                     }
@@ -295,45 +293,69 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
         center_lon = 21.7968;
         zoom = 2;
     }
+    var initial_center = [parseFloat(center_lon, 10), parseFloat(center_lat, 10)];
 
-    var initial_center = new google.maps.LatLng(parseFloat(center_lat, 10), parseFloat(center_lon, 10));
-    var map = new google.maps.Map(
-        document.getElementById(map_element_id), {
-          center: initial_center,
-          zoom: parseInt(zoom, 10),
-          mapTypeId: google.maps.MapTypeId.SATELLITE,
-          scrollwheel: false,
-          streetViewControl: false,
+
+    var map = new mapboxgl.Map({
+      container: map_element_id, // HTML container id
+      style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL (custom style with satellite and labels)
+      center: initial_center, // starting position as [lng, lat]
+      zoom: parseInt(zoom, 10),
+      maxZoom: 18,
     });
+    map.dragRotate.disable();
+    map.touchZoomRotate.disableRotation();
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
+    map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
 
-    // Add arrow marker
-    var image = {
-        url: arrow_url,
-        size: new google.maps.Size(25, 24),
-        anchor: new google.maps.Point(0, 24)
-    };
-    var centerMarker = new google.maps.Marker({
-          position: initial_center,
-          map: map,
-          icon: image
-    });
 
-    // Add listener for callback on bounds changed
-    google.maps.event.addListener(map, 'bounds_changed', function() {
-        if (on_bounds_changed_callback !== undefined) {
-            var bounds = map.getBounds();
-            on_bounds_changed_callback(  // The callback is called with the following arguments:
-                map_element_id, // ID of the element containing the map
-                map.getCenter().lat(),  // Latitude (at map center)
-                map.getCenter().lng(),  // Longitude (at map center)
-                map.getZoom(),  // Zoom
-                bounds.getSouthWest().lat(),  // Latidude (at bottom left of map)
-                bounds.getSouthWest().lng(),  // Longitude (at bottom left of map)
-                bounds.getNorthEast().lat(),  // Latidude (at top right of map)
-                bounds.getNorthEast().lng()   // Longitude (at top right  of map)
-            );
-        }
-        centerMarker.setPosition(map.getCenter());  // Update arrow marker
+    map.on('load', function() {
+        map.loadImage('/media/images/map_marker.png', function(error, image) {
+            map.addImage("custom-marker", image);
+
+            // Add position marker
+            map.addLayer({
+                id: "position-marker",
+                type: "symbol",
+                source: {
+                    "type": "geojson",
+                    "data": {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [center_lon, center_lat]
+                        }
+                    }
+                },
+                layout: {
+                    "icon-image": "custom-marker",
+                    "icon-ignore-placement": true,
+                    "icon-allow-overlap": true,
+                }
+            });
+
+
+            // Add listener for callback on bounds changed
+            if (on_bounds_changed_callback !== undefined) {
+                // Initial call to on_bounds_changed_callback
+                call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+            }
+            map.on('move', function(e) {
+                if (on_bounds_changed_callback !== undefined) {
+                    call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+                }
+                var new_map_lat = map.getCenter().lat;
+                var new_map_lon = map.getCenter().lng;
+                map.getSource('position-marker').setData({
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [new_map_lon, new_map_lat]
+                    }
+                });
+
+            });
+        });
     });
 
     return map;

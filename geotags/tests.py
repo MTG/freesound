@@ -42,13 +42,13 @@ class GeoTagsTests(TestCase):
 
     def test_browse_geotags_box(self):
         resp = self.client.get(reverse('geotags-box'))
-        check_values = {'m_width': 900, 'm_height': 600, 'clusters': 'on', 'center_lat': None, 'center_lon': None,
+        check_values = {'m_width': 942, 'm_height': 600, 'clusters': 'on', 'center_lat': None, 'center_lon': None,
                         'zoom': None, 'username': None}
         self.check_context(resp.context, check_values)
 
     def test_geotags_box_iframe(self):
         resp = self.client.get(reverse('embed-geotags-box-iframe'))
-        check_values = {'m_width': 900, 'm_height': 600, 'clusters': 'on', 'center_lat': None, 'center_lon': None,
+        check_values = {'m_width': 942, 'm_height': 600, 'clusters': 'on', 'center_lat': None, 'center_lon': None,
                         'zoom': None, 'username': None}
         self.check_context(resp.context, check_values)
 

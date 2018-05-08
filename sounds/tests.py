@@ -1068,7 +1068,9 @@ class SoundTemplateCacheTests(TestCase):
 
         # Download
         resp = self.client.get(self._get_sound_url('sound-download'))
-        sendfile.assert_called_once()
+        sendfile.assert_called_once_with(self.sound.locations("path"),
+                                         self.sound.friendly_filename(),
+                                         self.sound.locations("sendfile_url"))
         self.assertEqual(resp.status_code, 200)
         self._assertCacheAbsent(cache_keys)
 
@@ -1094,7 +1096,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Update similarity
         call_command('similarity_update', freesound_extractor_version=None)
-        similarity_add.assert_called_once()
+        similarity_add.assert_called_once_with(self.sound.id, self.sound.locations('analysis.statistics.path'))
         self._assertCacheAbsent(cache_keys)
 
         # Check similarity icon

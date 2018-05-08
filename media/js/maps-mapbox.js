@@ -177,14 +177,12 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
                         ajaxLoad( '/geotags/infowindow/' + sound_id, function(data, responseCode)
                         {
-
                             // Ensure that if the map is zoomed out such that multiple
                             // copies of the feature are visible, the popup appears
                             // over the copy being pointed to.
                             while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
                                 coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
                             }
-
                             var popup = new mapboxgl.Popup()
                                 .setLngLat(coordinates)
                                 .setHTML(data.response)
@@ -193,11 +191,8 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                             popup.on('close', function(e) {
                                 stopAll();  // Stop sound on popup close
                             });
-
                             makePlayer('.infowindow_player .player');
-
                         });
-
                     });
 
                     // Change the cursor to a pointer when the mouse is over the places layer.
@@ -210,17 +205,17 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         map.getCanvas().style.cursor = '';
                     });
 
-                    // Other stuff
                     // Set map boundaries
                     if ((center_lat !== undefined) && (center_lon !== undefined) && (zoom !== undefined)){
                         // If these parameters are specified, do center using them
-                        //map.setCenter(new google.maps.LatLng(center_lat, center_lon));
-                        //map.setZoom(zoom);
+                        map.setZoom(zoom);
+                        map.setCenter([center_lon, center_lat]);
                     } else {
                         if (nSounds > 1){
                             map.fitBounds(bounds);
                         } else {
-                            //map.setCenter(lastPoint, 4); // Center the map in the geotag
+                            map.setZoom(4);
+                            map.setCenter([geojson_features[0].geometry.coordinates]);
                         }
                     }
 

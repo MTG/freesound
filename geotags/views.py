@@ -138,7 +138,7 @@ def embed_iframe(request):
     tvars.update({
         'm_width': request.GET.get('w', 942),
         'm_height': request.GET.get('h', 600),
-        'clusters': request.GET.get('c', 'on'),
+        'cluster': request.GET.get('c', 'on') != 'off',
         'media_url': settings.MEDIA_URL,
     })
     return render(request, 'geotags/geotags_box_iframe.html', tvars)

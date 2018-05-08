@@ -47,7 +47,7 @@ function call_on_bounds_chage_callback(map, map_element_id, callback){
 }
 
 function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_bounds_changed_callback,
-                         center_lat, center_lon, zoom, show_search){
+                         center_lat, center_lon, zoom, show_search, cluster){
     /*
     This function is used to display maps with sounds. It is used in all pages where maps with markers (which represent
     sounds) are shown: user home/profile, pack page, geotags map, embeds. Parameters:
@@ -63,6 +63,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
     - center_lon: latitude where to center the map (if not specified, it is automatically determined based on markers)
     - zoom: initial zoom for the map (if not specified, it is automatically determined based on markers)
     - show_search: display search bar to fly to places in the map
+    - cluster: whether or not to perform point clustering (on by default)
 
     This function first calls the Freesound endpoint which returns the list of geotags to be displayed as markers.
     Once the data is received, it creates the map and does all necessary stuff to display it.
@@ -102,10 +103,9 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                 map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
             }
 
-            // Add markers for each sound
+            // Get coordinates for each sound
             var geojson_features = [];
             var bounds = new mapboxgl.LngLatBounds();
-
             $.each(data, function(index, item) {
                 var id = item[0];
                 var lat = item[1];
@@ -128,6 +128,11 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                 map.loadImage('/media/images/map_marker.png', function(error, image) {
                     map.addImage("custom-marker", image);
 
+                    // Setup clustering
+                    if (cluster === undefined){
+                        cluster = true;
+                    }
+
                     // Add a new source from our GeoJSON data and set the
                     // 'cluster' option to true. GL-JS will add the point_count property to your source data.
                     map.addSource("sounds", {
@@ -136,7 +141,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                             "type": "FeatureCollection",
                             "features": geojson_features
                         },
-                        cluster: true,
+                        cluster: cluster,
                         clusterMaxZoom: 10, // Max zoom to cluster points on
                         clusterRadius: 30 // Radius of each cluster when clustering points (defaults to 50)
                     });

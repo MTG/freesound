@@ -49,7 +49,8 @@
     {% endif %}
 
     var show_search = false;
-    make_sounds_map(url, 'map_canvas', undefined, undefined, center_lat, center_lon, zoom, show_search);
+    var cluster = {{cluster|yesno:"true,false"}};
+    make_sounds_map(url, 'map_canvas', undefined, undefined, center_lat, center_lon, zoom, show_search, cluster);
 </script>
 
 </body>

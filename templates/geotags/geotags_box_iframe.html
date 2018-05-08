@@ -29,11 +29,7 @@
             url = '{% url "geotags-barray" %}';
             center_lat = 24;
             center_lon = 20;
-            {% if use_gmaps %}
-                zoom = 2;
-            {% else %}
-                zoom = 1;
-            {% endif %}
+            zoom = 2;
             var box = document.location.hash.slice(5,document.location.hash.length);
             if (box !== ''){
                 // If box is given, get the geotags only from that box

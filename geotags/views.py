@@ -101,7 +101,6 @@ def _get_geotags_query_params(request):
         'zoom': request.GET.get('z', None),
         'username': request.GET.get('username', None),
         'tag': request.GET.get('tag', None),
-        'use_gmaps': request.GET.get('gmaps', False),  # To be removed once we don't need GMaps compatibility
     }
 
 

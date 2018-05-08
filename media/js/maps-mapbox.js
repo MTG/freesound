@@ -1,5 +1,5 @@
 function setMaxZoomCenter(lat, lng, zoom) {
-    window.map.flyTo({'center': [lng, lat], 'zoom': zoom});
+    window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels
 }
 
 function getSoundsLocations(url, callback){
@@ -35,7 +35,7 @@ function call_on_bounds_chage_callback(map, map_element_id, callback){
         map_element_id, // ID of the element containing the map
         map.getCenter().lat,  // Latitude (at map center)
         map.getCenter().lng,  // Longitude (at map center)
-        map.getZoom(),  // Zoom
+        map.getZoom() + 1,  // Add 1 for compatibility with gmaps zoom levels
         map.getBounds().getSouthWest().lat,  // Latidude (at bottom left of map)
         map.getBounds().getSouthWest().lng,  // Longitude (at bottom left of map)
         map.getBounds().getNorthEast().lat,  // Latidude (at top right of map)
@@ -75,7 +75,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
         if (nSounds > 0) {  // only if the user has sounds, we render a map
 
             // Define initial map center and zoom
-            var init_zoom = 1;
+            var init_zoom = 2;
             var init_lat = 22;
             var init_lon= 24;
             if ((center_lat !== undefined) && (center_lon !== undefined) && (zoom !== undefined)){
@@ -90,7 +90,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
               container: map_element_id, // HTML container id
               style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL (custom style with satellite and labels)
               center: [init_lon, init_lat], // starting position as [lng, lat]
-              zoom: init_zoom,
+              zoom: init_zoom - 1,  // Subtract 1 for compatibility with gmaps zoom levels
               maxZoom: 18,
             });
             map.dragRotate.disable();
@@ -242,7 +242,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
                     // Zoom-in when clicking on clusters
                     map.on('click', 'sounds-clusters', function (e) {
-                        map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 3});
+                        map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 4});
                     });
 
                     // Adjust map boundaries
@@ -251,7 +251,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         if (nSounds > 1){
                             map.fitBounds(bounds, {duration:0, padding: {top:40, right:40, left:40, bottom:40}});
                         } else {
-                            map.setZoom(4);
+                            map.setZoom(3);
                             map.setCenter(geojson_features[0].geometry.coordinates);
                         }
                     }
@@ -298,16 +298,14 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
     if (center_lat === undefined){  // Load default center
         center_lat = 23.8858;
         center_lon = 21.7968;
-        zoom = 2;
+        zoom = 1;
     }
     var initial_center = [parseFloat(center_lon, 10), parseFloat(center_lat, 10)];
-
-
     var map = new mapboxgl.Map({
       container: map_element_id, // HTML container id
       style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL (custom style with satellite and labels)
       center: initial_center, // starting position as [lng, lat]
-      zoom: parseInt(zoom, 10),
+      zoom: parseInt(zoom, 10) - 1,  // Subtract 1 for compatibility with gmaps zoom levels
       maxZoom: 18,
     });
     map.dragRotate.disable();

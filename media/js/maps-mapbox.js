@@ -68,7 +68,9 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
               center: [24, 22], // starting position as [lng, lat]
               zoom: 1
             });
-            map.addControl(new mapboxgl.NavigationControl());
+            map.dragRotate.disable();
+            map.touchZoomRotate.disableRotation();
+            map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
 
             // Add markers for each sound
             var geojson_features = [];

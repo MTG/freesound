@@ -33,7 +33,7 @@ function getSoundsLocations(url, callback){
 }
 
 function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_bounds_changed_callback,
-                         center_lat, center_lon, zoom){
+                         center_lat, center_lon, zoom, show_search){
     /*
     This function is used to display maps with sounds. It is used in all pages where maps with markers (which represent
     sounds) are shown: user home/profile, pack page, geotags map, embeds. Parameters:
@@ -48,6 +48,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
     - center_lat: latitude where to center the map (if not specified, it is automatically determined based on markers)
     - center_lon: latitude where to center the map (if not specified, it is automatically determined based on markers)
     - zoom: initial zoom for the map (if not specified, it is automatically determined based on markers)
+    - show_search: display search bar to fly to places in the map
 
     This function first calls the Freesound endpoint which returns the list of geotags to be displayed as markers.
     Once the data is received, it creates the map and does all necessary stuff to display it.
@@ -61,16 +62,31 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
         var nSounds = data.length;
         if (nSounds > 0) {  // only if the user has sounds, we render a map
 
+            // Define initial map center and zoom
+            var init_zoom = 1;
+            var init_lat = 22;
+            var init_lon= 24;
+            if ((center_lat !== undefined) && (center_lon !== undefined) && (zoom !== undefined)){
+                // If center and zoom properties are given, use them to init the map
+                init_zoom = zoom;
+                init_lat = center_lat;
+                init_lon = center_lon;
+            }
+
             // Init map and info window objects
             var map = new mapboxgl.Map({
               container: 'map_canvas', // HTML container id
-              style: 'mapbox://styles/mapbox/satellite-v9', // style URL
-              center: [24, 22], // starting position as [lng, lat]
-              zoom: 1
+              style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL
+              center: [init_lon, init_lat], // starting position as [lng, lat]
+              zoom: init_zoom,
+              maxZoom: 18,
             });
             map.dragRotate.disable();
             map.touchZoomRotate.disableRotation();
             map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
+            if (show_search === true){
+                map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
+            }
 
             // Add markers for each sound
             var geojson_features = [];
@@ -99,7 +115,6 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
                     if (error) throw error;
                     map.addImage("custom-marker", image);
-
 
                     // Add a new source from our GeoJSON data and set the
                     // 'cluster' option to true. GL-JS will add the point_count property to your source data.
@@ -168,7 +183,8 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         source: "sounds",
                         filter: ["!has", "point_count"],
                         layout: {
-                            "icon-image": "custom-marker"
+                            "icon-image": "custom-marker",
+                            "icon-allow-overlap": true,
                         }
                     });
 
@@ -209,14 +225,11 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         map.getCanvas().style.cursor = '';
                     });
 
-                    // Set map boundaries
-                    if ((center_lat !== undefined) && (center_lon !== undefined) && (zoom !== undefined)){
-                        // If these parameters are specified, do center using them
-                        map.setZoom(zoom);
-                        map.setCenter([center_lon, center_lat]);
-                    } else {
+                    // Adjust map boundaries
+                    if (center_lat === undefined){
+                        // If initital center and zoom were not given, adjust map boundaries now based on the sounds
                         if (nSounds > 1){
-                            map.fitBounds(bounds);
+                            map.fitBounds(bounds, {duration:0});
                         } else {
                             map.setZoom(4);
                             map.setCenter([geojson_features[0].geometry.coordinates]);

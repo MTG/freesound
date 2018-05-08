@@ -97,7 +97,8 @@
             {% endif %}
         {% endif %}
     {% endif %}
-    make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom);
+    var show_search = true;
+    make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search);
 
     function updateEmbedCode(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
 

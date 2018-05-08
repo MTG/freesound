@@ -242,7 +242,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
                     // Zoom-in when clicking on clusters
                     map.on('click', 'sounds-clusters', function (e) {
-                        map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 2});
+                        map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 3});
                     });
 
                     // Adjust map boundaries

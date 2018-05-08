@@ -11,11 +11,17 @@
 {% maps_js_scripts %}
 
 <script type="text/javascript">
-    function toggleIndicator(){
-        if ($("#indicator").css('display') == 'none'){
-            $("#indicator").show('blind', {}, 500, function() {});
+    function hideLoadingIndicator(){
+        $("#indicator").hide();
+    }
+
+    function toggleEmbed(){
+        if (!$("#embed_controls").is(':visible')){
+            $("#embed_controls").show(100);
+            $("#embed_label").text("Hide embed options");
         }else{
-            $("#indicator").hide('blind', {}, 500, function() {});
+            $("#embed_controls").hide(100);
+            $("#embed_label").text("Embed this map");
         }
     }
 
@@ -41,9 +47,20 @@
 {% if username or tag %}
     <p>You can also view <a href="{% url "geotags" %}">all geotags</a></p>
 {% endif %}
+
 <p style="margin-top:20px;">
-    Embed this map:<br><textarea id="embed_code" rows="4" cols="40" readonly style="width:100%;height:40px;"></textarea>
+    <a id="embed_label" href="javascript:void(0);" onclick="toggleEmbed();">Embed this map</a>
 </p>
+<div id="embed_controls" style="display:none;">
+    <p>
+        Embed width: <input type="number" min="100" step="1" value="900" id="embed_width" onchange="changeEmbedWidthHeightCluster();" style="width: 50px;"/>&nbsp;&nbsp;
+        Embed height: <input type="number" min="100" step="1" value="600" id="embed_height" onchange="changeEmbedWidthHeightCluster();" style="width: 50px;"/>&nbsp;&nbsp;
+        Show clusters in embed: <input type="checkbox" checked id="embed_cluster" onchange="changeEmbedWidthHeightCluster();" />
+    </p>
+    <p>
+        <textarea id="embed_code" rows="4" cols="40" readonly style="width:100%;height:45px;"></textarea>
+    </p>
+</div>
 
 <script type="text/javascript">
     var url;
@@ -80,14 +97,35 @@
     {% endif %}
 
     var show_search = true;
-    make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search);
+    make_sounds_map(url, 'map_canvas', hideLoadingIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search);
 
-    function updateEmbedCode(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
+    var current_lat;
+    var current_lon;
+    var current_zoom;
+    var current_box_bl_la;
+    var current_box_bl_lon;
+    var current_box_tr_lat;
+    var current_box_tr_lon;
+
+    function updateEmbedCode(_, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
+        // Store lat, lon and zoom globally so we can use them later to call updateEmbedCode without accessing map
+        current_lat = lat;
+        current_lon = lon;
+        current_zoom = zoom;
+        current_box_bl_la = box_bl_lat;
+        current_box_bl_lon = box_bl_lon;
+        current_box_tr_lat = box_tr_lat;
+        current_box_tr_lon = box_tr_lon;
+
         // Generate embed code
         var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;
-        var width = 942;
-        var height = 600;
-        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&w=" + width + "&h=" + height {% if username %}+ "&username={{ username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
+        var width = parseInt($("#embed_width").val(), 10);
+        var height = parseInt($("#embed_height").val(), 10);
+        var cluster = 'on';
+        if (!$('#embed_cluster').is(':checked')) {
+            cluster = 'off';
+        }
+        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&c=" + cluster + "&w=" + width + "&h=" + height {% if username %}+ "&username={{ username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
         var embed_code_element = $("#embed_code");
         embed_code_element.text(embed_code);
 
@@ -98,6 +136,11 @@
         new_url = updateQueryStringParameter(new_url, 'z', zoom);
         window.history.replaceState( {} , document.title, new_url );
 	}
+
+	function changeEmbedWidthHeightCluster(){
+        updateEmbedCode(undefined, current_lat, current_lon, current_zoom, current_box_bl_la, current_box_bl_lon, current_box_tr_lat, current_box_tr_lon);
+    }
+
 </script>
 
 {% endblock %}

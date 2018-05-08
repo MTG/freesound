@@ -22,7 +22,7 @@ import cStringIO
 import math
 import struct
 
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
@@ -99,15 +99,17 @@ def _get_geotags_query_params(request):
         'center_lat': request.GET.get('c_lat', None),
         'center_lon': request.GET.get('c_lon', None),
         'zoom': request.GET.get('z', None),
+        'username': request.GET.get('username', None),
+        'tag': request.GET.get('tag', None),
+        'use_gmaps': request.GET.get('gmaps', False),  # To be removed once we don't need GMaps compatibility
     }
 
 
 def geotags(request, tag=None):
     tvars = _get_geotags_query_params(request)
-    tvars.update({
+    tvars.update({  # Overwrite tag and username query params (if present)
         'tag': tag,
         'username': None,
-        'use_gmaps': request.GET.get('gmaps', False),
     })
     return render(request, 'geotags/geotags.html', tvars)
 
@@ -115,10 +117,9 @@ def geotags(request, tag=None):
 def for_user(request, username):
     user = get_user_or_404(username)
     tvars = _get_geotags_query_params(request)
-    tvars.update({
+    tvars.update({  # Overwrite tag and username query params (if present)
         'tag': None,
         'username': user,
-        'use_gmaps': request.GET.get('gmaps', False),
     })
     return render(request, 'geotags/geotags.html', tvars)
 
@@ -129,11 +130,6 @@ def geotags_box(request):
     # Currently we are only keeping this as legacy because it is not used anymore but there might still be
     # links pointing to it.
     tvars = _get_geotags_query_params(request)
-    tvars.update({
-        'use_gmaps': request.GET.get('gmaps', False),
-        'username': request.GET.get('username', None),
-        'tag': request.GET.get('tag', None),
-    })
     return render(request, 'geotags/geotags.html', tvars)
 
 
@@ -143,8 +139,7 @@ def embed_iframe(request):
         'm_width': request.GET.get('w', 942),
         'm_height': request.GET.get('h', 600),
         'clusters': request.GET.get('c', 'on'),
-        'username': request.GET.get('username', None),
-        'tag': request.GET.get('tag', None),
+        'media_url': settings.MEDIA_URL,
     })
     return render(request, 'geotags/geotags_box_iframe.html', tvars)
 

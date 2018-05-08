@@ -245,7 +245,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                             map.fitBounds(bounds, {duration:0, padding: {top:40, right:40, left:40, bottom:40}});
                         } else {
                             map.setZoom(4);
-                            map.setCenter([geojson_features[0].geometry.coordinates]);
+                            map.setCenter(geojson_features[0].geometry.coordinates);
                         }
                     }
 

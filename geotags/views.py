@@ -95,8 +95,10 @@ def geotag_for_sound_barray(request, sound_id):
 
 
 def geotags(request, tag=None):
+    use_gmaps = request.GET.get('gmaps', False)
     tvars = {'tag': tag,
-             'for_user': None}
+             'for_user': None,
+             'use_gmaps': use_gmaps}
     return render(request, 'geotags/geotags.html', tvars)
 
 

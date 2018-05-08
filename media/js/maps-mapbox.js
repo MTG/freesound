@@ -95,7 +95,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             });
 
             map.on('load', function() {
-                map.loadImage('/media/images/map_icon.png', function(error, image) {
+                map.loadImage('/media/images/map_marker.png', function(error, image) {
 
                     if (error) throw error;
                     map.addImage("custom-marker", image);
@@ -111,7 +111,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         },
                         cluster: true,
                         clusterMaxZoom: 10, // Max zoom to cluster points on
-                        clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+                        clusterRadius: 30 // Radius of each cluster when clustering points (defaults to 50)
                     });
 
                     map.addLayer({
@@ -128,20 +128,24 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                             "circle-color": [
                                 "step",
                                 ["get", "point_count"],
-                                "#51bbd6",
+                                "#007fff",
+                                10,
+                                "#ffad00",
                                 100,
-                                "#f1f075",
-                                750,
-                                "#f28cb1"
+                                "#ff0006",
+                                1000,
+                                "#ff00ef"
                             ],
                             "circle-radius": [
                                 "step",
                                 ["get", "point_count"],
-                                20,
+                                12,
+                                10,
+                                15,
                                 100,
-                                30,
-                                750,
-                                40
+                                20,
+                                1000,
+                                25
                             ]
                         }
                     });

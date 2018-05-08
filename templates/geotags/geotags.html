@@ -90,7 +90,11 @@
             url = '{% url "geotags-barray" %}';
             center_lat = 24;
             center_lon = 20;
-            zoom = 2;
+            {% if use_gmaps %}
+                zoom = 2;
+            {% else %}
+                zoom = 1;
+            {% endif %}
         {% endif %}
     {% endif %}
     make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom);

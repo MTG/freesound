@@ -240,8 +240,12 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         map.getCanvas().style.cursor = '';
                     });
 
-                    // Adjust map boundaries
+                    // Zoom-in when clicking on clusters
+                    map.on('click', 'sounds-clusters', function (e) {
+                        map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 2});
+                    });
 
+                    // Adjust map boundaries
                     if (center_lat === undefined){
                         // If initital center and zoom were not given, adjust map boundaries now based on the sounds
                         if (nSounds > 1){

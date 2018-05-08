@@ -104,7 +104,7 @@ def geotags(request, tag=None):
 
 def _get_geotags_box_params(request):
     return {
-        'm_width': request.GET.get('w', 900),
+        'm_width': request.GET.get('w', 942),
         'm_height': request.GET.get('h', 600),
         'clusters': request.GET.get('c', 'on'),
         'center_lat': request.GET.get('c_lat', None),

@@ -32,6 +32,20 @@ function getSoundsLocations(url, callback){
     oReq.send();
 }
 
+function call_on_bounds_chage_callback(map, map_element_id, callback){
+    /* Util function used in "make_sounds_map" and "make_geotag_edit_map" to get parameters to cll callback */
+    callback(  // The callback is called with the following arguments:
+        map_element_id, // ID of the element containing the map
+        map.getCenter().lat,  // Latitude (at map center)
+        map.getCenter().lng,  // Longitude (at map center)
+        map.getZoom(),  // Zoom
+        map.getBounds().getSouthWest().lat,  // Latidude (at bottom left of map)
+        map.getBounds().getSouthWest().lng,  // Longitude (at bottom left of map)
+        map.getBounds().getNorthEast().lat,  // Latidude (at top right of map)
+        map.getBounds().getNorthEast().lng   // Longitude (at top right  of map)
+    )
+}
+
 function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_bounds_changed_callback,
                          center_lat, center_lon, zoom, show_search){
     /*
@@ -44,7 +58,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
     - on_bounds_changed_callback: function called when the bounds of the map change (because of user interaction). As
         parameters it gets the map ID, updated center latitude, center longitude and zoom, as well as bottom left
         corner latitude and longitude, and top right corner latitude and longitude (see code below for more
-        specific details).
+        specific details). This callback is also called after map is loaded (bounds are set for the first time).
     - center_lat: latitude where to center the map (if not specified, it is automatically determined based on markers)
     - center_lon: latitude where to center the map (if not specified, it is automatically determined based on markers)
     - zoom: initial zoom for the map (if not specified, it is automatically determined based on markers)
@@ -76,7 +90,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             // Init map and info window objects
             var map = new mapboxgl.Map({
               container: 'map_canvas', // HTML container id
-              style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL
+              style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL (custom style with satellite and labels)
               center: [init_lon, init_lat], // starting position as [lng, lat]
               zoom: init_zoom,
               maxZoom: 18,
@@ -143,24 +157,24 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                             "circle-color": [
                                 "step",
                                 ["get", "point_count"],
-                                "#007fff",
+                                "#007fff",  // 0 to 10
                                 10,
-                                "#ffad00",
+                                "#ffad00",  // 10 to 100
                                 100,
-                                "#ff0006",
+                                "#ff0006",  // 100 to 1000
                                 1000,
-                                "#ff00ef"
+                                "#ff00ef"  // 1000+
                             ],
                             "circle-radius": [
                                 "step",
                                 ["get", "point_count"],
-                                12,
+                                12,  // 0 to 10
                                 10,
-                                15,
+                                15,  // 10 to 100
                                 100,
-                                20,
+                                20,  // 100 to 1000
                                 1000,
-                                25
+                                25  // 1000+
                             ]
                         }
                     });
@@ -188,7 +202,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         }
                     });
 
-                    // popups
+                    // Add popups
                     map.on('click', 'sounds-unclustered', function (e) {
 
                         stopAll();
@@ -226,6 +240,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                     });
 
                     // Adjust map boundaries
+
                     if (center_lat === undefined){
                         // If initital center and zoom were not given, adjust map boundaries now based on the sounds
                         if (nSounds > 1){
@@ -242,24 +257,12 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                     }
 
                     // Add listener for callback on bounds changed
-                    /*
-                    google.maps.event.addListener( map, 'bounds_changed', function() {
-                        if (on_bounds_changed_callback !== undefined) {
-                            var bounds = map.getBounds();
-                            on_bounds_changed_callback(  // The callback is called with the following arguments:
-                                map_element_id, // ID of the element containing the map
-                                map.getCenter().lat(),  // Latitude (at map center)
-                                map.getCenter().lng(),  // Longitude (at map center)
-                                map.getZoom(),  // Zoom
-                                bounds.getSouthWest().lat(),  // Latidude (at bottom left of map)
-                                bounds.getSouthWest().lng(),  // Longitude (at bottom left of map)
-                                bounds.getNorthEast().lat(),  // Latidude (at top right of map)
-                                bounds.getNorthEast().lng()   // Longitude (at top right  of map)
-                            )
-                        }
-                    });*/
-
-
+                    if (on_bounds_changed_callback !== undefined) {
+                        call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+                        map.on('move', function(e) {
+                            call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+                        });
+                    }
                 });
             });
         }

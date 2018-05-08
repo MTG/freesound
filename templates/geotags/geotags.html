@@ -11,14 +11,6 @@
 {% maps_js_scripts %}
 
 <script type="text/javascript">
-    function toggleShareControls(){
-        if ($("#share_controls").css('display') == 'none'){
-            $("#share_controls").show('blind', {}, 500, function() {});
-        }else{
-            $("#share_controls").hide('blind', {}, 500, function() {});
-        }
-    }
-
     function toggleIndicator(){
         if ($("#indicator").css('display') == 'none'){
             $("#indicator").show('blind', {}, 500, function() {});
@@ -43,40 +35,24 @@
     {% endif %}
 {% endif %}
 
-<div id="map_canvas" style="width: 910px; height: 600px; border: 1px solid black;"></div>
+<div id="map_canvas" style="width: 942px; height: 600px; border: 1px solid black;"></div>
 
-
-<div id="indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></div>
+<div id="indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif" style="float:right;margin-top:3px;"></div>
 {% if for_user or tag %}
     <p>You can also view <a href="{% url "geotags" %}">all geotags</a></p>
 {% endif %}
-
-
-    <p><span id="share_control_link"><br><a onClick = "toggleShareControls()">Share this map</a><span></p>
-    <div id="share_controls" style="display:none">
-
-        <table>
-        <tr>
-        <td width="320px">
-            Embed this map:<br>
-            <textarea id="embed_code" rows="4" cols="40">
-            </textarea>
-
-        </td>
-        <td>
-            Link:<br>
-            <textarea id="link_code" rows="4" cols="40">
-            </textarea>
-
-        </td>
-        </tr>
-        </table>
-
-    </div>
+<div style="margin-top:20px;">
+    <table style="width:100%;table-layout: fixed;">
+    <tr><td width="50%" style="border:0px;">
+        Embed this map:<br><textarea id="embed_code" rows="4" cols="40" readonly style="width:98%;"></textarea>
+    </td><td width="50%" style="border:0px;">
+        Link to this map:<br><textarea id="link_code" rows="4" cols="40" readonly style="width:98%;"></textarea>
+    </td></tr>
+    </table>
+</div>
 
 
 <script type="text/javascript">
-
     var url;
     var center_lat;
     var center_lon;
@@ -101,27 +77,16 @@
     make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search);
 
     function updateEmbedCode(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
-
         // Generate embed and link codes
         var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;
-        var width = 910;
+        var width = 942;
         var height = 600;
-        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom {% if for_user %}+ "&username={{ for_user.username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
+        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&w=" + width + "&h=" + height {% if for_user %}+ "&username={{ for_user.username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
         var link_code = "{% absurl 'geotags-box' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom {% if for_user %}+ "&username={{ for_user.username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box;
-
-        // Display code in elements
-        var share_control_element = $("#share_control_link");
         var embed_code_element = $("#embed_code");
         var link_code_element = $("#link_code");
-        if (zoom > 2){
-            embed_code_element.text(embed_code);
-            link_code_element.text(link_code);
-            share_control_element.html('<br><a onClick = "toggleShareControls()">Share this map</a>');
-        }else{
-            embed_code_element.text("");
-            link_code_element.text("");
-            share_control_element.text("");
-        }
+        embed_code_element.text(embed_code);
+        link_code_element.text(link_code);
 	}
 </script>
 

@@ -186,7 +186,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                         filter: ["has", "point_count"],
                         layout: {
                             "text-field": "{point_count_abbreviated}",
-                            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                            "text-font": ["Arial Unicode MS Bold"],
                             "text-size": 12
                         }
                     });

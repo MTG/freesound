@@ -1,8 +1,5 @@
 function setMaxZoomCenter(lat, lng, zoom) {
-    /*  Center a map to a given latitude, longitude and zoom.  */
-    var latlng = new google.maps.LatLng(lat, lng);
-    window.map.setCenter(latlng);
-    window.map.setZoom(zoom);
+    window.map.flyTo({'center': [lng, lat], 'zoom': zoom});
 }
 
 function getSoundsLocations(url, callback){
@@ -102,6 +99,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             if (show_search === true){
                 map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
             }
+            window.map = map; // Used to have a global reference to the map
 
             // Get coordinates for each sound
             var geojson_features = [];

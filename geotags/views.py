@@ -94,42 +94,59 @@ def geotag_for_sound_barray(request, sound_id):
     return generate_bytearray(sounds)
 
 
-def geotags(request, tag=None):
-    use_gmaps = request.GET.get('gmaps', False)
-    tvars = {'tag': tag,
-             'for_user': None,
-             'use_gmaps': use_gmaps}
-    return render(request, 'geotags/geotags.html', tvars)
-
-
-def _get_geotags_box_params(request):
+def _get_geotags_query_params(request):
     return {
-        'm_width': request.GET.get('w', 942),
-        'm_height': request.GET.get('h', 600),
-        'clusters': request.GET.get('c', 'on'),
         'center_lat': request.GET.get('c_lat', None),
         'center_lon': request.GET.get('c_lon', None),
         'zoom': request.GET.get('z', None),
-        'username': request.GET.get('username', None),
-        'tag': request.GET.get('tag', None),
     }
 
 
-def geotags_box(request):
-    tvars = _get_geotags_box_params(request)
-    return render(request, 'geotags/geotags_box.html', tvars)
-
-
-def embed_iframe(request):
-    tvars = _get_geotags_box_params(request)
-    return render(request, 'geotags/geotags_box_iframe.html', tvars)
+def geotags(request, tag=None):
+    tvars = _get_geotags_query_params(request)
+    tvars.update({
+        'tag': tag,
+        'username': None,
+        'use_gmaps': request.GET.get('gmaps', False),
+    })
+    return render(request, 'geotags/geotags.html', tvars)
 
 
 def for_user(request, username):
     user = get_user_or_404(username)
-    tvars = {'tag': None,
-             'for_user': user}
+    tvars = _get_geotags_query_params(request)
+    tvars.update({
+        'tag': None,
+        'username': user,
+        'use_gmaps': request.GET.get('gmaps', False),
+    })
     return render(request, 'geotags/geotags.html', tvars)
+
+
+def geotags_box(request):
+    # This view works the same as "geotags" but it takes the username/tag parameter from query parameters and
+    # onyl gets the geotags for a specific bounding box specified via hash parameters.
+    # Currently we are only keeping this as legacy because it is not used anymore but there might still be
+    # links pointing to it.
+    tvars = _get_geotags_query_params(request)
+    tvars.update({
+        'use_gmaps': request.GET.get('gmaps', False),
+        'username': request.GET.get('username', None),
+        'tag': request.GET.get('tag', None),
+    })
+    return render(request, 'geotags/geotags.html', tvars)
+
+
+def embed_iframe(request):
+    tvars = _get_geotags_query_params(request)
+    tvars.update({
+        'm_width': request.GET.get('w', 942),
+        'm_height': request.GET.get('h', 600),
+        'clusters': request.GET.get('c', 'on'),
+        'username': request.GET.get('username', None),
+        'tag': request.GET.get('tag', None),
+    })
+    return render(request, 'geotags/geotags_box_iframe.html', tvars)
 
 
 def infowindow(request, sound_id):

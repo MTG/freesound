@@ -25,8 +25,8 @@
 
 {% block section_content %}
 
-{% if for_user %}
-    <h1>Geotags for <a href="{% url "account" for_user.username %}">{{for_user.username}}</a></h1>
+{% if username %}
+    <h1>Geotags for <a href="{% url "account" username %}">{{ username }}</a></h1>
 {% else %}
     {% if tag %}
         <h1>Geotags tagged with <a href="{% url "tags" tag %}">{{tag}}</a></h1>
@@ -38,18 +38,12 @@
 <div id="map_canvas" style="width: 942px; height: 600px; border: 1px solid black;"></div>
 
 <div id="indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif" style="float:right;margin-top:3px;"></div>
-{% if for_user or tag %}
+{% if username or tag %}
     <p>You can also view <a href="{% url "geotags" %}">all geotags</a></p>
 {% endif %}
-<div style="margin-top:20px;">
-    <table style="width:100%;table-layout: fixed;">
-    <tr><td width="50%" style="border:0px;">
-        Embed this map:<br><textarea id="embed_code" rows="4" cols="40" readonly style="width:98%;"></textarea>
-    </td><td width="50%" style="border:0px;">
-        Link to this map:<br><textarea id="link_code" rows="4" cols="40" readonly style="width:98%;"></textarea>
-    </td></tr>
-    </table>
-</div>
+<p style="margin-top:20px;">
+    Embed this map:<br><textarea id="embed_code" rows="4" cols="40" readonly style="width:100%;height:40px;"></textarea>
+</p>
 
 
 <script type="text/javascript">
@@ -57,8 +51,9 @@
     var center_lat;
     var center_lon;
     var zoom;
-    {% if for_user %}
-        url = '{% url "geotags-for-user-barray" for_user.username %}';
+
+    {% if username %}
+        url = '{% url "geotags-for-user-barray" username %}';
     {% else %}
         {% if tag %}
             url = '{% url "geotags-barray" tag %}';
@@ -71,22 +66,38 @@
             {% else %}
                 zoom = 1;
             {% endif %}
+            var box = document.location.hash.slice(5,document.location.hash.length);
+            if (box !== ''){
+                // If box is given, get the geotags only from that box
+                 url = '{% url "geotags-box-barray" %}?box=' + box;
+            }
         {% endif %}
     {% endif %}
+
+    {% if center_lat and center_lon and zoom %}
+        center_lat = {{ center_lat }};
+        center_lon = {{ center_lon }};
+        zoom = {{ zoom }};
+    {% endif %}
+
     var show_search = true;
     make_sounds_map(url, 'map_canvas', toggleIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search);
 
     function updateEmbedCode(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
-        // Generate embed and link codes
+        // Generate embed code
         var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;
         var width = 942;
         var height = 600;
-        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&w=" + width + "&h=" + height {% if for_user %}+ "&username={{ for_user.username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
-        var link_code = "{% absurl 'geotags-box' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom {% if for_user %}+ "&username={{ for_user.username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box;
+        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&w=" + width + "&h=" + height {% if username %}+ "&username={{ username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
         var embed_code_element = $("#embed_code");
-        var link_code_element = $("#link_code");
         embed_code_element.text(embed_code);
-        link_code_element.text(link_code);
+
+        // Update page URL so it can directly be used to share the map
+        var new_url = window.location.href;
+        new_url = updateQueryStringParameter(new_url, 'c_lat', lat);
+        new_url = updateQueryStringParameter(new_url, 'c_lon', lon);
+        new_url = updateQueryStringParameter(new_url, 'z', zoom);
+        window.history.replaceState( {} , document.title, new_url );
 	}
 </script>
 

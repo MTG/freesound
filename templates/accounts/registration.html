@@ -22,7 +22,7 @@
         });
     });
 
-    function setPssswordType() {
+    function setPasswordType() {
         // Set type to password so that browser offers to store it
         document.getElementById("id_{{ form.password1.name }}").type = 'password';
         return true;
@@ -45,7 +45,7 @@
     <h3>
         We check uploads and forum posts for spam before others can see them. Any user that posts spam will be deleted.
     </h3>
-    <form id="registrationForm" method="post" action="." class="disable-on-submit" onsubmit="return setPssswordType()">{% csrf_token %}
+    <form id="registrationForm" method="post" action="." class="disable-on-submit" onsubmit="return setPasswordType()">{% csrf_token %}
         {{ form.non_field_errors }}
         {{ form.username.errors }}
         <p>

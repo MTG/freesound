@@ -75,7 +75,7 @@
     </style>
 
     <script type="text/javascript">
-        function setPssswordType() {
+        function setPasswordType() {
             // Set type to password so that browser offers to store it
             document.getElementById("id_{{ form.password1.name }}").type = 'password';
             return true;
@@ -100,7 +100,7 @@
 <div class="container_main">
 <div class="container">
     <img src="/media/images/logo.png"/>
-    <form id="registrationForm" method="post" action="." onsubmit="return setPssswordType()">{% csrf_token %}
+    <form id="registrationForm" method="post" action="." onsubmit="return setPasswordType()">{% csrf_token %}
         <div style="text-align:left">
         <span class="error2">{{ form.non_field_errors }}</span>
         <p> {{ form.username.errors }}

@@ -350,7 +350,6 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     'tags': list(line_cleaned.get('tags', [])),  # Convert tags to List as Set is not JSON serializable
                 })
 
-            # Append line data to the corresponding list
             lines_validated.append({
                 'line_no': n + 2,  # Show line number with l1 = header, l2 = first sound, and soon
                 'line_original': line,

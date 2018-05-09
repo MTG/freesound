@@ -286,3 +286,7 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
         super(SoundCSVDescriptionForm, self).__init__(*args, **kwargs)
         self.fields['name'].required = False  # Make sound name not required
 
+    def clean(self):
+        # Overwrite clean method from 'GeotaggingForm' as we don't need to check for all fields present here because an
+        # equivalent check is performed when parsing the geotag format "lat, lon, zoom".
+        return self.cleaned_data

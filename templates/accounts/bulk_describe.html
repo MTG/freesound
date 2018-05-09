@@ -103,7 +103,7 @@
                     <td>{{ line.line_cleaned.audio_filename }}</td>
                     <td>{{ line.line_cleaned.name }}</td>
                     <td>{{ line.line_cleaned.tags|join:" " }}</td>
-                    <td>{% if line.line_cleaned.lat %}{{ line.line_cleaned.lat }}, {{ line.line_cleaned.lon }}, {{ line.line_cleaned.zoom }}{% endif %}</td>
+                    <td>{% if line.line_cleaned.zoom %}{{ line.line_cleaned.lat }}, {{ line.line_cleaned.lon }}, {{ line.line_cleaned.zoom }}{% endif %}</td>
                     <td>{{ line.line_cleaned.description|striptags|safe|truncatewords:20 }}</td>
                     <td>{{ line.line_cleaned.license }}</td>
                     <td>{{ line.line_cleaned.pack_name }}</td>

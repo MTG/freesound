@@ -342,6 +342,12 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                             line_errors['geotag'] += ' '.join([e['message'] for e in errors])
                         else:
                             line_errors[field] = ' '.join([e['message'] for e in errors])
+                    if 'Enter a whole number' in line_errors['geotag'] or 'Enter a number' in line_errors['geotag']:
+                        # Make geotag error messages more user-friendly when the problem is that at least one of the
+                        # numbers is not formatted correctly
+                        line_errors['geotag'] = "Invalid geotag format. Must be latitude, longitude and zoom " \
+                                                "separated by commas (e.g. 41.40348, 2.189420, 18)."
+
                 line_cleaned = form.cleaned_data
                 line_cleaned.update({  # Update line_cleaned with the fields not returned by SoundCSVDescriptionForm
                     'username': sound_username,

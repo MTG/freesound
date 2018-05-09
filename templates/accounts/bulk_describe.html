@@ -113,7 +113,7 @@
         </table>
     {% endif %}
 
-    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET">
+    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET" class="disable-on-submit">
         <input id="hidden_action" type="hidden" name="action" value="" />
         <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this CSV file and upload a new one" />
         <input style="float:right;" type="submit" onclick="$('#hidden_action').attr('value', 'start');" value="Continue and add the {{ lines_validated_ok|length }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound"

@@ -341,7 +341,6 @@ class UserRegistrationAndActivation(TestCase):
         resp = self.client.post(reverse('accounts-register'), data={
             u'username': [username],
             u'password1': [u'123456'],
-            u'password2': [u'123456'],
             u'accepted_tos': [u'on'],
             u'email1': [u'example@email.com']
         })

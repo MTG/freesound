@@ -73,6 +73,21 @@
         }
 
     </style>
+
+    <script type="text/javascript">
+        function togglePasswordInputType() {
+            var passwordInput = document.getElementById("id_{{ form.password1.name }}");
+            var eyeImg = document.getElementById("eye-img");
+            if (passwordInput.type === 'password'){
+                passwordInput.type = 'text';
+                eyeImg.src = '{{ media_url }}images/eye-closed.png';
+            } else {
+                passwordInput.type = 'password';
+                eyeImg.src = '{{ media_url }}images/eye-open.png';
+            }
+        }
+    </script>
+
 </head>
 <body>
 
@@ -89,9 +104,11 @@
             <span class="label"><label for="id_email1">Email:</label></span> {{ form.email1 }}
             <span class="helptext">We will send you an activation email, so make sure this is correct!</span></p>
         <p> {{ form.password1.errors }}
-            <span class="label"><label for="id_password1">Password:</label></span> {{ form.password1 }}</p>
-        <p> {{ form.password2.errors }}
-            <span class="label"><label for="id_password2">Password confirmation:</label></span> {{ form.password2 }}</p>
+            <span class="label"><label for="id_password1">Password:</label></span> {{ form.password1 }}
+            <a href="javascript:void(0)" onclick="togglePasswordInputType()">
+                <img id="eye-img" src="{{ media_url }}images/eye-open.png" title="show/hide password" style="vertical-align: bottom;" />
+            </a>
+        </p>
         </div>
         <div>
         <p> {% if form.accepted_tos.errors %}<span class="error2">You must accept the terms of use to register to Freesound</span><br>{% endif %}

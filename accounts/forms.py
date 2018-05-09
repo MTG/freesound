@@ -185,7 +185,6 @@ class RegistrationForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(RegistrationForm, self).clean()
-        print 'key', self.captcha_key
         if self.captcha_key:
             # If captcha is enabled, check that captcha is ok
             captcha_response = cleaned_data.get("recaptcha_response")

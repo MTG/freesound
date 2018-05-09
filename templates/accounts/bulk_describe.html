@@ -151,25 +151,31 @@
     {% endif %}
     <div class="csv-bulk-upload-progress-label">{{ progress_info.progress_percentage }}% completed</div>
     <ul>
-        <li>Sounds successfully described: {{ progress_info.n_sounds_described_ok }}</li>
-        <ul>
         {% if progress_info.n_sounds_described_ok %}
-            <li>Sounds published: {{ progress_info.n_sounds_published }}</li>
-            <li>Sounds in moderation: {{ progress_info.n_sounds_moderation }}</li>
-            <li>Sounds currently processing: {{ progress_info.n_sounds_currently_processing }}</li>
-            <li>Sounds pending processing: {{ progress_info.n_sounds_pending_processing }}</li>
-            <li>Sounds failed processing: {{ progress_info.n_sounds_failed_processing }}</li>
+            <li>Successfully described: {{ progress_info.n_sounds_described_ok }}</li>
+            <ul>
+            {% if progress_info.n_sounds_described_ok %}
+                {% if progress_info.n_sounds_published %}<li>Published: {{ progress_info.n_sounds_published }}</li>{% endif %}
+                {% if progress_info.n_sounds_moderation %}<li>In moderation: {{ progress_info.n_sounds_moderation }}</li>{% endif %}
+                {% if progress_info.n_sounds_currently_processing %}<li>Currently processing: {{ progress_info.n_sounds_currently_processing }}</li>{% endif %}
+                {% if progress_info.n_sounds_pending_processing %} <li>Pending processing: {{ progress_info.n_sounds_pending_processing }}</li>{% endif %}
+                {% if progress_info.n_sounds_failed_processing %}<li>Failed processing: {{ progress_info.n_sounds_failed_processing }}</li>{% endif %}
+            {% endif %}
+            </ul>
         {% endif %}
-        </ul>
-        <li>Sounds that failed description: {{ progress_info.n_sounds_error }}</li>
-        <ul>
         {% if progress_info.n_sounds_error %}
-            {% for line_no, error in progress_info.sound_errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
+            <li>Failed description: {{ progress_info.n_sounds_error }}</li>
+            <ul>
+            {% if progress_info.n_sounds_error %}
+                {% for line_no, error in progress_info.sound_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            {% endif %}
+            </ul>
         {% endif %}
-        </ul>
-        <li>Sounds remaining to be described: {{ progress_info.n_sounds_remaining_to_describe }}</li>
+        {% if progress_info.n_sounds_remaining_to_describe %}
+            <li>Remaining to be described: {{ progress_info.n_sounds_remaining_to_describe }}</li>
+        {% endif %}
     </ul>
     {% if bulk.progress_type == 'S' or bulk.progress_type == 'F' %}
         {% if progress_info.progress_percentage < 100 %}

@@ -32,7 +32,8 @@ class ContactForm(forms.Form):
 
     def clean_recaptcha_response(self):
         captcha_response = self.cleaned_data.get("recaptcha_response")
-        if not captcha_response:
-            raise forms.ValidationError(_("Captcha is not correct"))
+        if self.captcha_key:
+            if not captcha_response:
+                raise forms.ValidationError(_("Captcha is not correct"))
         return captcha_response
 

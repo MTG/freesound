@@ -336,8 +336,45 @@ class UserRegistrationAndActivation(TestCase):
         RegistrationForm.captcha_key = ''  # Override this property so that captcha is not enabled in the tests
         # NOTE: using override_settings and setting RECAPTCHA_PUBLIC_KEY to '' won't work because RegistrationForm is
         # already loaded.
+        username = 'new_user'
 
-        username = 'newly_registered_user'
+        # Try registration without accepting tos
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': [username],
+            u'password1': [u'123456'],
+            u'accepted_tos': [u''],
+            u'email1': [u'example@email.com']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('You must accept the terms of use', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
+        # Try registration with bad email
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': [username],
+            u'password1': [u'123456'],
+            u'accepted_tos': [u'on'],
+            u'email1': [u'exampleemail.com']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('Enter a valid email', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
+        # Try registration with no username
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': [''],
+            u'password1': [u'123456'],
+            u'accepted_tos': [u'on'],
+            u'email1': [u'example@email.com.com']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('This field is required', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
+        # Try successful registration
         resp = self.client.post(reverse('accounts-register'), data={
             u'username': [username],
             u'password1': [u'123456'],
@@ -345,8 +382,34 @@ class UserRegistrationAndActivation(TestCase):
             u'email1': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertInHTML('Registration done, activate your account', resp.content)
+        self.assertIn('Registration done, activate your account', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 1)
+        self.assertEqual(len(mail.outbox), 1)  # An email was sent!
+        self.assertEqual(mail.outbox[0].subject, "[freesound] activation link.")
+
+        # Try register again with same username
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': [username],
+            u'password1': [u'123456'],
+            u'accepted_tos': [u'on'],
+            u'email1': [u'example@email.com']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('A user with that username already exists', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 1)
+        self.assertEqual(len(mail.outbox), 1)  # No new email sent
+
+        # Try with repeated email address
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': ['a_different_username'],
+            u'password1': [u'123456'],
+            u'accepted_tos': [u'on'],
+            u'email1': [u'example@email.com']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('A user using that email address already exists', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 1)
+        self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
     def test_user_activation(self):
         user = User.objects.get(username="User6Inactive")  # Inactive user in fixture

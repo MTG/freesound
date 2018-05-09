@@ -97,7 +97,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
         if remove_exists:
             existing_sound.delete()
         else:
-            msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
+            msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>.' % \
                     (sound_fields['name'], reverse('sound', args=[existing_sound.user.username, existing_sound.id]))
 
             # Remove file (including mirror locations)

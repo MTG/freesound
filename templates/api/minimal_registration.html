@@ -88,8 +88,6 @@
         <p> {{ form.email1.errors }}
             <span class="label"><label for="id_email1">Email:</label></span> {{ form.email1 }}
             <span class="helptext">We will send you an activation email, so make sure this is correct!</span></p>
-        <p> {{ form.email2.errors }}
-            <span class="label"><label for="id_email2">Email confirmation:</label></span> {{ form.email2 }}</p>
         <p> {{ form.password1.errors }}
             <span class="label"><label for="id_password1">Password:</label></span> {{ form.password1 }}</p>
         <p> {{ form.password2.errors }}
@@ -100,9 +98,9 @@
             {{ form.accepted_tos }} Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the Freesound website</p>
 
         <div class="captcha_element">
+            <span class="help-block"> {{ form.recaptcha_response.errors }} </span>
             <script src="https://www.google.com/recaptcha/api.js" async defer></script>
             <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
-            <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
         </div>
 
         </div>

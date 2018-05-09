@@ -31,7 +31,7 @@ from django.core import mail
 from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername
 from accounts.views import handle_uploaded_image
-from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
+from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField, RegistrationForm
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
 from tags.models import TaggedItem
 from utils.filesystem import File
@@ -331,6 +331,23 @@ class UserRegistrationAndActivation(TestCase):
         u = User.objects.create_user("testuser2", password="testpass")
         self.assertEqual(Profile.objects.filter(user=u).exists(), True)
         u.save()  # Check saving user again (with existing profile) does not fail
+
+    def test_user_registration(self):
+        RegistrationForm.captcha_key = ''  # Override this property so that captcha is not enabled in the tests
+        # NOTE: using override_settings and setting RECAPTCHA_PUBLIC_KEY to '' won't work because RegistrationForm is
+        # already loaded.
+
+        username = 'newly_registered_user'
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': [username],
+            u'password1': [u'123456'],
+            u'password2': [u'123456'],
+            u'accepted_tos': [u'on'],
+            u'email1': [u'example@email.com']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertInHTML('Registration done, activate your account', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 1)
 
     def test_user_activation(self):
         user = User.objects.get(username="User6Inactive")  # Inactive user in fixture

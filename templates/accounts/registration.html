@@ -1,5 +1,5 @@
 {% extends "accounts/_section.html" %}
-
+{% load util %}
 {% block title %}registration{% endblock %}
 
 {% block section_content %}
@@ -31,15 +31,28 @@
 <h1>Registration</h1>
 
     <h3>
-    We check uploads and forum posts for spam before others can see them. Any user that posts spam will be deleted.
+        We check uploads and forum posts for spam before others can see them. Any user that posts spam will be deleted.
     </h3>
 
     <form method="post" action="." class="disable-on-submit">{% csrf_token %}
-        {{ form.as_p }}
+        {{ form.non_field_errors }}
+        {% for field in form.visible_fields %}
+            {{ field.errors }}
+            {% if field|is_checkbox %}
+                <p>
+                    {{ field }} {{ field.label }}<span class="helptext">{{ field.help_text }}</span>
+                </p>
+            {% else %}
+                <p>
+                    <label for="{{ field.id }}">{{ field.label_tag }}</label>{{ field }}
+                    <span class="helptext">{{ field.help_text }}</span>
+                </p>
+            {% endif %}
+        {% endfor %}
+        <span class="help-block"> {{ form.recaptcha_response.errors }} </span>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
         <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
-        <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
-        <input type="submit" value="Register" />
+        <br><input type="submit" value="Register" />
     </form>
 
 {% include "accounts/reminders.html" %}

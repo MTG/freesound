@@ -127,15 +127,13 @@ def get_user_by_email(email):
 class UsernameField(forms.CharField):
     """ Username field, 3~30 characters, allows only alphanumeric chars, required by default """
     def __init__(self, required=True):
-        required_str = _("Required. ") if required else ""
-
         super(UsernameField, self).__init__(
             label=_("Username"),
             min_length=3,
             max_length=30,
             validators=[RegexValidator(r'^[\w.+-]+$')],  # is the same as Django UsernameValidator except for '@' symbol
-            help_text=_(required_str + _("30 characters or fewer. Can contain: letters, digits, underscores, dots, "
-                                         "dashes and plus signs.")),
+            help_text=_(_("30 characters or fewer. Can contain: letters, digits, underscores, dots, "
+                          "dashes and plus signs.")),
             error_messages={'invalid': _("This value must contain only letters, digits, underscores, dots, dashes and "
                                          "plus signs.")},
             required=required)
@@ -148,7 +146,6 @@ class RegistrationForm(forms.Form):
 
     email1 = forms.EmailField(label=_("Email"), help_text=_("We will send you a confirmation/activation email, so make "
                                                             "sure this is correct!."), max_length=254)
-    email2 = forms.EmailField(label=_("Email confirmation"), max_length=254)
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
@@ -176,29 +173,29 @@ class RegistrationForm(forms.Form):
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
 
-    def clean_email2(self):
-        email1 = self.cleaned_data.get("email1", "")
-        email2 = self.cleaned_data["email2"]
-        if email1 != email2:
-            raise forms.ValidationError(_("The two email fields didn't match."))
+    def clean_email1(self):
+        email1 = self.cleaned_data["email1"]
         try:
-            get_user_by_email(email2)
+            get_user_by_email(email1)
             logger.info('User trying to register with an already existing email')
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass
-        return email2
+        return email1
 
     def clean(self):
         cleaned_data = super(RegistrationForm, self).clean()
-        captcha_response = cleaned_data.get("recaptcha_response")
-        if not captcha_response:
-            raise forms.ValidationError(_("Captcha is not correct"))
+        print 'key', self.captcha_key
+        if self.captcha_key:
+            # If captcha is enabled, check that captcha is ok
+            captcha_response = cleaned_data.get("recaptcha_response")
+            if not captcha_response:
+                raise forms.ValidationError({"recaptcha_response": "Captcha is not correct"})
         return cleaned_data
 
     def save(self):
         username = self.cleaned_data["username"]
-        email = self.cleaned_data["email2"]
+        email = self.cleaned_data["email1"]
         password = self.cleaned_data["password2"]
         accepted_tos = self.cleaned_data.get("accepted_tos", False)
 

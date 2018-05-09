@@ -62,6 +62,7 @@ class RecaptchaWidget(forms.Widget):
             return ''
         return captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY).strip()
 
+
 class RecaptchaWidgetSSL(forms.Widget):
     """ A Widget which "renders" the output of captcha.displayhtml using SSL option"""
     def render(self, *args, **kwargs):

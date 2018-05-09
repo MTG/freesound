@@ -85,12 +85,6 @@
         <p> {{ form.username.errors }}
             <span class="label"><label for="id_username">Username:</label></span> {{ form.username }}
             <span class="helptext">Alphanumeric characters only (letters, digits and underscores)</span></p>
-        <p> {{ form.first_name.errors }}
-            <span class="label"><label for="id_first_name">First name:</label></span> {{ form.first_name }}
-            <span class="helptext">Optional</span></p>
-        <p> {{ form.last_name.errors }}
-            <span class="label"><label for="id_last_name">Last name:</label></span> {{ form.last_name }}
-            <span class="helptext">Optional</span></p>
         <p> {{ form.email1.errors }}
             <span class="label"><label for="id_email1">Email:</label></span> {{ form.email1 }}
             <span class="helptext">We will send you an activation email, so make sure this is correct!</span></p>
@@ -102,7 +96,6 @@
             <span class="label"><label for="id_password2">Password confirmation:</label></span> {{ form.password2 }}</p>
         </div>
         <div>
-        <p> {{ form.newsletter }} Sign up for the newsletter (only once every 4 months or so)?</p>
         <p> {% if form.accepted_tos.errors %}<span class="error2">You must accept the terms of use to register to Freesound</span><br>{% endif %}
             {{ form.accepted_tos }} Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the Freesound website</p>
 

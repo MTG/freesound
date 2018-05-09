@@ -163,9 +163,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     form = AdminUserForm
     fieldsets = (
          (None, {'fields': ('username', 'password')}),
-         ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
-         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
-                                    'groups')}),
+         ('Personal info', {'fields': ('email', )}),
+         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
      ('Important dates', {'fields': ('last_login', 'date_joined')}),
      )
 

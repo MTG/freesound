@@ -146,8 +146,6 @@ class RegistrationForm(forms.Form):
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
     username = UsernameField()
 
-    first_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
-    last_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     email1 = forms.EmailField(label=_("Email"), help_text=_("We will send you a confirmation/activation email, so make "
                                                             "sure this is correct!."), max_length=254)
     email2 = forms.EmailField(label=_("Email confirmation"), max_length=254)
@@ -202,13 +200,9 @@ class RegistrationForm(forms.Form):
         username = self.cleaned_data["username"]
         email = self.cleaned_data["email2"]
         password = self.cleaned_data["password2"]
-        first_name = self.cleaned_data.get("first_name", "")
-        last_name = self.cleaned_data.get("last_name", "")
         accepted_tos = self.cleaned_data.get("accepted_tos", False)
 
         user = User(username=username,
-                    first_name=first_name,
-                    last_name=last_name,
                     email=email,
                     is_staff=False,
                     is_active=False,

@@ -333,14 +333,14 @@ class BulkDescribeUtils(TestCase):
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
         os.mkdir(csv_file_base_path)
 
-        # Test CSV with al lines and metadata ok
+        # Test CSV with all lines and metadata ok
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
-            'audio_filename;name;tags;geotag;description;license;pack_name',
+            'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit',
             'file1.wav;New name for file1.wav;tag1 tag2 tag3;41.4065, 2.19504, 23;'
-            '"Description for file";Creative Commons 0;ambient',  # All fields valid
-            'file2.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;',  # Only mandatory fields
+            '"Description for file";Creative Commons 0;ambient;0',  # All fields valid
+            'file2.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;0',  # Only mandatory fields
             'file3.wav;;tag1 tag2 tag3;;'
-            '"Description for file";Creative Commons 0;ambient',  # All mandatory fields and some optional fields
+            '"Description for file";Creative Commons 0;ambient;1',  # All mandatory fields and some optional fields
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
@@ -359,12 +359,12 @@ class BulkDescribeUtils(TestCase):
 
         # Test missing/duplicated audiofile and wrong number of rows
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
-            'audio_filename;name;tags;geotag;description;license;pack_name',
-            'file1.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;',  # File exists, fields ok
-            'file2.wav;;tag1 tag2 tag3;;;Creative Commons 0;',  # Missing description
-            'file3.wav;;tag1 tag2 tag3;;"Description for file";',  # Wrong number of columns
-            'file6.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;',  # Audiofile does not exist
-            'file2.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;',  # Audiofile already described
+            'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit',
+            'file1.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;1',  # File exists, fields ok
+            'file2.wav;;tag1 tag2 tag3;;;Creative Commons 0;;1',  # Missing description
+            'file3.wav;;tag1 tag2 tag3;;"Description for file";;1',  # Wrong number of columns
+            'file6.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;1',  # Audiofile does not exist
+            'file2.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;1',  # Audiofile already described
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
@@ -378,23 +378,25 @@ class BulkDescribeUtils(TestCase):
 
         # Test validation errors in individual fields
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
-            'audio_filename;name;tags;geotag;description;license;pack_name',
-            'file1.wav;;tag1 tag2;;"Description for file";Creative Commons 0;',  # Wrong tags (less than 3)
-            'file2.wav;;tag1,tag2;;"Description for file";Creative Commons 0;',  # Wrong tags (less than 3)
-            'file3.wav;;tag1,tag2;gr87g;"Description for file2";Creative Commons 0;',  # Wrong geotag
-            'file4.wav;;tag1,tag2;42.34,190.45,15;"Description for file";Creative Commons 0;',  # Wrong geotag
-            'file5.wav;;tag1 tag2 tag3;;"Description for file";Sampling+;',  # Invalid license
+            'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit',
+            'file1.wav;;tag1 tag2;;"Description for file";Creative Commons 0;;1',  # Wrong tags (less than 3)
+            'file2.wav;;tag1,tag2;;"Description for file";Creative Commons 0;;1',  # Wrong tags (less than 3)
+            'file3.wav;;tag1,tag2;gr87g;"Description for file2";Creative Commons 0;;1',  # Wrong geotag
+            'file4.wav;;tag1,tag2;42.34,190.45,15;"Description for file";Creative Commons 0;;1',  # Wrong geotag
+            'file5.wav;;tag1 tag2 tag3;;"Description for file";Sampling+;;1',  # Invalid license
+            'file6.wav;;tag1 tag2 tag3;;"Description for file";Sampling+;;rt',  # Invalid is_explicit
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
         self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 5)  # Five lines have errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 6)  # Six lines have errors
         self.assertTrue('tags' in lines_validated[0]['line_errors'])  # Wrong tags
         self.assertTrue('tags' in lines_validated[1]['line_errors'])  # Wrong tags
         self.assertTrue('geotag' in lines_validated[2]['line_errors'])  # Wrong geotag
         self.assertTrue('geotag' in lines_validated[3]['line_errors'])  # Wrong geotag
         self.assertTrue('license' in lines_validated[4]['line_errors'])  # Wrong license
+        self.assertTrue('is_explicit' in lines_validated[5]['line_errors'])  # Wrong is_explicit
 
         # Test wrong header global errors
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
@@ -407,7 +409,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
 
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
-            'audio_filename;name;tags;geotag;description;license;pack_name',
+            'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit',
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
@@ -417,7 +419,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
 
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
-            'audio_filename;name;tags;geotag;description;license;pack_name;username',
+            'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit;username',
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
@@ -427,10 +429,10 @@ class BulkDescribeUtils(TestCase):
 
         # Test username errors when not passing username argument to validate_input_csv_file
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
-            'audio_filename;name;tags;geotag;description;license;pack_name;username',
-            'file1.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;new_username',  # User does not exist
-            'file2.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;',  # Invlaid num columns
-            'file3.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;testuser',  # All fields OK
+            'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit;username',
+            'file1.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;1;new_username',  # User does not exist
+            'file2.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;1',  # Invlaid num columns
+            'file3.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;0;testuser',  # All fields OK
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = validate_input_csv_file(header, lines, user_upload_path, username=None)
@@ -459,12 +461,12 @@ class BulkDescribeUtils(TestCase):
 
         # Create Test CSV with some lines ok and some wrong lines
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
-            'audio_filename;name;tags;geotag;description;license;pack_name',
-            'file1.wav;;tag1 tag2 tag3;41.4065, 2.19504, 23;"Description for file";Creative Commons 0;ambient',  # OK
-            'file2.wav;;tag1 tag2 tag3;;"Description for file";Invalid license;',  # Invalid license
-            'file3.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0',  # Wrong number of columns
-            'file4.wav;;tag1 tag2 tag3;dg;"Description for file";Creative Commons 0;',  # Invalid geotag
-            'file5.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;',  # OK
+            'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit',
+            'file1.wav;;tag1 tag2 tag3;41.4065, 2.19504, 23;"Description for file";Creative Commons 0;ambient;1',  # OK
+            'file2.wav;;tag1 tag2 tag3;;"Description for file";Invalid license;;1',  # Invalid license
+            'file3.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;1',  # Wrong number of columns
+            'file4.wav;;tag1 tag2 tag3;dg;"Description for file";Creative Commons 0;;0',  # Invalid geotag
+            'file5.wav;;tag1 tag2 tag3;;"Description for file";Creative Commons 0;;0',  # OK
         ], csv_file_base_path)
 
         # Test case when no sounds are been created because CSV file has some errors and 'force_import' is set to False

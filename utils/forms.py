@@ -50,7 +50,8 @@ class TagField(forms.CharField):
     def clean(self, value):
         tags = clean_and_split_tags(str(value))
         if len(tags) < 3:
-            raise forms.ValidationError('You should add at least 3 tags...')
+            raise forms.ValidationError('You should add at least 3 different tags. Tags must be separated by spaces '
+                                        '(and/or commas).')
         elif len(tags) > 30:
             raise forms.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
         return tags

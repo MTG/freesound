@@ -310,7 +310,8 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     else:
                         src_path = os.path.join(sounds_base_dir, audio_filename)
                         if not os.path.exists(src_path):
-                            line_errors['audio_filename'] = "Audio file does not exist."
+                            line_errors['audio_filename'] = "Audio file does not exist. This should be the name of " \
+                                                            "one of the audio files you uploaded."
                         else:
                             if src_path in filenames_to_describe:
                                 line_errors['audio_filename'] = "Audio file can only be described once."
@@ -328,9 +329,10 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
 
                 try:
                     if int(line['is_explicit']) not in [0, 1]:
-                        line_errors['is_explicit'] = "Invalid value. Should be 1 if sound is explicit or 0 otherwise."
+                        line_errors['is_explicit'] = 'Invalid value. Should be "1" if sound is explicit or ' \
+                                                     '"0" otherwise.'
                 except ValueError:
-                    line_errors['is_explicit'] = "Invalid value. Should be 1 if sound is explicit or 0 otherwise."
+                    line_errors['is_explicit'] = 'Invalid value. Should be "1" if sound is explicit or "0" otherwise.'
 
                 sound_fields = {
                     'name': line['name'] or audio_filename,
@@ -360,6 +362,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                             line_errors['geotag'] += ' '.join([e['message'] for e in errors])
                         else:
                             line_errors[field] = ' '.join([e['message'] for e in errors])
+                    # Post-process some error so they are more user-friendly
                     if 'Enter a whole number' in line_errors['geotag'] or 'Enter a number' in line_errors['geotag']:
                         # Make geotag error messages more user-friendly when the problem is that at least one of the
                         # numbers is not formatted correctly

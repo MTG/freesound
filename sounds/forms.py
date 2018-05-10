@@ -46,7 +46,7 @@ class GeotaggingForm(forms.Form):
                                'max_value': 'Longitude must be between -180 and 180.'
                            })
     zoom = forms.IntegerField(min_value=11,
-                              error_messages={'min_value': "You should zoom in more until you reach at least zoom 11."},
+                              error_messages={'min_value': "The zoom value sould be at least 11."},
                               required=False)
 
     def clean(self):
@@ -220,8 +220,13 @@ class LicenseForm(forms.Form):
 
 
 class NewLicenseForm(forms.Form):
-    license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') |
-                                                                     Q(name__startswith='Creative')), required=True)
+    license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
+    license = forms.ModelChoiceField(queryset=license_qs, required=True)
+
+    def __init__(self, *args, **kwargs):
+        super(NewLicenseForm, self).__init__(*args, **kwargs)
+        valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
+        self.fields['license'].error_messages = {'invalid_choice': 'Invalid license. Should be one of %s' % valid_licenses}
 
 
 class FlagForm(forms.Form):

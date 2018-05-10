@@ -3,14 +3,13 @@
 {% load display_sound %}
 {% load tags %}
 {% load filter_img %}
-{% load google_maps %}
+{% load maps %}
 
 {% block title %}{% if home %}home{% else %}{{user.username}}{% endif %}{% endblock %}
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="{% google_maps_js %}"></script>
-    <script src="{{media_url}}js/sounds_location.js?v={{ last_restart_date }}" type="text/javascript"></script>
+    {% maps_js_scripts %}
 {% endblock head %}
 
 {% block tab_home_active %}{% if home %}active_tab{% endif %}{% endblock %}
@@ -328,59 +327,8 @@
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
         <div id="map_canvas"></div>
         <script type="text/javascript">
-            var map = new google.maps.Map(
-                document.getElementById('map_canvas'), {
-                  center: new google.maps.LatLng(24, 22),
-                  zoom: 2,
-                  mapTypeId: google.maps.MapTypeId.SATELLITE,
-                  scrollwheel: false,
-                  streetViewControl: false,
-            });
-            var infowindow = new google.maps.InfoWindow();
-            google.maps.event.addListener(infowindow, 'closeclick', function() {
-                stopAll();
-            });
-
-            getSoundsLocations('{% url "geotags-for-user-latest-barray" user.username %}', function(data){
-                var bounds = new google.maps.LatLngBounds();
-                var nSounds = data.length;
-                var lastPoint;
-
-                $.each(data, function(index, item) {
-                    var id = item[0];
-                    var lat = item[1];
-                    var lon = item[2];
-
-                    var point = new google.maps.LatLng(lat, lon);
-                    lastPoint = point;
-                    bounds.extend(point);
-                    var marker = new google.maps.Marker({'position': point, 'map': map});
-
-                    google.maps.event.addListener(marker, 'click', function()
-                    {
-                        stopAll();
-                        ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
-                        {
-                            infowindow.setContent(data.response);
-                            infowindow.open(map, marker);
-                            setTimeout(function() {
-                                makePlayer('.infowindow_player .player');
-                            }, 500);
-                        });
-                    });
-                });
-
-                // Show map div if sounds in it
-                if (nSounds > 0) {
-                    $("#latest_geotags").show();
-                    google.maps.event.trigger(map, 'resize');
-                }
-
-                if (nSounds > 1){
-                    if (!bounds.isEmpty()) map.fitBounds(bounds);
-                }else{
-                    map.setCenter(lastPoint, 4); // Center the map in the geotag
-                }
+            make_sounds_map('{% url "geotags-for-user-latest-barray" user.username %}', 'map_canvas', function(){
+                $('#latest_geotags').show(); // Once map is ready, show geotags section
             });
         </script>
         <p><a href="{% url "geotags-for-user" user.username %}">more...</a></p>

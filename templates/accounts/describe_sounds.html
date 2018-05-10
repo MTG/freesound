@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load display_license_form %}
-{% load google_maps %}
+{% load maps %}
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="{% google_maps_js %}"></script>
+    {% maps_js_scripts %}
     <script>
         // Maps variables
         var maps = {};
@@ -82,15 +82,18 @@
         }
 
         function toggleSound(n) {
-            var sound_accordion_element = $('#sound-accordion-sound-'+n)
-            var sound_accordion_element_header = $('#sound-accordion-sound-header-'+n)
+            var idx = parseInt(n,10);
+            var idx0 = idx - 1;
+            var sound_accordion_element = $('#sound-accordion-sound-'+n);
+            var sound_accordion_element_header = $('#sound-accordion-sound-header-'+n);
             if (sound_accordion_element.is(':visible')) {
                 sound_accordion_element.hide('fast');
                 sound_accordion_element_header.removeClass('expanded');
             } else {
                 sound_accordion_element.show('fast');
                 sound_accordion_element_header.addClass('expanded');
-                if ($("#id_" + parseInt(n-1,10) + "-zoom").val()){
+                if ($("#id_" + idx0 + "-zoom").val()){
+
                     if (!maps[n]){
                         init_map(n);
                     }
@@ -98,60 +101,49 @@
             }
         }
 
-        function updateAndAddCenter(n) {
-            var center = maps[parseInt(n,10)].getCenter();
-            var zoom = maps[parseInt(n,10)].getZoom();
-            if (!$("#id_" + parseInt(n-1,10) + "-remove_geotag").checked)
-            {
-                $("#id_" + parseInt(n-1,10) + "-lon").val(center.lng());
-                $("#id_" + parseInt(n-1,10) + "-lat").val(center.lat());
-                $("#id_" + parseInt(n-1,10) + "-zoom").val(zoom);
+        function setMapVisibility(n){
+            var idx = parseInt(n,10);
+            var idx0 = idx - 1;
+            var sound_has_geotag = $("#id_" + idx0 + "-zoom").val();
+            if (sound_has_geotag){
+                // Show map
+                init_map(n);
+            } else {
+                // Hide wrapper (is displayed by default) and add "Add geotag" link
+                var wrapper = $('#gmap-wrapper-'+n);
+                $('#gmap-header-'+n).removeClass('.active-gmap');
+                $('#gmap-header-text-'+n).text('Add geotag');
+                wrapper.hide();
             }
-            centerMarkers[parseInt(n,10)].setPosition(center);
+        }
+
+        function updateLatLonZoomFields(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
+            var idx0 = parseInt(map_element_id.split('gmap')[1], 10) - 1;  // Get map number
+            $("#id_" + idx0 + "-lon").val(lon);
+            $("#id_" + idx0 + "-lat").val(lat);
+            $("#id_" + idx0 + "-zoom").val(zoom);
         }
 
         function init_map(n) {
-            var map = new google.maps.Map(
-                document.getElementById('gmap' + parseInt(n,10)), {
-                  center: new google.maps.LatLng(23.885837699862005,21.796875),
-                  zoom: 2,
-                  mapTypeId: google.maps.MapTypeId.SATELLITE,
-                  scrollwheel: false,
-                  streetViewControl: false,
-            });
+            console.log("initializing MAP ", n)
+            var idx = parseInt(n,10);
+            var idx0 = idx - 1;
 
+            var center_lat;
+            var center_lon;
+            var zoom;
             {% if last_latlong %}
-            var initial_center = new google.maps.LatLng({{last_latlong.0}},{{last_latlong.1}});
-            var initial_zoom =  {{last_latlong.2}};
-            {% else %}
-            var initial_center = new google.maps.LatLng(23.885837699862005,21.796875);
-            var initial_zoom =  2;
+                center_lat = {{last_latlong.0}};
+                center_lon = {{last_latlong.1}};
+                zoom = {{last_latlong.2}};
             {% endif %}
-
-            if ( ($("#id_" + parseInt(n-1,10) + "-zoom").val() != "") &
-                 ($("#id_" + parseInt(n-1,10) + "-lon").val() != "") &
-                 ($("#id_" + parseInt(n-1,10) + "-lat").val() != ""))
-            {
-                initial_center = new google.maps.LatLng( $("#id_" + parseInt(n-1,10) + "-lat").val() , $("#id_" + parseInt(n-1,10) + "-lon").val())
-                initial_zoom = parseInt($("#id_" + parseInt(n-1,10) + "-zoom").val())
+            if (($("#id_" + idx0 + "-zoom").val() !== "") && ($("#id_" + idx0 + "-lon").val() !== "") && ($("#id_" + idx0 + "-lat").val() !== "")) {
+                // If there are lat/lon/zoom already specified for that sound, load them
+                center_lat = $("#id_" + idx0 + "-lat").val();
+                center_lon = $("#id_" + idx0 + "-lon").val();
+                zoom = $("#id_" + idx0 + "-zoom").val();
             }
-            map.setCenter(initial_center);
-            map.setZoom(initial_zoom);
-            var image = {
-                url: "{{media_url}}/images/arrow.png",
-                size: new google.maps.Size(25, 24),
-                anchor: new google.maps.Point(0, 24)
-            };
-            var centerMarker = new google.maps.Marker({
-                  position: google.maps.LatLng(initial_center),
-                  map: map,
-                  icon: image
-            });
-            centerMarkers[parseInt(n,10)] = centerMarker;
-            maps[parseInt(n,10)] = map;
-            google.maps.event.addListener(maps[parseInt(n,10)], "bounds_changed", function(){
-                updateAndAddCenter(n);
-            });
+            maps[idx] = make_geotag_edit_map('gmap' + idx, '{{media_url}}/images/arrow.png', updateLatLonZoomFields, center_lat, center_lon, zoom);
         }
 
 
@@ -293,23 +285,19 @@
                         $("#{{form.geotag.remove_geotag.auto_id}}").change(function (event) {
                             if (this.checked)
                             {
-                                $("#{{form.geotag.lon.auto_id}}").attr('disabled', 'disabled').val("");
-                                $("#{{form.geotag.lat.auto_id}}").attr('disabled', 'disabled').val("");
-                                $("#{{form.geotag.zoom.auto_id}}").attr('disabled', 'disabled').val("");
+                                $("#{{form.geotag.lon.auto_id}}").attr('disabled', 'disabled');
+                                $("#{{form.geotag.lat.auto_id}}").attr('disabled', 'disabled');
+                                $("#{{form.geotag.zoom.auto_id}}").attr('disabled', 'disabled');
                             }
                             else
                             {
                                 $("#{{form.geotag.lon.auto_id}}").attr('disabled', false);
                                 $("#{{form.geotag.lat.auto_id}}").attr('disabled', false);
                                 $("#{{form.geotag.zoom.auto_id}}").attr('disabled', false);
-                                updateAndAddCenter({{forloop.counter}});
                             }
                         });
-                        if ($("#{{form.geotag.zoom.auto_id}}").val() != ""){
-                            $('#gmap-header-text-{{forloop.counter}}').text('Hide Geotag map');
-                        }else{
-                            toggleMapVisibility({{forloop.counter}})
-                        }
+                        setMapVisibility({{forloop.counter}});
+
                     </script>
                 </div><br style="clear: both" />
             </div>

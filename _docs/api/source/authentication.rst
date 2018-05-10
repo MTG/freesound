@@ -29,13 +29,13 @@ adding the key as a ``token`` GET parameter...
 
 ::
 
-  curl "https://freesound.org/apiv2/search/?query=piano&token=YOUR_API_KEY"
+  curl "https://freesound.org/apiv2/search/text/?query=piano&token=YOUR_API_KEY"
 
 ...or by adding it as an authorization header:
 
 ::
 
-  curl -H "Authorization: Token YOUR_API_KEY" "https://freesound.org/apiv2/search/?query=piano"
+  curl -H "Authorization: Token YOUR_API_KEY" "https://freesound.org/apiv2/search/text/?query=piano"
 
 And there we go, that's all you need to know about token authentication!
 

@@ -7,6 +7,7 @@ module.exports = {
     base: path.join(__dirname, '..', 'base.js'),
     index: path.join(__dirname, '..', 'src/common.js'),
     front: path.join(__dirname, '../src/pages/front.js'),
+    search: path.join(__dirname, '../src/pages/search.js'),
   },
   output: {
     filename: '[name].js',

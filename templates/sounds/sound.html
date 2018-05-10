@@ -41,7 +41,7 @@
 
 {% block section_content %}
 
-{% cache 3600 sound_header sound.id request.user.is_authenticated request.user.profile.is_adult %}
+{% cache 3600 sound_header sound.id is_explicit %}  {# cache both blurred and normal version for explicit sounds #}
 <div id="single_sample_header" class="{% if is_explicit %}blur{% endif %}">
     {% if sound.pack %}<a href="{% url 'pack' username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
 </div>

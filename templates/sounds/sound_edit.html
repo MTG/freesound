@@ -1,13 +1,13 @@
 {% extends "sounds/_section.html" %}
 {% load display_license_form %}
-{% load google_maps %}
+{% load maps %}
 
 {% block title %}&quot;editing {{sound.original_filename}}{% endblock title %}
 
 {% block head %}
 {{ block.super }}
 
-<script type="text/javascript" src="{% google_maps_js %}"></script>
+{% maps_js_scripts %}
 <script type="text/javascript">
 
     var doLog = true;
@@ -262,67 +262,35 @@
 
 <script type="text/javascript">
 
-    var map = new google.maps.Map(
-        document.getElementById('map'), {
-          center: new google.maps.LatLng(23.885837699862005,21.796875),
-          zoom: 2,
-          mapTypeId: google.maps.MapTypeId.SATELLITE,
-          scrollwheel: false,
-          streetViewControl: false,
-    });
-
-    var initial_center = new google.maps.LatLng(23.885837699862005,21.796875)
+    var center_lat;
+    var center_lon;
+    var zoom;
     {% if sound.geotag %}
-        initial_center = new google.maps.LatLng({{sound.geotag.lat}}, {{sound.geotag.lon}})
-        map.setZoom({{sound.geotag.zoom}});
+        center_lat = {{sound.geotag.lat}};
+        center_lon = {{sound.geotag.lon}};
+        zoom = {{sound.geotag.zoom}};
     {% endif %}
-    map.setCenter(initial_center);
 
-    var image = {
-        url: "{{media_url}}/images/arrow.png",
-        size: new google.maps.Size(25, 24),
-        anchor: new google.maps.Point(0, 24)
-    };
+    make_geotag_edit_map('map', '{{media_url}}/images/arrow.png', updateLatLonZoomFields, center_lat, center_lon, zoom);
 
-    var myLatLng = new google.maps.LatLng(initial_center);
-    var centerMarker = new google.maps.Marker({
-          position: myLatLng,
-          map: map,
-          icon: image
-    });
-
-    google.maps.event.addListener(map, "bounds_changed", updateAndAddCenter);
-
-    updateAndAddCenter()
-
-    function updateAndAddCenter()
-    {
-        var center = map.getCenter();
-        var zoom = map.getZoom();
-        // update form
-        if (!$("#{{geotag_form.remove_geotag.auto_id}}").checked)
-        {
-            $("#{{geotag_form.lon.auto_id}}").val(center.lng());
-            $("#{{geotag_form.lat.auto_id}}").val(center.lat());
-            $("#{{geotag_form.zoom.auto_id}}").val(zoom);
-        }
-        centerMarker.setPosition(center);
+    function updateLatLonZoomFields(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
+        $("#{{geotag_form.lon.auto_id}}").val(lon);
+        $("#{{geotag_form.lat.auto_id}}").val(lat);
+        $("#{{geotag_form.zoom.auto_id}}").val(zoom);
     }
-
 
     $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {
         if (this.checked)
         {
-            $("#{{geotag_form.lon.auto_id}}").attr('disabled', 'disabled').val("");
-            $("#{{geotag_form.lat.auto_id}}").attr('disabled', 'disabled').val("");
-            $("#{{geotag_form.zoom.auto_id}}").attr('disabled', 'disabled').val("");
+            $("#{{geotag_form.lon.auto_id}}").attr('disabled', 'disabled');
+            $("#{{geotag_form.lat.auto_id}}").attr('disabled', 'disabled');
+            $("#{{geotag_form.zoom.auto_id}}").attr('disabled', 'disabled');
         }
         else
         {
             $("#{{geotag_form.lon.auto_id}}").attr('disabled', false);
             $("#{{geotag_form.lat.auto_id}}").attr('disabled', false);
             $("#{{geotag_form.zoom.auto_id}}").attr('disabled', false);
-            updateAndAddCenter();
         }
     });
 

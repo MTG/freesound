@@ -7,7 +7,7 @@
     If you change this cache index, be sure to change the invalidation in
     ratings/views.py as well
 {% endcomment %}
-{% cache 43200 display_sound sound_id request.user.is_authenticated sound.processing_state sound.moderation_state request.user.profile.is_adult  %}
+{% cache 43200 display_sound sound_id is_authenticated is_explicit %}
 
 <div class="sample_player_small" id="{{ sound_id }}">
 

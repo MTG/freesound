@@ -89,6 +89,11 @@ def geotags_for_pack_barray(request, pack_id):
     return generate_bytearray(sounds)
 
 
+def geotag_for_sound_barray(request, sound_id):
+    sounds = Sound.objects.filter(id=sound_id).exclude(geotag=None)
+    return generate_bytearray(sounds)
+
+
 def geotags(request, tag=None):
     tvars = {'tag': tag,
              'for_user': None}
@@ -103,7 +108,8 @@ def _get_geotags_box_params(request):
         'center_lat': request.GET.get('c_lat', None),
         'center_lon': request.GET.get('c_lon', None),
         'zoom': request.GET.get('z', None),
-        'username': request.GET.get('username', None)
+        'username': request.GET.get('username', None),
+        'tag': request.GET.get('tag', None),
     }
 
 

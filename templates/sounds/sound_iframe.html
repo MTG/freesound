@@ -13,10 +13,29 @@
             var isEmbed = true;
             var spectrogramByDefault = {{ use_spectrogram|yesno:"true,false" }};
             var showToggleDisplayButton = {{ show_toggle_display_button|yesno:"true,false" }};
+            {% if size == "full_size" %}
+                function adjust_size_for_twitter_card() {
+                    var sampleInfoElement = document.getElementById('sample_info_element');
+                    var playerElement = document.getElementById('player_element');
+
+                    // Get width of player and height of header
+                    var playerWidth = playerElement.offsetWidth;
+                    var sampleInfoHeight = sampleInfoElement.offsetHeight
+                        + parseInt(window.getComputedStyle(playerElement).getPropertyValue('margin-top'), 10);
+
+                    // Twitter required card aspect ratio is 3.3, adjust player height accordingly
+                    var adjustedPlayerHeight = (playerWidth / 3.38) - sampleInfoHeight;
+                    playerElement.style.height = adjustedPlayerHeight.toString() + 'px';
+                }
+                window.onresize = function(event) {
+                    adjust_size_for_twitter_card();
+                };
+            {% endif %}
+
         </script>
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
     </head>
-    <body class="{{ size }}">
+    <body class="{{ size }}" {% if size == "full_size" %}onload="adjust_size_for_twitter_card()"{% endif %}>
 
         {% if size == 'large' %}
         <div class="widget large">
@@ -134,7 +153,7 @@
         
         {% if size == 'full_size' %}
         <div class="widget large full_size">
-            <div class="sample_info">
+            <div class="sample_info" id="sample_info_element">
                 <div class="user_avatar">
                     <img class="avatar" src="{{sound.user.profile.locations.avatar.S.url}}" alt="avatar" />
                 </div>
@@ -148,7 +167,7 @@
                     {% include "sounds/widget_license.html" %}
                 </div>
             </div>
-            <div class="player large full_size">
+            <div class="player large full_size" id="player_element">
                 <div class="metadata">
                     {% with 'L' as size %}
                         {% include 'sounds/metadata.html' %}

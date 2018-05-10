@@ -296,16 +296,24 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 except User.DoesNotExist:
                     line_errors['username'] = "User does not exist."
 
-                # 2) Check that audio file exists in disk and that it has not been described yet in CSV another line
+                # 2) Check that audio file is valid, that exists in disk and that it has not been described yet in
+                # CSV another line
                 audio_filename = line['audio_filename']
-                src_path = os.path.join(sounds_base_dir, audio_filename)
-                if not os.path.exists(src_path):
-                    line_errors['audio_filename'] = "Audio file does not exist."
+                if not audio_filename.strip():
+                    line_errors['audio_filename'] = "Invalid audio filename."
                 else:
-                    if src_path in filenames_to_describe:
-                        line_errors['audio_filename'] = "Audio file can only be described once."
+                    from accounts.forms import filename_has_valid_extension
+                    if not filename_has_valid_extension(audio_filename):
+                        line_errors['audio_filename'] = "Invalid file extension."
                     else:
-                        filenames_to_describe.append(src_path)
+                        src_path = os.path.join(sounds_base_dir, audio_filename)
+                        if not os.path.exists(src_path):
+                            line_errors['audio_filename'] = "Audio file does not exist."
+                        else:
+                            if src_path in filenames_to_describe:
+                                line_errors['audio_filename'] = "Audio file can only be described once."
+                            else:
+                                filenames_to_describe.append(src_path)
 
                 # 3) Check that all the other sound fields are ok
                 try:

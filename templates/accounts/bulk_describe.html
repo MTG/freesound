@@ -3,51 +3,6 @@
 {% load filter_img %}
 {% block title %}{{ block.super }}Describe - Bulk Describe Sounds{% endblock %}
 {% block content %}
-<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-
-<style>
-/* Tooltip container */
-.cell_tooltip {
-    position: relative;
-}
-
-/* Tooltip text */
-.cell_tooltip .tooltiptext {
-    visibility: hidden;
-    background-color: black;
-    color: #fff;
-    text-align: center;
-    padding: 5px;
-    border-radius: 6px;
-
-    /* Position the tooltip text - see examples below! */
-    position: absolute;
-    z-index: 1;
-    width: 120px;
-    top: 0px;
-    left: 105%;
-}
-
-/* Show the tooltip text when you mouse over the tooltip container */
-.cell_tooltip:hover .tooltiptext {
-    visibility: visible;
-}
-
-.cell_tooltip:hover {
-    cursor: pointer;
-}
-
-.cell_tooltip .tooltiptext::after {
-    content: " ";
-    position: absolute;
-    top: 50%;
-    right: 100%; /* To the left of the tooltip */
-    margin-top: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent black transparent transparent;
-}
-</style>
 
 <h1>Bulk Describe Sounds</h1>
 
@@ -85,26 +40,27 @@
             {% for line in lines_failed_validation %}
 
                 <tr>
-                    <td {% if line.line_errors.columns %}class="csv-bulk-upload-error-cell"{% endif %}>
-                        {% if line.line_errors.columns %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.columns }}"></a>{% endif %}
+                    <td {% if line.line_errors.columns %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {{ line.line_no }}
+                        <span class="tooltiptext">{{ line.line_errors.columns }}</span>
                     </td>
-                    <td {% if line.line_errors.audio_filename %}class="csv-bulk-upload-error-cell cell_tooltip"{% endif %}>
+                    <td {% if line.line_errors.audio_filename %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {{ line.line_cleaned.audio_filename }}
                         <span class="tooltiptext">{{ line.line_errors.audio_filename }}</span>
                     </td>
-                    <td {% if line.line_errors.name %}class="csv-bulk-upload-error-cell"{% endif %}>
-                        {% if line.line_errors.name %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.name }}"></a>{% endif %}
+                    <td {% if line.line_errors.name %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {{ line.line_cleaned.name }}
+                        <span class="tooltiptext">{{ line.line_errors.name }}</span>
                     </td>
-                    <td {% if line.line_errors.tags %}class="csv-bulk-upload-error-cell"{% endif %}>
+                    <td {% if line.line_errors.tags %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {% if line.line_errors.tags %}
-                            <a href="#" class="icon warning_icon" title="{{ line.line_errors.tags }}"></a>{{ line.line_original.tags }}
+                            {{ line.line_original.tags }}
+                            <span class="tooltiptext">{{ line.line_errors.tags }}</span>
                         {% else %}
                             {{ line.line_cleaned.tags|join:" " }}
                         {% endif %}
                     </td>
-                    <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell cell_tooltip"{% endif %}>
+                    <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {% if line.line_errors.geotag %}
                             {{ line.line_original.geotag }}
                         {% else %}
@@ -112,17 +68,17 @@
                         {% endif %}
                         <span class="tooltiptext">{{ line.line_errors.geotag }}</span>
                     </td>
-                    <td {% if line.line_errors.description %}class="csv-bulk-upload-error-cell"{% endif %}>
-                        {% if line.line_errors.description %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.description }}"></a>{% endif %}
+                    <td {% if line.line_errors.description %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
                         {{ line.line_cleaned.description|striptags|safe|truncatewords:20 }}
+                        <span class="tooltiptext">{{ line.line_errors.description }}</span>
                     </td>
-                    <td {% if line.line_errors.license %}class="csv-bulk-upload-error-cell"{% endif %}>
-                        {% if line.line_errors.license %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.license }}"></a>{% endif %}
-                        {{ line.line_cleaned.license }}
+                    <td {% if line.line_errors.license %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
+                        {{ line.line_original.license }}
+                        <span class="tooltiptext">{{ line.line_errors.license }}</span>
                     </td>
-                    <td {% if line.line_errors.pack_name %}class="csv-bulk-upload-error-cell"{% endif %}>
-                        {% if line.line_errors.pack_name %}<a href="#" class="icon warning_icon" title="{{ line.line_errors.pack_name }}"></a>{% endif %}
-                        {{ line.line_cleaned.pack_name }}
+                    <td {% if line.line_errors.pack_name %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
+                        {{ line.line_original.pack_name }}
+                        <span class="tooltiptext">{{ line.line_errors.pack_name }}</span>
                     </td>
                 </tr>
             {% endfor %}

@@ -1141,16 +1141,6 @@ class BulkUploadProgress(models.Model):
     sounds_valid = models.PositiveIntegerField(null=False, default=0)
     description_output = JSONField(null=True)
 
-    @property
-    def n_total_lines(self):
-        """
-        Returns total number of lines (excluding header)
-        """
-        if not self.validation_output:
-            return 0
-        else:
-            return len(self.validation_output['lines_ok']) + len(self.validation_output['lines_with_errors'])
-
     def get_csv_lines(self):
         """
         Read lines form CSV file and return a tuple with the header and a list of dictionaries.

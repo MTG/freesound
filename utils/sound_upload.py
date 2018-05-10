@@ -271,6 +271,10 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
         global_errors.append('Invalid header. Header should be: <i>%s</i>'
                              % ';'.join(EXPECTED_HEADER))
 
+    # Check that there are lines for sounds
+    if len(csv_lines) == 0:
+        global_errors.append('The file contains no lines with sound descriptions')
+
     # Check individual rows
     if not global_errors:
         for n, line in enumerate(csv_lines):

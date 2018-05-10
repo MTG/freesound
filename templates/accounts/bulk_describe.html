@@ -23,13 +23,8 @@
 {% elif bulk.progress_type == 'V' %}
     <h3>Validation results of the CSV file "{{ bulk.original_csv_filename }}"</h3>
 
-    {% if not n_total_lines and not global_errors%}
-        <p>The uploaded file does not contain any lines with sound descriptions! Please upload a CSV file
-            formatted following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a>.</p>
-    {% endif %}
-
     {% if global_errors %}
-        <p>We have encountered some <b>major errors</b> when validating your CSV file:</p>
+        <p>We have encountered some <b>major issues</b> when validating your CSV file:</p>
         <ul>
         {% for error in global_errors %}
             <li>{{ error|safe }}</li>
@@ -42,8 +37,7 @@
         <p>
             The following <b>{{ lines_failed_validation|length }} sound{{ lines_failed_validation|pluralize }}
             ha{{ lines_failed_validation|pluralize:"s,ve" }} failed validation</b> and won't be added
-            to Freesound if you continue now with the bulk describe process. Specific errors are maked in red in the
-            following table (hover the red cells to see the errors):
+            to Freesound. Move your mouse over the red cells to see the errors:
         </p>
         <table class="csv-validation-table">
         <thead>
@@ -96,10 +90,10 @@
     {% endif %}
 
     {% if lines_validated_ok and not global_errors %}
-        <p>
+        <p><br>
             The following <b>{{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }}
-            ha{{ lines_validated_ok|pluralize:"s,ve" }} validated correctly</b> and will be described and added to
-            Freesound with the metadata shown in the following table:
+            ha{{ lines_validated_ok|pluralize:"s,ve" }} validated correctly</b> and will be added to
+            Freesound with the following <i>cleaned</i> metadata:
         </p>
         <table class="csv-validation-table">
         <thead>
@@ -190,7 +184,7 @@
     {% if bulk.progress_type == 'S' or bulk.progress_type == 'F' %}
         {% if progress_info.progress_percentage < 100 %}
             <br>
-            <p><b>NOTE:</b> You can safely abandon this page and come back at a later time. You'll find a link
+            <p><b>NOTE:</b> You can safely leave this page and come back at a later time. You'll find a link
             to this page in your <a href="{% url 'accounts-home' %}">home page</a>.</p>
         {% endif %}
     {% endif %}

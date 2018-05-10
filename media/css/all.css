@@ -4246,9 +4246,14 @@ ul.messages {
 }
 
 .csv-validation-table {
-   overflow-y:scroll;
-   max-height:400px;
-   display:block;
+    overflow-y:scroll;
+    max-height:400px;
+    display:block;
+    word-wrap: break-word;
+}
+
+.csv-validation-table-geotag-td {
+    max-width: 80px;
 }
 
 .csv-bulk-upload-progress-label {

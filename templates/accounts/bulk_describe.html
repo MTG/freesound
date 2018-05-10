@@ -47,7 +47,7 @@
         </p>
         <table class="csv-validation-table">
         <thead>
-            <tr><th>Line</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
+            <tr><th>Line</th><th>Filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th><th>Explicit</th></tr>
         </thead>
         <tbody>
             {% for line in lines_failed_validation %}
@@ -58,31 +58,23 @@
                         <span class="tooltiptext">{{ line.line_errors.columns }}</span>
                     </td>
                     <td {% if line.line_errors.audio_filename %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
-                        {{ line.line_cleaned.audio_filename }}
+                        {{ line.line_original.audio_filename }}
                         <span class="tooltiptext">{{ line.line_errors.audio_filename }}</span>
                     </td>
                     <td {% if line.line_errors.name %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
-                        {{ line.line_cleaned.name }}
+                        {{ line.line_original.name }}
                         <span class="tooltiptext">{{ line.line_errors.name }}</span>
                     </td>
                     <td {% if line.line_errors.tags %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
-                        {% if line.line_errors.tags %}
-                            {{ line.line_original.tags }}
-                            <span class="tooltiptext">{{ line.line_errors.tags }}</span>
-                        {% else %}
-                            {{ line.line_cleaned.tags|join:" " }}
-                        {% endif %}
+                        {{ line.line_original.tags }}
+                        <span class="tooltiptext">{{ line.line_errors.tags }}</span>
                     </td>
-                    <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
-                        {% if line.line_errors.geotag %}
-                            {{ line.line_original.geotag }}
-                        {% else %}
-                            {% if line.line_cleaned.lat %}{{ line.line_cleaned.lat }}, {{ line.line_cleaned.lon }}, {{ line.line_cleaned.zoom }}{% endif %}
-                        {% endif %}
+                    <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell cell_tooltip_right csv-validation-table-geotag-td"{% endif %}>
+                        {{ line.line_original.geotag }}
                         <span class="tooltiptext">{{ line.line_errors.geotag }}</span>
                     </td>
                     <td {% if line.line_errors.description %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
-                        {{ line.line_cleaned.description|striptags|safe|truncatewords:20 }}
+                        {{ line.line_original.description|truncatewords:20 }}
                         <span class="tooltiptext">{{ line.line_errors.description }}</span>
                     </td>
                     <td {% if line.line_errors.license %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
@@ -92,6 +84,10 @@
                     <td {% if line.line_errors.pack_name %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
                         {{ line.line_original.pack_name }}
                         <span class="tooltiptext">{{ line.line_errors.pack_name }}</span>
+                    </td>
+                    <td {% if line.line_errors.is_explicit %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
+                        {{ line.line_original.is_explicit }}
+                        <span class="tooltiptext">{{ line.line_errors.is_explicit }}</span>
                     </td>
                 </tr>
             {% endfor %}
@@ -107,7 +103,7 @@
         </p>
         <table class="csv-validation-table">
         <thead>
-            <tr><th>Line</th><th>Audio filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th></tr>
+            <tr><th>Line</th><th>Filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th><th>Explicit</th></tr>
         </thead>
         <tbody>
             {% for line in lines_validated_ok %}
@@ -116,10 +112,11 @@
                     <td>{{ line.line_cleaned.audio_filename }}</td>
                     <td>{{ line.line_cleaned.name }}</td>
                     <td>{{ line.line_cleaned.tags|join:" " }}</td>
-                    <td>{% if line.line_cleaned.zoom %}{{ line.line_cleaned.lat }}, {{ line.line_cleaned.lon }}, {{ line.line_cleaned.zoom }}{% endif %}</td>
+                    <td class="csv-validation-table-geotag-td">{% if line.line_cleaned.zoom %}{{ line.line_cleaned.lat }}, {{ line.line_cleaned.lon }}, {{ line.line_cleaned.zoom }}{% endif %}</td>
                     <td>{{ line.line_cleaned.description|striptags|safe|truncatewords:20 }}</td>
                     <td>{{ line.line_cleaned.license }}</td>
                     <td>{{ line.line_cleaned.pack_name }}</td>
+                    <td>{{ line.line_cleaned.is_explicit|yesno:"Yes,No" }}</td>
                 </tr>
             {% endfor %}
         </tbody>

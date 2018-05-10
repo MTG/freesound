@@ -230,8 +230,10 @@ def get_csv_lines(csv_file_path):
     return header, lines
 
 
-EXPECTED_HEADER_NO_USERNAME = ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name']
-EXPECTED_HEADER = ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'username']
+EXPECTED_HEADER_NO_USERNAME = \
+    ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'is_explicit']
+EXPECTED_HEADER = \
+    ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'is_explicit', 'username']
 
 
 def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=None):
@@ -323,12 +325,20 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 except License.DoesNotExist:
                     license_id = 0
                     license_name = ''
+
+                try:
+                    if int(line['is_explicit']) not in [0, 1]:
+                        line_errors['is_explicit'] = "Invalid value. Should be 1 if sound is explicit or 0 otherwise."
+                except ValueError:
+                    line_errors['is_explicit'] = "Invalid value. Should be 1 if sound is explicit or 0 otherwise."
+
                 sound_fields = {
                     'name': line['name'] or audio_filename,
                     'description': line['description'],
                     'license': license_id,
                     'tags': line['tags'],
                     'pack_name': line['pack_name'] or None,
+                    'is_explicit': str(line['is_explicit']) == '1'
                 }
 
                 if line['geotag'].strip():
@@ -461,7 +471,8 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
                         'tags': line_cleaned['tags'],
                         'lat': line_cleaned['lat'],
                         'lon': line_cleaned['lon'],
-                        'zoom': line_cleaned['zoom']
+                        'zoom': line_cleaned['zoom'],
+                        'is_explicit': line_cleaned['is_explicit'],
                     },
                     process=False,
                     remove_exists=delete_already_existing,

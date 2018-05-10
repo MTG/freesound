@@ -211,7 +211,7 @@
 
             {% for sound in unprocessed_sounds %}
                 <li>
-                    <span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span>
+                    <a href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a>. Uploaded on <span class="date">{{sound.created}}</span>
                 {% if sound.processing_state == 'PE' %}
                     <span class="pending">Processing state: Pending</span>
                 {% else %}

@@ -14,10 +14,16 @@
     </p>
     <script>setTimeout(function(){ window.location.reload(1); }, 3500);</script>
 
+    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET" class="disable-on-submit">
+        <input id="hidden_action" type="hidden" name="action" value="" />
+        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this CSV file and upload a new one" />
+        <br style="clear:both;"/>
+    </form>
+
 {% elif bulk.progress_type == 'V' %}
     <h3>Validation results of the CSV file "{{ bulk.original_csv_filename }}"</h3>
 
-    {% if not n_total_lines %}
+    {% if not n_total_lines and not global_errors%}
         <p>The uploaded file does not contain any lines with sound descriptions! Please upload a CSV file
             formatted following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a>.</p>
     {% endif %}
@@ -26,9 +32,10 @@
         <p>We have encountered some <b>major errors</b> when validating your CSV file:</p>
         <ul>
         {% for error in global_errors %}
-            <li>{{ error }}</li>
+            <li>{{ error|safe }}</li>
         {% endfor %}
          </ul>
+        <p>Please make sure you are following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a> to format your CSV file.</p>
     {% endif %}
 
     {% if lines_failed_validation and not global_errors %}

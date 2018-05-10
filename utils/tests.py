@@ -405,8 +405,9 @@ class BulkDescribeUtils(TestCase):
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
-        self.assertEqual(len(global_errors), 1)  # One global error
+        self.assertEqual(len(global_errors), 2)  # Two global errors
         self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
+        self.assertTrue('no lines with sound' in global_errors[1])  # No sounds in csv file error reported
 
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
             'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit',
@@ -415,8 +416,9 @@ class BulkDescribeUtils(TestCase):
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path,
                                     username=None)  # Not passing username, header should now include 'username' field
-        self.assertEqual(len(global_errors), 1)  # One global error
+        self.assertEqual(len(global_errors), 2)  # One global error
         self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
+        self.assertTrue('no lines with sound' in global_errors[1])  # No sounds in csv file error reported
 
         csv_file_path = self.create_csv_file('test_descriptions.csv', [
             'audio_filename;name;tags;geotag;description;license;pack_name;is_explicit;username',
@@ -425,7 +427,8 @@ class BulkDescribeUtils(TestCase):
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path,
                                     username=None)  # Not passing username, header should now include 'username' field
-        self.assertEqual(len(global_errors), 0)  # No global errors
+        self.assertEqual(len(global_errors), 1)  # One global error
+        self.assertTrue('no lines with sound' in global_errors[0])  # No sounds in csv file error reported
 
         # Test username errors when not passing username argument to validate_input_csv_file
         csv_file_path = self.create_csv_file('test_descriptions.csv', [

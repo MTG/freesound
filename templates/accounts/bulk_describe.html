@@ -16,6 +16,12 @@
 
 {% elif bulk.progress_type == 'V' %}
     <h3>Validation results of the CSV file "{{ bulk.original_csv_filename }}"</h3>
+
+    {% if not n_total_lines %}
+        <p>The uploaded file does not contain any lines with sound descriptions! Please upload a CSV file
+            formatted following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a>.</p>
+    {% endif %}
+
     {% if global_errors %}
         <p>We have encountered some <b>major errors</b> when validating your CSV file:</p>
         <ul>

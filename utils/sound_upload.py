@@ -263,11 +263,11 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
 
     # Check headers
     if username is not None and csv_header != EXPECTED_HEADER_NO_USERNAME:
-        global_errors.append('Invalid header. Header should have the following %i columns: %s'
-                             % (len(EXPECTED_HEADER_NO_USERNAME), ';'.join(EXPECTED_HEADER_NO_USERNAME)))
+        global_errors.append('Invalid header. Header should be: <i>%s</i>'
+                             % ';'.join(EXPECTED_HEADER_NO_USERNAME))
     elif username is None and csv_header != EXPECTED_HEADER:
-        global_errors.append('Invalid header. Header should have the following %i columns: %s'
-                             % (len(EXPECTED_HEADER), ';'.join(EXPECTED_HEADER)))
+        global_errors.append('Invalid header. Header should be: <i>%s</i>'
+                             % ';'.join(EXPECTED_HEADER))
 
     # Check individual rows
     if not global_errors:

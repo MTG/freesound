@@ -993,7 +993,7 @@ def bulk_describe(request, bulk_id):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         gm_client.submit_job("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
 
-    elif request.GET.get('action', False) == 'delete':
+    elif request.GET.get('action', False) == 'delete' and bulk.progress_type in ['N', 'V']:
         # If action is "delete", delete BulkUploadProgress object and go back to describe page
         bulk.delete()
         return HttpResponseRedirect(reverse('accounts-describe'))

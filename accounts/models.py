@@ -456,7 +456,12 @@ class EmailBounce(models.Model):
     UNDETERMINED = 'UD'
     PERMANENT = 'PE'
     TRANSIENT = 'TR'
-    type = models.CharField(db_index=True, max_length=2, default=UNDETERMINED)
+    TYPE_CHOICES = (
+        (UNDETERMINED, 'Undetermined'),
+        (PERMANENT, 'Permanent'),
+        (TRANSIENT, 'Transient')
+    )
+    type = models.CharField(db_index=True, max_length=2, choices=TYPE_CHOICES, default=UNDETERMINED)
 
     timestamp = models.DateTimeField(default=now)
 

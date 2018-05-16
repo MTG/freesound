@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='EmailBounce',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type', models.CharField(default=b'UD', max_length=2)),
+                ('type', models.CharField(choices=[(b'UD', b'Undetermined'), (b'PE', b'Permanent'), (b'TR', b'Transient')], db_index=True, default=b'UD', max_length=2)),
                 ('timestamp', models.DateTimeField(default=django.utils.timezone.now)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='email_bounces', to=settings.AUTH_USER_MODEL)),
             ],

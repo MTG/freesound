@@ -45,7 +45,7 @@ import os
 import tempfile
 import shutil
 import datetime
-from utils.mail import transform_unique_email, replace_email_to, send_mail_template
+from utils.mail import transform_unique_email, replace_email_to, send_mail
 
 
 class SimpleUserTest(TestCase):
@@ -872,25 +872,25 @@ class UserEmailsUniqueTestCase(TestCase):
             return email_to
 
         # Check that emails sent to user_a are sent to his address
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_a.email])
-        self.assertEquals(used_email_to[0], self.user_a.email)
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_a])
+        self.assertEquals(used_email_to[0], self.user_a)
 
         # For user b, email_to also remains the same
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_b.email])
-        self.assertEquals(used_email_to[0], self.user_b.email)
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_b])
+        self.assertEquals(used_email_to[0], self.user_b)
 
         # For user c, email_to changes according to SameUser table
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
-        self.assertEquals(used_email_to[0], self.user_b.email)  # email_to becomes user_b.email
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c])
+        self.assertEquals(used_email_to[0], self.user_b)  # email_to becomes user_b
 
         # If we remove SameUser entries, email of user_c is not replaced anymore
         SameUser.objects.all().delete()
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
-        self.assertEquals(used_email_to[0], self.user_c.email)
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c])
+        self.assertEquals(used_email_to[0], self.user_c)
 
         # Test with email_to not being a list or tuple
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=self.user_a.email)
-        self.assertEquals(used_email_to[0], self.user_a.email)
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=self.user_a)
+        self.assertEquals(used_email_to[0], self.user_a)
 
         # Test with email_to being empty ''
         used_email_to = fake_send_email('Test subject', 'Test body', email_to='')
@@ -1286,22 +1286,21 @@ class AboutFieldVisibilityTests(object):  # temporarily disable this test becaus
 
 class EmailBounceTests(TestCase):
     @staticmethod
-    def _send_email(user):
-        return send_mail_template('Username reminder', 'accounts/email_username_reminder.txt', {'user': user},
-                                  None, user)
+    def _send_mail(email_to):
+        return send_mail('Test subject', 'Test body', email_to=email_to)
 
     @mock.patch('utils.mail.get_connection')
     def test_send_mail(self, get_connection):
         user = User.objects.create_user('user', email='user@freesound.org')
-        self.assertTrue(self._send_email(user))
+        self.assertTrue(self._send_mail(user))
 
         email_bounce = EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
         self.assertFalse(user.profile.email_is_valid())
-        self.assertFalse(self._send_email(user))
+        self.assertFalse(self._send_mail(user))
 
         email_bounce.delete()
         self.assertTrue(user.profile.email_is_valid())
-        self.assertTrue(self._send_email(user))
+        self.assertTrue(self._send_mail(user))
 
     def test_unactivated_user_deleted(self):
         pass  # TODO

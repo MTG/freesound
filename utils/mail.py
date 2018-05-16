@@ -55,8 +55,8 @@ def replace_email_to(func):
             email_to = [email_to]
 
         from accounts.models import SameUser
-        emails_mapping = {su.secondary_trans_email: su.orig_email for su in SameUser.objects.all()}
-        email_to = list(set([emails_mapping.get(email, email) for email in email_to]))
+        user_mapping = {su.secondary_user: su.main_user for su in SameUser.objects.all()}
+        email_to = list(set([user_mapping.get(user, user) for user in email_to]))  # strings are going to be left as is
         return func(subject, email_body, email_from, email_to, reply_to)
     return wrapper
 
@@ -66,7 +66,8 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
     """
     Sends email with a lot of defaults
     @:param email_to can be either string, or user object, or a list of those. If it is a user object, the function will
-    check if email is valid based on bounce info 
+    check if email is valid based on bounce info. Strings should be only used for emails that are not related to users,
+    e.g. support or admins
     @:param reply_to parameter can only be a single email address that will be added as a header
     to all mails being sent.
     @:returns False if an exception occurred during email sending procedure, or if there are users with valid emails in 

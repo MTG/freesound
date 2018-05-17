@@ -224,7 +224,7 @@ def get_csv_lines(csv_file_path):
     nuber of items in "header" if the individual row has less columns (again, "zip" will cut the mismatch
     between "header" and "row")
     """
-    reader = csv.reader(open(csv_file_path, 'rU'), delimiter=';')
+    reader = csv.reader(open(csv_file_path, 'rU'), delimiter=',')
     header = next(reader)
     lines = [dict(zip(header, row)) for row in reader]
     return header, lines

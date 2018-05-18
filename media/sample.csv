@@ -1,2 +1,2 @@
-audio_filename;name;tags;geotag;description;license;pack_name;is_explicit
-"filename.wav";"A cool name for my sound";"tag1 tag2 tag3 separated-by-spaces";"lat, lng, zoom";"The textual description for the sound.";"Creative Commons 0";"My pack";0
+audio_filename,name,tags,geotag,description,license,pack_name,is_explicit
+"filename.wav","A cool name for my sound","tag1 tag2 tag3 separated-by-spaces","lat, lng, zoom","The textual description for the sound.","Creative Commons 0","My pack",0

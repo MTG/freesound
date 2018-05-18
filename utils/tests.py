@@ -312,13 +312,49 @@ class BulkDescribeUtils(TestCase):
             f.close()
 
     @staticmethod
-    def create_csv_file(filename, lines, base_path):
+    def create_file_with_lines(filename, lines, base_path):
         csv_file_path = '%s/%s' % (base_path, filename)
         csv_fid = open(csv_file_path, 'w')
         for line in lines:
             csv_fid.write(line + '\n')
         csv_fid.close()
         return csv_file_path
+
+    def test_get_csv_lines(self):
+        # Load sample files for CSV, XLS and XLSX formats and compare the output of reading them is the same
+        sample_csv_path = os.path.join(settings.MEDIA_ROOT, 'sample.csv')
+        sample_xls_path = os.path.join(settings.MEDIA_ROOT, 'sample.xls')
+        sample_xlsx_path = os.path.join(settings.MEDIA_ROOT, 'sample.xlsx')
+        header_csv, lines_csv = get_csv_lines(sample_csv_path)
+        header_xls, lines_xls = get_csv_lines(sample_xls_path)
+        header_xlsx, lines_xlsx = get_csv_lines(sample_xlsx_path)
+
+        for i in range(0, len(header_csv)):
+            # Check headers have the same value
+            self.assertTrue(header_csv[i] == header_xls[i] == header_xlsx[i])
+
+            # Check lines from all formats parse same value for specific header value
+            header_value = header_csv[i]
+            for j in range(0, len(lines_csv)):
+                if header_value == 'is_explicit':
+                    # NOTE: Excel treats all numbers as floats, therefore for comparing rows that have numbers we
+                    # first convert them all to float.
+                    self.assertTrue(
+                        float(lines_csv[j][header_value]) ==
+                        float(lines_xls[j][header_value]) ==
+                        float(lines_xlsx[j][header_value]))
+                else:
+                    self.assertTrue(
+                        lines_csv[j][header_value] ==
+                        lines_xls[j][header_value] ==
+                        lines_xlsx[j][header_value])
+
+        # NOTE: more advance testing of this funciton would mean testing with different types of "good" and "bad" files
+        # for each of the formats. For the CSV case that would rather feasible as we can generate the files
+        # programatically. For the XLS and XLSX case we would need to rely on a third-party library to create XLS and
+        # XLSX files which would only be used for that. In any of the cases, we will never cover the myriard of
+        # evil CSV/XLS/XLSX files that can be out there. I think it is better to make sure that in case of unexpected
+        # error we show that message to the users instead of trying to cover all possible errors.
 
     @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
     @override_settings(CSV_PATH=tempfile.mkdtemp())
@@ -334,7 +370,7 @@ class BulkDescribeUtils(TestCase):
         os.mkdir(csv_file_base_path)
 
         # Test CSV with all lines and metadata ok
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
             'file1.wav,New name for file1.wav,"tag1 tag2 tag3","41.4065, 2.19504, 23",'
             '"Description for file",Creative Commons 0,ambient,0',  # All fields valid
@@ -358,7 +394,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('username' in lines_validated[2]['line_errors'])  # User does not exist error reported
 
         # Test missing/duplicated audiofile and wrong number of rows
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
             'file1.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # File exists, fields ok
             'file2.wav,,"tag1 tag2 tag3",,,Creative Commons 0,,1',  # Missing description
@@ -377,7 +413,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('audio_filename' in lines_validated[4]['line_errors'])  # File already described error reported
 
         # Test validation errors in individual fields
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
             'file1.wav,,"tag1 tag2",,"Description for file",Creative Commons 0,,1',  # Wrong tags (less than 3)
             'file2.wav,,"tag1,tag2",,"Description for file",Creative Commons 0,,1',  # Wrong tags (less than 3)
@@ -399,7 +435,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('is_explicit' in lines_validated[5]['line_errors'])  # Wrong is_explicit
 
         # Test wrong header global errors
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,unknown_field',
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
@@ -409,7 +445,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
         self.assertTrue('no lines with sound' in global_errors[1])  # No sounds in csv file error reported
 
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
@@ -420,7 +456,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
         self.assertTrue('no lines with sound' in global_errors[1])  # No sounds in csv file error reported
 
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
@@ -431,7 +467,7 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('no lines with sound' in global_errors[0])  # No sounds in csv file error reported
 
         # Test username errors when not passing username argument to validate_input_csv_file
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
             'file1.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1,new_username',  # User does not exist
             'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Invlaid num columns
@@ -463,7 +499,7 @@ class BulkDescribeUtils(TestCase):
         os.mkdir(csv_file_base_path)
 
         # Create Test CSV with some lines ok and some wrong lines
-        csv_file_path = self.create_csv_file('test_descriptions.csv', [
+        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
             'file1.wav,,"tag1 tag2 tag3","41.4065, 2.19504, 23","Description for file",Creative Commons 0,ambient,1',  # OK
             'file2.wav,,"tag1 tag2 tag3",,"Description for file",Invalid license,,1',  # Invalid license

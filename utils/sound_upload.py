@@ -23,6 +23,7 @@ import shutil
 import csv
 import logging
 import json
+import xlrd
 from django.urls import reverse
 from django.contrib.auth.models import User
 from utils.audioprocessing import get_sound_type
@@ -32,7 +33,6 @@ from utils.text import slugify
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
 from utils.cache import invalidate_template_cache
-from utils.tags import clean_and_split_tags
 from django.contrib.auth.models import Group
 from gearman.errors import ServerUnavailable
 from django.apps import apps
@@ -219,14 +219,28 @@ def get_csv_lines(csv_file_path):
     Get the contents of a CSV file and returns a tuple (header, lines) with the header of the CSV file and the
     rest of lines as a list of dictionaries (with keys being the element sin the header).
 
+    We currently support both CSV and EXCEL (XLS, XLSX) files, therefore all the functions and variables here that
+    are named "*csv*" apply to both formats.
+
     NOTE: each dictionary in "lines" won't have more items than the number of items in "header" because "zip"
     function will ignore them. However it can happen that an a dictionary in "lines" has less items than the
     nuber of items in "header" if the individual row has less columns (again, "zip" will cut the mismatch
     between "header" and "row")
     """
-    reader = csv.reader(open(csv_file_path, 'rU'), delimiter=',')
-    header = next(reader)
-    lines = [dict(zip(header, row)) for row in reader]
+    if csv_file_path.endswith('.csv'):
+        # Read CSV formatted file
+        reader = csv.reader(open(csv_file_path, 'rU'), delimiter=',')
+        header = next(reader)
+        lines = [dict(zip(header, row)) for row in reader]
+    elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):
+        # Read from Excel format
+        wb = xlrd.open_workbook(csv_file_path)
+        s = wb.sheet_by_index(0)  # Get first excel sheet
+        header = s.row_values(0)
+        lines = [dict(zip(header, row)) for row in [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+    else:
+        header = []
+        lines = []
     return header, lines
 
 
@@ -266,10 +280,10 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
     # Check headers
     if username is not None and csv_header != EXPECTED_HEADER_NO_USERNAME:
         global_errors.append('Invalid header. Header should be: <i>%s</i>'
-                             % ';'.join(EXPECTED_HEADER_NO_USERNAME))
+                             % ','.join(EXPECTED_HEADER_NO_USERNAME))
     elif username is None and csv_header != EXPECTED_HEADER:
         global_errors.append('Invalid header. Header should be: <i>%s</i>'
-                             % ';'.join(EXPECTED_HEADER))
+                             % ','.join(EXPECTED_HEADER))
 
     # Check that there are lines for sounds
     if len(csv_lines) == 0:
@@ -332,6 +346,11 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     license_name = ''
 
                 try:
+                    # Make sure is_explicit value is an integer (the library we use to parse xls/xlsx files treats
+                    # numbers as float and we need integer here.
+                    line['is_explicit'] = int(float(line['is_explicit']))
+
+                    # Check that is_explicit is either 0 or 1
                     if int(line['is_explicit']) not in [0, 1]:
                         line_errors['is_explicit'] = 'Invalid value. Should be "1" if sound is explicit or ' \
                                                      '"0" otherwise.'

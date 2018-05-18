@@ -464,7 +464,8 @@ def describe(request):
             except:
                 pass
 
-            path = os.path.join(directory, str(uuid.uuid4())+'.csv')
+            extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
+            path = os.path.join(directory, str(uuid.uuid4()) + '.%s' % extension)
             destination = open(path, 'wb')
 
             f = csv_form.cleaned_data['csv_file']

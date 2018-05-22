@@ -152,7 +152,6 @@ class Profile(SocialModel):
                 email_type=email_type).exists()
         return email_type.send_by_default != invert_default
 
-
     def get_enabled_email_types(self):
         # Get list of all enabled email types for this user
         all_emails = EmailPreferenceType.objects
@@ -173,28 +172,24 @@ class Profile(SocialModel):
         stream_emails = EmailPreferenceType.objects.get(name='stream_emails')
         # First get current value of stream_email to know if
         # profile.last_stream_email_sent must be initialized
-        had_enabled_stream_emails = self.user.email_settings\
-                .filter(email_type=stream_emails).exists()
+        had_enabled_stream_emails = self.user.email_settings.filter(email_type=stream_emails).exists()
 
         all_emails = EmailPreferenceType.objects
 
         # If an email_type is not enabled and default value is True then must
         # be on UserEmailSetting
-        disabled = all_emails.filter(send_by_default=True)\
-            .exclude(id__in=email_type_ids)
+        disabled = all_emails.filter(send_by_default=True).exclude(id__in=email_type_ids)
 
         # If an email_type is enabled and default value is False then must
         # be on UserEmailSetting
-        enabled = all_emails.filter(send_by_default=False,
-                id__in=email_type_ids)
+        enabled = all_emails.filter(send_by_default=False, id__in=email_type_ids)
 
         all_emails = list(enabled) + list(disabled)
 
         # Recreate email settings
         self.user.email_settings.all().delete()
         for i in all_emails:
-            UserEmailSetting.objects.create(user=self.user,
-                    email_type=i)
+            UserEmailSetting.objects.create(user=self.user, email_type=i)
 
         enabled_stream_emails = enabled.filter(id=stream_emails.id).exists()
         # If is enabling stream emails, set last_stream_email_sent to now

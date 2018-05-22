@@ -466,7 +466,6 @@ class UserEditProfile(TestCase):
 
         self.assertNotEqual(resp.context['profile_form'].errors, None)
 
-
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
         User.objects.create_user("testuser", password="testpass")

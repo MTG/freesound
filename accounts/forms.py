@@ -140,7 +140,6 @@ class UsernameField(forms.CharField):
 
 
 class RegistrationForm(forms.Form):
-    captcha_key = settings.RECAPTCHA_PUBLIC_KEY
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
     username = UsernameField()
 
@@ -177,7 +176,7 @@ class RegistrationForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(RegistrationForm, self).clean()
-        if self.captcha_key:
+        if settings.RECAPTCHA_PUBLIC_KEY:
             # If captcha is enabled, check that captcha is ok
             captcha_response = cleaned_data.get("recaptcha_response")
             if not captcha_response:

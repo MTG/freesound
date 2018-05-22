@@ -332,10 +332,8 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(Profile.objects.filter(user=u).exists(), True)
         u.save()  # Check saving user again (with existing profile) does not fail
 
+    @override_settings(RECAPTCHA_PUBLIC_KEY='')
     def test_user_registration(self):
-        RegistrationForm.captcha_key = ''  # Override this property so that captcha is not enabled in the tests
-        # NOTE: using override_settings and setting RECAPTCHA_PUBLIC_KEY to '' won't work because RegistrationForm is
-        # already loaded.
         username = 'new_user'
 
         # Try registration without accepting tos

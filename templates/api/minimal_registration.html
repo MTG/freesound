@@ -123,7 +123,7 @@
         <div class="captcha_element">
             <span class="help-block"> {{ form.recaptcha_response.errors }} </span>
             <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-            <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
+            <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
         </div>
 
         </div>

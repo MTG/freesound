@@ -1,47 +1,80 @@
 {% extends "accounts/_section.html" %}
-
+{% load util %}
 {% block title %}registration{% endblock %}
 
 {% block section_content %}
 <style> label[for=id_accepted_tos] {display: inline} #username_check, #check_success, #spinner { display:none; color: #bd2d33; font-style: italic; } #check_success {color:green;}</style>
 <script type="text/javascript">
     $(function () {
-      $("#id_username").focus()
-      
-        $('#id_username').parent().append('<div id="spinner"> Checking...<img src="{{ media_url }}images/indicator.gif" /></div><div id="username_check">Sorry, this username is already being used by someone else.</div><div id="check_success">Username is available</div>');
-      
-      // When the user enters a username we check if it's available
-      $("#id_username").focusout(function(){
-        if ($("#id_username").val()) {
-          $('#spinner').show();
-          $('#username_check').hide();
-          $('#check_success').hide();
-          $.get('{% url "check_username" %}', 
-              {'username': $("#id_username").val()}, 
-              function(data){
-                $('#username_check').toggle(!data.result);
-                $('#spinner').hide();
-                $('#check_success').toggle(data.result);
-              }, "json" );
+        $("#id_username").focus()
+            $('#id_username').parent().append('<div id="spinner"> Checking...<img src="{{ media_url }}images/indicator.gif" /></div><div id="username_check">Sorry, this username is already being used by someone else.</div><div id="check_success">Username is available</div>');
+            $("#id_username").focusout(function(){
+            if ($("#id_username").val()) {
+                $('#spinner').show();
+                $('#username_check').hide();
+                $('#check_success').hide();
+                $.get('{% url "check_username" %}', {'username': $("#id_username").val()}, function(data){
+                        $('#username_check').toggle(!data.result);
+                        $('#spinner').hide();
+                        $('#check_success').toggle(data.result);
+                }, "json" );
+            }
+        });
+    });
+
+    function setPasswordType() {
+        // Set type to password so that browser offers to store it
+        document.getElementById("id_{{ form.password1.name }}").type = 'password';
+        return true;
+    }
+
+    function togglePasswordInputType() {
+        var passwordInput = document.getElementById("id_{{ form.password1.name }}");
+        var eyeImg = document.getElementById("eye-img");
+        if (passwordInput.type === 'password'){
+            passwordInput.type = 'text';
+            eyeImg.src = '{{ media_url }}images/eye-closed.png';
+        } else {
+            passwordInput.type = 'password';
+            eyeImg.src = '{{ media_url }}images/eye-open.png';
         }
-      });
-    });    
+    }
 </script>
 
 <h1>Registration</h1>
-
     <h3>
-    We check uploads and forum posts for spam before others can see them. Any user that posts spam will be deleted.
+        We check uploads and forum posts for spam before others can see them. Any user that posts spam will be deleted.
     </h3>
-
-    <form method="post" action="." class="disable-on-submit">{% csrf_token %}
-        {{ form.as_p }}
+    <form id="registrationForm" method="post" action="." class="disable-on-submit" onsubmit="return setPasswordType()">{% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.username.errors }}
+        <p>
+            {{ form.username.label_tag }}{{ form.username }}
+            <span class="helptext">{{ form.username.help_text }}</span>
+        </p>
+        {{ form.email1.errors }}
+        <p>
+            {{ form.email1.label_tag }}{{ form.email1 }}
+            <span class="helptext">{{ form.email1.help_text }}</span>
+        </p>
+        {{ form.password1.errors }}
+        <p>
+            {{ form.password1.label_tag }}{{ form.password1 }}
+            <a href="javascript:void(0)" onclick="togglePasswordInputType()">
+                <img id="eye-img" src="{{ media_url }}images/eye-open.png" title="show/hide password" style="vertical-align: bottom;" />
+            </a>
+            <span class="helptext">{{ form.password1.help_text }}</span>
+        </p>
+        {{ form.accepted_tos.errors }}
+        <p>
+            {{ form.accepted_tos }} {{ form.accepted_tos.label }}
+        </p>
+        <span class="help-block"> {{ form.recaptcha_response.errors }} </span>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-        <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
-        <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
-        <input type="submit" value="Register" />
+        <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
+        <br><input type="submit" value="Create account!" />
     </form>
-
+<br>
 {% include "accounts/reminders.html" %}
 
 {% endblock %}

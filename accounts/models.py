@@ -306,8 +306,6 @@ class Profile(SocialModel):
         """
 
         self.user.username = 'deleted_user_%s' % self.user.id
-        self.user.first_name = ''
-        self.user.last_name = ''
         self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
         self.has_avatar = False
         self.is_deleted_user = True

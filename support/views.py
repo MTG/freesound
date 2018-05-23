@@ -24,7 +24,7 @@ from django.urls import reverse
 from django.shortcuts import render
 from django.conf import settings
 from support.forms import ContactForm
-from utils.mail import send_mail_template
+from utils.mail import send_mail_template_to_support
 from zenpy import Zenpy
 from zenpy.lib import api_objects as zendesk_api
 from comments.models import Comment
@@ -93,8 +93,8 @@ def send_email_to_support(request_email, subject, message, user=None):
         except User.DoesNotExist:
             pass
 
-    send_mail_template(u"[support] " + subject, "support/email_support.txt", {'message': message, 'user': user},
-                       settings.DEFAULT_FROM_EMAIL, reply_to=request_email)
+    send_mail_template_to_support(u"[support] " + subject, "support/email_support.txt",
+                                  {'message': message, 'user': user}, reply_to=request_email)
 
 
 def contact(request):

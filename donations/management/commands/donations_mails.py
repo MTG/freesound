@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 u'Thanks for contributing to Freesound',
                 'donations/email_donation_reminder.txt', {
                     'user': user,
-                    }, None, user)
+                    }, user_to=user)
             user.profile.last_donation_email_sent = datetime.datetime.now()
             user.profile.donations_reminder_email_sent = True
             user.profile.save()
@@ -140,7 +140,7 @@ class Command(BaseCommand):
                         u'Have you considered making a donation?',
                         'donations/email_donation_request.txt', {
                             'user': user,
-                            }, None, user)
+                            }, user_to=user)
 
                     if res:
                         user.profile.last_donation_email_sent = datetime.datetime.now()

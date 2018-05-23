@@ -86,8 +86,7 @@ class Ticket(models.Model):
                 send_mail_template(u'A freesound moderator handled your upload.',
                                    notification_type,
                                    locals(),
-                                   'noreply@freesound.org',
-                                   self.assignee)
+                                   user_to=self.assignee)
         # send message to user
         if sender_moderator in [Ticket.USER_ONLY, Ticket.USER_AND_MODERATOR]:
             user_to = self.sender if self.sender else False
@@ -96,8 +95,7 @@ class Ticket(models.Model):
                 send_mail_template(u'A freesound moderator handled your upload.',
                                    notification_type,
                                    locals(),
-                                   'noreply@freesound.org',
-                                   user_to)
+                                   user_to=user_to)
 
     def get_absolute_url(self):
         return reverse('ticket', args=[smart_unicode(self.key)])

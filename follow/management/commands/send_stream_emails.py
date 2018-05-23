@@ -96,8 +96,7 @@ class Command(BaseCommand):
 
             # Send email
             try:
-                send_mail(subject_str, text_content, email_from=settings.DEFAULT_FROM_EMAIL, email_to=[email_to],
-                          reply_to=None)
+                send_mail(subject_str, text_content, user_to=user)
             except Exception as e:
                 logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to), str(e)))
                 # Do not send the email and do not update the last email sent field in the profile

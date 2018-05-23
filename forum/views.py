@@ -205,7 +205,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                         send_mail_template(
                             u"topic reply notification - " + thread.title,
                             "forum/email_new_post_notification.txt",
-                            dict(post=post, thread=thread, forum=forum), email_from=None, email_to=users_to_notify
+                            dict(post=post, thread=thread, forum=forum), user_to=users_to_notify
                         )
 
                 if not set_to_moderation:

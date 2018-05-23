@@ -37,7 +37,7 @@
 
     {% else %}
 
-        <h3>Pick files</h3>
+        <h3>Describe files manually</h3>
         <p>You've uploaded these files, but they won't appear on the website until you've described them.
             <br>Select the files you want to describe, click on "describe selected files", and follow the instructions on the following pages.
             <br> You can also delete files by selecting them and pressing the "delete selected files" button.
@@ -69,18 +69,18 @@
         <!-- Bulk upload part -->
         {% if request.user.profile.can_do_bulk_upload %}
             <br style="clear: both;">
-            <h3>Describe files in bulk</h3>
+            <h3>Describe many files in batch</h3>
             <p>
-                You can also provide descriptions for several files at once by <b>uploading a CSV file</b>.
-                The CSV file must be formatted following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a>.
-                After uploading your CSV file, we will validate it and you'll have the chance to review the provided
-                descriptions before finally adding the sounds to Freesound.
-                Start by selecting a CSV file and cliking on <i>Upload CSV file</i>.
+                You can also provide descriptions for many files at once by <b>uploading a data file in CSV or XLS</b> format.
+                Please use the <a href="{{ media_url }}/sample.csv" target="_blank">CSV</a>, <a href="{{ media_url }}/sample.xls" target="_blank">XLS</a>
+                or <a href="{{ media_url }}/sample.xlsx" target="_blank">XLSX</a> template to create your data file, and read
+                <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a> to know how to fill
+                in all sound description fields. Upload your data file using the form below:
             </p>
             <form method="POST" enctype="multipart/form-data" action="">
                 {% csrf_token %}
                 {{csv_form}}
-                <input type="submit" name="Submit" value="Upload CSV file"/>
+                <input type="submit" name="Submit" value="Upload data file"/>
             </form>
             <ul class="messages">
                 <li>This feature is still in <b>beta</b>. If you experience any problems using it, please

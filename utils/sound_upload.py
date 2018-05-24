@@ -227,6 +227,13 @@ def get_csv_lines(csv_file_path):
     nuber of items in "header" if the individual row has less columns (again, "zip" will cut the mismatch
     between "header" and "row")
     """
+
+    def xls_val_to_string(val):
+        if type(val) == unicode:
+            return str(val.encode('utf-8'))
+        else:
+            return str(val)
+
     if csv_file_path.endswith('.csv'):
         # Read CSV formatted file
         reader = csv.reader(open(csv_file_path, 'rU'), delimiter=',')
@@ -237,7 +244,8 @@ def get_csv_lines(csv_file_path):
         wb = xlrd.open_workbook(csv_file_path)
         s = wb.sheet_by_index(0)  # Get first excel sheet
         header = s.row_values(0)
-        lines = [dict(zip(header, row)) for row in [[val for val in s.row_values(i)] for i in range(1, s.nrows)]]
+        lines = [dict(zip(header, row)) for row in
+                 [[xls_val_to_string(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
     else:
         header = []
         lines = []

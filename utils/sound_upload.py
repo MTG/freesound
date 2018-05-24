@@ -237,7 +237,7 @@ def get_csv_lines(csv_file_path):
         wb = xlrd.open_workbook(csv_file_path)
         s = wb.sheet_by_index(0)  # Get first excel sheet
         header = s.row_values(0)
-        lines = [dict(zip(header, row)) for row in [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+        lines = [dict(zip(header, row)) for row in [[val for val in s.row_values(i)] for i in range(1, s.nrows)]]
     else:
         header = []
         lines = []

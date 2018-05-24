@@ -1170,18 +1170,35 @@ class BulkUploadProgress(models.Model):
         Validate CSV file and store output in self.validation_output.
         """
         header, lines = self.get_csv_lines()
-        lines_validated, global_errors = validate_input_csv_file(
-            csv_header=header,
-            csv_lines=lines,
-            sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
-            username=self.user.username)
-        self.validation_output = {
-            'lines_ok': [line for line in lines_validated if not line['line_errors']],
-            'lines_with_errors': [line for line in lines_validated if line['line_errors']],
-            'global_errors': global_errors,
-        }
-        self.progress_type = 'V'  # Set progress to 'validated'
-        self.save()
+        try:
+            lines_validated, global_errors = validate_input_csv_file(
+                csv_header=header,
+                csv_lines=lines,
+                sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
+                username=self.user.username)
+            self.validation_output = {
+                'lines_ok': [line for line in lines_validated if not line['line_errors']],
+                'lines_with_errors': [line for line in lines_validated if line['line_errors']],
+                'global_errors': global_errors,
+            }
+            self.progress_type = 'V'  # Set progress to 'validated'
+            self.save()
+
+        except Exception:
+            # This si a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
+            # updated with a global error. Otherwise it will appear to the user that the object is permanently being
+            # validated. After we update the object with the "unexpected error" message, we raise the exception so the
+            # error is also sent to Sentry.
+
+            self.validation_output = {
+                'lines_ok': [],
+                'lines_with_errors': [],
+                'global_errors': ['An unexpected error occurred while validating your data file'],
+            }
+            self.progress_type = 'V'  # Set progress to 'validated'
+            self.save()
+
+            raise
 
     def describe_sounds(self):
         """

@@ -30,7 +30,7 @@
             <li>{{ error|safe }}</li>
         {% endfor %}
          </ul>
-        <p>Please make sure you are following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a> to format your data file.</p>
+        <p>Please make sure you are following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a> to create your data file.</p>
     {% endif %}
 
     {% if lines_failed_validation and not global_errors %}

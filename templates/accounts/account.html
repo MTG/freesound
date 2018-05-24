@@ -237,7 +237,7 @@
 
         {% if current_bulkdescribe %}
         <div class="content_box">
-          <h3>Bulk Describe Sound processes</h3>
+          <h3>Bulk Describe processes</h3>
             {% for bulk_describe in current_bulkdescribe %}
             <li style="padding: 4px;font-size: 11px">
               <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">{{ bulk_describe.original_csv_filename }}</a> created on <span class="date">{{bulk_describe.created}}</span>

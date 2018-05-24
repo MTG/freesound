@@ -4,33 +4,33 @@
 {% block title %}{{ block.super }}Describe - Bulk Describe Sounds{% endblock %}
 {% block content %}
 
-<h1>Bulk Describe Sounds</h1>
+<h1>Bulk description of files</h1>
 
 {% if bulk.progress_type == 'N' %}
-    <h3>Validating CSV file "{{ bulk.original_csv_filename }}" <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></h3>
+    <h3>Validating data file "{{ bulk.original_csv_filename }}" <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></h3>
     <p>
-        The uploaded CSV file has not yet been validated. If there are many sounds to be described, this process
-        could take a few minutes. This page will reload automatically when CSV validation has fininshed.
+        The uploaded data file has not yet been validated. If there are many sounds to be described, this process
+        could take a few minutes. This page will reload automatically when data validation has fininshed.
     </p>
     <script>setTimeout(function(){ window.location.reload(1); }, 3500);</script>
 
     <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET" class="disable-on-submit">
         <input id="hidden_action" type="hidden" name="action" value="" />
-        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this CSV file and upload a new one" />
+        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this data file and upload a new one" />
         <br style="clear:both;"/>
     </form>
 
 {% elif bulk.progress_type == 'V' %}
-    <h3>Validation results of the CSV file "{{ bulk.original_csv_filename }}"</h3>
+    <h3>Validation results of the data file "{{ bulk.original_csv_filename }}"</h3>
 
     {% if global_errors %}
-        <p>We have encountered some <b>major issues</b> when validating your CSV file:</p>
+        <p>We have encountered some <b>major issues</b> when validating your data file:</p>
         <ul>
         {% for error in global_errors %}
             <li>{{ error|safe }}</li>
         {% endfor %}
          </ul>
-        <p>Please make sure you are following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a> to format your CSV file.</p>
+        <p>Please make sure you are following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a> to format your data file.</p>
     {% endif %}
 
     {% if lines_failed_validation and not global_errors %}
@@ -119,7 +119,7 @@
 
     <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET" class="disable-on-submit">
         <input id="hidden_action" type="hidden" name="action" value="" />
-        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this CSV file and upload a new one" />
+        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this data file and upload a new one" />
         <input style="float:right;" type="submit" onclick="$('#hidden_action').attr('value', 'start');" value="Continue and add the {{ lines_validated_ok|length }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound"
             {% if not lines_validated_ok|length %}disabled="disabled"{% endif %}/>
         <br style="clear:both;"/>

@@ -39,7 +39,7 @@
 
         <h3>Describe files manually</h3>
         <p>You've uploaded these files, but they won't appear on the website until you've described them.
-            <br>Select the files you want to describe, click on "describe selected files", and follow the instructions on the following pages.
+            <br>Select the files you want to describe (no more than 10), click on "describe selected files", and follow the instructions on the following pages.
             <br> You can also delete files by selecting them and pressing the "delete selected files" button.
         <div id="content">
             <div class="content_box">
@@ -69,7 +69,7 @@
         <!-- Bulk upload part -->
         {% if request.user.profile.can_do_bulk_upload %}
             <br style="clear: both;">
-            <h3>Describe many files in batch</h3>
+            <h3>Bulk description of files</h3>
             <p>
                 You can also provide descriptions for many files at once by <b>uploading a data file in CSV or XLS</b> format.
                 Please use the <a href="{{ media_url }}/sample.csv" target="_blank">CSV</a>, <a href="{{ media_url }}/sample.xls" target="_blank">XLS</a>

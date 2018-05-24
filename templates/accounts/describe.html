@@ -37,56 +37,65 @@
 
     {% else %}
 
-        <h3>Describe files manually</h3>
-        <p>You've uploaded these files, but they won't appear on the website until you've described them.
-            <br>Select the files you want to describe (no more than 10), click on "describe selected files", and follow the instructions on the following pages.
-            <br> You can also delete files by selecting them and pressing the "delete selected files" button.
+        {% if request.user.profile.can_do_bulk_upload %}
         <div id="content">
             <div class="content_box">
-                <h3>Your uploaded files ({{ n_files }})</h3>
+                <h3>Describe files manually</h3>
+        {% else %}
+            <h3>Pick the sounds to describe</h3>
+        {% endif %}
                 <p>
-                <ul id="root_file" class="upload">
-                    {% show_file file_structure 1 %}
-                </ul>
+                    You've uploaded the files listed below, but <b>they won't appear on the website until you've described them</b>.
+                    {% if not request.user.profile.can_do_bulk_upload %}<br>{% endif %}Pick a maximum of 10 files from the list below, click on <i>Describe selected files</i>, and follow the instructions.
+                    {% if not request.user.profile.can_do_bulk_upload %}<br>{% endif %}You can also delete files by selecting them and pressing the <i>Delete selected files</i> button.
                 </p>
+                <p>
+                    Your uploaded files ({{ n_files }}):
+                    <ul id="root_file" class="upload">
+                        {% show_file file_structure 1 %}
+                    </ul>
+                </p>
+
+                <p>
+                    <form action="." method="post" id="fileform">{% csrf_token %}
+                        <div style="display:none">
+                        {{form.as_p}}
+                        </div>
+                        <input class="describe_page_action_button" type="submit" value="Describe selected files" name="describe">
+                        <br><input class="describe_page_action_button" type="submit" value="Delete selected files" name="delete">
+                    </form>
+                </p>
+        {% if request.user.profile.can_do_bulk_upload %}
             </div>
         </div>
-        <div id="sidebar">
-            <div class="content_box">
-                <h3>Actions</h3>
-                <p>
-                <form action="." method="post" id="fileform">{% csrf_token %}
-                    <div style="display:none">
-                    {{form.as_p}}
-                    </div>
-                    <input class="describe_page_action_button" type="submit" value="Describe selected files" name="describe">
-                    <br><input class="describe_page_action_button" type="submit" value="Delete selected files" name="delete">
-                </form>
-                </p>
-            </div>
-        </div>
+        {% endif %}
 
         <!-- Bulk upload part -->
         {% if request.user.profile.can_do_bulk_upload %}
-            <br style="clear: both;">
-            <h3>Bulk description of files</h3>
-            <p>
-                You can also provide descriptions for many files at once by <b>uploading a data file in CSV or XLS</b> format.
-                Please use the <a href="{{ media_url }}/sample.csv" target="_blank">CSV</a>, <a href="{{ media_url }}/sample.xls" target="_blank">XLS</a>
-                or <a href="{{ media_url }}/sample.xlsx" target="_blank">XLSX</a> template to create your data file, and read
-                <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a> to know how to fill
-                in all sound description fields. Upload your data file using the form below:
-            </p>
-            <form method="POST" enctype="multipart/form-data" action="">
-                {% csrf_token %}
-                {{csv_form}}
-                <input type="submit" name="Submit" value="Upload data file"/>
-            </form>
-            <ul class="messages">
-                <li>This feature is still in <b>beta</b>. If you experience any problems using it, please
-                    don't hesitate to <a href="{% url 'contact' %}">contact us</a> and report.</li>
-            </ul>
+            <div id="sidebar">
+                <div class="content_box">
+                    <h3>Bulk description of files</h3>
+                    <p>
+                        Alternatively, you can provide descriptions for many files at once by <b>uploading a data file</b>.
+                        To create your data file use the <a href="{{ media_url }}/sample.csv" target="_blank">CSV</a>, <a href="{{ media_url }}/sample.xls" target="_blank">XLS</a>
+                        or <a href="{{ media_url }}/sample.xlsx" target="_blank">XLSX</a> template and follow
+                        <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a>.
+                        Upload your data file using the form below:
+                    </p>
+                    <form method="POST" enctype="multipart/form-data" action="">
+                        {% csrf_token %}
+                        {{csv_form}}
+                        <input type="submit" name="Submit" value="Upload data file"/>
+                    </form>
+                    <ul class="messages">
+                        <li>This feature is still in <b>beta</b>. If you experience any problems using it, please
+                            don't hesitate to <a href="{% url 'contact' %}">contact us</a> and report.</li>
+                    </ul>
+                </div>
+            </div>
         {% endif %}
+
+        <br style="clear: both;">
     {% endif %}
 </div>
 {% endblock %}

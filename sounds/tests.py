@@ -41,11 +41,13 @@ from general.templatetags.filter_img import replace_img
 from sounds.models import Pack, Sound, SoundOfTheDay, License, DeletedSound, Flag
 from sounds.models import Download, PackDownload, PackDownloadSound
 from sounds.views import get_sound_of_the_day_id
+from accounts.models import EmailPreferenceType
 from utils.encryption import encrypt
 from utils.tags import clean_and_split_tags
 from utils.cache import get_template_cache_key
 
 from bs4 import BeautifulSoup
+
 
 class OldSoundLinksRedirectTestCase(TestCase):
 
@@ -162,7 +164,7 @@ class RandomSoundViewTestCase(TestCase):
 
 class CommentSoundsTestCase(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['sounds', 'email_preference_type']
 
     def test_add_comment(self):
         sound = Sound.objects.get(id=19)
@@ -173,6 +175,24 @@ class CommentSoundsTestCase(TestCase):
         sound.refresh_from_db()
         self.assertEqual(current_num_comments + 1, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
+
+    def test_email_notificaiton_on_send_email(self):
+        # Add a comment to a sound using the view and test that email was sent
+        sound = Sound.objects.get(id=19)
+        commenting_user = User.objects.get(id=2)
+        self.client.force_login(commenting_user)
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': u'Test comment'})
+
+        # Check email was sent notifying about comment
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] You have a new comment.')
+
+        # Now update preferences of sound.user to disable comment notification emails
+        sound.user.profile.update_enabled_email_types([])  # Will set all to disabled if none is passed
+
+        # Make the comment again and assert no new email has been sent
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': u'Test comment'})
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_unsecure_content(self):
         comment = None
@@ -214,7 +234,10 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(current_num_comments, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
 
+
 sound_counter = count()
+
+
 def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None):
     count_offset = count_offset + next(sound_counter)
     if user is None:

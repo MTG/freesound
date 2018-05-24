@@ -41,12 +41,11 @@ def MessageReplyClassCreator(baseclass, enable_captcha):
         subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size':'80'}))
         body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
         if enable_captcha:
-            captcha_key = settings.RECAPTCHA_PUBLIC_KEY
             recaptcha_response = forms.CharField(widget=CaptchaWidget)
 
             def clean_recaptcha_response(self):
                 captcha_response = self.cleaned_data.get("recaptcha_response")
-                if not captcha_response:
+                if not captcha_response and settings.RECAPTCHA_PUBLIC_KEY:
                     raise forms.ValidationError(_("Captcha is not correct"))
                 return captcha_response
 

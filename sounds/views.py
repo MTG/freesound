@@ -241,10 +241,10 @@ def sound(request, username, sound_id):
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
                     try:
-                        if request.user.profile.email_not_disabled("new_comment"):
+                        if sound.user.profile.email_not_disabled("new_comment"):
                             # Send the user an email to notify him of the new comment!
-                            logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username,
-                                                                                       request.user.username))
+                            logger.info("Notifying user %s of a new comment by %s" % (sound.user.username,
+                                                                                      request.user.username))
                             send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
                                                {'sound': sound, 'user': request.user, 'comment': comment_text},
                                                None, sound.user.email)
@@ -559,7 +559,7 @@ def pack_delete(request, username, pack_id):
         if pack_id != pack.id:
             raise PermissionDenied
         if abs(time.time() - link_generated_time) < 10:
-            logger.debug("User %s requested to delete pack %s" % (request.user.username, pack_id))
+            logger.info("User %s requested to delete pack %s" % (request.user.username, pack_id))
             pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
@@ -647,7 +647,7 @@ def similar(request, username, sound_id):
         raise Http404
 
     similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
-    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
+    logger.info('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
     return render(request, 'sounds/similar.html', locals())
 
@@ -725,7 +725,7 @@ def delete(request, username, sound_id):
             form = DeleteSoundForm(sound_id=sound_id)
         else:
 
-            logger.debug("User %s requested to delete sound %s" % (request.user.username,sound_id))
+            logger.info("User %s requested to delete sound %s" % (request.user.username,sound_id))
             try:
                 ticket = sound.ticket
                 tc = TicketComment(sender=request.user,

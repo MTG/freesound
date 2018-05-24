@@ -186,14 +186,15 @@ class Command(BaseCommand):
             report_progress('Checking number of posts in %i users... %.2f%%', total, count)
 
         if not options['skip-downloads']:
-            potential_user_ids = set()
-            potential_user_ids.update(
-                Download.objects.all().values_list('user_id', flat=True))  # Add ids of downloaders
-            potential_user_ids.update(PackDownload.objects.all().values_list('user_id', flat=True))
-            total = len(potential_user_ids)
+            total = User.objects.all().count()
 
-            # Look at number of sound downloads
-            for count, user in enumerate(User.objects.filter(id__in=potential_user_ids).select_related('profile').
+            # Look at number of sound downloads for all active users
+            # NOTE: a possible optimization here would be to first get user candidates that have downloaded sounds.
+            # It seems like 1/8th of the users do not have downloaded sounds, so we could probably make this step last
+            # for 1/8th less of the time. Nevertheless, because we only run this very ocasionally and the performance
+            # is not severely impacted when running, we decided that the optimization is probably not worth right now.
+            # Same thing applies to pack downloads below.
+            for count, user in enumerate(User.objects.filter(is_active=True).select_related('profile').
                                          annotate(real_num_sound_downloads=Count('sound_downloads'),).iterator()):
                 user_profile = user.profile
 
@@ -208,8 +209,8 @@ class Command(BaseCommand):
 
                 report_progress('Checking number of downloaded sounds in %i users... %.2f%%', total, count)
 
-            # Look at number of pack downloads
-            for count, user in enumerate(User.objects.filter(id__in=potential_user_ids).select_related('profile').
+            # Look at number of pack downloads for all active users (see note above)
+            for count, user in enumerate(User.objects.filter(is_active=True).select_related('profile').
                                          annotate(real_num_pack_downloads=Count('pack_downloads'),).iterator()):
                 user_profile = user.profile
 

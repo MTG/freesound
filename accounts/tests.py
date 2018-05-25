@@ -1421,7 +1421,7 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
         self.client.login(username='testuser', password='testpass')
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('The uploaded CSV file has not yet been validated', resp.content)
+        self.assertIn('The uploaded data file has not yet been validated', resp.content)
 
     @mock.patch('gearman.GearmanClient.submit_job')
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
@@ -1431,7 +1431,7 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
         self.client.login(username='testuser', password='testpass')
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('Validation results of the CSV file', resp.content)
+        self.assertIn('Validation results of the data file', resp.content)
 
         # Test that chosing option to delete existing BulkUploadProgress really does it
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=delete')

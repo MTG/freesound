@@ -64,6 +64,7 @@ import datetime
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
 audio_logger = logging.getLogger('audio')
+sentry_logger = logging.getLogger('sentry')
 
 
 class License(OrderedModel):
@@ -1178,29 +1179,28 @@ class BulkUploadProgress(models.Model):
                 csv_lines=lines,
                 sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
                 username=self.user.username)
-            self.validation_output = {
-                'lines_ok': [line for line in lines_validated if not line['line_errors']],
-                'lines_with_errors': [line for line in lines_validated if line['line_errors']],
-                'global_errors': global_errors,
-            }
-            self.progress_type = 'V'  # Set progress to 'validated'
-            self.save()
-
         except Exception:
-            # This si a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
+            # This is a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
             # updated with a global error. Otherwise it will appear to the user that the object is permanently being
-            # validated. After we update the object with the "unexpected error" message, we raise the exception so the
-            # error is also sent to Sentry.
+            # validated. After we update the object with the "unexpected error" message, we log the exception and
+            # continue with excecution
+            lines_validated = []
+            global_errors = ['An unexpected error occurred while validating your data file']
 
-            self.validation_output = {
-                'lines_ok': [],
-                'lines_with_errors': [],
-                'global_errors': ['An unexpected error occurred while validating your data file'],
-            }
-            self.progress_type = 'V'  # Set progress to 'validated'
-            self.save()
+            sentry_logger.error('Error validating data file', exc_info=True, extra={
+                'user_id': self.user_id,
+                'username': self.user.username,
+                'original_csv_filename': self.original_csv_filename,
+                'csv_path': self.csv_path
+            })
 
-            raise
+        self.validation_output = {
+            'lines_ok': [line for line in lines_validated if not line['line_errors']],
+            'lines_with_errors': [line for line in lines_validated if line['line_errors']],
+            'global_errors': global_errors,
+        }
+        self.progress_type = 'V'  # Set progress to 'validated'
+        self.save()
 
     def describe_sounds(self):
         """

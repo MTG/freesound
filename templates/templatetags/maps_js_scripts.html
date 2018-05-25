@@ -1,0 +1,15 @@
+{% if not use_gmaps %}
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.2.0/mapbox-gl-geocoder.min.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.2.0/mapbox-gl-geocoder.css' type='text/css' />
+    <script type="text/javascript" src="{{ media_url }}/js/maps-mapbox.js?v={{ last_restart_date }}"></script>
+    <script type="text/javascript">
+        mapboxgl.accessToken = '{{ mapbox_access_token }}';
+    </script>
+{% else %}
+    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{ google_maps_key }}"></script>
+    <script type="text/javascript" src="{{ media_url }}/js/markerclustererV3.js"></script>
+    <script type="text/javascript" src="{{ media_url }}/js/maps.js?v={{ last_restart_date }}"></script>
+{% endif %}
+

@@ -22,7 +22,7 @@ import cStringIO
 import math
 import struct
 
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
@@ -94,17 +94,8 @@ def geotag_for_sound_barray(request, sound_id):
     return generate_bytearray(sounds)
 
 
-def geotags(request, tag=None):
-    tvars = {'tag': tag,
-             'for_user': None}
-    return render(request, 'geotags/geotags.html', tvars)
-
-
-def _get_geotags_box_params(request):
+def _get_geotags_query_params(request):
     return {
-        'm_width': request.GET.get('w', 900),
-        'm_height': request.GET.get('h', 600),
-        'clusters': request.GET.get('c', 'on'),
         'center_lat': request.GET.get('c_lat', None),
         'center_lon': request.GET.get('c_lon', None),
         'zoom': request.GET.get('z', None),
@@ -113,21 +104,43 @@ def _get_geotags_box_params(request):
     }
 
 
-def geotags_box(request):
-    tvars = _get_geotags_box_params(request)
-    return render(request, 'geotags/geotags_box.html', tvars)
-
-
-def embed_iframe(request):
-    tvars = _get_geotags_box_params(request)
-    return render(request, 'geotags/geotags_box_iframe.html', tvars)
+def geotags(request, tag=None):
+    tvars = _get_geotags_query_params(request)
+    tvars.update({  # Overwrite tag and username query params (if present)
+        'tag': tag,
+        'username': None,
+    })
+    return render(request, 'geotags/geotags.html', tvars)
 
 
 def for_user(request, username):
     user = get_user_or_404(username)
-    tvars = {'tag': None,
-             'for_user': user}
+    tvars = _get_geotags_query_params(request)
+    tvars.update({  # Overwrite tag and username query params (if present)
+        'tag': None,
+        'username': user,
+    })
     return render(request, 'geotags/geotags.html', tvars)
+
+
+def geotags_box(request):
+    # This view works the same as "geotags" but it takes the username/tag parameter from query parameters and
+    # onyl gets the geotags for a specific bounding box specified via hash parameters.
+    # Currently we are only keeping this as legacy because it is not used anymore but there might still be
+    # links pointing to it.
+    tvars = _get_geotags_query_params(request)
+    return render(request, 'geotags/geotags.html', tvars)
+
+
+def embed_iframe(request):
+    tvars = _get_geotags_query_params(request)
+    tvars.update({
+        'm_width': request.GET.get('w', 942),
+        'm_height': request.GET.get('h', 600),
+        'cluster': request.GET.get('c', 'on') != 'off',
+        'media_url': settings.MEDIA_URL,
+    })
+    return render(request, 'geotags/geotags_box_iframe.html', tvars)
 
 
 def infowindow(request, sound_id):

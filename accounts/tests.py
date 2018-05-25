@@ -27,6 +27,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
+from django.core.management import call_command
 from django.core import mail
 from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername, EmailBounce
@@ -1307,3 +1308,23 @@ class EmailBounceTests(TestCase):
 
     def test_request_email_change(self):
         pass  # TODO
+
+    @mock.patch('accounts.management.commands.process_email_bounces.client')
+    def test_populate_bounce(self, client):
+        message_body = '{"Type": "Notification", "Message": "{\\"notificationType\\":\\"Bounce\\",' \
+                       '\\"bounce\\":{\\"bounceType\\":\\"Permanent\\",\\"bounceSubType\\":\\"Suppressed\\",' \
+                       '\\"bouncedRecipients\\":[{\\"emailAddress\\":\\"user@freesound.org\\"}],' \
+                       '\\"timestamp\\":\\"2018-05-20T13:54:37.821Z\\"}}"}'
+
+        client_obj = mock.MagicMock()
+        client_obj.receive_message.return_value = {u'Messages': [{u'Body': message_body, u'ReceiptHandle': 'dummy'}]}
+        client.return_value = client_obj
+
+        def _delete_message(**kwargs):
+            client_obj.receive_message.return_value = {u'Messages': []}
+        client_obj.delete_message.side_effect = _delete_message
+
+        user = User.objects.create_user('user', email='user@freesound.org')
+        call_command('process_email_bounces')
+
+        self.assertFalse(user.profile.email_is_valid())

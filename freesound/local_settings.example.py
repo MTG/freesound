@@ -105,3 +105,5 @@ APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
 RAVEN_CONFIG = {
     'dsn': 'DSN_PROVIDED_BY_SENTRY',
 }
+
+AWS_SQS_QUEUE_URL = ''  # also proper AWS credentials should be configured in ~/.aws

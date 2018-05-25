@@ -462,8 +462,14 @@ class EmailBounce(models.Model):
         (TRANSIENT, 'Transient')
     )
     type = models.CharField(db_index=True, max_length=2, choices=TYPE_CHOICES, default=UNDETERMINED)
+    type_map = {t[1]: t[0] for t in TYPE_CHOICES}
 
     timestamp = models.DateTimeField(default=now)
 
     class Meta:
         ordering = ("-timestamp",)
+        unique_together = ('user', 'type', 'timestamp')
+
+    @classmethod
+    def type_from_string(cls, value):
+        return cls.type_map.get(value, cls.UNDETERMINED)

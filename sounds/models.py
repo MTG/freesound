@@ -59,6 +59,7 @@ import random
 import gearman
 import subprocess
 import datetime
+import json
 
 
 search_logger = logging.getLogger('search')
@@ -1162,6 +1163,15 @@ class BulkUploadProgress(models.Model):
     sounds_valid = models.PositiveIntegerField(null=False, default=0)
     description_output = JSONField(null=True)
 
+    def get_bulk_upload_basic_data_for_log(self):
+        return {
+            'bulk_upload_id': self.id,
+            'user_id': self.user_id,
+            'username': self.user.username,
+            'original_csv_filename': self.original_csv_filename,
+            'csv_path': self.csv_path
+        }
+
     def get_csv_lines(self):
         """
         Read lines form CSV file and return a tuple with the header and a list of dictionaries.
@@ -1173,6 +1183,7 @@ class BulkUploadProgress(models.Model):
         Validate CSV file and store output in self.validation_output.
         """
         header, lines = self.get_csv_lines()
+        bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
         try:
             lines_validated, global_errors = validate_input_csv_file(
                 csv_header=header,
@@ -1187,12 +1198,7 @@ class BulkUploadProgress(models.Model):
             lines_validated = []
             global_errors = ['An unexpected error occurred while validating your data file']
 
-            sentry_logger.error('Error validating data file', exc_info=True, extra={
-                'user_id': self.user_id,
-                'username': self.user.username,
-                'original_csv_filename': self.original_csv_filename,
-                'csv_path': self.csv_path
-            })
+            sentry_logger.error('Error validating data file', exc_info=True, extra=bulk_upload_basic_data)
 
         self.validation_output = {
             'lines_ok': [line for line in lines_validated if not line['line_errors']],
@@ -1202,10 +1208,20 @@ class BulkUploadProgress(models.Model):
         self.progress_type = 'V'  # Set progress to 'validated'
         self.save()
 
+        # Log information about the process
+        bulk_upload_basic_data.update({
+            'n_lines_ok': len(self.validation_output['lines_ok']),
+            'n_lines_with_errors': len(self.validation_output['lines_with_errors']),
+            'n_global_errors': len(self.validation_output['global_errors']),
+        })
+        web_logger.info('Validated data file for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
+
     def describe_sounds(self):
         """
         Start the actual description of the sounds and add them to Freesound.
         """
+        bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
+        web_logger.info('Started creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
         bulk_describe_from_csv(
             self.csv_path,
             delete_already_existing=False,
@@ -1213,6 +1229,7 @@ class BulkUploadProgress(models.Model):
             sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
             username=self.user.username,
             bulkupload_progress_id=self.id)
+        web_logger.info('Finished creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
 
     def store_progress_for_line(self, line_no, message):
         """

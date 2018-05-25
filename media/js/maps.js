@@ -112,7 +112,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             if ((center_lat !== undefined) && (center_lon !== undefined) && (zoom !== undefined)){
                 // If these parameters are specified, do center using them
                 map.setCenter(new google.maps.LatLng(center_lat, center_lon));
-                map.setZoom(zoom);
+                map.setZoom(Math.round(parseFloat(zoom)));
             } else {
                 google.maps.event.trigger(map, 'resize');
                 if (nSounds > 1){

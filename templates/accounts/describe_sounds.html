@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load display_license_form %}
-{% load maps %}
+{% load maps_js_scripts %}
 
 {% block head %}
     {{ block.super }}
@@ -121,7 +121,7 @@
             var idx0 = parseInt(map_element_id.split('gmap')[1], 10) - 1;  // Get map number
             $("#id_" + idx0 + "-lon").val(lon);
             $("#id_" + idx0 + "-lat").val(lat);
-            $("#id_" + idx0 + "-zoom").val(zoom);
+            $("#id_" + idx0 + "-zoom").val(Math.floor(zoom));
         }
 
         function init_map(n) {

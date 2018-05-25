@@ -37,25 +37,24 @@ class GeoTagsTests(TestCase):
 
     def test_browse_geotags(self):
         resp = self.client.get(reverse('geotags', kwargs={'tag': 'soundscape'}))
-        check_values = {'tag': 'soundscape', 'for_user': None}
+        check_values = {'tag': 'soundscape', 'username': None}
         self.check_context(resp.context, check_values)
 
     def test_browse_geotags_box(self):
         resp = self.client.get(reverse('geotags-box'))
-        check_values = {'m_width': 900, 'm_height': 600, 'clusters': 'on', 'center_lat': None, 'center_lon': None,
-                        'zoom': None, 'username': None}
+        check_values = {'center_lat': None, 'center_lon': None, 'zoom': None, 'username': None}
         self.check_context(resp.context, check_values)
 
     def test_geotags_box_iframe(self):
         resp = self.client.get(reverse('embed-geotags-box-iframe'))
-        check_values = {'m_width': 900, 'm_height': 600, 'clusters': 'on', 'center_lat': None, 'center_lon': None,
+        check_values = {'m_width': 942, 'm_height': 600, 'cluster': True, 'center_lat': None, 'center_lon': None,
                         'zoom': None, 'username': None}
         self.check_context(resp.context, check_values)
 
     def test_browse_geotags_for_user(self):
         user = User.objects.get(username='Anton')
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
-        check_values = {'tag': None, 'for_user': user}
+        check_values = {'tag': None, 'username': user}
         self.check_context(resp.context, check_values)
 
     def test_browse_geotags_for_user_oldusername(self):
@@ -63,7 +62,7 @@ class GeoTagsTests(TestCase):
         user.username = "new_username"
         user.save()
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
-        check_values = {'tag': None, 'for_user': user}
+        check_values = {'tag': None, 'username': user}
         self.check_context(resp.context, check_values)
 
     def test_geotags_infowindow(self):

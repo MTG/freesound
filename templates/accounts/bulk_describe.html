@@ -164,6 +164,7 @@
                 {% if progress_info.n_sounds_currently_processing %}<li>Currently processing: {{ progress_info.n_sounds_currently_processing }}</li>{% endif %}
                 {% if progress_info.n_sounds_pending_processing %} <li>Pending processing: {{ progress_info.n_sounds_pending_processing }}</li>{% endif %}
                 {% if progress_info.n_sounds_failed_processing %}<li>Failed processing: {{ progress_info.n_sounds_failed_processing }}</li>{% endif %}
+                {% if progress_info.n_sounds_unknown %}<li>Deleted sounds: {{ progress_info.n_sounds_unknown }}</li>{% endif %}
             {% endif %}
             </ul>
         {% endif %}

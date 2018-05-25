@@ -1142,15 +1142,17 @@ class SoundLicenseHistory(models.Model):
 
 
 class BulkUploadProgress(models.Model):
-    """Store sounds bulk describe by CSV upload"""
+    """Stroe progress status for a Bulk Describe process."""
+
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     CSV_CHOICES = (
         ("N", 'Not yet validated'),  # linked CSV file has not yet been validated
-        ("F", 'Finished'),   # Whole bulk describe process has validated
+        ("F", 'Finished description'),   # All sounds have been described/created (but some might still be in
+                                         # processing/moderation stage)
         ("S", 'Sounds being described and processed'),  # Description (and processing) process has started
-        ("V", 'Finished validation.'),  # CSV file has been validated (might have errors)
-        ("C", 'Closed.'),  # Process has finished and has been closes
+        ("V", 'Finished validation'),  # CSV file has been validated (might have errors)
+        ("C", 'Closed'),  # Process has finished and has been closes
     )
     progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
     csv_path = models.CharField(max_length=512, null=True, blank=True, default=None)
@@ -1231,7 +1233,7 @@ class BulkUploadProgress(models.Model):
         if self.description_output is not None:
             for line_no, value in self.description_output.items():
                 if type(value) == int:
-                    # Sound id, meaning a sound that was successfully uploaded
+                    # Sound id, meaning a file for which a Sound object was successfully created
                     sound_ids_described_ok.append(value)
                 else:
                     # If not sound ID, then it means there were errors with these sounds
@@ -1245,19 +1247,28 @@ class BulkUploadProgress(models.Model):
             id__in=sound_ids_described_ok, processing_state="OK", moderation_state="OK").count()
         n_sounds_moderation = Sound.objects.filter(
             id__in=sound_ids_described_ok, processing_state="OK").exclude(moderation_state="OK").count()
-        n_sounds_pending_processing = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="PE").exclude(processing_ongoing_state="PR").count()
         n_sounds_currently_processing = Sound.objects.filter(
             id__in=sound_ids_described_ok, processing_state="PE", processing_ongoing_state="PR").count()
+        n_sounds_pending_processing = Sound.objects.filter(
+            id__in=sound_ids_described_ok, processing_state="PE").exclude(processing_ongoing_state="PR").count()
         n_sounds_failed_processing = Sound.objects.filter(
             id__in=sound_ids_described_ok, processing_state="FA").count()
 
+        # The remaining sounds that have been described ok but do not appear in any of the sets above are sounds with
+        # an unknown state. This could happen if sounds get deleted (e.g. as part of the moderation process or because
+        # a sound fails processing and the user deletes it).
+        n_sounds_unknown = n_sounds_described_ok - (n_sounds_published +
+                                                    n_sounds_moderation +
+                                                    n_sounds_currently_processing +
+                                                    n_sounds_pending_processing +
+                                                    n_sounds_failed_processing)
         progress = 0
         if self.description_output is not None:
             progress = 100.0 * (n_sounds_published +
                                 n_sounds_moderation +
                                 n_sounds_failed_processing +
-                                n_sounds_error) / \
+                                n_sounds_error +
+                                n_sounds_unknown) / \
                        (n_sounds_described_ok +
                         n_sounds_error +
                         n_sounds_remaining_to_describe)
@@ -1276,6 +1287,24 @@ class BulkUploadProgress(models.Model):
             'n_sounds_moderation': n_sounds_moderation,
             'n_sounds_pending_processing': n_sounds_pending_processing,
             'n_sounds_currently_processing': n_sounds_currently_processing,
+            'n_sounds_processing': n_sounds_pending_processing + n_sounds_currently_processing,
             'n_sounds_failed_processing': n_sounds_failed_processing,
+            'n_sounds_unknown': n_sounds_unknown,
             'progress_percentage': progress,
         }
+
+    def has_global_validation_errors(self):
+        """
+        Returns True if the validation finished with global errors
+        """
+        if self.validation_output is not None:
+            return len(self.validation_output['global_errors']) > 0
+        return False
+
+    def has_line_validation_errors(self):
+        """
+        Returns True if some errors were found in line validation
+        """
+        if self.validation_output is not None:
+            return len(self.validation_output['lines_with_errors']) > 0
+        return False

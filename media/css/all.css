@@ -2655,29 +2655,45 @@ div.about {
 
 #unprocessed_sounds .failed{
     color: red;
-    font-weight: bold;
 }
 
 #unprocessed_sounds .processing{
     color: green;
-    font-weight: bold;
 }
 
 #unprocessed_sounds .pending{
     color: orange;
-    font-weight: bold;
 }
 
 #unprocessed_sounds .queued{
     color: orange;
-    font-weight: bold;
-}
-
-#unprocessed_sounds .filename{
-    font-weight: bold;
 }
 
 #unprocessed_sounds .date{
+    color: gray;
+}
+
+#bulk_describe_processes_list {
+    font-size: 10px;
+}
+
+#bulk_describe_processes_list li {
+    padding: 4px;
+}
+
+.red_text{
+    color: red;
+}
+
+.green_text{
+    color: green;
+}
+
+.orange_text{
+    color: orange;
+}
+
+.gray_text {
     color: gray;
 }
 

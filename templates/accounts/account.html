@@ -185,6 +185,7 @@
     {% endif %}
     {% if home %}
         {% if unmoderated_sounds %}
+            <br>
             <div id="unmoderated_sounds" class="content_box">
                 <h3>Uploaded sounds awaiting moderation ({{ unmoderated_sounds_count }})</h3>
                 {% for ticket, sound in unmoderated_sounds %}
@@ -201,50 +202,64 @@
 
 
         {% if unprocessed_sounds %}
-        <div id="unprocessed_sounds" class="content_box">
-            <h3>Uploaded sounds that have not been processed yet ({{ unprocessed_sounds.count }})</h3>
+            <br>
+            <div id="unprocessed_sounds" class="content_box">
+                <h3>Uploaded sounds that have not been processed yet ({{ unprocessed_sounds.count }})</h3>
 
-            {% comment %}
-            <p>Sounds in this list have not been processed yet and thus can't be moderated. This might be because they are still pending to process or because processing has failed.</p>
-            {% endcomment %}
+                {% comment %}
+                <p>Sounds in this list have not been processed yet and thus can't be moderated. This might be because they are still pending to process or because processing has failed.</p>
+                {% endcomment %}
 
-            {% for sound in unprocessed_sounds %}
-                <li>
-                    <a href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a>. Uploaded on <span class="date">{{sound.created}}</span>
-                {% if sound.processing_state == 'PE' %}
-                    <span class="pending">Processing state: Pending</span>
-                {% else %}
-                    {% if sound.processing_state == 'QU' %}
-                        <span class="queued">Processing state: Queued</span>
+                {% for sound in unprocessed_sounds %}
+                    <li>
+                        <a href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a>. Uploaded on <span class="date">{{sound.created}}</span>
+                    {% if sound.processing_state == 'PE' %}
+                        <span class="pending">Pending processing</span>
                     {% else %}
-                        {% if sound.processing_state == 'FA' %}
-                            <span class="failed">Processing state: Failed</span>
+                        {% if sound.processing_state == 'QU' %}
+                            <span class="queued">Queued for processing</span>
                         {% else %}
-                            {% if sound.processing_state == 'PR' %}
-                                <span class="processing">Processing state: Processing</span>
+                            {% if sound.processing_state == 'FA' %}
+                                <span class="failed">Failed processing</span>
                             {% else %}
-                                Processing state: {{sound.processing_state}}
+                                {% if sound.processing_state == 'PR' %}
+                                    <span class="processing">Currently processing</span>
+                                {% else %}
+                                    Processing state: {{sound.processing_state}}
+                                {% endif %}
                             {% endif %}
                         {% endif %}
                     {% endif %}
-                {% endif %}
-                <a href="{% url "sound-delete" sound.user.username sound.id %}" >x</a>
-                </li>
-            {% endfor %}
-
-        </div><!-- #unprocessed_sounds -->
+                    <a href="{% url "sound-delete" sound.user.username sound.id %}" >x</a>
+                    </li>
+                {% endfor %}
+            </div><!-- #unprocessed_sounds -->
         {% endif %}
 
         {% if current_bulkdescribe %}
-        <div class="content_box">
-          <h3>Bulk Describe processes</h3>
-            {% for bulk_describe in current_bulkdescribe %}
-            <li style="padding: 4px;font-size: 11px">
-              <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">{{ bulk_describe.original_csv_filename }}</a> created on <span class="date">{{bulk_describe.created}}</span>
-              Status: {{bulk_describe.get_progress_type_display}}
-            </li>
-            {% endfor %}
-        </div>
+            <br>
+            <div id="bulk_describe_processes_list" class="content_box">
+              <h3>Bulk Describe processes ({{ current_bulkdescribe|length }})</h3>
+                {% for bulk_describe in current_bulkdescribe %}
+                    {% with bulk_describe.get_description_progress_info as progress_info %}
+                    <li>
+                      <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">{{ bulk_describe.original_csv_filename }}</a>. Created on <span class="gray_text">{{bulk_describe.created}}</span>
+                        Status:
+                        {% if bulk_describe.progress_type == 'F' and progress_info.n_sounds_processing %}
+                            <span class="orange_text">{{ bulk_describe.get_progress_type_display }} ({{ progress_info.n_sounds_processing }} sounds still processing)</span>
+                        {% elif bulk_describe.progress_type == 'F' and not progress_info.n_sounds_processing %}
+                            <span class="green_text">Finished</span>
+                        {% elif bulk_describe.progress_type == 'V' and bulk_describe.has_line_validation_errors %}
+                            <span class="red_text">Errors in validation</span>
+                        {% elif bulk_describe.progress_type == 'V' and bulk_describe.has_global_validation_errors %}
+                            <span class="red_text">Errors in validation</span>
+                        {% else %}
+                            <span class="orange_text">{{ bulk_describe.get_progress_type_display }}</span>
+                        {% endif %}
+                    </li>
+                    {% endwith %}
+                {% endfor %}
+            </div>
         {% endif %}
     {% endif %}
 </div><!-- #content -->

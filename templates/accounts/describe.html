@@ -88,8 +88,10 @@
                         <input type="submit" name="Submit" value="Upload data file"/>
                     </form>
                     <ul class="messages">
-                        <li>This feature is still in <b>beta</b>. If you experience any problems using it, please
-                            don't hesitate to <a href="{% url 'contact' %}">contact us</a> and report.</li>
+                        <li>This feature is still in <b>beta</b>. If you experience any problems using it or have any
+                            suggestions for improvements, please let us know by <a href=" {% url 'forums-thread' 'bug-reports-errors-and-feature-requests' 41081 %}">writting in the forums</a>
+                            or directly <a href="{% url 'contact' %}">contacting us</a>.</li>
+                        {% comment %}I know the link to the forum has a hardcoded forum name and thread ID. Don't even think of it. {% endcomment %}
                     </ul>
                 </div>
             </div>

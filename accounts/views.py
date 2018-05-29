@@ -177,13 +177,21 @@ def tos_acceptance(request):
     if request.method == 'POST':
         form = TermsOfServiceForm(request.POST)
         if form.is_valid():
-            Profile.objects.filter(user=request.user).update(accepted_tos=True)
-            cache.set('has-accepted-tos-%s' % request.user.id, 'yes', 2592000)
-            return HttpResponseRedirect(reverse('accounts-home'))
+            profile = Profile.objects.get(user=request.user)
+            profile.accepted_tos = True
+            profile.save()
+            profile.agree_to_gdpr()
+
+            cache.set('has-accepted-tos2018-%s' % request.user.id, 'yes', 2592000)
+            if form.cleaned_data['next']:
+                return HttpResponseRedirect(form.cleaned_data['next'])
+            else:
+                return HttpResponseRedirect(reverse('accounts-home'))
     else:
-        form = TermsOfServiceForm()
+        next_param = request.GET.get('next')
+        form = TermsOfServiceForm(initial={'next': next_param})
     tvars = {'form': form}
-    return render(request, 'accounts/accept_terms_of_service.html', tvars)
+    return render(request, 'accounts/gdpr_consent.html', tvars)
 
 
 @transaction.atomic()

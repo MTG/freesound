@@ -92,6 +92,7 @@ class TermsOfServiceForm(forms.Form):
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to continue using Freesound.'}
     )
+    next = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 
 class AvatarForm(forms.Form):

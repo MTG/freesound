@@ -94,6 +94,9 @@ class Profile(SocialModel):
     def __unicode__(self):
         return self.user.username
 
+    def agree_to_gdpr(self):
+        GdprAcceptance.objects.create(user=self.user)
+
     def get_sameuser_object(self):
         """Returns the SameUser object where the user is involved"""
         return SameUser.objects.get(Q(main_user=self.user) | Q(secondary_user=self.user))
@@ -106,6 +109,7 @@ class Profile(SocialModel):
             return True
         except SameUser.DoesNotExist:
             return False
+
     @property
     def get_total_downloads(self):
         # We consider each pack download as a single download
@@ -341,6 +345,14 @@ class Profile(SocialModel):
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
+
+
+class GdprAcceptance(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # Automatically add the date because the presence of this field means that
+    # the user accepted the terms
+    date_accepted = models.DateTimeField(auto_now_add=True)
+    # TODO: IP Address & Browser?
 
 
 class UserFlag(models.Model):

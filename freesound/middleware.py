@@ -17,6 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
+import urllib
 
 from django.conf import settings
 from django.core.cache import cache
@@ -25,6 +26,16 @@ from django.urls import reverse
 
 from sounds.models import Sound
 from utils.onlineusers import cache_online_users
+
+
+def dont_redirect(path):
+    return 'bulklicensechange' not in path \
+        and 'logout' not in path \
+        and 'tosacceptance' not in path \
+        and 'tos_api' not in path \
+        and 'tos_web' not in path \
+        and 'contact' not in path \
+        and not path.startswith(settings.MEDIA_URL)
 
 
 class OnlineUsersHandler(object):
@@ -48,10 +59,7 @@ class BulkChangeLicenseHandler(object):
         # don't run it for media URLs
         # N.B. probably better just to check for login in the URL
         if request.user.is_authenticated \
-                and 'bulklicensechange' not in request.get_full_path() \
-                and 'logout' not in request.get_full_path() \
-                and 'tosacceptance' not in request.get_full_path() \
-                and not request.get_full_path().startswith(settings.MEDIA_URL):
+                and dont_redirect(request.get_full_path()):
 
             user = request.user
             cache_key = "has-old-license-%s" % user.id
@@ -89,28 +97,28 @@ class FrontendPreferenceHandler(object):
 
 
 class TosAcceptanceHandler(object):
+    """Checks if the user has accepted the updates to the Terms
+    of Service due to the GDPR (May 2018).
+    This replaces the agreement to the original ToS (2013, 2fd543f3a)
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
 
         if request.user.is_authenticated \
-                and 'tosacceptance' not in request.get_full_path() \
-                and 'logout' not in request.get_full_path() \
-                and 'tos_api' not in request.get_full_path() \
-                and 'tos_web' not in request.get_full_path() \
-                and 'contact' not in request.get_full_path() \
-                and 'bulklicensechange' not in request.get_full_path() \
-                and not request.get_full_path().startswith(settings.MEDIA_URL):
+                and dont_redirect(request.get_full_path()):
 
             user = request.user
-            cache_key = "has-accepted-tos-%s" % user.id
+            cache_key = 'has-accepted-tos2018-%s' % user.id
             cache_info = cache.get(cache_key)
 
             if not cache_info:
-                has_accepted_tos = user.profile.accepted_tos
+                has_accepted_tos = hasattr(user, 'gdpracceptance')
                 if not has_accepted_tos:
-                    return HttpResponseRedirect(reverse("tos-acceptance"))
+                    url = '%s?%s' % (reverse('tos-acceptance'), urllib.urlencode({'next': request.get_full_path()}))
+                    return HttpResponseRedirect(url)
                 else:
                     cache.set(cache_key, 'yes', 2592000)  # 30 days cache
             else:

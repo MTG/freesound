@@ -1,0 +1,29 @@
+{% extends "accounts/_section.html" %}
+
+{% block title %}Acceptance of Freesound terms of use{% endblock %}
+
+{% block content %}
+    <h1>Hey, why am I here?</h1>
+
+    <h3>GDPR Updates to Terms of use</h3>
+    <br>
+
+    <h4><a href="/help/tos_web/" target="_blank"> Freesound terms of use </a></h4>
+    <p>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for hidden_field in form.hidden_fields %}
+          {{ hidden_field.errors }}
+          {{ hidden_field }}
+        {% endfor %}
+
+        {% with form.accepted_tos as tos %}
+            {{ tos }} <label style="display: inline" for="{{ tos.id_for_label }}">{{ tos.help_text|safe }}</label>
+        {% endwith %}
+    <br>
+        <input type="submit" name="submit" value="Continue using Freesound!" id="submit">
+    </form>
+    </p>
+
+
+{% endblock %}

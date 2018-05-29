@@ -200,6 +200,7 @@ class RegistrationForm(forms.Form):
 
         profile = user.profile  # .profile created on User.save()
         profile.accepted_tos = accepted_tos
+        profile.agree_to_gdpr()
         profile.save()
 
         return user

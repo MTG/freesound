@@ -20,19 +20,23 @@
 
 from __future__ import print_function
 
-from django.core.management.base import BaseCommand
-
-from django.contrib.auth.models import User
+import datetime
+import logging
 import random
 
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+from django.db import connection
 from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
-import sounds
+
+import comments
 import forum
 import ratings
-import datetime
-import comments
+import sounds
 import tickets
-from django.db import connection
+
+
+logger = logging.getLogger('console')
 
 
 def chunks(l, n):
@@ -46,14 +50,23 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-ev', '--extractor_version',
-            action='store',
-            dest='freesound_extractor_version',
-            default='0.3',
-            help='Only index sounds analyzed with specific Freesound Extractor version')
+            '-d', '--keep-downloaders',
+            dest='downloaders',
+            default=120000,
+            type=int,
+            help='The number of downloaders to keep')
 
+        parser.add_argument(
+            '-u', '-keep-uploaders',
+            dest='uploaders',
+            default=10,
+            type=int,
+            help='Percentage of uploaders to keep'
+        )
 
     def disconnect_signals(self):
+        """Disconnect django signals that update aggregate counts when items are modified. We re-compute
+        these counts as a separate step"""
         post_save.disconnect(forum.models.update_num_threads_on_thread_insert, sender=forum.models.Thread)
         pre_save.disconnect(forum.models.update_num_threads_on_thread_update, sender=forum.models.Thread)
         post_delete.disconnect(forum.models.update_last_post_on_thread_delete, sender=forum.models.Thread)
@@ -62,53 +75,75 @@ class Command(BaseCommand):
         post_delete.disconnect(forum.models.update_last_post_on_post_delete, sender=forum.models.Post)
         post_delete.disconnect(ratings.models.post_delete_rating, sender=ratings.models.SoundRating)
         post_save.disconnect(ratings.models.update_num_ratings_on_post_save, sender=ratings.models.SoundRating)
+
         post_delete.disconnect(sounds.models.update_num_downloads_on_delete, sender=sounds.models.Download)
         post_save.disconnect(sounds.models.update_num_downloads_on_insert, sender=sounds.models.Download)
+        post_delete.disconnect(sounds.models.update_num_downloads_on_delete_pack, sender=sounds.models.PackDownload)
+        post_save.disconnect(sounds.models.update_num_downloads_on_insert_pack, sender=sounds.models.PackDownload)
 
         pre_delete.disconnect(sounds.models.on_delete_sound, sender=sounds.models.Sound)
         post_delete.disconnect(sounds.models.post_delete_sound, sender=sounds.models.Sound)
         post_delete.disconnect(comments.models.on_delete_comment, sender=comments.models.Comment)
         post_save.disconnect(tickets.models.create_ticket_message, sender=tickets.models.TicketComment)
 
-
     def delete_some_users(self, userids):
-        print(datetime.datetime.now().isoformat())
+        logger.info('  Deleting {} users'.format(len(userids)))
+        logger.info('   - downloads')
+        # Do a bulk delete because it's faster than django deleting download rows individually for each user
+        # TODO: This could be faster by making new download tables for only
+        # the users that we are going to keep, and then remove the orignal
+        # table and rename.
         with connection.cursor() as cursor:
             cursor.execute("delete from sounds_download where user_id in %s", [tuple(userids)])
-        print(datetime.datetime.now().isoformat())
+            cursor.execute("delete from sounds_packdownloadsound where pack_download_id in (select id from sounds_packdownload where user_id in %s)", [tuple(userids)])
+            cursor.execute("delete from sounds_packdownload where user_id in %s", [tuple(userids)])
+        logger.info('   - done, user objects')
+        # This will delete some other related data, but it's not as slow as deleting downloads.
+        # so we let django do it
         User.objects.filter(id__in=userids).delete()
-        print(datetime.datetime.now().isoformat())
+        logger.info('   - done')
 
-    def delete_sound_uploaders(self):
-        """ Delete 90% of users who have uploaded sounds """
-        print("Users with sounds")
+    def delete_sound_uploaders(self, pkeep):
+        """Delete some percentage of users who have uploaded sounds
+           Arguments:
+              pkeep: the percentage of uploaders to keep
+        """
+        logger.info('Deleting some uploaders')
         userids = User.objects.values_list('id', flat=True).filter(profile__num_sounds__gt=0)
         numusers = len(userids)
-        print("num users with sounds: %s" % numusers)
-        randusers = sorted(random.sample(userids, int(numusers*0.9)))
-        ch = [c for c in chunks(randusers, 1000)]
+        logger.info('Number of uploaders: {}'.format(numusers))
+        percentage_remove = 1.0 - (pkeep / 100.0)
+        randusers = sorted(random.sample(userids, int(numusers*percentage_remove)))
+        ch = [c for c in chunks(randusers, 100)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            print("%s/%s" % (i, tot))
+            logger.info(' {}/{}'.format(i, tot))
             self.delete_some_users(c)
 
-
-    def delete_downloaders(self):
+    def delete_downloaders(self, numkeep):
+        """Delete users who have only downloaded sounds
+           Arguments:
+               numkeep: the number of users to keep (all others are removed)
+        """
+        logger.info('Deleting some downloaders')
         userids = User.objects.values_list('id', flat=True).filter(profile__num_sounds=0)
         userids = list(userids)
         numusers = len(userids)
-        print("num users: %s" % numusers)
+        logger.info('Number of downloaders: {}'.format(numusers))
         random.shuffle(userids)
-        # Keep 120000 users, and delete the rest
-        randusers = sorted(userids[:120000])
-        ch = [c for c in chunks(randusers, 10000)]
+        # Keep `numkeep` users, and delete the rest
+        randusers = sorted(userids[numkeep:])
+        ch = [c for c in chunks(randusers, 100000)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            print("%s/%s" % (i, tot))
+            logger.info(' {}/{}'.format(i, tot))
             self.delete_some_users(c)
 
     def handle(self,  *args, **options):
         self.disconnect_signals()
-        #self.delete_sound_uploaders()
-        self.delete_downloaders()
+        # Delete downloaders first, this will remove the majority of the download table
+        # so that when we delete uploaders, there are not as many download rows for other
+        # users who have downloaded these uploaders' sounds
+        self.delete_downloaders(options['downloaders'])
+        self.delete_sound_uploaders(options['uploaders'])
 

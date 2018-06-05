@@ -53,7 +53,7 @@ class SimpleUserTest(TestCase):
     fixtures = ['users', 'sounds_with_tags']
 
     def setUp(self):
-        self.user = User.objects.all()[0]
+        self.user = User.objects.get(username='User1')
         self.sound = Sound.objects.all()[0]
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
 
@@ -69,10 +69,10 @@ class SimpleUserTest(TestCase):
 
     def test_user_flag_response_ok(self):
         # 200 response on user flag and clear flag access
-        self.user.set_password('12345')
         self.user.is_superuser = True
         self.user.save()
-        a =self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
+        g = accounts.models.GdprAcceptance.objects.all()
         resp = self.client.get(reverse('flag-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('clear-flags-user', kwargs={'username': self.user.username}))
@@ -126,10 +126,9 @@ class SimpleUserTest(TestCase):
         self.sound.processing_state="OK"
         self.sound.save()
         user = self.sound.user
-        user.set_password('12345')
         user.is_superuser = True
         user.save()
-        self.client.login(username=user.username, password='12345')
+        self.client.force_login(user)
         resp = self.client.get(reverse('sound', kwargs={'username': user.username, "sound_id": self.sound.id}))
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('sound-flag', kwargs={'username': user.username, "sound_id": self.sound.id}))
@@ -202,12 +201,13 @@ class SimpleUserTest(TestCase):
 
         # Login user with moderation permissions
         user = User.objects.create_user("testuser", password="testpass")
+        user.profile.agree_to_gdpr()
         ct = ContentType.objects.get_for_model(Ticket)
         p = Permission.objects.get(content_type=ct, codename='can_moderate')
         ct2 = ContentType.objects.get_for_model(Post)
         p2 = Permission.objects.get(content_type=ct2, codename='can_moderate_forum')
         user.user_permissions.add(p, p2)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
 
         # 200 response on TOS acceptance page
         resp = self.client.get(reverse('tos-acceptance'))
@@ -503,8 +503,9 @@ class UserEditProfile(TestCase):
         shutil.rmtree(settings.AVATARS_PATH)
 
     def test_edit_user_profile(self):
-        User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user = User.objects.create_user("testuser", password="testpass")
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
             'profile-username': 'testuser',
@@ -545,8 +546,9 @@ class UserEditProfile(TestCase):
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
-        User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user = User.objects.create_user("testuser", password="testpass")
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         response = self.client.post("/home/email-settings/", {
             'email_types': 1,
         })
@@ -557,8 +559,9 @@ class UserEditProfile(TestCase):
 
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_edit_user_avatar(self):
-        User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user = User.objects.create_user("testuser", password="testpass")
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         self.client.post("/home/edit/", {
             'image-file': open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'),
             'image-remove': False,
@@ -614,7 +617,8 @@ class UserUploadAndDescribeSounds(TestCase):
         # Create audio files
         filenames = ['file1.wav', 'file2.wav', 'file3.wav']
         user = User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
         for filename in filenames:
@@ -666,7 +670,8 @@ class UserUploadAndDescribeSounds(TestCase):
         # Create audio files
         filenames = ['file1.wav', 'file2.wav']
         user = User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
         for filename in filenames:
@@ -722,6 +727,7 @@ class UserDelete(TestCase):
 
     def create_user_and_content(self, is_index_dirty=True):
         user = User.objects.create_user("testuser", password="testpass")
+        user.profile.agree_to_gdpr()
         # Create comments
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
@@ -813,7 +819,6 @@ class UserDelete(TestCase):
         self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, False)
 
 
-
 class UserEmailsUniqueTestCase(TestCase):
 
     def setUp(self):
@@ -822,6 +827,9 @@ class UserEmailsUniqueTestCase(TestCase):
         self.user_b = User.objects.create_user("user_b", password="12345", email=self.original_shared_email)
         self.user_c = User.objects.create_user("user_c", password="12345",
                                                email=transform_unique_email(self.original_shared_email))
+        for user in [self.user_a, self.user_b, self.user_c]:
+            user.profile.agree_to_gdpr()
+
         SameUser.objects.create(
             main_user=self.user_b,
             main_orig_email=self.user_b.email,
@@ -829,7 +837,7 @@ class UserEmailsUniqueTestCase(TestCase):
             secondary_orig_email=self.user_b.email,  # Must be same email (original)
         )
         # User a never had problems with email
-        # User b and c had the same email, but user_c's was automaitcally changed to avoid duplicates
+        # User b and c had the same email, but user_c's was automatically changed to avoid duplicates
 
     def test_redirects_when_shared_emails(self):
 
@@ -1028,10 +1036,9 @@ class PasswordReset(TestCase):
 class EmailResetTestCase(TestCase):
     def test_reset_email_form(self):
         """ Check that reset email with the right parameters """
-        user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        user.set_password('12345')
-        user.save()
-        a = self.client.login(username=user.username, password='12345')
+        user = User.objects.create_user("testuser", email="testuser@freesound.org", password="12345")
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
             'email': u'new_email@freesound.org',
             'password': '12345',
@@ -1041,11 +1048,13 @@ class EmailResetTestCase(TestCase):
 
     def test_reset_email_form_existing_email(self):
         """ Check that reset email with an existing email address """
-        user = User.objects.create_user("new_user", email="new_email@freesound.org")
-        user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        user.set_password('12345')
-        user.save()
-        a = self.client.login(username=user.username, password='12345')
+
+        # A user with this email address already exists
+        User.objects.create_user("new_user", email="new_email@freesound.org")
+
+        user = User.objects.create_user("testuser", email="testuser@freesound.org", password="12345")
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
             'email': u'new_email@freesound.org',
             'password': '12345',
@@ -1057,9 +1066,8 @@ class EmailResetTestCase(TestCase):
         """ Check reset email with a long email address """
         long_mail = ('1' * 255) + '@freesound.org'
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        user.set_password('12345')
-        user.save()
-        a = self.client.login(username=user.username, password='12345')
+        user.profile.agree_to_gdpr()
+        self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
             'email': long_mail,
             'password': '12345',
@@ -1151,6 +1159,7 @@ class ChangeUsernameTests(TestCase):
 
         # Create user and check no OldUsername objects exist
         userA = User.objects.create_user('userA', email='userA@freesound.org')
+        userA.profile.agree_to_gdpr()
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Change username and check a OldUsername is created
@@ -1185,7 +1194,8 @@ class ChangeUsernameTests(TestCase):
 
         # Create user and login
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
-        self.client.login(username='userA', password='testpass')
+        userA.profile.agree_to_gdpr()
+        self.client.force_login(userA)
 
         # Test save profile without changing username
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userA']})
@@ -1232,8 +1242,9 @@ class ChangeUsernameTests(TestCase):
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_admin(self):
 
-        User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
-        self.client.login(username='superuser', password='testpass')
+        superuser = User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
+        superuser.profile.agree_to_gdpr()
+        self.client.force_login(superuser)
 
         # Create user and get admin change url
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
@@ -1330,6 +1341,7 @@ class AboutFieldVisibilityTests(TestCase):
 
         self.about = 'Non-empty about field'
         for user in [self.spammer, self.downloader, self.uploader, self.admin]:
+            user.profile.agree_to_gdpr()
             user.profile.about = self.about
             user.profile.save()
 
@@ -1350,11 +1362,11 @@ class AboutFieldVisibilityTests(TestCase):
         self._check_visible()
 
     def test_spammer(self):
-        self.client.login(username='spammer', password='testpass')
+        self.client.force_login(self.spammer)
         self._check_visibility('spammer', True)
         self._check_visible()
 
     def test_admin(self):
-        self.client.login(username='admin', password='testpass')
+        self.client.force_login(self.admin)
         self._check_visibility('spammer', True)
         self._check_visible()

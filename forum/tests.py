@@ -31,6 +31,7 @@ class ForumPostSignalTestCase(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+        self.user.profile.agree_to_gdpr()
         self.forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
         self.thread = Thread.objects.create(forum=self.forum, title="testThread", author=self.user)
 
@@ -203,6 +204,7 @@ class ForumThreadSignalTestCase(TestCase):
         # Add new Thread and check if signal updates num_threads value
 
         user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+        user.profile.agree_to_gdpr()
         forum = Forum.objects.create(name="Second Forum", name_slug="second_forum", description="another forum")
 
         forum.refresh_from_db()
@@ -232,6 +234,7 @@ class ForumTestCase(TestCase):
         """If a thread only has an unmoderated post, visting the thread with the client results in HTTP404"""
 
         user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+        user.profile.agree_to_gdpr()
         forum = Forum.objects.create(name="Second Forum", name_slug="second_forum", description="another forum")
         thread = Thread.objects.create(forum=forum, title="testThread", author=user)
 
@@ -273,6 +276,7 @@ class ForumPageResponses(TestCase):
         self.N_THREADS = 1
         self.N_POSTS = 5
         self.user = User.objects.create_user(username='testuser', email='email@example.com', password='12345')
+        self.user.profile.agree_to_gdpr()
         _create_forums_threads_posts(self.user, self.N_FORUMS, self.N_THREADS, self.N_POSTS)
 
     def test_forums_response_ok(self):
@@ -386,6 +390,7 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user which is not author of post can't edit post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        user2.profile.agree_to_gdpr()
         self.client.force_login(user2)
         resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
             u'body': [u'Edited post body']
@@ -412,6 +417,7 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user which is not author of post can't delete post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        user2.profile.agree_to_gdpr()
         self.client.force_login(user2)
         resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
         self.assertEqual(resp.status_code, 404)
@@ -432,6 +438,7 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user which is not author of post can't delete post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        user2.profile.agree_to_gdpr()
         self.client.force_login(user2)
         resp = self.client.get(reverse('forums-post-delete-confirm', args=[post.id]))
         self.assertEqual(resp.status_code, 404)
@@ -454,6 +461,7 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user can subscribe
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        user2.profile.agree_to_gdpr()
         self.client.force_login(user2)
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
         self.assertEqual(resp.status_code, 302)
@@ -483,6 +491,7 @@ class ForumPageResponses(TestCase):
 
         # User creates new post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        user2.profile.agree_to_gdpr()
         self.client.force_login(user2)
 
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))

@@ -14,9 +14,9 @@ class DonationTest(TestCase):
     fixtures = ['initial_data']
 
     def test_non_annon_donation_with_name_paypal(self):
-        donations.models.DonationCampaign.objects.create(\
+        donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        self.user = User.objects.create_user(\
+        self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
         # custom ={u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}
         params = {'txn_id': '8B703020T00352816',
@@ -30,7 +30,7 @@ class DonationTest(TestCase):
             mock_requests.post.return_value = mock_response
             resp = self.client.post(reverse('donation-complete-paypal'), params)
             self.assertEqual(resp.status_code, 200)
-            donations_query = donations.models.Donation.objects.filter(\
+            donations_query = donations.models.Donation.objects.filter(
                 transaction_id='8B703020T00352816')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
@@ -40,9 +40,9 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].source, 'p')
 
     def test_non_annon_donation_paypal(self):
-        donations.models.DonationCampaign.objects.create(\
+        donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        self.user = User.objects.create_user(\
+        self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
         # custom = {u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}
         params = {'txn_id': '8B703020T00352816',
@@ -56,7 +56,7 @@ class DonationTest(TestCase):
             mock_requests.post.return_value = mock_response
             resp = self.client.post(reverse('donation-complete-paypal'), params)
             self.assertEqual(resp.status_code, 200)
-            donations_query = donations.models.Donation.objects.filter(\
+            donations_query = donations.models.Donation.objects.filter(
                 transaction_id='8B703020T00352816')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
@@ -65,9 +65,8 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].is_anonymous, False)
             self.assertEqual(donations_query[0].source, 'p')
 
-
     def test_annon_donation_paypal(self):
-        donations.models.DonationCampaign.objects.create(\
+        donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
 
         params = {'txn_id': '8B703020T00352816',
@@ -81,19 +80,19 @@ class DonationTest(TestCase):
             mock_requests.post.return_value = mock_response
             resp = self.client.post(reverse('donation-complete-paypal'), params)
             self.assertEqual(resp.status_code, 200)
-            donations_query = donations.models.Donation.objects.filter(\
+            donations_query = donations.models.Donation.objects.filter(
                 transaction_id='8B703020T00352816')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
             self.assertEqual(donations_query[0].source, 'p')
 
     def test_non_annon_donation_with_name_stripe(self):
-        donations.models.DonationCampaign.objects.create(\
+        donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        self.user = User.objects.create_user(\
+        self.user = User.objects.create_user(
                 username='fsuser', email='j@test.com', password='top', id='46280')
-        self.client.login(username='fsuser', password='top')
-        # custom ={u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}
+        self.user.profile.agree_to_gdpr()
+        self.client.force_login(self.user)
         params = {
                 'stripeToken': '8B703020T00352816',
                 'stripeEmail': 'donor@freesound.org',
@@ -105,7 +104,7 @@ class DonationTest(TestCase):
         with mock.patch('stripe.Charge.create') as mock_create:
             mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
             resp = self.client.post(reverse('donation-complete-stripe'), params)
-            donations_query = donations.models.Donation.objects.filter(\
+            donations_query = donations.models.Donation.objects.filter(
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
@@ -115,12 +114,12 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].source, 's')
 
     def test_non_annon_donation_stripe(self):
-        donations.models.DonationCampaign.objects.create(\
+        donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        self.user = User.objects.create_user(\
+        self.user = User.objects.create_user(
                 username='fsuser', email='j@test.com', password='top', id='46280')
-        self.client.login(username='fsuser', password='top')
-        # custom = {u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}
+        self.user.profile.agree_to_gdpr()
+        self.client.force_login(self.user)
         params = {
                 'stripeToken': '8B703020T00352816',
                 'stripeEmail': 'donor@freesound.org',
@@ -132,7 +131,7 @@ class DonationTest(TestCase):
         with mock.patch('stripe.Charge.create') as mock_create:
             mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
             resp = self.client.post(reverse('donation-complete-stripe'), params)
-            donations_query = donations.models.Donation.objects.filter(\
+            donations_query = donations.models.Donation.objects.filter(
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
@@ -142,7 +141,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].source, 's')
 
     def test_annon_donation_stripe(self):
-        donations.models.DonationCampaign.objects.create(\
+        donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
         # {u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}
         params = {
@@ -156,14 +155,14 @@ class DonationTest(TestCase):
         with mock.patch('stripe.Charge.create') as mock_create:
             mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
             resp = self.client.post(reverse('donation-complete-stripe'), params)
-            donations_query = donations.models.Donation.objects.filter(\
+            donations_query = donations.models.Donation.objects.filter(
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
             self.assertEqual(donations_query[0].source, 's')
 
     def test_donation_form(self):
-        donations.models.DonationCampaign.objects.create(\
+        donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
         data = {
             'amount': '0,1',
@@ -192,7 +191,6 @@ class DonationTest(TestCase):
         ret = self.client.post("/donations/donate/", data)
         response =  ret.json()
         self.assertTrue('errors' in response)
-
 
     def test_donation_response(self):
         # 200 response on donate page

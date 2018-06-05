@@ -32,7 +32,8 @@ class FollowTestCase(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        self.user.profile.agree_to_gdpr()
+        self.client.force_login(self.user)
 
     def test_following_users(self):
         # If we get following users for someone who exists, OK

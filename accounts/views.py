@@ -992,7 +992,7 @@ def old_user_link_redirect(request):
 
 @login_required
 @transaction.atomic()
-def email_reset(request):
+def email_reset(request, required=False):
     if request.method == "POST":
         form = EmailResetForm(request.POST, user=request.user)
         if form.is_valid():
@@ -1032,8 +1032,8 @@ def email_reset(request):
                 send_mail(subject, email_body, email_to=email)
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
-        form = EmailResetForm(user = request.user)
-    tvars = {'form': form}
+        form = EmailResetForm(user=request.user)
+    tvars = {'form': form, 'required': required}
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 

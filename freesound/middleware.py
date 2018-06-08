@@ -119,3 +119,28 @@ class TosAcceptanceHandler(object):
 
         response = self.get_response(request)
         return response
+
+
+class UpdateEmailHandler(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated \
+                and 'tosacceptance' not in request.get_full_path() \
+                and 'logout' not in request.get_full_path() \
+                and 'tos_api' not in request.get_full_path() \
+                and 'tos_web' not in request.get_full_path() \
+                and 'contact' not in request.get_full_path() \
+                and 'bulklicensechange' not in request.get_full_path() \
+                and 'resetemail' not in request.get_full_path() \
+                and not request.get_full_path().startswith(settings.MEDIA_URL):
+                # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
+
+            user = request.user
+
+            if not user.profile.email_is_valid():
+                return HttpResponseRedirect(reverse("accounts-email-reset-required"))
+
+        response = self.get_response(request)
+        return response

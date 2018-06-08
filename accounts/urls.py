@@ -45,6 +45,7 @@ urlpatterns = [
     url(r'^username/$', login_redirect(accounts.username_reminder), name="accounts-username-reminder"),
     url(r'^activate/(?P<username>[^\/]+)/(?P<uid_hash>[^\/]+)/.*$', login_redirect(accounts.activate_user), name="accounts-activate"),
     url(r'^resetemail/$', accounts.email_reset, name="accounts-email-reset"),
+    url(r'^resetemail/required/$', accounts.email_reset, name="accounts-email-reset-required", kwargs=dict(required=True)),
     url(r'^resetemail/sent/$', accounts.email_reset_done, name="accounts-email-reset-done"),
     url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', accounts.email_reset_complete, name="accounts-email-reset-complete"),
     url(r'^bulklicensechange/$', accounts.bulk_license_change, name="bulk-license-change"),

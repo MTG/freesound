@@ -21,23 +21,32 @@
 #
 
 from __future__ import print_function
-from PIL import Image, ImageDraw, ImageColor #@UnresolvedImport
-from functools import partial
+from PIL import Image, ImageDraw
+from color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
 import math
 import numpy
 import os
 import re
 import signal
-from . import get_sound_type
-
+import subprocess
+try:
+    from utils.audioprocessing import get_sound_type
+except ImportError:
+    # If this import fails it means that 'processing.py' is not being imported form the Django app  This is the case
+    # when running 'wav2png.py' as a command line tool. To make it work properly, we add the containing folder to the
+    # system path and in this way 'get_sound_type' can be imported from the 'audioprocessing' module,
+    import sys
+    sys.path.append('../')
+    from audioprocessing import get_sound_type
 try:
     import scikits.audiolab as audiolab
 except ImportError:
     print("WARNING: audiolab is not installed so wav2png will not work")
-import subprocess
+
 
 class AudioProcessingException(Exception):
     pass
+
 
 class TestAudioFile(object):
     """A class that mimics audiolab.sndfile but generates noise instead of reading
@@ -89,6 +98,7 @@ def get_max_level(filename):
     audio_file.close()
 
     return max_value
+
 
 class AudioProcessor(object):
     """
@@ -155,14 +165,13 @@ class AudioProcessor(object):
 
         if resize_if_less and (add_to_start > 0 or add_to_end > 0):
             if add_to_start > 0:
-                samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=1)
+                samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=0)
 
             if add_to_end > 0:
                 samples = numpy.resize(samples, size)
                 samples[size - add_to_end:] = 0
 
         return samples
-
 
     def spectral_centroid(self, seek_point, spec_range=110.0):
         """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
@@ -192,7 +201,6 @@ class AudioProcessor(object):
             spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (self.higher_log - self.lower_log)
 
         return (spectral_centroid, db_spectrum)
-
 
     def peaks(self, start_seek, end_seek):
         """ read all samples between start_seek and end_seek, then find the minimum and maximum peak
@@ -271,48 +279,18 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     return palette
 
 
-def desaturate(rgb, amount):
-    """
-        desaturate colors by amount
-        amount == 0, no change
-        amount == 1, grey
-    """
-    luminosity = sum(rgb) / 3.0
-    desat = lambda color: color - amount * (color - luminosity)
-
-    return tuple(map(int, map(desat, rgb)))
-
-
 class WaveformImage(object):
     """
     Given peaks and spectral centroids from the AudioProcessor, this class will construct
     a wavefile image which can be saved as PNG.
     """
-    def __init__(self, image_width, image_height, palette=1):
+    def __init__(self, image_width, image_height, color_scheme):
         if image_height % 2 == 0:
             raise AudioProcessingException("Height should be uneven: images look much better at uneven height")
 
-        if palette == 1:
-            background_color = (0,0,0)
-            colors = [
-                        (50,0,200),
-                        (0,220,80),
-                        (255,224,0),
-                        (255,70,0),
-                     ]
-        elif palette == 2:
-            background_color = (0,0,0)
-            colors = [self.color_from_value(value/29.0) for value in range(0,30)]
-        elif palette == 3:
-            background_color = (213, 217, 221)
-            colors = map( partial(desaturate, amount=0.7), [
-                        (50,0,200),
-                        (0,220,80),
-                        (255,224,0),
-                     ])
-        elif palette == 4:
-            background_color = (213, 217, 221)
-            colors = map( partial(desaturate, amount=0.8), [self.color_from_value(value/29.0) for value in range(0,30)])
+        waveform_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['wave_colors']
+        background_color = waveform_colors[0]
+        colors = waveform_colors[1:]
 
         self.image = Image.new("RGB", (image_width, image_height), background_color)
 
@@ -324,11 +302,6 @@ class WaveformImage(object):
 
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
-
-    def color_from_value(self, value):
-        """ given a value between 0 and 1, return an (r,g,b) tuple """
-
-        return ImageColor.getrgb("hsl(%d,%d%%,%d%%)" % (int( (1.0 - value) * 360 ), 80, 50))
 
     def draw_peaks(self, x, peaks, spectral_centroid):
         """ draw 2 peaks at x using the spectral_centroid for color """
@@ -390,23 +363,14 @@ class SpectrogramImage(object):
     Given spectra from the AudioProcessor, this class will construct a wavefile image which
     can be saved as PNG.
     """
-    def __init__(self, image_width, image_height, fft_size):
+    def __init__(self, image_width, image_height, fft_size, color_scheme):
         self.image_width = image_width
         self.image_height = image_height
         self.fft_size = fft_size
 
         self.image = Image.new("RGB", (image_height, image_width))
-
-        colors = [
-            (0, 0, 0),
-            (58/4,68/4,65/4),
-            (80/2,100/2,153/2),
-            (90,180,100),
-            (224,224,44),
-            (255,60,30),
-            (255,255,255)
-         ]
-        self.palette = interpolate_colors(colors)
+        self.palette = interpolate_colors(COLOR_SCHEMES.get(color_scheme,
+                                                            COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['spec_colors'])
 
         # generate the lookup which translates y-coordinate to fft-bin
         self.y_to_bin = []
@@ -431,10 +395,10 @@ class SpectrogramImage(object):
     def draw_spectrum(self, x, spectrum):
         # for all frequencies, draw the pixels
         for (index, alpha) in self.y_to_bin:
-            self.pixels.append( self.palette[int((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1])] )
+            self.pixels.append(self.palette[int((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1])])
 
         # if the FFT is too small to fill up the image, fill with black to the top
-        for y in range(len(self.y_to_bin), self.image_height): #@UnusedVariable
+        for y in range(len(self.y_to_bin), self.image_height):
             self.pixels.append(self.palette[0])
 
     def save(self, filename, quality=80):
@@ -443,15 +407,16 @@ class SpectrogramImage(object):
         self.image.transpose(Image.ROTATE_90).save(filename, quality=quality)
 
 
-def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, progress_callback=None):
+def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size,
+                       progress_callback=None, color_scheme=None):
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     """
     processor = AudioProcessor(input_filename, fft_size, numpy.hanning)
     samples_per_pixel = processor.audio_file.nframes / float(image_width)
 
-    waveform = WaveformImage(image_width, image_height)
-    spectrogram = SpectrogramImage(image_width, image_height, fft_size)
+    waveform = WaveformImage(image_width, image_height, color_scheme)
+    spectrogram = SpectrogramImage(image_width, image_height, fft_size, color_scheme)
 
     for x in range(image_width):
 
@@ -476,6 +441,7 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
 
 class NoSpaceLeftException(Exception):
     pass
+
 
 def convert_to_pcm(input_filename, output_filename):
     """

@@ -32,7 +32,6 @@ from django.db import transaction
 
 from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
-from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_post_to_solr, delete_post_from_solr
@@ -88,7 +87,8 @@ class last_action(object):
 @last_action
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
-    return render(request, 'forum/index.html', locals())
+    tvars = {'forums': forums}
+    return render(request, 'forum/index.html', tvars)
 
 
 @last_action
@@ -98,10 +98,12 @@ def forum(request, forum_name_slug):
     except Forum.DoesNotExist:
         raise Http404
 
+    tvars = {'forum': forum}
     paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
                          .select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)
+    tvars.update(paginator)
 
-    return render(request, 'forum/threads.html', combine_dicts(locals(), paginator))
+    return render(request, 'forum/threads.html', tvars)
 
 
 @last_action
@@ -127,7 +129,11 @@ def thread(request, forum_name_slug, thread_id):
         except Subscription.DoesNotExist:
             pass
 
-    return render(request, 'forum/thread.html', combine_dicts(locals(), paginator))
+    tvars = {'thread': thread,
+             'forum': forum,
+             'has_subscription': has_subscription}
+    tvars.update(paginator)
+    return render(request, 'forum/thread.html', tvars)
 
 
 @last_action
@@ -136,7 +142,9 @@ def latest_posts(request):
                          Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum')
                          .filter(moderation_state="OK").order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)
     hide_search = True
-    return render(request, 'forum/latest_posts.html', combine_dicts(locals(), paginator))
+    tvars = {'hide_search': hide_search}
+    tvars.update(paginator)
+    return render(request, 'forum/latest_posts.html', tvars)
 
 
 @last_action
@@ -227,7 +235,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
                                                      "has been temporaly blocked after multiple spam reports")
 
-    return render(request, 'forum/reply.html', locals())
+    tvars = {'forum': forum,
+             'thread': thread,
+             'form': form,
+             'latest_posts': latest_posts}
+    return render(request, 'forum/reply.html', tvars)
 
 
 @login_required
@@ -280,7 +292,9 @@ def new_thread(request, forum_name_slug):
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
                                                      "has been temporaly blocked after multiple spam reports")
 
-    return render(request, 'forum/new_thread.html', locals())
+    tvars = {'forum': forum,
+             'form': form}
+    return render(request, 'forum/new_thread.html', tvars)
 
 
 @login_required
@@ -329,7 +343,8 @@ def old_topic_link_redirect(request):
 def post_delete(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author == request.user or request.user.has_perm('forum.delete_post'):
-        return render(request, 'forum/confirm_deletion.html', locals())
+        tvars = {'post': post}
+        return render(request, 'forum/confirm_deletion.html', tvars)
     else:
         raise Http404
 
@@ -365,7 +380,8 @@ def post_edit(request, post_id):
                     reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:
             form = PostReplyForm(request, '', {'body': post.body})
-        return render(request, 'forum/post_edit.html', locals())
+        tvars = {'form': form}
+        return render(request, 'forum/post_edit.html', tvars)
     else:
         raise Http404
 
@@ -388,7 +404,6 @@ def moderate_posts(request):
                     messages.add_message(request, messages.INFO, 'The user has been successfully deleted.')
                 except User.DoesNotExist:
                     messages.add_message(request, messages.INFO, 'The user has already been deleted.')
-                    pass
             elif action == "Delete Post":
                 post.delete()
                 messages.add_message(request, messages.INFO, 'The post has been successfully deleted.')
@@ -397,6 +412,8 @@ def moderate_posts(request):
     post_list = []
     for p in pending_posts:
         f = PostModerationForm(initial={'action': 'Approve', 'post': p.id})
-        post_list.append({'post': p,'form': f})
-    forums = True  # prevent base template showing forum search
-    return render(request, 'forum/moderate.html', locals())
+        post_list.append({'post': p, 'form': f})
+
+    tvars = {'post_list': post_list,
+             'hide_search': True}
+    return render(request, 'forum/moderate.html', tvars)

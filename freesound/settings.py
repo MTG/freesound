@@ -159,9 +159,6 @@ STATIC_URL = '/static/'
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
-# urls for which the "lasta ction time" needs updating
-LAST_ACTION_TIME_URLS = ('/forum/', )
-
 IFRAME_PLAYER_SIZE = {
         'large': [920, 245],
         'medium': [481, 86],

@@ -106,4 +106,9 @@ RAVEN_CONFIG = {
     'dsn': 'DSN_PROVIDED_BY_SENTRY',
 }
 
-AWS_SQS_QUEUE_URL = ''  # also proper AWS credentials should be configured in ~/.aws
+# AWS
+
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_SQS_QUEUE_URL = ''
+AWS_SQS_MESSAGES_PER_CALL = 1

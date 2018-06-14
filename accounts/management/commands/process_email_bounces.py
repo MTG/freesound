@@ -35,7 +35,8 @@ class Command(BaseCommand):
     help = 'Retrieves email bounce info from AWS SQS and updates db'
 
     def handle(self, *args, **options):
-        sqs = client('sqs')
+        sqs = client('sqs', aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
         queue_url = settings.AWS_SQS_QUEUE_URL
 
         total = 0
@@ -44,7 +45,7 @@ class Command(BaseCommand):
             # Receive message from SQS queue
             response = sqs.receive_message(
                 QueueUrl=queue_url,
-                MaxNumberOfMessages=1,
+                MaxNumberOfMessages=settings.AWS_SQS_MESSAGES_PER_CALL,
                 VisibilityTimeout=0,
                 WaitTimeSeconds=0
             )

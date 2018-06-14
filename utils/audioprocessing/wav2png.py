@@ -36,7 +36,8 @@ parser.add_option("-h", "--height", action="store", dest="image_height", type="i
 parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int",
                   help="fft size, power of 2 for increased performance (default %default)")
 parser.add_option("-c", "--color_scheme", action="store", dest="color_scheme", type="string",
-                  help="name of the color scheme to use (one of: 'Freesound2' (default), 'FreesoundBeastWhoosh')")
+                  help="name of the color scheme to use (one of: 'Freesound2' (default), 'FreesoundBeastWhoosh', "
+                       "'Cyberpunk', 'Rainforest')")
 parser.add_option("-p", "--profile", action="store_true", dest="profile",
                   help="run profiler and output profiling information")
 

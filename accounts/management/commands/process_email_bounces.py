@@ -25,7 +25,7 @@ from django.utils.dateparse import parse_datetime
 from django.db import IntegrityError
 from accounts.models import EmailBounce
 from boto3 import client
-from json import loads
+import json
 import logging
 
 logger = logging.getLogger('console')
@@ -53,9 +53,9 @@ class Command(BaseCommand):
 
             for message in response['Messages']:
                 receipt_handle = message['ReceiptHandle']
-                body = loads(message['Body'])
+                body = json.loads(message['Body'])
 
-                data = loads(body['Message'])
+                data = json.loads(body['Message'])
                 if data['notificationType'] == 'Bounce':
                     bounce_data = data['bounce']
                     bounce_type = EmailBounce.type_from_string(bounce_data['bounceType'])

@@ -40,13 +40,14 @@ from tags.models import Tag
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
 from tickets.models import Ticket
+from utils.mail import transform_unique_email, send_mail
 import accounts.models
 import mock
 import os
 import tempfile
 import shutil
 import datetime
-from utils.mail import transform_unique_email, send_mail
+import json
 
 
 class SimpleUserTest(TestCase):
@@ -1311,10 +1312,18 @@ class EmailBounceTests(TestCase):
 
     @mock.patch('accounts.management.commands.process_email_bounces.client')
     def test_populate_bounce(self, client):
-        message_body = '{"Type": "Notification", "Message": "{\\"notificationType\\":\\"Bounce\\",' \
-                       '\\"bounce\\":{\\"bounceType\\":\\"Permanent\\",\\"bounceSubType\\":\\"Suppressed\\",' \
-                       '\\"bouncedRecipients\\":[{\\"emailAddress\\":\\"user@freesound.org\\"}],' \
-                       '\\"timestamp\\":\\"2018-05-20T13:54:37.821Z\\"}}"}'
+        message_body = json.dumps({
+            "Type": "Notification",
+            "Message": json.dumps({
+                "notificationType": "Bounce",
+                "bounce": {
+                    "bounceType": "Permanent",
+                    "bounceSubType": "Suppressed",
+                    "bouncedRecipients": [{"emailAddress": "user@freesound.org"}],
+                    "timestamp": "2018-05-20T13:54:37.821Z"
+                }
+            })
+        })
 
         client_obj = mock.MagicMock()
         client_obj.receive_message.return_value = {u'Messages': [{u'Body': message_body, u'ReceiptHandle': 'dummy'}]}

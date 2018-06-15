@@ -25,7 +25,7 @@ from django.utils.dateparse import parse_datetime
 from django.db import IntegrityError
 from accounts.models import EmailBounce
 from boto3 import client
-from json import loads
+import json
 import logging
 
 logger = logging.getLogger('console')
@@ -35,7 +35,8 @@ class Command(BaseCommand):
     help = 'Retrieves email bounce info from AWS SQS and updates db'
 
     def handle(self, *args, **options):
-        sqs = client('sqs')
+        sqs = client('sqs', aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
         queue_url = settings.AWS_SQS_QUEUE_URL
 
         total = 0
@@ -44,7 +45,7 @@ class Command(BaseCommand):
             # Receive message from SQS queue
             response = sqs.receive_message(
                 QueueUrl=queue_url,
-                MaxNumberOfMessages=1,
+                MaxNumberOfMessages=settings.AWS_SQS_MESSAGES_PER_CALL,
                 VisibilityTimeout=0,
                 WaitTimeSeconds=0
             )
@@ -52,9 +53,9 @@ class Command(BaseCommand):
 
             for message in response['Messages']:
                 receipt_handle = message['ReceiptHandle']
-                body = loads(message['Body'])
+                body = json.loads(message['Body'])
 
-                data = loads(body['Message'])
+                data = json.loads(body['Message'])
                 if data['notificationType'] == 'Bounce':
                     bounce_data = data['bounce']
                     bounce_type = EmailBounce.type_from_string(bounce_data['bounceType'])

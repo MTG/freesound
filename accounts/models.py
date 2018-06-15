@@ -348,7 +348,7 @@ class Profile(SocialModel):
         return None
 
     def email_is_valid(self):
-        return self.user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() == 0
+        return self.user.email_bounces.filter(type__in=EmailBounce.TYPES_INVALID).count() == 0
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
@@ -461,6 +461,7 @@ class EmailBounce(models.Model):
         (PERMANENT, 'Permanent'),
         (TRANSIENT, 'Transient')
     )
+    TYPES_INVALID = [UNDETERMINED, PERMANENT]
     type = models.CharField(db_index=True, max_length=2, choices=TYPE_CHOICES, default=UNDETERMINED)
     type_map = {t[1]: t[0] for t in TYPE_CHOICES}
 

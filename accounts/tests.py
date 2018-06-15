@@ -1305,10 +1305,24 @@ class EmailBounceTests(TestCase):
         self.assertTrue(self._send_mail(user))
 
     def test_unactivated_user_deleted(self):
-        pass  # TODO
+        user = User.objects.create_user('user', email='user@freesound.org')
+        user.is_active = False
+        user.save()
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        call_command('cleanup_unactivated_users')
+
+        with self.assertRaises(User.DoesNotExist):
+            user.refresh_from_db()
 
     def test_request_email_change(self):
-        pass  # TODO
+        user = User.objects.create_user('user', email='user@freesound.org', password='testpass')
+        self.client.login(username='user', password='testpass')
+        resp = self.client.get(reverse('front-page'))
+        self.assertEquals(resp.status_code, 200)
+
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        resp = self.client.get(reverse('front-page'))
+        self.assertRedirects(resp, reverse('accounts-email-reset-required'))
 
     @mock.patch('accounts.management.commands.process_email_bounces.client')
     def test_populate_bounce(self, client):

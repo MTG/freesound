@@ -25,7 +25,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse
 from django.db import transaction
@@ -267,7 +267,7 @@ def new_thread(request, forum_name_slug):
                     add_post_to_solr(post)
                     set_to_moderation = False
 
-                # Add first post to thread (first post will allways be the same)
+                # Add first post to thread (first post will always be the same)
                 # We need to reload thread object from DB, not so overwrite the object we created before when saving
                 updated_thread = Thread.objects.get(id=thread.id)
                 updated_thread.first_post = post
@@ -355,11 +355,16 @@ def post_delete_confirm(request, post_id):
     if request.method == 'POST':
         if post.author == request.user or request.user.has_perm('forum.delete_post'):
             thread = post.thread
+            forum = thread.forum
             post.delete()
+            # If the post was the only post in the thread, redirect to the forum
             try:
-                return HttpResponseRedirect(
-                    reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))
-            except (Post.DoesNotExist, Thread.DoesNotExist, AttributeError) as e:
+                thread.refresh_from_db()
+            except Thread.DoesNotExist:
+                return redirect('forums-forum', forum_name_slug=forum.name_slug)
+            try:
+                return redirect('forums-post', thread.forum.name_slug, thread.id, thread.last_post.id)
+            except (Post.DoesNotExist, Thread.DoesNotExist, AttributeError):
                 return HttpResponseRedirect(reverse('forums-forums'))
 
     raise Http404

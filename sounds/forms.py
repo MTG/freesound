@@ -67,11 +67,12 @@ class GeotaggingForm(forms.Form):
 
 class SoundDescriptionForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
-                           widget=forms.TextInput(attrs={'size': 65, 'class':'inputText'}))
+                           widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     is_explicit = forms.BooleanField(required=False)
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
                     help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                              "For example: field-recording is a popular tag.")
+                              "For example: <i>field-recording</i> is a popular tag."
+                              "<br>")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
     def __init__(self, *args, **kwargs):
@@ -231,7 +232,8 @@ class NewLicenseForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(NewLicenseForm, self).__init__(*args, **kwargs)
         valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
-        self.fields['license'].error_messages = {'invalid_choice': 'Invalid license. Should be one of %s' % valid_licenses}
+        self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
+                                                                        % valid_licenses})
 
 
 class FlagForm(forms.Form):

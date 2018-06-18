@@ -1310,6 +1310,9 @@ class EmailBounceTests(TestCase):
     def test_request_email_change(self):
         pass  # TODO
 
+    @override_settings(AWS_ACCESS_KEY_ID='dummy_id')
+    @override_settings(AWS_SECRET_ACCESS_KEY='dummy_secret')
+    @override_settings(AWS_SQS_QUEUE_URL='dummy_url')
     @mock.patch('accounts.management.commands.process_email_bounces.client')
     def test_populate_bounce(self, client):
         message_body = json.dumps({

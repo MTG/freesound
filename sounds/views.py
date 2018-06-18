@@ -705,12 +705,13 @@ def packs_for_user(request, username):
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
-    user = get_object_or_404(User, username__iexact=username)
-    paginator = paginate(request, Sound.public.only('id').filter(user=user), settings.SOUNDS_PER_PAGE)
+    sound_user = get_object_or_404(User, username__iexact=username)
+    paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     user_sounds = Sound.objects.ordered_ids(sound_ids)
 
-    tvars = {'user_sounds': user_sounds}
+    tvars = {'sound_user': sound_user,
+             'user_sounds': user_sounds}
     tvars.update(paginator)
     return render(request, 'sounds/for_user.html', tvars)
 

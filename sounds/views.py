@@ -632,7 +632,8 @@ def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    return render(request, 'sounds/geotag.html', locals())
+    tvars = {'sound': sound}
+    return render(request, 'sounds/geotag.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -647,9 +648,10 @@ def similar(request, username, sound_id):
         raise Http404
 
     similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
-    logger.info('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
-    return render(request, 'sounds/similar.html', locals())
+
+    tvars = {'similar_sounds': similar_sounds}
+    return render(request, 'sounds/similar.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -665,37 +667,25 @@ def pack(request, username, pack_id):
     if pack.is_deleted:
         return render(request, 'sounds/deleted_pack.html')
 
-    qs = Sound.objects.only('id').filter(pack=pack, moderation_state="OK", processing_state="OK")
-    paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
-    paginator = paginate_data['paginator']
-    current_page = paginate_data['current_page']
-    page = paginate_data['page']
-    sound_ids = [sound_obj.id for sound_obj in page]
+    qs = Sound.objects.only('id').filter(pack=pack, moderation_state='OK', processing_state='OK')
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 
     num_sounds_ok = len(qs)
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
-    else :
-        if num_sounds_ok < pack.num_sounds :
+    else:
+        if num_sounds_ok < pack.num_sounds:
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 
-    # If user is owner of pack, display form to add description
-    enable_description_form = False
-    if request.user.id == pack.user_id:
-        enable_description_form = True
-        form = PackDescriptionForm(instance = pack)
+    tvars = {'pack': pack,
+             'num_sounds_ok': num_sounds_ok,
+             'pack_sounds': pack_sounds
+             }
+    tvars.update(paginator)
 
-    # Manage POST info (if adding a description)
-    if request.method == 'POST':
-        form = PackDescriptionForm(request.POST, pack)
-        if form.is_valid():
-            pack.description = form.cleaned_data['description']
-            pack.save()
-        else:
-            pass
-
-    return render(request, 'sounds/pack.html', locals())
+    return render(request, 'sounds/pack.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -705,20 +695,25 @@ def packs_for_user(request, username):
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True).order_by(order)
-    return render(request, 'sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()))
+    paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
+
+    tvars = {'user': user,
+             'order': order}
+    tvars.update(paginator)
+    return render(request, 'sounds/packs.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
-    user = get_object_or_404(User, username__iexact=username)
-    qs = Sound.public.only('id').filter(user=user)
-    paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
-    paginator = paginate_data['paginator']
-    current_page = paginate_data['current_page']
-    page = paginate_data['page']
-    sound_ids = [sound_obj.id for sound_obj in page]
+    sound_user = get_object_or_404(User, username__iexact=username)
+    paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
+    sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     user_sounds = Sound.objects.ordered_ids(sound_ids)
-    return render(request, 'sounds/for_user.html', locals())
+
+    tvars = {'sound_user': sound_user,
+             'user_sounds': user_sounds}
+    tvars.update(paginator)
+    return render(request, 'sounds/for_user.html', tvars)
 
 
 @login_required
@@ -938,7 +933,7 @@ def downloaders(request, username, sound_id):
 
     download_list = []
     for s in page:
-        download_list.append({"created":s.created, "user": user_map[s.user_id]})
+        download_list.append({"created": s.created, "user": user_map[s.user_id]})
     download_list = sorted(download_list, key=itemgetter("created"), reverse=True)
 
     tvars = {"sound": sound,
@@ -950,8 +945,13 @@ def downloaders(request, username, sound_id):
 
 
 def pack_downloaders(request, username, pack_id):
-    pack = get_object_or_404(Pack, id = pack_id)
+    pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
     qs = PackDownload.objects.filter(pack_id=pack_id)
-    return render(request, 'sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()))
+    paginator = paginate(request, qs, 32, object_count=pack.num_downloads)
+
+    tvars = {'username': username,
+             'pack': pack}
+    tvars.update(paginator)
+    return render(request, 'sounds/pack_downloaders.html', tvars)

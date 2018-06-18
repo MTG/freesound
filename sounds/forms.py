@@ -156,16 +156,6 @@ class PackForm(forms.Form):
         self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
 
 
-class PackDescriptionForm(ModelForm):
-
-    class Meta:
-        model = Pack
-        fields = ('description',)
-        widgets = {
-            'description': Textarea(attrs={'rows': 5, 'cols':60}),
-        }
-
-
 class PackEditForm(ModelForm):
     pack_sounds = forms.CharField(min_length=1,
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),

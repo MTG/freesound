@@ -73,11 +73,7 @@
 
     {% if not pack.is_dirty %}
         {% if num_sounds_ok > 0 %}
-            {% if pack_geotags %}
-                <div id="download" style="margin-top:-40px">
-            {% else %}
-                <div id="download">
-            {% endif %}
+            <div id="download">
                 {% if request.user.is_authenticated %}
                     <a href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
                     <div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>

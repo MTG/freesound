@@ -352,16 +352,17 @@ def post_delete(request, post_id):
 @login_required
 def post_delete_confirm(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    if post.author == request.user or request.user.has_perm('forum.delete_post'):
-        thread = post.thread
-        post.delete()
-        try:
-            return HttpResponseRedirect(
-                reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))
-        except (Post.DoesNotExist, Thread.DoesNotExist, AttributeError) as e:
-            return HttpResponseRedirect(reverse('forums-forums'))
-    else:
-        raise Http404
+    if request.method == 'POST':
+        if post.author == request.user or request.user.has_perm('forum.delete_post'):
+            thread = post.thread
+            post.delete()
+            try:
+                return HttpResponseRedirect(
+                    reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))
+            except (Post.DoesNotExist, Thread.DoesNotExist, AttributeError) as e:
+                return HttpResponseRedirect(reverse('forums-forums'))
+
+    raise Http404
 
 
 @login_required

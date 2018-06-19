@@ -18,56 +18,50 @@
 #     See AUTHORS file.
 #
 
+import datetime
+import json
+import logging
+import time
+from operator import itemgetter
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
-from django.urls import reverse, resolve
 from django.db import connection, transaction
 from django.db.models import Q
-from django.http import HttpResponseRedirect, Http404,\
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.utils.six.moves.urllib.parse import urlparse
-from django.http import HttpResponse
 from django.template import loader
-from accounts.models import Profile
+from django.urls import reverse, resolve
+from django.utils.six.moves.urllib.parse import urlparse
+
 from comments.forms import CommentForm
 from comments.models import Comment
+from donations.models import DonationsModalSettings
+from follow import follow_utils
 from forum.models import Thread
 from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
-from networkx import nx
-from utils.frontend_handling import render
-from sounds.forms import *
-from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundOfTheDay, SoundLicenseHistory
-from sounds.models import  PackDownload, PackDownloadSound
-from sounds.templatetags import display_sound
-from donations.models import DonationsModalSettings
+from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
+    RemixForm, PackForm
+from sounds.models import PackDownload, PackDownloadSound
+from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
 from tickets import TICKET_STATUS_CLOSED
-from utils.search.search_general import get_random_sound_from_solr
 from tickets.models import Ticket, TicketComment
-from utils.username import redirect_if_old_username_or_404
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.functional import combine_dicts
+from utils.frontend_handling import render
 from utils.mail import send_mail_template
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
+from utils.search.search_general import get_random_sound_from_solr
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
-from follow import follow_utils
-from operator import itemgetter
-import gearman
-import datetime
-import time
-import logging
-import json
-import os
-
+from utils.username import redirect_if_old_username_or_404
 
 logger = logging.getLogger('web')
 downloads_logger = logging.getLogger('downloads')
@@ -103,7 +97,7 @@ def sounds(request):
     latest_sounds = [(latest_sound, latest_sound_objects[index],) for index, latest_sound in enumerate(latest_sounds)]
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
-    popular_sound_ids = [snd.id for snd in Sound.objects.filter(\
+    popular_sound_ids = [snd.id for snd in Sound.objects.filter(
             Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
     popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]

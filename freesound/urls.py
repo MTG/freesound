@@ -35,7 +35,7 @@ import bookmarks.views
 import follow.views
 import general.views
 import donations.views
-from utils.tagrecommendation_utilities import *
+import utils.tagrecommendation_utilities as tagrec
 from apiv2.apiv2_utils import apiv1_end_of_life_message
 
 admin.autodiscover()
@@ -131,13 +131,13 @@ urlpatterns = [
     url(r'^apiv2/', include('apiv2.urls')),
 
     # tag recommendation
-    url(r'^tagrecommendation/instructions/$', new_tagrecommendation_interface_instructions, name="tagrecommendation-instructions"),
-    url(r'^tagrecommendation/recommendtags/$', get_recommended_tags_view, name="recommend-tags"),
-    url(r'^tagrecommendation/savelog/$', log_recommendation_info_view, name="log-recommendation-info"),
+    url(r'^tagrecommendation/instructions/$', tagrec.new_tagrecommendation_interface_instructions, name="tagrecommendation-instructions"),
+    url(r'^tagrecommendation/recommendtags/$', tagrec.get_recommended_tags_view, name="recommend-tags"),
+    url(r'^tagrecommendation/savelog/$', tagrec.log_recommendation_info_view, name="log-recommendation-info"),
     # Urls for new tag recommendation interface experiment
-    url(r'^tagrecommendation/get_recommendation/$', get_recommended_tags_view_new, name="get-recommend-tags-new"),
-    url(r'^tagrecommendation/get_recommended_categories/$', get_recommended_categories_view, name="get-recommended-categories"),
-    url(r'^tagrecommendation/get_categories/$', get_all_categories_view, name="get-all-categories"),
+    url(r'^tagrecommendation/get_recommendation/$', tagrec.get_recommended_tags_view_new, name="get-recommend-tags-new"),
+    url(r'^tagrecommendation/get_recommended_categories/$', tagrec.get_recommended_categories_view, name="get-recommended-categories"),
+    url(r'^tagrecommendation/get_categories/$', tagrec.get_all_categories_view, name="get-all-categories"),
 
     # 500 view
     url(r'^crash_me/$',
@@ -155,7 +155,7 @@ urlpatterns = [
     url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
 ]
 
-#if you need django to host the admin files...
+# if you need django to host the admin files...
 from django.conf import settings
 from django.views.static import serve
 if settings.DEBUG:

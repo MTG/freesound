@@ -19,21 +19,23 @@
 #
 
 import datetime
-import gearman
 import json
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
-from django.contrib.auth.models import User, Group
-from django.urls import reverse
-from django.core.management import call_command
-from django.db import connection, transaction
-from django.db.models import Count, Min, Max, Q, F
-from django.contrib import messages
+
+import gearman
 from django.conf import settings
-from models import Ticket, Queue, TicketComment, UserAnnotation
-from forms import *
-from tickets import *
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import User, Group
+from django.db import transaction
+from django.db.models import Count, Min, Q, F
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+
+from models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
+from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
+from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
+    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 
@@ -505,12 +507,11 @@ def moderation_assigned(request, user_id):
             ticket.save()
 
     moderator_tickets_count = qs.count()
-    moderation_texts = MODERATION_TEXTS
     show_pagination = moderator_tickets_count > settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
     tvars = {
             "moderator_tickets_count": moderator_tickets_count,
-            "moderation_texts": moderation_texts,
+            "moderation_texts": MODERATION_TEXTS,
             "page": pagination_response['page'],
             "paginator": pagination_response['paginator'],
             "current_page": pagination_response['current_page'],

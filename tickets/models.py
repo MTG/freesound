@@ -77,25 +77,25 @@ class Ticket(models.Model):
         return list(ticket_comments)[:n] # converting from Django QuerySet to python list in order to use negative indexing
 
     def send_notification_emails(self, notification_type, sender_moderator):
-        ticket = self
-        send_to = []
-        #send message to assigned moderator
+        # send message to assigned moderator
         if sender_moderator in [Ticket.MODERATOR_ONLY, Ticket.USER_AND_MODERATOR]:
             if self.assignee:
-                user_to = self.assignee if self.assignee else False
+                tvars = {'ticket': self,
+                         'user_to': self.assignee}
                 send_mail_template(u'A freesound moderator handled your upload.',
                                    notification_type,
-                                   locals(),
+                                   tvars,
                                    'noreply@freesound.org',
                                    self.assignee.email)
         # send message to user
         if sender_moderator in [Ticket.USER_ONLY, Ticket.USER_AND_MODERATOR]:
-            user_to = self.sender if self.sender else False
-            email_to = user_to.email if user_to else ticket.sender_email
             if self.sender:
+                tvars = {'ticket': self,
+                         'user_to': self.sender}
+                email_to = self.sender.email
                 send_mail_template(u'A freesound moderator handled your upload.',
                                    notification_type,
-                                   locals(),
+                                   tvars,
                                    'noreply@freesound.org',
                                    email_to)
 
@@ -131,6 +131,7 @@ class TicketComment(models.Model):
             ("can_add_moderator_only_message", "Can add read-by-moderator-only messages."),
         )
 
+
 def create_ticket_message(sender, instance, created, **kwargs):
     if created:
         instance.ticket.last_commenter = instance.sender
@@ -142,6 +143,6 @@ post_save.connect(create_ticket_message, sender=TicketComment)
 
 
 class UserAnnotation(models.Model):
-    sender          = models.ForeignKey(User, related_name='sent_annotations')
-    user            = models.ForeignKey(User, related_name='annotations')
-    text            = models.TextField()
+    sender = models.ForeignKey(User, related_name='sent_annotations')
+    user = models.ForeignKey(User, related_name='annotations')
+    text = models.TextField()

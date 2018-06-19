@@ -10,17 +10,6 @@
 {% block section_content %}
 
     <script type="text/javascript">
-
-        $(function() {
-            if ('{{ show_unfollow_button }}' == 'False') {
-                $("#now_following_tags_div").hide();
-            }
-            if ({{ multiple_tags|length }} == 1) {
-                txt = $("#now_following_tags_span").text();
-                $("#now_following_tags_span").text(txt.replace("these", "this").replace("tags", "tag"));
-            }
-        });
-
         function follow_tags() {
             $("#follow_tags_button").attr("disabled", "disabled");
             $.ajax({
@@ -103,17 +92,10 @@
                 <div class="tag_group">
                     <ul class="tags">
                     {% for tag in multiple_tags %}
-                        {% comment %}<li><a href="{% url tags tag %}">{{ tag }}</a></li>{% endcomment %}
                         <li><a>{{ tag }}</a></li>
                     {% endfor %}
                     </ul>
                 </div>
-
-                {% comment %}
-                <div id="now_following_tags_div">
-                    <span id="now_following_tags_span">You are following these tags</span>
-                </div>
-                {% endcomment %}
 
                 <div style="clear: both"></div>
 

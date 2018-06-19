@@ -120,7 +120,7 @@
         {% endif %}
 
         {% if multiple_tags %}
-            <h1>Sounds with these tags</h1>
+            <h1>Sounds with {{ multiple_tags|length|pluralize:"this,these" }} tag{{ multiple_tags|length|pluralize }}</h1>
             {% if num_results > 0 %}
                 <div class="search_paginator">
                     {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}

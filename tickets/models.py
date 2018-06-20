@@ -68,7 +68,6 @@ class Ticket(models.Model):
     USER_ONLY = 2
     USER_AND_MODERATOR = 3
 
-
     def get_n_last_non_moderator_only_comments(self, n):
         """
         Get the last n comments that are not 'moderator only' from the self ticket
@@ -85,19 +84,16 @@ class Ticket(models.Model):
                 send_mail_template(u'A freesound moderator handled your upload.',
                                    notification_type,
                                    tvars,
-                                   'noreply@freesound.org',
-                                   self.assignee.email)
+                                   user_to=self.assignee)
         # send message to user
         if sender_moderator in [Ticket.USER_ONLY, Ticket.USER_AND_MODERATOR]:
             if self.sender:
                 tvars = {'ticket': self,
                          'user_to': self.sender}
-                email_to = self.sender.email
                 send_mail_template(u'A freesound moderator handled your upload.',
                                    notification_type,
                                    tvars,
-                                   'noreply@freesound.org',
-                                   email_to)
+                                   user_to=self.sender)
 
     def get_absolute_url(self):
         return reverse('ticket', args=[smart_unicode(self.key)])

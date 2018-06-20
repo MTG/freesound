@@ -28,7 +28,6 @@ from django.template import RequestContext
 from messages.forms import MessageReplyForm, MessageReplyFormNoCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_template_cache
-from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from BeautifulSoup import BeautifulSoup
@@ -43,9 +42,15 @@ def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
         
-        # get all ids, prefixed by "cb_" and after than an integer
-        # only get the checkboxes that are "on"
-        message_ids = filter(lambda x: x != None, [exceptional(int)(key.replace("cb_", "")) for key in request.POST.keys() if key.startswith("cb_") and request.POST.get(key) == "on"])
+        # get all message ids in the format `cb_[number]` which have a value of 'on'
+        message_ids = []
+        for key, val in request.POST.items():
+            if key.startswith('cb_') and val == 'on':
+                try:
+                    msgid = int(key.replace('cb_', ''))
+                    message_ids.append(msgid)
+                except ValueError:
+                    pass
 
         if choice and message_ids:
             messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) | Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
@@ -63,6 +68,7 @@ def messages_change_state(request):
 
 # base query object
 base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
+
 
 @login_required
 def inbox(request):
@@ -131,7 +137,8 @@ def new_message(request, username=None, message_id=None):
                     tvars = {'user_to': user_to,
                              'user_from': user_from}
                     if user_to.profile.email_not_disabled("private_message"):
-                        send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', tvars, None, user_to.email)
+                        send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', tvars,
+                                           user_to=user_to)
                 except:
                     # if the email sending fails, ignore...
                     pass

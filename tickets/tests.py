@@ -146,8 +146,7 @@ class MiscTicketTests(TicketTests):
                 u'A freesound moderator handled your upload.',
                 tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
                 local_vars,
-                'noreply@freesound.org',
-                ticket.sender.email)
+                user_to=ticket.sender)
 
 
 class TicketTestsFromQueue(TicketTests):

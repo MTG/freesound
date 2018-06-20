@@ -313,7 +313,6 @@ MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, s
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
 
-
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
 
@@ -323,6 +322,12 @@ STRIPE_PRIVATE_KEY = ""
 
 # Mapbox access token
 MAPBOX_ACCESS_TOKEN = ""
+
+# AWS tokens (for accessing email bounce list)
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_SQS_QUEUE_URL = ''
+AWS_SQS_MESSAGES_PER_CALL = 1
 
 # Frontend preference handling
 FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'

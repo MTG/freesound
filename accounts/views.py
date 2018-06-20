@@ -51,7 +51,8 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, \
+    EmailBounce
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -67,7 +68,7 @@ from utils.images import extract_square
 from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
 from utils.audioprocessing import get_sound_type
-from utils.mail import send_mail, send_mail_template, transform_unique_email
+from utils.mail import send_mail, send_mail_template, send_mail_template_to_support, transform_unique_email
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark
 from messages.models import Message
@@ -225,7 +226,7 @@ def send_activation(user):
         'username': username,
         'hash': uid_hash
     }
-    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, None, user.email)
+    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, user_to=user)
 
 
 def resend_activation(request):
@@ -256,7 +257,7 @@ def username_reminder(request):
             try:
                 user = User.objects.get(email__iexact=email)
                 send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt',
-                        {'user': user}, None, user.email)
+                                   {'user': user}, user_to=user)
             except User.DoesNotExist:
                 pass
 
@@ -1101,7 +1102,7 @@ def email_reset(request):
                 subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
                 subject = ''.join(subject.splitlines())
                 email_body = loader.render_to_string('accounts/email_reset_email.html', c)
-                send_mail(subject=subject, email_body=email_body, email_to=[email])
+                send_mail(subject, email_body, email_to=email)
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user = request.user)
@@ -1137,6 +1138,9 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     # Remove temporal mail change information ftom the DB
     ResetEmailRequest.objects.get(user=user).delete()
+
+    # Clear saved email bounces for old email
+    EmailBounce.objects.filter(user=user).delete()
 
     tvars = {'old_email': old_email, 'user': user}
     return render(request, 'accounts/email_reset_complete.html', tvars)
@@ -1196,11 +1200,9 @@ def flag_user(request, username=None):
                 template_to_use = 'accounts/report_spammer_admins.txt'
             else:
                 template_to_use = 'accounts/report_blocked_spammer_admins.txt'
-            to_emails = []
-            for mail in settings.ADMINS:
-                to_emails.append(mail[1])
-            send_mail_template(u'Spam/offensive report for user ' + flagged_user.username,
-                               template_to_use, locals(), None, to_emails)
+
+            send_mail_template_to_support(u'Spam/offensive report for user ' + flagged_user.username, template_to_use,
+                                          locals())
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')

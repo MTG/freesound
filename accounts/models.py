@@ -28,6 +28,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.utils.encoding import smart_unicode
+from django.utils.timezone import now
 from django.conf import settings
 from django.urls import reverse
 from general.models import SocialModel
@@ -98,6 +99,14 @@ class Profile(SocialModel):
         """Returns the SameUser object where the user is involved"""
         return SameUser.objects.get(Q(main_user=self.user) | Q(secondary_user=self.user))
 
+    def get_sameuser_main_user_or_self_user(self):
+        """If the user has SameUser object, it returns the main user of SameUser, otherwise returns the current user"""
+        try:
+            sameuser = self.get_sameuser_object()
+            return sameuser.main_user
+        except SameUser.DoesNotExist:
+            return self.user
+
     def has_shared_email(self):
         """Check if the user account associated with this profile
            has other accounts with the same email address"""
@@ -106,6 +115,23 @@ class Profile(SocialModel):
             return True
         except SameUser.DoesNotExist:
             return False
+
+    def get_email_for_delivery(self):
+        """Returns a string with the user email address taking into account SameUser objects. This is the method that
+        should for delivery when sending emails.
+
+        Check users against SameUser table (see https://github.com/MTG/freesound/pull/763). In our process of
+        removing duplicated email addresses from our users table we set up a temporary table to store the original
+        email addresses of users whose email was automatically changed to prevent duplicates. Here we make sure
+        that emails are sent to the user with original address and not the one we edited to prevent duplicates."""
+        return self.get_sameuser_main_user_or_self_user().email
+
+    def email_is_valid(self):
+        """Returns True if the email address of the user is a valid address (did not bounce in the past). Takes into
+        account SameUser objects (see docs of self.get_user_email)."""
+        user = self.get_sameuser_main_user_or_self_user()
+        return user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() == 0
+
     @property
     def get_total_downloads(self):
         # We consider each pack download as a single download
@@ -440,3 +466,29 @@ class OldUsername(models.Model):
 
     def __unicode__(self):
         return '{0} > {1}'.format(self.username, self.user.username)
+
+
+class EmailBounce(models.Model):
+    user = models.ForeignKey(User, related_name="email_bounces")
+
+    # Bounce types
+    UNDETERMINED = 'UD'
+    PERMANENT = 'PE'
+    TRANSIENT = 'TR'
+    TYPE_CHOICES = (
+        (UNDETERMINED, 'Undetermined'),
+        (PERMANENT, 'Permanent'),
+        (TRANSIENT, 'Transient')
+    )
+    type = models.CharField(db_index=True, max_length=2, choices=TYPE_CHOICES, default=UNDETERMINED)
+    type_map = {t[1]: t[0] for t in TYPE_CHOICES}
+
+    timestamp = models.DateTimeField(default=now)
+
+    class Meta:
+        ordering = ("-timestamp",)
+        unique_together = ('user', 'type', 'timestamp')
+
+    @classmethod
+    def type_from_string(cls, value):
+        return cls.type_map.get(value, cls.UNDETERMINED)

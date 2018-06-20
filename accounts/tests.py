@@ -27,9 +27,10 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
+from django.core.management import call_command
 from django.core import mail
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername
+from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername, EmailBounce
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField, RegistrationForm
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay, BulkUploadProgress
@@ -39,13 +40,14 @@ from tags.models import Tag
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
 from tickets.models import Ticket
+from utils.mail import transform_unique_email, send_mail
 import accounts.models
 import mock
 import os
 import tempfile
 import shutil
 import datetime
-from utils.mail import transform_unique_email, replace_email_to
+import json
 
 
 class SimpleUserTest(TestCase):
@@ -813,7 +815,6 @@ class UserDelete(TestCase):
         self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, False)
 
 
-
 class UserEmailsUniqueTestCase(TestCase):
 
     def setUp(self):
@@ -941,41 +942,21 @@ class UserEmailsUniqueTestCase(TestCase):
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-    def test_replace_when_sending_email(self):
+    def test_user_profile_get_email(self):
+        # Here we test that when we send an email to users that have SameUser objects we chose the right email address
 
-        @replace_email_to
-        def fake_send_email(subject, email_body, email_from, email_to, reply_to=None):
-            return email_to
+        # user_a has no SameUser objects, emails should be sent directly to his address
+        self.assertEquals(self.user_a.profile.get_email_for_delivery(), self.user_a.email)
 
-        # Check that emails sent to user_a are sent to his address
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_a.email])
-        self.assertEquals(used_email_to[0], self.user_a.email)
+        # user_b has SameUser with user_c, but user_b is main user so emails should be sent directly to his address
+        self.assertEquals(self.user_b.profile.get_email_for_delivery(), self.user_b.email)
 
-        # For user b, email_to also remains the same
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_b.email])
-        self.assertEquals(used_email_to[0], self.user_b.email)
+        # user_c should get emails at user_b email address (user_b is main user)
+        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_b.email)
 
-        # For user c, email_to changes according to SameUser table
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
-        self.assertEquals(used_email_to[0], self.user_b.email)  # email_to becomes user_b.email
-
-        # If we remove SameUser entries, email of user_c is not replaced anymore
+        # If we remove SameUser entries, email of user_c is sent directly to his address
         SameUser.objects.all().delete()
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
-        self.assertEquals(used_email_to[0], self.user_c.email)
-
-        # Test with email_to not being a list or tuple
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=self.user_a.email)
-        self.assertEquals(used_email_to[0], self.user_a.email)
-
-        # Test with email_to being empty ''
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to='')
-        self.assertEquals(used_email_to, True)
-
-        # Test with email_to being None, should return admin emails
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=None)
-        admin_emails = [admin[1] for admin in settings.SUPPORT]
-        self.assertEquals(used_email_to[0], admin_emails[0])
+        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_c.email)
 
 
 class PasswordReset(TestCase):
@@ -1358,6 +1339,62 @@ class AboutFieldVisibilityTests(TestCase):
         self.client.login(username='admin', password='testpass')
         self._check_visibility('spammer', True)
         self._check_visible()
+
+
+class EmailBounceTests(TestCase):
+    @staticmethod
+    def _send_mail(user_to):
+        return send_mail('Test subject', 'Test body', user_to=user_to)
+
+    @mock.patch('utils.mail.get_connection')
+    def test_send_mail(self, get_connection):
+        user = User.objects.create_user('user', email='user@freesound.org')
+        self.assertTrue(self._send_mail(user))
+
+        email_bounce = EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        self.assertFalse(user.profile.email_is_valid())
+        self.assertFalse(self._send_mail(user))
+
+        email_bounce.delete()
+        self.assertTrue(user.profile.email_is_valid())
+        self.assertTrue(self._send_mail(user))
+
+    def test_unactivated_user_deleted(self):
+        pass  # TODO
+
+    def test_request_email_change(self):
+        pass  # TODO
+
+    @override_settings(AWS_ACCESS_KEY_ID='dummy_id')
+    @override_settings(AWS_SECRET_ACCESS_KEY='dummy_secret')
+    @override_settings(AWS_SQS_QUEUE_URL='dummy_url')
+    @mock.patch('accounts.management.commands.process_email_bounces.client')
+    def test_populate_bounce(self, client):
+        message_body = json.dumps({
+            "Type": "Notification",
+            "Message": json.dumps({
+                "notificationType": "Bounce",
+                "bounce": {
+                    "bounceType": "Permanent",
+                    "bounceSubType": "Suppressed",
+                    "bouncedRecipients": [{"emailAddress": "user@freesound.org"}],
+                    "timestamp": "2018-05-20T13:54:37.821Z"
+                }
+            })
+        })
+
+        client_obj = mock.MagicMock()
+        client_obj.receive_message.return_value = {u'Messages': [{u'Body': message_body, u'ReceiptHandle': 'dummy'}]}
+        client.return_value = client_obj
+
+        def _delete_message(**kwargs):
+            client_obj.receive_message.return_value = {u'Messages': []}
+        client_obj.delete_message.side_effect = _delete_message
+
+        user = User.objects.create_user('user', email='user@freesound.org')
+        call_command('process_email_bounces')
+
+        self.assertFalse(user.profile.email_is_valid())
 
 
 class BulkDescribe(TestCase):

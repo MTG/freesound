@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 u'Thanks for contributing to Freesound',
                 'donations/email_donation_reminder.txt', {
                     'user': user,
-                    }, None, user.email)
+                    }, user_to=user)
             user.profile.last_donation_email_sent = datetime.datetime.now()
             user.profile.donations_reminder_email_sent = True
             user.profile.save()
@@ -136,14 +136,19 @@ class Command(BaseCommand):
                         send_email = True
 
                 if send_email:
-                    send_mail_template(
+                    res = send_mail_template(
                         u'Have you considered making a donation?',
                         'donations/email_donation_request.txt', {
                             'user': user,
-                            }, None, user.email)
-                    user.profile.last_donation_email_sent = datetime.datetime.now()
-                    user.profile.save()
-                    logger.info("Sent donation email (%s)" % json.dumps(
-                        {'user_id': user.id, 'donation_email_type': 'request'}))
+                            }, user_to=user)
+
+                    if res:
+                        user.profile.last_donation_email_sent = datetime.datetime.now()
+                        user.profile.save()
+                        logger.info("Sent donation email (%s)" % json.dumps(
+                            {'user_id': user.id, 'donation_email_type': 'request'}))
+                    else:
+                        logger.info("Didn't send donation email due to email address being invalid (%s)" % json.dumps(
+                            {'user_id': user.id, 'donation_email_type': 'request'}))
 
         logger.info("Finished sending donation emails")

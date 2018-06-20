@@ -29,7 +29,6 @@ from django.urls import reverse
 from bookmarks.forms import BookmarkForm
 from bookmarks.models import *
 from sounds.models import Sound
-from utils.functional import combine_dicts
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404
 

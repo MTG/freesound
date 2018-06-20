@@ -53,7 +53,6 @@ from tickets.models import Ticket, TicketComment
 from utils.username import redirect_if_old_username_or_404
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate

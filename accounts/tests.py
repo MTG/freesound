@@ -815,7 +815,6 @@ class UserDelete(TestCase):
         self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, False)
 
 
-
 class UserEmailsUniqueTestCase(TestCase):
 
     def setUp(self):
@@ -943,41 +942,21 @@ class UserEmailsUniqueTestCase(TestCase):
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-    def test_replace_when_sending_email(self):
-        return True  # TODO: implement new way of testing this
+    def test_user_profile_get_email(self):
+        # Here we test that when we send an email to users that have SameUser objects we chose the right email address
 
-        def fake_send_email(subject, email_body, email_from, email_to, reply_to=None):
-            return email_to
+        # user_a has no SameUser objects, emails should be sent directly to his address
+        self.assertEquals(self.user_a.profile.get_email_for_delivery(), self.user_a.email)
 
-        # Check that emails sent to user_a are sent to his address
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_a])
-        self.assertEquals(used_email_to[0], self.user_a)
+        # user_b has SameUser with user_c, but user_b is main user so emails should be sent directly to his address
+        self.assertEquals(self.user_b.profile.get_email_for_delivery(), self.user_b.email)
 
-        # For user b, email_to also remains the same
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_b])
-        self.assertEquals(used_email_to[0], self.user_b)
+        # user_c should get emails at user_b email address (user_b is main user)
+        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_b.email)
 
-        # For user c, email_to changes according to SameUser table
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c])
-        self.assertEquals(used_email_to[0], self.user_b)  # email_to becomes user_b
-
-        # If we remove SameUser entries, email of user_c is not replaced anymore
+        # If we remove SameUser entries, email of user_c is sent directly to his address
         SameUser.objects.all().delete()
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c])
-        self.assertEquals(used_email_to[0], self.user_c)
-
-        # Test with email_to not being a list or tuple
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=self.user_a)
-        self.assertEquals(used_email_to[0], self.user_a)
-
-        # Test with email_to being empty ''
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to='')
-        self.assertEquals(used_email_to, True)
-
-        # Test with email_to being None, should return admin emails
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=None)
-        admin_emails = [admin[1] for admin in settings.SUPPORT]
-        self.assertEquals(used_email_to[0], admin_emails[0])
+        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_c.email)
 
 
 class PasswordReset(TestCase):

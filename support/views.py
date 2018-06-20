@@ -116,7 +116,7 @@ def contact(request):
             request_sent = True
     else:
         if user:
-            form = ContactForm(initial={"your_email": user.email})
+            form = ContactForm(initial={"your_email": user.profile.get_email_for_delivery()})
         else:
             form = ContactForm()
     tvars = {'form': form, 'request_sent': request_sent}

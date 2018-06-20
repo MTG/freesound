@@ -99,6 +99,14 @@ class Profile(SocialModel):
         """Returns the SameUser object where the user is involved"""
         return SameUser.objects.get(Q(main_user=self.user) | Q(secondary_user=self.user))
 
+    def get_sameuser_main_user_or_self_user(self):
+        """If the user has SameUser object, it returns the main user of SameUser, otherwise returns the current user"""
+        try:
+            sameuser = self.get_sameuser_object()
+            return sameuser.main_user
+        except SameUser.DoesNotExist:
+            return self.user
+
     def has_shared_email(self):
         """Check if the user account associated with this profile
            has other accounts with the same email address"""
@@ -107,6 +115,23 @@ class Profile(SocialModel):
             return True
         except SameUser.DoesNotExist:
             return False
+
+    def get_email_for_delivery(self):
+        """Returns a string with the user email address taking into account SameUser objects. This is the method that
+        should for delivery when sending emails.
+
+        Check users against SameUser table (see https://github.com/MTG/freesound/pull/763). In our process of
+        removing duplicated email addresses from our users table we set up a temporary table to store the original
+        email addresses of users whose email was automatically changed to prevent duplicates. Here we make sure
+        that emails are sent to the user with original address and not the one we edited to prevent duplicates."""
+        return self.get_sameuser_main_user_or_self_user().email
+
+    def email_is_valid(self):
+        """Returns True if the email address of the user is a valid address (did not bounce in the past). Takes into
+        account SameUser objects (see docs of self.get_user_email)."""
+        user = self.get_sameuser_main_user_or_self_user()
+        return user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() == 0
+
     @property
     def get_total_downloads(self):
         # We consider each pack download as a single download
@@ -343,9 +368,6 @@ class Profile(SocialModel):
             last_sound = lasts_sound_geotagged[0]
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
-
-    def email_is_valid(self):
-        return self.user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() == 0
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

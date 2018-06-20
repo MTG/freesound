@@ -54,12 +54,10 @@ class Command(BaseCommand):
 
         logger.info("Sending stream updates notification for %i potential users" % len(users_enabled_notifications))
 
-        email_tuples = ()
         n_emails_sent = 0
         for profile in users_enabled_notifications:
 
             username = profile.user.username
-            email_to = profile.user.email
             profile.last_attempt_of_sending_stream_email = datetime.datetime.now()
 
             # Variable names use the terminology "week" because settings.NOTIFICATION_TIMEDELTA_PERIOD defaults to a
@@ -92,15 +90,15 @@ class Command(BaseCommand):
                 continue
 
             text_content = render_mail_template('follow/email_stream.txt', locals())
-            email_tuples += (subject_str, text_content, settings.DEFAULT_FROM_EMAIL, [email_to]),
 
             # Send email
             try:
                 send_mail(subject_str, text_content, user_to=user)
             except Exception as e:
-                logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to), str(e)))
                 # Do not send the email and do not update the last email sent field in the profile
                 profile.save()  # Save last_attempt_of_sending_stream_email
+                logger.info("An error occurred sending notification stream email to %s (%s)"
+                            % (profile.get_email_for_delivery(), str(e)))
                 continue
             n_emails_sent += 1
 

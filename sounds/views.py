@@ -249,7 +249,7 @@ def sound(request, username, sound_id):
                                                user_to=sound.user)
                     except Exception as e:
                         # If the email sending fails, ignore...
-                        logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.email, e))
+                        logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.username, e))
 
                     return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -778,7 +778,7 @@ def flag(request, username, sound_id):
             flag.save()
 
             if user:
-                user_email = user.email
+                user_email = user.profile.get_email_for_delivery()
             else:
                 user_email = flag_form.cleaned_data["email"]
 

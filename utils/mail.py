@@ -62,18 +62,10 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         user_to = _ensure_list(user_to)
         email_to = []
         for user in user_to:
-            # Check users against SameUser table (see https://github.com/MTG/freesound/pull/763). In our process of
-            # removing duplicated email addresses from our users table we set up a temporary table to store the original
-            # email addresses of users whose email was automatically changed to prevent duplicates. Here we make sure
-            # that emails are sent to the user with original address and not the one we edited to prevent duplicates.
-            try:
-                sameuser = user.profile.get_sameuser_object()
-                user = sameuser.main_user
-            except ObjectDoesNotExist:
-                pass
 
-            if user.profile.email_is_valid():  # check if user's email is valid for delivery
-                email_to.append(user.email)
+            # check if user's email is valid for delivery and add the correct email address to the list og email_to
+            if user.profile.email_is_valid():
+                email_to.append(user.profile.get_email_for_delivery())
 
             if len(email_to) == 0:  # all users have invalid emails
                 return False

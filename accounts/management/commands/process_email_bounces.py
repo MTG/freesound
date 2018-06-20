@@ -43,7 +43,7 @@ class Command(BaseCommand):
     # FIFO manner.
 
     def handle(self, *args, **options):
-        if not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
+        if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
             logger_web.error('AWS credentials are not configured')
             return
 
@@ -57,7 +57,8 @@ class Command(BaseCommand):
             logger_web.warn('Invalid value for number messages to process per call: {}, using 1'.format(messages_per_call))
             messages_per_call = 1
 
-        sqs = client('sqs', aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        sqs = client('sqs', region_name=settings.AWS_REGION,
+                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                      aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
         total_messages = 0

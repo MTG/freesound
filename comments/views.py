@@ -29,7 +29,6 @@ from django.shortcuts import get_object_or_404, render_to_response, render
 from django.template.context import RequestContext
 from django.db import transaction
 from sounds.models import Sound
-from utils.functional import combine_dicts
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404
 
@@ -45,6 +44,7 @@ def delete(request, comment_id):
         if not comment.sound or comment.sound.user != request.user:
             raise PermissionDenied
     comment.delete()
+    comment.sound.invalidate_template_caches()
     messages.success(request, 'Comment deleted.')
     next = request.GET.get("next")
     page = request.GET.get("page")

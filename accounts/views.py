@@ -25,6 +25,8 @@ import errno
 from itertools import chain
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
+import uuid
+import gearman
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -48,13 +50,13 @@ from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, \
     EmailBounce
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory, PackDownload, PackDownloadSound
+from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory, BulkUploadProgress, PackDownload, PackDownloadSound
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
 from utils.cache import invalidate_template_cache
@@ -298,9 +300,11 @@ def home(request):
     following, followers, following_tags, following_count, followers_count, following_tags_count \
         = follow_utils.get_vars_for_home_view(user)
 
+    current_bulkdescribe = BulkUploadProgress.objects.filter(user=user).exclude(progress_type="C")
     tvars = {
         'home': True,
         'latest_sounds': latest_sounds,
+        'current_bulkdescribe': current_bulkdescribe,
         'unprocessed_sounds': unprocessed_sounds,
         'unmoderated_sounds': unmoderated_sounds,
         'unmoderated_sounds_count': unmoderated_sounds_count,
@@ -452,8 +456,28 @@ def describe(request):
     file_structure.name = ''
 
     if request.method == 'POST':
-        form = FileChoiceForm(files, request.POST)
-        if form.is_valid():
+        form = FileChoiceForm(files, request.POST, prefix='sound')
+        csv_form = BulkDescribeForm(request.POST, request.FILES, prefix='bulk')
+        if csv_form.is_valid():
+            directory = os.path.join(settings.CSV_PATH, str(request.user.id))
+            try:
+                os.mkdir(directory)
+            except:
+                pass
+
+            extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
+            path = os.path.join(directory, str(uuid.uuid4()) + '.%s' % extension)
+            destination = open(path, 'wb')
+
+            f = csv_form.cleaned_data['csv_file']
+            for chunk in f.chunks():
+                destination.write(chunk)
+
+            bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path, original_csv_filename=f.name)
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("validate_bulk_describe_csv", str(bulk.id), wait_until_complete=False, background=True)
+            return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
+        elif form.is_valid():
             if "delete" in request.POST:
                 filenames = [files[x].name for x in form.cleaned_data["files"]]
                 tvars = {'form': form, 'filenames': filenames}
@@ -491,8 +515,9 @@ def describe(request):
                 tvars = {'form': form, 'file_structure': file_structure}
                 return render(request, 'accounts/describe.html', tvars)
     else:
-        form = FileChoiceForm(files)
-    tvars = {'form': form, 'file_structure': file_structure}
+        csv_form = BulkDescribeForm(prefix='bulk')
+        form = FileChoiceForm(files, prefix='sound')
+    tvars = {'form': form, 'file_structure': file_structure, 'n_files': len(files), 'csv_form': csv_form}
     return render(request, 'accounts/describe.html', tvars)
 
 
@@ -704,7 +729,7 @@ def attribution(request):
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user_id=user.id)
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
     page = paginator["page"]
     sound_ids = [d.sound_id for d in page]
     sounds = Sound.objects.ordered_ids(sound_ids)
@@ -719,7 +744,7 @@ def downloaded_sounds(request, username):
 def downloaded_packs(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = PackDownload.objects.filter(user=user.id)
-    paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
+    paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
     packs = Pack.objects.ordered_ids(pack_ids, select_related="user")
@@ -835,13 +860,11 @@ def account(request, username):
     else:
         num_sounds_pending_count = None
 
-    # show_about = ((request.user == user)  # user is looking at own page
-    #               or request.user.is_superuser  # admins should always see about fields
-    #               or user.is_superuser  # no reason to hide admin's about fields
-    #               or user.profile.get_total_downloads > 0  # user has downloads
-    #               or user.profile.num_sounds > 0)  # user has uploads
-
-    show_about = True  # temporary fix until get_total_downloads is fixed
+    show_about = ((request.user == user)  # user is looking at own page
+                  or request.user.is_superuser  # admins should always see about fields
+                  or user.is_superuser  # no reason to hide admin's about fields
+                  or user.profile.get_total_downloads > 0  # user has downloads
+                  or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
         'home': False,
@@ -951,6 +974,56 @@ def upload(request, no_flash=False):
         'no_flash': no_flash,
     }
     return render(request, 'accounts/upload.html', tvars)
+
+
+@login_required
+def bulk_describe(request, bulk_id):
+    if not request.user.profile.can_do_bulk_upload():
+        messages.add_message(request, messages.INFO, "Your user does not have permission to use the bulk describe "
+                                                     "feature. You must upload at least %i sounds before being able"
+                                                     "to use that feature." % settings.BULK_UPLOAD_MIN_SOUNDS)
+        return HttpResponseRedirect(reverse('accounts-home'))
+
+    bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
+
+    if request.GET.get('action', False) == 'start' and bulk.progress_type == 'V':
+        # If action is "start" and CSV is validated, mark BulkUploadProgress as "stared" and start describing sounds
+        bulk.progress_type = 'S'
+        bulk.save()
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        gm_client.submit_job("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
+
+    elif request.GET.get('action', False) == 'delete' and bulk.progress_type in ['N', 'V']:
+        # If action is "delete", delete BulkUploadProgress object and go back to describe page
+        bulk.delete()
+        return HttpResponseRedirect(reverse('accounts-describe'))
+
+    elif request.GET.get('action', False) == 'close':
+        # If action is "close", set the BulkUploadProgress object to closed state and redirect to home
+        bulk.progress_type = 'C'
+        bulk.save()
+        return HttpResponseRedirect(reverse('accounts-home'))
+
+    # Get progress info to be display if sound descirption process has started
+    progress_info = bulk.get_description_progress_info()
+
+    # Auto-reload if in "not yet validated" or in "started" state
+    auto_reload_page = bulk.progress_type == 'N' or bulk.progress_type == 'S'
+
+    if bulk.progress_type == 'F' and progress_info['progress_percentage'] < 100:
+        # If the description process has finished but progress is still not 100 (some sounds are still processing),
+        # then do the auto-reload
+        auto_reload_page = True
+
+    tvars = {
+        'bulk': bulk,
+        'lines_validated_ok': bulk.validation_output['lines_ok'] if bulk.validation_output else [],
+        'lines_failed_validation': bulk.validation_output['lines_with_errors'] if bulk.validation_output else [],
+        'global_errors': bulk.validation_output['global_errors'] if bulk.validation_output else [],
+        'auto_reload_page': auto_reload_page,
+        'progress_info': progress_info,
+    }
+    return render(request, 'accounts/bulk_describe.html', tvars)
 
 
 @login_required
@@ -1082,22 +1155,22 @@ def flag_user(request, username=None):
         object_id = request.POST["object_id"]
         if object_id:
             if request.POST["flag_type"] == "PM":
-                flagged_object = Message.objects.get(id = object_id)
+                flagged_object = Message.objects.get(id=object_id)
             elif request.POST["flag_type"] == "FP":
-                flagged_object = Post.objects.get(id = object_id)
+                flagged_object = Post.objects.get(id=object_id)
             elif request.POST["flag_type"] == "SC":
-                flagged_object = Comment.objects.get(id = object_id)
+                flagged_object = Comment.objects.get(id=object_id)
             else:
-                return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
+                return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
         else:
-            return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
+            return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
 
         previous_reports_count = UserFlag.objects.filter(user=flagged_user)\
             .values('reporting_user').distinct().count()
         uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
         uflag.save()
 
-        reports_count = UserFlag.objects.filter(user = flagged_user)\
+        reports_count = UserFlag.objects.filter(user=flagged_user)\
             .values('reporting_user').distinct().count()
         if reports_count != previous_reports_count and \
                 (reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or
@@ -1128,8 +1201,12 @@ def flag_user(request, username=None):
             else:
                 template_to_use = 'accounts/report_blocked_spammer_admins.txt'
 
+            tvars = {'flagged_user': flagged_user,
+                     'urls': urls,
+                     'user_url': user_url,
+                     'clear_url': clear_url}
             send_mail_template_to_support(u'Spam/offensive report for user ' + flagged_user.username, template_to_use,
-                                          locals())
+                                          tvars)
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')

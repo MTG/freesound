@@ -286,11 +286,11 @@ class SolrQuery(object):
         self.params['group.sort'] = group_sort
         self.params['group.sort.ingroup']  = group_sort_ingroup
         self.params['group.format'] = group_format
-        self.params['group.main'] = group_main        
+        self.params['group.main'] = group_main
         self.params['group.ngroups'] = group_num_groups
         self.params['group.truncate'] = group_truncate
         self.params['group.cache.percent'] = group_cache_percent
-        
+
 
 
 class BaseSolrAddEncoder(object):
@@ -426,7 +426,7 @@ class Solr(object):
 
         if response.status != 200:
             raise SolrException, response.reason
-        
+
         return response
 
     def select(self, query_string, raw=False):
@@ -495,7 +495,7 @@ class SolrResponseInterpreter(object):
             self.num_rows = len(self.docs)
             self.num_found = response["response"]["numFound"]
             self.non_grouped_number_of_matches = -1
-        
+
         self.q_time = response["responseHeader"]["QTime"]
         try:
             self.facets = response["facet_counts"]["facet_fields"]
@@ -508,7 +508,7 @@ class SolrResponseInterpreter(object):
         """
         for facet, fields in self.facets.items():
             self.facets[facet] = [(fields[index], fields[index+1]) for index in range(0, len(fields), 2)]
-        
+
         try:
             self.highlighting = response["highlighting"]
         except KeyError:
@@ -575,15 +575,15 @@ class SolrResponseInterpreterPaginator(object):
         self.page_range = range(1, self.num_pages + 1)
 
     def page(self, page_num):
-        object_list = self.interpreter.docs
         has_next = page_num < self.num_pages
         has_previous = page_num > 1 and page_num <= self.num_pages
-        has_other_pages = has_next or has_previous
-        next_page_number = page_num + 1
-        previous_page_number = page_num - 1
-        #start_index = self.interpreter.start
-        #end_index = self.interpreter.start + self.interpreter.num_found
-        return locals()
+        return {'object_list': self.interpreter.docs,
+                'has_next': has_next,
+                'has_previous': has_previous,
+                'has_other_pages': has_next or has_previous,
+                'next_page_number': page_num + 1,
+                'previous_page_number': page_num - 1
+                }
 
 
 if __name__ == "__main__":

@@ -1028,14 +1028,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 sound.save()
 
                 # Invalidate caches
-                invalidate_template_cache("sound_header", sound.id, True)
-                invalidate_template_cache("sound_header", sound.id, False)
-                invalidate_template_cache("sound_footer_top", sound.id)
-                invalidate_template_cache("sound_footer_bottom", sound.id)
-                invalidate_template_cache(
-                    "display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-                invalidate_template_cache(
-                    "display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+                sound.invalidate_template_caches()
 
                 return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id},
                                 status=status.HTTP_200_OK)
@@ -1191,7 +1184,7 @@ class Me(OauthRequiredAPIView):
         if self.user:
             response_data = UserSerializer(self.user, context=self.get_serializer_context()).data
             response_data.update({
-                 'email': self.user.email,
+                 'email': self.user.profile.get_email_for_delivery(),
                  'unique_id': self.user.id,
             })
             return Response(response_data, status=status.HTTP_200_OK)

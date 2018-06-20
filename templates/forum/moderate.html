@@ -1,7 +1,5 @@
 {% extends "forum/_section.html" %}
 
-
-
 {% load smileys %}
 {% load filter_img %}
 
@@ -28,6 +26,11 @@
                 </div>
                 <br>
                 {{post.post.body|replace_img|smileys|safe|linebreaks}}
+
+                {% if post.post.author.profile.signature %}
+                    <div class="signature">{{post.post.author.profile.signature|replace_img|smileys|safe}}</div>
+                {% endif %}
+
             </li>
             <form action="." method="post">{% csrf_token %}
                 {{ post.form.as_p }}

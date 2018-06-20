@@ -4,8 +4,8 @@
         "model": "auth.user", 
         "fields": {
             "username": "--DeletedUser--", 
-            "first_name": "Deleted", 
-            "last_name": "User", 
+            "first_name": "",
+            "last_name": "",
             "is_active": true, 
             "is_superuser": false, 
             "is_staff": false, 

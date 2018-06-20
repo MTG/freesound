@@ -45,4 +45,5 @@ def context_extra(request):
         'new_tickets_count': new_tickets_count,
         'num_pending_sounds': num_pending_sounds,
         'num_messages': num_messages,
+        'recaptcha_public_key': settings.RECAPTCHA_PUBLIC_KEY,
     }

@@ -20,10 +20,15 @@
 
 from django import template
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
 
-@register.simple_tag()
-def google_maps_js():
-    return "//maps.googleapis.com/maps/api/js?v=3&key=%s&sensor=false" % settings.GOOGLE_API_KEY
+@register.inclusion_tag('templatetags/maps_js_scripts.html', takes_context=True)
+def maps_js_scripts(context):
+    request = context['request']
+    return {'use_gmaps': request.GET.get('gmaps', False),
+            'google_maps_key': settings.GOOGLE_API_KEY,
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'media_url': settings.MEDIA_URL}

@@ -1,11 +1,11 @@
 {% extends "sounds/_section.html" %}
-{% load google_maps %}
+{% load maps_js_scripts %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}} - geotag{% endblock title %}
 
 {% block head %}
 {{ block.super }}
-<script type="text/javascript" src="{% google_maps_js %}"></script>
+{% maps_js_scripts %}
 {% endblock head %}
 
 {% block section_content %}
@@ -16,34 +16,6 @@
 </p>
 <div id="map_canvas" style="width: 800px; height: 600px; border: 1px solid black;"></div>
 <script type="text/javascript">
-    var map = new google.maps.Map(
-        document.getElementById('map_canvas'), {
-          center: new google.maps.LatLng({{sound.geotag.lat}}, {{sound.geotag.lon}}),
-          zoom: {{sound.geotag.zoom}},
-          mapTypeId: google.maps.MapTypeId.SATELLITE,
-          scrollwheel: false,
-          streetViewControl: false,
-    });
-    var infowindow = new google.maps.InfoWindow();
-    google.maps.event.addListener(infowindow, 'closeclick', function() {
-        stopAll();
-    });
-
-    var point = new google.maps.LatLng({{sound.geotag.lat}}, {{sound.geotag.lon}});
-    var marker = new google.maps.Marker({'position': point, 'map':map});
-
-    google.maps.event.addListener(marker, 'click', function()
-    {
-        stopAll();
-        ajaxLoad( "{% url "geotags-infowindow" sound.id %}", function(data, responseCode)
-        {
-            infowindow.setContent(data.response);
-            infowindow.open(map, marker);
-            setTimeout(function() {
-                makePlayer('.infowindow_player .player');
-            }, 500);
-        });
-    });
-
+    make_sounds_map('{% url "geotags-for-sound-barray" sound.id %}', 'map_canvas', undefined, undefined, {{sound.geotag.lat}}, {{sound.geotag.lon}}, {{sound.geotag.zoom}});
 </script>
 {% endblock %}

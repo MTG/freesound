@@ -4,10 +4,10 @@
 {% load display_sound %}
 {% load paginator %}
 
-{% block title %}Sound by {{user.username}}{% endblock title %}
+{% block title %}Sound by {{sound_user.username}}{% endblock title %}
 
 {% block section_content %}
-<h1>Sounds by <a href="{% url "account" user.username %}">{{user.username}}</a></h1>
+<h1>Sounds by <a href="{% url "account" sound_user.username %}">{{sound_user.username}}</a></h1>
 
 {% show_paginator paginator page current_page request "sound" %}
 

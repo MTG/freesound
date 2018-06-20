@@ -1,31 +1,27 @@
 {% extends "sounds/_section.html" %}
 
 {% load absurl %}
-{% load google_maps %}
+{% load maps_js_scripts %}
 
 {% block title %}geotags{% endblock title %}
 
 {% block head %}
 {{ block.super }}
-<script type="text/javascript" src="{% google_maps_js %}"></script>
-<script src="{{media_url}}js/markerclustererV3.js" type="text/javascript"></script>
-<script src="{{media_url}}js/maps.js?v={{ last_restart_date }}" type="text/javascript"></script>
-<script src="{{media_url}}js/sounds_location.js?v={{ last_restart_date }}" type="text/javascript"></script>
+
+{% maps_js_scripts %}
 
 <script type="text/javascript">
-    function toggleShareControls(){
-        if ($("#share_controls").css('display') == 'none'){
-            $("#share_controls").show('blind', {}, 500, function() {});
-        }else{
-            $("#share_controls").hide('blind', {}, 500, function() {});
-        }
+    function hideLoadingIndicator(){
+        $("#indicator").hide();
     }
 
-    function toggleIndicator(){
-        if ($("#indicator").css('display') == 'none'){
-            $("#indicator").show('blind', {}, 500, function() {});
+    function toggleEmbed(){
+        if (!$("#embed_controls").is(':visible')){
+            $("#embed_controls").show(100);
+            $("#embed_label").text("Hide embed options");
         }else{
-            $("#indicator").hide('blind', {}, 500, function() {});
+            $("#embed_controls").hide(100);
+            $("#embed_label").text("Embed this map");
         }
     }
 
@@ -35,8 +31,8 @@
 
 {% block section_content %}
 
-{% if for_user %}
-    <h1>Geotags for <a href="{% url "account" for_user.username %}">{{for_user.username}}</a></h1>
+{% if username %}
+    <h1>Geotags for <a href="{% url "account" username %}">{{ username }}</a></h1>
 {% else %}
     {% if tag %}
         <h1>Geotags tagged with <a href="{% url "tags" tag %}">{{tag}}</a></h1>
@@ -45,129 +41,102 @@
     {% endif %}
 {% endif %}
 
-<div id="map_canvas" style="width: 910px; height: 600px; border: 1px solid black;"></div>
-<div id="indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></div>
-{% if for_user or tag %}
+<div id="map_canvas" style="width: 942px; height: 600px; border: 1px solid black;"></div>
+
+<div id="indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif" style="float:right;margin-top:3px;"></div>
+{% if username or tag %}
     <p>You can also view <a href="{% url "geotags" %}">all geotags</a></p>
 {% endif %}
 
-
-    <p><span id="share_control_link"><br><a onClick = "toggleShareControls()">Share this map</a><span></p>
-    <div id="share_controls" style="display:none">
-
-        <table>
-        <tr>
-        <td width="320px">
-            Embed this map:<br>
-            <textarea id="embed_code" rows="4" cols="40">
-            </textarea>
-
-        </td>
-        <td>
-            Link:<br>
-            <textarea id="link_code" rows="4" cols="40">
-            </textarea>
-
-        </td>
-        </tr>
-        </table>
-
-    </div>
+<p style="margin-top:20px;">
+    <a id="embed_label" href="javascript:void(0);" onclick="toggleEmbed();">Embed this map</a>
+</p>
+<div id="embed_controls" style="display:none;">
+    <p>
+        Embed width: <input type="number" min="100" step="1" value="900" id="embed_width" onchange="changeEmbedWidthHeightCluster();" style="width: 50px;"/>&nbsp;&nbsp;
+        Embed height: <input type="number" min="100" step="1" value="600" id="embed_height" onchange="changeEmbedWidthHeightCluster();" style="width: 50px;"/>&nbsp;&nbsp;
+        Show clusters in embed: <input type="checkbox" checked id="embed_cluster" onchange="changeEmbedWidthHeightCluster();" />
+    </p>
+    <p>
+        <textarea id="embed_code" rows="4" cols="40" readonly style="width:100%;height:45px;"></textarea>
+    </p>
+</div>
 
 <script type="text/javascript">
+    var url;
+    var center_lat;
+    var center_lon;
+    var zoom;
 
-    var width = 910;
-    var height = 600;
-    var map = new google.maps.Map(
-        document.getElementById('map_canvas'), {
-          center: new google.maps.LatLng(24, 22),
-          zoom: 2,
-          mapTypeId: google.maps.MapTypeId.SATELLITE,
-          scrollwheel: false,
-          streetViewControl: false,
-    });
-    var infowindow = new google.maps.InfoWindow();
-    google.maps.event.addListener(infowindow, 'closeclick', function() {
-        stopAll();
-    });
-
-    {% if for_user %}
-        var url = '{% url "geotags-for-user-barray" for_user.username %}';
+    {% if username %}
+        url = '{% url "geotags-for-user-barray" username %}';
     {% else %}
         {% if tag %}
-            var url = '{% url "geotags-barray" tag %}';
+            url = '{% url "geotags-barray" tag %}';
         {% else %}
-            var url = '{% url "geotags-barray" %}';
+            url = '{% url "geotags-barray" %}';
+            center_lat = 24;
+            center_lon = 20;
+            zoom = 2;
+            var box = document.location.hash.slice(5,document.location.hash.length);
+            if (box !== ''){
+                // If box is given, get the geotags only from that box
+                 url = '{% url "geotags-box-barray" %}?box=' + box;
+            }
         {% endif %}
     {% endif %}
-    var bounds = new google.maps.LatLngBounds();
-    var markers = [];
-    
-    getSoundsLocations(url, function(data){
-        $.each(data, function(index, item) {
-            var id = item[0];
-            var lat = item[1];
-            var lon = item[2];
 
-            var point = new google.maps.LatLng(lat, lon);
-            var marker = new google.maps.Marker({'position': point});
+    {% if center_lat and center_lon and zoom %}
+        center_lat = {{ center_lat }};
+        center_lon = {{ center_lon }};
+        zoom = {{ zoom }};
+    {% endif %}
 
-            {% if tag or for_user %}
-                bounds.extend(point);
-            {% endif %}
+    var show_search = true;
+    make_sounds_map(url, 'map_canvas', hideLoadingIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search);
 
-            google.maps.event.addListener(marker, 'click', function()
-            {
-                stopAll();
-                ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
-                {
-                    infowindow.setContent(data.response);
-                    infowindow.open(map, marker);
-                    setTimeout(function() {
-                        makePlayer('.infowindow_player .player');
-                    }, 500);
-                });
-            });
-            markers.push(marker);
-        });
+    var current_lat;
+    var current_lon;
+    var current_zoom;
+    var current_box_bl_la;
+    var current_box_bl_lon;
+    var current_box_tr_lat;
+    var current_box_tr_lon;
 
-        if (!bounds.isEmpty()) map.fitBounds(bounds);
-        var mcOptions = { gridSize: 50, maxZoom: 12, imagePath:'/media/images/js-marker-clusterer/m' };
-        var markerCluster = new MarkerClusterer(map, markers, mcOptions);
+    function updateEmbedCode(_, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon){
+        // Store lat, lon and zoom globally so we can use them later to call updateEmbedCode without accessing map
+        current_lat = lat;
+        current_lon = lon;
+        current_zoom = zoom;
+        current_box_bl_la = box_bl_lat;
+        current_box_bl_lon = box_bl_lon;
+        current_box_tr_lat = box_tr_lat;
+        current_box_tr_lon = box_tr_lon;
 
-        // Hide loading indicator
-        toggleIndicator();
+        // Generate embed code
+        var box = "#box=" + box_bl_lat + "," + box_bl_lon+"," + box_tr_lat+"," + box_tr_lon;
+        var width = parseInt($("#embed_width").val(), 10);
+        var height = parseInt($("#embed_height").val(), 10);
+        var cluster = 'on';
+        if (!$('#embed_cluster').is(':checked')) {
+            cluster = 'off';
+        }
+        var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&c=" + cluster + "&w=" + width + "&h=" + height {% if username %}+ "&username={{ username }}"{% endif %}{% if tag %}+ "&tag={{ tag }}"{% endif %} + box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
+        var embed_code_element = $("#embed_code");
+        embed_code_element.text(embed_code);
 
-    });
-
-    //google.maps.event.addListener( map, 'zoomend',   function() {updateEmbedCode(map)} );
-    //google.maps.event.addListener( map, 'moveend', function() {updateEmbedCode(map)});
-    google.maps.event.addListener( map, 'bounds_changed', function() {updateEmbedCode(map)});
-
-
-    function updateEmbedCode(map){
-            var bounds = map.getBounds()
-            var box = "#box="+bounds.getSouthWest().lat()+","+
-            bounds.getSouthWest().lng()+","+
-            bounds.getNorthEast().lat()+","+
-            bounds.getNorthEast().lng()
-
-            var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
-            box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>"
-
-            var link_code = "{% absurl 'geotags-box' %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
-            box
-
-            if (map.getZoom() > 2){
-                $("#embed_code").text(embed_code)
-                $("#link_code").text(link_code)
-                $("#share_control_link").text("")
-                $("#share_control_link").append('<br><a onClick = "toggleShareControls()">Share this map</a>')
-            }else{
-                $("#embed_code").text("")
-                $("#link_code").text("")
-                $("#share_control_link").text("")
-            }
+        // Update page URL so it can directly be used to share the map
+        var new_url = window.location.href;
+        new_url = updateQueryStringParameter(new_url, 'c_lat', lat);
+        new_url = updateQueryStringParameter(new_url, 'c_lon', lon);
+        new_url = updateQueryStringParameter(new_url, 'z', zoom);
+        window.history.replaceState( {} , document.title, new_url );
 	}
+
+	function changeEmbedWidthHeightCluster(){
+        updateEmbedCode(undefined, current_lat, current_lon, current_zoom, current_box_bl_la, current_box_bl_lon, current_box_tr_lat, current_box_tr_lon);
+    }
+
 </script>
+
 {% endblock %}

@@ -99,6 +99,14 @@ class Profile(SocialModel):
         """Returns the SameUser object where the user is involved"""
         return SameUser.objects.get(Q(main_user=self.user) | Q(secondary_user=self.user))
 
+    def get_sameuser_main_user_or_self_user(self):
+        """If the user has SameUser object, it returns the main user of SameUser, otherwise returns the current user"""
+        try:
+            sameuser = self.get_sameuser_object()
+            return sameuser.main_user
+        except SameUser.DoesNotExist:
+            return self.user
+
     def has_shared_email(self):
         """Check if the user account associated with this profile
            has other accounts with the same email address"""
@@ -107,6 +115,23 @@ class Profile(SocialModel):
             return True
         except SameUser.DoesNotExist:
             return False
+
+    def get_email_for_delivery(self):
+        """Returns a string with the user email address taking into account SameUser objects. This is the method that
+        should for delivery when sending emails.
+
+        Check users against SameUser table (see https://github.com/MTG/freesound/pull/763). In our process of
+        removing duplicated email addresses from our users table we set up a temporary table to store the original
+        email addresses of users whose email was automatically changed to prevent duplicates. Here we make sure
+        that emails are sent to the user with original address and not the one we edited to prevent duplicates."""
+        return self.get_sameuser_main_user_or_self_user().email
+
+    def email_is_valid(self):
+        """Returns True if the email address of the user is a valid address (did not bounce in the past). Takes into
+        account SameUser objects (see docs of self.get_user_email)."""
+        user = self.get_sameuser_main_user_or_self_user()
+        return user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() == 0
+
     @property
     def get_total_downloads(self):
         # We consider each pack download as a single download
@@ -153,7 +178,6 @@ class Profile(SocialModel):
                 email_type=email_type).exists()
         return email_type.send_by_default != invert_default
 
-
     def get_enabled_email_types(self):
         # Get list of all enabled email types for this user
         all_emails = EmailPreferenceType.objects
@@ -174,28 +198,24 @@ class Profile(SocialModel):
         stream_emails = EmailPreferenceType.objects.get(name='stream_emails')
         # First get current value of stream_email to know if
         # profile.last_stream_email_sent must be initialized
-        had_enabled_stream_emails = self.user.email_settings\
-                .filter(email_type=stream_emails).exists()
+        had_enabled_stream_emails = self.user.email_settings.filter(email_type=stream_emails).exists()
 
         all_emails = EmailPreferenceType.objects
 
         # If an email_type is not enabled and default value is True then must
         # be on UserEmailSetting
-        disabled = all_emails.filter(send_by_default=True)\
-            .exclude(id__in=email_type_ids)
+        disabled = all_emails.filter(send_by_default=True).exclude(id__in=email_type_ids)
 
         # If an email_type is enabled and default value is False then must
         # be on UserEmailSetting
-        enabled = all_emails.filter(send_by_default=False,
-                id__in=email_type_ids)
+        enabled = all_emails.filter(send_by_default=False, id__in=email_type_ids)
 
         all_emails = list(enabled) + list(disabled)
 
         # Recreate email settings
         self.user.email_settings.all().delete()
         for i in all_emails:
-            UserEmailSetting.objects.create(user=self.user,
-                    email_type=i)
+            UserEmailSetting.objects.create(user=self.user, email_type=i)
 
         enabled_stream_emails = enabled.filter(id=stream_emails.id).exists()
         # If is enabling stream emails, set last_stream_email_sent to now
@@ -262,6 +282,10 @@ class Profile(SocialModel):
 
         return True, ""
 
+    def can_do_bulk_upload(self):
+        # Bulk uploads are allowed if the user has uploaded more than N sounds or if the user is whitelisted
+        return self.num_sounds >= settings.BULK_UPLOAD_MIN_SOUNDS or self.is_whitelisted
+
     def is_blocked_for_spam_reports(self):
         reports_count = UserFlag.objects.filter(user__username=self.user.username).values('reporting_user').distinct().count()
         if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING or self.user.sounds.all().count() > 0:
@@ -312,8 +336,6 @@ class Profile(SocialModel):
         """
 
         self.user.username = 'deleted_user_%s' % self.user.id
-        self.user.first_name = ''
-        self.user.last_name = ''
         self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
         self.has_avatar = False
         self.is_deleted_user = True
@@ -346,9 +368,6 @@ class Profile(SocialModel):
             last_sound = lasts_sound_geotagged[0]
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
-
-    def email_is_valid(self):
-        return self.user.email_bounces.filter(type__in=EmailBounce.TYPES_INVALID).count() == 0
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

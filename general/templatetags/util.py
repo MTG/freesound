@@ -21,6 +21,7 @@
 from django.template import Library
 import datetime, time
 from django.template.defaultfilters import stringfilter
+from django.forms import CheckboxInput
 
 register = Library()
 

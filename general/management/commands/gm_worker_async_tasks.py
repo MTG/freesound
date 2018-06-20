@@ -29,6 +29,8 @@ from django.core.management.base import BaseCommand
 
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
+from sounds.models import BulkUploadProgress
+from sounds.management.commands import csv_bulk_upload
 from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
     DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 
@@ -58,7 +60,7 @@ class Command(BaseCommand):
                 task_name = str(task_name)
                 t_name = task_name.replace('task_', '');
                 self.write_stdout('Task: %s\n' % t_name)
-                task_func = lambda i:(lambda x, y: getattr(Command, i)(self, x, y))
+                task_func = lambda i: (lambda x, y: getattr(Command, i)(self, x, y))
                 gm_worker.register_task(t_name, task_func(task_name))
 
         self.write_stdout('Starting work\n')
@@ -139,4 +141,34 @@ class Command(BaseCommand):
             self.write_stdout(message)
             logger_async_tasks.info(message)
 
+        return 'false'
+
+    def task_validate_bulk_describe_csv(self, gearman_worker, gearman_job):
+        bulk_upload_progress_object_id = int(gearman_job.data)
+        self.write_stdout("Starting to validate BulkUploadProgress with id: %s" % bulk_upload_progress_object_id)
+        try:
+            bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
+            bulk.validate_csv_file()
+            return 'true'
+        except BulkUploadProgress.DoesNotExist as e:
+            message = "Error in async validate BulkUploadProgress object with id %s (%s)" % \
+                      (bulk_upload_progress_object_id, str(e))
+            self.write_stdout(message)
+        return 'false'
+
+    def task_bulk_describe(self, gearman_worker, gearman_job):
+        bulk_upload_progress_object_id = int(gearman_job.data)
+        self.write_stdout("Starting to describe sounds for BulkUploadProgress with id: %s"
+                          % bulk_upload_progress_object_id)
+        try:
+            bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
+            bulk.describe_sounds()
+            bulk.refresh_from_db()  # Refresh from db as describe_sounds() method will change fields of bulk
+            bulk.progress_type = 'F'  # Set to finished when one
+            bulk.save()
+            return 'true'
+        except BulkUploadProgress.DoesNotExist as e:
+            message = "Error in async describe sounds for BulkUploadProgress object with id %s (%s)" % \
+                      (bulk_upload_progress_object_id, str(e))
+            self.write_stdout(message)
         return 'false'

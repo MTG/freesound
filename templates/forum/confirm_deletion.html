@@ -13,7 +13,10 @@
 
 <div id="confirm_deletion">
 <h4><a href="{% url "forums-post" post.thread.forum.name_slug post.thread.id post.id %}">No</a></h4>
-<h4><a href="{% url "forums-post-delete-confirm" post.id %}">Yes</a></h4>
+    <form method="post" action="{% url "forums-post-delete-confirm" post.id %}" style="margin: 0; padding: 0">
+        {% csrf_token %}
+        <button type="submit">Yes</button>
+    </form>
 </div>
 <br style="clear: both;" />
 <br><br>

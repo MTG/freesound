@@ -25,12 +25,21 @@ import optparse
 import sys
 
 parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")
-parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string", help="output waveform image (default input filename + _w.png)")
-parser.add_option("-s", "--specout", action="store", dest="output_filename_s", type="string", help="output spectrogram image (default input filename + _s.jpg)")
-parser.add_option("-w", "--width", action="store", dest="image_width", type="int", help="image width in pixels (default %default)")
-parser.add_option("-h", "--height", action="store", dest="image_height", type="int", help="image height in pixels (default %default)")
-parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int", help="fft size, power of 2 for increased performance (default %default)")
-parser.add_option("-p", "--profile", action="store_true", dest="profile", help="run profiler and output profiling information")
+parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string",
+                  help="output waveform image (default input filename + _w.png)")
+parser.add_option("-s", "--specout", action="store", dest="output_filename_s", type="string",
+                  help="output spectrogram image (default input filename + _s.jpg)")
+parser.add_option("-w", "--width", action="store", dest="image_width", type="int",
+                  help="image width in pixels (default %default)")
+parser.add_option("-h", "--height", action="store", dest="image_height", type="int",
+                  help="image height in pixels (default %default)")
+parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int",
+                  help="fft size, power of 2 for increased performance (default %default)")
+parser.add_option("-c", "--color_scheme", action="store", dest="color_scheme", type="string",
+                  help="name of the color scheme to use (one of: 'Freesound2' (default), 'FreesoundBeastWhoosh', "
+                       "'Cyberpunk', 'Rainforest')")
+parser.add_option("-p", "--profile", action="store_true", dest="profile",
+                  help="run profiler and output profiling information")
 
 parser.set_defaults(output_filename_w=None, output_filename_s=None, image_width=500, image_height=171, fft_size=2048)
 
@@ -42,18 +51,21 @@ if len(args) == 0:
    
     if len(args) > 1 and (options.output_filename_w != None or options.output_filename_s != None):
         parser.error("when processing multiple files you can't define the output filename!")
- 
+
+
 def progress_callback(percentage):
     sys.stdout.write(str(percentage) + "% ")
     sys.stdout.flush()
    
-    # process all files so the user can use wildcards like *.wav
+
+# process all files so the user can use wildcards like *.wav
 for input_file in args:
     
     output_file_w = options.output_filename_w or input_file + "_w.png"
     output_file_s = options.output_filename_s or input_file + "_s.jpg"
     
-    args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size, progress_callback)
+    args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size,
+            progress_callback, options.color_scheme)
 
     print "processing file %s:\n\t" % input_file,
 

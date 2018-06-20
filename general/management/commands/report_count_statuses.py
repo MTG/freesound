@@ -25,10 +25,11 @@ from collections import defaultdict
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Value
+from django.db.models.functions import Coalesce
 
 from forum.models import Post
-from sounds.models import Sound, Pack
+from sounds.models import Sound, Pack, Download, PackDownload
 
 console_logger = logging.getLogger("console")
 
@@ -84,9 +85,9 @@ class Command(BaseCommand):
                     sound.save()
             report_progress('Checking number of comments in %i sounds... %.2f%%', total, count)
 
-        # Look at number of rartings and average rating
+        # Look at number of ratings and average rating
         for count, sound in enumerate(Sound.objects.all().annotate(
-                real_num_ratings=Count('ratings'), real_avg_rating=Avg('ratings__rating')).iterator()):
+                real_num_ratings=Count('ratings'), real_avg_rating=Coalesce(Avg('ratings__rating'), Value(0))).iterator()):
             real_num_ratings = sound.real_num_ratings
             if real_num_ratings != sound.num_ratings:
                 mismatches_report['Sound.num_ratings'] += 1
@@ -121,7 +122,7 @@ class Command(BaseCommand):
             'real_num_sounds': """
                 SELECT COUNT(U0."id") AS "count"
                 FROM "sounds_sound" U0
-                WHERE U0."pack_id" = ("sounds_pack"."id") 
+                WHERE U0."pack_id" = ("sounds_pack"."id")
                 AND U0."processing_state" = 'OK' AND U0."moderation_state" = 'OK'
             """
         }).iterator()):
@@ -158,7 +159,7 @@ class Command(BaseCommand):
                     'real_num_sounds': """
                         SELECT COUNT(U0."id") AS "count"
                         FROM "sounds_sound" U0
-                        WHERE U0."user_id" = ("auth_user"."id") 
+                        WHERE U0."user_id" = ("auth_user"."id")
                         AND U0."processing_state" = 'OK' AND U0."moderation_state" = 'OK'
                     """
                 }).iterator()):
@@ -184,6 +185,46 @@ class Command(BaseCommand):
                 if not options['no-changes']:
                     user_profile.save()
             report_progress('Checking number of posts in %i users... %.2f%%', total, count)
+
+        if not options['skip-downloads']:
+            total = User.objects.all().count()
+
+            # Look at number of sound downloads for all active users
+            # NOTE: a possible optimization here would be to first get user candidates that have downloaded sounds.
+            # It seems like 1/8th of the users do not have downloaded sounds, so we could probably make this step last
+            # for 1/8th less of the time. Nevertheless, because we only run this very ocasionally and the performance
+            # is not severely impacted when running, we decided that the optimization is probably not worth right now.
+            # Same thing applies to pack downloads below.
+            for count, user in enumerate(User.objects.filter(is_active=True).select_related('profile').
+                                         annotate(real_num_sound_downloads=Count('sound_downloads'),).iterator()):
+                user_profile = user.profile
+
+                real_num_sound_downloads = user.real_num_sound_downloads
+                if real_num_sound_downloads != user_profile.num_sound_downloads:
+                    mismatches_report['User.num_sound_downloads'] += 1
+                    mismatches_object_ids['User.num_sound_downloads'].append(user.id)
+                    user_profile.num_sound_downloads = real_num_sound_downloads
+
+                    if not options['no-changes']:
+                        user_profile.save()
+
+                report_progress('Checking number of downloaded sounds in %i users... %.2f%%', total, count)
+
+            # Look at number of pack downloads for all active users (see note above)
+            for count, user in enumerate(User.objects.filter(is_active=True).select_related('profile').
+                                         annotate(real_num_pack_downloads=Count('pack_downloads'),).iterator()):
+                user_profile = user.profile
+
+                real_num_pack_downloads = user.real_num_pack_downloads
+                if real_num_pack_downloads != user_profile.num_pack_downloads:
+                    mismatches_report['User.num_pack_downloads'] += 1
+                    mismatches_object_ids['User.num_pack_downloads'].append(user.id)
+                    user_profile.num_pack_downloads = real_num_pack_downloads
+
+                    if not options['no-changes']:
+                        user_profile.save()
+
+                report_progress('Checking number of downloaded packs in %i users... %.2f%%', total, count)
 
         console_logger.info("Number of mismatched counts: ")
         console_logger.info('\n' + pprint.pformat(mismatches_report))

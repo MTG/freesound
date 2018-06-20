@@ -29,10 +29,22 @@ module.exports = {
     // enable HMR globally
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
+      title: 'Freesound index',
+      filename: 'index.html',
+      template: path.join(__dirname, '..', 'dev-templates/index.html'),
+      chunks: ['base', 'index'],
+    }),
+    new HtmlWebpackPlugin({
       title: 'Front page',
       filename: 'front.html',
       template: path.join(__dirname, '..', 'dev-templates/front.html'),
       chunks: ['base', 'index', 'front'],
+    }),
+    new HtmlWebpackPlugin({
+      title: 'Search',
+      filename: 'search.html',
+      template: path.join(__dirname, '..', 'dev-templates/search.html'),
+      chunks: ['base', 'index', 'search'],
     }),
   ],
   devServer: {
@@ -40,7 +52,7 @@ module.exports = {
     host: 'localhost',
     port: 3000,
     open: true,
-    openPage: 'front.html',
+    openPage: 'index.html',
     contentBase: path.join(__dirname, '..', 'public'),
   },
 };

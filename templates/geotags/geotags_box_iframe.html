@@ -1,34 +1,53 @@
-{% load display_geotags %}
-{% load google_maps %}
+{% load maps_js_scripts %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">  
     <head>
         <script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
-        <script type="text/javascript" src="{% google_maps_js %}"></script>
-        <script src="{{media_url}}js/sounds_location.js?v={{ last_restart_date }}" type="text/javascript"></script>
-        <script src="{{media_url}}js/markerclustererV3.js" type="text/javascript"></script>
-
+        {% maps_js_scripts %}
         <link href='http://fonts.googleapis.com/css?family=Inconsolata&v1' rel='stylesheet' type='text/css' />
         <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/embed.css" />
         <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
         <script src="{{ media_url }}html_player/soundmanager2.js"></script>
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
-
-        <script type="text/javascript">
-            var isLoggedIn = {{request.user.is_authenticated|yesno:"true,false"}};
-        </script>
-        <script src="{{media_url}}js/freesound.js" type="text/javascript"></script>
         <script src="{{media_url}}js/ajax_utils.js" type="text/javascript"></script>
-        
     </head>
-
 <body>
 
-{% if not username %}
-    {% display_geotags "/geotags/geotags_box_barray/" m_width m_height clusters center_lat center_lon zoom username %}
-{% else %}
-    {% display_geotags "/geotags/sounds_barray/user/" m_width m_height clusters center_lat center_lon zoom username %}
-{% endif %}
+<div id="map_canvas" style="width: {{m_width}}px; height: {{m_height}}px; border: 1px solid black;"></div>
+<script type="text/javascript">
+    var url;
+    var center_lat;
+    var center_lon;
+    var zoom;
+
+    {% if username %}
+        url = '{% url "geotags-for-user-barray" username %}';
+    {% else %}
+        {% if tag %}
+            url = '{% url "geotags-barray" tag %}';
+        {% else %}
+            url = '{% url "geotags-barray" %}';
+            center_lat = 24;
+            center_lon = 20;
+            zoom = 2;
+            var box = document.location.hash.slice(5,document.location.hash.length);
+            if (box !== ''){
+                // If box is given, get the geotags only from that box
+                 url = '{% url "geotags-box-barray" %}?box=' + box;
+            }
+        {% endif %}
+    {% endif %}
+
+    {% if center_lat and center_lon and zoom %}
+        center_lat = {{ center_lat }};
+        center_lon = {{ center_lon }};
+        zoom = {{ zoom }};
+    {% endif %}
+
+    var show_search = false;
+    var cluster = {{cluster|yesno:"true,false"}};
+    make_sounds_map(url, 'map_canvas', undefined, undefined, center_lat, center_lon, zoom, show_search, cluster);
+</script>
 
 </body>
 </html>

@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^sounds_barray/user/(?P<username>[^//]+)/$', geotags.geotags_for_user_barray, name="geotags-for-user-barray"),
     url(r'^sounds_barray/user_latest/(?P<username>[^//]+)/$', geotags.geotags_for_user_latest_barray, name="geotags-for-user-latest-barray"),
     url(r'^sounds_barray/pack/(?P<pack_id>\d+)/$', geotags.geotags_for_pack_barray, name="geotags-for-pack-barray"),
+    url(r'^sounds_barray/sound/(?P<sound_id>\d+)/$', geotags.geotag_for_sound_barray, name="geotags-for-sound-barray"),
     url(r'^sounds_barray/(?P<tag>[\w-]+)?/?$', geotags.geotags_barray, name="geotags-barray"),
     url(r'^geotags_box_barray/$', geotags.geotags_box_barray, name="geotags-box-barray"),
     url(r'^infowindow/(?P<sound_id>\d+)/$', geotags.infowindow, name="geotags-infowindow"),

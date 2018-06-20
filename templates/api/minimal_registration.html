@@ -73,43 +73,57 @@
         }
 
     </style>
+
+    <script type="text/javascript">
+        function setPasswordType() {
+            // Set type to password so that browser offers to store it
+            document.getElementById("id_{{ form.password1.name }}").type = 'password';
+            return true;
+        }
+
+        function togglePasswordInputType() {
+            var passwordInput = document.getElementById("id_{{ form.password1.name }}");
+            var eyeImg = document.getElementById("eye-img");
+            if (passwordInput.type === 'password'){
+                passwordInput.type = 'text';
+                eyeImg.src = '{{ media_url }}images/eye-closed.png';
+            } else {
+                passwordInput.type = 'password';
+                eyeImg.src = '{{ media_url }}images/eye-open.png';
+            }
+        }
+    </script>
+
 </head>
 <body>
 
 <div class="container_main">
 <div class="container">
     <img src="/media/images/logo.png"/>
-    <form method="post" action=".">{% csrf_token %}
+    <form id="registrationForm" method="post" action="." onsubmit="return setPasswordType()">{% csrf_token %}
         <div style="text-align:left">
         <span class="error2">{{ form.non_field_errors }}</span>
         <p> {{ form.username.errors }}
             <span class="label"><label for="id_username">Username:</label></span> {{ form.username }}
             <span class="helptext">Alphanumeric characters only (letters, digits and underscores)</span></p>
-        <p> {{ form.first_name.errors }}
-            <span class="label"><label for="id_first_name">First name:</label></span> {{ form.first_name }}
-            <span class="helptext">Optional</span></p>
-        <p> {{ form.last_name.errors }}
-            <span class="label"><label for="id_last_name">Last name:</label></span> {{ form.last_name }}
-            <span class="helptext">Optional</span></p>
         <p> {{ form.email1.errors }}
             <span class="label"><label for="id_email1">Email:</label></span> {{ form.email1 }}
             <span class="helptext">We will send you an activation email, so make sure this is correct!</span></p>
-        <p> {{ form.email2.errors }}
-            <span class="label"><label for="id_email2">Email confirmation:</label></span> {{ form.email2 }}</p>
         <p> {{ form.password1.errors }}
-            <span class="label"><label for="id_password1">Password:</label></span> {{ form.password1 }}</p>
-        <p> {{ form.password2.errors }}
-            <span class="label"><label for="id_password2">Password confirmation:</label></span> {{ form.password2 }}</p>
+            <span class="label"><label for="id_password1">Password:</label></span> {{ form.password1 }}
+            <a href="javascript:void(0)" onclick="togglePasswordInputType()">
+                <img id="eye-img" src="{{ media_url }}images/eye-open.png" title="show/hide password" style="vertical-align: bottom;" />
+            </a>
+        </p>
         </div>
         <div>
-        <p> {{ form.newsletter }} Sign up for the newsletter (only once every 4 months or so)?</p>
         <p> {% if form.accepted_tos.errors %}<span class="error2">You must accept the terms of use to register to Freesound</span><br>{% endif %}
             {{ form.accepted_tos }} Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the Freesound website</p>
 
         <div class="captcha_element">
+            <span class="help-block"> {{ form.recaptcha_response.errors }} </span>
             <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-            <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
-            <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
+            <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
         </div>
 
         </div>

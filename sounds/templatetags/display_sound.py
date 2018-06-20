@@ -56,7 +56,8 @@ def display_sound(context, sound):
         'license_name': sound_obj.license.name,
         'media_url':    context['media_url'],
         'request':      context['request'],
-        'is_explicit':  is_explicit
+        'is_explicit':  is_explicit,
+        'is_authenticated': request.user.is_authenticated(),
     }
 
 
@@ -75,5 +76,6 @@ def display_raw_sound(context, sound):
         'license_name': sound.license_name,
         'media_url':    context['media_url'],
         'request':      request,
-        'is_explicit':  is_explicit
+        'is_explicit':  is_explicit,
+        'is_authenticated': request.user.is_authenticated(),
     }

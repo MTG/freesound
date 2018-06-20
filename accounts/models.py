@@ -153,7 +153,6 @@ class Profile(SocialModel):
                 email_type=email_type).exists()
         return email_type.send_by_default != invert_default
 
-
     def get_enabled_email_types(self):
         # Get list of all enabled email types for this user
         all_emails = EmailPreferenceType.objects
@@ -174,28 +173,24 @@ class Profile(SocialModel):
         stream_emails = EmailPreferenceType.objects.get(name='stream_emails')
         # First get current value of stream_email to know if
         # profile.last_stream_email_sent must be initialized
-        had_enabled_stream_emails = self.user.email_settings\
-                .filter(email_type=stream_emails).exists()
+        had_enabled_stream_emails = self.user.email_settings.filter(email_type=stream_emails).exists()
 
         all_emails = EmailPreferenceType.objects
 
         # If an email_type is not enabled and default value is True then must
         # be on UserEmailSetting
-        disabled = all_emails.filter(send_by_default=True)\
-            .exclude(id__in=email_type_ids)
+        disabled = all_emails.filter(send_by_default=True).exclude(id__in=email_type_ids)
 
         # If an email_type is enabled and default value is False then must
         # be on UserEmailSetting
-        enabled = all_emails.filter(send_by_default=False,
-                id__in=email_type_ids)
+        enabled = all_emails.filter(send_by_default=False, id__in=email_type_ids)
 
         all_emails = list(enabled) + list(disabled)
 
         # Recreate email settings
         self.user.email_settings.all().delete()
         for i in all_emails:
-            UserEmailSetting.objects.create(user=self.user,
-                    email_type=i)
+            UserEmailSetting.objects.create(user=self.user, email_type=i)
 
         enabled_stream_emails = enabled.filter(id=stream_emails.id).exists()
         # If is enabling stream emails, set last_stream_email_sent to now
@@ -262,6 +257,10 @@ class Profile(SocialModel):
 
         return True, ""
 
+    def can_do_bulk_upload(self):
+        # Bulk uploads are allowed if the user has uploaded more than N sounds or if the user is whitelisted
+        return self.num_sounds >= settings.BULK_UPLOAD_MIN_SOUNDS or self.is_whitelisted
+
     def is_blocked_for_spam_reports(self):
         reports_count = UserFlag.objects.filter(user__username=self.user.username).values('reporting_user').distinct().count()
         if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING or self.user.sounds.all().count() > 0:
@@ -312,8 +311,6 @@ class Profile(SocialModel):
         """
 
         self.user.username = 'deleted_user_%s' % self.user.id
-        self.user.first_name = ''
-        self.user.last_name = ''
         self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
         self.has_avatar = False
         self.is_deleted_user = True

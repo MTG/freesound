@@ -53,7 +53,6 @@ from tickets.models import Ticket, TicketComment
 from utils.username import redirect_if_old_username_or_404
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.functional import combine_dicts
 from utils.mail import send_mail_template_to_support
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
@@ -239,11 +238,12 @@ def sound(request, username, sound_id):
                 if form.is_valid():
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
+                    sound.invalidate_template_caches()
                     try:
-                        if request.user.profile.email_not_disabled("new_comment"):
+                        if sound.user.profile.email_not_disabled("new_comment"):
                             # Send the user an email to notify him of the new comment!
-                            logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username,
-                                                                                       request.user.username))
+                            logger.info("Notifying user %s of a new comment by %s" % (sound.user.username,
+                                                                                      request.user.username))
                             send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
                                                {'sound': sound, 'user': request.user, 'comment': comment_text},
                                                user_to=sound.user)
@@ -257,7 +257,7 @@ def sound(request, username, sound_id):
 
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
-    display_random_link = request.GET.get('random_browsing')
+    display_random_link = request.GET.get('random_browsing', False)
     is_following = False
     if request.user.is_authenticated:
         users_following = follow_utils.get_users_following(request.user)
@@ -271,7 +271,7 @@ def sound(request, username, sound_id):
         'form': form,
         'display_random_link': display_random_link,
         'is_following': is_following,
-        'is_explicit': is_explicit,
+        'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
@@ -329,6 +329,7 @@ def sound_download(request, username, sound_id):
         cache_key = 'sdwn_%s_%d' % (sound_id, request.user.id)
         if cache.get(cache_key, None) is None:
             Download.objects.create(user=request.user, sound=sound, license=sound.license)
+            sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
@@ -557,7 +558,7 @@ def pack_delete(request, username, pack_id):
         if pack_id != pack.id:
             raise PermissionDenied
         if abs(time.time() - link_generated_time) < 10:
-            logger.debug("User %s requested to delete pack %s" % (request.user.username, pack_id))
+            logger.info("User %s requested to delete pack %s" % (request.user.username, pack_id))
             pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
@@ -588,6 +589,7 @@ def sound_edit_sources(request, username, sound_id):
         form = RemixForm(sound, request.POST)
         if form.is_valid():
             form.save()
+            sound.invalidate_template_caches()
     else:
         form = RemixForm(sound, initial=dict(sources=sources_string))
     tvars = {
@@ -629,7 +631,8 @@ def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
-    return render(request, 'sounds/geotag.html', locals())
+    tvars = {'sound': sound}
+    return render(request, 'sounds/geotag.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -644,9 +647,10 @@ def similar(request, username, sound_id):
         raise Http404
 
     similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
-    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
-    return render(request, 'sounds/similar.html', locals())
+
+    tvars = {'similar_sounds': similar_sounds}
+    return render(request, 'sounds/similar.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -662,37 +666,25 @@ def pack(request, username, pack_id):
     if pack.is_deleted:
         return render(request, 'sounds/deleted_pack.html')
 
-    qs = Sound.objects.only('id').filter(pack=pack, moderation_state="OK", processing_state="OK")
-    paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
-    paginator = paginate_data['paginator']
-    current_page = paginate_data['current_page']
-    page = paginate_data['page']
-    sound_ids = [sound_obj.id for sound_obj in page]
+    qs = Sound.objects.only('id').filter(pack=pack, moderation_state='OK', processing_state='OK')
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 
     num_sounds_ok = len(qs)
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
-    else :
-        if num_sounds_ok < pack.num_sounds :
+    else:
+        if num_sounds_ok < pack.num_sounds:
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 
-    # If user is owner of pack, display form to add description
-    enable_description_form = False
-    if request.user.id == pack.user_id:
-        enable_description_form = True
-        form = PackDescriptionForm(instance = pack)
+    tvars = {'pack': pack,
+             'num_sounds_ok': num_sounds_ok,
+             'pack_sounds': pack_sounds
+             }
+    tvars.update(paginator)
 
-    # Manage POST info (if adding a description)
-    if request.method == 'POST':
-        form = PackDescriptionForm(request.POST, pack)
-        if form.is_valid():
-            pack.description = form.cleaned_data['description']
-            pack.save()
-        else:
-            pass
-
-    return render(request, 'sounds/pack.html', locals())
+    return render(request, 'sounds/pack.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -702,20 +694,25 @@ def packs_for_user(request, username):
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True).order_by(order)
-    return render(request, 'sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()))
+    paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
+
+    tvars = {'user': user,
+             'order': order}
+    tvars.update(paginator)
+    return render(request, 'sounds/packs.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
-    user = get_object_or_404(User, username__iexact=username)
-    qs = Sound.public.only('id').filter(user=user)
-    paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
-    paginator = paginate_data['paginator']
-    current_page = paginate_data['current_page']
-    page = paginate_data['page']
-    sound_ids = [sound_obj.id for sound_obj in page]
+    sound_user = get_object_or_404(User, username__iexact=username)
+    paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
+    sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     user_sounds = Sound.objects.ordered_ids(sound_ids)
-    return render(request, 'sounds/for_user.html', locals())
+
+    tvars = {'sound_user': sound_user,
+             'user_sounds': user_sounds}
+    tvars.update(paginator)
+    return render(request, 'sounds/for_user.html', tvars)
 
 
 @login_required
@@ -736,7 +733,7 @@ def delete(request, username, sound_id):
             form = DeleteSoundForm(sound_id=sound_id)
         else:
 
-            logger.debug("User %s requested to delete sound %s" % (request.user.username,sound_id))
+            logger.info("User %s requested to delete sound %s" % (request.user.username,sound_id))
             try:
                 ticket = sound.ticket
                 tc = TicketComment(sender=request.user,
@@ -847,7 +844,8 @@ def display_sound_wrapper(request, username, sound_id):
         'license_name': sound_obj.license.name,
         'media_url': settings.MEDIA_URL,
         'request': request,
-        'is_explicit': is_explicit
+        'is_explicit': is_explicit,
+        'is_authenticated': request.user.is_authenticated()  # cache computation is weird with CallableBool
     }
     return render(request, 'sounds/display_sound.html', tvars)
 
@@ -933,7 +931,7 @@ def downloaders(request, username, sound_id):
 
     download_list = []
     for s in page:
-        download_list.append({"created":s.created, "user": user_map[s.user_id]})
+        download_list.append({"created": s.created, "user": user_map[s.user_id]})
     download_list = sorted(download_list, key=itemgetter("created"), reverse=True)
 
     tvars = {"sound": sound,
@@ -945,8 +943,13 @@ def downloaders(request, username, sound_id):
 
 
 def pack_downloaders(request, username, pack_id):
-    pack = get_object_or_404(Pack, id = pack_id)
+    pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
     qs = PackDownload.objects.filter(pack_id=pack_id)
-    return render(request, 'sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()))
+    paginator = paginate(request, qs, 32, object_count=pack.num_downloads)
+
+    tvars = {'username': username,
+             'pack': pack}
+    tvars.update(paginator)
+    return render(request, 'sounds/pack_downloaders.html', tvars)

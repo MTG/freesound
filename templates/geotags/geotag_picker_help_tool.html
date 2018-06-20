@@ -1,0 +1,27 @@
+{% load maps_js_scripts %}
+{% maps_js_scripts %}
+<script type="text/javascript">
+
+    function showGeotagPickerHelpTool(refElementID){
+        if ($("#geotag_picker_map").length === 0){
+            // If Geotag picker tool has not already been displayed, display it
+            $('#' + refElementID).append(
+                '<div style="margin-top: 35px;margin-bottom: 25px;">' +
+                '<div id="geotag_picker_map" style="width: 400px; height:400px; margin-left:272px; margin-bottom: 12px;"></div>' +
+                '<div style="text-align:center;"><i>latitude, longitude, zoom</i>: <input id="geotag_picker_out" size="24" type="text"></input> <a href="javascript:void(0);" onclick="copyValue();">copy to clipboard</a></div>' +
+                '</div>'
+            );
+            make_geotag_edit_map('geotag_picker_map', '{{media_url}}/images/arrow.png', showLatLonZoomFields);
+        }
+    }
+
+    function showLatLonZoomFields(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
+        $("#geotag_picker_out").val(lat.toFixed(6) + ', ' + lon.toFixed(6) + ', ' + zoom.toFixed(0));
+    }
+
+    function copyValue(){
+        $("#geotag_picker_out").select()
+        document.execCommand("copy");
+    }
+
+</script>

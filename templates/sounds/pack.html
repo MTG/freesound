@@ -20,13 +20,11 @@
     <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
-    <p>
-        {{pack.description|replace_img|safe|linebreaksbr}}
-    </p>
+    <p>{{pack.description|replace_img|safe|linebreaksbr}}</p>
     <ul>
-            <li>Pack created on: <b>{{ pack.created }}</b></li>
-            <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
-            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
+        <li>Pack created on: <b>{{ pack.created }}</b></li>
+        <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
+        <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
     </ul>
     {% if perms.pack.can_edit or pack.user == request.user %}
             <p>
@@ -35,7 +33,7 @@
                 </a>
                 <br/>
                 <a href="{% url 'pack-delete' pack.user.username pack.id %}"
-                    class="icon" id="delete_pack" title="edit pack">
+                    class="icon" id="delete_link" title="edit pack">
                     Delete this pack
                 </a>
             </p>

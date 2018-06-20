@@ -35,10 +35,18 @@ import re
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
-    lat = forms.FloatField(min_value=-90, max_value=90, required=False)
-    lon = forms.FloatField(min_value=-180, max_value=180, required=False)
+    lat = forms.FloatField(min_value=-90, max_value=90, required=False,
+                           error_messages={
+                               'min_value': 'Latitude must be between -90 and 90.',
+                               'max_value': 'Latitude must be between -90 and 90.'
+                           })
+    lon = forms.FloatField(min_value=-180, max_value=180, required=False,
+                           error_messages={
+                               'min_value': 'Longitude must be between -180 and 180.',
+                               'max_value': 'Longitude must be between -180 and 180.'
+                           })
     zoom = forms.IntegerField(min_value=11,
-                              error_messages={'min_value': "You should zoom in more until you reach at least zoom 11."},
+                              error_messages={'min_value': "The zoom value sould be at least 11."},
                               required=False)
 
     def clean(self):
@@ -59,11 +67,11 @@ class GeotaggingForm(forms.Form):
 
 class SoundDescriptionForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
-                           widget=forms.TextInput(attrs={'size': 65, 'class':'inputText'}))
+                           widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     is_explicit = forms.BooleanField(required=False)
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
                     help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                              "For example: field-recording is a popular tag.")
+                              "For example: <i>field-recording</i> is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
     def __init__(self, *args, **kwargs):
@@ -73,7 +81,7 @@ class SoundDescriptionForm(forms.Form):
             del kwargs['explicit_disable']
 
         super(SoundDescriptionForm, self).__init__(*args, **kwargs)
-        # Disable is_explcit field if is already marked
+        # Disable is_explicit field if is already marked
         self.initial['is_explicit'] = explicit_disable
         self.fields['is_explicit'].disabled = explicit_disable
 
@@ -148,8 +156,8 @@ class PackChoiceField(forms.ModelChoiceField):
 
 class PackForm(forms.Form):
     pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
-    new_pack = HtmlCleaningCharField(widget=forms.TextInput(attrs={'size': 45}),
-                                     label="Or fill in the name of a new pack:", required=False, min_length=1)
+    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
+                               label="Or fill in the name of a new pack:", required=False, min_length=5)
 
     def __init__(self, pack_choices, *args, **kwargs):
         super(PackForm, self).__init__(*args, **kwargs)
@@ -160,6 +168,7 @@ class PackEditForm(ModelForm):
     pack_sounds = forms.CharField(min_length=1,
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
                                   required=False)
+    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
     def clean_pack_sounds(self):
         pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])
@@ -198,10 +207,10 @@ class PackEditForm(ModelForm):
 
     class Meta:
         model = Pack
-        fields = ('name','description',)
+        fields = ('name', 'description',)
         widgets = {
             'name': TextInput(),
-            'description': Textarea(attrs={'rows': 5, 'cols':50}),
+            'description': Textarea(attrs={'rows': 5, 'cols': 50}),
         }
 
 
@@ -216,8 +225,14 @@ class LicenseForm(forms.Form):
 
 
 class NewLicenseForm(forms.Form):
-    license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') |
-                                                                     Q(name__startswith='Creative')), required=True)
+    license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
+    license = forms.ModelChoiceField(queryset=license_qs, required=True)
+
+    def __init__(self, *args, **kwargs):
+        super(NewLicenseForm, self).__init__(*args, **kwargs)
+        valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
+        self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
+                                                                        % valid_licenses})
 
 
 class FlagForm(forms.Form):
@@ -267,3 +282,22 @@ class DeleteSoundForm(forms.Form):
                 }
         super(DeleteSoundForm, self).__init__(*args, **kwargs)
 
+
+class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseForm):
+    """
+    This is the form that we use to validate sound metadata provided via CSV bulk description.
+    This form inherits from other existing forms to consolidate all sound description related fields in one single form.
+    None of the forms from which SoundCSVDescriptionForm inherits are ModelForms, therefore this form is only intented
+    to validate metadata fields passed to it (i.e. does not have save() method).
+    The field "pack_name" is added manually because there is no logic that we want to replicate from PackForm.
+    """
+    pack_name = forms.CharField(min_length=5, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(SoundCSVDescriptionForm, self).__init__(*args, **kwargs)
+        self.fields['name'].required = False  # Make sound name not required
+
+    def clean(self):
+        # Overwrite clean method from 'GeotaggingForm' as we don't need to check for all fields present here because an
+        # equivalent check is performed when parsing the geotag format "lat, lon, zoom".
+        return self.cleaned_data

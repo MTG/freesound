@@ -93,7 +93,7 @@ def archived_messages(request):
 def message(request, message_id):
     try:
         message = base_qs.get(id=message_id)
-    except Message.DoesNotExist: #@UndefinedVariable
+    except Message.DoesNotExist:
         raise Http404
 
     if message.user_from != request.user and message.user_to != request.user:
@@ -104,7 +104,8 @@ def message(request, message_id):
         invalidate_template_cache("user_header", request.user.id)
         message.save()
 
-    return render(request, 'messages/message.html', locals())
+    tvars = {'message': message}
+    return render(request, 'messages/message.html', tvars)
 
 @login_required
 @transaction.atomic()
@@ -133,8 +134,10 @@ def new_message(request, username=None, message_id=None):
 
                 try:
                     # send the user an email to notify him of the sent message!
+                    tvars = {'user_to': user_to,
+                             'user_from': user_from}
                     if user_to.profile.email_not_disabled("private_message"):
-                        send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', locals(),
+                        send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', tvars,
                                            user_to=user_to)
                 except:
                     # if the email sending fails, ignore...
@@ -174,7 +177,9 @@ def new_message(request, username=None, message_id=None):
             else:
                 form = MessageReplyForm(initial=dict(to=username))
 
-    return render(request, 'messages/new.html', locals())
+    tvars = {'form': form}
+    return render(request, 'messages/new.html', tvars)
+
 
 def username_lookup(request):
     results = []

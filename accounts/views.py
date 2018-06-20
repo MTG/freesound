@@ -1155,22 +1155,22 @@ def flag_user(request, username=None):
         object_id = request.POST["object_id"]
         if object_id:
             if request.POST["flag_type"] == "PM":
-                flagged_object = Message.objects.get(id = object_id)
+                flagged_object = Message.objects.get(id=object_id)
             elif request.POST["flag_type"] == "FP":
-                flagged_object = Post.objects.get(id = object_id)
+                flagged_object = Post.objects.get(id=object_id)
             elif request.POST["flag_type"] == "SC":
-                flagged_object = Comment.objects.get(id = object_id)
+                flagged_object = Comment.objects.get(id=object_id)
             else:
-                return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
+                return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
         else:
-            return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
+            return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
 
         previous_reports_count = UserFlag.objects.filter(user=flagged_user)\
             .values('reporting_user').distinct().count()
         uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
         uflag.save()
 
-        reports_count = UserFlag.objects.filter(user = flagged_user)\
+        reports_count = UserFlag.objects.filter(user=flagged_user)\
             .values('reporting_user').distinct().count()
         if reports_count != previous_reports_count and \
                 (reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or
@@ -1201,8 +1201,12 @@ def flag_user(request, username=None):
             else:
                 template_to_use = 'accounts/report_blocked_spammer_admins.txt'
 
+            tvars = {'flagged_user': flagged_user,
+                     'urls': urls,
+                     'user_url': user_url,
+                     'clear_url': clear_url}
             send_mail_template_to_support(u'Spam/offensive report for user ' + flagged_user.username, template_to_use,
-                                          locals())
+                                          tvars)
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')

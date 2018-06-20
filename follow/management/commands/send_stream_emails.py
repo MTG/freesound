@@ -35,7 +35,7 @@ class Command(BaseCommand):
     """
     help = 'Send stream notifications to users who have not been notified for the last ' \
            'settings.NOTIFICATION_TIMEDELTA_PERIOD period and whose stream has new sounds for that period'
-    args = True  # For backwards compatimility mdoe
+    args = True  # For backwards compatibility mode
     # See: http://stackoverflow.com/questions/30244288/django-management-command-cannot-see-arguments
 
     def handle(self, *args, **options):
@@ -90,6 +90,10 @@ class Command(BaseCommand):
                 continue
 
             text_content = render_mail_template('follow/email_stream.txt', locals())
+            tvars = {'username': username,
+                     'users_sounds': users_sounds,
+                     'tags_sounds': tags_sounds}
+            text_content = render_mail_template('follow/email_stream.txt', tvars)
 
             # Send email
             try:

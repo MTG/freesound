@@ -218,7 +218,7 @@
             {% endif %}
         {% endif %}
 
-        {% if user.is_authenticated %}
+        {% if request.user.is_authenticated %}
             <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
             {% if request.user != sound.user %}
                 <li>

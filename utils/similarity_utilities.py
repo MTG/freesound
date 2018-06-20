@@ -29,7 +29,7 @@ from utils.encryption import create_hash
 logger = logging.getLogger('web')
 
 
-def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SOUNDS_PER_PAGE, offset = 0 ):
+def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS_PER_PAGE, offset=0):
 
     if preset not in PRESETS:
         preset = DEFAULT_PRESET
@@ -51,7 +51,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 
     if not similar_sounds:
         try:
-            result = Similarity.search(sound.id, preset = preset, num_results = num_results, offset = offset)
+            result = Similarity.search(sound.id, preset=preset, num_results=num_results, offset=offset)
             similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
             count = result['count']
         except Exception as e:

@@ -2070,7 +2070,8 @@ ul.pagination {
     background: url(../images/post_delete.png) bottom;
 }
 
-#confirm_deletion h4 {
+/* Forum post deletion, Delete undescribed files pages */
+#confirm_deletion h4, #confirm_deletion button {
     margin-right: 15px;
     display: block;
     float: left;
@@ -2078,6 +2079,9 @@ ul.pagination {
     background-color:#F9F9F9;
     border-radius: 3px;
     border: 1px solid #F0EEF1;
+    color: #2C74C9;
+    font-size: 100%;
+    font-weight: bold;
 }
 
 /* Sidebar

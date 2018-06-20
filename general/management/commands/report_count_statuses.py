@@ -25,7 +25,8 @@ from collections import defaultdict
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Value
+from django.db.models.functions import Coalesce
 
 from forum.models import Post
 from sounds.models import Sound, Pack, Download, PackDownload
@@ -86,7 +87,7 @@ class Command(BaseCommand):
 
         # Look at number of ratings and average rating
         for count, sound in enumerate(Sound.objects.all().annotate(
-                real_num_ratings=Count('ratings'), real_avg_rating=Avg('ratings__rating')).iterator()):
+                real_num_ratings=Count('ratings'), real_avg_rating=Coalesce(Avg('ratings__rating'), Value(0))).iterator()):
             real_num_ratings = sound.real_num_ratings
             if real_num_ratings != sound.num_ratings:
                 mismatches_report['Sound.num_ratings'] += 1
@@ -121,7 +122,7 @@ class Command(BaseCommand):
             'real_num_sounds': """
                 SELECT COUNT(U0."id") AS "count"
                 FROM "sounds_sound" U0
-                WHERE U0."pack_id" = ("sounds_pack"."id") 
+                WHERE U0."pack_id" = ("sounds_pack"."id")
                 AND U0."processing_state" = 'OK' AND U0."moderation_state" = 'OK'
             """
         }).iterator()):
@@ -158,7 +159,7 @@ class Command(BaseCommand):
                     'real_num_sounds': """
                         SELECT COUNT(U0."id") AS "count"
                         FROM "sounds_sound" U0
-                        WHERE U0."user_id" = ("auth_user"."id") 
+                        WHERE U0."user_id" = ("auth_user"."id")
                         AND U0."processing_state" = 'OK' AND U0."moderation_state" = 'OK'
                     """
                 }).iterator()):

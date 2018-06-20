@@ -330,6 +330,9 @@ div.infowindow {
 #edit_link {
     background-image: url(../images/fugue-icons/icons/quill.png);
 }
+#delete_link {
+    background-image: url(../images/cancel.png);
+}
 #comments_link {
     background-image: url(../images/fugue-icons/icons/pencil.png);
 }
@@ -345,6 +348,10 @@ div.infowindow {
 }
 #follow_link_sound {
     background-image: url(../images/fugue-icons/icons/user--plus.png);
+    cursor: pointer;
+}
+.warning_icon {
+    background-image: url(../images/info_red.png);
     cursor: pointer;
 }
 
@@ -2652,29 +2659,45 @@ div.about {
 
 #unprocessed_sounds .failed{
     color: red;
-    font-weight: bold;
 }
 
 #unprocessed_sounds .processing{
     color: green;
-    font-weight: bold;
 }
 
 #unprocessed_sounds .pending{
     color: orange;
-    font-weight: bold;
 }
 
 #unprocessed_sounds .queued{
     color: orange;
-    font-weight: bold;
-}
-
-#unprocessed_sounds .filename{
-    font-weight: bold;
 }
 
 #unprocessed_sounds .date{
+    color: gray;
+}
+
+#bulk_describe_processes_list {
+    font-size: 10px;
+}
+
+#bulk_describe_processes_list li {
+    padding: 4px;
+}
+
+.red_text{
+    color: red;
+}
+
+.green_text{
+    color: green;
+}
+
+.orange_text{
+    color: orange;
+}
+
+.gray_text {
     color: gray;
 }
 
@@ -3427,6 +3450,11 @@ ul.messages {
 
 /* Upload pages
 ------------------------------------------------------*/
+
+#describe_page ul.upload {
+    max-height: 295px;
+    overflow-y: scroll;
+}
 
 #describe_page ul.upload ul {
     list-style: none;
@@ -4235,4 +4263,81 @@ ul.messages {
     padding: 10px;
     margin-bottom: 10px;
     margin-top: 10px;
+}
+
+.csv-validation-table {
+    overflow-y:scroll;
+    max-height:400px;
+    display:block;
+    word-wrap: break-word;
+}
+
+.csv-validation-table-geotag-td {
+    max-width: 80px;
+}
+
+.csv-bulk-upload-progress-label {
+    padding: 10px;
+    text-align: center;
+    font-size: 25px;
+}
+
+.csv-bulk-upload-error-cell {
+    background-color: rgba(255,64,60,0.65);
+}
+
+/* Tooltip right */
+.cell_tooltip_right { position: relative; }
+.cell_tooltip_right .tooltiptext {
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    width: 120px;
+    top: 0px;
+    left: 105%;
+}
+.cell_tooltip_right:hover .tooltiptext { visibility: visible; }
+.cell_tooltip_right:hover { cursor: pointer; }
+.cell_tooltip_right .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    top: 20px;
+    right: 100%; /* To the left of the tooltip */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent black transparent transparent;
+}
+
+/* Tooltip left */
+.cell_tooltip_left { position: relative; }
+.cell_tooltip_left .tooltiptext {
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    width: 120px;
+    top: 0px;
+    right: 105%;
+}
+.cell_tooltip_left:hover .tooltiptext { visibility: visible; }
+.cell_tooltip_left:hover { cursor: pointer; }
+.cell_tooltip_left .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    top: 20px;
+    left: 100%; /* To the right of the tooltip */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent black;
 }

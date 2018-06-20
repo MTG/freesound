@@ -134,20 +134,14 @@ class MiscTicketTests(TicketTests):
                 tickets.models.Ticket.USER_ONLY)
 
         local_vars = {
-                'send_to': [],
                 'ticket': ticket,
-                'self': ticket,
                 'user_to': ticket.sender,
-                'email_to': ticket.sender.email,
-                'notification_type': tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
-                'sender_moderator': tickets.models.Ticket.USER_ONLY
                 }
         send_mail_mock.assert_called_once_with(
                 u'A freesound moderator handled your upload.',
                 tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
                 local_vars,
-                'noreply@freesound.org',
-                ticket.sender.email)
+                user_to=ticket.sender)
 
 
 class TicketTestsFromQueue(TicketTests):

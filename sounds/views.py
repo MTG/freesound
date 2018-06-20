@@ -55,7 +55,7 @@ from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
 from utils.frontend_handling import render
-from utils.mail import send_mail_template
+from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
 from utils.search.search_general import get_random_sound_from_solr
@@ -241,10 +241,10 @@ def sound(request, username, sound_id):
                                                                                       request.user.username))
                             send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
                                                {'sound': sound, 'user': request.user, 'comment': comment_text},
-                                               None, sound.user.email)
+                                               user_to=sound.user)
                     except Exception as e:
                         # If the email sending fails, ignore...
-                        logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.email, e))
+                        logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.username, e))
 
                     return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -773,13 +773,12 @@ def flag(request, username, sound_id):
             flag.save()
 
             if user:
-                user_email = user.email
+                user_email = user.profile.get_email_for_delivery()
             else:
                 user_email = flag_form.cleaned_data["email"]
 
-            from_email = settings.DEFAULT_FROM_EMAIL
-            send_mail_template(u"Sound flag: %s - %s" % (sound.user.username, sound.original_filename),
-                    "sounds/email_flag.txt", {"flag": flag}, from_email, reply_to=user_email)
+            send_mail_template_to_support(u"Sound flag: %s - %s" % (sound.user.username, sound.original_filename),
+                                          "sounds/email_flag.txt", {"flag": flag}, reply_to=user_email)
 
             return redirect(sound)
     else:

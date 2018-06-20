@@ -34,10 +34,8 @@ class Command(BaseCommand):
     def handle(self, **options):
         logger.info("Updating front page caches")
 
-        rss_url = settings.FREESOUND_RSS
-
-        rss_cache = render_to_string('rss_cache.html', locals())
-        cache.set("rss_cache", rss_cache, 2592000) # 30 days cache
+        rss_cache = render_to_string('rss_cache.html', {'rss_url': settings.FREESOUND_RSS})
+        cache.set("rss_cache", rss_cache, 2592000)  # 30 days cache
 
         campaign = donations.models.DonationCampaign.objects.order_by('date_start').last()
         all_donations = donations.models.Donation.objects\

@@ -32,7 +32,7 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
     if 'user_id' in extra_data:
         user = User.objects.get(id=extra_data['user_id'])
         user_id = user.id
-        email = user.email
+        email = user.profile.get_email_for_delivery()
         # Reset the reminder flag to False so that in a year time user is reminded to donate
         user.profile.donations_reminder_email_sent = False
         user.profile.save()
@@ -55,13 +55,14 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
     donation, created = Donation.objects.get_or_create(transaction_id=transaction_id, defaults=donation_data)
 
     if created:
+        email_to = None if user is not None else email
         send_mail_template(
                 u'Thanks for your donation!',
                 'donations/email_donation.txt', {
                     'user': user,
                     'amount': amount,
                     'display_name': display_name
-                    }, None, email)
+                    }, user_to=user, email_to=email_to)
 
         log_data = donation_data
         log_data.update({'user_id': user_id})

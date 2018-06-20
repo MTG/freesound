@@ -35,7 +35,7 @@ class Command(BaseCommand):
     """
     help = 'Send stream notifications to users who have not been notified for the last ' \
            'settings.NOTIFICATION_TIMEDELTA_PERIOD period and whose stream has new sounds for that period'
-    args = True  # For backwards compatimility mdoe
+    args = True  # For backwards compatibility mode
     # See: http://stackoverflow.com/questions/30244288/django-management-command-cannot-see-arguments
 
     def handle(self, *args, **options):
@@ -54,12 +54,10 @@ class Command(BaseCommand):
 
         logger.info("Sending stream updates notification for %i potential users" % len(users_enabled_notifications))
 
-        email_tuples = ()
         n_emails_sent = 0
         for profile in users_enabled_notifications:
 
             username = profile.user.username
-            email_to = profile.user.email
             profile.last_attempt_of_sending_stream_email = datetime.datetime.now()
 
             # Variable names use the terminology "week" because settings.NOTIFICATION_TIMEDELTA_PERIOD defaults to a
@@ -92,16 +90,19 @@ class Command(BaseCommand):
                 continue
 
             text_content = render_mail_template('follow/email_stream.txt', locals())
-            email_tuples += (subject_str, text_content, settings.DEFAULT_FROM_EMAIL, [email_to]),
+            tvars = {'username': username,
+                     'users_sounds': users_sounds,
+                     'tags_sounds': tags_sounds}
+            text_content = render_mail_template('follow/email_stream.txt', tvars)
 
             # Send email
             try:
-                send_mail(subject_str, text_content, email_from=settings.DEFAULT_FROM_EMAIL, email_to=[email_to],
-                          reply_to=None)
+                send_mail(subject_str, text_content, user_to=user)
             except Exception as e:
-                logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to), str(e)))
                 # Do not send the email and do not update the last email sent field in the profile
                 profile.save()  # Save last_attempt_of_sending_stream_email
+                logger.info("An error occurred sending notification stream email to %s (%s)"
+                            % (profile.get_email_for_delivery(), str(e)))
                 continue
             n_emails_sent += 1
 

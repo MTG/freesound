@@ -2,7 +2,7 @@
 
 {% load absurl %}
 
-{% block salutation %}{% if user_to %}{{user_to.username}}{% else %}X{% endif %}{% endblock %}
+{% block salutation %}{{user_to.username}}{% endblock %}
 
 {% block body %}
 The sound {{ ticket.sound.original_filename }} has been

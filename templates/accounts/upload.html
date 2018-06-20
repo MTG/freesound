@@ -134,7 +134,11 @@
         color:gray;
         font-size:12px;
     }
-
+    #describe-sounds{
+        margin-left: 30px;
+        margin-top: 39px;
+        font-size:12px;
+    }
     </style>
 {% endblock %}
 
@@ -292,13 +296,13 @@ Hint 1: you can upload multiple files at once
 <div id="describe_button_block">
 <p>Once sounds are uploaded, you'll have to describe them before they can show up in the web site.</p>
 <p><a id="describe_a" href="{% url "accounts-describe" %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
-
 </div>
 </div>
 <div id="upload-progress-container" style="display:none">
-<span style="clear:both"/>
 </div>
 <br/>
+<div style="clear:both"/>
+
 </div><!-- #upload_page -->
 
 {% if no_flash %}

@@ -21,7 +21,7 @@
 #
 
 from django.contrib import admin
-from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay
+from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress
 
 
 class LicenseAdmin(admin.ModelAdmin):
@@ -69,3 +69,9 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
     raw_id_fields = ('sound',)
     list_display = ('date_display', 'sound', 'email_sent')
 admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)
+
+
+class BulkUploadProgressAdmin(admin.ModelAdmin):
+    raw_id_fields = ('user',)
+    list_display = ('user', 'created', 'progress_type', 'sounds_valid')
+admin.site.register(BulkUploadProgress, BulkUploadProgressAdmin)

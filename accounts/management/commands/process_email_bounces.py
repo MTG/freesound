@@ -44,17 +44,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
-            logger_web.error('AWS credentials are not configured')
+            logger_console.error('AWS credentials are not configured')
             return
 
         queue_url = settings.AWS_SQS_QUEUE_URL
         if not queue_url:
-            logger_web.error('AWS queue URL is not configured')
+            logger_console.error('AWS queue URL is not configured')
             return
 
         messages_per_call = settings.AWS_SQS_MESSAGES_PER_CALL
         if not 1 <= settings.AWS_SQS_MESSAGES_PER_CALL <= 10:
-            logger_web.warn('Invalid value for number messages to process per call: {}, using 1'.format(messages_per_call))
+            logger_console.warn('Invalid value for number messages to process per call: {}, using 1'.format(messages_per_call))
             messages_per_call = 1
 
         sqs = client('sqs', region_name=settings.AWS_REGION,

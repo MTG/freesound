@@ -73,9 +73,10 @@ class Command(BaseCommand):
                 VisibilityTimeout=0,
                 WaitTimeSeconds=0
             )
-            has_messages = len(response['Messages']) > 0
+            messages = response.get('Messages', [])
+            has_messages = len(messages) > 0
 
-            for message in response['Messages']:
+            for message in messages:
                 receipt_handle = message['ReceiptHandle']
                 body = json.loads(message['Body'])
 

@@ -127,10 +127,14 @@ class Profile(SocialModel):
         return self.get_sameuser_main_user_or_self_user().email
 
     def email_is_valid(self):
-        """Returns True if the email address of the user is a valid address (did not bounce in the past). Takes into
-        account SameUser objects (see docs of self.get_user_email)."""
+        """Returns True if the email address of the user is a valid address (did not bounce in the past and the user
+        is not a deleted user). Takes into account SameUser objects (see docs of self.get_user_email).
+        NOTE: we don't check that user is_active because we need to send emails to inactive users (activation emails)
+        """
         user = self.get_sameuser_main_user_or_self_user()
-        return user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() == 0
+        user_has_bounces = \
+            user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() > 0
+        return not user_has_bounces and not self.is_deleted_user
 
     @property
     def get_total_downloads(self):

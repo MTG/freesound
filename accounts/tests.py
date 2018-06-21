@@ -1342,6 +1342,7 @@ class AboutFieldVisibilityTests(TestCase):
 
 
 class EmailBounceTests(TestCase):
+
     @staticmethod
     def _send_mail(user_to):
         return send_mail('Test subject', 'Test body', user_to=user_to)
@@ -1396,6 +1397,36 @@ class EmailBounceTests(TestCase):
         call_command('process_email_bounces')
 
         self.assertFalse(user.profile.email_is_valid())
+
+
+class ProfileEmailIsValid(TestCase):
+
+    def test_email_is_valid(self):
+        user = User.objects.create_user('user', email='user@freesound.org', is_active=False)
+
+        # Test newly created user (still not activated) has email valid
+        # NOTE: we send activation emails to inactive users, therefore email is valid
+        self.assertEqual(user.is_active, False)
+        self.assertEqual(user.profile.email_is_valid(), True)
+
+        # Test newly created user (after activation) also has email valid
+        user.is_active = True
+        user.save()
+        self.assertEqual(user.profile.email_is_valid(), True)
+
+        # Test email becomes invalid when it bounced in the past
+        email_bounce = EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        self.assertEqual(user.profile.email_is_valid(), False)
+        email_bounce.delete()
+        self.assertEqual(user.profile.email_is_valid(), True)  # Back to normal
+
+        # Test email becomes invalid when user is deleted (anonymized)
+        user.profile.delete_user()
+        self.assertEqual(user.profile.email_is_valid(), False)
+
+        # Test email is still invalid after user is deleted and bounces happened
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        self.assertEqual(user.profile.email_is_valid(), False)
 
 
 class BulkDescribe(TestCase):

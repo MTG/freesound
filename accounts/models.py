@@ -134,7 +134,7 @@ class Profile(SocialModel):
         user = self.get_sameuser_main_user_or_self_user()
         user_has_bounces = \
             user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() > 0
-        return not user_has_bounces and not self.is_deleted_user
+        return not user_has_bounces and not user.profile.is_deleted_user
 
     @property
     def get_total_downloads(self):

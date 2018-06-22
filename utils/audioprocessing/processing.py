@@ -286,7 +286,7 @@ class WaveformImage(object):
     """
     def __init__(self, image_width, image_height, color_scheme):
         if image_height % 2 == 0:
-            raise AudioProcessingException("Height should be uneven: images look much better at uneven height")
+            print("WARNING: Height is not uneven, images look much better at uneven height")
 
         waveform_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['wave_colors']
         background_color = waveform_colors[0]

@@ -3,11 +3,7 @@
 DEBUG = True
 DISPLAY_DEBUG_TOOLBAR = True
 
-ADMINS = (
-    ('Your Email Here', 'abc@gmail.com'),
-)
-MANAGERS = ADMINS
-SUPPORT = ADMINS
+SUPPORT = (('Your Email Here', 'abc@gmail.com'), )
 
 # If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
 ALLOWED_EMAILS = []

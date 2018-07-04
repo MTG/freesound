@@ -41,6 +41,13 @@ def create_dump_file():
     return os.path.join(path, time.strftime('%Y%m%d_%H%M') + '.json')
 
 
+def decode_idna_email(email):
+    """Takes email (unicode) with IDNA encoded domain and returns true unicode representation"""
+    user, domain = email.split('@')
+    domain = domain.encode().decode('idna')  # explicit encode to bytestring for python 2/3 compatability
+    return user + '@' + domain
+
+
 class Command(BaseCommand):
     help = 'Retrieves email bounce info from AWS SQS and updates db.'
     # At the time of implementation AWS has two queue types: standard and FIFO. Standard queue will not guarantee the
@@ -120,13 +127,13 @@ class Command(BaseCommand):
                     is_duplicate = False
 
                     for recipient in bounce_data['bouncedRecipients']:
-                        email = recipient['emailAddress']
+                        email = decode_idna_email(recipient['emailAddress'])
                         try:
                             user = User.objects.get(email__iexact=email)
                             EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
                             total_bounces += 1
                         except User.DoesNotExist:  # user probably got deleted
-                            logger_console.info('User {} not found in database (probably deleted)'.format(email))
+                            logger_console.info(u'User {} not found in database (probably deleted)'.format(email))
                         except IntegrityError:  # message duplicated
                             is_duplicate = True
 

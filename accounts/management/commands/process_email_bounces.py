@@ -26,6 +26,7 @@ from django.db import IntegrityError
 from accounts.models import EmailBounce
 from utils.filesystem import create_directories
 from boto3 import client
+from botocore.exceptions import EndpointConnectionError
 import json
 import logging
 import time
@@ -106,12 +107,17 @@ class Command(BaseCommand):
 
         while has_messages:
             # Receive message from SQS queue
-            response = sqs.receive_message(
-                QueueUrl=queue_url,
-                MaxNumberOfMessages=messages_per_call,
-                VisibilityTimeout=0,
-                WaitTimeSeconds=0
-            )
+            try:
+                response = sqs.receive_message(
+                    QueueUrl=queue_url,
+                    MaxNumberOfMessages=messages_per_call,
+                    VisibilityTimeout=0,
+                    WaitTimeSeconds=0
+                )
+            except EndpointConnectionError as e:
+                logger_console.error(e.message)
+                return
+                
             messages = response.get('Messages', [])
             has_messages = not no_delete and len(messages) > 0
 

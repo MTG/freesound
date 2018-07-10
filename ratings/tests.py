@@ -34,8 +34,6 @@ class RatingsTestCase(TestCase):
         self.sound = sounds.models.Sound.objects.get(pk=16)
         self.user1 = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
         self.user2 = User.objects.create_user("testuser2", email="testuser2@freesound.org", password="testpass")
-        self.user1.profile.agree_to_gdpr()
-        self.user2.profile.agree_to_gdpr()
 
     def test_rating_normal(self):
         """ Add a rating """
@@ -129,7 +127,6 @@ class RatingsPageTestCase(TestCase):
     def setUp(self):
         self.sound = sounds.models.Sound.objects.get(pk=16)
         self.user1 = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
-        self.user1.profile.agree_to_gdpr()
 
     def test_rating_link_logged_in(self):
         """A logged in user viewing a sound should get links to rate the sound"""

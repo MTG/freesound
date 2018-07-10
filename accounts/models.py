@@ -438,8 +438,8 @@ def create_user_profile(sender, instance, created, **kwargs):
     try:
         instance.profile
     except Profile.DoesNotExist:
-        profile = Profile(user=instance, accepted_tos=True)
-        profile.save()
+        profile = Profile.objects.create(user=instance, accepted_tos=True)
+        profile.agree_to_gdpr()
 
 
 post_save.connect(create_user_profile, sender=User)

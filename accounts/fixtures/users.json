@@ -124,53 +124,5 @@
               "email": "anon7@xmpl.org",
               "date_joined": "2005-02-07 16:42:00"
           }
-    },
-    {
-        "model": "accounts.gdpracceptance",
-        "pk": 1,
-        "fields": {
-            "user": 1,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
-    },
-    {
-        "model": "accounts.gdpracceptance",
-        "pk": 2,
-        "fields": {
-            "user": 2,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
-    },
-    {
-        "model": "accounts.gdpracceptance",
-        "pk": 3,
-        "fields": {
-            "user": 3,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
-    },
-    {
-        "model": "accounts.gdpracceptance",
-        "pk": 4,
-        "fields": {
-            "user": 4,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
-    },
-    {
-        "model": "accounts.gdpracceptance",
-        "pk": 5,
-        "fields": {
-            "user": 5,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
-    },
-    {
-        "model": "accounts.gdpracceptance",
-        "pk": 6,
-        "fields": {
-            "user": 6,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
     }
 ]

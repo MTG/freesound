@@ -91,7 +91,6 @@ class DonationTest(TestCase):
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(
                 username='fsuser', email='j@test.com', password='top', id='46280')
-        self.user.profile.agree_to_gdpr()
         self.client.force_login(self.user)
         params = {
                 'stripeToken': '8B703020T00352816',
@@ -118,7 +117,6 @@ class DonationTest(TestCase):
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(
                 username='fsuser', email='j@test.com', password='top', id='46280')
-        self.user.profile.agree_to_gdpr()
         self.client.force_login(self.user)
         params = {
                 'stripeToken': '8B703020T00352816',

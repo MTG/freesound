@@ -198,21 +198,13 @@ class RegistrationForm(forms.Form):
         username = self.cleaned_data["username"]
         email = self.cleaned_data["email1"]
         password = self.cleaned_data["password1"]
-        accepted_tos = self.cleaned_data.get("accepted_tos", False)
-
-        user = User(username=username,
-                    email=email,
-                    is_staff=False,
-                    is_active=False,
-                    is_superuser=False)
-        user.set_password(password)
-        user.save()
-
-        profile = user.profile  # .profile created on User.save()
-        profile.accepted_tos = accepted_tos
-        profile.agree_to_gdpr()
-        profile.save()
-
+        user = User.objects.create(
+            username=username,
+            email=email,
+            password=password,
+            is_staff=False,
+            is_active=False,
+            is_superuser=False)
         return user
 
 

@@ -90,14 +90,6 @@
         "pk": 58
     },
     {
-        "model": "accounts.gdpracceptance",
-        "pk": 58,
-        "fields": {
-            "user": 58,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
-    },
-    {
         "fields": {
             "username": "jerenveren", 
             "first_name": "", 

@@ -54,14 +54,6 @@
         }
     },
     {
-        "model": "accounts.gdpracceptance",
-        "pk": 1,
-        "fields": {
-            "user": 2,
-            "date_accepted": "2018-06-05T15:19:52.301"
-        }
-    },
-    {
         "pk": 29,
         "model": "auth.user",
         "fields": {
@@ -95,14 +87,6 @@
             "password": "05b1f935c101324471f8ba919aaa259c",
             "email": "anon13@xmpl.org",
             "date_joined": "2005-03-09 18:19:34"
-        }
-    },
-    {
-        "model": "accounts.gdpracceptance",
-        "pk": 2,
-        "fields": {
-            "user": 58,
-            "date_accepted": "2018-06-05T15:19:52.301"
         }
     },
     {

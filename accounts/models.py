@@ -75,7 +75,7 @@ class Profile(SocialModel):
     is_whitelisted = models.BooleanField(default=False, db_index=True)
     has_old_license = models.BooleanField(null=False, default=False)
     not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
-    accepted_tos = models.BooleanField(default=False)
+    accepted_tos = models.BooleanField(default=False)  # This legacy field referring to old (pre-GDPR) terms of service
     last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
     last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None)

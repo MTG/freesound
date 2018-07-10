@@ -386,7 +386,6 @@ class GdprAcceptance(models.Model):
     # Automatically add the date because the presence of this field means that
     # the user accepted the terms
     date_accepted = models.DateTimeField(auto_now_add=True)
-    # TODO: IP Address & Browser?
 
 
 class UserFlag(models.Model):

@@ -76,6 +76,16 @@ def validate_file_extension(audiofiles):
             raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
 
 
+def validate_csvfile_extension(csv_file):
+    csv_filename = str(csv_file)
+    if not ('.' in csv_filename and csv_filename.rsplit('.', 1)[-1].lower() in settings.ALLOWED_CSVFILE_EXTENSIONS):
+        raise forms.ValidationError('Invalid file extension.')
+
+
+class BulkDescribeForm(forms.Form):
+    csv_file = forms.FileField(label='', validators=[validate_csvfile_extension])
+
+
 class UploadFileForm(forms.Form):
     files = MultiFileField(min_num=1, validators=[validate_file_extension], label="", required=False)
 

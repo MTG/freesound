@@ -1,6 +1,6 @@
 {% extends "email_base.txt" %}
 
-{% block salutation %}{% if user_to %}{{user_to.username}}{% else %}X{% endif %}{% endblock %}
+{% block salutation %}{{user_to.username}}{% endblock %}
 
 {% block body %}
 One of the sound moderators at Freesound has whitelisted you! This means all

@@ -159,9 +159,6 @@ STATIC_URL = '/static/'
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
-# urls for which the "lasta ction time" needs updating
-LAST_ACTION_TIME_URLS = ('/forum/', )
-
 IFRAME_PLAYER_SIZE = {
         'large': [920, 245],
         'medium': [481, 86],
@@ -186,6 +183,7 @@ MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
 USERNAME_CHANGE_MAX_TIMES = 3
 
 # Forum restrictions
@@ -200,6 +198,9 @@ NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
+
+# Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
+BULK_UPLOAD_MIN_SOUNDS = 40
 
 # Graylog stream ids and domain
 GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
@@ -223,6 +224,7 @@ DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum vie
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
+CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 
@@ -311,7 +313,6 @@ MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, s
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
 
-
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
 
@@ -321,6 +322,13 @@ STRIPE_PRIVATE_KEY = ""
 
 # Mapbox access token
 MAPBOX_ACCESS_TOKEN = ""
+
+# AWS tokens (for accessing email bounce list)
+AWS_REGION = ''
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_SQS_QUEUE_URL = ''
+AWS_SQS_MESSAGES_PER_CALL = 1
 
 # Frontend preference handling
 FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'

@@ -101,24 +101,29 @@ class ForumPostSignalTestCase(TestCase):
     def test_remove_moderated_post(self):
         """Removing a moderated post decreses count and might change last_post"""
 
-        firstpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
-        secondpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
-        thirdpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        firstpost = Post.objects.create(thread=self.thread, author=self.user, body="first", moderation_state="OK")
+        secondpost = Post.objects.create(thread=self.thread, author=self.user, body="second", moderation_state="OK")
+        thirdpost = Post.objects.create(thread=self.thread, author=self.user, body="third", moderation_state="OK")
+        self.thread.first_post = firstpost
+        self.thread.save(update_fields=['first_post'])
 
         self.thread.refresh_from_db()
         self.assertEqual(self.thread.num_posts, 3)
+        self.assertEqual(self.thread.first_post, firstpost)
         self.assertEqual(self.thread.last_post, thirdpost)
 
         thirdpost.delete()
 
         self.thread.refresh_from_db()
         self.assertEqual(self.thread.num_posts, 2)
+        self.assertEqual(self.thread.first_post, firstpost)
         self.assertEqual(self.thread.last_post, secondpost)
 
         firstpost.delete()
 
         self.thread.refresh_from_db()
         self.assertEqual(self.thread.num_posts, 1)
+        self.assertEqual(self.thread.first_post, secondpost)
         self.assertEqual(self.thread.last_post, secondpost)
 
     def test_remove_unmoderated_post(self):
@@ -433,23 +438,55 @@ class ForumPageResponses(TestCase):
         post = thread.post_set.last()
 
         # Assert non-logged in user can't delete post
-        resp = self.client.get(reverse('forums-post-delete-confirm', args=[post.id]))
+        resp = self.client.post(reverse('forums-post-delete-confirm', args=[post.id]))
         self.assertRedirects(resp, '%s?next=%s' % (reverse('login'), reverse('forums-post-delete-confirm', args=[post.id])))
 
         # Assert logged in user which is not author of post can't delete post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
         user2.profile.agree_to_gdpr()
         self.client.force_login(user2)
-        resp = self.client.get(reverse('forums-post-delete-confirm', args=[post.id]))
+        resp = self.client.post(reverse('forums-post-delete-confirm', args=[post.id]))
         self.assertEqual(resp.status_code, 404)
 
         # Assert logged in user can delete post
         self.client.force_login(self.user)
-        resp = self.client.get(reverse('forums-post-delete-confirm', args=[post.id]))
+        resp = self.client.post(reverse('forums-post-delete-confirm', args=[post.id]))
         new_last_post = thread.post_set.last()
         self.assertRedirects(resp, new_last_post.get_absolute_url(), target_status_code=302)
-        # TODO: this case only checks the deletion of the last post of a thread. Deleting the first post of a thread
-        # TODO: (or the only post if there's only one) raises a 500 error. This should be fixed and test updated.
+
+    def test_delete_only_post_of_thread(self):
+        # If we delete the only post of a thread, redirect to the forum
+        forum = Forum.objects.first()
+        thread = Thread.objects.create(author=self.user, title='Test thread', forum=forum)
+        post = Post.objects.create(author=self.user, thread=thread, body='Some thread')
+
+        self.client.force_login(self.user)
+        resp = self.client.post(reverse('forums-post-delete-confirm', args=[post.id]))
+        self.assertRedirects(resp, forum.get_absolute_url())
+
+        with self.assertRaises(Thread.DoesNotExist):
+            thread.refresh_from_db()
+
+    def test_delete_first_post_of_thread(self):
+        # If we delete the first post of the thread and there are others, set Thread.first_post to the next post
+        other_user = User.objects.create_user(username='seconduser', email='anotheruser@example.com')
+
+        forum = Forum.objects.first()
+        thread = Thread.objects.create(author=self.user, title='Test thread', forum=forum)
+        post = Post.objects.create(author=self.user, thread=thread, body='Some thread')
+        post2 = Post.objects.create(author=other_user, thread=thread, body='This is an agreement!')
+        thread.first_post = post
+        thread.save(update_fields=['first_post'])
+
+        self.client.force_login(self.user)
+        resp = self.client.post(reverse('forums-post-delete-confirm', args=[post.id]))
+        self.assertRedirects(resp, post2.get_absolute_url(), target_status_code=302)
+
+        thread.refresh_from_db()
+        self.assertEqual(thread.first_post, post2)
+        self.assertEqual(thread.num_posts, 1)
+        # Author stays as the original author even though first_post is by other_user
+        self.assertEqual(thread.author, self.user)
 
     def test_user_subscribe_to_thread(self):
         forum = Forum.objects.first()

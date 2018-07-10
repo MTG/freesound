@@ -23,14 +23,14 @@ from django.conf import settings
 from django.urls import reverse
 from django.http import Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render
-from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
 import logging
 from follow import follow_utils
-import sounds
+import sounds.models
 
 search_logger = logging.getLogger("search")
+
 
 def tags(request, multiple_tags=None):
     if multiple_tags:
@@ -56,26 +56,32 @@ def tags(request, multiple_tags=None):
     query.set_facet_options_default(limit=100, sort=True, mincount=1, count_missing=False)
     query.set_group_field(group_field="grouping_pack")
     query.set_group_options(group_func=None,
-        group_query=None,
-        group_rows=10,
-        group_start=0,
-        group_limit=1,
-        group_offset=0,
-        group_sort=None,
-        group_sort_ingroup=None,
-        group_format='grouped',
-        group_main=False,
-        group_num_groups=True,
-        group_cache_percent=0,
-        group_truncate=True)  # Sets how many results from the same grup are taken into account for computing the facets
+                            group_query=None,
+                            group_rows=10,
+                            group_start=0,
+                            group_limit=1,
+                            group_offset=0,
+                            group_sort=None,
+                            group_sort_ingroup=None,
+                            group_format='grouped',
+                            group_main=False,
+                            group_num_groups=True,
+                            group_cache_percent=0,
+                            group_truncate=True)  # Sets how many results from the same group are taken into account for computing the facets
 
+    page = None
+    num_results = 0
+    tags = []
+    error = False
+    docs = {}
+    non_grouped_number_of_results = 0
+    paginator = None
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
         num_results = paginator.count
         non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
-        error = False
         tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
 
         docs = results.docs
@@ -90,20 +96,37 @@ def tags(request, multiple_tags=None):
     except SolrException as e:
         error = True
         search_logger.error("SOLR ERROR - %s" % e)
-    except :
+    except:
         error = True
 
     slash_tag = "/".join(multiple_tags)
-    space_tag = " ".join(multiple_tags)
 
+    follow_tags_url = ''
+    unfollow_tags_url = ''
+    show_unfollow_button = False
     if slash_tag:
         follow_tags_url = reverse('follow-tags', args=[slash_tag])
         unfollow_tags_url = reverse('unfollow-tags', args=[slash_tag])
         show_unfollow_button = False
+
         if request.user.is_authenticated:
             show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
 
-    return render(request, 'sounds/tags.html', locals())
+    tvars = {'show_unfollow_button': show_unfollow_button,
+             'multiple_tags': multiple_tags,
+             'follow_tags_url': follow_tags_url,
+             'unfollow_tags_url': unfollow_tags_url,
+             'error': error,
+             'tags': tags,
+             'slash_tag': slash_tag,
+             'num_results': num_results,
+             'non_grouped_number_of_results': non_grouped_number_of_results,
+             'docs': docs,
+             'paginator': paginator,
+             'page': page,
+             'current_page': current_page
+             }
+    return render(request, 'sounds/tags.html', tvars)
 
 
 def old_tag_link_redirect(request):

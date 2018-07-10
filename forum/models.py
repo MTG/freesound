@@ -247,6 +247,13 @@ def update_last_post_on_post_delete(sender, instance, **kwargs):
                 if thread_has_posts:
                     post.thread.num_posts = F('num_posts') - 1
                     post.thread.save()
+
+                    # If this post was the first post in the thread then we should set it to the next one
+                    # We leave the author of the thread as the author of the first post
+                    if post.thread.first_post_id == post.id:
+                        # This is unconditionally the first post, even if it's not moderated
+                        post.thread.first_post = post.thread.post_set.first()
+                        post.thread.save(update_fields=['first_post'])
                 else:
                     post.thread.delete()
         except Thread.DoesNotExist:

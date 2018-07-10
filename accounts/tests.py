@@ -20,32 +20,34 @@
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase, override_settings, Client
+from django.test import TestCase
 from django.test.utils import override_settings, skipIf
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
+from django.core.management import call_command
 from django.core import mail
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername
+from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername, EmailBounce
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField, RegistrationForm
-from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay
+from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay, BulkUploadProgress
 from tags.models import TaggedItem
 from utils.filesystem import File
 from tags.models import Tag
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
 from tickets.models import Ticket
+from utils.mail import transform_unique_email, send_mail
 import accounts.models
 import mock
 import os
 import tempfile
 import shutil
 import datetime
-from utils.mail import transform_unique_email, replace_email_to
+import json
 
 
 class SimpleUserTest(TestCase):
@@ -634,14 +636,14 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting one file redirects to /home/describe/sounds/
         resp = self.client.post('/home/describe/', {
             'describe': [u'Describe selected files'],
-            'files': [u'file1'],
+            'sound-files': [u'file1'],
         })
         self.assertRedirects(resp, '/home/describe/sounds/')
 
         # Selecting multiple file redirects to /home/describe/license/
         resp = self.client.post('/home/describe/', {
             'describe': [u'Describe selected files'],
-            'files': [u'file1', u'file0'],
+            'sound-files': [u'file1', u'file0'],
         })
         self.assertRedirects(resp, '/home/describe/license/')
 
@@ -649,7 +651,7 @@ class UserUploadAndDescribeSounds(TestCase):
         filenames_to_delete = [u'file1', u'file0']
         resp = self.client.post('/home/describe/', {
             'delete': [u'Delete selected files'],
-            'files': filenames_to_delete,
+            'sound-files': filenames_to_delete,
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.context['filenames']), len(filenames_to_delete))
@@ -657,7 +659,7 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting confirmation of files to delete
         resp = self.client.post('/home/describe/', {
             'delete_confirm': [u'delete_confirm'],
-            'files': filenames_to_delete,
+            'sound-files': filenames_to_delete,
         })
         self.assertRedirects(resp, '/home/describe/')
         self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(filenames_to_delete))
@@ -949,41 +951,21 @@ class UserEmailsUniqueTestCase(TestCase):
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-    def test_replace_when_sending_email(self):
+    def test_user_profile_get_email(self):
+        # Here we test that when we send an email to users that have SameUser objects we chose the right email address
 
-        @replace_email_to
-        def fake_send_email(subject, email_body, email_from, email_to, reply_to=None):
-            return email_to
+        # user_a has no SameUser objects, emails should be sent directly to his address
+        self.assertEquals(self.user_a.profile.get_email_for_delivery(), self.user_a.email)
 
-        # Check that emails sent to user_a are sent to his address
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_a.email])
-        self.assertEquals(used_email_to[0], self.user_a.email)
+        # user_b has SameUser with user_c, but user_b is main user so emails should be sent directly to his address
+        self.assertEquals(self.user_b.profile.get_email_for_delivery(), self.user_b.email)
 
-        # For user b, email_to also remains the same
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_b.email])
-        self.assertEquals(used_email_to[0], self.user_b.email)
+        # user_c should get emails at user_b email address (user_b is main user)
+        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_b.email)
 
-        # For user c, email_to changes according to SameUser table
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
-        self.assertEquals(used_email_to[0], self.user_b.email)  # email_to becomes user_b.email
-
-        # If we remove SameUser entries, email of user_c is not replaced anymore
+        # If we remove SameUser entries, email of user_c is sent directly to his address
         SameUser.objects.all().delete()
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
-        self.assertEquals(used_email_to[0], self.user_c.email)
-
-        # Test with email_to not being a list or tuple
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=self.user_a.email)
-        self.assertEquals(used_email_to[0], self.user_a.email)
-
-        # Test with email_to being empty ''
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to='')
-        self.assertEquals(used_email_to, True)
-
-        # Test with email_to being None, should return admin emails
-        used_email_to = fake_send_email('Test subject', 'Test body', email_to=None)
-        admin_emails = [admin[1] for admin in settings.SUPPORT]
-        self.assertEquals(used_email_to[0], admin_emails[0])
+        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_c.email)
 
 
 class PasswordReset(TestCase):
@@ -1370,3 +1352,228 @@ class AboutFieldVisibilityTests(TestCase):
         self.client.force_login(self.admin)
         self._check_visibility('spammer', True)
         self._check_visible()
+
+
+class EmailBounceTests(TestCase):
+
+    @staticmethod
+    def _send_mail(user_to):
+        return send_mail('Test subject', 'Test body', user_to=user_to)
+
+    @mock.patch('utils.mail.get_connection')
+    def test_send_mail(self, get_connection):
+        user = User.objects.create_user('user', email='user@freesound.org')
+        self.assertTrue(self._send_mail(user))
+
+        email_bounce = EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        self.assertFalse(user.profile.email_is_valid())
+        self.assertFalse(self._send_mail(user))
+
+        email_bounce.delete()
+        self.assertTrue(user.profile.email_is_valid())
+        self.assertTrue(self._send_mail(user))
+
+    def test_unactivated_user_deleted(self):
+        pass  # TODO
+
+    def test_request_email_change(self):
+        pass  # TODO
+
+    @override_settings(AWS_REGION='dummy_region')
+    @override_settings(AWS_ACCESS_KEY_ID='dummy_id')
+    @override_settings(AWS_SECRET_ACCESS_KEY='dummy_secret')
+    @override_settings(AWS_SQS_QUEUE_URL='dummy_url')
+    @mock.patch('accounts.management.commands.process_email_bounces.client')
+    def test_populate_bounce(self, client):
+        message_body = json.dumps({
+            "Type": "Notification",
+            "Message": json.dumps({
+                "notificationType": "Bounce",
+                "bounce": {
+                    "bounceType": "Permanent",
+                    "bounceSubType": "Suppressed",
+                    "bouncedRecipients": [{"emailAddress": "user@freesound.org"}],
+                    "timestamp": "2018-05-20T13:54:37.821Z"
+                }
+            })
+        })
+
+        client_obj = mock.MagicMock()
+        client_obj.receive_message.return_value = {u'Messages': [{u'Body': message_body, u'ReceiptHandle': 'dummy'}]}
+        client.return_value = client_obj
+
+        def _delete_message(**kwargs):
+            client_obj.receive_message.return_value = {u'Messages': []}
+        client_obj.delete_message.side_effect = _delete_message
+
+        user = User.objects.create_user('user', email='user@freesound.org')
+        call_command('process_email_bounces')
+
+        self.assertFalse(user.profile.email_is_valid())
+
+
+class ProfileEmailIsValid(TestCase):
+
+    def test_email_is_valid(self):
+        user = User.objects.create_user('user', email='user@freesound.org', is_active=False)
+
+        # Test newly created user (still not activated) has email valid
+        # NOTE: we send activation emails to inactive users, therefore email is valid
+        self.assertEqual(user.is_active, False)
+        self.assertEqual(user.profile.email_is_valid(), True)
+
+        # Test newly created user (after activation) also has email valid
+        user.is_active = True
+        user.save()
+        self.assertEqual(user.profile.email_is_valid(), True)
+
+        # Test email becomes invalid when it bounced in the past
+        email_bounce = EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        self.assertEqual(user.profile.email_is_valid(), False)
+        email_bounce.delete()
+        self.assertEqual(user.profile.email_is_valid(), True)  # Back to normal
+
+        # Test email becomes invalid when user is deleted (anonymized)
+        user.profile.delete_user()
+        self.assertEqual(user.profile.email_is_valid(), False)
+
+        # Test email is still invalid after user is deleted and bounces happened
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        self.assertEqual(user.profile.email_is_valid(), False)
+
+
+class BulkDescribe(TestCase):
+
+    fixtures = ['initial_data']
+
+    @override_settings(CSV_PATH=tempfile.mkdtemp())
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
+    @mock.patch('gearman.GearmanClient.submit_job')
+    def test_upload_csv(self, submit_job):
+        user = User.objects.create_user("testuser", password="testpass")
+        self.client.login(username='testuser', password='testpass')
+
+        # Test successful file upload and redirect
+        filename = "file.csv"
+        f = SimpleUploadedFile(filename, "file_content")
+        resp = self.client.post(reverse('accounts-describe'), {u'bulk-csv_file': f})
+        bulk = BulkUploadProgress.objects.get(user=user)
+        self.assertRedirects(resp, reverse('accounts-bulk-describe', args=[bulk.id]))
+
+        # Test really file exists
+        self.assertEqual(os.path.exists(bulk.csv_path), True)
+
+        # Test gearman job is triggered
+        submit_job.assert_called_once_with("validate_bulk_describe_csv", str(bulk.id),
+                                           wait_until_complete=False, background=True)
+
+        # Delete tmp directory
+        shutil.rmtree(settings.CSV_PATH)
+
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
+    def test_bulk_describe_view_permissions(self):
+        user = User.objects.create_user("testuser", password="testpass")
+        bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
+
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        expected_redirect_url = reverse('accounts-login') + '?next=%s' % reverse('accounts-bulk-describe',
+                                                                                 args=[bulk.id])
+        self.assertRedirects(resp, expected_redirect_url)  # If user not logged in, redirect to login page
+
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertEqual(resp.status_code, 200)  # After login, page loads normally (200 OK)
+
+        User.objects.create_user("testuser2", password="testpass", email='another_email@example.com')
+        self.client.login(username='testuser2', password='testpass')
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertEqual(resp.status_code, 404)  # User without permission (not owner of object) gets 404
+
+        with self.settings(BULK_UPLOAD_MIN_SOUNDS=10):
+            # Now user is not allowed to load the page as user.profile.can_do_bulk_upload() returns False
+            self.client.login(username='testuser', password='testpass')
+            resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]), follow=True)
+            self.assertRedirects(resp, reverse('accounts-home'))
+            self.assertIn('Your user does not have permission to use the bulk describe', resp.content)
+
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
+    def test_bulk_describe_state_validating(self):
+        # Test that when BulkUploadProgress has not finished validation we show correct info to users
+        user = User.objects.create_user("testuser", password="testpass")
+        bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertIn('The uploaded data file has not yet been validated', resp.content)
+
+    @mock.patch('gearman.GearmanClient.submit_job')
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
+    def test_bulk_describe_state_finished_validation(self, submit_job):
+        # Test that when BulkUploadProgress has finished validation we show correct info to users
+        user = User.objects.create_user("testuser", password="testpass")
+        bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertIn('Validation results of the data file', resp.content)
+
+        # Test that chosing option to delete existing BulkUploadProgress really does it
+        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=delete')
+        self.assertRedirects(resp, reverse('accounts-describe'))  # Redirects to describe page after delete
+        self.assertEquals(BulkUploadProgress.objects.filter(user=user).count(), 0)
+
+        # Test that chosing option to start describing files triggers bulk describe gearmnan job
+        bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
+        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=start')
+        self.assertEqual(resp.status_code, 200)
+        submit_job.assert_called_once_with("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
+
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
+    def test_bulk_describe_state_description_in_progress(self):
+        # Test that when BulkUploadProgress has started description and processing we show correct info to users
+        user = User.objects.create_user("testuser", password="testpass")
+        bulk = BulkUploadProgress.objects.create(progress_type="S", user=user, original_csv_filename="test.csv")
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertIn('Your sounds are being described and processed', resp.content)
+
+        # Test that when BulkUploadProgress has finished describing items but still is processing some sounds, we
+        # show that info to the users. First we fake some data for the bulk object
+        bulk.progress_type = 'F'
+        bulk.validation_output = {
+            'lines_ok': range(5),  # NOTE: we only use the length of these lists, so we fill them with irrelevant data
+            'lines_with_errors': range(2),
+            'global_errors': [],
+        }
+        bulk.description_output = {
+            '1': 1,  # NOTE: we only use the length of the dict so we fill it with irrelevant values/keys
+            '2': 2,
+            '3': 3,
+        }
+        bulk.save()
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertIn('Your sounds are being described and processed', resp.content)
+
+        # Test that when both description and processing have finished we show correct info to users
+        for i in range(0, 5):  # First create the sound objects so BulkUploadProgress can properly compute progress
+            Sound.objects.create(user=user,
+                                 original_filename="Test sound %i" % i,
+                                 license=License.objects.all()[0],
+                                 md5="fakemd5%i" % i,
+                                 moderation_state="OK",
+                                 processing_state="OK")
+
+        bulk.progress_type = 'F'
+        bulk.description_output = {}
+        for count, sound in enumerate(user.sounds.all()):
+            bulk.description_output[count] = sound.id  # Fill bulk.description_output with real sound IDs
+        bulk.save()
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertIn('The bulk description process has finished!', resp.content)
+
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
+    def test_bulk_describe_state_closed(self):
+        # Test that when BulkUploadProgress object is closed we show correct info to users
+        user = User.objects.create_user("testuser", password="testpass")
+        bulk = BulkUploadProgress.objects.create(progress_type="C", user=user, original_csv_filename="test.csv")
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertIn('This bulk description process is closed', resp.content)

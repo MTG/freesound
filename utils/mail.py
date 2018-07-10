@@ -22,6 +22,7 @@ from django.conf import settings
 from django.core.mail.message import EmailMessage
 from django.template.loader import render_to_string
 from django.core.mail import get_connection
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def transform_unique_email(email):
@@ -33,65 +34,54 @@ def transform_unique_email(email):
     return "dupemail+%s@freesound.org" % (email.replace("@", "%"), )
 
 
-def replace_email_to(func):
-    """
-    This decorator checks the email_to list and replaces any addresses that need replacement
-    according to the SameUser table (see https://github.com/MTG/freesound/pull/763). In our process
-    of removing dublicated email addresses from our users table we set up a temporary table to
-    store the original email addresses of users whose email was automatically changed to prevent 
-    duplicates. In this function we make sure that emails are sent to the original address and not
-    the one we edited to prevent duplicates. 
-    At some point in time, SameUser table should become empty (when users update their addresses) and
-    then we'll be able to remove this decorator.
-    """
-    def wrapper(subject, email_body, email_from=None, email_to=list(), reply_to=None):
-
-        # Process email_to like we do in normal 'send_mail'
-        if not email_to:
-            if email_to == '':
-                return True
-            email_to = [admin[1] for admin in settings.SUPPORT]
-        elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
-            email_to = [email_to]
-
-        from accounts.models import SameUser
-        emails_mapping = {su.secondary_trans_email: su.orig_email for su in SameUser.objects.all()}
-        email_to = list(set([emails_mapping.get(email, email) for email in email_to]))
-        return func(subject, email_body, email_from, email_to, reply_to)
-    return wrapper
+def _ensure_list(item):
+    if not isinstance(item, tuple) and not isinstance(item, list):
+        return [item]
+    return item
 
 
-@replace_email_to
-def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None, reply_to=None):
     """
-    Sends email with a lot of defaults
-    'reply_to' parameter can only be a single email address that will be added as a header
-    to all mails being sent.
+    Sends email with a lot of defaults. The function will check if user's email is valid based on bounce info and will
+    not send to this user in other case. Parameters user_to and email_to are mutually exclusive, if one is set, other
+    should be None.
+    @:param user_to is a single user object, or a list of them. If it is set, email_to parameter should be None
+    @:param email_to is a single email string, or a list of them. If it is set, user_to parameter should be None.
+    Strings should be only used for emails that are not related to users, e.g. support or admins, otherwise user_to
+    parameter should be used to provide user object(s) instead of email address
+    @:param email_from is a email string that shows up as sender. The default value is DEFAULT_FROM_EMAIL in config
+    @:param reply_to can only be a single email address that will be added as a header to all mails being sent
+    @:returns False if no emails were send successfully, True otherwise
     """
-    if not email_from:
+    assert bool(user_to) != bool(email_to), "One of parameters user_to and email_to should be set, but not both"
+
+    if email_from is None:
         email_from = settings.DEFAULT_FROM_EMAIL
 
-    if not email_to:
-        # If email is emprty email, don't send email, otherwise (email 'False' but not '',
-        # send to default support emails)
-        if email_to == '':
-            return True
-        email_to = [admin[1] for admin in settings.SUPPORT]
-    elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
-        email_to = [email_to]
+    if user_to:
+        user_to = _ensure_list(user_to)
+        email_to = []
+        for user in user_to:
 
-    if settings.ALLOWED_EMAILS:
+            # check if user's email is valid for delivery and add the correct email address to the list og email_to
+            if user.profile.email_is_valid():
+                email_to.append(user.profile.get_email_for_delivery())
+
+            if len(email_to) == 0:  # all users have invalid emails
+                return False
+
+    if email_to:
+        email_to = _ensure_list(email_to)
+
+    if settings.ALLOWED_EMAILS:  # for testing purposes, so we don't accidentally send emails to users
         email_to = [email for email in email_to if email in settings.ALLOWED_EMAILS]
 
     try:
-        emails = tuple(
-            ((settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_to)
-        )
+        emails = tuple(((settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email])
+                        for email in email_to))
 
         # Replicating send_mass_mail functionality and adding reply-to header if requires
-        connection = get_connection(username=None,
-                                    password=None,
-                                    fail_silently=False)
+        connection = get_connection(username=None, password=None, fail_silently=False)
         headers = None
         if reply_to:
             headers = {'Reply-To': reply_to}
@@ -99,15 +89,22 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
                     for subject, message, sender, recipient in emails]
 
         connection.send_messages(messages)
-
         return True
-    except:
+
+    except Exception:
         return False
 
 
-def send_mail_template(subject, template, context, email_from=None, email_to=[], reply_to=None):
+def send_mail_template(subject, template, context, user_to=None, email_to=None, email_from=None, reply_to=None):
     context["settings"] = settings
-    return send_mail(subject, render_to_string(template, context), email_from, email_to, reply_to=reply_to)
+    return send_mail(subject, render_to_string(template, context), user_to, email_to, email_from, reply_to)
+
+
+def send_mail_template_to_support(subject, template, context, email_from=None, reply_to=None):
+    email_to = []
+    for email in settings.SUPPORT:
+        email_to.append(email[1])
+    return send_mail_template(subject, template, context, email_to=email_to, email_from=email_from, reply_to=reply_to)
 
 
 def render_mail_template(template, context):

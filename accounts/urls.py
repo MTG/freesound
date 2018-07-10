@@ -63,7 +63,7 @@ urlpatterns = [
     url(r'^upload/html/$', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),
     url(r'^upload/flash/$', accounts.upload, name="accounts-upload-flash"),
     url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
-
+    url(r'^upload/bulk-describe/(?P<bulk_id>[0-9]+)/$', accounts.bulk_describe, name="accounts-bulk-describe"),
 
     url(r'^describe/$', accounts.describe, name="accounts-describe"),
     url(r'^describe/license/$', accounts.describe_license, name="accounts-describe-license"),
@@ -72,7 +72,7 @@ urlpatterns = [
 
     url(r'^bookmarks/add/(?P<sound_id>\d+)/$', bookmarks.add_bookmark, name="add-bookmark"),
     url(r'^bookmarks/get_form_for_sound/(?P<sound_id>\d+)/$', bookmarks.get_form_for_sound, name="bookmarks-add-form-for-sound"),
-    url(r'^bookmarks/category/(?P<category_id>\d+)/delete/$', bookmarks.delete_bookmark_category, name="delete-bookmark-category"),    
+    url(r'^bookmarks/category/(?P<category_id>\d+)/delete/$', bookmarks.delete_bookmark_category, name="delete-bookmark-category"),
     url(r'^bookmarks/(?P<bookmark_id>\d+)/delete/$', bookmarks.delete_bookmark, name="delete-bookmark"),
 
     url(r'^messages/$', messages.inbox, name='messages'),

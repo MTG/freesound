@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 from django.utils.dateparse import parse_datetime
 from django.db import IntegrityError
 from accounts.models import EmailBounce
+from utils.aws import init_client, AwsCredentialsNotConfigured
 from boto3 import client
 import json
 import logging
@@ -43,8 +44,10 @@ class Command(BaseCommand):
     # FIFO manner.
 
     def handle(self, *args, **options):
-        if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
-            logger_console.error('AWS credentials are not configured')
+        try:
+            sqs = init_client('sqs')
+        except AwsCredentialsNotConfigured as e:
+            logger_console.error(e.message)
             return
 
         queue_url = settings.AWS_SQS_QUEUE_URL
@@ -56,10 +59,6 @@ class Command(BaseCommand):
         if not 1 <= settings.AWS_SQS_MESSAGES_PER_CALL <= 10:
             logger_console.warn('Invalid value for number messages to process per call: {}, using 1'.format(messages_per_call))
             messages_per_call = 1
-
-        sqs = client('sqs', region_name=settings.AWS_REGION,
-                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
         total_messages = 0
         total_bounces = 0  # counts multiple recipients of the same mail

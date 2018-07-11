@@ -43,21 +43,22 @@ class Command(BaseCommand):
     # FIFO manner.
 
     def handle(self, *args, **options):
-        if not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
-            logger_web.error('AWS credentials are not configured')
+        if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
+            logger_console.error('AWS credentials are not configured')
             return
 
         queue_url = settings.AWS_SQS_QUEUE_URL
         if not queue_url:
-            logger_web.error('AWS queue URL is not configured')
+            logger_console.error('AWS queue URL is not configured')
             return
 
         messages_per_call = settings.AWS_SQS_MESSAGES_PER_CALL
         if not 1 <= settings.AWS_SQS_MESSAGES_PER_CALL <= 10:
-            logger_web.warn('Invalid value for number messages to process per call: {}, using 1'.format(messages_per_call))
+            logger_console.warn('Invalid value for number messages to process per call: {}, using 1'.format(messages_per_call))
             messages_per_call = 1
 
-        sqs = client('sqs', aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        sqs = client('sqs', region_name=settings.AWS_REGION,
+                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                      aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
         total_messages = 0
@@ -72,9 +73,10 @@ class Command(BaseCommand):
                 VisibilityTimeout=0,
                 WaitTimeSeconds=0
             )
-            has_messages = len(response['Messages']) > 0
+            messages = response.get('Messages', [])
+            has_messages = len(messages) > 0
 
-            for message in response['Messages']:
+            for message in messages:
                 receipt_handle = message['ReceiptHandle']
                 body = json.loads(message['Body'])
 

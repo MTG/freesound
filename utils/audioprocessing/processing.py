@@ -286,7 +286,7 @@ class WaveformImage(object):
     """
     def __init__(self, image_width, image_height, color_scheme):
         if image_height % 2 == 0:
-            raise AudioProcessingException("Height should be uneven: images look much better at uneven height")
+            print("WARNING: Height is not uneven, images look much better at uneven height")
 
         waveform_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['wave_colors']
         background_color = waveform_colors[0]
@@ -408,9 +408,18 @@ class SpectrogramImage(object):
 
 
 def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size,
-                       progress_callback=None, color_scheme=None):
+                       progress_callback=None, progress_callback_steps=10, color_scheme=None):
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
+    :param input_filename: input audio filename (must be PCM)
+    :param output_filename_w: output filename for waveform image (must end in .png)
+    :param output_filename_s: output filename for spectrogram image (must end in .jpg)
+    :param image_width: width of both spectrogram and waveform images
+    :param image_height: height of both spectrogram and waveform images
+    :param fft_size: size of the FFT computed for the spectrogram image
+    :param progress_callback: function to iteratively call while images are being created
+    :param progress_callback_steps: number of times the progress_callback will be called until 100% progress is reached
+    :param color_scheme: color scheme to use for the generated images (defaults to Freesound2 color scheme)
     """
     processor = AudioProcessor(input_filename, fft_size, numpy.hanning)
     samples_per_pixel = processor.audio_file.nframes / float(image_width)
@@ -420,7 +429,7 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
 
     for x in range(image_width):
 
-        if progress_callback and x % (image_width/10) == 0:
+        if progress_callback and x % (image_width/progress_callback_steps) == 0:
             progress_callback((x*100)/image_width)
 
         seek_point = int(x * samples_per_pixel)

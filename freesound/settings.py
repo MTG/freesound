@@ -325,6 +325,7 @@ STRIPE_PRIVATE_KEY = ""
 MAPBOX_ACCESS_TOKEN = ""
 
 # AWS tokens (for accessing email bounce list)
+AWS_REGION = ''
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 AWS_SQS_QUEUE_URL = ''

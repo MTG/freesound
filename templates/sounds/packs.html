@@ -15,7 +15,7 @@
 <li><a href="?order=-num_sounds" {% ifequal order "-num_sounds" %}class="selected"{% endifequal %}>number of sounds</a></li>
 <li><a href="?order=-num_downloads" {% ifequal order "-num_downloads" %}class="selected"{% endifequal %}>number of downloads</a></li>
 </ul>
-{% cache 3600 user.id order current_page %}
+{% cache 3600 packs user.id order current_page %}
 <p>{% show_paginator paginator page current_page request "pack" %}</p>
 
 {% for pack in page.object_list %}

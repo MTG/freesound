@@ -27,8 +27,5 @@ register = template.Library()
 
 @register.inclusion_tag('templatetags/maps_js_scripts.html', takes_context=True)
 def maps_js_scripts(context):
-    request = context['request']
-    return {'use_gmaps': request.GET.get('gmaps', False),
-            'google_maps_key': settings.GOOGLE_API_KEY,
-            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'media_url': settings.MEDIA_URL}

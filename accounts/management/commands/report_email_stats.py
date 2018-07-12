@@ -25,5 +25,20 @@ from utils.aws import report_ses_stats
 class Command(BaseCommand):
     help = 'Retrieves email stats from AWS SES and reports it to graylog.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--short-term-datapoints',
+            type=int,
+            dest='n_datapoints',
+            help="Number of datapoints to aggregate for short-term stats (cronjob interval / aws interval (15mins))",
+        )
+
+        parser.add_argument(
+            '--long-term-sample-size',
+            type=int,
+            dest='sample_size',
+            help="Number of datapoints to aggregate for short-term stats (cronjob interval / aws interval (15mins))",
+        )
+
     def handle(self, *args, **options):
-        report_ses_stats()
+        report_ses_stats(sample_size=options['sample_size'], n_points=options['n_datapoints'])

@@ -33,6 +33,7 @@ from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername, EmailBounce
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField, RegistrationForm
+from accounts.management.commands.process_email_bounces import process_message
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay, BulkUploadProgress
 from tags.models import TaggedItem
 from utils.filesystem import File
@@ -1342,7 +1343,7 @@ class AboutFieldVisibilityTests(TestCase):
 
 
 class EmailBounceTests(TestCase):
-
+    """Test things related to email bounce info from AWS"""
     @staticmethod
     def _send_mail(user_to):
         return send_mail('Test subject', 'Test body', user_to=user_to)
@@ -1366,36 +1367,16 @@ class EmailBounceTests(TestCase):
     def test_request_email_change(self):
         pass  # TODO
 
-    @override_settings(AWS_REGION='dummy_region')
-    @override_settings(AWS_ACCESS_KEY_ID='dummy_id')
-    @override_settings(AWS_SECRET_ACCESS_KEY='dummy_secret')
-    @override_settings(AWS_SQS_QUEUE_URL='dummy_url')
-    @mock.patch('accounts.management.commands.process_email_bounces.client')
-    def test_populate_bounce(self, client):
-        message_body = json.dumps({
-            "Type": "Notification",
-            "Message": json.dumps({
-                "notificationType": "Bounce",
-                "bounce": {
-                    "bounceType": "Permanent",
-                    "bounceSubType": "Suppressed",
-                    "bouncedRecipients": [{"emailAddress": "user@freesound.org"}],
-                    "timestamp": "2018-05-20T13:54:37.821Z"
-                }
-            })
-        })
-
-        client_obj = mock.MagicMock()
-        client_obj.receive_message.return_value = {u'Messages': [{u'Body': message_body, u'ReceiptHandle': 'dummy'}]}
-        client.return_value = client_obj
-
-        def _delete_message(**kwargs):
-            client_obj.receive_message.return_value = {u'Messages': []}
-        client_obj.delete_message.side_effect = _delete_message
+    def test_populate_bounce(self):
+        message_body = {
+            "bounceType": "Permanent",
+            "bounceSubType": "Suppressed",
+            "bouncedRecipients": [{"emailAddress": "user@freesound.org"}],
+            "timestamp": "2018-05-20T13:54:37.821Z"
+        }
 
         user = User.objects.create_user('user', email='user@freesound.org')
-        call_command('process_email_bounces')
-
+        process_message(message_body)
         self.assertFalse(user.profile.email_is_valid())
 
 

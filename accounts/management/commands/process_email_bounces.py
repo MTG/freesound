@@ -25,12 +25,31 @@ from django.utils.dateparse import parse_datetime
 from django.db import IntegrityError
 from accounts.models import EmailBounce
 from utils.aws import init_client, AwsCredentialsNotConfigured
-from boto3 import client
 import json
 import logging
 
 logger_web = logging.getLogger('web')
 logger_console = logging.getLogger('console')
+
+
+def process_message(data):
+    bounce_type = EmailBounce.type_from_string(data['bounceType'])
+    timestamp = parse_datetime(data['timestamp'])
+    is_duplicate = False
+    n_recipients = 0
+
+    for recipient in data['bouncedRecipients']:
+        email = recipient['emailAddress']
+        try:
+            user = User.objects.get(email__iexact=email)
+            EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
+            n_recipients += 1
+        except User.DoesNotExist:  # user probably got deleted
+            logger_console.info('User {} not found in database (probably deleted)'.format(email))
+        except IntegrityError:  # message duplicated
+            is_duplicate = True
+
+    return is_duplicate, n_recipients
 
 
 class Command(BaseCommand):
@@ -81,28 +100,16 @@ class Command(BaseCommand):
 
                 data = json.loads(body['Message'])
                 if data['notificationType'] == 'Bounce':
-                    bounce_data = data['bounce']
-                    bounce_type = EmailBounce.type_from_string(bounce_data['bounceType'])
-                    timestamp = parse_datetime(bounce_data['timestamp'])
-                    is_duplicate = False
-
-                    for recipient in bounce_data['bouncedRecipients']:
-                        email = recipient['emailAddress']
-                        try:
-                            user = User.objects.get(email__iexact=email)
-                            EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
-                            total_bounces += 1
-                        except User.DoesNotExist:  # user probably got deleted
-                            logger_console.info('User {} not found in database (probably deleted)'.format(email))
-                        except IntegrityError:  # message duplicated
-                            is_duplicate = True
+                    is_duplicate, n_recipients = process_message(data['bounce'])
 
                     sqs.delete_message(
                         QueueUrl=queue_url,
                         ReceiptHandle=receipt_handle
                     )
+
                     if not is_duplicate:
                         total_messages += 1
+                        total_bounces += n_recipients
 
         result = {'nMailsBounced': total_messages, 'nBounces': total_bounces}
         logger_web.info('Finished processing messages from queue ({})'.format(json.dumps(result)))

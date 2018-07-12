@@ -43,7 +43,35 @@ def init_client(service):
                   aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
 
-def report_ses_stats():
+class EmailStats(object):
+    total = 0
+    bounces = 0
+    complaints = 0
+    rejects = 0
+
+    def _rate(self, value):
+        return float(value) / self.total
+
+    def render(self):
+        return {
+            'total': self.total,
+            'bounces': self.bounces,
+            'complaints': self.complaints,
+            'rejects': self.rejects,
+            'bounceRate': self._rate(self.bounces),
+            'complaintRate': self._rate(self.complaints),
+            'rejectRate': self._rate(self.rejects)
+        }
+
+    def aggregate(self, data):
+        self.total += data['DeliveryAttempts']
+        self.complaints += data['Complaints']
+        self.bounces += data['Bounces']
+        self.rejects += data['Rejects']
+
+
+def report_ses_stats(sample_size=None, n_points=None):
+    """Retrieves email statistics from AWS and sends the data to graylog"""
     ses = init_client('ses')
 
     try:
@@ -53,23 +81,28 @@ def report_ses_stats():
         return
 
     data = response['SendDataPoints']
-    data.sort(key=lambda x: x['Timestamp'], reverse=True)
+    data.sort(key=lambda x: x['Timestamp'], reverse=True)  # array of datapoints is not sorted originally
 
-    size = settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
-    total = 0
-    complaints = 0
-    bounces = 0
+    try:
+        sample_size = sample_size or settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
+        n_points = n_points or settings.AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS
+    except AttributeError:
+        logger_console.error('AWS SES config variables not configured')
+        return
+
+    email_stats = EmailStats()
+    count = 0
+    result = {}
 
     for data_point in data:
-        total += data_point['DeliveryAttempts']
-        complaints += data_point['Complaints']
-        bounces += data_point['Bounces']
-        if size and total >= size:
+        email_stats.aggregate(data_point)
+        count += 1
+        if count == n_points:
+            result['shortTerm'] = email_stats.render()
+        if sample_size and email_stats.total >= sample_size:
             break
 
-    bounce_rate = float(bounces) / total
+    result['longTerm'] = email_stats.render()
+    logger_web.info('AWS email stats: {}'.format(json.dumps(result)))
 
-    logger_web.info('Test email bounce rate {}'.format(json.dumps({'bounceRate': bounce_rate})))
-    logger_web.info(json.dumps(data, default=str))
-
-    return response
+    return result

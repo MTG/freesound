@@ -746,6 +746,11 @@ class UserDelete(TestCase):
                                  processing_state="OK")
         return user
 
+    def test_user_delete_make_invalid_password(self):
+        user = self.create_user_and_content(is_index_dirty=False)
+        user.profile.delete_user()
+        self.assertFalse(user.has_usable_password())
+
     def test_user_delete_keep_sounds(self):
         # This should set user's attribute active to false and anonymize it
         user = self.create_user_and_content(is_index_dirty=False)

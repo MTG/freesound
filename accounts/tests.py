@@ -33,6 +33,7 @@ from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser, ResetEmailRequest, OldUsername, EmailBounce
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField, RegistrationForm
+from accounts.management.commands.process_email_bounces import decode_idna_email
 from sounds.models import License, Sound, Pack, DeletedSound, SoundOfTheDay, BulkUploadProgress
 from tags.models import TaggedItem
 from utils.filesystem import File
@@ -744,6 +745,11 @@ class UserDelete(TestCase):
                                  processing_state="OK")
         return user
 
+    def test_user_delete_make_invalid_password(self):
+        user = self.create_user_and_content(is_index_dirty=False)
+        user.profile.delete_user()
+        self.assertFalse(user.has_usable_password())
+
     def test_user_delete_keep_sounds(self):
         # This should set user's attribute active to false and anonymize it
         user = self.create_user_and_content(is_index_dirty=False)
@@ -1394,6 +1400,11 @@ class EmailBounceTests(TestCase):
         call_command('process_email_bounces')
 
         self.assertFalse(user.profile.email_is_valid())
+
+    def test_idna_email(self):
+        encoded_email = u'user@xn--eb-tbv.de'
+        decoded_email = u'user@\u2211eb.de'
+        self.assertEquals(decoded_email, decode_idna_email(encoded_email))
 
 
 class ProfileEmailIsValid(TestCase):

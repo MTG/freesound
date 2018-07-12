@@ -21,52 +21,51 @@
 #
 
 from django.conf.urls import url
-from django.views.generic import TemplateView
-from views import *
+from tickets import views
 
 urlpatterns = [
 
     url(r'^moderation/$',
-        moderation_home,
+        views.moderation_home,
         name='tickets-moderation-home'),
 
     url(r'^moderation/tardy_users_sounds/$',
-        moderation_tardy_users_sounds,
+        views.moderation_tardy_users_sounds,
         name='tickets-moderation-tardy-users'),
 
     url(r'^moderation/tardy_moderators_sounds/$',
-        moderation_tardy_moderators_sounds,
+        views.moderation_tardy_moderators_sounds,
         name='tickets-moderation-tardy-moderators'),
 
     url(r'^moderation/assign/(?P<user_id>\d+)/new$',
-        moderation_assign_user,
+        views.moderation_assign_user,
         name='tickets-moderation-assign-user-new'),
 
     url(r'^moderation/assign/(?P<user_id>\d+)/pending$',
-        moderation_assign_user_pending,
+        views.moderation_assign_user_pending,
         name='tickets-moderation-assign-user-pending'),
 
     url(r'^moderation/assigned/(?P<user_id>\d+)/$',
-        moderation_assigned,
+        views.moderation_assigned,
         name='tickets-moderation-assigned'),
 
     url(r'^moderation/assign/ticket/(?P<user_id>\d+)/(?P<ticket_id>\d+)/$',
-        moderation_assign_single_ticket,
+        views.moderation_assign_single_ticket,
         name='tickets-moderation-assign-single-ticket'),
 
     url(r'^moderation/annotations/(?P<user_id>\d+)/$',
-        user_annotations,
+        views.user_annotations,
         name='tickets-user-annotations'),
 
     url(r'^moderation/pending/(?P<username>[^//]+)/$',
-        pending_tickets_per_user,
+        views.pending_tickets_per_user,
         name='tickets-user-pending_sounds'),
 
     url(r'^(?P<ticket_key>[\w\d]+)/$',
-        ticket,
+        views.ticket,
         name='tickets-ticket'),
 
     url(r'^(?P<ticket_key>[\w\d]+)/messages/$',
-        sound_ticket_messages,
+        views.sound_ticket_messages,
         name='tickets-ticket-messages'),
 ]

@@ -347,7 +347,7 @@ class Profile(SocialModel):
         self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
         self.has_avatar = False
         self.is_deleted_user = True
-        self.user.set_password(str(uuid.uuid4()))
+        self.user.set_unusable_password()
 
         self.about = ''
         self.home_page = ''

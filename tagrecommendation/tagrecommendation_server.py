@@ -24,16 +24,18 @@
 #   - sklearn (joblib)
 
 from __future__ import print_function
-from twisted.web import server, resource
-from twisted.internet import reactor
-from tagrecommendation_settings import *
-import logging
-import graypy
-from logging.handlers import RotatingFileHandler
+
 import json
-from communityBasedTagRecommendation import CommunityBasedTagRecommender
-from utils import loadFromJson, saveToJson
+import logging
+
 import cloghandler
+import graypy
+from twisted.internet import reactor
+from twisted.web import server, resource
+
+from communityBasedTagRecommendation import CommunityBasedTagRecommender
+import tagrecommendation_settings as tr_settings
+from utils import loadFromJson, saveToJson
 
 
 def server_interface(resource):
@@ -55,7 +57,8 @@ class TagRecommendationServer(resource.Resource):
 
     def load(self):
         try:
-            tag_recommendation_data = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
+            tag_recommendation_data = loadFromJson(
+                tr_settings.RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
             DATABASE = tag_recommendation_data['database']
             CLASSES = tag_recommendation_data['classes']
             self.cbtr = CommunityBasedTagRecommender(dataset=DATABASE, classes=CLASSES)
@@ -66,7 +69,7 @@ class TagRecommendationServer(resource.Resource):
             logger.info("No computed matrices were found, recommendation system not loading for the moment (but service listening for data to come).")
 
         try:
-            self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
+            self.index_stats = loadFromJson(tr_settings.RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
             logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds_in_matrix'])
         except Exception as e:
             print(e)
@@ -75,7 +78,7 @@ class TagRecommendationServer(resource.Resource):
             }
 
         try:
-            self.index = loadFromJson(RECOMMENDATION_DATA_DIR + 'Index.json')
+            self.index = loadFromJson(tr_settings.RECOMMENDATION_DATA_DIR + 'Index.json')
             self.index_stats['biggest_id_in_index'] = max([int(key) for key in self.index.keys()])
             self.index_stats['n_sounds_in_index'] = len(self.index.keys())
         except Exception as e:
@@ -136,7 +139,7 @@ class TagRecommendationServer(resource.Resource):
         if len(self.index.keys()) % 1000 == 0:
             # Every 1000 indexed sounds, save the index
             logger.info('Saving tagrecommendation index...')
-            saveToJson(RECOMMENDATION_DATA_DIR + 'Index.json', self.index, verbose=False)
+            saveToJson(tr_settings.RECOMMENDATION_DATA_DIR + 'Index.json', self.index, verbose=False)
             self.index_stats['biggest_id_in_index'] = max([int(key) for key in self.index.keys()])
             self.index_stats['n_sounds_in_index'] = len(self.index.keys())
 
@@ -146,21 +149,21 @@ class TagRecommendationServer(resource.Resource):
 
 if __name__ == '__main__':
     # Set up logging
-    if not LOG_TO_STDOUT:
+    if not tr_settings.LOG_TO_STDOUT:
         print("LOG_TO_STDOUT is False, will not log")
     logger = logging.getLogger('tagrecommendation')
     logger.setLevel(logging.DEBUG)
-    handler = cloghandler.ConcurrentRotatingFileHandler(LOGFILE, mode="a", maxBytes=2*1024*1024, backupCount=5)
+    handler = cloghandler.ConcurrentRotatingFileHandler(tr_settings.LOGFILE, mode="a", maxBytes=2 * 1024 * 1024, backupCount=5)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    if LOG_TO_STDOUT:
+    if tr_settings.LOG_TO_STDOUT:
         std_handler = logging.StreamHandler()
         std_handler.setLevel(logging.DEBUG)
         std_handler.setFormatter(formatter)
         logger.addHandler(std_handler)
-    handler_graypy = graypy.GELFHandler(LOGSERVER_IP_ADDRESS, LOGSERVER_PORT)
+    handler_graypy = graypy.GELFHandler(tr_settings.LOGSERVER_IP_ADDRESS, tr_settings.LOGSERVER_PORT)
     logger.addHandler(handler_graypy)
 
     # Start service
@@ -168,8 +171,8 @@ if __name__ == '__main__':
     root = resource.Resource()
     root.putChild("tagrecommendation", TagRecommendationServer())
     site = server.Site(root)
-    reactor.listenTCP(LISTEN_PORT, site)
-    logger.info('Started tag recommendation service, listening to port ' + str(LISTEN_PORT) + "...")
+    reactor.listenTCP(tr_settings.LISTEN_PORT, site)
+    logger.info('Started tag recommendation service, listening to port ' + str(tr_settings.LISTEN_PORT) + "...")
     reactor.run()
     logger.info('Service stopped.')
 

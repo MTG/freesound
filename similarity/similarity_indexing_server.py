@@ -26,14 +26,16 @@ can be reloaded with the new index.
 '''
 
 
-from twisted.web import server, resource
-from twisted.internet import reactor
-from gaia_wrapper import GaiaWrapper
-from similarity_settings import *
-import logging
-import graypy
-from logging.handlers import RotatingFileHandler
 import json
+import logging
+from logging.handlers import RotatingFileHandler
+
+import graypy
+from twisted.internet import reactor
+from twisted.web import server, resource
+
+from gaia_wrapper import GaiaWrapper
+import similarity_settings as sim_settings
 
 
 def server_interface(resource):
@@ -66,7 +68,7 @@ class SimilarityServer(resource.Resource):
 
     def save(self, request, filename=None):
         if not filename:
-            filename = [INDEXING_SERVER_INDEX_NAME]
+            filename = [sim_settings.INDEXING_SERVER_INDEX_NAME]
         return json.dumps(self.gaia.save_index(filename[0]))
 
     def reload_gaia_wrapper(self, request):
@@ -81,7 +83,7 @@ if __name__ == '__main__':
     # Set up logging
     logger = logging.getLogger('similarity')
     logger.setLevel(logging.DEBUG)
-    handler = RotatingFileHandler(LOGFILE_INDEXING_SERVER, maxBytes=2*1024*1024, backupCount=5)
+    handler = RotatingFileHandler(sim_settings.LOGFILE_INDEXING_SERVER, maxBytes=2 * 1024 * 1024, backupCount=5)
     handler.setLevel(logging.DEBUG)
     std_handler = logging.StreamHandler()
     std_handler.setLevel(logging.DEBUG)
@@ -98,7 +100,8 @@ if __name__ == '__main__':
     root = resource.Resource()
     root.putChild("similarity", SimilarityServer())
     site = server.Site(root)
-    reactor.listenTCP(INDEXING_SERVER_LISTEN_PORT, site)
-    logger.info('Started similarity INDEXING service, listening to port ' + str(INDEXING_SERVER_LISTEN_PORT) + "...")
+    reactor.listenTCP(sim_settings.INDEXING_SERVER_LISTEN_PORT, site)
+    logger.info('Started similarity INDEXING service, listening to port ' + str(
+        sim_settings.INDEXING_SERVER_LISTEN_PORT) + "...")
     reactor.run()
     logger.info('Service stopped.')

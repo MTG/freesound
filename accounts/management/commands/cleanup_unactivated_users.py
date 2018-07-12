@@ -27,11 +27,30 @@ logger = logging.getLogger('console')
 
 
 class Command(BaseCommand):
-    help = 'Removes unactivated users with invalid emails'
+    help = 'Removes users that entered invalid email address during registration, thus having the activation email ' \
+           'bounced and thus never logged in or being activated'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--fast',
+            action='store_true',
+            dest='fast',
+            default=False,
+            help="Skip extra safety check for deletion of users",
+        )
 
     def handle(self, *args, **options):
-        bounces = EmailBounce.objects.filter(type__in=EmailBounce.TYPES_INVALID, user__is_active=False)
+        bounces = EmailBounce.objects.filter(type__in=EmailBounce.TYPES_INVALID, user__is_active=False,
+                                             user__last_login=None)
         users = User.objects.filter(id__in=bounces.values_list('user', flat=True))
+
+        if not options['fast']:
+            for user in users:
+                if user.profile.has_content():
+                    logger.error('User {} is not expected to have content, aborting!')
+                    return
+
         total, details = users.delete()
-        deleted_users = details.get('auth.Users', 0)
+
+        deleted_users = details.get('auth.User', 0)
         logger.info('Deleted {} users'.format(deleted_users))

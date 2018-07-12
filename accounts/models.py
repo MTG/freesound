@@ -358,6 +358,12 @@ class Profile(SocialModel):
         else:
             Sound.objects.filter(user=self.user).update(is_index_dirty=True)
 
+    def has_content(self):
+        return Sound.objects.filter(user=self.user) or \
+               Post.objects.filter(author=self.user) or \
+               Comment.objects.filter(user=self.user)
+        # TODO: add more checks?
+
     def update_num_sounds(self, commit=True):
         """
         Updates the num_sounds property by counting the number of moderated and processed sounds

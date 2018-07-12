@@ -1376,6 +1376,17 @@ class EmailBounceTests(TestCase):
         with self.assertRaises(User.DoesNotExist):
             user.refresh_from_db()
 
+    def test_activated_user_not_deleted(self):
+        user = User.objects.create_user('user', email='user@freesound.org')
+        user.is_active = True
+        user.save()
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+        call_command('cleanup_unactivated_users')
+        try:
+            user.refresh_from_db()
+        except User.DoesNotExist:
+            self.fail()
+
     def test_request_email_change(self):
         user = User.objects.create_user('user', email='user@freesound.org', password='testpass')
         self.client.login(username='user', password='testpass')
@@ -1384,7 +1395,7 @@ class EmailBounceTests(TestCase):
 
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
         resp = self.client.get(reverse('front-page'))
-        self.assertRedirects(resp, reverse('accounts-email-reset-required'))
+        self.assertRedirects(resp, reverse('accounts-email-reset'))
 
     @override_settings(AWS_REGION='dummy_region')
     @override_settings(AWS_ACCESS_KEY_ID='dummy_id')

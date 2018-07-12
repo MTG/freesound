@@ -22,7 +22,6 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from utils.forms import CaptchaWidget
-from tickets import *
 from utils.forms import HtmlCleaningCharField
 
 

@@ -21,7 +21,7 @@
 #
 
 from django.conf.urls import url, include
-import views
+from donations import views
 
 urlpatterns = [
     url(r'^donate/$', views.donate, name="donate"),

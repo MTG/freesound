@@ -9,7 +9,6 @@ from django.contrib.auth.hashers import make_password
 def forwards_func(apps, schema_editor):
     User = apps.get_model('auth', 'User')
     users = User.objects.filter(profile__is_deleted_user=True)
-    print("to change, %s users" % len(users))
     for user in users:
         # Don't use user.set_unusable_password because the `User` class here is a
         # class made by the migration framework and not our actual User class

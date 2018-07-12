@@ -34,6 +34,8 @@ def dont_redirect(path):
         and 'tosacceptance' not in path \
         and 'tos_api' not in path \
         and 'tos_web' not in path \
+        and 'privacy' not in path \
+        and 'cookies' not in path \
         and 'contact' not in path \
         and not path.startswith(settings.MEDIA_URL)
 

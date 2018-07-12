@@ -97,10 +97,11 @@ class FlashUploadFileForm(forms.Form):
 class TermsOfServiceForm(forms.Form):
     accepted_tos = forms.BooleanField(
         label='',
-        help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
-                  'Freesound website',
+        help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> '
+                  'and the <a href="/help/privacy/" target="_blank">privacy policy</a> of Freesound',
         required=True,
-        error_messages={'required': 'You must accept the terms of use in order to continue using Freesound.'}
+        error_messages={'required': 'You must accept the terms of use and the privacy poclicy in order to continue '
+                                    'using Freesound.'}
     )
     next = forms.CharField(widget=forms.HiddenInput(), required=False)
 
@@ -158,8 +159,8 @@ class RegistrationForm(forms.Form):
                                                             "sure this is correct!."), max_length=254)
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
-        label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
-                        'Freesound website'),
+        label=mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
+                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>.'),
         required=True,
         error_messages={'required': _('You must accept the terms of use in order to register to Freesound.')}
     )

@@ -37,7 +37,7 @@ class Command(BaseCommand):
             '--long-term-sample-size',
             type=int,
             dest='sample_size',
-            help="Number of datapoints to aggregate for short-term stats (cronjob interval / aws interval (15mins))",
+            help="Number of emails to approximate bounce rate from AWS dashboard",
         )
 
     def handle(self, *args, **options):

@@ -21,6 +21,7 @@
 import os
 import zlib
 import hashlib
+import errno
 
 
 class File:
@@ -88,3 +89,12 @@ def crc32file(filename):
 def remove_directory_if_empty(path):
     if not os.listdir(path):
         os.rmdir(path)
+
+
+def create_directories(path):
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise

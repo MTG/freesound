@@ -22,15 +22,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import redirect, render, get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 
 from bookmarks.forms import BookmarkForm
-from bookmarks.models import *
+from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404
+
 
 @redirect_if_old_username_or_404
 def bookmarks(request, username, category_id=None):

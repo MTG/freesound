@@ -366,6 +366,7 @@ def edit(request):
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
+            invalidate_template_cache('user_header', request.user.id)
 
             profile.save()
             msg_txt = "Your profile has been updated correctly."

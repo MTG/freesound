@@ -60,6 +60,7 @@ import gearman
 import subprocess
 import datetime
 import json
+import zlib
 
 
 search_logger = logging.getLogger('search')
@@ -729,8 +730,11 @@ class Sound(SocialModel):
             self.save()
 
     def compute_crc(self, commit=True):
-        p = subprocess.Popen(["crc32", self.locations('path')], stdout=subprocess.PIPE)
-        self.crc = p.communicate()[0].split(" ")[0][:-1]
+        with open(self.locations('path'), "rb") as fp:
+            data = fp.read()
+        crc = zlib.crc32(data)
+        self.crc = '{:0>8x}'.format(crc & 0xffffffff)  # right aligned with zero-padding, width of 8 chars
+
         if commit:
             self.save()
 

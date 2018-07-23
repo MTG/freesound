@@ -19,7 +19,13 @@
 #
 
 from django.core.management.base import BaseCommand
-from utils.aws import report_ses_stats
+from django.conf import settings
+import logging
+import json
+from utils.aws import get_ses_stats, AwsCredentialsNotConfigured, EndpointConnectionError
+
+logger_console = logging.getLogger('console')
+logger_web = logging.getLogger('web')
 
 
 class Command(BaseCommand):
@@ -41,4 +47,17 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        report_ses_stats(sample_size=options['sample_size'], n_points=options['n_datapoints'])
+        try:
+            sample_size = options['sample_size'] or settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
+            n_points = options['n_datapoints'] or settings.AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS
+        except AttributeError:
+            logger_console.error('AWS SES config variables not configured')
+            return
+
+        try:
+            stats = get_ses_stats(sample_size, n_points)
+        except (AwsCredentialsNotConfigured, EndpointConnectionError) as e:
+            logger_console.error(e.message)
+            return
+
+        logger_web.info('AWS email stats: {}'.format(json.dumps(stats)))

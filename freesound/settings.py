@@ -330,9 +330,9 @@ AWS_SECRET_ACCESS_KEY = ''
 # Email bounce processing parameters
 AWS_SQS_QUEUE_URL = ''
 AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
-# Email stats retrieval parameters
-AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500  # used to approximate bounce rate from AWS SES dashboard, ~ 10000-11000
-AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period (15min), used for short-term estimation
+# Email stats retrieval parameters (see utils.aws.report_ses_stats for more details)
+AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500  # should be ~ 10000-11000
+AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period (15min)
 
 
 # Frontend preference handling

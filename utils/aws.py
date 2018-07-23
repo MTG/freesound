@@ -22,11 +22,8 @@ from django.conf import settings
 
 from boto3 import client
 from botocore.exceptions import EndpointConnectionError
-import json
-
 import logging
 
-logger_web = logging.getLogger('web')
 logger_console = logging.getLogger('console')
 
 
@@ -34,7 +31,17 @@ class AwsCredentialsNotConfigured(Exception):
     message = 'AWS credentials are not configured'
 
 
+class AwsConnectionError(Exception):
+    pass
+
+
 def init_client(service):
+    """
+    Gets AWS credentials from config file and creates a client
+    :param service: string that is passed to boto3.client
+    :return: boto3.client object
+    :raises: AwsCredentialsNotConfigured: missing or not filled in credentials in config file
+    """
     if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
         raise AwsCredentialsNotConfigured()
 
@@ -70,25 +77,24 @@ class EmailStats(object):
         self.rejects += data['Rejects']
 
 
-def report_ses_stats(sample_size=None, n_points=None):
-    """Retrieves email statistics from AWS and sends the data to graylog"""
+def get_ses_stats(sample_size, n_points):
+    """
+    Retrieves email statistics from AWS and sends the data to graylog
+    :param sample_size: number of emails used to approximate long-term bounce rate from AWS SES dashboard
+    :param n_points: number of DataSetPoints to calculate short-term bounce rate (for monitoring on finer scale)
+    :return: dict with 'shortTerm' and 'longTerm' dicts that contain detailed info on bounces, complaints and rejects
+    :raises AwsCredentialsNotConfigured: missing or not filled in credentials in config file
+    :raises AwsConnectionError: connection problems with AWS server
+    """
     ses = init_client('ses')
 
     try:
         response = ses.get_send_statistics()
     except EndpointConnectionError as e:
-        logger_console.error(e.message)
-        return
+        raise AwsConnectionError(e)
 
     data = response['SendDataPoints']
     data.sort(key=lambda x: x['Timestamp'], reverse=True)  # array of datapoints is not sorted originally
-
-    try:
-        sample_size = sample_size or settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
-        n_points = n_points or settings.AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS
-    except AttributeError:
-        logger_console.error('AWS SES config variables not configured')
-        return
 
     email_stats = EmailStats()
     count = 0
@@ -103,6 +109,5 @@ def report_ses_stats(sample_size=None, n_points=None):
             break
 
     result['longTerm'] = email_stats.render()
-    logger_web.info('AWS email stats: {}'.format(json.dumps(result)))
 
     return result

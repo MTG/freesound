@@ -199,6 +199,9 @@ NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
 
+# Buffer size for CRC computation
+CRC_BUFFER_SIZE = 4096
+
 # Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
 BULK_UPLOAD_MIN_SOUNDS = 40
 

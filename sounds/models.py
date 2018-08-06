@@ -730,9 +730,12 @@ class Sound(SocialModel):
             self.save()
 
     def compute_crc(self, commit=True):
-        with open(self.locations('path'), "rb") as fp:
-            data = fp.read()
-        crc = zlib.crc32(data)
+        crc = 0
+        with open(self.locations('path'), 'rb') as fp:
+            data = fp.read(settings.CRC_BUFFER_SIZE)
+            while len(data) > 0:
+                crc = zlib.crc32(data, crc)
+                data = fp.read(settings.CRC_BUFFER_SIZE)
         self.crc = '{:0>8x}'.format(crc & 0xffffffff)  # right aligned with zero-padding, width of 8 chars
 
         if commit:

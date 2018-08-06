@@ -1387,6 +1387,30 @@ class EmailBounceTests(TestCase):
         except User.DoesNotExist:
             self.fail()
 
+    def test_unactivated_user_with_content_not_deleted(self):
+        # Should never happen, testing the has_content safety check if something goes wrong
+        user = User.objects.create_user('user', email='user@freesound.org')
+        user.is_active = False
+        user.save()
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+
+        # Somehow user created pack without being activated
+        pack = Pack.objects.create(user=user, name="Ghost pack")
+
+        # Regular run should not delete the user, because we check for content
+        call_command('cleanup_unactivated_users')
+        try:
+            user.refresh_from_db()
+        except User.DoesNotExist:
+            self.fail()
+
+        # Fast run (without safety check) should delete the user and pack
+        call_command('cleanup_unactivated_users', fast=True)
+        with self.assertRaises(User.DoesNotExist):
+            user.refresh_from_db()
+        with self.assertRaises(Pack.DoesNotExist):
+            pack.refresh_from_db()
+
     def test_request_email_change(self):
         user = User.objects.create_user('user', email='user@freesound.org', password='testpass')
         self.client.login(username='user', password='testpass')

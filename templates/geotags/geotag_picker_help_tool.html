@@ -11,7 +11,7 @@
                 '<div style="text-align:center;"><i>latitude, longitude, zoom</i>: <input id="geotag_picker_out" size="24" type="text"></input> <a href="javascript:void(0);" onclick="copyValue();">copy to clipboard</a></div>' +
                 '</div>'
             );
-            make_geotag_edit_map('geotag_picker_map', '{{media_url}}/images/arrow.png', showLatLonZoomFields);
+            window.map = make_geotag_edit_map('geotag_picker_map', '{{media_url}}/images/arrow.png', showLatLonZoomFields);
         }
     }
 

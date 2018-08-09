@@ -16,6 +16,8 @@
 </p>
 <div id="map_canvas" style="width: 800px; height: 600px; border: 1px solid black;"></div>
 <script type="text/javascript">
-    make_sounds_map('{% url "geotags-for-sound-barray" sound.id %}', 'map_canvas', undefined, undefined, {{sound.geotag.lat}}, {{sound.geotag.lon}}, {{sound.geotag.zoom}});
+    var show_search = false;
+    var show_style_selector = true;
+    make_sounds_map('{% url "geotags-for-sound-barray" sound.id %}', 'map_canvas', undefined, undefined, {{sound.geotag.lat}}, {{sound.geotag.lon}}, {{sound.geotag.zoom}}, show_search, show_style_selector);
 </script>
 {% endblock %}

@@ -3129,6 +3129,24 @@ use classes from pack edition
     margin-bottom: 20px;
 }
 
+.map_terrain_menu {
+    position:absolute;
+    background: #fff;
+    padding: 8px;
+    right: 52px;
+    top: 8px;
+    border-radius: 5px;
+    line-height: 24px;
+    border: 2px solid rgba(100,100,100, 0.1);
+    cursor: pointer;
+    background-clip: padding-box;
+}
+
+.map_terrain_menu:hover {
+    background: #eeeeee;
+    background-clip: padding-box;
+}
+
 /* Describe google map
 ------------------------------------------------------*/
 .describe-geotag-form {

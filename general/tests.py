@@ -44,11 +44,12 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
         thread = Thread.objects.create(forum=forum, title="testThread", author=user)
         Post.objects.create(author=user, body="testBody", thread=thread)
+        Post.objects.create(author=user, body="testBody unnmoderated", thread=thread, moderation_state="NM")
         user.profile.refresh_from_db()  # Refresh from db after methods that use F-expressions
 
         # Assert initial counts are ok
         self.assertEquals(user.profile.num_sounds, 1)
-        self.assertEquals(user.profile.num_posts, 1)
+        self.assertEquals(user.profile.num_posts, 1)  # Nota that count is 1 because one of the posts is not moderated
         self.assertEquals(pack.num_sounds, 1)
         self.assertEquals(pack.num_downloads, 0)
         self.assertEquals(sound.num_ratings, 1)
@@ -100,7 +101,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         sound.refresh_from_db()
         pack.refresh_from_db()
         self.assertEquals(user.profile.num_sounds, 1)
-        self.assertEquals(user.profile.num_posts, 1)
+        self.assertEquals(user.profile.num_posts, 1)  # Note this is still 1 as unmoderated posts do not count
         self.assertEquals(pack.num_sounds, 1)
         self.assertNotEquals(pack.num_downloads, 0)
         self.assertEquals(sound.num_ratings, 1)

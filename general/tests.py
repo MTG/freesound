@@ -49,7 +49,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
 
         # Assert initial counts are ok
         self.assertEquals(user.profile.num_sounds, 1)
-        self.assertEquals(user.profile.num_posts, 1)  # Nota that count is 1 because one of the posts is not moderated
+        self.assertEquals(user.profile.num_posts, 1)  # Note that count is 1 because one of the posts is not moderated
         self.assertEquals(pack.num_sounds, 1)
         self.assertEquals(pack.num_downloads, 0)
         self.assertEquals(sound.num_ratings, 1)

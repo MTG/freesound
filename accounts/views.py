@@ -1194,11 +1194,11 @@ def flag_user(request, username):
                         obj = f_object.content_type.get_object_for_this_type(id=f_object.object_id)
                         url = reverse('admin:%s_%s_change' %
                                       (obj._meta.app_label,  obj._meta.model_name), args=[obj.id])
-                        if obj._meta.model_name == 'comment':
+                        if isinstance(obj, Comment):
                             content = obj.comment
-                        elif obj._meta.model_name == 'post':
+                        elif isinstance(obj, Post):
                             content = obj.body
-                        elif obj._meta.model_name == 'message':
+                        elif isinstance(obj, Message):
                             content = obj.body.body
                         else:
                             content = ''

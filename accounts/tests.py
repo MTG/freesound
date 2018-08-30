@@ -1591,11 +1591,11 @@ class ReportSpamOffensive(TestCase):
         self.reporters = []
         for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
             reporter = User.objects.create_user(username='reporter_{0}'.format(i),
-                                                email='reporter_{0}@example.com'.format(i), password='testpass')
+                                                email='reporter_{0}@example.com'.format(i))
             self.reporters.append(reporter)
 
         # Create user posting spam
-        self.spammer = User.objects.create_user(username='spammer', email='spammer@example.com', password='testpass')
+        self.spammer = User.objects.create_user(username='spammer', email='spammer@example.com')
 
     def get_reporter_as_logged_in_user(self, i):
         user = self.reporters[i]

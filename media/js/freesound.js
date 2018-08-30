@@ -39,16 +39,15 @@ $(function() {
             $(this).find("a").css("background-image", "url(/media/images/tag_edge_group.png)");
         }
     );
-    
-    $(".explicit_content_text span a").click(function(e) {
-        var warning = $(this).parent().parent('.explicit_content_text');
-        var sample_player_small = $(this).parent().parent().parent();
-        sample_player_small.find('.sample_player').removeClass('blur');
-        sample_player_small.find('.sample_information').removeClass('blur');
-        warning.remove();
-        e.preventDefault()
-    })
 });
+
+function remove_explicit_content_warning(element){
+    var warning = $(element).parent().parent('.explicit_content_text');
+    var player = $(element).parent().parent().parent();
+    player.find('.sample_player').removeClass('blur');
+    player.find('.sample_information').removeClass('blur');
+    warning.remove();
+}
 
 function d()
 {

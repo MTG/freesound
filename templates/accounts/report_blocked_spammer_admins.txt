@@ -5,8 +5,9 @@ Hi there super admin!
 User {{ flagged_user.username }} has been blocked after several spam reports by different users.
 Here you have a list of the items that have been marked as spam:
 
-{% for url in urls %}
-    * {{url.0}}: {{url.1}}
+{% for type, url, content in objects_data %}
+    * {{ type }}: {{ url }}{% if content %}
+        > {{ content|truncatechars:30 }}{% endif %}
 {% endfor %}
 
 If you can confirm this user is a spammer, please delete him following {{user_url}}

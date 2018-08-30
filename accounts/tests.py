@@ -1683,7 +1683,7 @@ class ReportSpamOffensive(TestCase):
 
     def test_report_object_same_user(self):
         # Test that when a user is reported many times but not by distinct users, no email is sent
-        # NOTE: we only test for the case of sound comments as the logic that handles this si common for all other
+        # NOTE: we only test for the case of sound comments as the logic that handles this is common for all other
         # kinds of reports
 
         sound = Sound.objects.first()

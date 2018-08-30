@@ -196,11 +196,8 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
         for moderator in moderators:
             invalidate_template_cache("user_header", moderator.id)
 
-    # 9 proces sound and packs
-    try:
-        sound.compute_crc()
-    except:
-        pass
+    # 9 process sound and packs
+    sound.compute_crc()
 
     if process:
         try:

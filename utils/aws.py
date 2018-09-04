@@ -59,15 +59,15 @@ class EmailStats(object):
     def _rate(self, value):
         return float(value) / self.total
 
-    def render(self):
+    def render(self, prefix):
         return {
-            'total': self.total,
-            'bounces': self.bounces,
-            'complaints': self.complaints,
-            'rejects': self.rejects,
-            'bounceRate': self._rate(self.bounces),
-            'complaintRate': self._rate(self.complaints),
-            'rejectRate': self._rate(self.rejects)
+            prefix + 'Total': self.total,
+            prefix + 'Bounces': self.bounces,
+            prefix + 'Complaints': self.complaints,
+            prefix + 'Rejects': self.rejects,
+            prefix + 'BounceRate': self._rate(self.bounces),
+            prefix + 'ComplaintRate': self._rate(self.complaints),
+            prefix + 'RejectRate': self._rate(self.rejects)
         }
 
     def aggregate(self, data):
@@ -104,10 +104,10 @@ def get_ses_stats(sample_size, n_points):
         email_stats.aggregate(data_point)
         count += 1
         if count == n_points:
-            result['shortTerm'] = email_stats.render()
+            result.update(email_stats.render('shortTerm'))
         if sample_size and email_stats.total >= sample_size:
             break
 
-    result['longTerm'] = email_stats.render()
+    result.update(email_stats.render('longTerm'))
 
     return result

@@ -60,4 +60,4 @@ class Command(BaseCommand):
             logger_console.error(e.message)
             return
 
-        logger_web.info('AWS email stats: {}'.format(json.dumps(stats)))
+        logger_web.info('Reporting AWS email stats ({})'.format(json.dumps(stats)))

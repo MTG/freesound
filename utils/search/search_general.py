@@ -37,6 +37,8 @@ console_logger = logging.getLogger("console")
 
 def convert_to_solr_document(sound):
     document = {}
+
+    # Basic sound fields
     keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels', 'md5',
                    'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
     for key in keep_fields:
@@ -70,6 +72,16 @@ def convert_to_solr_document(sound):
     document["spectral_path_m"] = locations["display"]["spectral"]["M"]["path"]
     document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
     document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
+
+    # Audio Commons analysis
+    # NOTE: as the sound object here is the one returned by SoundManager.bulk_query_solr, it will have the Audio Commons
+    # descriptor fields under a property called 'ac_analysis'.
+    ac_analysis = getattr(sound, "ac_analysis")
+    if ac_analysis is not None:
+        # If analysis is present, index all existing analysis fields under SOLR's dynamicField "ac_*"
+        for key, value in ac_analysis.items():
+            document['ac_{0}'.format(key)] = value
+
     return document
 
 

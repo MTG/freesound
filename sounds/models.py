@@ -160,6 +160,7 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          ac_analsyis.analysis_data as ac_analysis,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -178,9 +179,10 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id AND ac_analsyis.extractor = %s)
         WHERE
           sound.id IN %s """
-        return self.raw(query, [sound_ids])
+        return self.raw(query, [settings.AUDIOCOMMONS_EXTRACTOR_NAME, sound_ids])
 
     def bulk_query(self, where, order_by, limit, args):
         query = """SELECT

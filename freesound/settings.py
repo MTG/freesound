@@ -190,6 +190,9 @@ USERNAME_CHANGE_MAX_TIMES = 3
 LAST_FORUM_POST_MINIMUM_TIME = 60*5
 BASE_MAX_POSTS_PER_DAY = 5
 
+# AudioCommons descriptors stuff
+AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV2'  # This will be used for indexing sounds and returning analysis output
+
 
 # Random Sound of the day settings
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month

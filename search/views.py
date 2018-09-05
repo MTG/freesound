@@ -68,6 +68,7 @@ def search_prepare_query(search_query,
                          offset=None):
     query = SolrQuery()
 
+    # Set field weights and scoring function
     field_weights = []
     if id_weight != 0:
         field_weights.append(("id", id_weight))
@@ -81,15 +82,32 @@ def search_prepare_query(search_query,
         field_weights.append(("pack_tokenized", pack_tokenized_weight))
     if original_filename_weight != 0:
         field_weights.append(("original_filename", original_filename_weight))
-
     query.set_dismax_query(search_query,
                            query_fields=field_weights,)
+
+    # Set start and rows parameters (offset and size)
     if not offset:
         start = (current_page - 1) * sounds_per_page
     else:
         start = offset
+
+    # Process filter to replace humna-readable ac descriptor names for the dynamic field names used in Solr
+    # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
+    # and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names, therefore we have
+    # to add them here as well.
+    suffix_map = {
+        float: '_d',
+        int: '_i',
+        bool: '_b',
+        str: '_s',
+    }
+    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
+        filter_query = filter_query.replace('ac_{0}'.format(name), 'ac_{0}{1}'.format(name, suffix_map[t]))
+
+    # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
 
+    # Specify query factes
     if include_facets:
         query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
         query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
@@ -99,6 +117,7 @@ def search_prepare_query(search_query,
         query.set_facet_options("grouping_pack", limit=10)
         query.set_facet_options("license", limit=10)
 
+    # Add groups
     if grouping:
         query.set_group_field(group_field="grouping_pack")
         query.set_group_options(

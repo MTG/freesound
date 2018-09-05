@@ -1177,6 +1177,9 @@ class SoundAnalysis(models.Model):
                 pass
         return None
 
+    class Meta:
+        unique_together = (("sound", "extractor"),)
+
 
 class BulkUploadProgress(models.Model):
     """Store progress status for a Bulk Describe process."""

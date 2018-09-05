@@ -310,8 +310,12 @@
 		<field name="spectral_path_l" type="string" indexed="false" stored="true" required="true" />
 		<field name="preview_path" type="string" indexed="false" stored="true" required="true" />
 
-        <!-- Audio Commons dynamic fields -->
-        <dynamicField name="ac_*" type="sdouble" indexed="true" stored="true"/>
+        <!-- Dynamic fields -->
+        <!-- This will be used to index Audio Commons analysis fields and potentially other stuff -->
+        <dynamicField name="*_i" type="sint" indexed="true" stored="true"/>
+        <dynamicField name="*_d" type="sdouble" indexed="true" stored="true"/>
+        <dynamicField name="*_b" type="boolean" indexed="true" stored="true"/>
+        <dynamicField name="*_s" type="string" indexed="true" stored="true"/>
 
         <!-- Other fields -->
         <field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>

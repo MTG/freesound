@@ -78,10 +78,20 @@ def convert_to_solr_document(sound):
     # descriptor fields under a property called 'ac_analysis'.
     ac_analysis = getattr(sound, "ac_analysis")
     if ac_analysis is not None:
-        # If analysis is present, index all existing analysis fields under SOLR's dynamicField "ac_*"
+        # If analysis is present, index all existing analysis fields under SOLR's dynamic fields "*_i", "*_d", "*_s"
+        # and "*_b" depending on the value's type
         for key, value in ac_analysis.items():
-            document['ac_{0}'.format(key)] = value
-
+            if type(value) == int:
+                document['ac_{0}_i'.format(key)] = value
+            elif type(value) == float:
+                document['ac_{0}_d'.format(key)] = value
+            elif type(value) == str:
+                document['ac_{0}_s'.format(key)] = value
+            elif type(value) == bool:
+                document['ac_{0}_b'.format(key)] = value
+            else:
+                # Don't index that field
+                pass
     return document
 
 

@@ -95,14 +95,9 @@ def search_prepare_query(search_query,
     # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
     # and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names, therefore we have
     # to add them here as well.
-    suffix_map = {
-        float: '_d',
-        int: '_i',
-        bool: '_b',
-        str: '_s',
-    }
     for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
-        filter_query = filter_query.replace('ac_{0}'.format(name), 'ac_{0}{1}'.format(name, suffix_map[t]))
+        filter_query = filter_query.replace('ac_{0}'.format(name), 'ac_{0}{1}'
+                                            .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
 
     # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)

@@ -264,7 +264,10 @@ class SoundListSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         # Get ac analysis data form the object itself as it will have been included in the Sound
         # by SoundManager.bulk_query
-        return obj.ac_analysis
+        if obj.ac_analysis:
+            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value
+                    for key, value in obj.ac_analysis.items()}
+        return None
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -292,7 +295,9 @@ class SoundSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         try:
             # Retreive analysis data from the related SoundAnalysis object corresponding to the Audio Commons extractor
-            return obj.analyses.get(extractor=settings.AUDIOCOMMONS_EXTRACTOR_NAME).get_analysis()
+            # Add Audio Commons descirptor prefix so names better match with the names used in filters
+            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value for key, value
+                    in obj.analyses.get(extractor=settings.AUDIOCOMMONS_EXTRACTOR_NAME).get_analysis().items()}
         except SoundAnalysis.DoesNotExist:
             return None
 

@@ -79,19 +79,12 @@ def convert_to_solr_document(sound):
     ac_analysis = getattr(sound, "ac_analysis")
     if ac_analysis is not None:
         # If analysis is present, index all existing analysis fields under SOLR's dynamic fields "*_i", "*_d", "*_s"
-        # and "*_b" depending on the value's type
+        # and "*_b" depending on the value's type. Also add Audio Commons prefix.
         for key, value in ac_analysis.items():
-            if type(value) == int:
-                document['ac_{0}_i'.format(key)] = value
-            elif type(value) == float:
-                document['ac_{0}_d'.format(key)] = value
-            elif type(value) == str:
-                document['ac_{0}_s'.format(key)] = value
-            elif type(value) == bool:
-                document['ac_{0}_b'.format(key)] = value
-            else:
-                # Don't index that field
-                pass
+            suffix = settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+            if suffix:
+                document['{0}{1}{2}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key, suffix)] = value
+
     return document
 
 

@@ -192,6 +192,7 @@ BASE_MAX_POSTS_PER_DAY = 5
 
 # AudioCommons descriptors stuff
 AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV2'  # This will be used for indexing sounds and returning analysis output
+AUDIOCOMMONS_DESCRIPTOR_PREFIX = 'ac_'
 AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
     [('loudness', float),
      ('dynamic_range', float),
@@ -215,6 +216,15 @@ AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
      ('warmth', float),
      ('sharpness', float)]
 
+# Map of suffixes used for each type of dynamic fields defined in our Solr schema
+# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
+# and '*_s' (for string)
+SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
+    float: '_d',
+    int: '_i',
+    bool: '_b',
+    str: '_s',
+}
 
 # Random Sound of the day settings
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month

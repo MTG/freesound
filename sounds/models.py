@@ -179,7 +179,8 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id AND ac_analsyis.extractor = %s)
+          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
+                                                         AND ac_analsyis.extractor = %s)
         WHERE
           sound.id IN %s """
         return self.raw(query, [settings.AUDIOCOMMONS_EXTRACTOR_NAME, sound_ids])
@@ -210,6 +211,7 @@ class SoundManager(models.Manager):
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
           sounds_remixgroup_sounds.id as remixgroup_id,
+          ac_analsyis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -221,9 +223,11 @@ class SoundManager(models.Manager):
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
+                                                         AND ac_analsyis.extractor = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (where, )
+        WHERE %s """ % ("'%s'" % settings.AUDIOCOMMONS_EXTRACTOR_NAME, where, )
         if order_by:
             query = "%s ORDER BY %s" % (query, order_by)
         if limit:

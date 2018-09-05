@@ -20,13 +20,14 @@
 #     See AUTHORS file.
 #
 
-from sounds.models import Sound, Pack
+from sounds.models import Sound, Pack, SoundAnalysis
 from ratings.models import SoundRating
 from comments.models import Comment
 from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
+from django.conf import settings
 from rest_framework import serializers
 from utils.tags import clean_and_split_tags
 from utils.forms import filename_has_valid_extension
@@ -101,6 +102,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis',
                   'analysis_frames',
                   'analysis_stats',
+                  'ac_analysis',
                   )
 
 
@@ -238,6 +240,11 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         else:
             return None
 
+    ac_analysis = serializers.SerializerMethodField()
+    def get_ac_analysis(self, obj):
+        # Fake implementation. Method implemented in subclasses
+        return None
+
 
 class SoundListSerializer(AbstractSoundSerializer):
 
@@ -253,6 +260,11 @@ class SoundListSerializer(AbstractSoundSerializer):
             return self.context['view'].sound_analysis_data[str(obj.id)]
         except Exception as e:
             return None
+
+    def get_ac_analysis(self, obj):
+        # Get ac analysis data form the object itself as it will have been included in the Sound
+        # by SoundManager.bulk_query
+        return obj.ac_analysis
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -275,6 +287,13 @@ class SoundSerializer(AbstractSoundSerializer):
             else:
                 return 'No descriptors specified. You should indicate which descriptors you want with the \'descriptors\' request parameter.'
         except Exception as e:
+            return None
+
+    def get_ac_analysis(self, obj):
+        try:
+            # Retreive analysis data from the related SoundAnalysis object corresponding to the Audio Commons extractor
+            return obj.analyses.get(extractor=settings.AUDIOCOMMONS_EXTRACTOR_NAME).get_analysis()
+        except SoundAnalysis.DoesNotExist:
             return None
 
 

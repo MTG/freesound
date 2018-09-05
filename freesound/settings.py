@@ -192,6 +192,28 @@ BASE_MAX_POSTS_PER_DAY = 5
 
 # AudioCommons descriptors stuff
 AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV2'  # This will be used for indexing sounds and returning analysis output
+AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
+    [('loudness', float),
+     ('dynamic_range', float),
+     ('temporal_centroid', float),
+     ('log_attack_time', float),
+     ('single_event', bool),
+     ('tonality', str),
+     ('tonality_confidence', float),
+     ('loop', bool),
+     ('tempo', float),
+     ('tempo_confidence', float),
+     ('note_midi', int),
+     ('note_name', str),
+     ('note_frequency', float),
+     ('note_confidence', float),
+     ('brightness', float),
+     ('depth', float),
+     ('hardness', float),
+     ('roughness', float),
+     ('booming', float),
+     ('warmth', float),
+     ('sharpness', float)]
 
 
 # Random Sound of the day settings

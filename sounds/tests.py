@@ -19,7 +19,10 @@
 #
 
 import datetime
+import json
+import tempfile
 import time
+import os
 from itertools import count
 
 import mock
@@ -39,7 +42,7 @@ import accounts
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
 from sounds.models import Pack, Sound, SoundOfTheDay, License, DeletedSound, Flag
-from sounds.models import Download, PackDownload, PackDownloadSound
+from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis
 from sounds.views import get_sound_of_the_day_id
 from accounts.models import EmailPreferenceType
 from utils.encryption import encrypt
@@ -1351,3 +1354,36 @@ class SoundTemplateCacheTests(TestCase):
             lambda: all([text in self.client.get(self._get_sound_url('sound-display')).content
                          for text in ['Moderation state:', 'Pending']])
         )
+
+
+class SoundAnalysisModel(TestCase):
+
+    fixtures = ['initial_data']
+
+    @override_settings(ANALYSIS_PATH=tempfile.mkdtemp())
+    def test_get_analysis(self):
+        _, _, sounds = create_user_and_sounds(num_sounds=1)
+        sound = sounds[0]
+        analysis_data = {'descriptor1': 0.56, 'descirptor2': 1.45, 'descriptor3': 'label'}
+
+        # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
+        sa = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor1", analysis_data=analysis_data)
+        self.assertEquals(sound.analyses.all().count(), 1)
+        self.assertEquals(sa.get_analysis().keys(), analysis_data.keys())
+        self.assertEquals(sa.get_analysis()['descriptor1'], 0.56)
+
+        # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
+        analysis_filename = '%i_testextractor_out.json'
+        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
+        os.mkdir(sound_analysis_folder)
+        json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
+        sa2 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor2", analysis_filename=analysis_filename)
+        self.assertEquals(sound.analyses.all().count(), 2)
+        self.assertEquals(sa2.get_analysis().keys(), analysis_data.keys())
+        self.assertEquals(sa2.get_analysis()['descriptor1'], 0.56)
+
+        # Create an analysis object which refeences a non-existing file. Check that get_analysis returns None.
+        sa3 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor3",
+                                           analysis_filename='non_existing_file.json')
+        self.assertEquals(sound.analyses.all().count(), 3)
+        self.assertEquals(sa3.get_analysis(), None)

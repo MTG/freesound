@@ -1149,8 +1149,37 @@ class SoundLicenseHistory(models.Model):
         ordering = ("-created",)
 
 
+class SoundAnalysis(models.Model):
+    """Reference to the analysis output for a given sound and extractor.
+    The actual output can be either directly stored in the model (using analysis_data field),
+    or can be stored in a JSON file in disk (using the analysis_filename field)."""
+    sound = models.ForeignKey(Sound, related_name='analyses')
+    created = models.DateTimeField(auto_now_add=True)
+    extractor = models.CharField(db_index=True, max_length=255)
+    analysis_filename = models.CharField(max_length=255, null=True)
+    analysis_data = JSONField(null=True)
+
+    @property
+    def analysis_filepath(self):
+        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_PATH
+        and under a sound ID folder structure like sounds and other sound-related files."""
+        id_folder = str(self.id / 1000)
+        return os.path.join(settings.ANALYSIS_PATH, id_folder, "%s" % self.analysis_filename)
+
+    def get_analysis(self):
+        """Returns the contents of the analysis"""
+        if self.analysis_data:
+            return self.analysis_data
+        elif self.analysis_filename:
+            try:
+                return json.load(open(self.analysis_filepath))
+            except IOError:
+                pass
+        return None
+
+
 class BulkUploadProgress(models.Model):
-    """Stroe progress status for a Bulk Describe process."""
+    """Store progress status for a Bulk Describe process."""
 
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)

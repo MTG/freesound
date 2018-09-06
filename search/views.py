@@ -96,7 +96,7 @@ def search_prepare_query(search_query,
     # and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names, therefore we have
     # to add them here as well.
     for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
-        filter_query = filter_query.replace('ac_{0}'.format(name), 'ac_{0}{1}'
+        filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
                                             .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
 
     # Set all options

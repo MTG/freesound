@@ -133,7 +133,9 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        """Get data to insert into solr for many sounds in a single query"""
+        """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
+        of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
+        method, all the information for all requested sounds is obtained with a single query."""
         query = """SELECT
           auth_user.username,
           sound.user_id,
@@ -183,9 +185,13 @@ class SoundManager(models.Manager):
                                                          AND ac_analsyis.extractor = %s)
         WHERE
           sound.id IN %s """
-        return self.raw(query, [settings.AUDIOCOMMONS_EXTRACTOR_NAME, sound_ids])
+        return self.raw(query, [settings.AUDIOCOMMONS_EXTRACTOR_NAME, tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
+        """For each sound, get all fields needed to display a sound on the web (using display_raw_sound templatetag) or
+         in the API (including AudioCommons output analysis). Using this custom query to avoid the need of having to do
+         some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
+         information for all requested sounds is obtained with a single query."""
         query = """SELECT
           auth_user.username,
           sound.id,

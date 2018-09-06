@@ -224,6 +224,7 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
     int: '_i',
     bool: '_b',
     str: '_s',
+    unicode: '_s',
 }
 
 # Random Sound of the day settings

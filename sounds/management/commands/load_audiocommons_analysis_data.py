@@ -21,11 +21,21 @@
 import os
 import json
 import logging
+import math
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from sounds.models import Sound, SoundAnalysis
 
 logger = logging.getLogger("console")
+
+
+def value_is_valid(value):
+    # Postgres JSON data field can not store float values of nan or inf. These vlaues should have never
+    # been outputted by the Audio Commons extractor in the first place. We use this function here and skip
+    # indexing key/value pairs where the value is not valid for Postgres JSON data fields.
+    if type(value) == float:
+        return not math.isinf(value) and not math.isnan(value)
+    return True
 
 
 class Command(BaseCommand):
@@ -59,7 +69,7 @@ class Command(BaseCommand):
                         ac_descriptor_names = \
                             [name for name, _ in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES]
                         filtered_analysis_data = {key: value for key, value in analysis_data.items()
-                                                  if key in ac_descriptor_names}
+                                                  if key in ac_descriptor_names and value_is_valid(value)}
                         SoundAnalysis.objects.get_or_create(sound=sound, extractor=options['extractor'],
                                                             analysis_data=filtered_analysis_data)
                         sound.mark_index_dirty()  # Mark sound as index dirty so it is reindexed adding the new fields

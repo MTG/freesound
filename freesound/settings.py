@@ -202,7 +202,7 @@ AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
      ('tonality', str),
      ('tonality_confidence', float),
      ('loop', bool),
-     ('tempo', float),
+     ('tempo', int),
      ('tempo_confidence', float),
      ('note_midi', int),
      ('note_name', str),

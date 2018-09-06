@@ -1158,7 +1158,13 @@ class SoundLicenseHistory(models.Model):
 class SoundAnalysis(models.Model):
     """Reference to the analysis output for a given sound and extractor.
     The actual output can be either directly stored in the model (using analysis_data field),
-    or can be stored in a JSON file in disk (using the analysis_filename field)."""
+    or can be stored in a JSON file in disk (using the analysis_filename field).
+
+    NOTE: currently we only use this model to store the output of the Audio Commons extractor (using
+    analysis_data field). We chose to implement it more generically (i.e. name the model SoundAnalysis
+    instead of AudioCommonsAnalysis) so that we can use it in the future for standard Essentia analysis
+    or for other extractors as well, but for the current use case that wouldn't be needed.
+    """
     sound = models.ForeignKey(Sound, related_name='analyses')
     created = models.DateTimeField(auto_now_add=True)
     extractor = models.CharField(db_index=True, max_length=255)

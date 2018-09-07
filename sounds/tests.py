@@ -241,7 +241,8 @@ class CommentSoundsTestCase(TestCase):
 sound_counter = count()
 
 
-def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None):
+def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None,
+                           processing_state='PE', moderation_state='PE'):
     count_offset = count_offset + next(sound_counter)
     if user is None:
         user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
@@ -259,7 +260,10 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
                                      base_filename_slug="test_sound_%i" % (i + count_offset),
                                      license=License.objects.all()[0],
                                      pack=pack,
-                                     md5="fakemd5_%i" % (i + count_offset))
+                                     md5="fakemd5_%i" % (i + count_offset),
+                                     processing_state=processing_state,
+                                     moderation_state=moderation_state)
+
         if tags is not None:
             sound.set_tags(clean_and_split_tags(tags))
         sounds.append(sound)
@@ -1407,9 +1411,10 @@ class SoundManagerQueryMethods(TestCase):
                                        'comments_array']
 
     def setUp(self):
-        _, _, sounds = create_user_and_sounds(num_sounds=3, tags="tag1 tag2 tag3")
-        self.sounds = sounds
+        user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=1, tags="tag1 tag2 tag3")
         self.sound_ids = [s.id for s in sounds]
+        self.user = user
+        self.pack = packs[0]
 
     def test_bulk_query_id_num_queries(self):
 
@@ -1422,9 +1427,12 @@ class SoundManagerQueryMethods(TestCase):
     def test_bulk_query_id_field_contents(self):
 
         # Check the contents of some fields are correct
-        for i, sound in enumerate(Sound.objects.bulk_query_id(sound_ids=self.sound_ids)):
-            self.assertEqual(self.sounds[i].user.username, sound.username)
-            # TODO: add more field checks here
+        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids):
+            self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
+            self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
+            self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
+            self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
+            self.assertItemsEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
 
     def test_bulk_query_solr_num_queries(self):
 
@@ -1437,6 +1445,69 @@ class SoundManagerQueryMethods(TestCase):
     def test_bulk_query_solr_field_contents(self):
 
         # Check the contents of some fields are correct
-        for i, sound in enumerate(Sound.objects.bulk_query_solr(sound_ids=self.sound_ids)):
-            self.assertEqual(self.sounds[i].user.username, sound.username)
-            # TODO: add more field checks here
+        for sound in Sound.objects.bulk_query_solr(sound_ids=self.sound_ids):
+            self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
+            self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
+            self.assertEqual(Sound.objects.get(id=sound.id).md5, sound.md5)
+            self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
+            self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
+            self.assertItemsEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
+
+    def test_ordered_ids(self):
+
+        # This method is similar to SoundManager.bulk_query_id but returns the sounds in the same order as the
+        # the IDs in sound_ids. Here we only check that the sorting is correct. (the other things like returned
+        # sound fields being correct are already tested in previous tests).
+        with self.assertNumQueries(1):
+            for i, sound in enumerate(Sound.objects.ordered_ids(sound_ids=self.sound_ids)):
+                self.assertEqual(self.sound_ids[i], sound.id)
+
+    def test_bulk_sounds_for_user(self):
+
+        # This method uses SoundManager.bulk_query internally (also used by SoundManager.bulk_query_id) to retrieve
+        # sounds by a user. We only check that filtering by user works here (the other things like returned sound fields
+        # being correct are already tested in previous tests).
+
+        # Created sounds are not yet moderated and processed ok, so bulk_sounds_for_user should return no sounds
+        self.assertEqual(len(list(Sound.objects.bulk_sounds_for_user(user_id=self.user.id))), 0)
+
+        # Now we set user sounds to moderated and processed ok (and set user_sound_ids for later use)
+        user_sound_ids = []
+        for sound in Sound.objects.filter(user=self.user):
+            sound.moderation_state = 'OK'
+            sound.processing_state = 'OK'
+            sound.save()
+            user_sound_ids.append(sound.id)
+
+        # Check that now sounds returned by bulk_sounds_for_user are ok
+        user_sound_ids_bulk_query = []
+        with self.assertNumQueries(1):
+            for i, sound in enumerate(Sound.objects.bulk_sounds_for_user(user_id=self.user.id)):
+                self.assertEqual(self.user.id, sound.user_id)
+                user_sound_ids_bulk_query.append(sound.id)
+        self.assertItemsEqual(user_sound_ids, user_sound_ids_bulk_query)
+
+    def test_bulk_sounds_for_pack(self):
+
+        # This method uses SoundManager.bulk_query internally (also used by SoundManager.bulk_query_id) to retrieve
+        # sounds of a pack. We only check that filtering by pack works here (the other things like returned sound fields
+        # being correct are already tested in previous tests).
+
+        # Created sounds are not yet moderated and processed ok, so bulk_sounds_for_pack should return no sounds
+        self.assertEqual(len(list(Sound.objects.bulk_sounds_for_pack(pack_id=self.pack.id))), 0)
+
+        # Now we set user sounds to moderated and processed ok (and set pack_sound_ids for later use)
+        pack_sound_ids = []
+        for sound in Sound.objects.filter(pack=self.pack):
+            sound.moderation_state = 'OK'
+            sound.processing_state = 'OK'
+            sound.save()
+            pack_sound_ids.append(sound.id)
+
+        # Check that now sounds returned by bulk_sounds_for_pack are ok
+        pack_sound_ids_bulk_query = []
+        with self.assertNumQueries(1):
+            for i, sound in enumerate(Sound.objects.bulk_sounds_for_pack(pack_id=self.pack.id)):
+                self.assertEqual(self.user.id, sound.user_id)
+                pack_sound_ids_bulk_query.append(sound.id)
+        self.assertItemsEqual(pack_sound_ids, pack_sound_ids_bulk_query)

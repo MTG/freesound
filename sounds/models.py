@@ -170,7 +170,7 @@ class SoundManager(models.Manager):
             FROM tags_tag
             LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
           WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=20) AS tag_array,
+           AND tags_taggeditem.content_type_id=%s) AS tag_array,
           ARRAY(
             SELECT comments_comment.comment
             FROM comments_comment
@@ -185,7 +185,9 @@ class SoundManager(models.Manager):
                                                          AND ac_analsyis.extractor = %s)
         WHERE
           sound.id IN %s """
-        return self.raw(query, [settings.AUDIOCOMMONS_EXTRACTOR_NAME, tuple(sound_ids)])
+        return self.raw(query, [ContentType.objects.get_for_model(Sound).id,
+                                settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                                tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
         """For each sound, get all fields needed to display a sound on the web (using display_raw_sound templatetag) or
@@ -223,7 +225,7 @@ class SoundManager(models.Manager):
             FROM tags_tag
             LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
           WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=20) AS tag_array
+           AND tags_taggeditem.content_type_id=%s) AS tag_array
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
@@ -233,7 +235,9 @@ class SoundManager(models.Manager):
                                                          AND ac_analsyis.extractor = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % ("'%s'" % settings.AUDIOCOMMONS_EXTRACTOR_NAME, where, )
+        WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,
+                        "'%s'" % settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                        where, )
         if order_by:
             query = "%s ORDER BY %s" % (query, order_by)
         if limit:

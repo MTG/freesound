@@ -104,7 +104,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=Fal
     for i in range(0, len(all_sound_ids), slice_size):
         console_logger.info("Adding %i sounds to solr, slice %i of %i", slice_size, (i/slice_size) + 1, n_slices)
         try:
-            sound_ids = tuple(all_sound_ids[i:i+slice_size])
+            sound_ids = all_sound_ids[i:i+slice_size]
             sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)
             add_sounds_to_solr(sounds_qs)
 

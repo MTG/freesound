@@ -51,6 +51,18 @@ def search_prepare_sort(sort, options):
     return sort
 
 
+def search_process_filter(filter_query):
+    # Process the filter to replace humnan-readable Audio Commons descriptor names for the dynamic field names used in
+    # Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i). The dynamic field names we define in Solr
+    # schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) and '*_s' (for string). At indexing time
+    # we append these suffixes to the ac descirptor names so Solr can treat the types properly. Now we automatically
+    # append the suffices to the filter names so users do not need to deal with that.
+    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
+        filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
+                                            .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
+    return filter_query
+
+
 def search_prepare_query(search_query,
                          filter_query,
                          sort,
@@ -91,13 +103,8 @@ def search_prepare_query(search_query,
     else:
         start = offset
 
-    # Process filter to replace humna-readable ac descriptor names for the dynamic field names used in Solr
-    # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
-    # and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names, therefore we have
-    # to add them here as well.
-    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
-        filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
-                                            .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
+    # Process filter
+    filter_query = search_process_filter(filter_query)
 
     # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)

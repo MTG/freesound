@@ -7,7 +7,7 @@ Here you have a list of the items that have been marked as bad content:
 
 {% for type, url, content in objects_data %}
     * {{ type }}: {{ url }}{% if content %}
-        > {{ content|truncatechars:30 }}{% endif %}
+        > {{ content|truncatechars:200 }}{% endif %}
 {% endfor %}
 
 If you can confirm this user is a spammer or offensive, please delete him following {{user_url}}

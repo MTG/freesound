@@ -22,6 +22,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.contrib import messages
 
 from sounds.models import Sound
 from utils.onlineusers import cache_online_users
@@ -116,6 +117,36 @@ class TosAcceptanceHandler(object):
             else:
                 # If there is cache it means the terms has been accepted
                 pass
+
+        response = self.get_response(request)
+        return response
+
+
+class UpdateEmailHandler(object):
+    message = "We have identified that some emails that we have sent to you didn't go through, thus it appears that " \
+              "your email address is not valid. Please update your email address to a working one to continue using " \
+              "Freesound"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated \
+                and 'tosacceptance' not in request.get_full_path() \
+                and 'logout' not in request.get_full_path() \
+                and 'tos_api' not in request.get_full_path() \
+                and 'tos_web' not in request.get_full_path() \
+                and 'contact' not in request.get_full_path() \
+                and 'bulklicensechange' not in request.get_full_path() \
+                and 'resetemail' not in request.get_full_path() \
+                and not request.get_full_path().startswith(settings.MEDIA_URL):
+                # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
+
+            user = request.user
+
+            if not user.profile.email_is_valid():
+                messages.add_message(request, messages.INFO, self.message)
+                return HttpResponseRedirect(reverse("accounts-email-reset"))
 
         response = self.get_response(request)
         return response

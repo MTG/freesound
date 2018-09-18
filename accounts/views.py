@@ -1107,7 +1107,7 @@ def email_reset(request):
                 send_mail(subject, email_body, email_to=email)
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
-        form = EmailResetForm(user = request.user)
+        form = EmailResetForm(user=request.user)
     tvars = {'form': form}
     return render(request, 'accounts/email_reset_form.html', tvars)
 

@@ -39,7 +39,12 @@ from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from forum.models import Post, Thread
 from comments.models import Comment
-from sounds.models import DeletedSound, Sound, Pack
+from sounds.models import DeletedSound, Sound, Pack, Download, PackDownload, BulkUploadProgress
+from ratings.models import SoundRating
+from bookmarks.models import Bookmark
+from donations.models import Donation
+from messages.models import Message
+from apiv2.models import ApiV2Client
 import uuid
 import tickets.models
 import datetime
@@ -358,6 +363,24 @@ class Profile(SocialModel):
         else:
             Sound.objects.filter(user=self.user).update(is_index_dirty=True)
 
+    def has_content(self):
+        """
+        Checks if the user has created any content or used Freesound in any way that leaves any significant data.
+        Typically should be used to check if it is safe to hard delete the user.
+        """
+        return (Sound.objects.filter(user=self.user).exists() or
+                Pack.objects.filter(user=self.user).exists() or
+                SoundRating.objects.filter(user=self.user).exists() or
+                Download.objects.filter(user=self.user).exists() or
+                PackDownload.objects.filter(user=self.user).exists() or
+                Bookmark.objects.filter(user=self.user).exists() or
+                Post.objects.filter(author=self.user).exists() or
+                Comment.objects.filter(user=self.user).exists() or
+                Donation.objects.filter(user=self.user).exists() or
+                Message.objects.filter(user_from=self.user).exists() or
+                BulkUploadProgress.objects.filter(user=self.user).exists() or
+                ApiV2Client.objects.filter(user=self.user).exists())
+
     def update_num_sounds(self, commit=True):
         """
         Updates the num_sounds property by counting the number of moderated and processed sounds
@@ -484,6 +507,7 @@ class EmailBounce(models.Model):
         (PERMANENT, 'Permanent'),
         (TRANSIENT, 'Transient')
     )
+    TYPES_INVALID = [UNDETERMINED, PERMANENT]
     type = models.CharField(db_index=True, max_length=2, choices=TYPE_CHOICES, default=UNDETERMINED)
     type_map = {t[1]: t[0] for t in TYPE_CHOICES}
 

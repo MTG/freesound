@@ -133,7 +133,9 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        """Get data to insert into solr for many sounds in a single query"""
+        """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
+        of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
+        method, all the information for all requested sounds is obtained with a single query."""
         query = """SELECT
           auth_user.username,
           sound.user_id,
@@ -160,6 +162,7 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          ac_analsyis.analysis_data as ac_analysis,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -167,7 +170,7 @@ class SoundManager(models.Manager):
             FROM tags_tag
             LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
           WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=20) AS tag_array,
+           AND tags_taggeditem.content_type_id=%s) AS tag_array,
           ARRAY(
             SELECT comments_comment.comment
             FROM comments_comment
@@ -178,11 +181,19 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
+                                                         AND ac_analsyis.extractor = %s)
         WHERE
           sound.id IN %s """
-        return self.raw(query, [sound_ids])
+        return self.raw(query, [ContentType.objects.get_for_model(Sound).id,
+                                settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                                tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
+        """For each sound, get all fields needed to display a sound on the web (using display_raw_sound templatetag) or
+         in the API (including AudioCommons output analysis). Using this custom query to avoid the need of having to do
+         some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
+         information for all requested sounds is obtained with a single query."""
         query = """SELECT
           auth_user.username,
           sound.id,
@@ -208,20 +219,25 @@ class SoundManager(models.Manager):
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
           sounds_remixgroup_sounds.id as remixgroup_id,
+          ac_analsyis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
             LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
           WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=20) AS tag_array
+           AND tags_taggeditem.content_type_id=%s) AS tag_array
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
+                                                         AND ac_analsyis.extractor = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (where, )
+        WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,
+                        "'%s'" % settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                        where, )
         if order_by:
             query = "%s ORDER BY %s" % (query, order_by)
         if limit:
@@ -1149,8 +1165,46 @@ class SoundLicenseHistory(models.Model):
         ordering = ("-created",)
 
 
+class SoundAnalysis(models.Model):
+    """Reference to the analysis output for a given sound and extractor.
+    The actual output can be either directly stored in the model (using analysis_data field),
+    or can be stored in a JSON file in disk (using the analysis_filename field).
+
+    NOTE: currently we only use this model to store the output of the Audio Commons extractor (using
+    analysis_data field). We chose to implement it more generically (i.e. name the model SoundAnalysis
+    instead of AudioCommonsAnalysis) so that we can use it in the future for standard Essentia analysis
+    or for other extractors as well, but for the current use case that wouldn't be needed.
+    """
+    sound = models.ForeignKey(Sound, related_name='analyses')
+    created = models.DateTimeField(auto_now_add=True)
+    extractor = models.CharField(db_index=True, max_length=255)
+    analysis_filename = models.CharField(max_length=255, null=True)
+    analysis_data = JSONField(null=True)
+
+    @property
+    def analysis_filepath(self):
+        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_PATH
+        and under a sound ID folder structure like sounds and other sound-related files."""
+        id_folder = str(self.id / 1000)
+        return os.path.join(settings.ANALYSIS_PATH, id_folder, "%s" % self.analysis_filename)
+
+    def get_analysis(self):
+        """Returns the contents of the analysis"""
+        if self.analysis_data:
+            return self.analysis_data
+        elif self.analysis_filename:
+            try:
+                return json.load(open(self.analysis_filepath))
+            except IOError:
+                pass
+        return None
+
+    class Meta:
+        unique_together = (("sound", "extractor"),)
+
+
 class BulkUploadProgress(models.Model):
-    """Stroe progress status for a Bulk Describe process."""
+    """Store progress status for a Bulk Describe process."""
 
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)

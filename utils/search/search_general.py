@@ -37,6 +37,8 @@ console_logger = logging.getLogger("console")
 
 def convert_to_solr_document(sound):
     document = {}
+
+    # Basic sound fields
     keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels', 'md5',
                    'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
     for key in keep_fields:
@@ -70,6 +72,19 @@ def convert_to_solr_document(sound):
     document["spectral_path_m"] = locations["display"]["spectral"]["M"]["path"]
     document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
     document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
+
+    # Audio Commons analysis
+    # NOTE: as the sound object here is the one returned by SoundManager.bulk_query_solr, it will have the Audio Commons
+    # descriptor fields under a property called 'ac_analysis'.
+    ac_analysis = getattr(sound, "ac_analysis")
+    if ac_analysis is not None:
+        # If analysis is present, index all existing analysis fields under SOLR's dynamic fields "*_i", "*_d", "*_s"
+        # and "*_b" depending on the value's type. Also add Audio Commons prefix.
+        for key, value in ac_analysis.items():
+            suffix = settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+            if suffix:
+                document['{0}{1}{2}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key, suffix)] = value
+
     return document
 
 
@@ -89,7 +104,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=Fal
     for i in range(0, len(all_sound_ids), slice_size):
         console_logger.info("Adding %i sounds to solr, slice %i of %i", slice_size, (i/slice_size) + 1, n_slices)
         try:
-            sound_ids = tuple(all_sound_ids[i:i+slice_size])
+            sound_ids = all_sound_ids[i:i+slice_size]
             sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)
             add_sounds_to_solr(sounds_qs)
 

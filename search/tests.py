@@ -21,6 +21,7 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from sounds.models import Sound
+from search.views import search_process_filter
 from utils.search.solr import SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import mock
 import copy
@@ -141,5 +142,23 @@ class SearchPageTests(TestCase):
         # Which means they are going to be displayed
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.context['filter_query_split']), 2)
+
+
+class SearchProcessFilter(TestCase):
+
+    def test_search_process_filter(self):
+
+        filter_query = search_process_filter('ac_loudness: ac_dynamic_range: ac_temporal_centroid: ac_log_attack_time: '
+                                             'ac_single_event: ac_tonality: ac_tonality_confidence: ac_loop: ac_tempo: '
+                                             'ac_tempo_confidence: ac_note_midi: ac_note_name: ac_note_frequency: '
+                                             'ac_note_confidence: ac_brightness: ac_depth: ac_hardness: ac_roughness: '
+                                             'ac_booming: ac_warmth: ac_sharpness: another_field:')
+        self.assertEqual(filter_query, 'ac_loudness_d: ac_dynamic_range_d: ac_temporal_centroid_d: '
+                                       'ac_log_attack_time_d: ac_single_event_b: ac_tonality_s: '
+                                       'ac_tonality_confidence_d: ac_loop_b: ac_tempo_i: ac_tempo_confidence_d: '
+                                       'ac_note_midi_i: ac_note_name_s: ac_note_frequency_d: ac_note_confidence_d: '
+                                       'ac_brightness_d: ac_depth_d: ac_hardness_d: ac_roughness_d: ac_booming_d: '
+                                       'ac_warmth_d: ac_sharpness_d: another_field:')
+
 
 

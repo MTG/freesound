@@ -8,6 +8,7 @@
     <script>
         // Maps variables
         var maps = {};
+        window.maps = maps;
         var centerMarkers = {};
 
         // Tag recommendation variables
@@ -143,7 +144,7 @@
                 center_lon = $("#id_" + idx0 + "-lon").val();
                 zoom = $("#id_" + idx0 + "-zoom").val();
             }
-            maps[idx] = make_geotag_edit_map('gmap' + idx, '{{media_url}}/images/arrow.png', updateLatLonZoomFields, center_lat, center_lon, zoom);
+            maps[idx] = make_geotag_edit_map('gmap' + idx, '{{media_url}}/images/arrow.png', updateLatLonZoomFields, center_lat, center_lon, zoom, idx);
         }
 
 

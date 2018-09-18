@@ -93,7 +93,8 @@
     {% endif %}
 
     var show_search = true;
-    make_sounds_map(url, 'map_canvas', hideLoadingIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search);
+    var show_style_selector = true;
+    make_sounds_map(url, 'map_canvas', hideLoadingIndicator, updateEmbedCode, center_lat, center_lon, zoom, show_search, show_style_selector);
 
     var current_lat;
     var current_lon;

@@ -40,6 +40,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.cache import never_cache
 from django.utils.http import base36_to_int
@@ -1149,19 +1150,23 @@ def email_reset_complete(request, uidb36=None, token=None):
 
 @login_required
 @transaction.atomic()
-def flag_user(request, username=None):
+def flag_user(request, username):
+
     if request.POST:
-        flagged_user = User.objects.get(username__iexact=request.POST["username"])
+        flagged_user = User.objects.get(username__iexact=username)
         reporting_user = request.user
         object_id = request.POST["object_id"]
         if object_id:
-            if request.POST["flag_type"] == "PM":
-                flagged_object = Message.objects.get(id=object_id)
-            elif request.POST["flag_type"] == "FP":
-                flagged_object = Post.objects.get(id=object_id)
-            elif request.POST["flag_type"] == "SC":
-                flagged_object = Comment.objects.get(id=object_id)
-            else:
+            try:
+                if request.POST["flag_type"] == "PM":
+                    flagged_object = Message.objects.get(id=object_id, user_from=flagged_user)
+                elif request.POST["flag_type"] == "FP":
+                    flagged_object = Post.objects.get(id=object_id, author=flagged_user)
+                elif request.POST["flag_type"] == "SC":
+                    flagged_object = Comment.objects.get(id=object_id, user=flagged_user)
+                else:
+                    return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
+            except (Message.DoesNotExist, Post.DoesNotExist, Comment.DoesNotExist) as e:
                 return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
         else:
             return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
@@ -1179,7 +1184,7 @@ def flag_user(request, username=None):
 
             # Get all flagged objects by the user, create links to admin pages and send email
             flagged_objects = UserFlag.objects.filter(user=flagged_user)
-            urls = []
+            objects_data = []
             added_objects = []
             for f_object in flagged_objects:
                 key = str(f_object.content_type) + str(f_object.object_id)
@@ -1189,9 +1194,17 @@ def flag_user(request, username=None):
                         obj = f_object.content_type.get_object_for_this_type(id=f_object.object_id)
                         url = reverse('admin:%s_%s_change' %
                                       (obj._meta.app_label,  obj._meta.model_name), args=[obj.id])
-                        urls.append([str(f_object.content_type), request.build_absolute_uri(url)])
-                    except Exception:
-                        urls.append([str(f_object.content_type), "url not available"])
+                        if isinstance(obj, Comment):
+                            content = obj.comment
+                        elif isinstance(obj, Post):
+                            content = obj.body
+                        elif isinstance(obj, Message):
+                            content = obj.body.body
+                        else:
+                            content = ''
+                        objects_data.append([str(f_object.content_type), request.build_absolute_uri(url), content])
+                    except ObjectDoesNotExist:
+                        objects_data.append([str(f_object.content_type), "url not available", ""])
             user_url = reverse('admin:%s_%s_delete' %
                                (flagged_user._meta.app_label, flagged_user._meta.model_name), args=[flagged_user.id])
             user_url = request.build_absolute_uri(user_url)
@@ -1203,7 +1216,7 @@ def flag_user(request, username=None):
                 template_to_use = 'accounts/report_blocked_spammer_admins.txt'
 
             tvars = {'flagged_user': flagged_user,
-                     'urls': urls,
+                     'objects_data': objects_data,
                      'user_url': user_url,
                      'clear_url': clear_url}
             send_mail_template_to_support(u'Spam/offensive report for user ' + flagged_user.username, template_to_use,

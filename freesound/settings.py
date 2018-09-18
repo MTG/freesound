@@ -200,6 +200,9 @@ NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
 
+# Buffer size for CRC computation
+CRC_BUFFER_SIZE = 4096
+
 # Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
 BULK_UPLOAD_MIN_SOUNDS = 40
 
@@ -324,12 +327,17 @@ STRIPE_PRIVATE_KEY = ""
 # Mapbox access token
 MAPBOX_ACCESS_TOKEN = ""
 
-# AWS tokens (for accessing email bounce list)
+# AWS tokens (for accessing email bounce list and email statistics)
 AWS_REGION = ''
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
+# Email bounce processing parameters
 AWS_SQS_QUEUE_URL = ''
-AWS_SQS_MESSAGES_PER_CALL = 1
+AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
+# Email stats retrieval parameters (see utils.aws.report_ses_stats for more details)
+AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500  # should be ~ 10000-11000
+AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period (15min)
+
 
 # Frontend preference handling
 FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'

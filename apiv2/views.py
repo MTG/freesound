@@ -100,7 +100,7 @@ class TextSearch(GenericAPIView):
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
         if search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None:
-            raise BadRequestException(msg='At lesast one request parameter from Text Search should be included '
+            raise BadRequestException(msg='At least one request parameter from Text Search should be included '
                                           'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
@@ -186,7 +186,7 @@ class ContentSearch(GenericAPIView):
         if not search_form.cleaned_data['target'] and \
                 not search_form.cleaned_data['descriptors_filter'] and \
                 not self.analysis_file:
-            raise BadRequestException(msg='At lesast one parameter from Content Search should be included '
+            raise BadRequestException(msg='At least one parameter from Content Search should be included '
                                           'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)

@@ -1,6 +1,6 @@
-<html>
+{% extends 'base.njk' %}
 
-<body>
+{% block content %}
   <div class="container">
     <div class="center">
       <div class="v-spacing-5 v-spacing-top-3">
@@ -9,14 +9,11 @@
     </div>
     <div class="text-center">
       <div class="v-spacing-2">
-        <a href="./front.html">Front page</a>
+        <a href="./front.njk">Front page</a>
       </div>
       <div class="v-spacing-2">
-        <a href="./search.html">Search sounds page</a>
+        <a href="./search.njk">Search sounds page</a>
       </div>
     </div>
   </div>
-  <script src="../src/index.js"></script>
-</body>
-
-</html>
+{% endblock %}

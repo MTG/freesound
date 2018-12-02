@@ -6,3 +6,5 @@ import 'element-closest'
 import 'normalize.css'
 
 import '../styles/index.scss'
+
+import './components'

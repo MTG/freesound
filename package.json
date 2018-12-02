@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Freesound, the cool stuff",
   "scripts": {
-    "start": "parcel freesound/static/html/index.njk",
+    "start": "node freesound/static/start",
     "prettier": "prettier freesound/static/src/**/**.js freesound/static/styles/**/**.scss --write",
     "eslint": "eslint freesound/static/src"
   },
@@ -22,6 +22,7 @@
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.10.0",
+    "inquirer": "^6.2.1",
     "nunjucks": "^3.1.4",
     "parcel-bundler": "^1.10.3",
     "parcel-plugin-nunjucks": "^1.0.0",

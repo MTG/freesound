@@ -19,3 +19,7 @@ Notable things missing:
 - icons are not loaded: the plan is to greatly improve the way to load in the page
 - there's no "build" mode, i.e. the assets can only be accessed through the dev server run through `npm start` and can't be exported nor optimized
 - styleguide: the previous version has been dismissed as it was running react components that were adapted from the html page I added to the dev pages. The plan is to write a very simple in-house styleguide once things get more stable, so to show the different use cases of the UI components/atoms.
+
+## Icons
+This project uses https://icomoon.io for generating the icon font.
+To import the font project in your own icomon account (a free one is enough), import the file `bw-icons/selection.json`, as explained in the `bw-icons/Read Me.txt` file.

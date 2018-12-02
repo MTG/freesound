@@ -161,4 +161,7 @@
   </div>
 
   {% include './molecules/footer.njk' %}
+  {% block extrabody %}
+    <script src="../src/pages/front.js"></script>
+  {% endblock %}
 {% endblock %}

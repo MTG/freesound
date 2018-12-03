@@ -1,18 +1,9 @@
 import throttle from 'lodash.throttle';
-import { getIcon } from '../utils/icons';
-import once from '../utils/once';
 
 const navbar = document.getElementsByClassName('bw-nav')[0];
-const navbarMenusAnchors = [...document.getElementsByClassName('bw-nav__menu')];
-
-// call once() to avoid adding ellipsis icons multiple times
-const addEllipsisIconToMenusOnce = once('navbar-ellipsis-icon', () => {
-  const ellipsisSvg = getIcon('ellipsis');
-  navbarMenusAnchors.forEach(el => el.appendChild(ellipsisSvg));
-});
 
 // call with once() to avoid adding the same event listener multiple times
-const addScrollEventListenerOnce = once('navbar-scroll-listeners', () => {
+const addScrollEventListener = () => {
   // min interval (in ms) between consecutive calls of scroll checking function
   const SCROLL_CHECK_TIMER = 100;
   const checkShouldShowNavbarShadow = throttle(() => {
@@ -25,10 +16,9 @@ const addScrollEventListenerOnce = once('navbar-scroll-listeners', () => {
   }, SCROLL_CHECK_TIMER);
 
   window.addEventListener('scroll', checkShouldShowNavbarShadow);
-});
+};
 
 // finally call the 'once' functions
-addEllipsisIconToMenusOnce();
-addScrollEventListenerOnce();
+addScrollEventListener();
 
 export default navbar;

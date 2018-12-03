@@ -1,14 +1,10 @@
-import { getIcon } from '../utils/icons';
+import { createIconElement } from '../utils/icons'
 
-const searchBoxes = [...document.querySelectorAll('input[type="search"]')];
+const searchBoxes = [...document.querySelectorAll('input[type="search"]')]
 
 searchBoxes.forEach(searchField => {
-  const inputWrapper = searchField.parentNode;
-  const searchSvg = getIcon('search');
-  const searchIconNode = searchSvg;
-  inputWrapper.insertBefore(searchIconNode, searchField);
-  const renderedSvgIcon = inputWrapper.getElementsByTagName('svg')[0];
-  if (renderedSvgIcon) {
-    renderedSvgIcon.setAttribute('class', 'input-icon');
-  }
-});
+  const inputWrapper = searchField.parentNode
+  const searchIconNode = createIconElement('bw-icon-search')
+  searchIconNode.classList.add('input-icon')
+  inputWrapper.insertBefore(searchIconNode, searchField)
+})

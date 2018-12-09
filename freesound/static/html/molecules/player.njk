@@ -1,3 +1,26 @@
+{% macro player(
+    size = 'small',
+    title = 'My sound',
+    url = 'https://freesound.org/data/previews/55/55228_350554',
+    img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png'
+) %}
+  <div
+    class="bw-player"
+    data-size="{{ size }}"
+    data-mp3="{{ url }}-lq.mp3"
+    data-ogg="{{ url }}-lq.ogg"
+    data-waveform="{{ img }}"
+    data-spectrum="{{ img }}"
+    data-title="{{ title }}">
+  </div>
+
+  <!-- The following is a hack for Parcel to serve the white waveform images, no need to put this part in production -->
+  <div class="hidden">
+    <img src="../public/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" />
+  </div>
+  <!-- end parcel hack -->
+{% endmacro %}
+
 {% macro 
   smallPlayer(
     title = 'My sound',
@@ -6,22 +29,8 @@
     url = 'https://freesound.org/data/previews/55/55228_350554',
     img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png'
   ) %}
-<div
-  class="bw-player"
-  data-size="small"
-  data-mp3="{{ url }}-lq.mp3"
-  data-ogg="{{ url }}-lq.ogg"
-  data-waveform="{{ img }}"
-  data-spectrum="{{ img }}"
-  data-title="{{ title }}">
-</div>
-<h5 class="v-spacing-top-1">{{ title }}</h5>
-<a>{{ author }}</a>
-<p class="text-grey">{{ description }}</p>
-
-<!-- The following is a hack for Parcel to serve the white waveform images, no need to put this part in production -->
-<div class="hidden">
-  <img src="../public/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" />
-</div>
-<!-- end parcel hack -->
+  {{ player('small', title, url, img) }}
+  <h5 class="v-spacing-top-1">{{ title }}</h5>
+  <a>{{ author }}</a>
+  <p class="text-grey">{{ description }}</p>
 {% endmacro %}

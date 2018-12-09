@@ -1,8 +1,8 @@
 const inquirer = require('inquirer')
-const { exec } = require('child_process')
+const shell = require('shelljs')
 
-inquirer
-  .prompt([
+const start = async () => {
+  const answers = await inquirer.prompt([
     {
       type: 'list',
       name: 'pagename',
@@ -11,7 +11,7 @@ inquirer
       filter: val => val.toLowerCase(),
     },
   ])
-  .then(answers => {
-    exec(`parcel freesound/static/html/${answers.pagename}.njk`)
-    console.log('Your page is ready at http://localhost:1234')
-  })
+  shell.exec(`parcel freesound/static/html/${answers.pagename}.njk`)
+}
+
+start()

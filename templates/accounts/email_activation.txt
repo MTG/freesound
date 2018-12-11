@@ -11,5 +11,6 @@ In order to activate your Freesound account, please click this link:
 
 <{% absurl 'accounts-activate' username hash %}>
 
-If for some reason this fails, try copy-pasting the complete link into you browser. Some mail clients break up long lines, or do strange things to URL's!
+If for some reason this fails, or the link above is not displayed try copy-pasting this URL into you browser address bar: 
+{% absurl 'accounts-activate' username hash %}
 {% endblock %}

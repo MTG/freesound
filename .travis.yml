@@ -20,7 +20,7 @@ install:
 - pip install django-nose
 - pip install -r requirements.txt
 script:
-- python manage.py test --noinput --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum geotags ratings search sounds support tags tickets utils wiki general
+- python manage.py test --noinput --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum geotags ratings search sounds support tags tickets utils wiki general monitor
 notifications:
   hipchat:
     rooms:

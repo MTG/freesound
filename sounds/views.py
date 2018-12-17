@@ -29,6 +29,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 from django.db.models import Q
 from django.http import HttpResponse
@@ -44,7 +45,6 @@ from comments.models import Comment
 from donations.models import DonationsModalSettings
 from follow import follow_utils
 from forum.models import Thread
-from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
     RemixForm, PackForm

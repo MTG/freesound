@@ -1511,3 +1511,83 @@ class SoundManagerQueryMethods(TestCase):
                 self.assertEqual(self.user.id, sound.user_id)
                 pack_sound_ids_bulk_query.append(sound.id)
         self.assertItemsEqual(pack_sound_ids, pack_sound_ids_bulk_query)
+
+
+class SoundEditDeletePermissionTestCase(TestCase):
+    """Test that when editing and deleting sounds and packs only the user who owns
+    them, or a specific admin can make the change"""
+
+    fixtures = ['sounds.json']
+
+    def setUp(self):
+        # From sounds.json fixture
+        self.sound = Sound.objects.get(pk=6)
+        self.pack = Pack.objects.get(pk=5103)
+        self.sound_user = User.objects.get(username=self.sound.user.username)
+        self.other_user = User.objects.get(username='Anton')
+        self.admin_user = User.objects.get(username='Bram')
+
+    def test_edit_sound_owner(self):
+        # Sound owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_delete_sound_owner(self):
+        # Sound owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_edit_pack_owner(self):
+        # Pack owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_delete_pack_owner(self):
+        # Pack owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 403)
+

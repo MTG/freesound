@@ -21,6 +21,7 @@
 #
 
 from django.contrib import admin
+from django.urls import reverse
 from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress
 
 
@@ -61,7 +62,36 @@ admin.site.register(Pack, PackAdmin)
 
 class FlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
-    list_display = ('reporting_user', 'email', 'reason_type')
+    list_display = ('id', 'reporting_user_link', 'email_link', 'sound_uploader_link', 'sound_link', 'reason_summary', 'reason_type')
+    list_filter = ('reason_type',)
+
+    def reporting_user_link(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse('account', args=[obj.reporting_user.username]), obj.reporting_user.username) \
+            if obj.reporting_user else '-'
+    reporting_user_link.allow_tags = True
+
+    def email_link(self, obj):
+        return '<a href="mailto:{0}" target="_blank">{1}</a>'.format(
+            reverse('account', args=[obj.email]), obj.email) \
+            if obj.email else '-'
+    email_link.allow_tags = True
+
+    def sound_uploader_link(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('account', args=[obj.sound.user.username]),
+                                                              obj.sound.user.username)
+    sound_uploader_link.allow_tags = True
+
+    def sound_link(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
+                                                              obj.sound_id)
+    sound_link.allow_tags = True
+
+    def reason_summary(self, obj):
+        reason_no_newlines = obj.reason.replace('\n', '|')
+        return reason_no_newlines if len(reason_no_newlines) < 50 else reason_no_newlines[:50] + '...'
+
+
 admin.site.register(Flag, FlagAdmin)
 
 

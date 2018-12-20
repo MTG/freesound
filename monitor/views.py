@@ -137,8 +137,11 @@ def queries_stats_ajax(request):
         }
         req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/terms',
                 auth=auth, params=params)
+        req.raise_for_status()
         return JsonResponse(req.json())
     except requests.HTTPError:
+        return HttpResponse(status=500)
+    except ValueError:
         return HttpResponse(status=500)
 
 
@@ -154,8 +157,11 @@ def api_usage_stats_ajax(request, client_id):
         }
         req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/histogram',
                 auth=auth, params=params)
+        req.raise_for_status()
         return JsonResponse(req.json())
     except requests.HTTPError:
+        return HttpResponse(status=500)
+    except ValueError:
         return HttpResponse(status=500)
 
 

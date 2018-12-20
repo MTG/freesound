@@ -303,6 +303,23 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
+        # Check that a username that doesn't fit the registration guidelines returns "False", even
+        # if the username doesn't exist
+        resp = self.client.get(reverse('check_username'),
+                {'username': 'username@withat'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        resp = self.client.get(reverse('check_username'),
+                {'username': 'username^withcaret'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        resp = self.client.get(reverse('check_username'),
+                {'username': 'username_withunderscore'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], True)
+
 
 class OldUserLinksRedirect(TestCase):
 

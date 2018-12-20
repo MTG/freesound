@@ -7,7 +7,7 @@
 <script type="text/javascript">
     $(function () {
         $("#id_username").focus()
-            $('#id_username').parent().append('<div id="spinner"> Checking...<img src="{{ media_url }}images/indicator.gif" /></div><div id="username_check">Sorry, this username is already being used by someone else.</div><div id="check_success">Username is available</div>');
+            $('#id_username').parent().append('<div id="spinner"> Checking...<img src="{{ media_url }}images/indicator.gif" /></div><div id="username_check">Sorry, this username is not valid or is already being used by someone else.</div><div id="check_success">Username is available</div>');
             $("#id_username").focusout(function(){
             if ($("#id_username").val()) {
                 $('#spinner').show();

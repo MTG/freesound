@@ -241,14 +241,11 @@ form {
     margin-bottom: 10px;
 }
 
-form label {
-    display: block;
-}
-
 form input,form textarea {
     padding: 3px;
     font-size: 13px;
 }
+
 #content textarea {
     width: 530px;
 }

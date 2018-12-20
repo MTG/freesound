@@ -3,7 +3,7 @@
 {% block title %}registration{% endblock %}
 
 {% block section_content %}
-<style> label[for=id_accepted_tos] {display: inline} #username_check, #check_success, #spinner { display:none; color: #bd2d33; font-style: italic; } #check_success {color:green;}</style>
+<style> label:not([for=id_accepted_tos]) {display: block} #username_check, #check_success, #spinner { display:none; color: #bd2d33; font-style: italic; } #check_success {color:green;}</style>
 <script type="text/javascript">
     $(function () {
         $("#id_username").focus()

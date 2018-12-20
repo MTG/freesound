@@ -803,7 +803,8 @@ def __redirect_old_link(request, cls, url_name):
     obj_id = request.GET.get('id', False)
     if obj_id:
         try:
-            obj = get_object_or_404(cls, id=int(obj_id))
+            obj_id = int(obj_id)
+            obj = get_object_or_404(cls, id=obj_id)
             return HttpResponsePermanentRedirect(reverse(url_name, args=[obj.user.username, obj_id]))
         except ValueError:
             raise Http404

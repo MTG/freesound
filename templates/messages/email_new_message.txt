@@ -9,6 +9,6 @@ You have a new message at freesound, sent by {{user_from.username}}!
 
 To read the message go to:
 
-<{% absurl "messages" %}>
+{% absurl "messages" %}
 
 {% endblock %}

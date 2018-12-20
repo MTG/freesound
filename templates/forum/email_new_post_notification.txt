@@ -10,7 +10,7 @@ A thread you are subscribed to over at Freesound has been replied to by user {{p
 Thread: "{{thread.title}}"
 Post URL:
 
-<{% absurl "forums-post" forum.name_slug thread.id post.id %}>
+{% absurl "forums-post" forum.name_slug thread.id post.id %}
 
 
 

@@ -23,12 +23,14 @@
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.10.0",
     "inquirer": "^6.2.1",
+    "node": "^10.14.0",
     "nunjucks": "^3.1.4",
     "parcel-bundler": "^1.10.3",
     "parcel-plugin-nunjucks": "^1.0.0",
     "prettier": "^1.11.1",
     "react": "^16.3.0",
-    "sass": "^1.15.1"
+    "sass": "^1.15.1",
+    "shelljs": "^0.8.3"
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",

@@ -2,7 +2,6 @@ import throttle from 'lodash.throttle';
 
 const navbar = document.getElementsByClassName('bw-nav')[0];
 
-// call with once() to avoid adding the same event listener multiple times
 const addScrollEventListener = () => {
   // min interval (in ms) between consecutive calls of scroll checking function
   const SCROLL_CHECK_TIMER = 100;
@@ -18,7 +17,6 @@ const addScrollEventListener = () => {
   window.addEventListener('scroll', checkShouldShowNavbarShadow);
 };
 
-// finally call the 'once' functions
 addScrollEventListener();
 
 export default navbar;

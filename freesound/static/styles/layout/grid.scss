@@ -45,4 +45,8 @@
   }
 }
 
+.hidden {
+  display: none;
+}
+
 @include make-grid-columns();

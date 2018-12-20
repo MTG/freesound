@@ -1,3 +1,4 @@
+{% import './molecules/player.njk' as players %}
 {% extends "base.njk" %}
 
 {% block content %}
@@ -61,9 +62,9 @@
       <div class="bw-search__result-list h-padding-4">
         <div class="bw-search__result">
           <div class="row no-gutters no-wrap">
-            <div class="bw-player bw-search__player-small" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3"
-              data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg" data-waveform="waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png"
-              data-spectrum="spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"></div>
+            <div class="col-3">
+              {{ players.player() }}
+            </div>
             <div class="padding-left-3">
               <h5 class="v-spacing-top-1">Bass Guitar Solo 01</h5>
               <p class="text-grey">My amazing skills at bass</p>
@@ -89,9 +90,9 @@
         </div>
         <div class="bw-search__result">
           <div class="row no-gutters no-wrap">
-            <div class="bw-player bw-search__player-small" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3"
-              data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg" data-waveform="waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png"
-              data-spectrum="spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"></div>
+            <div class="col-3">
+              {{ players.player() }}
+            </div>
             <div class="padding-left-3">
               <h5 class="v-spacing-top-1">Bass Guitar Solo 01</h5>
               <p class="text-grey">My amazing skills at bass</p>
@@ -117,9 +118,9 @@
         </div>
         <div class="bw-search__result">
           <div class="row no-gutters no-wrap">
-            <div class="bw-player bw-search__player-small" data-size="small" data-mp3="https://freesound.org/data/previews/55/55228_350554-lq.mp3"
-              data-ogg="https://freesound.org/data/previews/55/55228_350554-lq.ogg" data-waveform="waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png"
-              data-spectrum="spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg"></div>
+            <div class="col-3">
+              {{ players.player() }}
+            </div>
             <div class="padding-left-3">
               <h5 class="v-spacing-top-1">Bass Guitar Solo 01</h5>
               <p class="text-grey">My amazing skills at bass</p>

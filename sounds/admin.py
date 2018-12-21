@@ -72,8 +72,7 @@ class FlagAdmin(admin.ModelAdmin):
     reporting_user_link.allow_tags = True
 
     def email_link(self, obj):
-        return '<a href="mailto:{0}" target="_blank">{1}</a>'.format(
-            reverse('account', args=[obj.email]), obj.email) \
+        return '<a href="mailto:{0}" target="_blank">{1}</a>'.format(obj.email, obj.email) \
             if obj.email else '-'
     email_link.allow_tags = True
 

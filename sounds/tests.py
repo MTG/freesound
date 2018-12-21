@@ -64,6 +64,10 @@ class OldSoundLinksRedirectTestCase(TestCase):
         response = self.client.get(reverse('old-sound-page'), data={'id': self.sound.id})
         self.assertEqual(response.status_code, 301)
 
+        # id is valid but has a space after it
+        response = self.client.get(reverse('old-sound-page'), data={'id': '%d ' % self.sound.id})
+        self.assertEqual(response.status_code, 301)
+
     def test_old_sound_link_redirect_not_exists_id(self):
         # 404 id does not exist
         response = self.client.get(reverse('old-sound-page'), data={'id': 0}, follow=True)
@@ -85,6 +89,10 @@ class OldPackLinksRedirectTestCase(TestCase):
 
     def test_old_pack_link_redirect_ok(self):
         response = self.client.get(reverse('old-pack-page'), data={'id': self.pack.id})
+        self.assertEqual(response.status_code, 301)
+
+        # id is valid but has a space after it
+        response = self.client.get(reverse('old-pack-page'), data={'id': '%d ' % self.pack.id})
         self.assertEqual(response.status_code, 301)
 
     def test_old_pack_link_redirect_not_exists_id(self):

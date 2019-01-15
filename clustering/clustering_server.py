@@ -49,7 +49,7 @@ class ClusteringServer(resource.Resource):
                                       [0.3, 0.5, 1, 0.05], 
                                       [0.01, 0.01, 0.05, 1]])
         print(similarity_matrix.shape)
-        result = self.cluster(similarity_matrix, 2)
+        result = self.cluster(similarity_matrix, np.int(np.log2(similarity_matrix.shape[0])))
         return json.dumps(result)
 
 

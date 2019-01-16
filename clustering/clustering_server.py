@@ -1,6 +1,7 @@
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
+import numpy as np
 from clustering_settings import LISTEN_PORT
 import logging
 import json
@@ -43,9 +44,10 @@ class ClusteringServer(resource.Resource):
         # Create knn graph        
         graph = nx.Graph()
         graph.add_nodes_from(sound_ids_list)
+        k = int(np.ceil(np.log2(len(sound_ids_list))))
 
         for sound_id in sound_ids_list:
-            nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, 10, sound_ids_list))
+            nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list))
             graph.add_edges_from([(sound_id, i) for i in nearest_neighbors])
 
         # Community detection in the graph

@@ -18,8 +18,6 @@ import networkx as nx
 import community.community_louvain as com
 
 LISTEN_PORT = 8009
-LOGFILE = '/var/log/freesound/clustering.log'
-LOG_TO_STDOUT = True
 
 
 def server_interface(resource):

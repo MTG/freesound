@@ -13,6 +13,7 @@ import yaml
 import cloghandler
 import clustering_methods
 import numpy as np
+from gaia2 import DataSet, View, DistanceFunctionFactory
 
 LISTEN_PORT = 8009
 
@@ -20,6 +21,7 @@ LISTEN_PORT = 8009
 def server_interface(resource):
     return {
         'cluster_search_results': resource.cluster_search_results, # query, sound_ids
+        'k_nearest_neighbors': resource.k_nearest_neighbors, # sound_id, k
 }
 
 
@@ -43,7 +45,7 @@ class ClusteringServer(resource.Resource):
     def cluster_search_results(self, request, query, sound_ids):
         sound_ids_list = sound_ids[0].split(',')
         print('Request clustering of points: {} ... from the query "{}"'.format(', '.join(sound_ids_list[:20]), 
-                                                                             query[0]))
+                                                                                query[0]))
         similarity_matrix = np.array([[1 ,0.5, 0.4, 0.01], 
                                       [0.5, 1, 0.01, 0.01], 
                                       [0.3, 0.5, 1, 0.05], 
@@ -51,6 +53,15 @@ class ClusteringServer(resource.Resource):
         print(similarity_matrix.shape)
         result = self.cluster(similarity_matrix, np.int(np.log2(similarity_matrix.shape[0])))
         return json.dumps(result)
+
+    def k_nearest_neighbors(self, request, sound_id, k):
+        print('Request k nearest neighbors of point {}'.format(sound_id[0]))
+        ds = DataSet()
+        ds.load('FS_6k_sounds_normalized.db')
+        view = View(ds)
+        euclideanMetric = DistanceFunctionFactory.create('euclidean', ds.layout())
+        results = view.nnSearch(sound_id[0], euclideanMetric).get(int(k[0]))
+        return json.dumps(results)
 
 
 if __name__ == '__main__':

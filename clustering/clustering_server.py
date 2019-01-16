@@ -60,7 +60,7 @@ class ClusteringServer(resource.Resource):
         graph.add_nodes_from(sound_ids_list)
 
         for sound_id in sound_ids_list:
-            nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, 10))
+            nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, 10, sound_ids_list))
             graph.add_edges_from([(sound_id, i) for i in nearest_neighbors])
 
         # Community detection in the graph

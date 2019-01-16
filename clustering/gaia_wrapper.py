@@ -18,5 +18,6 @@ class GaiaWrapper:
         self.view = View(self.dataset)
         self.metric = DistanceFunctionFactory.create('euclidean', self.dataset.layout())
 
-    def search_nearest_neighbors(self, sound_id, k):
-        return self.view.nnSearch(sound_id, self.metric).get(k)[1:]
+    def search_nearest_neighbors(self, sound_id, k, in_sound_ids):
+        filter = 'WHERE point.id IN ("' + '", "'.join(in_sound_ids) + '")'
+        return self.view.nnSearch(sound_id, self.metric, filter).get(k)[1:]

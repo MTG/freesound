@@ -16,6 +16,8 @@ import numpy as np
 from gaia2 import DataSet, View, DistanceFunctionFactory
 
 LISTEN_PORT = 8009
+LOGFILE = '/var/log/freesound/clustering.log'
+LOG_TO_STDOUT = True
 
 
 def server_interface(resource):
@@ -44,18 +46,18 @@ class ClusteringServer(resource.Resource):
 
     def cluster_search_results(self, request, query, sound_ids):
         sound_ids_list = sound_ids[0].split(',')
-        print('Request clustering of points: {} ... from the query "{}"'.format(', '.join(sound_ids_list[:20]), 
+        logger.info('Request clustering of points: {} ... from the query "{}"'.format(', '.join(sound_ids_list[:20]), 
                                                                                 query[0]))
         similarity_matrix = np.array([[1 ,0.5, 0.4, 0.01], 
                                       [0.5, 1, 0.01, 0.01], 
                                       [0.3, 0.5, 1, 0.05], 
                                       [0.01, 0.01, 0.05, 1]])
-        print(similarity_matrix.shape)
+        logger.info(similarity_matrix.shape)
         result = self.cluster(similarity_matrix, np.int(np.log2(similarity_matrix.shape[0])))
         return json.dumps(result)
 
     def k_nearest_neighbors(self, request, sound_id, k):
-        print('Request k nearest neighbors of point {}'.format(sound_id[0]))
+        logger.info('Request k nearest neighbors of point {}'.format(sound_id[0]))
         ds = DataSet()
         ds.load('FS_6k_sounds_normalized.db')
         view = View(ds)
@@ -65,12 +67,21 @@ class ClusteringServer(resource.Resource):
 
 
 if __name__ == '__main__':
+    # Set up logging
+    logger = logging.getLogger('clustering')
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
     # Start service
-    print('Configuring clustering service...')
+    logger.info('Configuring clustering service...')
     root = resource.Resource()
     root.putChild("clustering", ClusteringServer())
     site = server.Site(root)
     reactor.listenTCP(LISTEN_PORT, site)
-    print('Started clustering service, listening to port ' + str(LISTEN_PORT) + "...")
+    logger.info('Started clustering service, listening to port ' + str(LISTEN_PORT) + "...")
     reactor.run()
-print('Service stopped.')
+    logger.info('Service stopped.')

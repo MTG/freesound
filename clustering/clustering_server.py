@@ -47,6 +47,9 @@ class ClusteringServer(resource.Resource):
     def render_GET(self, request):
         return self.methods[request.prepath[1]](request=request, **request.args)
 
+    def render_POST(self, request):
+        return self.methods[request.prepath[1]](request=request, **request.args)
+
     def cluster_search_results(self, request, query, sound_ids):
         sound_ids_list = sound_ids[0].split(',')
         logger.info('Request clustering of {} points: {} ... from the query "{}"'

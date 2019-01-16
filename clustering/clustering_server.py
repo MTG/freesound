@@ -49,8 +49,10 @@ class ClusteringServer(resource.Resource):
 
     def cluster_search_results(self, request, query, sound_ids):
         sound_ids_list = sound_ids[0].split(',')
-        logger.info('Request clustering of points: {} ... from the query "{}"'.format(', '.join(sound_ids_list[:20]), 
-                                                                                      query[0]))
+        logger.info('Request clustering of {} points: {} ... from the query "{}"'
+                .format(len(sound_ids_list), ', '.join(sound_ids_list[:20]), query[0]))
+
+        # Create knn graph        
         graph = nx.Graph()
         graph.add_nodes_from(sound_ids_list)
 
@@ -58,6 +60,7 @@ class ClusteringServer(resource.Resource):
             nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, 10))
             graph.add_edges_from([(sound_id, i) for i in nearest_neighbors])
 
+        # Community detection in the graph
         classes = com.best_partition(graph)
         return json.dumps(classes)
 

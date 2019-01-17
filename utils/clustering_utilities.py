@@ -2,6 +2,7 @@ import traceback, logging
 from django.conf import settings
 from django.core.cache import cache
 from clustering.client import Clustering
+from clustering.clustering_settings import CLUSTERING_CACHE_TIME
 from utils.encryption import create_hash
 
 
@@ -14,7 +15,7 @@ def get_clusters(sound_ids, query=None, filter=None):
     cache_key = hash_cache_key(cache_key)
 
     # Don't use the cache when we're debugging
-    if settings.DEBUG or len(cache_key) >= 250 or in_ids:
+    if settings.DEBUG or len(cache_key) >= 250:
         returned_sounds = False
     else:
         result = cache.get(cache_key)
@@ -30,10 +31,11 @@ def get_clusters(sound_ids, query=None, filter=None):
         )
 
         returned_sounds = result
-        num_clusters = max(result.values()) + 1
 
         if len(returned_sounds) > 0 and len(cache_key) < 250 and not settings.DEBUG:
-            cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
+            cache.set(cache_key, result, CLUSTERING_CACHE_TIME)
+    
+    num_clusters = max(result.values()) + 1
 
     return returned_sounds, num_clusters
 

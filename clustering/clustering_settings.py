@@ -6,3 +6,6 @@ LISTEN_PORT = 8010
 # CLIENT SETTINGS (to be moved to django settings?)
 CLUSTERING_ADDRESS               = 'localhost'
 CLUSTERING_PORT                  = 8010
+
+# OTHER
+CLUSTERING_CACHE_TIME = 60*60*1

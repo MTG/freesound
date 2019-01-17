@@ -3,7 +3,6 @@ import json
 import urllib2
 
 _BASE_URL                     = 'http://%s:%i/clustering/' % (CLUSTERING_ADDRESS, CLUSTERING_PORT)
-_BASE_INDEXING_SERVER_URL     = 'http://%s:%i/clustering/' % (SIMILARITY_ADDRESS, SIMILARITY_INDEXING_SERVER_PORT)
 _URL_CLUSTER_POINTS           = 'cluster_points'
 
 
@@ -27,6 +26,7 @@ def _get_url_as_json(url, data=None, timeout=None):
 
 
 def _result_or_exception(result):
+    return result
     if not result['error']:
         return result['result']
     else:

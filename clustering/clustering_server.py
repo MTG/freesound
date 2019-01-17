@@ -11,7 +11,7 @@ import community.community_louvain as com
 
 def server_interface(resource):
     return {
-        'cluster_search_results': resource.cluster_search_results, # query, sound_ids
+        'cluster_points': resource.cluster_points, # query, sound_ids
         'k_nearest_neighbors': resource.k_nearest_neighbors, # sound_id, k
 }
 
@@ -36,7 +36,7 @@ class ClusteringServer(resource.Resource):
     def render_POST(self, request):
         return self.methods[request.prepath[1]](request=request, **request.args)
 
-    def cluster_search_results(self, request, query, sound_ids):
+    def cluster_points(self, request, query, sound_ids):
         sound_ids_list = sound_ids[0].split(',')
         logger.info('Request clustering of {} points: {} ... from the query "{}"'
                 .format(len(sound_ids_list), ', '.join(sound_ids_list[:20]), query[0]))

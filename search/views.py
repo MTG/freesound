@@ -26,6 +26,7 @@ import re
 from django.conf import settings
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
 
 import forms
 import sounds
@@ -33,6 +34,7 @@ import forum
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
+from utils.clustering_utilities import get_clusters
 
 logger = logging.getLogger("search")
 
@@ -322,6 +324,14 @@ def search(request):
         return render(request, 'search/search.html', tvars)
     else:
         return render(request, 'search/search_ajax.html', tvars)
+
+
+def cluster_sounds(request):
+    sound_ids = request.GET.get("s", "")
+    search_query = request.GET.get("q", "")
+    filter_query = request.GET.get("f", "")
+    results, num_clusters = get_clusters(sound_ids, query=search_query, filter=filter_query)
+    return JsonResponse(results, safe=False)
 
 
 def search_forum(request):

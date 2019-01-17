@@ -104,6 +104,7 @@ urlpatterns = [
 
     url(r'^contact/', support.views.contact, name="contact"),
     url(r'^search/$', search.views.search, name='sounds-search'),
+    url(r'^cluster/$', search.views.cluster_sounds, name='cluster-sounds'),
 
     url(r'', include('ratings.urls')),
     url(r'^comments/', include('comments.urls')),

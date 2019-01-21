@@ -24,9 +24,10 @@ import logging
 
 import re
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import render, redirect, reverse
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
+from django.core.cache import cache
 
 import forms
 import sounds
@@ -313,6 +314,24 @@ def search(request):
             'non_grouped_number_of_results': non_grouped_number_of_results,
         })
 
+        # we send the query parameters in the context for clustering
+        query_params = {
+            'search_query': search_query,
+            'filter_query': filter_query,
+            'sort': sort,
+            'current_page': current_page,
+            'sounds_per_page': settings.SOUNDS_PER_PAGE,
+            'id_weight': id_weight,
+            'tag_weight': tag_weight,
+            'description_weight': description_weight,
+            'username_weight': username_weight,
+            'pack_tokenized_weight': pack_tokenized_weight,
+            'original_filename_weight': original_filename_weight,
+            'grouping': grouping
+        }
+
+        tvars.update({'query_params': json.dumps(query_params)})
+
     except SolrException as e:
         logger.warning('Search error: query: %s error %s' % (query, e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
@@ -326,12 +345,53 @@ def search(request):
         return render(request, 'search/search_ajax.html', tvars)
 
 
+def replicate_solr_query_for_clustering(query_params):
+    current_page = 1  # for what is this used for??
+    query = search_prepare_query(**query_params)
+    non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
+    resultids = [d.get("id") for d in docs]
+    return resultids
+
+
+def get_cluster(request):
+    requested_cluster_id = int(request.GET.get('cluster_id', 1)) - 1
+    results_clustering = cache.get('results-clustering')
+    
+    sounds_from_requested_cluster = [str(sound_id) for sound_id, cluster_id in results_clustering['clusters'].iteritems() 
+                                     if cluster_id==requested_cluster_id]
+
+    filter_query = ' OR id:'.join(sounds_from_requested_cluster)
+
+    # The filter by id is passed to redirect().
+    # However, we should pass it with cache or session to avoid adding this big filter in the url
+    return redirect(reverse('sounds-search') + '?f=' + filter_query)
+
+
 def cluster_sounds(request):
-    sound_ids = request.GET.get("s", "")
-    search_query = request.GET.get("q", "")
-    filter_query = request.GET.get("f", "")
+    query_params = search_query = json.loads(request.GET.get("query_params", ""))
+    search_query = query_params['search_query']
+    filter_query = query_params['filter_query']
+    query_params.update({'sounds_per_page': 100})
+
+    resultids = replicate_solr_query_for_clustering(query_params)
+
+    # fake sound ids to request clustering
+    sound_ids = '262436,213079,325667'
     results, num_clusters = get_clusters(sound_ids, query=search_query, filter=filter_query)
-    return JsonResponse(results, safe=False)
+
+    fake_clustering_results = {
+        sound_id: idx%2 for idx, sound_id in enumerate(resultids)
+    }
+    num_clusters = max(fake_clustering_results.values()) + 1
+
+    cache.set('results-clustering', {
+        'query_params': query_params,
+        'clusters': fake_clustering_results,
+        'num_clusters': num_clusters,
+    })
+
+    return JsonResponse({'results': fake_clustering_results, 
+                         'num_clusters': num_clusters}, safe=False)
 
 
 def search_forum(request):

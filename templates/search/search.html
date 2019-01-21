@@ -77,6 +77,21 @@
         	}
         }
 
+        // Ajax request clustering
+        $.get({% url 'cluster-sounds' %}, 
+                {
+                    query_params: '{{ query_params | safe }}',
+                }, 
+                function( data ) {
+                    var cluster_div = $('#clusters-div');
+                    cluster_div.empty();
+                    for (var j=0; j<data.num_clusters; j++) {
+                        var num_cluster = j + 1;
+                        // here maybe link to another view with cluster number parameter that then will call the sound-search view with the appropriate filter to avoid having a long url with all the filter ids
+                        cluster_div.append('<li><a href="{% url 'get-cluster' %}?cluster_id=' + num_cluster + '">cluster #' + num_cluster + '</a></li>');
+                    }
+        });
+
     });
 
     function addAdvancedSearchOptionsFilters()
@@ -208,6 +223,10 @@
 {% else %}
     {% if facets %}
     <div id="sidebar" style="float:right">
+        <h3>clusters</h3>
+        <div id='clusters-div'>...</div>
+        <br>
+
         {% if facets.license and facets.license|length > 1 %}
             <h3>licenses</h3>
             {% display_facet "license" facets.license "list" %}

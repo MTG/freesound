@@ -27,7 +27,6 @@ from django.conf import settings
 from django.shortcuts import render, redirect, reverse
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from django.core.cache import cache
 
 import forms
 import sounds
@@ -80,7 +79,8 @@ def search_prepare_query(search_query,
                          grouping=False,
                          include_facets=True,
                          grouping_pack_limit=1,
-                         offset=None):
+                         offset=None,
+                         in_ids=[]):
     query = SolrQuery()
 
     # Set field weights and scoring function
@@ -108,6 +108,10 @@ def search_prepare_query(search_query,
 
     # Process filter
     filter_query = search_process_filter(filter_query)
+
+    # Process filter for clustering
+    if in_ids:
+        filter_query += ' OR id:'.join(in_ids)
 
     # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
@@ -157,6 +161,7 @@ def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+    cluster_id = request.GET.get('cluster_id', "")
 
     # Generate array with information of filters
     filter_query_split = []
@@ -262,6 +267,9 @@ def search(request):
         'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
     }))
 
+    # get sound ids of the requested cluster
+    in_ids = get_ids_in_cluster(search_query, filter_query, sort, cluster_id)
+
     query = search_prepare_query(search_query,
                                  filter_query,
                                  sort,
@@ -273,7 +281,8 @@ def search(request):
                                  username_weight,
                                  pack_tokenized_weight,
                                  original_filename_weight,
-                                 grouping=grouping
+                                 grouping=grouping,
+                                 in_ids=in_ids,
                                  )
 
     tvars = {
@@ -352,45 +361,33 @@ def replicate_solr_query_for_clustering(query_params):
     resultids = [d.get("id") for d in docs]
     return resultids
 
+def get_ids_in_cluster(search_query, filter_query, sort, requested_cluster_id):
+    if requested_cluster_id == "":
+        return []
+    else:
+        requested_cluster_id = int(requested_cluster_id) - 1
+        # results are cached in clustering_utilities
+        # TODO: add sorting as a param for hash generation
+        results, num_clusters = get_clusters('', query=search_query, filter=filter_query)
 
-def get_cluster(request):
-    requested_cluster_id = int(request.GET.get('cluster_id', 1)) - 1
-    results_clustering = cache.get('results-clustering')
-    
-    sounds_from_requested_cluster = [str(sound_id) for sound_id, cluster_id in results_clustering['clusters'].iteritems() 
-                                     if cluster_id==requested_cluster_id]
+        sounds_from_requested_cluster = [str(sound_id) for sound_id, cluster_id in results.iteritems() 
+                                        if cluster_id==requested_cluster_id]
 
-    filter_query = ' OR id:'.join(sounds_from_requested_cluster)
-
-    # The filter by id is passed to redirect().
-    # However, we should pass it with cache or session to avoid adding this big filter in the url
-    return redirect(reverse('sounds-search') + '?f=' + filter_query)
+        return sounds_from_requested_cluster
 
 
 def cluster_sounds(request):
     query_params = search_query = json.loads(request.GET.get("query_params", ""))
     search_query = query_params['search_query']
     filter_query = query_params['filter_query']
-    query_params.update({'sounds_per_page': 100})
+    # with more sounds solr says 'URI is too large >8192'
+    query_params.update({'sounds_per_page': 800})
 
     resultids = replicate_solr_query_for_clustering(query_params)
 
-    # fake sound ids to request clustering
-    sound_ids = '262436,213079,325667'
-    results, num_clusters = get_clusters(sound_ids, query=search_query, filter=filter_query)
+    results, num_clusters = get_clusters(resultids, query=search_query, filter=filter_query)
 
-    fake_clustering_results = {
-        sound_id: idx%2 for idx, sound_id in enumerate(resultids)
-    }
-    num_clusters = max(fake_clustering_results.values()) + 1
-
-    cache.set('results-clustering', {
-        'query_params': query_params,
-        'clusters': fake_clustering_results,
-        'num_clusters': num_clusters,
-    })
-
-    return JsonResponse({'results': fake_clustering_results, 
+    return JsonResponse({'results': results, 
                          'num_clusters': num_clusters}, safe=False)
 
 

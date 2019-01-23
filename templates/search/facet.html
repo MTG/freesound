@@ -1,10 +1,10 @@
 {% ifequal type "list" %}
  <ul>
-     {% for f in facet %}<li class="facet_item"><a href=".?g={{grouping}}&q={{search_query}}&f={{f.params}}">{{f.display_name}}</a> ({{f.count}})</li>{% endfor %}
+     {% for f in facet %}<li class="facet_item"><a href=".?g={{grouping}}&q={{search_query}}&f={{f.params}}&s={{sort_unformated}}">{{f.display_name}}</a> ({{f.count}})</li>{% endfor %}
 </ul>
 {% endifequal %}
 {% ifequal type "cloud" %}
 <p class="search-tagcloud">
-    {% for f in facet %}<span class="facet_item" style="font-size:{{f.size}}em"><a href=".?g={{grouping}}&q={{search_query}}&f={{f.params}}">{{f.display_name}}</a></span> {% endfor %}
+    {% for f in facet %}<span class="facet_item" style="font-size:{{f.size}}em"><a href=".?g={{grouping}}&q={{search_query}}&f={{f.params}}&s={{sort_unformated}}">{{f.display_name}}</a></span> {% endfor %}
 </p>
 {% endifequal %}

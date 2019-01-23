@@ -31,130 +31,14 @@ from django.http import JsonResponse
 import forms
 import sounds
 import forum
+from utils.search.search_general import search_prepare_sort, search_process_filter, \
+    search_prepare_query, perform_solr_query
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-from utils.clustering_utilities import get_clusters
+from utils.clustering_utilities import cluster_sound_results
 
 logger = logging.getLogger("search")
-
-
-def search_prepare_sort(sort, options):
-    """ for ordering by rating order by rating, then by number of ratings """
-    if sort in [x[1] for x in options]:
-        if sort == "avg_rating desc":
-            sort = [sort, "num_ratings desc"]
-        elif  sort == "avg_rating asc":
-            sort = [sort, "num_ratings asc"]
-        else:
-            sort = [sort]
-    else:
-        sort = [forms.SEARCH_DEFAULT_SORT]
-    return sort
-
-
-def search_process_filter(filter_query):
-    # Process the filter to replace humnan-readable Audio Commons descriptor names for the dynamic field names used in
-    # Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i). The dynamic field names we define in Solr
-    # schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) and '*_s' (for string). At indexing time
-    # we append these suffixes to the ac descirptor names so Solr can treat the types properly. Now we automatically
-    # append the suffices to the filter names so users do not need to deal with that.
-    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
-        filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
-                                            .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
-    return filter_query
-
-
-def search_prepare_query(search_query,
-                         filter_query,
-                         sort,
-                         current_page,
-                         sounds_per_page,
-                         id_weight=settings.DEFAULT_SEARCH_WEIGHTS['id'],
-                         tag_weight=settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-                         description_weight=settings.DEFAULT_SEARCH_WEIGHTS['description'],
-                         username_weight=settings.DEFAULT_SEARCH_WEIGHTS['username'],
-                         pack_tokenized_weight=settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-                         original_filename_weight=settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
-                         grouping=False,
-                         include_facets=True,
-                         grouping_pack_limit=1,
-                         offset=None,
-                         in_ids=[]):
-    query = SolrQuery()
-
-    # Set field weights and scoring function
-    field_weights = []
-    if id_weight != 0:
-        field_weights.append(("id", id_weight))
-    if tag_weight != 0:
-        field_weights.append(("tag", tag_weight))
-    if description_weight != 0:
-        field_weights.append(("description", description_weight))
-    if username_weight != 0:
-        field_weights.append(("username", username_weight))
-    if pack_tokenized_weight != 0:
-        field_weights.append(("pack_tokenized", pack_tokenized_weight))
-    if original_filename_weight != 0:
-        field_weights.append(("original_filename", original_filename_weight))
-    query.set_dismax_query(search_query,
-                           query_fields=field_weights,)
-
-    # Set start and rows parameters (offset and size)
-    if not offset:
-        start = (current_page - 1) * sounds_per_page
-    else:
-        start = offset
-
-    # Process filter
-    filter_query = search_process_filter(filter_query)
-
-    # Process filter for clustering
-    if in_ids:
-        filter_query += ' OR id:'.join(in_ids)
-
-    # Set all options
-    query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
-
-    # Specify query factes
-    if include_facets:
-        query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
-        query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
-        query.set_facet_options("type", limit=len(sounds.models.Sound.SOUND_TYPE_CHOICES))
-        query.set_facet_options("tag", limit=30)
-        query.set_facet_options("username", limit=30)
-        query.set_facet_options("grouping_pack", limit=10)
-        query.set_facet_options("license", limit=10)
-
-    # Add groups
-    if grouping:
-        query.set_group_field(group_field="grouping_pack")
-        query.set_group_options(
-            group_func=None,
-            group_query=None,
-            group_rows=10,
-            group_start=0,
-            group_limit=grouping_pack_limit,  # This is the number of documents that will be returned for each group. By default only 1 is returned.
-            group_offset=0,
-            group_sort=None,
-            group_sort_ingroup=None,
-            group_format='grouped',
-            group_main=False,
-            group_num_groups=True,
-            group_cache_percent=0)
-    return query
-
-
-def perform_solr_query(q, current_page):
-    """
-    This util function performs the query to Solr and returns needed parameters to continue with the view.
-    The main reason to have this util function is to facilitate mocking in unit tests for this view.
-    """
-    solr = Solr(settings.SOLR_URL)
-    results = SolrResponseInterpreter(solr.select(unicode(q)))
-    paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-    page = paginator.page(current_page)
-    return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
 
 def search(request):
@@ -191,7 +75,7 @@ def search(request):
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
-    sort = request.GET.get("s", None)
+    sort_unformated = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
     grouping = request.GET.get("g", "1")  # Group by default
 
@@ -254,7 +138,7 @@ def search(request):
             if a_filename != "":
                 original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
 
-    sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
+    sort = search_prepare_sort(sort_unformated, forms.SEARCH_SORT_OPTIONS_WEB)
 
     logger.info(u'Search (%s)' % json.dumps({
         'ip': get_client_ip(request),
@@ -267,8 +151,24 @@ def search(request):
         'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
     }))
 
+    # we send the query parameters in the context for clustering
+    query_params = {
+        'search_query': search_query,
+        'filter_query': filter_query.replace('"', ''),  # " can appear when filtering with facets
+        'sort': sort,
+        'current_page': current_page,
+        'sounds_per_page': settings.SOUNDS_PER_PAGE,
+        'id_weight': id_weight,
+        'tag_weight': tag_weight,
+        'description_weight': description_weight,
+        'username_weight': username_weight,
+        'pack_tokenized_weight': pack_tokenized_weight,
+        'original_filename_weight': original_filename_weight,
+        'grouping': grouping
+    }
+
     # get sound ids of the requested cluster
-    in_ids = get_ids_in_cluster(search_query, filter_query, sort, cluster_id)
+    in_ids = get_ids_in_cluster(query_params, cluster_id)
 
     query = search_prepare_query(search_query,
                                  filter_query,
@@ -293,6 +193,7 @@ def search(request):
         'grouping': grouping,
         'advanced': advanced,
         'sort': sort,
+        'sort_unformated': sort_unformated,
         'sort_options': sort_options,
         'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
         'current_page': current_page,
@@ -321,25 +222,8 @@ def search(request):
             'docs': docs,
             'facets': facets,
             'non_grouped_number_of_results': non_grouped_number_of_results,
+            'query_params': json.dumps(query_params),
         })
-
-        # we send the query parameters in the context for clustering
-        query_params = {
-            'search_query': search_query,
-            'filter_query': filter_query,
-            'sort': sort,
-            'current_page': current_page,
-            'sounds_per_page': settings.SOUNDS_PER_PAGE,
-            'id_weight': id_weight,
-            'tag_weight': tag_weight,
-            'description_weight': description_weight,
-            'username_weight': username_weight,
-            'pack_tokenized_weight': pack_tokenized_weight,
-            'original_filename_weight': original_filename_weight,
-            'grouping': grouping
-        }
-
-        tvars.update({'query_params': json.dumps(query_params)})
 
     except SolrException as e:
         logger.warning('Search error: query: %s error %s' % (query, e))
@@ -354,38 +238,26 @@ def search(request):
         return render(request, 'search/search_ajax.html', tvars)
 
 
-def replicate_solr_query_for_clustering(query_params):
-    current_page = 1  # for what is this used for??
-    query = search_prepare_query(**query_params)
-    non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
-    resultids = [d.get("id") for d in docs]
-    return resultids
-
-def get_ids_in_cluster(search_query, filter_query, sort, requested_cluster_id):
+def get_ids_in_cluster(query_params, requested_cluster_id):
     if requested_cluster_id == "":
         return []
     else:
         requested_cluster_id = int(requested_cluster_id) - 1
-        # results are cached in clustering_utilities
-        # TODO: add sorting as a param for hash generation
-        results, num_clusters = get_clusters('', query=search_query, filter=filter_query)
 
+        # results are cached in clustering_utilities
+        results, num_clusters = cluster_sound_results(query_params)
+
+        # move this in clustering utilities
         sounds_from_requested_cluster = [str(sound_id) for sound_id, cluster_id in results.iteritems() 
-                                        if cluster_id==requested_cluster_id]
+                                         if cluster_id==requested_cluster_id]
 
         return sounds_from_requested_cluster
 
 
 def cluster_sounds(request):
-    query_params = search_query = json.loads(request.GET.get("query_params", ""))
-    search_query = query_params['search_query']
-    filter_query = query_params['filter_query']
-    # with more sounds solr says 'URI is too large >8192'
-    query_params.update({'sounds_per_page': 800})
+    query_params = json.loads(request.GET.get("query_params", ""))
 
-    resultids = replicate_solr_query_for_clustering(query_params)
-
-    results, num_clusters = get_clusters(resultids, query=search_query, filter=filter_query)
+    results, num_clusters = cluster_sound_results(query_params)
 
     return JsonResponse({'results': results, 
                          'num_clusters': num_clusters}, safe=False)

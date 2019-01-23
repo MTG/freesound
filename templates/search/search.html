@@ -36,7 +36,7 @@
 <p id="filter_query_display">
 
 {% for filter in filter_query_split %}
-    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="remove this filter">{{ filter.name }}</a>
+    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}&s={{sort_unformated}}" title="remove this filter">{{ filter.name }}</a>
 {% endfor %}
 
 </p>
@@ -88,7 +88,7 @@
                     for (var j=0; j<data.num_clusters; j++) {
                         var num_cluster = j + 1;
                         // here maybe link to another view with cluster number parameter that then will call the sound-search view with the appropriate filter to avoid having a long url with all the filter ids
-                        cluster_div.append('<li class="facet_item"><a href=".?g={{grouping}}&q={{search_query}}&f={{f.params}}&cluster_id=' + num_cluster + '">cluster #' + num_cluster + '</a></li>');
+                        cluster_div.append('<li class="facet_item"><a href=".?g={{grouping}}&q={{search_query}}&f={{f.params}}&s={{sort_unformated}}&cluster_id=' + num_cluster + '">cluster #' + num_cluster + '</a></li>');
                     }
         });
 

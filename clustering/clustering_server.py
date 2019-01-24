@@ -50,8 +50,8 @@ class ClusteringServer(resource.Resource):
             try:
                 nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list))
                 graph.add_edges_from([(sound_id, i) for i in nearest_neighbors])
-            except ValueError:
-                pass
+            except ValueError:  # node does not exist in Gaia dataset
+                graph.remove_node(sound_id)
 
         # Community detection in the graph
         classes = com.best_partition(graph)

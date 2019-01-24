@@ -243,14 +243,13 @@ def get_ids_in_cluster(query_params, requested_cluster_id):
         return []
     else:
         requested_cluster_id = int(requested_cluster_id) - 1
-        print('>>>>>>>>>>>>>>>>>>>>>>>>', requested_cluster_id)
+
         # results are cached in clustering_utilities
         results, num_clusters = cluster_sound_results(query_params)
 
         # move this in clustering utilities
         sounds_from_requested_cluster = [str(sound_id) for sound_id, cluster_id in results.iteritems() 
                                          if cluster_id==requested_cluster_id]
-        print('>>>>>>>>>>>>>>>>>>>>>>>>', sounds_from_requested_cluster, len(sounds_from_requested_cluster))
 
         return sounds_from_requested_cluster
 

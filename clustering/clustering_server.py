@@ -39,7 +39,7 @@ class ClusteringServer(resource.Resource):
     def cluster_points(self, request, query_params, sound_ids):
         sound_ids_list = sound_ids[0].split(',')
         logger.info('Request clustering of {} points: {} ... from the query "{}"'
-                .format(len(sound_ids_list), ', '.join(sound_ids_list[:20]), json.dumps(query_params))
+                .format(len(sound_ids_list), ', '.join(sound_ids_list[:20]), json.dumps(query_params)))
 
         # Create knn graph        
         graph = nx.Graph()

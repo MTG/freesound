@@ -21,7 +21,7 @@ def get_sound_ids_from_solr_query(query_params):
 
 def cluster_sound_results(query_params):
     # fake sound ids to request clustering
-    fake_sound_ids = '262436,213079,325667'
+    # fake_sound_ids = '262436,213079,325667'
 
     cache_key = 'cluster-search-results-q-{}-f-{}-s-{}-tw-{}-uw-{}-idw-{}-dw-{}-pw-{}-fw-{}'.format(
         query_params['search_query'],
@@ -35,13 +35,13 @@ def cluster_sound_results(query_params):
         query_params['original_filename_weight'],
     )    
 
-    cache_key = hash_cache_key(cache_key)
+    cache_key_hashed = hash_cache_key(cache_key)
 
     # check if result is in cache
     if len(cache_key) >= 250:
         returned_sounds = False
     else:
-        result = cache.get(cache_key)
+        result = cache.get(cache_key_hashed)
         if result:
             returned_sounds = result
         else:
@@ -50,21 +50,22 @@ def cluster_sound_results(query_params):
     # if not in cache, query solr and perform clustering
     if not returned_sounds:
         sound_ids = get_sound_ids_from_solr_query(query_params)
+        sound_ids_string = ','.join([str(sound_id) for sound_id in sound_ids])
 
         result = Clustering.cluster_points(
-            query=query_params,
-            sound_ids=fake_sound_ids,
+            query=cache_key,
+            sound_ids=sound_ids_string,
         )
 
         # fake results for now
-        result = {
-            sound_id: idx%2 for idx, sound_id in enumerate(sound_ids)
-        }
+        # result = {
+        #     sound_id: idx%2 for idx, sound_id in enumerate(sound_ids)
+        # }
 
         returned_sounds = result
 
         if len(returned_sounds) > 0 and len(cache_key) < 250:
-            cache.set(cache_key, result, CLUSTERING_CACHE_TIME)
+            cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
     
     num_clusters = max(returned_sounds.values()) + 1
 

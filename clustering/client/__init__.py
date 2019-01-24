@@ -40,5 +40,5 @@ class Clustering():
 
     @classmethod
     def cluster_points(cls, query, sound_ids):
-        url = _BASE_URL + _URL_CLUSTER_POINTS + '?' + 'query=' + str(query) + '&sound_ids=' + str(sound_ids)
+        url = _BASE_URL + _URL_CLUSTER_POINTS + '?' + 'query_params=' + str(query) + '&sound_ids=' + str(sound_ids)
         return _result_or_exception(_get_url_as_json(url))

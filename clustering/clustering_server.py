@@ -47,8 +47,11 @@ class ClusteringServer(resource.Resource):
         k = int(np.ceil(np.log2(len(sound_ids_list))))
 
         for sound_id in sound_ids_list:
-            nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list))
-            graph.add_edges_from([(sound_id, i) for i in nearest_neighbors])
+            try:
+                nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list))
+                graph.add_edges_from([(sound_id, i) for i in nearest_neighbors])
+            except ValueError:
+                pass
 
         # Community detection in the graph
         classes = com.best_partition(graph)

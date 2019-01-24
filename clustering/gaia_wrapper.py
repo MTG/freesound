@@ -29,4 +29,7 @@ class GaiaWrapper:
             filter = 'WHERE point.id IN ("' + '", "'.join(in_sound_ids) + '")'
         else:
             filter = None
-        return self.view.nnSearch(sound_id, self.metric, filter).get(k)[1:]
+        try:
+            return self.view.nnSearch(sound_id, self.metric, filter).get(k)[1:]
+        except:
+            return []

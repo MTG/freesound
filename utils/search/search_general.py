@@ -106,9 +106,12 @@ def search_prepare_query(search_query,
     # Process filter
     filter_query = search_process_filter(filter_query)
 
-    # Process filter for clustering
+    # Process filter for clustering (maybe consider only applying this filter in this case...)
     if in_ids:
-        filter_query += ' OR id:'.join(in_ids)
+        if len(in_ids) == 1:
+            filter_query += 'id:{}'.format(in_ids[0])
+        else:
+            filter_query += ' OR id:'.join(in_ids)
 
     # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)

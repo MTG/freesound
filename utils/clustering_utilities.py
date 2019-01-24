@@ -57,6 +57,8 @@ def cluster_sound_results(query_params):
             sound_ids=sound_ids_string,
         )
 
+        print(result)
+
         # fake results for now
         # result = {
         #     sound_id: idx%2 for idx, sound_id in enumerate(sound_ids)

@@ -1,0 +1,11 @@
+{% macro stars(rating, color='red') %}
+  {% for i in range(rating | round(0, 'floor')) %}
+    <span class="bw-icon-star text-{{ color }}"></span>
+  {% endfor %}
+  {% if rating !== rating | round(0) %}
+    <span class="bw-icon-star-half text-{{ color }}"></span>
+  {% endif %}
+  {% for i in range(5 - rating | round(0)) %}
+    <span class="bw-icon-star text-light-grey"></span>
+  {% endfor %}
+{% endmacro %}

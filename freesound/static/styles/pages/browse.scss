@@ -6,6 +6,13 @@
 .bw-search__filter-value {
   display: flex;
   justify-content: space-between;
+  &, & label {
+    cursor: pointer;
+  }
+
+  &:hover .bw-icon-checkbox {
+    opacity: 0.3;
+  }
 }
 
 .bw-search__filter-checkbox {
@@ -28,10 +35,6 @@
 
   padding-top: $small-spacing;
   padding-bottom: $small-spacing;
-
-  &:not(:last-of-type) {
-    border-bottom: 1px solid $navy-light-grey;
-  }
 }
 
 .bw-search__player-small {
@@ -41,8 +44,23 @@
 .bw-search__result {
   padding-top: $smedium-spacing;
   padding-bottom: $smedium-spacing;
+}
 
-  &:not(:last-of-type) {
-    border-bottom: 1px solid $navy-light-grey;
+.bw-search__active-filters-button {
+  padding: 5px 10px;
+  font-size: 14px;
+  font-weight: 400;
+
+  .bw-icon-close {
+    font-size: 10px;
+  }
+}
+
+.bw-search__input {
+  font-size: 32px;
+  text-align: center;
+
+  &::placeholder {
+    color: $navy-light-grey;
   }
 }

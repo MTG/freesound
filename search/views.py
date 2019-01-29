@@ -71,6 +71,12 @@ def search(request):
                     }
                     filter_query_split.append(filter)
 
+    if cluster_id != "":  # cluster filter is in a separate query parameter
+        filter_query_split.append({
+            'name': "Cluster #" + cluster_id,
+            'remove_url': filter_query,
+        })
+
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:

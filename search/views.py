@@ -81,7 +81,7 @@ def search(request):
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
-    sort_unformated = request.GET.get("s", None)
+    sort_unformatted = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
     grouping = request.GET.get("g", "1")  # Group by default
 
@@ -144,7 +144,7 @@ def search(request):
             if a_filename != "":
                 original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
 
-    sort = search_prepare_sort(sort_unformated, forms.SEARCH_SORT_OPTIONS_WEB)
+    sort = search_prepare_sort(sort_unformatted, forms.SEARCH_SORT_OPTIONS_WEB)
 
     logger.info(u'Search (%s)' % json.dumps({
         'ip': get_client_ip(request),
@@ -199,7 +199,7 @@ def search(request):
         'grouping': grouping,
         'advanced': advanced,
         'sort': sort,
-        'sort_unformated': sort_unformated,
+        'sort_unformatted': sort_unformatted,
         'sort_options': sort_options,
         'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
         'current_page': current_page,
@@ -262,6 +262,7 @@ def get_ids_in_cluster(query_params, requested_cluster_id):
 
 def cluster_sounds(request):
     query_params = json.loads(request.GET.get("query_params", ""))
+    sort_unformatted = request.GET.get("sort_unformatted", "")
 
     results, num_clusters = cluster_sound_results(query_params)
 
@@ -270,6 +271,7 @@ def cluster_sounds(request):
     return render(request, 'search/clustering_facet.html', {
             'results': results,
             'query_params': query_params,
+            'sort_unformatted': sort_unformatted,
             'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster),
     })
 

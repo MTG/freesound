@@ -81,6 +81,7 @@
         $.get({% url 'cluster-sounds' %}, 
                 {
                     query_params: '{{ query_params | safe }}',
+                    sort_unformatted: '{{ sort_unformatted }}',
                 }, 
                 function( data ) {
                     $('#clusters-div').replaceWith(data);

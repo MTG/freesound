@@ -1,7 +1,7 @@
 <ul>
     {% for cluster_id, num_results in cluster_id_num_results %}
         <li class="facet_item">
-            <a href=".?g={{query_params.grouping}}&q={{query_params.search_query}}&f={{query_params.filter_query}}&s={{query_params.sort_unformated}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
+            <a href=".?g={{query_params.grouping}}&q={{query_params.search_query}}&f={{query_params.filter_query}}&s={{sort_unformatted}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
             </a> ({{num_results}})
         </li>
     {% endfor %}

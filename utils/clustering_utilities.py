@@ -5,6 +5,7 @@ from clustering.client import Clustering
 from clustering.clustering_settings import CLUSTERING_CACHE_TIME
 from utils.encryption import create_hash
 from utils.search.search_general import search_prepare_query, perform_solr_query
+import copy
 
 logger = logging.getLogger('web')
 
@@ -13,7 +14,6 @@ def get_sound_ids_from_solr_query(query_params):
     current_page = 1  # for what is this used for??
     # with more sounds solr says 'URI is too large >8192'
     query_params.update({'sounds_per_page': 800})
-    query_params['filter_query'] = query_params['filter_query'].replace('\\\"', '"')
     query = search_prepare_query(**query_params)
     non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
     resultids = [d.get("id") for d in docs]
@@ -23,6 +23,8 @@ def get_sound_ids_from_solr_query(query_params):
 def cluster_sound_results(query_params):
     # fake sound ids to request clustering
     # fake_sound_ids = '262436,213079,325667'
+    query_params_formatted = copy.copy(query_params)
+    query_params_formatted['filter_query'] = query_params_formatted['filter_query'].replace('\\"', '"')
 
     cache_key = 'cluster-search-results-q-{}-f-{}-s-{}-tw-{}-uw-{}-idw-{}-dw-{}-pw-{}-fw-{}'.format(
         query_params['search_query'],
@@ -34,7 +36,7 @@ def cluster_sound_results(query_params):
         query_params['description_weight'],
         query_params['pack_tokenized_weight'],
         query_params['original_filename_weight'],
-    )    
+    ).replace(' ', '')
 
     cache_key_hashed = hash_cache_key(cache_key)
 
@@ -50,7 +52,7 @@ def cluster_sound_results(query_params):
 
     # if not in cache, query solr and perform clustering
     if not returned_sounds:
-        sound_ids = get_sound_ids_from_solr_query(query_params)
+        sound_ids = get_sound_ids_from_solr_query(query_params_formatted)
         sound_ids_string = ','.join([str(sound_id) for sound_id in sound_ids])
 
         result = Clustering.cluster_points(

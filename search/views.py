@@ -261,9 +261,11 @@ def cluster_sounds(request):
 
     num_sounds_per_cluster = [results.values().count(cluster_idx) for cluster_idx in range(num_clusters)]
 
-    return JsonResponse({'results': results, 
-                         'num_clusters': num_clusters,
-                         'num_sounds_per_cluster': num_sounds_per_cluster}, safe=False)
+    return render(request, 'search/clustering_facet.html', {
+            'results': results,
+            'query_params': query_params,
+            'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster),
+    })
 
 
 def search_forum(request):

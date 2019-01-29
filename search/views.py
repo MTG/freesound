@@ -154,7 +154,7 @@ def search(request):
     # we send the query parameters in the context for clustering
     query_params = {
         'search_query': search_query,
-        'filter_query': filter_query.replace('"', ''),  # " can appear when filtering with facets
+        'filter_query': filter_query.replace('"', '\\"'),  # " can appear when filtering with facets
         'sort': sort,
         'current_page': current_page,
         'sounds_per_page': settings.SOUNDS_PER_PAGE,

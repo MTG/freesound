@@ -13,6 +13,7 @@ def get_sound_ids_from_solr_query(query_params):
     current_page = 1  # for what is this used for??
     # with more sounds solr says 'URI is too large >8192'
     query_params.update({'sounds_per_page': 800})
+    query_params['filter_query'] = query_params['filter_query'].replace('\\\"', '"')
     query = search_prepare_query(**query_params)
     non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
     resultids = [d.get("id") for d in docs]
@@ -66,7 +67,7 @@ def cluster_sound_results(query_params):
 
         if len(returned_sounds) > 0 and len(cache_key) < 250:
             cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
-    
+
     num_clusters = max(returned_sounds.values()) + 1
 
     return returned_sounds, num_clusters

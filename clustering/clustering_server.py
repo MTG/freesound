@@ -6,6 +6,7 @@ from clustering_settings import LISTEN_PORT
 import logging
 import json
 import networkx as nx
+from networkx.readwrite import json_graph
 import community.community_louvain as com
 
 
@@ -55,7 +56,11 @@ class ClusteringServer(resource.Resource):
 
         # Community detection in the graph
         classes = com.best_partition(graph)
-        return json.dumps(classes)
+
+        # Export graph as json
+        graph_json = json_graph.node_link_data(graph)
+
+        return json.dumps({'error': False, 'result': classes, 'graph': graph_json})
 
     def k_nearest_neighbors(self, request, sound_id, k):
         logger.info('Request k nearest neighbors of point {}'.format(sound_id[0]))

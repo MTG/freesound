@@ -251,7 +251,7 @@ def get_ids_in_cluster(query_params, requested_cluster_id):
         requested_cluster_id = int(requested_cluster_id) - 1
 
         # results are cached in clustering_utilities
-        results, num_clusters = cluster_sound_results(query_params)
+        results, num_clusters, _ = cluster_sound_results(query_params)
 
         # move this in clustering utilities
         sounds_from_requested_cluster = [str(sound_id) for sound_id, cluster_id in results.iteritems() 
@@ -264,7 +264,7 @@ def cluster_sounds(request):
     query_params = json.loads(request.GET.get("query_params", ""))
     sort_unformatted = request.GET.get("sort_unformatted", "")
 
-    results, num_clusters = cluster_sound_results(query_params)
+    results, num_clusters, _ = cluster_sound_results(query_params)
 
     num_sounds_per_cluster = [results.values().count(cluster_idx) for cluster_idx in range(num_clusters)]
 

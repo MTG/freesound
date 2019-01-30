@@ -44,7 +44,8 @@ def cluster_sound_results(query_params):
     else:
         result = cache.get(cache_key_hashed)
         if result:
-            returned_sounds = result
+            returned_sounds = result[0]
+            graph = result[1]
         else:
             returned_sounds = False
 
@@ -58,7 +59,8 @@ def cluster_sound_results(query_params):
             sound_ids=sound_ids_string,
         )
 
-        returned_sounds = result
+        returned_sounds = result[0]
+        graph = result[1]
 
         if len(returned_sounds) > 0 and len(cache_key) < 250:
             cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
@@ -68,7 +70,7 @@ def cluster_sound_results(query_params):
     except ValueError:
         num_clusters = 0
 
-    return returned_sounds, num_clusters
+    return returned_sounds, num_clusters, graph
 
 
 def hash_cache_key(key):

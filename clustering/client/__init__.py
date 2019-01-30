@@ -26,9 +26,8 @@ def _get_url_as_json(url, data=None, timeout=None):
 
 
 def _result_or_exception(result):
-    return result
     if not result['error']:
-        return result['result']
+        return result['result'], result['graph']
     else:
         if 'status_code' in result.keys():
             raise ClusteringException(result['result'], status_code=result['status_code'])

@@ -21,8 +21,6 @@ def get_sound_ids_from_solr_query(query_params):
 
 
 def cluster_sound_results(query_params):
-    # fake sound ids to request clustering
-    # fake_sound_ids = '262436,213079,325667'
     query_params_formatted = copy.copy(query_params)
     query_params_formatted['filter_query'] = query_params_formatted['filter_query'].replace('\\"', '"')
 
@@ -60,17 +58,15 @@ def cluster_sound_results(query_params):
             sound_ids=sound_ids_string,
         )
 
-        # fake results for now
-        # result = {
-        #     sound_id: idx%2 for idx, sound_id in enumerate(sound_ids)
-        # }
-
         returned_sounds = result
 
         if len(returned_sounds) > 0 and len(cache_key) < 250:
             cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
 
-    num_clusters = max(returned_sounds.values()) + 1
+    try:
+        num_clusters = max(returned_sounds.values()) + 1
+    except ValueError:
+        num_clusters = 0
 
     return returned_sounds, num_clusters
 

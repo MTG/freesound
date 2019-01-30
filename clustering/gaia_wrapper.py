@@ -7,6 +7,8 @@ from gaia2 import DataSet, View, DistanceFunctionFactory
 
 import clustering_settings as clust_settings
 
+logger = logging.getLogger('clustering')
+
 
 class GaiaWrapper:
     def __init__(self):
@@ -30,6 +32,10 @@ class GaiaWrapper:
         else:
             filter = None
         try:
-            return self.view.nnSearch(sound_id, self.metric, filter).get(k)[1:]
-        except:
+            nearest_neighbors = self.view.nnSearch(sound_id, self.metric, filter).get(k)[1:]
+            if not nearest_neighbors:
+                logger.info("No nearest neighbors found for point with id '{}'".format(sound_id))
+            return nearest_neighbors
+        except Exception as e:
+            logger.info(e)
             return []

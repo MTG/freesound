@@ -7,7 +7,7 @@ import logging
 import json
 import networkx as nx
 from networkx.readwrite import json_graph
-import community.community_louvain as com
+import community as com
 
 
 def server_interface(resource):
@@ -56,6 +56,8 @@ class ClusteringServer(resource.Resource):
 
         # Community detection in the graph
         classes = com.best_partition(graph)
+
+        nx.set_node_attributes(graph, classes, 'group')
 
         # Export graph as json
         graph_json = json_graph.node_link_data(graph)

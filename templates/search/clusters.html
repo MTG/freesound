@@ -1,0 +1,135 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Force-Directed Layout</title>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script src="{% static 'src/components/webAudioApiForDesigners.js' %}"></script>
+    <style type="text/css">
+        .node {
+            stroke: rgb(255, 255, 255);
+            stroke-width: 1px;
+        }
+
+        .link {
+            stroke: rgb(201, 201, 201);
+            stroke-width: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chart"></div>
+    <script type="text/javascript">
+        var DEFAULT_NODE_SIZE = 8;
+        ON_OVER_NODE_SIZE = 11;
+        FORCE_CHARGE = -150;
+        FORCE_LINK_DISTANCE = 10
+        var width = 1200,
+            height = 900;
+        fill = d3.scale.category10();
+
+        // https://github.com/wbkd/d3-extended
+        d3.selection.prototype.moveToFront = function () {
+            return this.each(function () {
+                this.parentNode.appendChild(this);
+            });
+        };
+
+        var force = d3.layout.force()
+            .charge(FORCE_CHARGE)
+            .linkDistance(FORCE_LINK_DISTANCE)
+            .size([width, height]);
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        var graph = JSON.parse('{{ graph | safe }}');
+
+        var nodeById = d3.map();
+
+        graph.nodes.forEach(function (node) {
+            nodeById.set(node.id, node);
+        });
+
+        graph.links.forEach(function (link) {
+            link.source = nodeById.get(link.source);
+            link.target = nodeById.get(link.target);
+        });
+
+        force
+            .nodes(graph.nodes)
+            .links(graph.links)
+            .start();
+
+        var link = svg.selectAll(".link")
+            .data(graph.links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        var node = svg.selectAll(".node")
+            .data(graph.nodes)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", DEFAULT_NODE_SIZE)
+            .style("fill", function (d) {
+                return fill(d.group);
+            })
+        // .call(force.drag);
+
+        svg.selectAll(".node")
+            .on("mouseenter", function (d) {
+                // load and play sound
+                context.loadSound(d.url, '0');
+                playingSound = context.playSound('0');
+
+                // make node bigger
+                d3.select(this)
+                    .transition()
+                    .attr("r", ON_OVER_NODE_SIZE)
+
+                d3.select(this).moveToFront();
+            })
+            .on("mouseleave", function () {
+                // stop playing sound
+                if (playingSound) {
+                    playingSound.pause();
+                }
+
+                // make node smaller
+                d3.select(this)
+                    .transition()
+                    .attr("r", DEFAULT_NODE_SIZE)
+            });
+
+        force.on("tick", function () {
+            link.attr("x1", function (d) {
+                    return d.source.x;
+                })
+                .attr("y1", function (d) {
+                    return d.source.y;
+                })
+                .attr("x2", function (d) {
+                    return d.target.x;
+                })
+                .attr("y2", function (d) {
+                    return d.target.y;
+                });
+
+            node.attr("cx", function (d) {
+                    return d.x;
+                })
+                .attr("cy", function (d) {
+                    return d.y;
+                });
+        });
+
+        // // Web Audio API
+        var context = initializeNewWebAudioContext();
+        var playingSound; // keep track of playing sound to stop it
+    </script>
+</body>
+
+</html>

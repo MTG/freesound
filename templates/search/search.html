@@ -218,7 +218,11 @@
 {% else %}
     {% if facets %}
     <div id="sidebar" style="float:right">
-        <h3>clusters</h3>
+        <h3>clusters 
+            <a href="{% url 'cluster-visualisation' %}?query_params={{query_params}}">
+                <img src='{{media_url}}images/eye-open.png' width="30px"/>
+            </a>
+        </h3>
         <div id='clusters-div'>...
             <br><br>
         </div>

@@ -276,6 +276,21 @@ def cluster_sounds(request):
     })
 
 
+def cluster_visualisation(request):
+    query_params = json.loads(request.GET.get("query_params", ""))
+    _, _, graph = cluster_sound_results(query_params)
+
+    results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
+    preview_urls_by_id = {s.id:s.get_preview_abs_url()[21:] for s in results}
+
+    for node in graph['nodes']:
+        node['url'] = preview_urls_by_id[int(node['id'])]
+
+    return render(request, 'search/clusters.html', {
+            'graph': json.dumps(graph)
+    })
+
+
 def search_forum(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")

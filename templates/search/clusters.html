@@ -9,12 +9,12 @@
     <style type="text/css">
         .node {
             stroke: rgb(255, 255, 255);
-            stroke-width: 1px;
+            stroke-width: 1.5px;
         }
 
         .link {
             stroke: rgb(201, 201, 201);
-            stroke-width: 1px;
+            /* stroke-width: 1px; */
         }
     </style>
 </head>
@@ -22,10 +22,10 @@
 <body>
     <div id="chart"></div>
     <script type="text/javascript">
-        var DEFAULT_NODE_SIZE = 8;
-        ON_OVER_NODE_SIZE = 11;
-        FORCE_CHARGE = -150;
-        FORCE_LINK_DISTANCE = 10
+        var DEFAULT_NODE_SIZE = 9;
+        ON_OVER_NODE_SIZE = 12;
+        FORCE_CHARGE = -100;
+        FORCE_LINK_DISTANCE = 20;
         var width = 1200,
             height = 900;
         fill = d3.scale.category10();
@@ -36,10 +36,47 @@
                 this.parentNode.appendChild(this);
             });
         };
+        
+        // Collide for forbiding overlap of nodes
+        var padding = 1,
+            radius = DEFAULT_NODE_SIZE;
+
+        function collide(alpha) {
+            var quadtree = d3.geom.quadtree(graph.nodes);
+            return function (d) {
+                var rb = 2 * radius + padding,
+                    nx1 = d.x - rb,
+                    nx2 = d.x + rb,
+                    ny1 = d.y - rb,
+                    ny2 = d.y + rb;
+                quadtree.visit(function (quad, x1, y1, x2, y2) {
+                    if (quad.point && (quad.point !== d)) {
+                        var x = d.x - quad.point.x,
+                            y = d.y - quad.point.y,
+                            l = Math.sqrt(x * x + y * y);
+                        if (l < rb) {
+                            l = (l - rb) / l * alpha;
+                            d.x -= x *= l;
+                            d.y -= y *= l;
+                            quad.point.x += x;
+                            quad.point.y += y;
+                        }
+                    }
+                    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                });
+            };
+        }
 
         var force = d3.layout.force()
             .charge(FORCE_CHARGE)
             .linkDistance(FORCE_LINK_DISTANCE)
+            .linkStrength(function (d) {
+                if (d.weight) {
+                    return 3 * d.weight;
+                } else {
+                    return 1;
+                }
+            })
             .size([width, height]);
 
         var svg = d3.select("body").append("svg")
@@ -67,7 +104,10 @@
         var link = svg.selectAll(".link")
             .data(graph.links)
             .enter().append("line")
-            .attr("class", "link");
+            .attr("class", "link")
+            .style("stroke-width", function (d) {
+                return d.weight;
+            });
 
         var node = svg.selectAll(".node")
             .data(graph.nodes)
@@ -124,6 +164,7 @@
                 .attr("cy", function (d) {
                     return d.y;
                 });
+            node.each(collide(0.5));
         });
 
         // // Web Audio API

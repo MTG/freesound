@@ -49,8 +49,9 @@ class ClusteringServer(resource.Resource):
 
         for sound_id in sound_ids_list:
             try:
-                nearest_neighbors, _ = zip(*self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list))
-                graph.add_edges_from([(sound_id, i) for i in nearest_neighbors])
+                nearest_neighbors = self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list)
+                # graph.add_edges_from([(sound_id, i[0]) for i in nearest_neighbors if i[1]<10])
+                graph.add_weighted_edges_from([(sound_id, i[0], 1/i[1]) for i in nearest_neighbors if i[1]<10])
             except ValueError:  # node does not exist in Gaia dataset
                 graph.remove_node(sound_id)
 

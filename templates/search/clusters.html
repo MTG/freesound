@@ -16,6 +16,10 @@
             stroke: rgb(201, 201, 201);
             /* stroke-width: 1px; */
         }
+
+        body {
+            background-color: rgba(128, 128, 128, 0.1);   
+        }
     </style>
 </head>
 
@@ -26,8 +30,8 @@
         ON_OVER_NODE_SIZE = 12;
         FORCE_CHARGE = -100;
         FORCE_LINK_DISTANCE = 20;
-        var width = 1200,
-            height = 900;
+        var width = window.innerWidth-30,
+            height = window.innerHeight-30;
         fill = d3.scale.category10();
 
         // https://github.com/wbkd/d3-extended
@@ -36,7 +40,7 @@
                 this.parentNode.appendChild(this);
             });
         };
-        
+
         // Collide for forbiding overlap of nodes
         var padding = 1,
             radius = DEFAULT_NODE_SIZE;
@@ -79,9 +83,31 @@
             })
             .size([width, height]);
 
+        var zoom = d3.behavior.zoom()
+            .scaleExtent([0.3, 2])
+            .on("zoom", zoomed);
+
         var svg = d3.select("body").append("svg")
+            .attr("viewBox", "0 0 " + width + " " + height)
+            .attr("preserveAspectRatio", "xMinYMid")
+            .append("g")
+            .call(zoom)
+            .append("g");
+
+        //big black box surrounding everything that we can zoom on 
+        var rect = svg.append("g")
+            .attr("class", "rect")
+            .append("rect")
+            .style("fill", "white")
+            .style("opacity", 0)
             .attr("width", width)
-            .attr("height", height);
+            .attr("height", height)
+            .style("pointer-events", "all")
+        
+        var vis = svg.append("g")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
 
         var graph = JSON.parse('{{ graph | safe }}');
 
@@ -101,7 +127,7 @@
             .links(graph.links)
             .start();
 
-        var link = svg.selectAll(".link")
+        var link = vis.selectAll(".link")
             .data(graph.links)
             .enter().append("line")
             .attr("class", "link")
@@ -109,7 +135,7 @@
                 return d.weight;
             });
 
-        var node = svg.selectAll(".node")
+        var node = vis.selectAll(".node")
             .data(graph.nodes)
             .enter().append("circle")
             .attr("class", "node")
@@ -167,7 +193,12 @@
             node.each(collide(0.5));
         });
 
-        // // Web Audio API
+        // Zoom        
+        function zoomed() {
+            vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        }
+
+        // Web Audio API
         var context = initializeNewWebAudioContext();
         var playingSound; // keep track of playing sound to stop it
     </script>

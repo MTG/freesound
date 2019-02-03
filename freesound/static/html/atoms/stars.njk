@@ -1,11 +1,12 @@
-{% macro stars(rating, color='red') %}
+{% import './icons.njk' as icons %}
+{% macro stars(rating) %}
   {% for i in range(rating | round(0, 'floor')) %}
-    <span class="bw-icon-star text-{{ color }}"></span>
+    {{ icons.icon('star', 'text-red')}}
   {% endfor %}
   {% if rating !== rating | round(0) %}
-    <span class="bw-icon-star-half text-{{ color }}"></span>
+    {{ icons.icon('half-star', 'text-red')}}
   {% endif %}
   {% for i in range(5 - rating | round(0)) %}
-    <span class="bw-icon-star text-light-grey"></span>
+    {{ icons.icon('star', 'text-light-grey')}}
   {% endfor %}
 {% endmacro %}

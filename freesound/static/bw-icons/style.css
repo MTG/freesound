@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'bw-icons';
-  src:  url('fonts/bw-icons.eot?jfvcz4');
-  src:  url('fonts/bw-icons.eot?jfvcz4#iefix') format('embedded-opentype'),
-    url('fonts/bw-icons.ttf?jfvcz4') format('truetype'),
-    url('fonts/bw-icons.woff?jfvcz4') format('woff'),
-    url('fonts/bw-icons.svg?jfvcz4#bw-icons') format('svg');
+  src:  url('fonts/bw-icons.eot?dijp1e');
+  src:  url('fonts/bw-icons.eot?dijp1e#iefix') format('embedded-opentype'),
+    url('fonts/bw-icons.ttf?dijp1e') format('truetype'),
+    url('fonts/bw-icons.woff?dijp1e') format('woff'),
+    url('fonts/bw-icons.svg?dijp1e#bw-icons') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -24,6 +24,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.bw-icon-half-star .path1:before {
+  content: "\e94c";
+  color: rgb(255, 53, 70);
+}
+.bw-icon-half-star .path2:before {
+  content: "\e94d";
+  margin-left: -1em;
+  color: rgb(202, 202, 212);
+}
 .bw-icon-star-half-filled-red-alt:before {
   content: "\e94a";
   color: #9696aa;

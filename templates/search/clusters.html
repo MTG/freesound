@@ -13,12 +13,13 @@
         }
 
         .link {
-            stroke: rgb(201, 201, 201);
+            stroke: rgb(65, 65, 65);
+            opacity: 0.3;
             /* stroke-width: 1px; */
         }
 
         body {
-            background-color: rgba(128, 128, 128, 0.1);   
+            background-color: rgba(128, 128, 128, 0.1);
         }
     </style>
 </head>
@@ -30,9 +31,11 @@
         ON_OVER_NODE_SIZE = 12;
         FORCE_CHARGE = -100;
         FORCE_LINK_DISTANCE = 20;
-        var width = window.innerWidth-30,
-            height = window.innerHeight-30;
-        fill = d3.scale.category10();
+
+        var width = window.innerWidth - 30,
+            height = window.innerHeight - 30;
+
+        var fill = d3.scale.category20();
 
         // https://github.com/wbkd/d3-extended
         d3.selection.prototype.moveToFront = function () {
@@ -103,7 +106,7 @@
             .attr("width", width)
             .attr("height", height)
             .style("pointer-events", "all")
-        
+
         var vis = svg.append("g")
             .attr("width", width)
             .attr("height", height)
@@ -122,6 +125,7 @@
             link.target = nodeById.get(link.target);
         });
 
+        // Force layout
         force
             .nodes(graph.nodes)
             .links(graph.links)
@@ -143,6 +147,7 @@
             .style("fill", function (d) {
                 return fill(d.group);
             })
+            .on('click', connectedNodes);
         // .call(force.drag);
 
         svg.selectAll(".node")
@@ -198,6 +203,41 @@
             vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         }
 
+        // Hilight nodes on click
+        //Toggle stores whether the highlighting is on
+        var toggle = 0;
+        //Create an array logging what is connected to what
+        var linkedByIndex = {};
+        for (i = 0; i < graph.nodes.length; i++) {
+            linkedByIndex[i + "," + i] = 1;
+        };
+        graph.links.forEach(function (d) {
+            linkedByIndex[d.source.index + "," + d.target.index] = 1;
+        });
+        //This function looks up whether a pair are neighbours
+        function neighboring(a, b) {
+            return linkedByIndex[a.index + "," + b.index];
+        }
+
+        function connectedNodes() {
+            if (toggle == 0) {
+                //Reduce the opacity of all but the neighbouring nodes
+                d = d3.select(this).node().__data__;
+                link.style("opacity", function (o) {
+                    return d.index == o.source.index | d.index == o.target.index ? 1 : 0.05;
+                });
+                node.style("opacity", function (o) {
+                    return neighboring(d, o) | neighboring(o, d) ? 1 : 0.15;
+                });
+                //Reduce the op
+                toggle = 1;
+            } else {
+                //Put them back to opacity=1
+                node.style("opacity", 1);
+                link.style("opacity", 0.3);
+                toggle = 0;
+            }
+        }
         // Web Audio API
         var context = initializeNewWebAudioContext();
         var playingSound; // keep track of playing sound to stop it

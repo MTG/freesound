@@ -10,12 +10,38 @@
         .node {
             stroke: rgb(255, 255, 255);
             stroke-width: 1.5px;
+            cursor: pointer;
         }
 
         .link {
             stroke: rgb(99, 99, 99);
             opacity: 0.1;
             /* stroke-width: 1px; */
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 10px 0;
+            font-weight: normal;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 5px 0;
+            font-weight: normal;
+        }
+
+        h3 {
+            font-size: 10px;
+            margin: 5px 0;
+            font-weight: normal;
+        }
+
+        header {
+            padding: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         body {
@@ -25,6 +51,11 @@
 </head>
 
 <body>
+    <header>
+        <h1>Sound file name</h1>
+        <h2>Click on a node to display info</h2>
+        <h3></h3>
+    </header>
     <div id="chart"></div>
     <script type="text/javascript">
         var DEFAULT_NODE_SIZE = 9;
@@ -229,15 +260,26 @@
                 node.style("opacity", function (o) {
                     return neighboring(d, o) | neighboring(o, d) ? 1 : 0.15;
                 });
-                //Reduce the op
+
+                // show sound info
+                d3.select("h1").html(d.name);
+                d3.select("h2").html(d.tags);
+                d3.select("h3").html('<a href="'+d.sound_page_url+'">'+d.sound_page_url+'</a>');
+
                 toggle = 1;
             } else {
                 //Put them back to opacity=1
                 node.style("opacity", 1);
                 link.style("opacity", 0.1);
                 toggle = 0;
+
+                // remove sound info
+                d3.select("h1").html('Sound file name');
+                d3.select("h2").html('Click on a node to display info');
+                d3.select("h3").html('');
             }
         }
+
         // Web Audio API
         var context = initializeNewWebAudioContext();
         var playingSound; // keep track of playing sound to stop it

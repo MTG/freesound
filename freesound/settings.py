@@ -213,9 +213,10 @@ AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
      ('depth', float),
      ('hardness', float),
      ('roughness', float),
-     ('booming', float),
+     ('boominess', float),
      ('warmth', float),
-     ('sharpness', float)]
+     ('sharpness', float),
+     ('reverb', bool)]  # Used when running load_audiocommons_analysis_data and when parsing filters
 
 # Map of suffixes used for each type of dynamic fields defined in our Solr schema
 # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)

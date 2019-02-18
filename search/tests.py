@@ -152,13 +152,13 @@ class SearchProcessFilter(TestCase):
                                              'ac_single_event: ac_tonality: ac_tonality_confidence: ac_loop: ac_tempo: '
                                              'ac_tempo_confidence: ac_note_midi: ac_note_name: ac_note_frequency: '
                                              'ac_note_confidence: ac_brightness: ac_depth: ac_hardness: ac_roughness: '
-                                             'ac_booming: ac_warmth: ac_sharpness: another_field:')
+                                             'ac_boominess: ac_reverb: ac_warmth: ac_sharpness: another_field:')
         self.assertEqual(filter_query, 'ac_loudness_d: ac_dynamic_range_d: ac_temporal_centroid_d: '
                                        'ac_log_attack_time_d: ac_single_event_b: ac_tonality_s: '
                                        'ac_tonality_confidence_d: ac_loop_b: ac_tempo_i: ac_tempo_confidence_d: '
                                        'ac_note_midi_i: ac_note_name_s: ac_note_frequency_d: ac_note_confidence_d: '
-                                       'ac_brightness_d: ac_depth_d: ac_hardness_d: ac_roughness_d: ac_booming_d: '
-                                       'ac_warmth_d: ac_sharpness_d: another_field:')
+                                       'ac_brightness_d: ac_depth_d: ac_hardness_d: ac_roughness_d: ac_boominess_d: '
+                                       'ac_reverb_b: ac_warmth_d: ac_sharpness_d: another_field:')
 
 
 

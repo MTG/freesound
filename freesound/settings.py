@@ -192,7 +192,7 @@ LAST_FORUM_POST_MINIMUM_TIME = 60*5
 BASE_MAX_POSTS_PER_DAY = 5
 
 # AudioCommons descriptors stuff
-AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV2'  # This will be used for indexing sounds and returning analysis output
+AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV3'  # This will be used for indexing sounds and returning analysis output
 AUDIOCOMMONS_DESCRIPTOR_PREFIX = 'ac_'
 AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
     [('loudness', float),

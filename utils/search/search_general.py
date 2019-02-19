@@ -175,3 +175,18 @@ def delete_sound_from_solr(sound_id):
         Solr(settings.SOLR_URL).delete_by_id(sound_id)
     except (SolrException, socket.error) as e:
         logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
+
+
+def delete_sounds_from_solr(sound_ids):
+    solr_max_boolean_clause = 1000  # This number is specified in solrconfig.xml
+    for count, i in enumerate(range(0, len(sound_ids), solr_max_boolean_clause)):
+        range_ids = sound_ids[i:i+solr_max_boolean_clause]
+        try:
+            logger.info("deleting %i sounds from solr [%i of %i, %i sounds]" %
+                        (len(sound_ids), count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
+                         len(range_ids)))
+            sound_ids_query = ' OR '.join(['id:{0}'.format(sid) for sid in range_ids])
+            Solr(settings.SOLR_URL).delete_by_query(sound_ids_query)
+        except (SolrException, socket.error) as e:
+            logger.error('could not delete solr sounds chunk %i of %i' %
+                         (count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause))))

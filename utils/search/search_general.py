@@ -97,7 +97,15 @@ def add_sounds_to_solr(sounds):
     solr.add(documents)
 
 
-def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=False):
+def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=False, delete_if_existing=False):
+    """
+    Add all sounds from the sound_queryset to the SOLR index.
+    :param sound_queryset: queryset of Sound objects.
+    :param slice_size: sounds are indexed iteratively in chunks of this size.
+    :param mark_index_clean: if True, set 'is_index_dirty=False' for the Sound objects corresponding to indexed sounds.
+    :param delete_if_existing: if True, delete sounds from SOLR index before (re-)indexing them.
+    :return: number of correctly indexed sounds
+    """
     num_correctly_indexed_sounds = 0
     all_sound_ids = sound_queryset.values_list('id', flat=True).all()
     n_slices = int(math.ceil(float(len(all_sound_ids))/slice_size))
@@ -106,6 +114,8 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=Fal
         try:
             sound_ids = all_sound_ids[i:i+slice_size]
             sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)
+            if delete_if_existing:
+                delete_sounds_from_solr(sound_ids=sound_ids)
             add_sounds_to_solr(sounds_qs)
 
             if mark_index_clean:

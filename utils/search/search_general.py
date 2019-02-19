@@ -93,7 +93,7 @@ def add_sounds_to_solr(sounds):
     console_logger.info("creating XML")
     documents = [convert_to_solr_document(s) for s in sounds]
     console_logger.info("adding %d sounds to solr index" % len(documents))
-    console_logger.info("posting to Solr")
+    logger.info("adding %d sounds to solr index" % len(documents))
     solr.add(documents)
 
 

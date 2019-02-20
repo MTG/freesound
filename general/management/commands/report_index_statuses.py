@@ -21,7 +21,7 @@
 
 from django.core.management.base import BaseCommand
 from optparse import make_option
-from utils.search.search_general import get_all_sound_ids_from_solr
+from utils.search.search_general import get_all_sound_ids_from_solr, delete_sounds_from_solr
 from utils.similarity_utilities import Similarity
 from sounds.models import Sound
 from utils.search.solr import Solr
@@ -92,11 +92,9 @@ class Command(BaseCommand):
             # Delete sounds from solr that are not in the db
             if in_solr_not_in_fs:
                 print "\nDeleting sounds that should not be in solr"
-                N = len(in_solr_not_in_fs)
-                for count, sid in enumerate(in_solr_not_in_fs):
-                    sys.stdout.write('\r\tDeleting sound %i of %i         ' % (count+1, N))
-                    sys.stdout.flush()
-                    solr.delete_by_id(sid)
+                sys.stdout.write('\r\tDeleting sound %i sounds from solr' % len(in_solr_not_in_fs))
+                sys.stdout.flush()
+                delete_sounds_from_solr(sound_ids=in_solr_not_in_fs)
 
         print "\n***************\nGAIA INDEX\n***************\n"
         in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mpa))))

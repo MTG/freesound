@@ -90,10 +90,9 @@ def convert_to_solr_document(sound):
 
 def add_sounds_to_solr(sounds):
     solr = Solr(settings.SOLR_URL)
-    console_logger.info("creating XML")
     documents = [convert_to_solr_document(s) for s in sounds]
-    console_logger.info("adding %d sounds to solr index" % len(documents))
-    logger.info("adding %d sounds to solr index" % len(documents))
+    console_logger.info("Adding %d sounds to solr index" % len(documents))
+    logger.info("Adding %d sounds to solr index" % len(documents))
     solr.add(documents)
 
 
@@ -110,7 +109,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=Fal
     all_sound_ids = sound_queryset.values_list('id', flat=True).all()
     n_slices = int(math.ceil(float(len(all_sound_ids))/slice_size))
     for i in range(0, len(all_sound_ids), slice_size):
-        console_logger.info("Adding %i sounds to solr, slice %i of %i", slice_size, (i/slice_size) + 1, n_slices)
+        console_logger.info("Adding sounds to solr, slice %i of %i", (i/slice_size) + 1, n_slices)
         try:
             sound_ids = all_sound_ids[i:i+slice_size]
             sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)

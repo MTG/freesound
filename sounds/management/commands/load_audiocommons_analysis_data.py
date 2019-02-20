@@ -72,7 +72,6 @@ class Command(BaseCommand):
                                                   if key in ac_descriptor_names and value_is_valid(value)}
                         SoundAnalysis.objects.get_or_create(sound=sound, extractor=options['extractor'],
                                                             analysis_data=filtered_analysis_data)
-                        sound.mark_index_dirty()  # Mark sound as index dirty so it is reindexed adding the new fields
                         n_analyses_loaded += 1
 
                     except ValueError:

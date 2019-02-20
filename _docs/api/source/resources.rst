@@ -104,13 +104,13 @@ Filter name                 Type           Description
 ``ac_note_name``            string         Pitch note name based on median of estimated fundamental frequency (makes more sense for ac_single_event sounds). Note name must be one of  ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number. E.g. "A4", "E#7".
 ``ac_note_frequency``       numerical      Frequency corresponding to the estimated note (makes more sense for ac_single_event sounds).
 ``ac_note_confidence``      numerical      Reliability of the note name/midi/frequency estimation in a range of [0, 1].
-``ac_brightness``           numerical      Brightness of the analyzed audio in a scale from [0-100]. A bright sound is one that is clear/vibrant and/or contains significant high-pitched elements.
-``ac_depth``                numerical      Depth of the analyzed audio in a scale from [0-100]. A deep sound is one that conveys the sense of having been made far down below the surface of its source.
-``ac_hardness``             numerical      Hardness of the analyzed audio in a scale from [0-100]. A hard sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
-``ac_roughness``            numerical      Roughness of the analyzed audio in a scale from [0-100]. A rough sound is one that has an uneven or irregular sonic texture.
-``ac_boominess``            numerical      Bominess of the analyzedn sound in a scale from [0-100].
-``ac_warmth``               numerical      Warmth of the analyzedn sound in a scale from [0-100].
-``ac_sharpness``            numerical      Sharpness of the analyzedn sound in a scale from [0-100].
+``ac_brightness``           numerical      Brightness of the analyzed audio in a scale from [0-100]. A *bright* sound is one that is clear/vibrant and/or contains significant high-pitched elements.
+``ac_depth``                numerical      Depth of the analyzed audio in a scale from [0-100]. A *deep* sound is one that conveys the sense of having been made far down below the surface of its source.
+``ac_hardness``             numerical      Hardness of the analyzed audio in a scale from [0-100]. A *hard* sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
+``ac_roughness``            numerical      Roughness of the analyzed audio in a scale from [0-100]. A *rough* sound is one that has an uneven or irregular sonic texture.
+``ac_boominess``            numerical      Bominess of the analyzedn sound in a scale from [0-100]. A *boomy* sound is one that conveys a sense of loudness, depth and resonance.
+``ac_warmth``               numerical      Warmth of the analyzedn sound in a scale from [0-100]. A *warm* sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.
+``ac_sharpness``            numerical      Sharpness of the analyzedn sound in a scale from [0-100]. A *sharp* sound is one that suggests it might cut if it were to take on physical form.
 ``ac_reverb``               boolean        Whether the signal is reverberated or not.
 ==========================  =============  ====================================================
 

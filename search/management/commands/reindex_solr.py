@@ -23,32 +23,30 @@ import logging
 from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
-from utils.search.search_general import add_all_sounds_to_solr, delete_sound_from_solr
+from utils.search.search_general import add_all_sounds_to_solr, delete_sounds_from_solr, get_all_sound_ids_from_solr
 
 console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
     args = ''
-    help = 'Take all sounds moderated and processed as OK and send them to Solr'
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '-n', '--no_index_clean',
-            action='store_true',
-            dest='no_index_clean',
-            help='Use this option to not mark sounds as is_index_dirty=False after indexing them.')
+    help = 'Take all sounds moderated and processed as OK and send them to Solr. Delete existing previous versions of' \
+           'these same sounds before indexing (if existing) and also delete extra sounds in Solr which are not found ' \
+           'in DB. All this process is in slices of sounds so that in case of updating existing indexed sounds the ' \
+           'index never is fully emptied but we iteratively delete XYZ and re-index XYZ. This command can be used in' \
+           'case there is a specific need of re-indexing all sounds without marking them as is_index_dirty and ' \
+           'using the "post_dirty_sounds_to_solr" command.'
 
     def handle(self, *args, **options):
-        mark_index_clean = not options['no_index_clean']
 
-        # Get all sounds moderated and processed ok
+        # Get all sounds moderated and processed ok and add them to solr (also delete them before re-indexing)
         sounds_to_index = Sound.objects.filter(processing_state="OK", moderation_state="OK")
-        console_logger.info("Reindexing %d sounds to solr", sounds_to_index.count())
+        console_logger.info("Re-indexing %d sounds to solr", sounds_to_index.count())
+        add_all_sounds_to_solr(sounds_to_index, mark_index_clean=True, delete_if_existing=True)
 
-        add_all_sounds_to_solr(sounds_to_index, mark_index_clean=mark_index_clean)
-
-        # Get all sounds that should not be in solr and remove them if they are
-        sound_qs = Sound.objects.exclude(processing_state="OK", moderation_state="OK")
-        for sound in sound_qs:
-            delete_sound_from_solr(sound.id)  # Will only do something if sound in fact exists in solr
+        # Delete all sounds in solr which are not found in the Freesound DB
+        solr_ids = get_all_sound_ids_from_solr()
+        indexed_sound_ids = sounds_to_index.values_list('id', flat=True)
+        sound_ids_to_delete = list(set(solr_ids).difference(indexed_sound_ids))
+        console_logger.info("Deleting %d non-existing sounds form solr", len(sound_ids_to_delete))
+        delete_sounds_from_solr(sound_ids=sound_ids_to_delete)

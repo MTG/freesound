@@ -77,19 +77,12 @@ class Command(BaseCommand):
         if not options['no-changes']:
             # Mark fs sounds to go processing
             if in_fs_not_in_solr:
-                print "Changing is_index_dirty_state of sounds that require it"
-                N = len(in_fs_not_in_solr)
-                for count, sid in enumerate(in_fs_not_in_solr):
-                    sys.stdout.write('\r\tChanging state of sound sound %i of %i         ' % (count+1, N))
-                    sys.stdout.flush()
-                    sound = Sound.objects.get(id=sid)
-                    sound.set_single_field('is_index_dirty', True)
+                print "Changing is_index_dirty_state of %i sounds" % len(in_fs_not_in_solr)
+                Sound.objects.filter(id__in=in_fs_not_in_solr).update(is_index_dirty=True)
 
             # Delete sounds from solr that are not in the db
             if in_solr_not_in_fs:
-                print "\nDeleting sounds that should not be in solr"
-                sys.stdout.write('\r\tDeleting sound %i sounds from solr' % len(in_solr_not_in_fs))
-                sys.stdout.flush()
+                print "\nDeleting %i sounds that should not be in solr" % len(in_solr_not_in_fs)
                 delete_sounds_from_solr(sound_ids=in_solr_not_in_fs)
 
         print "\n***************\nGAIA INDEX\n***************\n"

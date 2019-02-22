@@ -21,7 +21,7 @@
 import re
 import unicodedata
 import bleach
-from html5lib.filters.base import Filter
+from bleach.html5lib_shim import Filter
 from functools import partial
 from htmlentitydefs import name2codepoint
 from django.utils.encoding import smart_unicode

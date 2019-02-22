@@ -227,9 +227,12 @@ class ShouldSuggestDonationTest(TestCase):
         # Change downloads date again to be recent (however modal won't show because probability is 0.0)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
+
+class CleanHtmlTest(TestCase):
+
     def test_clean_html(self):
         # Test if the text input contains allowed html tags
-        # The only supported tags are : a, img, strong, b, em, li, u, p, br, blockquotea and code
+        # The only supported tags are : a, img, strong, b, em, li, u, p, br, blockquote and code
         ret = clean_html(u'a b c d')
         self.assertEqual(u'a b c d', ret)
 

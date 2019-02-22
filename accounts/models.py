@@ -81,9 +81,9 @@ class Profile(SocialModel):
     has_old_license = models.BooleanField(null=False, default=False)
     not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
     accepted_tos = models.BooleanField(default=False)
-    last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
-    last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
-    last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
+    last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
+    last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
+    last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
     donations_reminder_email_sent = models.BooleanField(default=False)
 
     # The following 4 fields are updated using django signals (methods 'update_num_downloads*')

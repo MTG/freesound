@@ -4,6 +4,7 @@
   "description": "Freesound, the cool stuff",
   "scripts": {
     "start": "node freesound/static/start",
+    "build": "node freesound/static/build",
     "prettier": "prettier freesound/static/src/**/**.js freesound/static/styles/**/**.scss --write",
     "eslint": "eslint freesound/static/src"
   },

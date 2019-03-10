@@ -1,28 +1,36 @@
+{% import '../../atoms/icons.njk' as icons %}
+
 {% macro getFilterInputId(filterName) %}
   {{ filterName | replace(' ', '-') }}
 {% endmacro %}
 
 {% macro checkboxFilter(filterName) %}
-<li class="bw-search__filter-value v-padding-1">
-  <label for="{{ getFilterInputId(filterName) }}" class="between w-100">
-    <div class="bw-search__filter-checkbox">
-      <input type="checkbox" class="bw-checkbox" id="{{ getFilterInputId(filterName) }}" onchange="">
-    </div>
-    <div class="bw-search__filter-name">
-      {{ filterName }}
-      <div class="bw-search__filter-count">20</div>
-    </div>
-  </label>
-</li>
+  <li class="bw-search__filter-value v-padding-1">
+    <label for="{{ getFilterInputId(filterName) }}" class="between w-100">
+      <div class="bw-search__filter-checkbox">
+        <input type="checkbox" class="bw-checkbox" id="{{ getFilterInputId(filterName) }}" onchange="">
+      </div>
+      <div class="bw-search__filter-name">
+        {{ filterName }}
+        <div class="bw-search__filter-count">20</div>
+      </div>
+    </label>
+  </li>
 {% endmacro %}
 
 {% macro checkboxSection(sectionName, filtersName) %}
-<div class="bw-search__filter-section">
-  <div class="bw-search__filter-section-name caps text-light-grey">{{ sectionName }}</div>
-  <ul class="bw-search__filter-value-list">
-  {% for filterName in filtersName %}
-    {{ checkboxFilter(filterName) }}
-  {% endfor %}
+  <div class="bw-search__filter-section">
+    <div class="bw-search__filter-section-name caps text-light-grey between">
+      <span>{{ sectionName }}</span>
+      <span class="bw-search__filter-section-collapse">
+      {{ icons.icon('bar') }}
+      {{ icons.icon('plus') }}
+      </span>
+    </div>
+    <ul class="bw-search__filter-value-list">
+      {% for filterName in filtersName %}
+        {{ checkboxFilter(filterName) }}
+      {% endfor %}
   </ul>
   <div class="divider-light"></div>
 </div>

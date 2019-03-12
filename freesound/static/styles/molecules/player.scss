@@ -56,11 +56,10 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  background-color: $white;
-  padding: $tiny-spacing;
+  background-color: transparentize($white, 0.5);
+  padding: 2px;
   color: $navy-grey;
-  border-radius: 10px;
-  opacity: 0.7;
+  border-radius: 2px;
 }
 
 .bw-player {

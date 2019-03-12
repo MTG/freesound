@@ -1,0 +1,12 @@
+{% import '../../atoms/icons.njk' as icons %}
+
+{% macro list(filters) %}
+  {% for filterName in filters %}
+    <button class="btn-inverse bw-search__active-filters-button">
+      {{ filterName }}
+      <span class="h-spacing-left-2">
+        {{ icons.icon('close') }}
+      </span>
+    </button>
+  {% endfor %}
+{% endmacro %}

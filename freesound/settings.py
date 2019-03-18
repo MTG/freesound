@@ -157,6 +157,7 @@ MEDIA_URL = "/media/"
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is no an installed Django app)
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
 STATIC_URL = '/static/'
+STATIC_ROOT = 'bw_static'
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 

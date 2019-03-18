@@ -1,7 +1,7 @@
 const inquirer = require('inquirer')
 const shell = require('shelljs')
 
-const outDir = 'freesound/static/dist'
+const outDir = 'freesound/static/bw-frontend/dist'
 
 const start = async () => {
   const answers = await inquirer.prompt([
@@ -13,7 +13,7 @@ const start = async () => {
       filter: val => val.toLowerCase(),
     },
   ])
-  shell.exec(`parcel serve freesound/static/html/${answers.pagename}.njk -d ${outDir}`)
+  shell.exec(`parcel serve freesound/static/bw-frontend/html/${answers.pagename}.njk -d ${outDir}`)
 }
 
 start()

@@ -7,7 +7,7 @@ const outDir = 'freesound/static/dist'
 
 const start = async () => {
   pages.forEach(page => {
-    shell.exec(`parcel build freesound/static/html/${page}.njk -d ${outDir}`)
+    shell.exec(`parcel build freesound/static/html/${page}.njk -d ${outDir}  --no-content-hash`)
   })
 }
 

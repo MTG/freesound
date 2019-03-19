@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Freesound{% endblock title %}
+
+{% block content %}
+  {% include './molecules/navbar.html' %}
+
+  <div class="container">
+    <div class="bw-front__hero-container">
+      <header>
+        <h1>Find any sound, for free</h1>
+        <p class="bw-front__subheader">In a collaborative database crafted by our community</p>
+      </header>
+      <div class="bw-front__hero-container--search">
+        <div class="input-wrapper">
+          <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." />
+        </div>
+      </div>
+    </div>
+    <div class="row bw-front__content">
+      <main class="col-md-9">
+        <section class="border-grey-light padding-5 v-spacing-6">
+          <h2 class="text-center v-spacing-2">Maintenance downtime</h2>
+          <p class="text-grey text-center">
+            Dear Freesounders, On Monday 3rd at 10:30 a.m. CEST Freesound will be down for approximately two hours
+            while we perform some
+            maintenance on our servers. We’re sorry for the inconvenience this may cause.
+          </p>
+          <div class="center">
+            <button class="btn-primary h-spacing-2">Read more</button>
+            <button class="btn-inverse">More stories</button>
+          </div>
+        </section>
+        <section class="v-spacing-6">
+          <h2 class="v-spacing-4">For you</h2>
+          <div class="row">
+            <div class="col">
+              player
+            </div>
+            <div class="col">
+              player
+            </div>
+            <div class="col">
+              player
+            </div>
+          </div>
+        </section>
+        <hr />
+        <section class="v-spacing-6">
+          <h2 class="v-spacing-4 v-spacing-top-4">Popular searches</h2>
+          <div class="row">
+            <div class="col">
+              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Field-recording</button>
+            </div>
+            <div class="col">
+              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Ambience</button>
+            </div>
+            <div class="col">
+              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Loop</button>
+            </div>
+            <div class="col">
+              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Voice</button>
+            </div>
+          </div>
+        </section>
+        <hr />
+        <section class="v-spacing-6">
+          <h2 class="v-spacing-4 v-spacing-top-4">Trending sounds</h2>
+          <div class="row">
+            <div class="col">
+              player
+            </div>
+            <div class="col">
+              player
+            </div>
+            <div class="col">
+              player
+            </div>
+          </div>
+        </section>
+      </main>
+      <aside class="col-md-3">
+        <section class="v-spacing-7">
+          <h4>Enjoying Freesound?</h4>
+          <p class="text-grey v-spacing-2">Please consider donating some money</p>
+          <div class="between v-spacing-5 wrap">
+            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button>
+            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button>
+            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button>
+            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button>
+          </div>
+          <div class="h-spacing-left-3">
+            <div>Top donor this week:</div>
+            <div class="middle">
+              <div class="avatar h-spacing-2">
+                <img src="../public/avatar.jpg" />
+              </div>
+              <div>
+                <a>giuband</a>
+                <br />
+                <div class="text-light-grey">10 sounds &middot; 0 posts</div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <hr />
+        <section class="v-padding-7">
+          <h4 class="v-spacing-3">Hot forum threads</h4>
+          <article class="v-padding-2">
+            <div class="v-spacing-1">
+              <a class="bw-link--black">Using sounds, making money</a>
+            </div>
+            <div class="text-grey">Started by
+              <a>Rosmars</a>
+            </div>
+            <a class="bw-link--grey">20 answers</a>
+          </article>
+          <article class="v-padding-2">
+            <div class="v-spacing-1">
+              <a class="bw-link--black">40 subscribers!</a>
+            </div>
+            <div class="text-grey">Started by
+              <a>Mudkip2016</a>
+            </div>
+            <a class="bw-link--grey">3 answers</a>
+          </article>
+          <div class="center v-spacing-top-4">
+            <button class="btn-inverse">More posts here</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  {% include './molecules/footer.html' %}
+  {% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/front.8b360dcd.js' %}"></script>
+  {% endblock %}
+{% endblock %}

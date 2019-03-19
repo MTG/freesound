@@ -198,7 +198,7 @@ def front_page(request):
         'latest_additions': latest_additions,
         'random_sound': random_sound
     }
-    return render(request, 'index.html', tvars)
+    return render(request, 'front.html', tvars)
 
 
 @redirect_if_old_username_or_404

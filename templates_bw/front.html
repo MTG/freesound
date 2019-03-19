@@ -111,24 +111,18 @@
         <hr />
         <section class="v-padding-7">
           <h4 class="v-spacing-3">Hot forum threads</h4>
-          <article class="v-padding-2">
-            <div class="v-spacing-1">
-              <a class="bw-link--black">Using sounds, making money</a>
-            </div>
-            <div class="text-grey">Started by
-              <a>Rosmars</a>
-            </div>
-            <a class="bw-link--grey">20 answers</a>
-          </article>
-          <article class="v-padding-2">
-            <div class="v-spacing-1">
-              <a class="bw-link--black">40 subscribers!</a>
-            </div>
-            <div class="text-grey">Started by
-              <a>Mudkip2016</a>
-            </div>
-            <a class="bw-link--grey">3 answers</a>
-          </article>
+            {% for forum in current_forum_threads %}
+                <article class="v-padding-2">
+                    <div class="v-spacing-1">
+                      <a class="bw-link--black" href="{{forum.last_post.get_absolute_url}}">{{ forum.title }}</a>
+                    </div>
+                    <div class="text-grey">
+                      in <a class="bw-link--grey" href="{{forum.forum.get_absolute_url}}">{{forum.forum}}</a>,
+                      by <a href="{% url 'account' forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a>
+                      <br>{{forum.last_post.created|timesince}} ago
+                    </div>
+                </article>
+            {% endfor %}
           <div class="center v-spacing-top-4">
             <button class="btn-inverse">More posts here</button>
           </div>

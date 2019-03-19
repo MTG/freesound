@@ -194,7 +194,7 @@ def front_page(request):
         random_sound = None
 
     top_donor = None
-    if using_beastwhoosh:
+    if using_beastwhoosh(request):
         # TODO: simplify the calclation of the top donor using annotate in the query
         # TODO: add pertinent caching strategy here
         n_weeks_back = 1 if not settings.DEBUG else 300

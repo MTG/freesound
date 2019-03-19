@@ -85,7 +85,12 @@ class License(OrderedModel):
 class SoundManager(models.Manager):
 
     def latest_additions(self, num_sounds, period='2 weeks', use_interval=True):
-        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) if use_interval else ""
+        if settings.DEBUG:
+            # If in DEBUG mode it is likely that database does not contain sounds in the requested period. To compensate
+            # that we never use the interval filter in DEBUG mode and instead get the `num_sounds` latest additions.
+            use_interval = False
+        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) \
+            if use_interval else ""
         query = """
                 select
                     username,

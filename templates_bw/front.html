@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load static %}
+{% load cache %}
 
 {% block title %}Freesound{% endblock title %}
 
@@ -91,19 +92,21 @@
             <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button>
             <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button>
           </div>
-          <div class="h-spacing-left-3">
-            <div>Top donor this week:</div>
-            <div class="middle">
-              <div class="avatar h-spacing-2">
-                <img src="{% static 'bw-frontend/dist/avatar.d28463b9.jpg' %}" />
+          {% if top_donor %}
+              <div class="h-spacing-left-3">
+                <div>Top donor this week:</div>
+                <div class="middle">
+                  <div class="avatar h-spacing-2">
+                    <img src="{{ top_donor.profile.locations.avatar.M.url }}" />
+                  </div>
+                  <div>
+                    <a href="{% url 'account' top_donor.username %}">{{ top_donor.username }}</a>
+                    <br />
+                    <div class="text-light-grey">{{ top_donor.profile.num_sounds }} sound{{ top_donor.profile.num_sounds|pluralize }} &middot; {{ top_donor.profile.num_posts }} post{{ top_donor.profile.num_posts|pluralize }}</div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <a>giuband</a>
-                <br />
-                <div class="text-light-grey">10 sounds &middot; 0 posts</div>
-              </div>
-            </div>
-          </div>
+            {% endif %}
         </section>
         <hr />
         <section class="v-padding-7">

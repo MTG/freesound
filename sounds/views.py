@@ -22,6 +22,7 @@ import datetime
 import json
 import logging
 import time
+from collections import defaultdict
 from operator import itemgetter
 
 from django.conf import settings
@@ -42,7 +43,7 @@ from django.utils.six.moves.urllib.parse import urlparse
 
 from comments.forms import CommentForm
 from comments.models import Comment
-from donations.models import DonationsModalSettings
+from donations.models import DonationsModalSettings, Donation
 from follow import follow_utils
 from forum.models import Thread
 from geotags.models import GeoTag
@@ -54,7 +55,7 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.frontend_handling import render
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
@@ -191,12 +192,30 @@ def front_page(request):
         random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
     else:
         random_sound = None
+
+    top_donor = None
+    if using_beastwhoosh:
+        # TODO: simplify the calclation of the top donor using annotate in the query
+        # TODO: add pertinent caching strategy here
+        n_weeks_back = 1 if not settings.DEBUG else 300
+        last_week = datetime.datetime.now() - datetime.timedelta(weeks=n_weeks_back)
+        top_donor_data = defaultdict(int)
+        for username, amount in \
+            Donation.objects.filter(created__gt=last_week)\
+                    .exclude(user=None, is_anonymous=True)\
+                    .values_list('user__username', 'amount'):
+            top_donor_data[username] += amount
+        if top_donor_data:
+            top_donor_username = sorted(top_donor_data.items(), key=lambda x: x[1], reverse=True)[0][0]
+            top_donor = User.objects.get(username=top_donor_username)
+
     tvars = {
         'rss_cache': rss_cache,
         'donations_cache': donations_cache,
         'current_forum_threads': current_forum_threads,
         'latest_additions': latest_additions,
-        'random_sound': random_sound
+        'random_sound': random_sound,
+        'top_donor': top_donor,
     }
     return render(request, 'front.html', tvars)
 

@@ -68,6 +68,20 @@ logger = logging.getLogger('web')
 downloads_logger = logging.getLogger('downloads')
 
 
+def get_n_weeks_back_datetime(n_weeks):
+    """
+    Returns a datetime object set to a time `n_weeks` back from now.
+    If DEBUG=True, it is likely that the contents of the development databse have not been updated and no
+    activity will be registered for the last `n_weeks`. To compensate for that, when in DEBUG mode the returned
+    date is calculated with respect to the date of the most recent download sotred in database. In this way it is
+    more likely that the selected time range will include activity in database.
+    """
+    now = datetime.datetime.now()
+    if settings.DEBUG:
+        now = Download.objects.first().created
+    return now - datetime.timedelta(weeks=n_weeks)
+
+
 def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
@@ -92,12 +106,11 @@ def get_sound_of_the_day_id():
 
 
 def sounds(request):
-    n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_sound_objects = Sound.objects.ordered_ids([latest_sound['sound_id'] for latest_sound in latest_sounds])
     latest_sounds = [(latest_sound, latest_sound_objects[index],) for index, latest_sound in enumerate(latest_sounds)]
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
+    last_week = get_n_weeks_back_datetime(n_weeks=1)
     popular_sound_ids = [snd.id for snd in Sound.objects.filter(
             Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
@@ -197,8 +210,7 @@ def front_page(request):
     if using_beastwhoosh(request):
         # TODO: simplify the calclation of the top donor using annotate in the query
         # TODO: add pertinent caching strategy here
-        n_weeks_back = 1 if not settings.DEBUG else 300
-        last_week = datetime.datetime.now() - datetime.timedelta(weeks=n_weeks_back)
+        last_week = get_n_weeks_back_datetime(n_weeks=1)
         top_donor_data = defaultdict(int)
         for username, amount in \
             Donation.objects.filter(created__gt=last_week)\

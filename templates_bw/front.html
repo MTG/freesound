@@ -2,6 +2,7 @@
 
 {% load static %}
 {% load cache %}
+{% load display_sound %}
 
 {% block title %}Freesound{% endblock title %}
 
@@ -37,15 +38,13 @@
         <section class="v-spacing-6">
           <h2 class="v-spacing-4">For you</h2>
           <div class="row">
-            <div class="col">
-              player
-            </div>
-            <div class="col">
-              player
-            </div>
-            <div class="col">
-              player
-            </div>
+          {% for sound in latest_additions %}
+              {% if forloop.counter0 < 3 %}
+                <div class="col">
+                    {% display_sound sound.sound_id %}
+                </div>
+              {% endif %}
+          {% endfor %}
           </div>
         </section>
         <hr />

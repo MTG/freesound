@@ -20,6 +20,7 @@
 
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
+import color_schemes
 import utils.audioprocessing.processing as audioprocessing
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 import os, tempfile, shutil, sys
@@ -186,6 +187,8 @@ def process(sound):
     # create waveform images M
     waveform_path_m = sound.locations("display.wave.M.path")
     spectral_path_m = sound.locations("display.spectral.M.path")
+    waveform_bw_path_m = sound.locations("display.wave_bw.M.path")
+    spectral_bw_path_m = sound.locations("display.spectral_bw.M.path")
 
     try:
         os.makedirs(os.path.dirname(waveform_path_m))
@@ -193,7 +196,10 @@ def process(sound):
         pass
 
     try:
-        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
+        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048,
+                                           color_scheme=color_schemes.FREESOUND2_COLOR_SCHEME)
+        audioprocessing.create_wave_images(tmp_wavefile2, waveform_bw_path_m, spectral_bw_path_m, 500, 201, 2048,
+                                           color_scheme=color_schemes.BEASTWHOOSH_COLOR_SCHEME)
     except AudioProcessingException as e:
         cleanup(to_cleanup)
         failure("creation of images (M) has failed", e)
@@ -202,13 +208,18 @@ def process(sound):
         failure("unhandled exception", e)
         cleanup(to_cleanup)
         return False
-    success("created previews, medium")
+    success("created image (medium)")
 
     # create waveform images L
     waveform_path_l = sound.locations("display.wave.L.path")
     spectral_path_l = sound.locations("display.spectral.L.path")
+    waveform_bw_path_l = sound.locations("display.wave_bw.L.path")
+    spectral_bw_path_l = sound.locations("display.spectral_bw.L.path")
     try:
-        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
+        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048,
+                                           color_scheme=color_schemes.FREESOUND2_COLOR_SCHEME)
+        audioprocessing.create_wave_images(tmp_wavefile2, waveform_bw_path_l, spectral_bw_path_l, 1500, 401, 2048,
+                                           color_scheme=color_schemes.BEASTWHOOSH_COLOR_SCHEME)
     except AudioProcessingException as e:
         cleanup(to_cleanup)
         failure("creation of images (L) has failed", e)
@@ -217,7 +228,7 @@ def process(sound):
         failure("unhandled exception", e)
         cleanup(to_cleanup)
         return False
-    success("created previews, large")
+    success("created images (large)")
 
     cleanup(to_cleanup)
     sound.set_processing_ongoing_state("FI")

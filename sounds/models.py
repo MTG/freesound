@@ -449,6 +449,30 @@ class Sound(SocialModel):
                                                                                                    sound_user_id)),
                         url=settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
                     )
+                ),
+                spectral_bw=dict(
+                    M=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
+                    ),
+                    L=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_L.jpg" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
+                    )
+                ),
+                wave_bw=dict(
+                    M=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
+                    ),
+                    L=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_L.png" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
+                    )
                 )
             ),
             analysis=dict(

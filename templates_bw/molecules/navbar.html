@@ -75,7 +75,7 @@
           <li class="bw-nav__action dropdown">
             <a class="bw-link--grey avatar bw-nav__menu--avatar-with{% if not num_messages %}out{% endif %}-notifications dropdown-toggle no-hover" id="avatar-menu"
               aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
-              <img src="{% static 'bw-frontend/dist/avatar.d28463b9.jpg' %}" />
+              <img src="{{ request.user.profile.locations.avatar.M.url }}" />
             </a>
             <ul class="dropdown-menu" aria-labelledby="avatar-menu">
               <li class="bw-nav__action dropdown-item">

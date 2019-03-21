@@ -59,7 +59,7 @@ class Command(BaseCommand):
 
         # Generate trending sounds cache
         trending_sound_ids = list(Download.objects.order_by('-created').values_list('sound_id', flat=True)[0:3])
-        cache.set("trending_sounds", trending_sound_ids,  cache_time)
+        cache.set("trending_sound_ids", trending_sound_ids,  cache_time)
 
         # TODO: decide how to compute trending sounds. Current implementation simply takes the 3 most recent downloads.
         # Depending on the calculation of trending sounds we might need to change periodicity with which we run

@@ -38,7 +38,7 @@ class Command(BaseCommand):
         # Create one for Freeesound Nightingale frontend and one for BeastWhoosh
         rss_cache = render_to_string('rss_cache.html', {'rss_url': settings.FREESOUND_RSS})
         cache.set("rss_cache", rss_cache, 2592000)  # 30 days cache
-        rss_cache_bw = render_to_string('rss_cache_bw.html', {'rss_url': settings.FREESOUND_RSS})
+        rss_cache_bw = render_to_string('molecules/news_cache.html', {'rss_url': settings.FREESOUND_RSS})
         cache.set("rss_cache_bw", rss_cache_bw, 2592000)  # 30 days cache
 
         # TODO: we still don't know how to handle multiple news entries in BW, currently only the latest will be shown

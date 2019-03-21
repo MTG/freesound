@@ -40,39 +40,32 @@
           {% endfor %}
           </div>
         </section>
+        {% if popular_searches %}
         <hr />
         <section class="v-spacing-6">
           <h2 class="v-spacing-4 v-spacing-top-4">Popular searches</h2>
           <div class="row">
-            <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Field-recording</button>
-            </div>
-            <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Ambience</button>
-            </div>
-            <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Loop</button>
-            </div>
-            <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Voice</button>
-            </div>
+              {% for search_term in popular_searches %}
+                <div class="col">
+                  <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">{{ search_term }}</button>
+                </div>
+              {% endfor %}
           </div>
         </section>
+        {% endif %}
+        {% if trending_sound_ids %}
         <hr />
         <section class="v-spacing-6">
           <h2 class="v-spacing-4 v-spacing-top-4">Trending sounds</h2>
           <div class="row">
+          {% for sound_id in trending_sound_ids %}
             <div class="col">
-              player
+                {% display_sound sound_id %}
             </div>
-            <div class="col">
-              player
-            </div>
-            <div class="col">
-              player
-            </div>
+          {% endfor %}
           </div>
         </section>
+      {% endif %}
       </main>
       <aside class="col-md-3">
         <section class="v-spacing-7">

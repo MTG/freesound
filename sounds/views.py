@@ -189,6 +189,8 @@ def get_current_thread_ids():
 def front_page(request):
 
     rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
+    trending_sound_ids = cache.get("trending_sound_ids", None)
+    popular_searches = cache.get("popular_searches", None)
     current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),
                                                   first_post__moderation_state="OK",
                                                   last_post__moderation_state="OK") \
@@ -223,6 +225,8 @@ def front_page(request):
 
     tvars = {
         'rss_cache': rss_cache,
+        'popular_searches': popular_searches,
+        'trending_sound_ids': trending_sound_ids,
         'current_forum_threads': current_forum_threads,
         'latest_additions': latest_additions,
         'random_sound': random_sound,

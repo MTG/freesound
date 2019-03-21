@@ -187,7 +187,7 @@ def get_current_thread_ids():
 
 
 def front_page(request):
-    rss_cache = cache.get("rss_cache", None)
+    rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
     donations_cache = cache.get("donations_cache", None)
     current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),
                                                   first_post__moderation_state="OK",

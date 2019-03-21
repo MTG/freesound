@@ -23,18 +23,11 @@
     </div>
     <div class="row bw-front__content">
       <main class="col-md-9">
-        <section class="border-grey-light padding-5 v-spacing-6">
-          <h2 class="text-center v-spacing-2">Maintenance downtime</h2>
-          <p class="text-grey text-center">
-            Dear Freesounders, On Monday 3rd at 10:30 a.m. CEST Freesound will be down for approximately two hours
-            while we perform some
-            maintenance on our servers. We’re sorry for the inconvenience this may cause.
-          </p>
-          <div class="center">
-            <button class="btn-primary h-spacing-2">Read more</button>
-            <button class="btn-inverse">More stories</button>
-          </div>
-        </section>
+
+        {% if rss_cache %}
+          {{ rss_cache }}
+        {% endif %}
+
         <section class="v-spacing-6">
           <h2 class="v-spacing-4">For you</h2>
           <div class="row">

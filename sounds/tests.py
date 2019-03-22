@@ -288,9 +288,14 @@ class ChangeSoundOwnerTestCase(TestCase):
         userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
         userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
                                              user=User.objects.create_user("testuser2", password="testpass2"))
+
+        fake_original_path_template = '/test/path/{sound_id}_{user_id}.wav'
+
         for sound in soundsA:
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
+            sound.set_original_path(fake_original_path_template.format(sound_id=sound.id, user_id=userA.id))
+            sound.refresh_from_db()
 
         # Check initial number of sounds is ok
         self.assertEqual(userA.profile.num_sounds, 4)
@@ -318,6 +323,7 @@ class ChangeSoundOwnerTestCase(TestCase):
         self.assertEqual(sound.pack.num_sounds, 1)
         self.assertEqual(target_sound_pack.num_sounds, 3)
         self.assertEqual(sound.pack.user, userB)
+        self.assertEqual(sound.original_path, fake_original_path_template.format(sound_id=sound.id, user_id=userB.id))
 
         # Delete original user and perform further checks
         userA.delete()  # Completely delete form db (instead of user.profile.delete_user())

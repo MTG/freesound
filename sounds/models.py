@@ -723,7 +723,7 @@ class Sound(SocialModel):
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
             except OSError:
                 web_logger.info('WARNING changing owner of sound %i: Could not rename file %s because '
-                                 'it does not exist.\n' % (self.id, path))
+                                'it does not exist.\n' % (self.id, path))
 
         # Deal with pack
         # If sound is in pack, replicate pack in new user.
@@ -740,6 +740,9 @@ class Sound(SocialModel):
         # Change user field
         old_owner = self.user
         self.user = new_owner
+
+        # Change original_path field
+        self.original_path = replace_user_id_in_path(self.original_path, old_owner.id, new_owner.id)
 
         # Set index dirty
         self.mark_index_dirty(commit=True)  # commit=True does save

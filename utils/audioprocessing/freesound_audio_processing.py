@@ -86,6 +86,7 @@ def process(sound):
         success("Found the file at its FS2 location: %s" % new_path)
         if sound.original_path != new_path:
             sound.set_original_path(new_path)
+            sound.refresh_from_db()
 
     # convert to pcm
     to_cleanup = []

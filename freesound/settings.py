@@ -158,7 +158,7 @@ MEDIA_URL = "/media/"
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 

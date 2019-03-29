@@ -177,7 +177,16 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                                        request_is_secure=self.context['request'].is_secure()),
             'spectral_l': prepend_base(obj.locations("display.spectral.L.url"),
                                        request_is_secure=self.context['request'].is_secure()),
+            'waveform_bw_m': prepend_base(obj.locations("display.wave_bw.M.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
+            'waveform_bw_l': prepend_base(obj.locations("display.wave_bw.L.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
+            'spectral_bw_m': prepend_base(obj.locations("display.spectral_bw.M.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
+            'spectral_bw_l': prepend_base(obj.locations("display.spectral_bw.L.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
         }
+
 
     analysis = serializers.SerializerMethodField()
     def get_analysis(self, obj):

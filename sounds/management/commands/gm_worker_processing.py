@@ -32,7 +32,7 @@ from django.db.utils import DatabaseError
 from psycopg2 import InterfaceError
 
 from sounds.models import Sound
-from utils.audioprocessing.essentia_analysis import analyze
+from utils.audioprocessing.freesound_audio_analysis import analyze
 from utils.audioprocessing.freesound_audio_processing import process
 
 logger = logging.getLogger("console")

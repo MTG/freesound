@@ -220,6 +220,4 @@ def process(sound, skip_previews=False, skip_displays=False):
     copy_previews_to_mirror_locations(sound)
     copy_displays_to_mirror_locations(sound)
 
-    success("Finished to process sound with id %i" % sound.id)
-
     return True

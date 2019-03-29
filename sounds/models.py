@@ -712,17 +712,21 @@ class Sound(SocialModel):
 
         # Rename related files in disk
         paths_to_rename = [
-            self.locations()['path'],  # original file path
-            self.locations()['analysis']['frames']['path'],  # analysis frames file
-            self.locations()['analysis']['statistics']['path'],  # analysis statistics file
-            self.locations()['display']['spectral']['L']['path'],  # spectrogram L
-            self.locations()['display']['spectral']['M']['path'],  # spectrogram M
-            self.locations()['display']['wave']['L']['path'],  # waveform L
-            self.locations()['display']['wave']['M']['path'],  # waveform M
-            self.locations()['preview']['HQ']['mp3']['path'],  # preview HQ mp3
-            self.locations()['preview']['HQ']['ogg']['path'],  # preview HQ ogg
-            self.locations()['preview']['LQ']['mp3']['path'],  # preview LQ mp3
-            self.locations()['preview']['LQ']['ogg']['path'],  # preview LQ ogg
+            self.locations('path'),  # original file path
+            self.locations('analysis.frames.path'),  # analysis frames file
+            self.locations('analysis.statistics.path'),  # analysis statistics file
+            self.locations('display.spectral.L.path'),  # spectrogram L
+            self.locations('display.spectral.M.path'),  # spectrogram M
+            self.locations('display.wave_bw.L.path'),  # waveform BW L
+            self.locations('display.wave_bw.M.path'),  # waveform BW M
+            self.locations('display.spectral_bw.L.path'),  # spectrogram BW L
+            self.locations('display.spectral_bw.M.path'),  # spectrogram BW M
+            self.locations('display.wave.L.path'),  # waveform L
+            self.locations('display.wave.M.path'),  # waveform M
+            self.locations('preview.HQ.mp3.path'),  # preview HQ mp3
+            self.locations('preview.HQ.ogg.path'),  # preview HQ ogg
+            self.locations('preview.LQ.mp3.path'),  # preview LQ mp3
+            self.locations('preview.LQ.ogg.path'),  # preview LQ ogg
         ]
         for path in paths_to_rename:
             try:

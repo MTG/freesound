@@ -18,22 +18,49 @@
 #     See AUTHORS file.
 #
 
+import errno
+import logging
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
 from django.conf import settings
-import os, shutil, subprocess, signal, sys
+
+import utils.audioprocessing.processing as audioprocessing
+from utils.audioprocessing.processing import AudioProcessingException
 from utils.mirror_files import copy_analysis_to_mirror_locations
 
 
+logger = logging.getLogger("processing")
+
+
 def analyze(sound):
-    FFMPEG_TIMEOUT = 3 * 60
-    tmp_conv = False
 
-    def  alarm_handler(signum, frame):
-        raise Exception("timeout while waiting for ffmpeg")
-
-    #TODO: refactor processing and analysis together
     def write_log(message):
-        sys.stdout.write(str(message)+'\n')
+        sys.stdout.write(str(message) + '\n')
         sys.stdout.flush()
+        logger.info("[%d] %i: %s" % (os.getpid(), sound.id, message))
+
+    def create_directory(path):
+        try:
+            os.makedirs(path)
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir(path):
+                # Directory already exists
+                pass
+            else:
+                # Directory could not be created, raise exception
+                raise
+
+    def cleanup(files):
+        success("cleaning up processing files: " + ", ".join(files))
+        for filename in files:
+            try:
+                os.unlink(filename)
+            except:
+                pass
 
     def failure(message, error=None, failure_state="FA"):
         sound.set_analysis_state(failure_state)
@@ -42,75 +69,88 @@ def analyze(sound):
         if error:
             logging_message += "\terror: %s\n" + str(error)
         write_log(message)
+        cleanup(to_cleanup)
+
+    def success(message):
+        write_log('- ' + message)
+
+    to_cleanup = []  # This will hold a list of files to cleanup after processing
 
     try:
-        statistics_path = sound.locations("analysis.statistics.path")
-        frames_path = sound.locations("analysis.frames.path")
-
         # Get the path of the original sound
-        input_path = sound.locations('path')
-        if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(input_path):
-            input_path = sound.locations('preview.LQ.mp3.path')
+        sound_path = sound.locations('path')
+        if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+            sound_path = sound.locations('preview.LQ.mp3.path')
 
-        if not os.path.exists(input_path):
-            failure('Could not find file with path %s'% input_path)
+        if not os.path.exists(sound_path):
+            failure('could not find file with path %s' % sound_path)
             return False
 
-        if os.path.getsize(input_path) >100 * 1024 * 1024: #same as filesize_warning in sound model
-            failure('File is larger than 100MB. Passing on it.', failure_state='SK')
-            return False
-
-        ext = os.path.splitext(input_path)[1]
-        if ext in ['.wav', '.aiff', '.aifc', '.aif']:
-            tmp_conv = True
-            tmp_wav_path = '/tmp/conversion_%s.wav' % sound.id
-            try:
-                p = subprocess.Popen(['ffmpeg', '-y', '-i', input_path, '-acodec', 'pcm_s16le',
-                                  '-ac', '1', '-ar', '44100', tmp_wav_path])
-                signal.signal(signal.SIGALRM, alarm_handler)
-                signal.alarm(FFMPEG_TIMEOUT)
-                p.wait()
-                signal.alarm(0)
-            except Exception as e:
-                failure("ffmpeg conversion failed ", e)
+        if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
+            if os.path.getsize(sound_path) > settings.MAX_FILESIZE_FOR_ANALYSIS:
+                failure('file is larger than %sMB and therefore it won\'t be analyzed.' %
+                        (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
                 return False
-            input_path = tmp_wav_path
-        tmp_ana_path = '/tmp/analysis_%s' % sound.id
+
+        # Convert to PCM and save PCM version in `tmp_wavefile`
+        try:
+            tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+            audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=True)
+            to_cleanup.append(tmp_wavefile)
+            success("converted to PCM: " + tmp_wavefile)
+
+        except AudioProcessingException as e:
+            failure("conversion to PCM failed", e)
+            return False
+        except IOError as e:
+            # Could not create tmp file
+            failure("could not create tmp_wavefile file", e)
+            return False
+        except Exception as e:
+            failure("unhandled exception while converting to PCM", e)
+            return False
+
+        out_tmp_analysis_path = '/tmp/analysis_%s' % sound.id
         essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
         os.chdir(essentia_dir)
-        exec_array = [settings.ESSENTIA_EXECUTABLE, input_path, tmp_ana_path]
+        exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile, out_tmp_analysis_path]
 
         try:
             p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p_result = p.wait()
             if p_result != 0:
                 output_std, output_err = p.communicate()
-                failure( "Essentia extractor returned an error (%s) stdout:%s stderr: %s"%(p_result, output_std, output_err))
+                failure("Essentia extractor returned an error (%s) stdout:%s stderr: %s"
+                        % (p_result, output_std, output_err))
                 return False
+            to_cleanup.append(out_tmp_analysis_path)
+
         except Exception as e:
             failure("Essentia extractor failed ", e)
             return False
 
-        __create_dir(statistics_path)
-        __create_dir(frames_path)
-        shutil.move('%s_statistics.yaml' % tmp_ana_path, statistics_path)
-        shutil.move('%s_frames.json' % tmp_ana_path, frames_path)
-        #os.remove('%s.json' % tmp_ana_path)  # Current extractor does not produce the json file
+        # Create directories where to store analysis files and move them there
+        statistics_path = sound.locations("analysis.statistics.path")
+        frames_path = sound.locations("analysis.frames.path")
+        create_directory(statistics_path)
+        create_directory(frames_path)
+        shutil.move('%s_statistics.yaml' % out_tmp_analysis_path, statistics_path)
+        shutil.move('%s_frames.json' % out_tmp_analysis_path, frames_path)
+
         sound.set_analysis_state('OK')
-        sound.set_similarity_state('PE')  # So sound gets reindexed in gaia
+        sound.set_similarity_state('PE')  # Set similarity to PE so sound will get indexed to Gaia
+
     except Exception as e:
         failure("Unexpected error in analysis ", e)
         return False
-    finally:
-        if tmp_conv:
-            os.remove(tmp_wav_path)
+    except OSError:
+        failure("could not create directory for statistics and/or frames")
+        return False
 
-    # Copy analysis and display files to mirror locations
+    # Clean up temp files
+    cleanup(to_cleanup)
+
+    # Copy analysis files to mirror locations
     copy_analysis_to_mirror_locations(sound)
+
     return True
-
-
-def __create_dir(path):
-    dir_path = os.path.dirname(os.path.abspath(path))
-    if not  os.path.exists(dir_path):
-        os.makedirs(dir_path)

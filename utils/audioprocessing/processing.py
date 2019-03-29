@@ -567,23 +567,24 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
         raise AudioProcessingException(stdout)
 
 
-def convert_using_ffmpeg(input_filename, output_filename):
+def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
     converts the incoming wave file to stereo pcm using fffmpeg
     """
-    TIMEOUT = 3 * 60
-
     def alarm_handler(signum, frame):
         raise AudioProcessingException("timeout while waiting for ffmpeg")
 
     if not os.path.exists(input_filename):
         raise AudioProcessingException("file %s does not exist" % input_filename)
 
-    command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100", output_filename]
+    command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100"]
+    if mono_out:
+        command += ['-ac', '1']
+    command += [output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     signal.signal(signal.SIGALRM, alarm_handler)
-    signal.alarm(TIMEOUT)
+    signal.alarm(3 * 60)  # 3 minutes timeout
     (stdout, stderr) = process.communicate()
     signal.alarm(0)
     if process.returncode != 0 or not os.path.exists(output_filename):

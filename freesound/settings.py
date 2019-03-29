@@ -281,7 +281,10 @@ STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../_san
 
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 
+# Sound analysis properties
 ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
+MAX_FILESIZE_FOR_ANALYSIS = 100 * 1024 * 1024  # In bytes. Sounds bigger than this size won't be analzyed.
+MAX_SOUND_DURATION_FOR_ANALYSIS = None  # In seconds. Sounds longer than this duration won't be analyzed.
 
 # APIV2 settings
 ################

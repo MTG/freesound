@@ -291,12 +291,18 @@ class Sound(SocialModel):
     user = models.ForeignKey(User, related_name="sounds")
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    # filenames
-    # original_filename = name of the file the user uploaded (can be renamed on file desipction)
-    # original_path = name of the file on disk before processing
-    # base_filename_slug = base of the filename, this will be something like: id__username__filenameslug
-    original_filename = models.CharField(max_length=512)  #
+    # "original_filename" is the name given to the sound, which typically is similar to the filename. note that this
+    # property is named in a misleading way and should probably be renamed to "name" or "sound_name".
+    original_filename = models.CharField(max_length=512)
+
+    # "original_path" is the path on disk of the original sound file. This property is only used at upload time and
+    # updated when the sound is moved from its upload location to the final destination. After that the property should
+    # never be used again as Sound.locations('path') is preferred. For more clarity this property should be renamed to
+    # "path" or "sound_path"
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+
+    # "base_filename_slug" is a slugified version of the original filename, set at upload time. This is used
+    # to create the friendly filename when downloading the sound and once set is never changed.
     base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None)
 
     # user defined fields
@@ -812,15 +818,43 @@ class Sound(SocialModel):
         except Ticket.DoesNotExist:
             pass
 
-    def process(self, force=False):
+    def process_and_analyze(self, force=False):
+        """
+        Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
+        other than "OK". force_process and force_analysis arguments can be used to trigger one of the two steps even if
+        the processing_state and/or analysis_state is set to "OK".
+        """
+        self.process(force)
+        self.analyze(force)
+
+    def process(self, force=False, skip_previews=False, skip_displays=False):
+        """
+        Trigger processing of the sound if analysis_state is not "OK" or force=True.
+        'skip_previews' and 'skip_displays' methods can be used to disable the computation of either of these steps.
+        Processing code generates the file previews and display images as well as fills some audio fields of the
+        Sound model.
+        """
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
             self.set_processing_ongoing_state("QU")
-            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
+            gm_client.submit_job("process_sound", json.dumps({
+                'sound_id': self.id,
+                'skip_previews': skip_previews,
+                'skip_displays': skip_displays
+            }), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
+
+    def analyze(self, force=False):
+        """
+        Trigger analysis of the sound if analysis_state is not "OK" or force=True.
+        Analysis code runs Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
+        """
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.analysis_state != "OK":
             self.set_analysis_state("QU")
-            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+            gm_client.submit_job("analyze_sound", json.dumps({
+                'sound_id': self.id
+            }), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):

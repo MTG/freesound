@@ -46,7 +46,11 @@ def analyze(sound):
     try:
         statistics_path = sound.locations("analysis.statistics.path")
         frames_path = sound.locations("analysis.frames.path")
+
+        # Get the path of the original sound
         input_path = sound.locations('path')
+        if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(input_path):
+            input_path = sound.locations('preview.LQ.mp3.path')
 
         if not os.path.exists(input_path):
             failure('Could not find file with path %s'% input_path)

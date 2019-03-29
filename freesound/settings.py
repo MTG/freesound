@@ -490,4 +490,10 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 # For using static files served by a javascript webpack server
 USE_JS_DEVELOPMENT_SERVER = DEBUG
 
+# In a typical development setup original files won't be available in the filesystem, but preview files
+# might be available as these take much less space. The flag below will configure Freesound to use these
+# preview files (instead of the originals) for processing and downloading when the originals are not available.
+USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING = DEBUG
+
+
 from logger import LOGGING

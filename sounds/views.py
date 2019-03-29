@@ -21,6 +21,7 @@
 import datetime
 import json
 import logging
+import os
 import time
 from collections import defaultdict
 from operator import itemgetter
@@ -57,7 +58,7 @@ from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
-from utils.nginxsendfile import sendfile
+from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
 from utils.search.search_general import get_random_sound_from_solr
 from utils.similarity_utilities import get_similar_sounds
@@ -360,7 +361,8 @@ def sound_download(request, username, sound_id):
             Download.objects.create(user=request.user, sound=sound, license=sound.license)
             sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
-    return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
+    return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
 
 
 @redirect_if_old_username_or_404

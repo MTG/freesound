@@ -1099,6 +1099,7 @@ class SoundTemplateCacheTests(TestCase):
 
     # Downloads are only cached in display
     @mock.patch('sounds.views.sendfile', return_value=HttpResponse('Dummy response'))
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     def test_download(self, sendfile):
         cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)

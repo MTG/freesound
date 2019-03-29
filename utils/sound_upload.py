@@ -201,7 +201,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     if process:
         try:
-            sound.process()
+            sound.process_and_analyze()
 
             if sound.pack:
                 sound.pack.process()
@@ -515,7 +515,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             # Process sound and pack
             error_sending_to_process = None
             try:
-                sound.process()
+                sound.process_and_analyze()
             except Exception as e:
                 error_sending_to_process = str(e)
             if sound.pack:

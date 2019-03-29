@@ -68,7 +68,7 @@ from ratings.models import SoundRating
 from utils.cache import invalidate_template_cache
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.nginxsendfile import sendfile
+from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
 logger = logging.getLogger("api")
@@ -528,11 +528,10 @@ class DownloadSound(DownloadAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-
-        if not os.path.exists(sound.locations('path')):
+        sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
+        if not os.path.exists(sound_path):
             raise NotFoundException(resource=self)
-
-        return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+        return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
 class DownloadLink(DownloadAPIView):
@@ -1164,9 +1163,10 @@ def download_from_token(request, token):
         sound = Sound.objects.get(id=token_contents.get('sound_id', None))
     except Sound.DoesNotExist:
         raise NotFoundException
-    if not os.path.exists(sound.locations('path')):
+    sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
+    if not os.path.exists(sound_path):
         raise NotFoundException
-    return sendfile(sound.locations('path'), sound.friendly_filename(), sound.locations('sendfile_url'))
+    return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
 class Me(OauthRequiredAPIView):

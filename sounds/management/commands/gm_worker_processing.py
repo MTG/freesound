@@ -51,27 +51,25 @@ class Command(BaseCommand):
 
     def write_stdout(self, msg):
         logger.info("[%d] %s" % (os.getpid(), msg))
-        self.stdout.write(msg)
-        self.stdout.flush()
 
     def handle(self, *args, **options):
         # N.B. don't take out the print statements as they're
         # very very very very very very very very very very
         # helpful in debugging supervisor+worker+gearman
-        self.write_stdout('Starting worker\n')
+        self.write_stdout('Starting worker')
         task_name = 'task_%s' % options['queue']
-        self.write_stdout('Task: %s\n' % task_name)
+        self.write_stdout('Task: %s' % task_name)
         if task_name not in dir(self):
-            self.write_stdout("Wow.. That's crazy! Maybe try an existing queue?\n")
+            self.write_stdout("Wow.. That's crazy! Maybe try an existing queue?")
             sys.exit(1)
         task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
-        self.write_stdout('Initializing gm_worker\n')
+        self.write_stdout('Initializing gm_worker')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        self.write_stdout('Registering task %s, function %s\n' % (task_name, task_func))
+        self.write_stdout('Registering task %s, function %s' % (task_name, task_func))
         gm_worker.register_task(options['queue'], task_func)
-        self.write_stdout('Starting work\n')
+        self.write_stdout('Starting work')
         gm_worker.work()
-        self.write_stdout('Ended work\n')
+        self.write_stdout('Ended work')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
         return self.task_process_x(gearman_worker, gearman_job, analyze)
@@ -87,15 +85,13 @@ class Command(BaseCommand):
         skip_previews = job_data.get('skip_previews', None)
         skip_displays = job_data.get('skip_displays', None)
         if func == analyze:
-            task_name = 'Analysis'
+            task_name = 'analysis'
         elif func == process:
-            task_name = 'Processing'
+            task_name = 'processing'
         else:
             task_name = ''
 
-        print sound_id, skip_previews, skip_displays
-
-        self.write_stdout("%s sound with id %s" % (task_name, sound_id))
+        self.write_stdout("---- Starting %s of sound with id %s ----" % (task_name, sound_id))
 
         # Get the Sound objects from DB
         sound = False
@@ -121,7 +117,7 @@ class Command(BaseCommand):
             # if we didn't succeed in resetting the connection, quit the worker
             if intent <= 0:
                 self.write_stdout("Problems while connecting to the database, could not reset the connection and "
-                                  "will kill the worker.\n")
+                                  "will kill the worker.")
                 sys.exit(255)
 
             # Process or analyze the sound
@@ -136,10 +132,10 @@ class Command(BaseCommand):
             return 'true' if result else 'false'
 
         except Sound.DoesNotExist:
-            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
+            self.write_stdout("\t did not find sound with id: %s" % sound_id)
             return 'false'
 
         except Exception as e:
-            self.write_stdout("\t something went terribly wrong: %s\n" % e)
+            self.write_stdout("\t something went terribly wrong: %s" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
             return 'false'

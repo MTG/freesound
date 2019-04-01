@@ -63,7 +63,7 @@ def process(sound, skip_previews=False, skip_displays=False):
     def failure(message, error=None):
         sound.set_processing_ongoing_state("FI")
         sound.change_processing_state("FA", use_set_instead_of_save=True)
-        logging_message = "Failed to process sound with id %s\n" % sound.id
+        logging_message = "ERROR: Failed to process sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
             logging_message += "\terror: %s" % str(error)

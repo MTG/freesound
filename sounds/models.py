@@ -827,21 +827,23 @@ class Sound(SocialModel):
         except Ticket.DoesNotExist:
             pass
 
-    def process_and_analyze(self, force=False):
+    def process_and_analyze(self, force=False, high_priority=False):
         """
         Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
-        other than "OK". force_process and force_analysis arguments can be used to trigger one of the two steps even if
-        the processing_state and/or analysis_state is set to "OK".
+        other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
+        state and analysis state of the sound. 'high_priority' can be set to True to send the processing and/or
+        analysis jobs with high priority to the gearman job server.
         """
-        self.process(force)
-        self.analyze(force)
+        self.process(force=force, high_priority=high_priority)
+        self.analyze(force=force, high_priority=high_priority)
 
-    def process(self, force=False, skip_previews=False, skip_displays=False):
+    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
         """
         Trigger processing of the sound if analysis_state is not "OK" or force=True.
-        'skip_previews' and 'skip_displays' methods can be used to disable the computation of either of these steps.
-        Processing code generates the file previews and display images as well as fills some audio fields of the
-        Sound model.
+        'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
+        'high_priority' argument can be set to True to send the processing job with high priority to the gearman job
+        server. Processing code generates the file previews and display images as well as fills some audio fields
+        of the Sound model.
         """
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
@@ -850,20 +852,21 @@ class Sound(SocialModel):
                 'sound_id': self.id,
                 'skip_previews': skip_previews,
                 'skip_displays': skip_displays
-            }), wait_until_complete=False, background=True)
+            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
 
-    def analyze(self, force=False):
+    def analyze(self, force=False, high_priority=False):
         """
-        Trigger analysis of the sound if analysis_state is not "OK" or force=True.
-        Analysis code runs Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
+        Trigger analysis of the sound if analysis_state is not "OK" or force=True. 'high_priority' argument can be
+        set to True to send the processing job with high priority to the gearman job server. Analysis code runs
+        Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
         """
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.analysis_state != "OK":
             self.set_analysis_state("QU")
             gm_client.submit_job("analyze_sound", json.dumps({
                 'sound_id': self.id
-            }), wait_until_complete=False, background=True)
+            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):

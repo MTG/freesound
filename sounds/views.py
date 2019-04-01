@@ -21,7 +21,9 @@
 import datetime
 import json
 import logging
+import os
 import time
+from collections import defaultdict
 from operator import itemgetter
 
 from django.conf import settings
@@ -42,7 +44,7 @@ from django.utils.six.moves.urllib.parse import urlparse
 
 from comments.forms import CommentForm
 from comments.models import Comment
-from donations.models import DonationsModalSettings
+from donations.models import DonationsModalSettings, Donation
 from follow import follow_utils
 from forum.models import Thread
 from geotags.models import GeoTag
@@ -54,9 +56,9 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.frontend_handling import render
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
-from utils.nginxsendfile import sendfile
+from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
 from utils.search.search_general import get_random_sound_from_solr
 from utils.similarity_utilities import get_similar_sounds
@@ -65,6 +67,20 @@ from utils.username import redirect_if_old_username_or_404
 
 logger = logging.getLogger('web')
 downloads_logger = logging.getLogger('downloads')
+
+
+def get_n_weeks_back_datetime(n_weeks):
+    """
+    Returns a datetime object set to a time `n_weeks` back from now.
+    If DEBUG=True, it is likely that the contents of the development databse have not been updated and no
+    activity will be registered for the last `n_weeks`. To compensate for that, when in DEBUG mode the returned
+    date is calculated with respect to the date of the most recent download sotred in database. In this way it is
+    more likely that the selected time range will include activity in database.
+    """
+    now = datetime.datetime.now()
+    if settings.DEBUG:
+        now = Download.objects.first().created
+    return now - datetime.timedelta(weeks=n_weeks)
 
 
 def get_sound_of_the_day_id():
@@ -91,12 +107,11 @@ def get_sound_of_the_day_id():
 
 
 def sounds(request):
-    n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_sound_objects = Sound.objects.ordered_ids([latest_sound['sound_id'] for latest_sound in latest_sounds])
     latest_sounds = [(latest_sound, latest_sound_objects[index],) for index, latest_sound in enumerate(latest_sounds)]
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
+    last_week = get_n_weeks_back_datetime(n_weeks=1)
     popular_sound_ids = [snd.id for snd in Sound.objects.filter(
             Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
@@ -173,8 +188,10 @@ def get_current_thread_ids():
 
 
 def front_page(request):
-    rss_cache = cache.get("rss_cache", None)
-    donations_cache = cache.get("donations_cache", None)
+
+    rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
+    trending_sound_ids = cache.get("trending_sound_ids", None)
+    popular_searches = cache.get("popular_searches", None)
     current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),
                                                   first_post__moderation_state="OK",
                                                   last_post__moderation_state="OK") \
@@ -191,14 +208,32 @@ def front_page(request):
         random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
     else:
         random_sound = None
+
+    top_donor = None
+    if using_beastwhoosh(request):
+        # TODO: simplify the calclation of the top donor using annotate in the query
+        # TODO: add pertinent caching strategy here
+        last_week = get_n_weeks_back_datetime(n_weeks=1)
+        top_donor_data = defaultdict(int)
+        for username, amount in \
+            Donation.objects.filter(created__gt=last_week)\
+                    .exclude(user=None, is_anonymous=True)\
+                    .values_list('user__username', 'amount'):
+            top_donor_data[username] += amount
+        if top_donor_data:
+            top_donor_username = sorted(top_donor_data.items(), key=lambda x: x[1], reverse=True)[0][0]
+            top_donor = User.objects.get(username=top_donor_username)
+
     tvars = {
         'rss_cache': rss_cache,
-        'donations_cache': donations_cache,
+        'popular_searches': popular_searches,
+        'trending_sound_ids': trending_sound_ids,
         'current_forum_threads': current_forum_threads,
         'latest_additions': latest_additions,
-        'random_sound': random_sound
+        'random_sound': random_sound,
+        'top_donor': top_donor,
     }
-    return render(request, 'index.html', tvars)
+    return render(request, 'front.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -326,7 +361,8 @@ def sound_download(request, username, sound_id):
             Download.objects.create(user=request.user, sound=sound, license=sound.license)
             sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
-    return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
+    return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
 
 
 @redirect_if_old_username_or_404

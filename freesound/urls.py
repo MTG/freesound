@@ -162,7 +162,6 @@ if settings.DEBUG:
     import debug_toolbar
     urlpatterns += [
         url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
-        url(r'^%s/(?P<path>.*)$' % settings.STATIC_URL.strip('/'), serve, {'document_root': settings.STATIC_ROOT, 'show_indexes': True}),
         url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]

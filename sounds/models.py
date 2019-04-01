@@ -85,7 +85,12 @@ class License(OrderedModel):
 class SoundManager(models.Manager):
 
     def latest_additions(self, num_sounds, period='2 weeks', use_interval=True):
-        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) if use_interval else ""
+        if settings.DEBUG:
+            # If in DEBUG mode it is likely that database does not contain sounds in the requested period. To compensate
+            # that we never use the interval filter in DEBUG mode and instead get the `num_sounds` latest additions.
+            use_interval = False
+        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) \
+            if use_interval else ""
         query = """
                 select
                     username,
@@ -286,12 +291,18 @@ class Sound(SocialModel):
     user = models.ForeignKey(User, related_name="sounds")
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    # filenames
-    # original_filename = name of the file the user uploaded (can be renamed on file desipction)
-    # original_path = name of the file on disk before processing
-    # base_filename_slug = base of the filename, this will be something like: id__username__filenameslug
-    original_filename = models.CharField(max_length=512)  #
+    # "original_filename" is the name given to the sound, which typically is similar to the filename. note that this
+    # property is named in a misleading way and should probably be renamed to "name" or "sound_name".
+    original_filename = models.CharField(max_length=512)
+
+    # "original_path" is the path on disk of the original sound file. This property is only used at upload time and
+    # updated when the sound is moved from its upload location to the final destination. After that the property should
+    # never be used again as Sound.locations('path') is preferred. For more clarity this property should be renamed to
+    # "path" or "sound_path"
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+
+    # "base_filename_slug" is a slugified version of the original filename, set at upload time. This is used
+    # to create the friendly filename when downloading the sound and once set is never changed.
     base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None)
 
     # user defined fields
@@ -443,6 +454,30 @@ class Sound(SocialModel):
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id,
                                                                                                    sound_user_id)),
                         url=settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
+                    )
+                ),
+                spectral_bw=dict(
+                    M=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
+                    ),
+                    L=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_L.jpg" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
+                    )
+                ),
+                wave_bw=dict(
+                    M=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
+                    ),
+                    L=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_L.png" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
                     )
                 )
             ),
@@ -677,24 +712,28 @@ class Sound(SocialModel):
 
         # Rename related files in disk
         paths_to_rename = [
-            self.locations()['path'],  # original file path
-            self.locations()['analysis']['frames']['path'],  # analysis frames file
-            self.locations()['analysis']['statistics']['path'],  # analysis statistics file
-            self.locations()['display']['spectral']['L']['path'],  # spectrogram L
-            self.locations()['display']['spectral']['M']['path'],  # spectrogram M
-            self.locations()['display']['wave']['L']['path'],  # waveform L
-            self.locations()['display']['wave']['M']['path'],  # waveform M
-            self.locations()['preview']['HQ']['mp3']['path'],  # preview HQ mp3
-            self.locations()['preview']['HQ']['ogg']['path'],  # preview HQ ogg
-            self.locations()['preview']['LQ']['mp3']['path'],  # preview LQ mp3
-            self.locations()['preview']['LQ']['ogg']['path'],  # preview LQ ogg
+            self.locations('path'),  # original file path
+            self.locations('analysis.frames.path'),  # analysis frames file
+            self.locations('analysis.statistics.path'),  # analysis statistics file
+            self.locations('display.spectral.L.path'),  # spectrogram L
+            self.locations('display.spectral.M.path'),  # spectrogram M
+            self.locations('display.wave_bw.L.path'),  # waveform BW L
+            self.locations('display.wave_bw.M.path'),  # waveform BW M
+            self.locations('display.spectral_bw.L.path'),  # spectrogram BW L
+            self.locations('display.spectral_bw.M.path'),  # spectrogram BW M
+            self.locations('display.wave.L.path'),  # waveform L
+            self.locations('display.wave.M.path'),  # waveform M
+            self.locations('preview.HQ.mp3.path'),  # preview HQ mp3
+            self.locations('preview.HQ.ogg.path'),  # preview HQ ogg
+            self.locations('preview.LQ.mp3.path'),  # preview LQ mp3
+            self.locations('preview.LQ.ogg.path'),  # preview LQ ogg
         ]
         for path in paths_to_rename:
             try:
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
             except OSError:
                 web_logger.info('WARNING changing owner of sound %i: Could not rename file %s because '
-                                 'it does not exist.\n' % (self.id, path))
+                                'it does not exist.\n' % (self.id, path))
 
         # Deal with pack
         # If sound is in pack, replicate pack in new user.
@@ -711,6 +750,9 @@ class Sound(SocialModel):
         # Change user field
         old_owner = self.user
         self.user = new_owner
+
+        # Change original_path field
+        self.original_path = replace_user_id_in_path(self.original_path, old_owner.id, new_owner.id)
 
         # Set index dirty
         self.mark_index_dirty(commit=True)  # commit=True does save
@@ -747,7 +789,12 @@ class Sound(SocialModel):
 
     def compute_crc(self, commit=True):
         crc = 0
-        with open(self.locations('path'), 'rb') as fp:
+        sound_path = self.locations('path')
+        if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+            sound_path = self.locations("preview.LQ.mp3.path")
+        print sound_path
+
+        with open(sound_path, 'rb') as fp:
             for data in iter(lambda: fp.read(settings.CRC_BUFFER_SIZE), b''):
                 crc = zlib.crc32(data, crc)
 
@@ -780,15 +827,43 @@ class Sound(SocialModel):
         except Ticket.DoesNotExist:
             pass
 
-    def process(self, force=False):
+    def process_and_analyze(self, force=False):
+        """
+        Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
+        other than "OK". force_process and force_analysis arguments can be used to trigger one of the two steps even if
+        the processing_state and/or analysis_state is set to "OK".
+        """
+        self.process(force)
+        self.analyze(force)
+
+    def process(self, force=False, skip_previews=False, skip_displays=False):
+        """
+        Trigger processing of the sound if analysis_state is not "OK" or force=True.
+        'skip_previews' and 'skip_displays' methods can be used to disable the computation of either of these steps.
+        Processing code generates the file previews and display images as well as fills some audio fields of the
+        Sound model.
+        """
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
             self.set_processing_ongoing_state("QU")
-            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
+            gm_client.submit_job("process_sound", json.dumps({
+                'sound_id': self.id,
+                'skip_previews': skip_previews,
+                'skip_displays': skip_displays
+            }), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
+
+    def analyze(self, force=False):
+        """
+        Trigger analysis of the sound if analysis_state is not "OK" or force=True.
+        Analysis code runs Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
+        """
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.analysis_state != "OK":
             self.set_analysis_state("QU")
-            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+            gm_client.submit_job("analyze_sound", json.dumps({
+                'sound_id': self.id
+            }), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):

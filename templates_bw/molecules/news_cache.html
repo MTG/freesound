@@ -1,0 +1,16 @@
+{% load rss %}
+{% load util %}
+{% get_rss rss_url as rss %}
+<section class="border-grey-light padding-5 v-spacing-6">
+{% for entry in rss.entries|slice:":1" %}
+  <h2 class="text-center v-spacing-2">{{entry.title|truncatewords:10}}</h2>
+  <p class="text-grey text-center">
+    {{entry.published_parsed|tuple_to_time|date:"F jS, Y"}}
+    {{entry.summary|safe|striptags|truncatewords:100}}
+  </p>
+  <div class="center">
+    <button class="btn-primary h-spacing-2">Read more></button>
+    <button class="btn-inverse">More stories</button>
+  </div>
+{% endfor %}
+</section>

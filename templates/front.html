@@ -62,9 +62,10 @@
     </div>
 
     <!-- donations -->
-    {% if donations_cache %}
-      {{ donations_cache }}
-    {% endif %}
+    <div id="donation_box">
+        <p><strong>Love Freesound?</strong></p>
+        <a class="donation_button" href="{% url 'donate' %}">Donate Now</a>
+    </div>
 
     <!-- latest forum posts -->
     {% cache 300 latest_posts %}

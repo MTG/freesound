@@ -157,6 +157,8 @@ MEDIA_URL = "/media/"
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is no an installed Django app)
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
 STATIC_URL = '/static/'
+STATIC_ROOT = 'bw_static'
+STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
@@ -279,7 +281,11 @@ STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../_san
 
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 
+# Sound analysis properties
 ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
+ESSENTIA_TIMEOUT = 5 * 60  # In seconds
+MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25  # In bytes, after converting to 16bit mono PCM (~5MB per minute).
+
 
 # APIV2 settings
 ################
@@ -407,7 +413,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates2'),
+            os.path.join(os.path.dirname(__file__), '../templates_bw'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -487,5 +493,11 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 # For using static files served by a javascript webpack server
 USE_JS_DEVELOPMENT_SERVER = DEBUG
+
+# In a typical development setup original files won't be available in the filesystem, but preview files
+# might be available as these take much less space. The flag below will configure Freesound to use these
+# preview files (instead of the originals) for processing and downloading when the originals are not available.
+USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING = DEBUG
+
 
 from logger import LOGGING

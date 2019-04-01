@@ -20,11 +20,14 @@
 #
 
 import datetime
-import zlib
-from django.http import HttpResponse
-from sounds.models import Download, PackDownload
-from donations.models import DonationsModalSettings
 import random
+import zlib
+
+from django.http import HttpResponse
+
+from donations.models import DonationsModalSettings
+from sounds.models import Download, PackDownload
+from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download
 
 
 def download_sounds(licenses_url, pack):
@@ -36,17 +39,16 @@ def download_sounds(licenses_url, pack):
     attribution = pack.get_attribution()
     license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
     filelist = "%02x %i %s %s\r\n" % (license_crc,
-                                    len(attribution.encode('UTF-8')),
-                                    licenses_url, "_readme_and_license.txt")
+                                      len(attribution.encode('UTF-8')),
+                                      licenses_url,
+                                      "_readme_and_license.txt")
 
-    sounds_list = pack.sounds.filter(processing_state="OK",
-            moderation_state="OK").select_related('user', 'license')
+    sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
 
     for sound in sounds_list:
-        url = sound.locations("sendfile_url")
-        name = sound.friendly_filename()
         if sound.crc == '':
             continue
+        _, name, url = prepare_sendfile_arguments_for_sound_download(sound)
         filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
 
     response = HttpResponse(filelist, content_type="text/plain")

@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "description": "Freesound, the cool stuff",
   "scripts": {
-    "start": "node freesound/static/start",
-    "build": "node freesound/static/build",
-    "prettier": "prettier freesound/static/src/**/**.js freesound/static/styles/**/**.scss --write",
-    "eslint": "eslint freesound/static/src"
+    "start": "node freesound/static/bw-frontend/start",
+    "build": "node freesound/static/bw-frontend/build",
+    "prettier": "prettier freesound/static/bw-frontend/src/**/**.js freesound/static/bw-frontend/styles/**/**.scss --write",
+    "eslint": "eslint freesound/static/bw-frontend/src"
   },
   "repository": {
     "type": "git",

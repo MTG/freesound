@@ -17,3 +17,4 @@ if use_django_nose is not None:
 SECRET_KEY = "testsecretwhichhastobeatleast16characterslong"
 RAVEN_CONFIG = {}
 SUPPORT = (('Name Surname', 'support@freesound.org'),)
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

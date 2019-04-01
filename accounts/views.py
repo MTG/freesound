@@ -678,7 +678,7 @@ def describe_sounds(request):
         # In the future if django-workers do not write to the db this might be changed
         try:
             for s in sounds_to_process:
-                s.process()
+                s.process_and_analyze()
         except Exception as e:
             audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
         for p in dirty_packs:

@@ -1,0 +1,127 @@
+{% load static %}
+{% load cache %}
+
+<nav class="bw-nav bw-nav--expanded">
+  <div class="container bw-nav__container">
+    <div class="bw-nav__logo-search-container">
+      <div class="bw-nav__logo">
+        <a href="" class="no-hover"></a>
+      </div>
+      <div class="input-wrapper">
+        <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+      </div>
+    </div>
+    <ul class="bw-nav__actions">
+      <li class="bw-nav__action">
+        <a class="bw-link--grey" href="{% url 'sounds' %}">Sounds</a>
+      </li>
+      <li class="bw-nav__action">
+        <a class="bw-link--grey" href="{% url 'packs' %}">Packs</a>
+      </li>
+      <li class="bw-nav__action">
+        <a class="bw-link--grey" href="{% url 'forums-forums' %}">Forum</a>
+      </li>
+      <li class="bw-nav__action">
+        <a class="bw-link--grey" href="{% url 'geotags' %}">Map</a>
+      </li>
+      <li class="bw-nav__action dropdown">
+        <a class="bw-link--grey bw-nav__menu dropdown-toggle no-hover bw-icon-ellipsis" id="three-dots-menu" aria-haspopup="true"
+          aria-expanded="false" data-toggle="dropdown"></a>
+        <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="{% url 'tags' %}">
+              Tags
+            </a>
+          </li>
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="">
+              Charts
+            </a>
+          </li>
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="{% url 'donors' %}">
+              Donors
+            </a>
+          </li>
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="{% url 'wiki' %}faq/">
+              Help
+            </a>
+          </li>
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="{% url 'wiki' %}developers/">
+              Developers
+            </a>
+          </li>
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="https://blog.freesound.org">
+              Freesound Blog
+            </a>
+          </li>
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="https://labs.freesound.org">
+              Freesound Labs
+            </a>
+          </li>
+          <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="">
+              Freesound t-Shirt
+            </a>
+          </li>
+        </ul>
+      </li>
+      {% if request.user.is_authenticated %}
+          {% cache 3600 bw_user_header request.user.id %}
+          <li class="bw-nav__action dropdown">
+            <a class="bw-link--grey avatar bw-nav__menu--avatar-with{% if not num_messages %}out{% endif %}-notifications dropdown-toggle no-hover" id="avatar-menu"
+              aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
+              <img src="{{ request.user.profile.locations.avatar.M.url }}" />
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="avatar-menu">
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="{% url 'account' request.user.username %}">View profile</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="{% url 'accounts-home' %}">Manage uploads</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="{% url 'bookmarks-for-user' request.user.username %}">Bookmarks</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="{% url 'messages' %}">My messages
+                  {% if num_messages %}<span class="text-red">({{ num_messages }})</span>{% endif %}
+                </a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="{% url 'accounts-edit' %}">Account settings</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="{% url 'access-tokens' %}">Manage API settings</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--black" href="{% url 'donate' %}">Donate</a>
+              </li>
+              <li class="bw-nav__action dropdown-item">
+                <a class="bw-link--grey" href="{% url 'logout' %}?next=/">Logout</a>
+              </li>
+            </ul>
+          </li>
+          <li class="bw-nav__action">
+            <button class="btn-secondary">Donate</button>
+          </li>
+          <li class="bw-nav__action">
+            <button class="btn-primary">Upload sound</button>
+          </li>
+          {% endcache %}
+      {% else %}
+          <li class="bw-nav__action">
+            <a class="bw-link--black" href="{% url 'login' %}">Log in</a>
+          </li>
+          <li class="bw-nav__action">
+            <button class="btn-primary">Join</button>
+          </li>
+      {% endif %}
+
+    </ul>
+  </div>
+</nav>

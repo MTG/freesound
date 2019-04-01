@@ -569,7 +569,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
 
 def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
-    converts the incoming wave file to stereo pcm using fffmpeg
+    converts the incoming wave file to 16bit, 44kHz pcm using fffmpeg
     """
     def alarm_handler(signum, frame):
         raise AudioProcessingException("timeout while waiting for ffmpeg")

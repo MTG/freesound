@@ -22,6 +22,7 @@ import errno
 import logging
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -37,6 +38,9 @@ logger = logging.getLogger("processing")
 
 
 def analyze(sound):
+
+    def alarm_handler(signum, frame):
+        raise AudioProcessingException("timeout while waiting for Essentia")
 
     def write_log(message):
         sys.stdout.write(str(message) + '\n')
@@ -86,13 +90,7 @@ def analyze(sound):
             failure('could not find file with path %s' % sound_path)
             return False
 
-        if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
-            if os.path.getsize(sound_path) > settings.MAX_FILESIZE_FOR_ANALYSIS:
-                failure('file is larger than %sMB and therefore it won\'t be analyzed.' %
-                        (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
-                return False
-
-        # Convert to PCM and save PCM version in `tmp_wavefile`
+        # Convert to mono PCM and save PCM version in `tmp_wavefile`
         try:
             tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
             audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=True)
@@ -109,11 +107,17 @@ def analyze(sound):
             failure("unhandled exception while converting to PCM", e)
             return False
 
+        if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
+            if os.path.getsize(tmp_wavefile) > settings.MAX_FILESIZE_FOR_ANALYSIS:
+                failure('converted file is larger than %sMB and therefore it won\'t be analyzed.' %
+                        (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
+                return False
+
         # Create directories where to store analysis files and move them there
         statistics_path = sound.locations("analysis.statistics.path")
         frames_path = sound.locations("analysis.frames.path")
-        create_directory(statistics_path)
-        create_directory(frames_path)
+        create_directory(os.path.dirname(statistics_path))
+        create_directory(os.path.dirname(frames_path))
 
         # Run Essentia's FreesoundExtractor analsyis
         tmp_out_directory = tempfile.mkdtemp()
@@ -123,7 +127,10 @@ def analyze(sound):
         exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
                       os.path.join(tmp_out_directory, 'essentia_%i' % sound.id)]
         p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        signal.signal(signal.SIGALRM, alarm_handler)
+        signal.alarm(settings.ESSENTIA_TIMEOUT)
         out, err = p.communicate()
+        signal.alarm(0)
         if p.returncode != 0:
             failure("essentia extractor returned an error\nstdout: %s \nstderr: %s" % (out, err))
             return False

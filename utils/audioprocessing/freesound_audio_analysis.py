@@ -64,11 +64,11 @@ def analyze(sound):
 
     def failure(message, error=None, failure_state="FA"):
         sound.set_analysis_state(failure_state)
-        logging_message = "Failed to process sound with id %s\n" % sound.id
+        logging_message = "ERROR: Failed to analyze sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
-            logging_message += "\terror: %s\n" + str(error)
-        write_log(message)
+            logging_message += "\terror: %s" % str(error)
+        write_log(logging_message)
         cleanup(to_cleanup)
 
     def success(message):
@@ -98,7 +98,6 @@ def analyze(sound):
             audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=True)
             to_cleanup.append(tmp_wavefile)
             success("converted to PCM: " + tmp_wavefile)
-
         except AudioProcessingException as e:
             failure("conversion to PCM failed", e)
             return False
@@ -110,38 +109,36 @@ def analyze(sound):
             failure("unhandled exception while converting to PCM", e)
             return False
 
-        out_tmp_analysis_path = '/tmp/analysis_%s' % sound.id
-        essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
-        os.chdir(essentia_dir)
-        exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile, out_tmp_analysis_path]
-
-        try:
-            p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            p_result = p.wait()
-            if p_result != 0:
-                output_std, output_err = p.communicate()
-                failure("Essentia extractor returned an error (%s) stdout:%s stderr: %s"
-                        % (p_result, output_std, output_err))
-                return False
-            to_cleanup.append(out_tmp_analysis_path)
-
-        except Exception as e:
-            failure("Essentia extractor failed ", e)
-            return False
-
         # Create directories where to store analysis files and move them there
         statistics_path = sound.locations("analysis.statistics.path")
         frames_path = sound.locations("analysis.frames.path")
         create_directory(statistics_path)
         create_directory(frames_path)
-        shutil.move('%s_statistics.yaml' % out_tmp_analysis_path, statistics_path)
-        shutil.move('%s_frames.json' % out_tmp_analysis_path, frames_path)
 
+        # Run Essentia's FreesoundExtractor analsyis
+        tmp_out_directory = tempfile.mkdtemp()
+        to_cleanup.append(tmp_out_directory)
+        essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
+        os.chdir(essentia_dir)
+        exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
+                      os.path.join(tmp_out_directory, 'essentia_%i' % sound.id)]
+        p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        if p.returncode != 0:
+            failure("essentia extractor returned an error\nstdout: %s \nstderr: %s" % (out, err))
+            return False
+
+        # Move essentia output files to analysis data directory
+        shutil.move(os.path.join(tmp_out_directory, 'essentia_%i_statistics.yaml' % sound.id), statistics_path)
+        shutil.move(os.path.join(tmp_out_directory, 'essentia_%i_frames.json' % sound.id), frames_path)
+        success("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
+
+        # Change sound analysis and similarity states
         sound.set_analysis_state('OK')
         sound.set_similarity_state('PE')  # Set similarity to PE so sound will get indexed to Gaia
 
     except Exception as e:
-        failure("Unexpected error in analysis ", e)
+        failure("unexpected error in analysis ", e)
         return False
     except OSError:
         failure("could not create directory for statistics and/or frames")

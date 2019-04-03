@@ -23,6 +23,7 @@ import logging
 import gearman
 import json
 import os
+import signal
 import sys
 import traceback
 from django.conf import settings
@@ -79,6 +80,13 @@ class Command(BaseCommand):
 
     def task_process_x(self, gearman_worker, gearman_job, func):
 
+        def alarm_handler(signum, frame):
+            raise Exception('processing/analysis for sound %s timed out' % sound_id)
+
+        # Configure timeout counter
+        signal.signal(signal.SIGALRM, alarm_handler)
+        signal.alarm(settings.WORKER_TIMEOUT)
+
         # Retreive job data from gearman object
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
@@ -128,14 +136,16 @@ class Command(BaseCommand):
             if skip_displays:
                 func_kwargs['skip_displays'] = True
             result = func(*func_args, **func_kwargs)
+            signal.alarm(0)  # "Reset" timeout counter
+
             self.write_stdout("Finished sound %s, %s %s" % (sound_id, task_name, ("OK" if result else "FALIED")))
             return 'true' if result else 'false'
 
         except Sound.DoesNotExist:
-            self.write_stdout("\t did not find sound with id: %s" % sound_id)
+            self.write_stdout("ERROR: Did not find sound with id: %s" % sound_id)
             return 'false'
 
         except Exception as e:
-            self.write_stdout("\t something went terribly wrong: %s" % e)
+            self.write_stdout("ERROR: something went terribly wrong: %s" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
             return 'false'

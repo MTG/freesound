@@ -294,8 +294,8 @@ class ChangeSoundOwnerTestCase(TestCase):
         for sound in soundsA:
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
-            sound.set_original_path(fake_original_path_template.format(sound_id=sound.id, user_id=userA.id))
-            sound.refresh_from_db()
+            sound.original_path = fake_original_path_template.format(sound_id=sound.id, user_id=userA.id)
+            sound.save()
 
         # Check initial number of sounds is ok
         self.assertEqual(userA.profile.num_sounds, 4)

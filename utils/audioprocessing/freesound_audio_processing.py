@@ -53,24 +53,24 @@ def process(sound, skip_previews=False, skip_displays=False):
                 raise
 
     def cleanup(files):
-        success("cleaning up processing files: " + ", ".join(files))
+        log_step("cleaning up processing files: " + ", ".join(files))
         for filename in files:
             try:
                 os.unlink(filename)
-            except:
-                pass
+            except Exception as e:
+                write_log("ERROR: could not clean filename %s: %s" % (filename, e))
 
     def failure(message, error=None):
-        sound.set_processing_ongoing_state("FI")
-        sound.change_processing_state("FA", use_set_instead_of_save=True)
+        cleanup(to_cleanup)
         logging_message = "ERROR: Failed to process sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
             logging_message += "\terror: %s" % str(error)
         write_log(logging_message)
-        cleanup(to_cleanup)
+        sound.set_processing_ongoing_state("FI")
+        sound.change_processing_state("FA", processing_log=logging_message)
 
-    def success(message):
+    def log_step(message):
         write_log('- ' + message)
 
     to_cleanup = []  # This will hold a list of files to cleanup after processing
@@ -85,17 +85,17 @@ def process(sound, skip_previews=False, skip_displays=False):
     if not os.path.exists(sound_path):
         failure("can't process sound as file does not exist")
         return False
-    success("file to process found in " + sound_path)
+    log_step("file to process found in " + sound_path)
 
     # Convert to PCM and save PCM version in `tmp_wavefile`
     try:
         tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
         if not audioprocessing.convert_to_pcm(sound_path, tmp_wavefile):
             tmp_wavefile = sound_path
-            success("no need to convert, this file is already PCM data")
+            log_step("no need to convert, this file is already PCM data")
         else:
             to_cleanup.append(tmp_wavefile)
-            success("converted to pcm: " + tmp_wavefile)
+            log_step("converted to pcm: " + tmp_wavefile)
     except IOError as e:
         # Could not create tmp file
         failure("could not create tmp_wavefile file", e)
@@ -104,7 +104,7 @@ def process(sound, skip_previews=False, skip_displays=False):
         try:
             audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile)
             to_cleanup.append(tmp_wavefile)
-            success("converted to PCM: " + tmp_wavefile)
+            log_step("converted to PCM: " + tmp_wavefile)
         except AudioProcessingException as e:
             failure("conversion to PCM failed", e)
             return False
@@ -119,7 +119,7 @@ def process(sound, skip_previews=False, skip_displays=False):
         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
         if sound.type in ["mp3", "ogg", "m4a"]:
             info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
-        success("got sound info and stereofied: " + tmp_wavefile2)
+        log_step("got sound info and stereofied: " + tmp_wavefile2)
     except IOError as e:
         # Could not create tmp file
         failure("could not create tmp_wavefile2 file", e)
@@ -160,7 +160,7 @@ def process(sound, skip_previews=False, skip_displays=False):
             except Exception as e:
                 failure("unhandled exception generating MP3 previews", e)
                 return False
-            success("created mp3: " + mp3_path)
+            log_step("created mp3: " + mp3_path)
 
         # Generate OGG previews
         for ogg_path, quality in [(sound.locations("preview.LQ.ogg.path"), 1),
@@ -173,7 +173,7 @@ def process(sound, skip_previews=False, skip_displays=False):
             except Exception as e:
                 failure("unhandled exception generating OGG previews", e)
                 return False
-            success("created ogg: " + ogg_path)
+            log_step("created ogg: " + ogg_path)
 
     # Generate display images for different sizes and colour scheme front-ends
     if not skip_displays:
@@ -201,7 +201,7 @@ def process(sound, skip_previews=False, skip_displays=False):
                 fft_size = 2048
                 audioprocessing.create_wave_images(tmp_wavefile2, waveform_path, spectral_path, width, height,
                                                    fft_size, color_scheme=color_scheme)
-                success("created wave and spectrogram images: %s, %s" % (waveform_path, spectral_path))
+                log_step("created wave and spectrogram images: %s, %s" % (waveform_path, spectral_path))
             except AudioProcessingException as e:
                 failure("creation of display images has failed", e)
                 return False
@@ -214,7 +214,7 @@ def process(sound, skip_previews=False, skip_displays=False):
 
     # Change processing state and processing ongoing state in Sound model
     sound.set_processing_ongoing_state("FI")
-    sound.change_processing_state("OK", use_set_instead_of_save=True)
+    sound.change_processing_state("OK")
 
     # Copy previews and display files to mirror locations
     copy_previews_to_mirror_locations(sound)

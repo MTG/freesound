@@ -59,12 +59,12 @@ def analyze(sound):
                 raise
 
     def cleanup(files):
-        success("cleaning up processing files: " + ", ".join(files))
+        log_step("cleaning up analysis files: " + ", ".join(files))
         for filename in files:
             try:
                 os.unlink(filename)
-            except:
-                pass
+            except Exception as e:
+                write_log("ERROR: could not clean filename %s: %s" % (filename, e))
 
     def failure(message, error=None, failure_state="FA"):
         sound.set_analysis_state(failure_state)
@@ -75,7 +75,7 @@ def analyze(sound):
         write_log(logging_message)
         cleanup(to_cleanup)
 
-    def success(message):
+    def log_step(message):
         write_log('- ' + message)
 
     to_cleanup = []  # This will hold a list of files to cleanup after processing
@@ -95,7 +95,7 @@ def analyze(sound):
             tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
             audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=True)
             to_cleanup.append(tmp_wavefile)
-            success("converted to PCM: " + tmp_wavefile)
+            log_step("converted to PCM: " + tmp_wavefile)
         except AudioProcessingException as e:
             failure("conversion to PCM failed", e)
             return False
@@ -138,7 +138,7 @@ def analyze(sound):
         # Move essentia output files to analysis data directory
         shutil.move(os.path.join(tmp_out_directory, 'essentia_%i_statistics.yaml' % sound.id), statistics_path)
         shutil.move(os.path.join(tmp_out_directory, 'essentia_%i_frames.json' % sound.id), frames_path)
-        success("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
+        log_step("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
 
         # Change sound analysis and similarity states
         sound.set_analysis_state('OK')

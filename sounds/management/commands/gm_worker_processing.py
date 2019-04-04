@@ -68,17 +68,28 @@ def log_error(msg):
 
 
 def cleanup_tmp_directory(tmp_directory):
-
-    try:
-        print('CLEANING', os.listdir(tmp_directory))
-        shutil.rmtree(tmp_directory)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            pass  # Directory does not exist, do nothing about it
-        else:
+    if tmp_directory is not None:
+        try:
+            shutil.rmtree(tmp_directory)
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                pass  # Directory does not exist, do nothing about it
+            else:
+                log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
+        except Exception as e:
             log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
-    except Exception as e:
-        log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
+
+
+def check_if_free_space(directory='/tmp/', min_disk_space_percentage=0.05):
+    """
+    Raises a WorkerException if the perfectage of free disk space in the volume of the given 'directory' is lower
+    than 'min_disk_space_percentage'.
+    """
+    stats = os.statvfs(directory)
+    percetage_free = stats.f_bfree * 1.0 / stats.f_blocks
+    if percetage_free < min_disk_space_percentage:
+        raise WorkerException("Disk is running out of space, "
+                              "aborting task as there might not be enough space for temp files")
 
 
 def get_sound_object(sound_id):
@@ -148,16 +159,17 @@ class Command(BaseCommand):
         log('Ended work')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
+        tmp_directory = None
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
         set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
 
         log("---- Starting analysis of sound with id %s ----" % sound_id)
-        tmp_directory = tempfile.mkdtemp(prefix='analysis_%s_' % sound_id)
         try:
+            check_if_free_space()
+            tmp_directory = tempfile.mkdtemp(prefix='analysis_%s_' % sound_id)
             sound = get_sound_object(sound_id)
             result = analyze(sound)
-            cancel_timeout_alarm()
             log("Finished analysis of sound with id %s: %s" % (sound_id, ("OK" if result else "FALIED")))
 
         except WorkerException as e:
@@ -166,10 +178,12 @@ class Command(BaseCommand):
         except Exception as e:
             log_error('Unexpected error while analyzing sound: %s' % e)
 
+        cancel_timeout_alarm()
         cleanup_tmp_directory(tmp_directory)
         return ''  # Gearman requires return value to be a string
 
     def task_process_sound(self, gearman_worker, gearman_job):
+        tmp_directory = None
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
         skip_previews = job_data.get('skip_previews', False)
@@ -177,12 +191,12 @@ class Command(BaseCommand):
         set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
 
         log("---- Starting processing of sound with id %s ----" % sound_id)
-        tmp_directory = tempfile.mkdtemp(prefix='processing_%s_' % sound_id)
         try:
+            check_if_free_space()
+            tmp_directory = tempfile.mkdtemp(prefix='processing_%s_' % sound_id)
             sound = get_sound_object(sound_id)
             result = process(
                 sound, skip_displays=skip_displays, skip_previews=skip_previews, tmp_directory=tmp_directory)
-            cancel_timeout_alarm()
             log("Finished processing of sound with id %s: %s" % (sound_id, ("OK" if result else "FALIED")))
 
         except WorkerException as e:
@@ -191,5 +205,6 @@ class Command(BaseCommand):
         except Exception as e:
             log_error('Unexpected error while processing sound: %s' % e)
 
+        cancel_timeout_alarm()
         cleanup_tmp_directory(tmp_directory)
         return ''  # Gearman requires return value to be a string

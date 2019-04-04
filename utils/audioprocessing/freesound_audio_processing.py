@@ -21,6 +21,7 @@
 import errno
 import logging
 import os
+import shutil
 import sys
 import tempfile
 
@@ -34,7 +35,7 @@ from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_
 logger = logging.getLogger("processing")
 
 
-def process(sound, skip_previews=False, skip_displays=False):
+def process(sound, skip_previews=False, skip_displays=False, tmp_directory=None):
 
     def write_log(message):
         sys.stdout.write(str(message) + '\n')
@@ -52,16 +53,15 @@ def process(sound, skip_previews=False, skip_displays=False):
                 # Directory could not be created, raise exception
                 raise
 
-    def cleanup(files):
-        log_step("cleaning up processing files: " + ", ".join(files))
-        for filename in files:
-            try:
-                os.unlink(filename)
-            except Exception as e:
-                write_log("ERROR: could not clean filename %s: %s" % (filename, e))
+    def cleanup():
+        log_step("cleaning up temp files: " + ", ".join(os.listdir(tmp_directory)))
+        try:
+            shutil.rmtree(tmp_directory)
+        except Exception as e:
+            write_log("ERROR: could not clean tmp files in %s: %s" % (tmp_directory, e))
 
     def failure(message, error=None):
-        cleanup(to_cleanup)
+        cleanup()
         logging_message = "ERROR: Failed to process sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
@@ -73,7 +73,8 @@ def process(sound, skip_previews=False, skip_displays=False):
     def log_step(message):
         write_log('- ' + message)
 
-    to_cleanup = []  # This will hold a list of files to cleanup after processing
+    if tmp_directory is None:
+        tmp_directory = tempfile.mkdtemp()
 
     # Change ongoing processing state to "processing" in Sound model
     sound.set_processing_ongoing_state("PR")
@@ -89,12 +90,11 @@ def process(sound, skip_previews=False, skip_displays=False):
 
     # Convert to PCM and save PCM version in `tmp_wavefile`
     try:
-        tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+        _, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(sound.id), dir=tmp_directory)
         if not audioprocessing.convert_to_pcm(sound_path, tmp_wavefile):
             tmp_wavefile = sound_path
             log_step("no need to convert, this file is already PCM data")
         else:
-            to_cleanup.append(tmp_wavefile)
             log_step("converted to pcm: " + tmp_wavefile)
     except IOError as e:
         # Could not create tmp file
@@ -103,7 +103,6 @@ def process(sound, skip_previews=False, skip_displays=False):
     except AudioProcessingException as e:
         try:
             audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile)
-            to_cleanup.append(tmp_wavefile)
             log_step("converted to PCM: " + tmp_wavefile)
         except AudioProcessingException as e:
             failure("conversion to PCM failed", e)
@@ -114,8 +113,7 @@ def process(sound, skip_previews=False, skip_displays=False):
 
     # Now get info about the file, stereofy it and save new stereofied PCM version in `tmp_wavefile2`
     try:
-        tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
-        to_cleanup.append(tmp_wavefile2)
+        _, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix=str(sound.id), dir=tmp_directory)
         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
         if sound.type in ["mp3", "ogg", "m4a"]:
             info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
@@ -210,7 +208,7 @@ def process(sound, skip_previews=False, skip_displays=False):
                 return False
 
     # Clean up temp files
-    cleanup(to_cleanup)
+    cleanup()
 
     # Change processing state and processing ongoing state in Sound model
     sound.set_processing_ongoing_state("FI")

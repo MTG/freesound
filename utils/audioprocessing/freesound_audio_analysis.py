@@ -37,7 +37,7 @@ from utils.mirror_files import copy_analysis_to_mirror_locations
 logger = logging.getLogger("processing")
 
 
-def analyze(sound):
+def analyze(sound, tmp_directory=None):
 
     def alarm_handler(signum, frame):
         raise AudioProcessingException("timeout while waiting for Essentia")
@@ -58,13 +58,12 @@ def analyze(sound):
                 # Directory could not be created, raise exception
                 raise
 
-    def cleanup(files):
-        log_step("cleaning up analysis files: " + ", ".join(files))
-        for filename in files:
-            try:
-                os.unlink(filename)
-            except Exception as e:
-                write_log("ERROR: could not clean filename %s: %s" % (filename, e))
+    def cleanup():
+        log_step("cleaning up temp files: " + ", ".join(os.listdir(tmp_directory)))
+        try:
+            shutil.rmtree(tmp_directory)
+        except Exception as e:
+            write_log("ERROR: could not clean tmp files in %s: %s" % (tmp_directory, e))
 
     def failure(message, error=None, failure_state="FA"):
         sound.set_analysis_state(failure_state)
@@ -73,12 +72,13 @@ def analyze(sound):
         if error:
             logging_message += "\terror: %s" % str(error)
         write_log(logging_message)
-        cleanup(to_cleanup)
+        cleanup()
 
     def log_step(message):
         write_log('- ' + message)
 
-    to_cleanup = []  # This will hold a list of files to cleanup after processing
+    if tmp_directory is None:
+        tmp_directory = tempfile.mkdtemp()
 
     try:
         # Get the path of the original sound
@@ -92,9 +92,8 @@ def analyze(sound):
 
         # Convert to mono PCM and save PCM version in `tmp_wavefile`
         try:
-            tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+            _, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(sound.id), dir=tmp_directory)
             audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=True)
-            to_cleanup.append(tmp_wavefile)
             log_step("converted to PCM: " + tmp_wavefile)
         except AudioProcessingException as e:
             failure("conversion to PCM failed", e)
@@ -120,12 +119,10 @@ def analyze(sound):
         create_directory(os.path.dirname(frames_path))
 
         # Run Essentia's FreesoundExtractor analsyis
-        tmp_out_directory = tempfile.mkdtemp()
-        to_cleanup.append(tmp_out_directory)
         essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
         os.chdir(essentia_dir)
         exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
-                      os.path.join(tmp_out_directory, 'essentia_%i' % sound.id)]
+                      os.path.join(tmp_directory, 'essentia_%i' % sound.id)]
         p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         signal.signal(signal.SIGALRM, alarm_handler)
         signal.alarm(settings.ESSENTIA_TIMEOUT)
@@ -136,8 +133,8 @@ def analyze(sound):
             return False
 
         # Move essentia output files to analysis data directory
-        shutil.move(os.path.join(tmp_out_directory, 'essentia_%i_statistics.yaml' % sound.id), statistics_path)
-        shutil.move(os.path.join(tmp_out_directory, 'essentia_%i_frames.json' % sound.id), frames_path)
+        shutil.move(os.path.join(tmp_directory, 'essentia_%i_statistics.yaml' % sound.id), statistics_path)
+        shutil.move(os.path.join(tmp_directory, 'essentia_%i_frames.json' % sound.id), frames_path)
         log_step("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
 
         # Change sound analysis and similarity states
@@ -152,7 +149,7 @@ def analyze(sound):
         return False
 
     # Clean up temp files
-    cleanup(to_cleanup)
+    cleanup()
 
     # Copy analysis files to mirror locations
     copy_analysis_to_mirror_locations(sound)

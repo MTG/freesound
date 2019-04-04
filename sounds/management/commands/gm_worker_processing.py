@@ -18,14 +18,17 @@
 #     See AUTHORS file.
 #
 
-import logging
-
-import gearman
+import errno
 import json
+import logging
 import os
+import shutil
 import signal
 import sys
+import tempfile
 import traceback
+
+import gearman
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connection
@@ -39,6 +42,83 @@ from utils.audioprocessing.freesound_audio_processing import process
 logger = logging.getLogger("console")
 
 
+class WorkerException(Exception):
+    pass
+
+
+def set_timeout_alarm(time, msg):
+
+    def alarm_handler(signum, frame):
+        raise WorkerException(msg)
+
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(time)
+
+
+def cancel_timeout_alarm():
+    signal.alarm(0)
+
+
+def log(msg):
+    logger.info("[%d] %s" % (os.getpid(), msg))
+
+
+def log_error(msg):
+    log('ERROR: %s' % msg)
+
+
+def cleanup_tmp_directory(tmp_directory):
+
+    try:
+        print('CLEANING', os.listdir(tmp_directory))
+        shutil.rmtree(tmp_directory)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            pass  # Directory does not exist, do nothing about it
+        else:
+            log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
+    except Exception as e:
+        log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
+
+
+def get_sound_object(sound_id):
+    # Get the Sound object from DB
+    # TODO: is all this really needed?
+    sound = None
+    intent = 3
+    try:
+        # If the database connection has become invalid, try to reset the
+        # connection (max of 'intent' times)
+        while intent > 0:
+            try:
+                # Try to get the sound, and if we succeed continue as normal
+                sound = Sound.objects.get(id=sound_id)
+                break
+            except (InterfaceError, DatabaseError):
+                # Try to close the current connection (it probably already is closed)
+                try:
+                    connection.connection.close()
+                except:
+                    pass
+                # Trick Django into creating a fresh connection on the next db use attempt
+                connection.connection = None
+                intent -= 1
+
+    except Sound.DoesNotExist:
+        raise WorkerException("Did not find sound with id: %s" % sound_id)
+
+    except Exception as e:
+        raise WorkerException("Unexpected error while getting sound from DB: %s\n\t%s"
+                              % (e, traceback.format_exc()))
+
+    # if we didn't succeed in resetting the connection, quit the worker
+    if intent <= 0:
+        raise WorkerException("Problems while connecting to the database, could not reset the connection and "
+                              "will kill the worker.")
+
+    return sound
+
+
 class Command(BaseCommand):
     help = 'Run the sound processing worker'
 
@@ -50,102 +130,66 @@ class Command(BaseCommand):
             default='process_sound',
             help='Register this function (default: process_sound)')
 
-    def write_stdout(self, msg):
-        logger.info("[%d] %s" % (os.getpid(), msg))
-
     def handle(self, *args, **options):
-        # N.B. don't take out the print statements as they're
-        # very very very very very very very very very very
-        # helpful in debugging supervisor+worker+gearman
-        self.write_stdout('Starting worker')
+        log('Starting worker')
         task_name = 'task_%s' % options['queue']
-        self.write_stdout('Task: %s' % task_name)
+        log('Task: %s' % task_name)
         if task_name not in dir(self):
-            self.write_stdout("Wow.. That's crazy! Maybe try an existing queue?")
+            log("Wow.. That's crazy! Maybe try an existing queue?")
             sys.exit(1)
+
         task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
-        self.write_stdout('Initializing gm_worker')
+        log('Initializing gm_worker')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        self.write_stdout('Registering task %s, function %s' % (task_name, task_func))
+        log('Registering task %s, function %s' % (task_name, task_func))
         gm_worker.register_task(options['queue'], task_func)
-        self.write_stdout('Starting work')
+        log('Starting work')
         gm_worker.work()
-        self.write_stdout('Ended work')
+        log('Ended work')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
-        return self.task_process_x(gearman_worker, gearman_job, analyze)
-
-    def task_process_sound(self, gearman_worker, gearman_job):
-        return self.task_process_x(gearman_worker, gearman_job, process)
-
-    def task_process_x(self, gearman_worker, gearman_job, func):
-
-        def alarm_handler(signum, frame):
-            raise Exception('processing/analysis for sound %s timed out' % sound_id)
-
-        # Configure timeout counter
-        signal.signal(signal.SIGALRM, alarm_handler)
-        signal.alarm(settings.WORKER_TIMEOUT)
-
-        # Retreive job data from gearman object
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
-        skip_previews = job_data.get('skip_previews', None)
-        skip_displays = job_data.get('skip_displays', None)
-        if func == analyze:
-            task_name = 'analysis'
-        elif func == process:
-            task_name = 'processing'
-        else:
-            task_name = ''
+        set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
 
-        self.write_stdout("---- Starting %s of sound with id %s ----" % (task_name, sound_id))
-
-        # Get the Sound objects from DB
-        sound = False
+        log("---- Starting analysis of sound with id %s ----" % sound_id)
+        tmp_directory = tempfile.mkdtemp(prefix='analysis_%s_' % sound_id)
         try:
-            # If the database connection has become invalid, try to reset the
-            # connection (max of 'intent' times)
-            intent = 3
-            while intent > 0:
-                try:
-                    # Try to get the sound, and if we succeed continue as normal
-                    sound = Sound.objects.get(id=sound_id)
-                    break
-                except (InterfaceError, DatabaseError):
-                    # Try to close the current connection (it probably already is closed)
-                    try:
-                        connection.connection.close()
-                    except:
-                        pass
-                    # Trick Django into creating a fresh connection on the next db use attempt
-                    connection.connection = None
-                    intent -= 1
+            sound = get_sound_object(sound_id)
+            result = analyze(sound)
+            cancel_timeout_alarm()
+            log("Finished analysis of sound with id %s: %s" % (sound_id, ("OK" if result else "FALIED")))
 
-            # if we didn't succeed in resetting the connection, quit the worker
-            if intent <= 0:
-                self.write_stdout("Problems while connecting to the database, could not reset the connection and "
-                                  "will kill the worker.")
-                sys.exit(255)
-
-            # Process or analyze the sound
-            func_args = [sound]
-            func_kwargs = {}
-            if skip_previews:
-                func_kwargs['skip_previews'] = True
-            if skip_displays:
-                func_kwargs['skip_displays'] = True
-            result = func(*func_args, **func_kwargs)
-            signal.alarm(0)  # "Reset" timeout counter
-
-            self.write_stdout("Finished sound %s, %s %s" % (sound_id, task_name, ("OK" if result else "FALIED")))
-            return 'true' if result else 'false'
-
-        except Sound.DoesNotExist:
-            self.write_stdout("ERROR: Did not find sound with id: %s" % sound_id)
-            return 'false'
+        except WorkerException as e:
+            log_error(e)
 
         except Exception as e:
-            self.write_stdout("ERROR: something went terribly wrong: %s" % e)
-            self.write_stdout("\t%s\n" % traceback.format_exc())
-            return 'false'
+            log_error('Unexpected error while analyzing sound: %s' % e)
+
+        cleanup_tmp_directory(tmp_directory)
+        return ''  # Gearman requires return value to be a string
+
+    def task_process_sound(self, gearman_worker, gearman_job):
+        job_data = json.loads(gearman_job.data)
+        sound_id = job_data['sound_id']
+        skip_previews = job_data.get('skip_previews', False)
+        skip_displays = job_data.get('skip_displays', False)
+        set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
+
+        log("---- Starting processing of sound with id %s ----" % sound_id)
+        tmp_directory = tempfile.mkdtemp(prefix='processing_%s_' % sound_id)
+        try:
+            sound = get_sound_object(sound_id)
+            result = process(
+                sound, skip_displays=skip_displays, skip_previews=skip_previews, tmp_directory=tmp_directory)
+            cancel_timeout_alarm()
+            log("Finished processing of sound with id %s: %s" % (sound_id, ("OK" if result else "FALIED")))
+
+        except WorkerException as e:
+            log_error(e)
+
+        except Exception as e:
+            log_error('Unexpected error while processing sound: %s' % e)
+
+        cleanup_tmp_directory(tmp_directory)
+        return ''  # Gearman requires return value to be a string

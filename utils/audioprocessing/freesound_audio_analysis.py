@@ -65,6 +65,9 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
             os.chdir(essentia_dir)
             exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
                           os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id)]
+            if settings.ESSENTIA_PROFILE_FILE_PATH is not None:
+                exec_array += [settings.ESSENTIA_PROFILE_FILE_PATH]
+
             p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
             if p.returncode != 0:
@@ -72,9 +75,15 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
                 return False
 
             # Move essentia output files to analysis data directory
-            shutil.move(os.path.join(self.tmp_directory, 'ess_%i_statistics.yaml' % self.sound.id), statistics_path)
-            shutil.move(os.path.join(self.tmp_directory, 'ess_%i_frames.json' % self.sound.id), frames_path)
-            self.log_step("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
+            if settings.ESSENTIA_PROFILE_FILE_PATH:
+                # Never versions of FreesoundExtractor using profile file use a different naming convention
+                shutil.move(os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id), statistics_path)
+                shutil.move(os.path.join(self.tmp_directory, 'ess_%i_frames' % self.sound.id), frames_path)
+            else:
+                shutil.move(os.path.join(self.tmp_directory, 'ess_%i_statistics.yaml' % self.sound.id), statistics_path)
+                shutil.move(os.path.join(self.tmp_directory, 'ess_%i_frames.json' % self.sound.id), frames_path)
+
+            self.log_info("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
 
             # Change sound analysis and similarity states
             self.sound.set_analysis_state('OK')

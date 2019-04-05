@@ -483,14 +483,16 @@ class Sound(SocialModel):
             ),
             analysis=dict(
                 statistics=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id,
-                                                                                                    sound_user_id)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.yaml" % (id_folder, self.id, sound_user_id)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.%s" % (
+                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
+                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.%s" % (
+                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
                 ),
                 frames=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id,
-                                                                                                sound_user_id)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.json" % (id_folder, self.id, sound_user_id)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.%s" % (
+                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
+                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
+                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
                 )
             )
         )

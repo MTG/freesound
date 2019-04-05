@@ -18,28 +18,23 @@
 #     See AUTHORS file.
 #
 
-import errno
 import json
 import logging
 import os
-import shutil
 import signal
 import sys
 import tempfile
-import traceback
 
 import gearman
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db import connection
-from django.db.utils import DatabaseError
-from psycopg2 import InterfaceError
 
-from sounds.models import Sound
-from utils.audioprocessing.freesound_audio_analysis import analyze
-from utils.audioprocessing.freesound_audio_processing import process
+from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
+from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
+from utils.filesystem import remove_directory
 
-logger = logging.getLogger("console")
+logger = logging.getLogger("processing")
+logger_error = logging.getLogger("processing_errors")
 
 
 class WorkerException(Exception):
@@ -59,30 +54,22 @@ def cancel_timeout_alarm():
     signal.alarm(0)
 
 
-def log(msg):
-    logger.info("[%d] %s" % (os.getpid(), msg))
-
-
-def log_error(msg):
-    log('ERROR: %s' % msg)
-
-
 def cleanup_tmp_directory(tmp_directory):
     if tmp_directory is not None:
         try:
-            shutil.rmtree(tmp_directory)
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                pass  # Directory does not exist, do nothing about it
-            else:
-                log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
+            remove_directory(tmp_directory)
         except Exception as e:
             log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
 
 
+def log_error(message):
+    logger.error(message)
+    logger_error.info(message)
+
+
 def check_if_free_space(directory='/tmp/', min_disk_space_percentage=0.05):
     """
-    Raises a WorkerException if the perfectage of free disk space in the volume of the given 'directory' is lower
+    Raises an Exception if the perfectage of free disk space in the volume of the given 'directory' is lower
     than 'min_disk_space_percentage'.
     """
     stats = os.statvfs(directory)
@@ -90,44 +77,6 @@ def check_if_free_space(directory='/tmp/', min_disk_space_percentage=0.05):
     if percetage_free < min_disk_space_percentage:
         raise WorkerException("Disk is running out of space, "
                               "aborting task as there might not be enough space for temp files")
-
-
-def get_sound_object(sound_id):
-    # Get the Sound object from DB
-    # TODO: is all this really needed?
-    sound = None
-    intent = 3
-    try:
-        # If the database connection has become invalid, try to reset the
-        # connection (max of 'intent' times)
-        while intent > 0:
-            try:
-                # Try to get the sound, and if we succeed continue as normal
-                sound = Sound.objects.get(id=sound_id)
-                break
-            except (InterfaceError, DatabaseError):
-                # Try to close the current connection (it probably already is closed)
-                try:
-                    connection.connection.close()
-                except:
-                    pass
-                # Trick Django into creating a fresh connection on the next db use attempt
-                connection.connection = None
-                intent -= 1
-
-    except Sound.DoesNotExist:
-        raise WorkerException("Did not find sound with id: %s" % sound_id)
-
-    except Exception as e:
-        raise WorkerException("Unexpected error while getting sound from DB: %s\n\t%s"
-                              % (e, traceback.format_exc()))
-
-    # if we didn't succeed in resetting the connection, quit the worker
-    if intent <= 0:
-        raise WorkerException("Problems while connecting to the database, could not reset the connection and "
-                              "will kill the worker.")
-
-    return sound
 
 
 class Command(BaseCommand):
@@ -142,21 +91,21 @@ class Command(BaseCommand):
             help='Register this function (default: process_sound)')
 
     def handle(self, *args, **options):
-        log('Starting worker')
+        logger.info('Starting worker')
         task_name = 'task_%s' % options['queue']
-        log('Task: %s' % task_name)
+        logger.info('Task: %s' % task_name)
         if task_name not in dir(self):
-            log("Wow.. That's crazy! Maybe try an existing queue?")
+            logger.info("Wow.. That's crazy! Maybe try an existing queue?")
             sys.exit(1)
 
         task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
-        log('Initializing gm_worker')
+        logger.info('Initializing gm_worker')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        log('Registering task %s, function %s' % (task_name, task_func))
+        logger.info('Registering task %s, function %s' % (task_name, task_func))
         gm_worker.register_task(options['queue'], task_func)
-        log('Starting work')
+        logger.info('Starting work')
         gm_worker.work()
-        log('Ended work')
+        logger.info('Ended work')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
         tmp_directory = None
@@ -164,19 +113,21 @@ class Command(BaseCommand):
         sound_id = job_data['sound_id']
         set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
 
-        log("---- Starting analysis of sound with id %s ----" % sound_id)
+        logger.info("---- Starting analysis of sound with id %s ----" % sound_id)
         try:
             check_if_free_space()
             tmp_directory = tempfile.mkdtemp(prefix='analysis_%s_' % sound_id)
-            sound = get_sound_object(sound_id)
-            result = analyze(sound)
-            log("Finished analysis of sound with id %s: %s" % (sound_id, ("OK" if result else "FALIED")))
+            result = FreesoundAudioAnalyzer(sound_id=sound_id, tmp_directory=tmp_directory).analyze()
+            if result:
+                logger.info("Successfully analyzed sound %s" % sound_id)
+            else:
+                log_error("Failed analyizing sound %s" % sound_id)
 
         except WorkerException as e:
-            log_error(e)
+            log_error('%s' % e)
 
         except Exception as e:
-            log_error('Unexpected error while analyzing sound: %s' % e)
+            log_error('Unexpected error while analyzing sound %s' % e)
 
         cancel_timeout_alarm()
         cleanup_tmp_directory(tmp_directory)
@@ -190,20 +141,22 @@ class Command(BaseCommand):
         skip_displays = job_data.get('skip_displays', False)
         set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
 
-        log("---- Starting processing of sound with id %s ----" % sound_id)
+        logger.info("---- Starting processing of sound with id %s ----" % sound_id)
         try:
             check_if_free_space()
             tmp_directory = tempfile.mkdtemp(prefix='processing_%s_' % sound_id)
-            sound = get_sound_object(sound_id)
-            result = process(
-                sound, skip_displays=skip_displays, skip_previews=skip_previews, tmp_directory=tmp_directory)
-            log("Finished processing of sound with id %s: %s" % (sound_id, ("OK" if result else "FALIED")))
+            result = FreesoundAudioProcessor(sound_id=sound_id, tmp_directory=tmp_directory)\
+                .process(skip_displays=skip_displays, skip_previews=skip_previews)
+            if result:
+                logger.info("Successfully processed sound %s" % sound_id)
+            else:
+                log_error("Failed processing sound %s" % sound_id)
 
         except WorkerException as e:
-            log_error(e)
+            log_error('%s' % e)
 
         except Exception as e:
-            log_error('Unexpected error while processing sound: %s' % e)
+            log_error('Unexpected error while processing sound %s' % e)
 
         cancel_timeout_alarm()
         cleanup_tmp_directory(tmp_directory)

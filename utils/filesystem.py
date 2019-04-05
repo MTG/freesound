@@ -18,10 +18,11 @@
 #     See AUTHORS file.
 #
 
-import os
-import zlib
-import hashlib
 import errno
+import hashlib
+import os
+import shutil
+import zlib
 
 
 class File:
@@ -92,9 +93,16 @@ def remove_directory_if_empty(path):
 
 
 def create_directories(path):
-    if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-        except OSError as exc:
-            if exc.errno != errno.EEXIST:
-                raise
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            raise  # Ignore exception if directory already existing
+
+
+def remove_directory(path):
+    try:
+        shutil.rmtree(path)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise  # Ignore exception if directory does not exist

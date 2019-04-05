@@ -18,140 +18,79 @@
 #     See AUTHORS file.
 #
 
-import errno
 import logging
 import os
 import shutil
-import signal
 import subprocess
-import sys
-import tempfile
 
 from django.conf import settings
 
-import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
+from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessorBase
+from utils.filesystem import create_directories
 from utils.mirror_files import copy_analysis_to_mirror_locations
 
 
 logger = logging.getLogger("processing")
 
 
-def analyze(sound, tmp_directory=None):
+class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
 
-    def alarm_handler(signum, frame):
-        raise AudioProcessingException("timeout while waiting for Essentia")
+    def failure(self, message, error=None, failure_state="FA"):
+        super(FreesoundAudioAnalyzer, self).failure(message, error)
+        self.sound.set_analysis_state(failure_state)
 
-    def write_log(message):
-        sys.stdout.write(str(message) + '\n')
-        sys.stdout.flush()
-        logger.info("[%d] %i: %s" % (os.getpid(), sound.id, message))
+    def analyze(self):
 
-    def create_directory(path):
         try:
-            os.makedirs(path)
-        except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                # Directory already exists
-                pass
-            else:
-                # Directory could not be created, raise exception
-                raise
+            # Get the path of the original sound and convert to PCM
+            sound_path = self.get_sound_path()
+            tmp_wavefile = self.convert_to_pcm(sound_path)
 
-    def cleanup():
-        log_step("cleaning up temp files: " + ", ".join(os.listdir(tmp_directory)))
-        try:
-            shutil.rmtree(tmp_directory)
-        except Exception as e:
-            write_log("ERROR: could not clean tmp files in %s: %s" % (tmp_directory, e))
+            # Check if filesize of the converted file
+            if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
+                if os.path.getsize(tmp_wavefile) > settings.MAX_FILESIZE_FOR_ANALYSIS:
+                    self.failure('converted file is larger than %sMB and therefore it won\'t be analyzed.' %
+                                 (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
+                    return False
 
-    def failure(message, error=None, failure_state="FA"):
-        sound.set_analysis_state(failure_state)
-        logging_message = "ERROR: Failed to analyze sound with id %s\n" % sound.id
-        logging_message += "\tmessage: %s\n" % message
-        if error:
-            logging_message += "\terror: %s" % str(error)
-        write_log(logging_message)
-        cleanup()
+            # Create directories where to store analysis files and move them there
+            statistics_path = self.sound.locations("analysis.statistics.path")
+            frames_path = self.sound.locations("analysis.frames.path")
+            create_directories(os.path.dirname(statistics_path))
+            create_directories(os.path.dirname(frames_path))
 
-    def log_step(message):
-        write_log('- ' + message)
-
-    if tmp_directory is None:
-        tmp_directory = tempfile.mkdtemp()
-
-    try:
-        # Get the path of the original sound
-        sound_path = sound.locations('path')
-        if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
-            sound_path = sound.locations('preview.LQ.mp3.path')
-
-        if not os.path.exists(sound_path):
-            failure('could not find file with path %s' % sound_path)
-            return False
-
-        # Convert to mono PCM and save PCM version in `tmp_wavefile`
-        try:
-            _, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(sound.id), dir=tmp_directory)
-            audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=True)
-            log_step("converted to PCM: " + tmp_wavefile)
-        except AudioProcessingException as e:
-            failure("conversion to PCM failed", e)
-            return False
-        except IOError as e:
-            # Could not create tmp file
-            failure("could not create tmp_wavefile file", e)
-            return False
-        except Exception as e:
-            failure("unhandled exception while converting to PCM", e)
-            return False
-
-        if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
-            if os.path.getsize(tmp_wavefile) > settings.MAX_FILESIZE_FOR_ANALYSIS:
-                failure('converted file is larger than %sMB and therefore it won\'t be analyzed.' %
-                        (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
+            # Run Essentia's FreesoundExtractor analsyis
+            essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
+            os.chdir(essentia_dir)
+            exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
+                          os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id)]
+            p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = p.communicate()
+            if p.returncode != 0:
+                self.failure("essentia extractor returned an error\nstdout: %s \nstderr: %s" % (out, err))
                 return False
 
-        # Create directories where to store analysis files and move them there
-        statistics_path = sound.locations("analysis.statistics.path")
-        frames_path = sound.locations("analysis.frames.path")
-        create_directory(os.path.dirname(statistics_path))
-        create_directory(os.path.dirname(frames_path))
+            # Move essentia output files to analysis data directory
+            shutil.move(os.path.join(self.tmp_directory, 'ess_%i_statistics.yaml' % self.sound.id), statistics_path)
+            shutil.move(os.path.join(self.tmp_directory, 'ess_%i_frames.json' % self.sound.id), frames_path)
+            self.log_step("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
 
-        # Run Essentia's FreesoundExtractor analsyis
-        essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
-        os.chdir(essentia_dir)
-        exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
-                      os.path.join(tmp_directory, 'essentia_%i' % sound.id)]
-        p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        signal.signal(signal.SIGALRM, alarm_handler)
-        signal.alarm(settings.ESSENTIA_TIMEOUT)
-        out, err = p.communicate()
-        signal.alarm(0)
-        if p.returncode != 0:
-            failure("essentia extractor returned an error\nstdout: %s \nstderr: %s" % (out, err))
+            # Change sound analysis and similarity states
+            self.sound.set_analysis_state('OK')
+            self.sound.set_similarity_state('PE')  # Set similarity to PE so sound will get indexed to Gaia
+
+        except AudioProcessingException as e:
+            self.failure(e)
+            return False
+        except (Exception, OSError) as e:
+            self.failure("unexpected error in analysis ", e)
             return False
 
-        # Move essentia output files to analysis data directory
-        shutil.move(os.path.join(tmp_directory, 'essentia_%i_statistics.yaml' % sound.id), statistics_path)
-        shutil.move(os.path.join(tmp_directory, 'essentia_%i_frames.json' % sound.id), frames_path)
-        log_step("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
+        # Clean up temp files
+        self.cleanup()
 
-        # Change sound analysis and similarity states
-        sound.set_analysis_state('OK')
-        sound.set_similarity_state('PE')  # Set similarity to PE so sound will get indexed to Gaia
+        # Copy analysis files to mirror locations
+        copy_analysis_to_mirror_locations(self.sound)
 
-    except Exception as e:
-        failure("unexpected error in analysis ", e)
-        return False
-    except OSError:
-        failure("could not create directory for statistics and/or frames")
-        return False
-
-    # Clean up temp files
-    cleanup()
-
-    # Copy analysis files to mirror locations
-    copy_analysis_to_mirror_locations(sound)
-
-    return True
+        return True

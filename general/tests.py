@@ -18,11 +18,12 @@
 #     See AUTHORS file.
 #
 
-from forum.models import Thread, Post, Forum
-from ratings.models import SoundRating
-from sounds.tests import create_user_and_sounds
 from django.core.management import call_command
 from django.test import TestCase
+
+from forum.models import Thread, Post, Forum
+from ratings.models import SoundRating
+from utils.test import create_user_and_sounds
 
 
 class ReportCountStatusesManagementCommandTestCase(TestCase):

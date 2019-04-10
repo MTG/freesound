@@ -182,7 +182,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
         # Fill audio information fields in Sound object
         try:
-            self.sound.set_audio_info_fields(info)
+            self.sound.set_audio_info_fields(**info)
         except Exception as e:  # Could not catch a more specific exception
             self.failure("failed writting audio info fields to db", e)
             return False

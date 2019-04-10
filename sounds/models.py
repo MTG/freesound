@@ -606,12 +606,24 @@ class Sound(SocialModel):
         self.similarity_state = state
         self.save(update_fields=['similarity_state'])
 
-    def set_audio_info_fields(self, info):
-        allowed_fields = ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']
-        for field_name, value in info.items():
-            if field_name in allowed_fields:
-                self.__setattr__(field_name, value)
-        self.save(update_fields=list(info.keys()))
+    def set_audio_info_fields(self, samplerate=None, bitrate=None, bitdepth=None, channels=None, duration=None):
+        update_fields = []
+        if samplerate is not None:
+            self.samplerate = samplerate
+            update_fields.append('samplerate')
+        if bitrate is not None:
+            self.bitrate = bitrate
+            update_fields.append('bitrate')
+        if bitdepth is not None:
+            self.bitdepth = bitdepth
+            update_fields.append('bitdepth')
+        if channels is not None:
+            self.channels = channels
+            update_fields.append('channels')
+        if duration is not None:
+            self.duration = duration
+            update_fields.append('duration')
+        self.save(update_fields=update_fields)
 
     def change_moderation_state(self, new_state, commit=True, do_not_update_related_stuff=False):
         """

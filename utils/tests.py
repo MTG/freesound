@@ -667,3 +667,26 @@ class AudioProcessingTestCase(TestCase):
         # this point for the present unit test
 
 
+
+    '''
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info')
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm')
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    @override_settings(STEREOFY_PATH=tempfile.mkstemp())
+    def test_make_previews_fails(self, convert_to_pcm_mock, stereofy_mock):
+        self.set_convert_to_pcm_mock_return_value(convert_to_pcm_mock)
+        self.set_stereofy_mock_return_value(stereofy_mock)
+
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        # processing will fail because create mp3 does not find tmp wavfile
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('conversion to mp3 (preview) has failed', self.sound.processing_log)
+        self.assertFalse(os.path.exists(tmp_directory))
+    '''
+
+
+

@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import errno
 import logging
 import os
 import tempfile
@@ -114,8 +115,11 @@ class FreesoundAudioProcessorBase(object):
             # Could not create tmp file
             raise AudioProcessingException("could not create tmp_wavefile file: %s" % e)
         except OSError as e:
-            # Could not execute command, probably command does not exist?
-            raise AudioProcessingException("conversion to PCM failed, could not run command, does it exist?: %s" % e)
+            if e.errno == errno.ENOENT:
+                # Could not execute command, probably format decoder commands and/or ffmpeg are not installed
+                raise AudioProcessingException("conversion to PCM failed, command does not seem to exist: %s" % e)
+            else:
+                raise
         except AudioProcessingException as e:
             # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
             try:
@@ -161,9 +165,14 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
             self.failure("could not create tmp_wavefile2 file", e)
             return False
         except OSError as e:
-            # Could not execute command, probably command does not exist?
-            self.failure("stereofy has failed, could not run command, does it exist?: %s" % e)
-            return False
+            if e.errno == errno.ENOENT:
+                # Could not execute command stereofy command, probably can't be found in settings.STEREOFY_PATH
+                self.failure("stereofy has failed, command does not seem to exist: %s" % e)
+                return False
+            else:
+                self.failure("stereofy has failed: %s" % e)
+                return False
+
         except AudioProcessingException as e:
             self.failure("stereofy has failed", e)
             return False

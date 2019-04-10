@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import errno
 import logging
 import os
 import tempfile
@@ -115,18 +114,17 @@ class FreesoundAudioProcessorBase(object):
             # Could not create tmp file
             raise AudioProcessingException("could not create tmp_wavefile file: %s" % e)
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                # Could not execute command, probably format decoder commands and/or ffmpeg are not installed
-                raise AudioProcessingException("conversion to PCM failed, "
-                                               "make sure that external executables exist: %s" % e)
-            else:
-                raise
+            raise AudioProcessingException("conversion to PCM failed, "
+                                           "make sure that format conversion executables exist: %s" % e)
         except AudioProcessingException as e:
             # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
             try:
                 audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=mono)
             except AudioProcessingException as e:
                 raise AudioProcessingException("conversion to PCM failed: %s" % e)
+            except OSError as e:
+                raise AudioProcessingException("conversion to PCM failed, "
+                                               "make sure that ffmpeg executable exists: %s" % e)
         except Exception as e:
             raise AudioProcessingException("unhandled exception while converting to PCM: %s" % e)
 
@@ -166,13 +164,9 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
             self.failure("could not create tmp_wavefile2 file", e)
             return False
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                self.failure("stereofy has failed, make sure executable exists at %s: %s" % (settings.SOUNDS_PATH, e))
-                return False
-            else:
-                self.failure("stereofy has failed: %s" % e)
-                return False
-
+            self.failure("stereofy has failed, "
+                         "make stereofy sure executable exists at %s: %s" % (settings.SOUNDS_PATH, e))
+            return False
         except AudioProcessingException as e:
             self.failure("stereofy has failed", e)
             return False
@@ -203,6 +197,11 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                                       (self.sound.locations("preview.HQ.mp3.path"), 192)]:
                 try:
                     audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
+                except OSError as e:
+                    self.failure("conversion to mp3 (preview) has failed, "
+                                 "make sure that lame executable exists: %s" % e)
+                    return False
+
                 except AudioProcessingException as e:
                     self.failure("conversion to mp3 (preview) has failed", e)
                     return False
@@ -216,6 +215,10 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                                       (self.sound.locations("preview.HQ.ogg.path"), 6)]:
                 try:
                     audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
+                except OSError as e:
+                    self.failure("conversion to ogg (preview) has failed, "
+                                 "make sure that oggenc executable exists: %s" % e)
+                    return False
                 except AudioProcessingException as e:
                     self.failure("conversion to ogg (preview) has failed", e)
                     return False

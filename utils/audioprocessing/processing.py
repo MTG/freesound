@@ -541,7 +541,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     if not os.path.exists(input_filename):
         raise AudioProcessingException("file %s does not exist" % input_filename)
 
-    command = ["lame", "--silent", "--abr", str(quality), input_filename, output_filename]
+    command = ["lame2", "--silent", "--abr", str(quality), input_filename, output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
@@ -558,7 +558,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     if not os.path.exists(input_filename):
         raise AudioProcessingException("file %s does not exist" % input_filename)
 
-    command = ["oggenc", "-q", str(quality), input_filename, "-o", output_filename]
+    command = ["oggenc2", "-q", str(quality), input_filename, "-o", output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()

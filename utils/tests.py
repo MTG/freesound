@@ -619,7 +619,8 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     def test_sound_path_does_not_exist(self):
         tmp_directory = self.pre_test(create_sound_file=False)
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -630,7 +631,8 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
     def test_conversion_to_pcm_failed(self):
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -643,7 +645,8 @@ class AudioProcessingTestCase(TestCase):
         self.sound.type = 'wav'
         self.sound.save()
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -657,8 +660,9 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
     def test_stereofy_failed(self, *args):
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
         # processing will fail because stereofy can't work with generated random audio file or sterefy can't be found
+        self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -688,8 +692,9 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(PREVIEWS_PATH=tempfile.mkdtemp())
     def test_make_mp3_previews_fails(self, *args):
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
         # processing will fail because create mp3 does not find tmp wavfile
+        self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -704,8 +709,9 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(PREVIEWS_PATH=tempfile.mkdtemp())
     def test_make_ogg_previews_fails(self, *args):
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
         # processing will fail because create ogg does not find tmp wavfile
+        self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -722,8 +728,9 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(DISPLAYS_PATH=tempfile.mkdtemp())
     def test_create_images_fails(self, *args):
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
         # processing will fail because no valid audio files will be readable when creating images
+        self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -741,7 +748,7 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(DISPLAYS_PATH=tempfile.mkdtemp())
     def test_skip_previews(self, *args):
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory)\
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory)\
             .process(skip_previews=True)
 
         self.assertFalse(os.path.exists(self.sound.locations('preview.LQ.ogg.path')))
@@ -757,6 +764,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertTrue(os.path.exists(self.sound.locations('display.wave.L.path')))
         self.assertTrue(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
 
+        self.assertTrue(result)  # Processing succeeded
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "OK")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -773,7 +781,7 @@ class AudioProcessingTestCase(TestCase):
     @override_settings(DISPLAYS_PATH=tempfile.mkdtemp())
     def test_skip_displays(self, *args):
         tmp_directory = self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory) \
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory) \
             .process(skip_displays=True)
 
         self.assertTrue(os.path.exists(self.sound.locations('preview.LQ.ogg.path')))
@@ -789,6 +797,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertFalse(os.path.exists(self.sound.locations('display.wave.L.path')))
         self.assertFalse(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
 
+        self.assertTrue(result)  # Processing succeeded
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "OK")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -821,7 +830,9 @@ class AudioAnalysisTestCase(TestCase):
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     def test_sound_path_does_not_exist(self):
         tmp_directory = self.pre_test(create_sound_file=False)
-        FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).analyze()
+        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).analyze()
+        # analysis will fail because sound does not exist
+        self.assertFalse(result)  # Analysis failed, returning False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "FA")
         self.assertFalse(os.path.exists(tmp_directory))
@@ -830,8 +841,9 @@ class AudioAnalysisTestCase(TestCase):
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
     def test_conversion_to_pcm_failed(self):
         tmp_directory = self.pre_test()
-        FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).analyze()
-        # analysis will fail because there is no sound file
+        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).analyze()
+        # analysis will fail because convert_to_pcm can't load a file
+        self.assertFalse(result)  # Analysis failed, returning False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "FA")
         self.assertFalse(os.path.exists(tmp_directory))
@@ -843,7 +855,7 @@ class AudioAnalysisTestCase(TestCase):
     def test_big_pcm_file_is_not_analyzed(self, *args):
         tmp_directory = self.pre_test()
         result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).analyze()
-        self.assertFalse(result)
+        self.assertFalse(result)  # Analysis failed, returning False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "SK")
         self.assertFalse(os.path.exists(tmp_directory))
@@ -857,11 +869,9 @@ class AudioAnalysisTestCase(TestCase):
     def test_analysis_created_analysis_files(self, *args):
         tmp_directory = self.pre_test()
         result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).analyze()
-        self.assertTrue(result)
         self.assertTrue(os.path.exists(self.sound.locations('analysis.statistics.path')))
         self.assertTrue(os.path.exists(self.sound.locations('analysis.frames.path')))
+        self.assertTrue(result)  # Analysis succeeded
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "OK")
         self.assertFalse(os.path.exists(tmp_directory))
-
-

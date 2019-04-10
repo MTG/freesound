@@ -563,8 +563,16 @@ class BulkDescribeUtils(TestCase):
 
 
 def convert_to_pcm_mock(input_filename, output_filename):
+    return True
+
+
+def convert_to_pcm_mock_create_file(input_filename, output_filename):
     create_test_files(paths=[output_filename], n_bytes=2048)
     return True
+
+
+def convert_to_pcm_fail_mock(input_filename, output_filename):
+    raise AudioProcessingException("failed converting to pcm")
 
 
 def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
@@ -627,11 +635,13 @@ class AudioProcessingTestCase(TestCase):
         self.assertIn('could not find file with path', self.sound.processing_log)
         self.assertFalse(os.path.exists(tmp_directory))
 
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_fail_mock)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
-    def test_conversion_to_pcm_failed(self):
+    def test_conversion_to_pcm_failed(self, *args):
         tmp_directory = self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        # will fail because mocked version of convert_to_pcm fails
         self.assertFalse(result)  # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
@@ -837,18 +847,19 @@ class AudioAnalysisTestCase(TestCase):
         self.assertEqual(self.sound.analysis_state, "FA")
         self.assertFalse(os.path.exists(tmp_directory))
 
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_fail_mock)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
-    def test_conversion_to_pcm_failed(self):
+    def test_conversion_to_pcm_failed(self, *args):
         tmp_directory = self.pre_test()
         result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).analyze()
-        # analysis will fail because convert_to_pcm can't load a file
+        # analysis will fail because mocked convert_to_pcm fails
         self.assertFalse(result)  # Analysis failed, returning False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "FA")
         self.assertFalse(os.path.exists(tmp_directory))
 
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_create_file)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
     @override_settings(MAX_FILESIZE_FOR_ANALYSIS=1024)

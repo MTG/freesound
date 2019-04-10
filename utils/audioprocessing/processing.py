@@ -589,3 +589,19 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     signal.alarm(0)
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
+
+
+def analyze_using_essentia(essentia_executable_path, input_filename, output_filename_base, essentia_profile_path=None):
+    """
+    runs Essentia's FreesoundExtractor analsyis
+    """
+    essentia_dir = os.path.dirname(os.path.abspath(essentia_executable_path))
+    os.chdir(essentia_dir)
+    exec_array = [essentia_executable_path, input_filename, output_filename_base]
+    if essentia_profile_path is not None:
+        exec_array += [essentia_profile_path]
+
+    p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+    if p.returncode != 0:
+        raise AudioProcessingException("essentia extractor returned an error\nstdout: %s \nstderr: %s" % (out, err))

@@ -21,15 +21,14 @@
 import logging
 import os
 import shutil
-import subprocess
 
 from django.conf import settings
 
-from utils.audioprocessing.processing import AudioProcessingException
+import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessorBase
+from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories
 from utils.mirror_files import copy_analysis_to_mirror_locations
-
 
 logger = logging.getLogger("processing")
 
@@ -61,18 +60,9 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
             create_directories(os.path.dirname(frames_path))
 
             # Run Essentia's FreesoundExtractor analsyis
-            essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
-            os.chdir(essentia_dir)
-            exec_array = [settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
-                          os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id)]
-            if settings.ESSENTIA_PROFILE_FILE_PATH is not None:
-                exec_array += [settings.ESSENTIA_PROFILE_FILE_PATH]
-
-            p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = p.communicate()
-            if p.returncode != 0:
-                self.failure("essentia extractor returned an error\nstdout: %s \nstderr: %s" % (out, err))
-                return False
+            audioprocessing.analyze_using_essentia(settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
+                                   os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id),
+                                   essentia_profile_path=settings.ESSENTIA_PROFILE_FILE_PATH)
 
             # Move essentia output files to analysis data directory
             if settings.ESSENTIA_PROFILE_FILE_PATH:

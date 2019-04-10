@@ -18,24 +18,29 @@
 #     See AUTHORS file.
 #
 
+import datetime
+import os
+import shutil
+import tempfile
+
+import mock
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User
-from django.conf import settings
-from django.core.cache import cache
+
+import utils.downloads
+from donations.models import Donation, DonationsModalSettings
+from sounds.models import Sound, Pack, License, Download
+from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
+from utils.audioprocessing.processing import AudioProcessingException
 from utils.forms import filename_has_valid_extension
-from utils.tags import clean_and_split_tags
-from utils.test import create_test_files
-from utils.text import clean_html
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, create_sound, \
     NoAudioException, AlreadyExistsException
-from sounds.models import Sound, Pack, License, Download
-from donations.models import Donation, DonationsModalSettings
-import shutil
-import datetime
-import utils.downloads
-import tempfile
-import os
+from utils.tags import clean_and_split_tags
+from utils.test import create_test_files, create_user_and_sounds
+from utils.text import clean_html
 
 
 class UtilsTest(TestCase):
@@ -557,7 +562,108 @@ class BulkDescribeUtils(TestCase):
 
 
 class AudioProcessingTestCase(TestCase):
-    pass
 
+    fixtures = ['initial_data']
 
+    def pre_test(self):
+        # Do some stuff which needs to be carried out right before each test
+        tmp_directory = tempfile.mkdtemp()
+        self.assertEqual(self.sound.processing_state, "PE")
+        return tmp_directory
+
+    @staticmethod
+    def set_convert_to_pcm_mock_return_value(func):
+        # Mock convert_to_pcm always returns True
+        func.return_value = True
+
+    @staticmethod
+    def set_stereofy_mock_return_value(func):
+        # Mock convert_to_pcm so it always returns True and "works"
+        func.return_value = dict(
+            duration=123.5,
+            channels=2,
+            samplerate=44100,
+            bitrate=128,
+            bitdepth=16)
+
+    def setUp(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=1, type="mp3")  # Use mp3 so it needs converstion to PCM
+        self.sound = sounds[0]
+        self.user = user
+
+    def test_sound_object_does_not_exist(self):
+        with self.assertRaises(AudioProcessingException) as cm:
+            FreesoundAudioProcessor(sound_id=999)
+        exc = cm.exception
+        self.assertIn('did not find Sound object', exc.message)
+
+    def test_sound_path_does_not_exist(self):
+        tmp_directory = self.pre_test()
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('could not find file with path', self.sound.processing_log)
+        self.assertFalse(os.path.exists(tmp_directory))
+
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    def test_conversion_to_pcm_failed(self):
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('conversion to PCM failed', self.sound.processing_log)
+        self.assertFalse(os.path.exists(tmp_directory))
+
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    def test_no_need_to_convert_to_pcm(self):
+        tmp_directory = self.pre_test()
+        self.sound.type = 'wav'
+        self.sound.save()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('no need to convert, this file is already PCM data', self.sound.processing_log)
+        self.assertFalse(os.path.exists(tmp_directory))
+        # NOTE: this test will generate stereofy errors as well but here we only check that a spcific message about
+        # PCM conversion was added to the log. stereofy is tested below.
+
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm')
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    def test_stereofy_failed(self, convert_to_pcm_mock):
+        self.set_convert_to_pcm_mock_return_value(convert_to_pcm_mock)
+
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        # processing will fail because stereofy can't work with generated random audio file or sterefy can't be found
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('stereofy has failed', self.sound.processing_log)
+        self.assertFalse(os.path.exists(tmp_directory))
+
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info')
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm')
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    def test_set_audio_info_fields(self, convert_to_pcm_mock, stereofy_mock):
+        self.set_convert_to_pcm_mock_return_value(convert_to_pcm_mock)
+        self.set_stereofy_mock_return_value(stereofy_mock)
+
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.duration, 123.5)  # Assert that info properties were set
+        self.assertEqual(self.sound.channels, 2)
+        self.assertEqual(self.sound.samplerate, 44100)
+        self.assertEqual(self.sound.bitrate, 128)
+        self.assertEqual(self.sound.bitdepth, 0)  # This will be 0 because sound is mp3 and bitdepth is overwritten to 0
+
+        # NOTE: after calling set_audio_info_fields processing will fail, but we're onlt interested in testing up to
+        # this point for the present unit test
 

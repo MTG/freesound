@@ -25,26 +25,36 @@ from django.contrib.auth.models import User
 
 from sounds.models import Sound, Pack, License
 from utils.tags import clean_and_split_tags
+from utils.filesystem import create_directories
 
 
-def create_test_files(filenames, directory, n_bytes=1024):
+def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024):
     """
     This function generates test files ith random content and saves them in the specified directory.
     :param filenames: list of names for the files to generate
     :param directory: folder where to store the files
+    :param paths: if provided, then files are created in the indicated paths regardless of filenames and direcotry args
     :param n_bytes: numnber of bytes of each generated file
     """
-    for filename in filenames:
-        f = open(os.path.join(directory, filename), 'a')
-        f.write(os.urandom(n_bytes))
-        f.close()
+    if paths is None:
+        create_directories(directory)
+        for filename in filenames:
+            f = open(os.path.join(directory, filename), 'w')
+            f.write(os.urandom(n_bytes))
+            f.close()
+    else:
+        for path in paths:
+            create_directories(os.path.dirname(path))
+            f = open(path, 'w')
+            f.write(os.urandom(n_bytes))
+            f.close()
 
 
 sound_counter = count()  # Used in create_user_and_sounds to avoid repeating sound names
 
 
 def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None,
-                           processing_state='PE', moderation_state='PE'):
+                           processing_state='PE', moderation_state='PE', type='wav'):
     """
     Creates User, Sound and Pack objects useful for testing. A 'sound_counter' is used to make sound names unique as
     well as other fields like md5.
@@ -57,6 +67,7 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
     :param tags: tags added to the sounds (all sounds will have the same tags)
     :param processing_state: processing state of the created sounds
     :param moderation_state: moderation state of the created sounds
+    :param type: type of the sounds to be created (e.g. 'wav')
     :return: tuple with (User object, list of Pack objcts, list of Sound objects)
     """
     count_offset = count_offset + next(sound_counter)
@@ -77,6 +88,7 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
                                      license=License.objects.all()[0],
                                      pack=pack,
                                      md5="fakemd5_%i" % (i + count_offset),
+                                     type=type,
                                      processing_state=processing_state,
                                      moderation_state=moderation_state)
 

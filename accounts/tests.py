@@ -43,6 +43,7 @@ from forum.models import Thread, Post, Forum
 from messages.models import Message, MessageBody
 from tickets.models import Ticket
 from utils.mail import transform_unique_email, send_mail
+from utils.test import create_test_files
 import accounts.models
 import mock
 import os
@@ -638,10 +639,7 @@ class UserUploadAndDescribeSounds(TestCase):
         self.client.login(username='testuser', password='testpass')
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
-        for filename in filenames:
-            f = open(user_upload_path + filename, 'a')
-            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
-            f.close()
+        create_test_files(filenames, user_upload_path)
 
         # Check that files are displayed in the template
         resp = self.client.get('/home/describe/')
@@ -690,10 +688,7 @@ class UserUploadAndDescribeSounds(TestCase):
         self.client.login(username='testuser', password='testpass')
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
-        for filename in filenames:
-            f = open(user_upload_path + filename, 'a')
-            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
-            f.close()
+        create_test_files(filenames, user_upload_path)
 
         # Set license and pack data in session
         session = self.client.session

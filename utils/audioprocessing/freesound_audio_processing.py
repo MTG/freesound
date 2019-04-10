@@ -110,10 +110,12 @@ class FreesoundAudioProcessorBase(object):
                 tmp_wavefile = sound_path
                 self.log_info("no need to convert, this file is already PCM data")
 
+        except OSError as e:
+            # Could not execute command, probably command does not exist?
+            raise AudioProcessingException("could not run PCM conversion command, does it exist?: %s" % e)
         except IOError as e:
             # Could not create tmp file
             raise AudioProcessingException("could not create tmp_wavefile file: %s" % e)
-
         except AudioProcessingException as e:
             # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
             try:
@@ -154,6 +156,9 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
             if self.sound.type in ["mp3", "ogg", "m4a"]:
                 info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
             self.log_info("got sound info and stereofied: " + tmp_wavefile2)
+        except OSError as e:
+            # Could not execute command, probably command does not exist?
+            raise AudioProcessingException("could not run stereofy command, does it exist?: %s" % e)
         except IOError as e:
             # Could not create tmp file
             self.failure("could not create tmp_wavefile2 file", e)

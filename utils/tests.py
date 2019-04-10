@@ -663,7 +663,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.samplerate, 44100)
         self.assertEqual(self.sound.bitrate, 128)
         self.assertEqual(self.sound.bitdepth, 0)  # This will be 0 because sound is mp3 and bitdepth is overwritten to 0
-
         # NOTE: after calling set_audio_info_fields processing will fail, but we're onlt interested in testing up to
         # this point for the present unit test
+
 

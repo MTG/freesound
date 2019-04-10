@@ -117,7 +117,8 @@ class FreesoundAudioProcessorBase(object):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 # Could not execute command, probably format decoder commands and/or ffmpeg are not installed
-                raise AudioProcessingException("conversion to PCM failed, command does not seem to exist: %s" % e)
+                raise AudioProcessingException("conversion to PCM failed, "
+                                               "make sure that external executables exist: %s" % e)
             else:
                 raise
         except AudioProcessingException as e:
@@ -166,8 +167,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
             return False
         except OSError as e:
             if e.errno == errno.ENOENT:
-                # Could not execute command stereofy command, probably can't be found in settings.STEREOFY_PATH
-                self.failure("stereofy has failed, command does not seem to exist: %s" % e)
+                self.failure("stereofy has failed, make sure executable exists at %s: %s" % (settings.SOUNDS_PATH, e))
                 return False
             else:
                 self.failure("stereofy has failed: %s" % e)

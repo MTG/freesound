@@ -35,6 +35,7 @@ from donations.models import Donation, DonationsModalSettings
 from sounds.models import Sound, Pack, License, Download
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
 from utils.audioprocessing.processing import AudioProcessingException
+from utils.filesystem import remove_directory
 from utils.forms import filename_has_valid_extension
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, create_sound, \
     NoAudioException, AlreadyExistsException
@@ -561,6 +562,32 @@ class BulkDescribeUtils(TestCase):
         shutil.rmtree(settings.CSV_PATH)
 
 
+def convert_to_pcm_mock(*args, **kwargs):
+    return True
+
+
+def stereofy_mock(*args, **kwargs):
+    return dict(
+        duration=123.5,
+        channels=2,
+        samplerate=44100,
+        bitrate=128,
+        bitdepth=16)
+
+
+def convert_to_mp3_mock(input_filename, output_filename, quality):
+    create_test_files(paths=[output_filename])
+
+
+def convert_to_ogg_mock(input_filename, output_filename, quality):
+    create_test_files(paths=[output_filename])
+
+
+def create_wave_images_mock(
+        input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, **kwargs):
+    create_test_files(paths=[output_filename_w, output_filename_s])
+
+
 class AudioProcessingTestCase(TestCase):
 
     fixtures = ['initial_data']
@@ -570,21 +597,6 @@ class AudioProcessingTestCase(TestCase):
         tmp_directory = tempfile.mkdtemp()
         self.assertEqual(self.sound.processing_state, "PE")
         return tmp_directory
-
-    @staticmethod
-    def set_convert_to_pcm_mock_return_value(func):
-        # Mock convert_to_pcm always returns True
-        func.return_value = True
-
-    @staticmethod
-    def set_stereofy_mock_return_value(func):
-        # Mock convert_to_pcm so it always returns True and "works"
-        func.return_value = dict(
-            duration=123.5,
-            channels=2,
-            samplerate=44100,
-            bitrate=128,
-            bitdepth=16)
 
     def setUp(self):
         user, _, sounds = create_user_and_sounds(num_sounds=1, type="mp3")  # Use mp3 so it needs converstion to PCM
@@ -632,11 +644,9 @@ class AudioProcessingTestCase(TestCase):
         # NOTE: this test will generate stereofy errors as well but here we only check that a spcific message about
         # PCM conversion was added to the log. stereofy is tested below.
 
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm')
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
-    def test_stereofy_failed(self, convert_to_pcm_mock):
-        self.set_convert_to_pcm_mock_return_value(convert_to_pcm_mock)
-
+    def test_stereofy_failed(self, *args):
         tmp_directory = self.pre_test()
         create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
         FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
@@ -647,13 +657,10 @@ class AudioProcessingTestCase(TestCase):
         self.assertIn('stereofy has failed', self.sound.processing_log)
         self.assertFalse(os.path.exists(tmp_directory))
 
-    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info')
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm')
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
-    def test_set_audio_info_fields(self, convert_to_pcm_mock, stereofy_mock):
-        self.set_convert_to_pcm_mock_return_value(convert_to_pcm_mock)
-        self.set_stereofy_mock_return_value(stereofy_mock)
-
+    def test_set_audio_info_fields(self, *args):
         tmp_directory = self.pre_test()
         create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
         FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
@@ -666,17 +673,11 @@ class AudioProcessingTestCase(TestCase):
         # NOTE: after calling set_audio_info_fields processing will fail, but we're onlt interested in testing up to
         # this point for the present unit test
 
-
-
-    '''
-    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info')
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm')
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
     @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
-    @override_settings(STEREOFY_PATH=tempfile.mkstemp())
-    def test_make_previews_fails(self, convert_to_pcm_mock, stereofy_mock):
-        self.set_convert_to_pcm_mock_return_value(convert_to_pcm_mock)
-        self.set_stereofy_mock_return_value(stereofy_mock)
-
+    @override_settings(PREVIEWS_PATH=tempfile.mkdtemp())
+    def test_make_mp3_previews_fails(self, *args):
         tmp_directory = self.pre_test()
         create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
         FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
@@ -686,7 +687,101 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('conversion to mp3 (preview) has failed', self.sound.processing_log)
         self.assertFalse(os.path.exists(tmp_directory))
-    '''
 
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    @override_settings(PREVIEWS_PATH=tempfile.mkdtemp())
+    def test_make_ogg_previews_fails(self, *args):
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        # processing will fail because create ogg does not find tmp wavfile
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('conversion to ogg (preview) has failed', self.sound.processing_log)
+        self.assertFalse(os.path.exists(tmp_directory))
 
+    @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    @override_settings(PREVIEWS_PATH=tempfile.mkdtemp())
+    @override_settings(DISPLAYS_PATH=tempfile.mkdtemp())
+    def test_create_images_fails(self, *args):
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory).process()
+        # processing will fail because no valid audio files will be readable when creating images
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('exception while generating displays', self.sound.processing_log)
+        self.assertFalse(os.path.exists(tmp_directory))
 
+    @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    @override_settings(PREVIEWS_PATH=tempfile.mkdtemp())
+    @override_settings(DISPLAYS_PATH=tempfile.mkdtemp())
+    def test_skip_previews(self, *args):
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory)\
+            .process(skip_previews=True)
+
+        self.assertFalse(os.path.exists(self.sound.locations('preview.LQ.ogg.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('preview.HQ.ogg.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('preview.LQ.mp3.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('preview.HQ.mp3.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral_bw.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral.L.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral_bw.L.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave_bw.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave.L.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
+
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "OK")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertFalse(os.path.exists(tmp_directory))
+
+    @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(SOUNDS_PATH=tempfile.mkdtemp())
+    @override_settings(PREVIEWS_PATH=tempfile.mkdtemp())
+    @override_settings(DISPLAYS_PATH=tempfile.mkdtemp())
+    def test_skip_displays(self, *args):
+        tmp_directory = self.pre_test()
+        create_test_files(paths=[self.sound.locations('path')])  # Manually add sound file to disk
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id, tmp_directory=tmp_directory) \
+            .process(skip_displays=True)
+
+        self.assertTrue(os.path.exists(self.sound.locations('preview.LQ.ogg.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('preview.HQ.ogg.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('preview.LQ.mp3.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('preview.HQ.mp3.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral_bw.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral.L.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral_bw.L.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave_bw.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave.L.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
+
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "OK")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertFalse(os.path.exists(tmp_directory))

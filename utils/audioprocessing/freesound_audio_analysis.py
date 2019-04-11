@@ -60,9 +60,9 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
             create_directories(os.path.dirname(frames_path))
 
             # Run Essentia's FreesoundExtractor analsyis
-            audioprocessing.analyze_using_essentia(settings.ESSENTIA_EXECUTABLE, tmp_wavefile,
-                                   os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id),
-                                   essentia_profile_path=settings.ESSENTIA_PROFILE_FILE_PATH)
+            audioprocessing.analyze_using_essentia(
+                settings.ESSENTIA_EXECUTABLE, tmp_wavefile, os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id),
+                essentia_profile_path=settings.ESSENTIA_PROFILE_FILE_PATH)
 
             # Move essentia output files to analysis data directory
             if settings.ESSENTIA_PROFILE_FILE_PATH:

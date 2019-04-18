@@ -10,21 +10,20 @@ import copy
 logger = logging.getLogger('web')
 
 
-def get_sound_ids_from_solr_query(query_params):
+def get_sound_ids_from_solr_query(query_params, num_sounds=1000):
     current_page = 1  # for what is this used for??
-    # with more sounds solr says 'URI is too large >8192'
-    query_params.update({'sounds_per_page': 800})
+    query_params.update({'sounds_per_page': num_sounds})
     query = search_prepare_query(**query_params)
     non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
     resultids = [d.get("id") for d in docs]
     return resultids
 
 
-def cluster_sound_results(query_params):
+def cluster_sound_results(query_params, features):
     query_params_formatted = copy.copy(query_params)
     query_params_formatted['filter_query'] = query_params_formatted['filter_query'].replace('\\"', '"')
 
-    cache_key = 'cluster-search-results-q-{}-f-{}-s-{}-tw-{}-uw-{}-idw-{}-dw-{}-pw-{}-fw-{}'.format(
+    cache_key = 'cluster-search-results-q-{}-f-{}-s-{}-tw-{}-uw-{}-idw-{}-dw-{}-pw-{}-fw-{}-feat-{}'.format(
         query_params['search_query'],
         query_params['filter_query'],
         str(query_params['sort'][0]),  # str cast to avoid having sometimes unicode != string
@@ -34,6 +33,7 @@ def cluster_sound_results(query_params):
         query_params['description_weight'],
         query_params['pack_tokenized_weight'],
         query_params['original_filename_weight'],
+        features,
     ).replace(' ', '')
 
     cache_key_hashed = hash_cache_key(cache_key)
@@ -57,6 +57,7 @@ def cluster_sound_results(query_params):
         result = Clustering.cluster_points(
             query=cache_key,
             sound_ids=sound_ids_string,
+            features=features
         )
 
         returned_sounds = result[0]
@@ -66,7 +67,7 @@ def cluster_sound_results(query_params):
             cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
 
     try:
-        num_clusters = max(returned_sounds.values()) + 1
+        num_clusters = len(returned_sounds) + 1
     except ValueError:
         num_clusters = 0
 

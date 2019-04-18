@@ -21,6 +21,7 @@
 import datetime
 import json
 import logging
+from collections import defaultdict
 
 import re
 from django.conf import settings
@@ -250,12 +251,10 @@ def get_ids_in_cluster(query_params, requested_cluster_id):
     else:
         requested_cluster_id = int(requested_cluster_id) - 1
 
-        # results are cached in clustering_utilities
-        results, num_clusters, _ = cluster_sound_results(query_params)
+        # results are cached in clustering_utilities, features are: 'audio_fs', 'audio_as', 'audio_fs_selected', 'tag'
+        results, num_clusters, _ = cluster_sound_results(query_params, 'audio_as')
 
-        # move this in clustering utilities
-        sounds_from_requested_cluster = [str(sound_id) for sound_id, cluster_id in results.iteritems() 
-                                         if cluster_id==requested_cluster_id]
+        sounds_from_requested_cluster = results[int(requested_cluster_id)]
 
         return sounds_from_requested_cluster
 
@@ -264,31 +263,55 @@ def cluster_sounds(request):
     query_params = json.loads(request.GET.get("query_params", ""))
     sort_unformatted = request.GET.get("sort_unformatted", "")
 
-    results, num_clusters, _ = cluster_sound_results(query_params)
+    results, num_clusters, _ = cluster_sound_results(query_params, 'audio_as')
 
-    num_sounds_per_cluster = [results.values().count(cluster_idx) for cluster_idx in range(num_clusters)]
+    num_sounds_per_cluster = [len(cluster) for cluster in results]
+    classes = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}
+
+    # label clusters using most occuring tags
+    sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, classes.keys()))
+    sound_tags = {sound.id: sound.get_sound_tags() for sound in sound_instances}
+    cluster_tags = defaultdict(list)
+    query_terms = {t.lower() for t in query_params['search_query'].split(' ')}
+    for sound_id, tags in sound_tags.iteritems():
+        cluster_tags[classes[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
+    cluster_tags_with_count = {k: sorted([(t, tags.count(t)) for t in set(tags)], 
+                                         key=lambda x: x[1], reverse=True)
+                               for k, tags in cluster_tags.iteritems()}
+    cluster_most_occuring_tags = [' '.join(zip(*tags[:3])[0]) for tags in cluster_tags_with_count.values()]  # dict values sorted?!
 
     return render(request, 'search/clustering_facet.html', {
-            'results': results,
+            'results': classes,
             'query_params': query_params,
             'sort_unformatted': sort_unformatted,
-            'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster),
+            'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster, cluster_most_occuring_tags),
     })
 
 
 def cluster_visualisation(request):
     query_params = json.loads(request.GET.get("query_params", ""))
-    _, _, graph = cluster_sound_results(query_params)
+    return render(request, 'search/clusters.html', {
+            'query_params': request.GET.get("query_params", ""),
+    })
+
+
+def return_clustered_graph(request):
+    query_params = json.loads(request.GET.get("query_params", ""))
+    _, _, graph = cluster_sound_results(query_params, 'audio_as')
 
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
-    preview_urls_by_id = {s.id:s.get_preview_abs_url()[21:] for s in results}
+    preview_urls_name_tags_by_id = {s.id:(s.get_preview_abs_url()[21:],
+                                          s.original_filename,
+                                          ' '.join(s.get_sound_tags()),
+                                          s.get_absolute_url()) for s in results}
 
     for node in graph['nodes']:
-        node['url'] = preview_urls_by_id[int(node['id'])]
+        node['url'] = preview_urls_name_tags_by_id[int(node['id'])][0]
+        node['name'] = preview_urls_name_tags_by_id[int(node['id'])][1]
+        node['tags'] = preview_urls_name_tags_by_id[int(node['id'])][2]
+        node['sound_page_url'] = preview_urls_name_tags_by_id[int(node['id'])][3]
 
-    return render(request, 'search/clusters.html', {
-            'graph': json.dumps(graph)
-    })
+    return JsonResponse(json.dumps(graph), safe=False)
 
 
 def search_forum(request):

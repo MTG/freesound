@@ -24,7 +24,7 @@ from django.conf import settings
 from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
 from forms import SoundCombinedSearchFormAPI
-from utils.test import create_user_and_sounds
+from utils.test_helpers import create_user_and_sounds
 
 from exceptions import BadRequestException
 

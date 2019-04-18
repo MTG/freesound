@@ -43,7 +43,7 @@ from forum.models import Thread, Post, Forum
 from messages.models import Message, MessageBody
 from tickets.models import Ticket
 from utils.mail import transform_unique_email, send_mail
-from utils.test import create_test_files
+from utils.test_helpers import create_test_files
 import accounts.models
 import mock
 import os

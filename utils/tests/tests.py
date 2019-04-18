@@ -40,7 +40,7 @@ from utils.forms import filename_has_valid_extension
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, create_sound, \
     NoAudioException, AlreadyExistsException
 from utils.tags import clean_and_split_tags
-from utils.test import create_test_files, create_user_and_sounds
+from utils.test_helpers import create_test_files, create_user_and_sounds
 from utils.text import clean_html
 
 

@@ -23,7 +23,7 @@ from django.test import TestCase
 
 from forum.models import Thread, Post, Forum
 from ratings.models import SoundRating
-from utils.test import create_user_and_sounds
+from utils.test_helpers import create_user_and_sounds
 
 
 class ReportCountStatusesManagementCommandTestCase(TestCase):

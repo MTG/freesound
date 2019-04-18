@@ -47,7 +47,7 @@ from sounds.views import get_sound_of_the_day_id
 from accounts.models import EmailPreferenceType
 from utils.encryption import encrypt
 from utils.tags import clean_and_split_tags
-from utils.test import create_user_and_sounds
+from utils.test_helpers import create_user_and_sounds
 from utils.cache import get_template_cache_key
 
 from bs4 import BeautifulSoup

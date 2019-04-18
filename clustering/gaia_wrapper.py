@@ -41,10 +41,10 @@ class GaiaWrapper:
     def __load_datasets(self):
         self.as_dataset.load(self.__get_dataset_path(clust_settings.INDEX_NAME_AS))
         self.as_view = View(self.as_dataset)
-        # self.metric = DistanceFunctionFactory.create('euclidean', self.dataset.layout())
-        # self.metric = DistanceFunctionFactory.create('CosineSimilarity',  self.dataset.layout())
-        # self.metric = DistanceFunctionFactory.create('CosineAngle',  self.dataset.layout())
-        self.as_metric = DistanceFunctionFactory.create('Manhattan',  self.as_dataset.layout())
+        self.as_metric = DistanceFunctionFactory.create('euclidean', self.as_dataset.layout())
+        # self.as_metric = DistanceFunctionFactory.create('CosineSimilarity',  self.as_dataset.layout())
+        # self.as_metric = DistanceFunctionFactory.create('CosineAngle',  self.as_dataset.layout())
+        # self.as_metric = DistanceFunctionFactory.create('Manhattan',  self.as_dataset.layout())
 
         self.tag_dataset.load(self.__get_dataset_path(clust_settings.INDEX_NAME_TAG))
         self.tag_view = View(self.tag_dataset)
@@ -56,13 +56,21 @@ class GaiaWrapper:
 
         # self.gaia_similiarity = GaiaWrapperSimilarity()
 
-        self.__load_sc_descriptors_dataset()
+        self.__load_ac_descriptors_dataset()
 
-    def __load_sc_descriptors_dataset(self):
-        self.ac_dataset.load(self.__get_dataset_path('FS_AC_descriptors_normalized'))
+    def __load_ac_descriptors_dataset(self):
+        self.ac_dataset.load(self.__get_dataset_path('FS_AC_descriptors_normalized'))  # TODO: add this in clustering settings
         self.ac_view = View(self.ac_dataset)
         self.ac_metric = DistanceFunctionFactory.create('euclidean', self.ac_dataset.layout(), 
-            {'descriptorNames': ['ac_brightness', 'ac_boominess', 'ac_depth', 'ac_hardness', 'ac_roughness', 'ac_sharpness', 'ac_warmth']})
+            {'descriptorNames': [
+                'ac_brightness', 
+                'ac_boominess', 
+                'ac_depth', 
+                'ac_hardness', 
+                'ac_roughness', 
+                'ac_sharpness', 
+                'ac_warmth'
+            ]})
 
     def search_nearest_neighbors(self, sound_id, k, in_sound_ids=[], features='audio_as'):
         if in_sound_ids:

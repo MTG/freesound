@@ -19,7 +19,7 @@ def server_interface(resource):
     return {
         'cluster_points': resource.cluster_points, # query, features, sound_ids
         'k_nearest_neighbors': resource.k_nearest_neighbors, # sound_id, k
-}
+    }
 
 
 class ClusteringServer(resource.Resource):
@@ -212,7 +212,8 @@ class ClusteringServer(resource.Resource):
         # classes, num_communities, communities, modularity = self.cluster_graph_overlap(graph)
         ratio_intra_community_edges = self._ratio_intra_community_edges(graph, communities)
 
-        graph, classes, communities, ratio_intra_community_edges = self.remove_lowest_quality_cluster(graph, classes, communities, ratio_intra_community_edges)
+        # graph, classes, communities, ratio_intra_community_edges = self.remove_lowest_quality_cluster(
+        #         graph, classes, communities, ratio_intra_community_edges)
 
         node_community_centralities = self._point_centralities(graph, communities)
 

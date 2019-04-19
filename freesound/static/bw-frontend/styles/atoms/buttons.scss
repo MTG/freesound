@@ -23,7 +23,10 @@ button {
 }
 
 .btn-inverse {
-  @include rounded-button(transparent, transparent);
+  @include rounded-button(transparent, $black);
   color: $navy-grey;
+  @include active() {
+    color: $white;
+  }
   border: 1px solid $navy-light-grey;
 }

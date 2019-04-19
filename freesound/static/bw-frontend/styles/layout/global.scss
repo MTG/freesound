@@ -10,6 +10,7 @@ body {
   color: $black;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-weight: 500;
 
   @include md-and-above {
     font-size: $base-size;
@@ -24,6 +25,7 @@ body {
     margin-bottom: 0;
     font-size: nth(nth($list: $headers-list, $n: $i), 3);
     line-height: nth(nth($list: $headers-list, $n: $i), 4);
+    letter-spacing: -1px;
 
     @include md-and-above {
       font-size: nth(nth($list: $headers-list, $n: $i), 1);

@@ -15,14 +15,17 @@ button {
 }
 
 .btn-primary {
+  letter-spacing: -1px;
   @include rounded-button($red, $red-hover);
 }
 
 .btn-secondary {
+  letter-spacing: -1px;
   @include rounded-button($black, $black-hover);
 }
 
 .btn-inverse {
+  letter-spacing: -1px;
   @include rounded-button(transparent, $black);
   color: $navy-grey;
   @include active() {

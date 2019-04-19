@@ -1,5 +1,5 @@
-{% macro tag(tagName) %}
-  <button class="btn-inverse border-grey-light text-center no-border-radius padding-1 spacing-1 font-weight-normal">
+{% macro tag(tagName, size=1, classname="") %}
+  <button class="btn-inverse border-grey-light text-center no-border-radius padding-{{size}} text-black no-text-wrap {{classname}}">
     {{ tagName }}
   </button>
 {% endmacro %}

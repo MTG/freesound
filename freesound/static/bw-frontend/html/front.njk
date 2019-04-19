@@ -1,4 +1,5 @@
 {% import './molecules/player.njk' as players %}
+{% import './atoms/tags.njk' as tags %}
 {% extends "base.njk" %}
 
 {% block content %}
@@ -31,7 +32,7 @@
           </div>
         </section>
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4">For you</h2>
+          <h3 class="v-spacing-4">For you</h3>
           <div class="row">
             <div class="col">
               {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
@@ -46,25 +47,28 @@
         </section>
         <hr />
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4 v-spacing-top-4">Popular searches</h2>
+          <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
           <div class="row">
             <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Field-recording</button>
+              {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
             </div>
             <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Ambience</button>
+              {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
             </div>
             <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Loop</button>
+              {{ tags.tag('Loop', 4, 'w-100 h-100')}}
             </div>
             <div class="col">
-              <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">Voice</button>
+              {{ tags.tag('Voice', 4, 'w-100 h-100')}}
             </div>
+             <div class="col">
+              {{ tags.tag('Wind', 4, 'w-100 h-100')}}
+            </div
           </div>
         </section>
         <hr />
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4 v-spacing-top-4">Trending sounds</h2>
+          <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
           <div class="row">
             <div class="col">
               {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
@@ -99,7 +103,7 @@
           <div class="h-spacing-left-3">
             <div>Top donor this week:</div>
             <div class="middle">
-              <div class="avatar h-spacing-2">
+              <div class="avatar h-spacing-1">
                 <img src="../public/avatar.jpg" />
               </div>
               <div>

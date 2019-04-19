@@ -16,6 +16,10 @@ $navbar-height-mobile: 64px;
   @include md-and-above {
     height: $navbar-height;
   }
+
+  .input-wrapper {
+    flex-grow: 1;
+  }
 }
 
 .bw-nav--scrolled {
@@ -120,9 +124,11 @@ $navbar-height-mobile: 64px;
 .bw-nav:not(.bw-nav--expanded) {
   .btn-primary {
     @include reset-rounded-button($red, $red-hover);
+    letter-spacing: 0px;
   }
   .btn-secondary {
     @include reset-rounded-button($black, $black-hover);
+    letter-spacing: 0px;
   }
 }
 

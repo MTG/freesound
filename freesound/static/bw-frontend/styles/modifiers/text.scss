@@ -35,3 +35,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.no-text-wrap {
+  white-space: nowrap;
+}
+
+.no-letter-spacing {
+  letter-spacing: 0;
+}

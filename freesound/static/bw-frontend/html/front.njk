@@ -19,18 +19,48 @@
     </div>
     <div class="row bw-front__content">
       <main class="col-md-9">
-        <section class="border-grey-light padding-5 v-spacing-6">
-          <h2 class="text-center v-spacing-2">Maintenance downtime</h2>
-          <p class="text-grey text-center">
-            Dear Freesounders, On Monday 3rd at 10:30 a.m. CEST Freesound will be down for approximately two hours
-            while we perform some
-            maintenance on our servers. We’re sorry for the inconvenience this may cause.
-          </p>
-          <div class="center">
-            <button class="btn-primary h-spacing-2">Read more</button>
-            <button class="btn-inverse">More stories</button>
-          </div>
-        </section>
+        <div class="v-spacing-6">
+          <section class="border-grey-light">
+            <div class="bw-carousel-container">
+              <div class="bw-carousel-wrapper">
+                <div class="bw-carousel">
+                  <div class="padding-5">
+                    <h2 class="text-center v-spacing-2">Maintenance downtime</h2>
+                    <p class="text-grey text-center">
+                    Dear Freesounders, On Monday 3rd at 10:30 a.m. CEST Freesound will be down for approximately two hours
+                    while we perform some
+                    maintenance on our servers. We’re sorry for the inconvenience this may cause.
+                  </p>
+                    <div class="center">
+                      <button class="btn-primary h-spacing-2">Read more</button>
+                      <button class="btn-inverse">More stories</button>
+                    </div>
+                  </div>
+                  <div class="padding-5">
+                    <h2 class="text-center v-spacing-2">Welcome to page 2</h2>
+                    <p class="text-grey text-center">
+                    Dear Freesounders, This is a second blog post. Find out more.
+                  </p>
+                    <div class="center">
+                      <button class="btn-primary h-spacing-2">Read more</button>
+                      <button class="btn-inverse">More stories</button>
+                    </div>
+                  </div>
+                  <div class="padding-5">
+                    <h2 class="text-center v-spacing-2">Welcome to page 3</h2>
+                    <p class="text-grey text-center">
+                    Dear Freesounders, This is a third blog post. Find out more.
+                  </p>
+                    <div class="center">
+                      <button class="btn-primary h-spacing-2">Read more</button>
+                      <button class="btn-inverse">More stories</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
         <section class="v-spacing-6">
           <h3 class="v-spacing-4">For you</h3>
           <div class="row">
@@ -48,36 +78,116 @@
         <hr />
         <section class="v-spacing-6">
           <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
-          <div class="row">
-            <div class="col">
-              {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel">
+                <div>
+                  <div class="row">
+                    <div class="col">
+                      {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Loop', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Voice', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Wind', 4, 'w-100 h-100')}}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="row">
+                    <div class="col">
+                      {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Loop', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Voice', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Wind', 4, 'w-100 h-100')}}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="row">
+                    <div class="col">
+                      {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Loop', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Voice', 4, 'w-100 h-100')}}
+                    </div>
+                    <div class="col">
+                      {{ tags.tag('Wind', 4, 'w-100 h-100')}}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col">
-              {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
-            </div>
-            <div class="col">
-              {{ tags.tag('Loop', 4, 'w-100 h-100')}}
-            </div>
-            <div class="col">
-              {{ tags.tag('Voice', 4, 'w-100 h-100')}}
-            </div>
-             <div class="col">
-              {{ tags.tag('Wind', 4, 'w-100 h-100')}}
-            </div
           </div>
         </section>
         <hr />
         <section class="v-spacing-6">
           <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
-          <div class="row">
-            <div class="col">
-              {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
-            </div>
-            <div class="col">
-              {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
-            </div>
-            <div class="col">
-              {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel v-padding-bottom-4">
+                <div>
+                  <div class="row">
+                    <div class="col">
+                      {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="row">
+                    <div class="col">
+                      {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="row">
+                    <div class="col">
+                      {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>

@@ -20,10 +20,8 @@
 
 import datetime
 import json
-import tempfile
 import time
 import os
-from itertools import count
 
 import mock
 from django.conf import settings
@@ -46,8 +44,7 @@ from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalys
 from sounds.views import get_sound_of_the_day_id
 from accounts.models import EmailPreferenceType
 from utils.encryption import encrypt
-from utils.tags import clean_and_split_tags
-from utils.test_helpers import create_user_and_sounds
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 from utils.cache import get_template_cache_key
 
 from bs4 import BeautifulSoup
@@ -1348,7 +1345,7 @@ class SoundAnalysisModel(TestCase):
 
     fixtures = ['initial_data']
 
-    @override_settings(ANALYSIS_PATH=tempfile.mkdtemp())
+    @override_analysis_path_with_temp_directory
     def test_get_analysis(self):
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]

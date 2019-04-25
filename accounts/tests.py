@@ -43,14 +43,12 @@ from forum.models import Thread, Post, Forum
 from messages.models import Message, MessageBody
 from tickets.models import Ticket
 from utils.mail import transform_unique_email, send_mail
-from utils.test_helpers import create_test_files
+from utils.test_helpers import create_test_files, override_uploads_path_with_temp_directory, \
+    override_avatars_path_with_temp_directory, override_csv_path_with_temp_directory
 import accounts.models
 import mock
 import os
-import tempfile
-import shutil
 import datetime
-import json
 
 
 class SimpleUserTest(TestCase):
@@ -510,7 +508,7 @@ class UserEditProfile(TestCase):
 
     fixtures = ['email_preference_type']
 
-    @override_settings(AVATARS_PATH=tempfile.mkdtemp())
+    @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser", password="testpass")
         f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'), None, None, None, None, None)
@@ -520,9 +518,6 @@ class UserEditProfile(TestCase):
         self.assertEqual(os.path.exists(user.profile.locations("avatar.S.path")), True)
         self.assertEqual(os.path.exists(user.profile.locations("avatar.M.path")), True)
         self.assertEqual(os.path.exists(user.profile.locations("avatar.L.path")), True)
-
-        # Delete tmp directory
-        shutil.rmtree(settings.AVATARS_PATH)
 
     def test_edit_user_profile(self):
         User.objects.create_user("testuser", password="testpass")
@@ -577,7 +572,7 @@ class UserEditProfile(TestCase):
         self.assertEqual(len(email_types), 1)
         self.assertTrue(email_types.pop().name, 'email')
 
-    @override_settings(AVATARS_PATH=tempfile.mkdtemp())
+    @override_avatars_path_with_temp_directory
     def test_edit_user_avatar(self):
         User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
@@ -599,16 +594,13 @@ class UserEditProfile(TestCase):
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.has_avatar, False)
 
-        # Delete tmp directory
-        shutil.rmtree(settings.AVATARS_PATH)
-
 
 class UserUploadAndDescribeSounds(TestCase):
 
     fixtures = ['initial_data']
 
     @skipIf(True, "Test not ready for new uploader")
-    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    @override_uploads_path_with_temp_directory
     def test_handle_uploaded_file_html(self):
         # TODO: test html5 file uploads when we change uploader
         user = User.objects.create_user("testuser", password="testpass")
@@ -628,11 +620,10 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
 
-        # Delete tmp directory
-        shutil.rmtree(settings.UPLOADS_PATH)
 
-    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    @override_uploads_path_with_temp_directory
     def test_select_uploaded_files_to_describe(self):
+
         # Create audio files
         filenames = ['file1.wav', 'file2.wav', 'file3.wav']
         user = User.objects.create_user("testuser", password="testpass")
@@ -677,10 +668,7 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertRedirects(resp, '/home/describe/')
         self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(filenames_to_delete))
 
-        # Delete tmp directory
-        shutil.rmtree(settings.UPLOADS_PATH)
-
-    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    @override_uploads_path_with_temp_directory
     def test_describe_selected_files(self):
         # Create audio files
         filenames = ['file1.wav', 'file2.wav']
@@ -1486,7 +1474,7 @@ class BulkDescribe(TestCase):
 
     fixtures = ['initial_data']
 
-    @override_settings(CSV_PATH=tempfile.mkdtemp())
+    @override_csv_path_with_temp_directory
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     @mock.patch('gearman.GearmanClient.submit_job')
     def test_upload_csv(self, submit_job):
@@ -1506,9 +1494,6 @@ class BulkDescribe(TestCase):
         # Test gearman job is triggered
         submit_job.assert_called_once_with("validate_bulk_describe_csv", str(bulk.id),
                                            wait_until_complete=False, background=True)
-
-        # Delete tmp directory
-        shutil.rmtree(settings.CSV_PATH)
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_view_permissions(self):

@@ -19,13 +19,15 @@
 #
 
 import os
+from functools import partial, wraps
 from itertools import count
 
 from django.contrib.auth.models import User
+from django.test.utils import override_settings
 
 from sounds.models import Sound, Pack, License
+from utils.filesystem import create_directories, TemporaryDirectory
 from utils.tags import clean_and_split_tags
-from utils.filesystem import create_directories
 
 
 def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024):
@@ -97,3 +99,43 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
         sounds.append(sound)
     return user, packs, sounds
 
+
+def override_path_with_temp_directory(fun, settings_path_name):
+    """
+    Decorator that wraps a function inside two context managers which i) create a temporary directory; and ii) override
+    a settings path to that temporary directory. When the wrapped function exits, the created temporary will be
+    deleted and the settings override reverted. This will happen even if the function exists with an Exception. This
+    is useful in unit tests which write files to disk and we want to make sure these are deleted after the test has
+    finished running.
+
+    Code adapted from: https://stackoverflow.com/a/25827070
+    """
+
+    @wraps(fun)
+    def ret_fun(*args, **kwargs):
+        with TemporaryDirectory() as tmpfolder:
+            with override_settings(**{settings_path_name: tmpfolder}):
+                return fun(*args, **kwargs)
+    return ret_fun
+
+
+override_uploads_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='UPLOADS_PATH')
+
+override_csv_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='CSV_PATH')
+
+override_avatars_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='AVATARS_PATH')
+
+override_analysis_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='ANALYSIS_PATH')
+
+override_sounds_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='SOUNDS_PATH')
+
+override_previews_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='PREVIEWS_PATH')
+
+override_displays_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='DISPLAYS_PATH')

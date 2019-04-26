@@ -94,8 +94,8 @@ def check_if_free_space(directory='/tmp/', min_disk_space_percentage=0.05):
     :raises WorkerException: if available percentage of free space is below the threshold
     """
     stats = os.statvfs(directory)
-    percetage_free = stats.f_bfree * 1.0 / stats.f_blocks
-    if percetage_free < min_disk_space_percentage:
+    percentage_free = stats.f_bfree * 1.0 / stats.f_blocks
+    if percentage_free < min_disk_space_percentage:
         raise WorkerException("Disk is running out of space, "
                               "aborting task as there might not be enough space for temp files")
 

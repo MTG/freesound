@@ -47,6 +47,12 @@ class WorkerException(Exception):
 
 
 def set_timeout_alarm(time, msg):
+    """
+    Sets a timeout alarm which raises a WorkerException after a number of seconds.
+    :param float time: seconds until WorkerException is raised
+    :param str msg: message to add to WorkerException when raised
+    :raises WorkerException: when timeout is reached
+    """
 
     def alarm_handler(signum, frame):
         raise WorkerException(msg)
@@ -56,10 +62,17 @@ def set_timeout_alarm(time, msg):
 
 
 def cancel_timeout_alarm():
+    """
+    Cancels an exsting timeout alarm (or does nothing if no alarm was set).
+    """
     signal.alarm(0)
 
 
 def cleanup_tmp_directory(tmp_directory):
+    """
+    Removes tmp_directory and its contents. Does not raise an exception of the direcotry does not exist.
+    :param str tmp_directory: path of the directory to be removed
+    """
     if tmp_directory is not None:
         try:
             remove_directory(tmp_directory)
@@ -74,8 +87,11 @@ def log_error(message):
 
 def check_if_free_space(directory='/tmp/', min_disk_space_percentage=0.05):
     """
-    Raises an Exception if the perfectage of free disk space in the volume of the given 'directory' is lower
-    than 'min_disk_space_percentage'.
+    Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
+    volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
+    :param str directory: path of the directory whose volume will be checked for free space
+    :param float min_disk_space_percentage: free disk space percentage to check against
+    :raises WorkerException: if available percentage of free space is below the threshold
     """
     stats = os.statvfs(directory)
     percetage_free = stats.f_bfree * 1.0 / stats.f_blocks

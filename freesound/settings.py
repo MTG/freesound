@@ -287,6 +287,9 @@ SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 # General timeout for processing/analysis workers (in seconds)
 WORKER_TIMEOUT = 5 * 60
 
+# Base directory where temporary directories needed by the processing/analysis functions will be created
+PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH = '/tmp/'
+
 ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
 ESSENTIA_STATS_OUT_FORMAT = 'yaml'
 ESSENTIA_FRAMES_OUT_FORMAT = 'json'

@@ -27,7 +27,7 @@ from django.conf import settings
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessorBase
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.filesystem import create_directories
+from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_analysis_to_mirror_locations
 
 logger = logging.getLogger("processing")
@@ -41,53 +41,54 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
 
     def analyze(self):
 
-        try:
-            # Get the path of the original sound and convert to PCM
-            sound_path = self.get_sound_path()
-            tmp_wavefile = self.convert_to_pcm(sound_path)
+        with TemporaryDirectory(
+                prefix='analysis_%s_' % self.sound.id,
+                dir=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH) as tmp_directory:
 
-            # Check if filesize of the converted file
-            if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
-                if os.path.getsize(tmp_wavefile) > settings.MAX_FILESIZE_FOR_ANALYSIS:
-                    self.failure('converted file is larger than %sMB and therefore it won\'t be analyzed.' %
-                                 (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
-                    return False
+            try:
+                # Get the path of the original sound and convert to PCM
+                sound_path = self.get_sound_path()
+                tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory)
 
-            # Create directories where to store analysis files and move them there
-            statistics_path = self.sound.locations("analysis.statistics.path")
-            frames_path = self.sound.locations("analysis.frames.path")
-            create_directories(os.path.dirname(statistics_path))
-            create_directories(os.path.dirname(frames_path))
+                # Check if filesize of the converted file
+                if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
+                    if os.path.getsize(tmp_wavefile) > settings.MAX_FILESIZE_FOR_ANALYSIS:
+                        self.failure('converted file is larger than %sMB and therefore it won\'t be analyzed.' %
+                                     (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
+                        return False
 
-            # Run Essentia's FreesoundExtractor analsyis
-            audioprocessing.analyze_using_essentia(
-                settings.ESSENTIA_EXECUTABLE, tmp_wavefile, os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id),
-                essentia_profile_path=settings.ESSENTIA_PROFILE_FILE_PATH)
+                # Create directories where to store analysis files and move them there
+                statistics_path = self.sound.locations("analysis.statistics.path")
+                frames_path = self.sound.locations("analysis.frames.path")
+                create_directories(os.path.dirname(statistics_path))
+                create_directories(os.path.dirname(frames_path))
 
-            # Move essentia output files to analysis data directory
-            if settings.ESSENTIA_PROFILE_FILE_PATH:
-                # Never versions of FreesoundExtractor using profile file use a different naming convention
-                shutil.move(os.path.join(self.tmp_directory, 'ess_%i' % self.sound.id), statistics_path)
-                shutil.move(os.path.join(self.tmp_directory, 'ess_%i_frames' % self.sound.id), frames_path)
-            else:
-                shutil.move(os.path.join(self.tmp_directory, 'ess_%i_statistics.yaml' % self.sound.id), statistics_path)
-                shutil.move(os.path.join(self.tmp_directory, 'ess_%i_frames.json' % self.sound.id), frames_path)
+                # Run Essentia's FreesoundExtractor analsyis
+                audioprocessing.analyze_using_essentia(
+                    settings.ESSENTIA_EXECUTABLE, tmp_wavefile, os.path.join(tmp_directory, 'ess_%i' % self.sound.id),
+                    essentia_profile_path=settings.ESSENTIA_PROFILE_FILE_PATH)
 
-            self.log_info("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
+                # Move essentia output files to analysis data directory
+                if settings.ESSENTIA_PROFILE_FILE_PATH:
+                    # Never versions of FreesoundExtractor using profile file use a different naming convention
+                    shutil.move(os.path.join(tmp_directory, 'ess_%i' % self.sound.id), statistics_path)
+                    shutil.move(os.path.join(tmp_directory, 'ess_%i_frames' % self.sound.id), frames_path)
+                else:
+                    shutil.move(os.path.join(tmp_directory, 'ess_%i_statistics.yaml' % self.sound.id), statistics_path)
+                    shutil.move(os.path.join(tmp_directory, 'ess_%i_frames.json' % self.sound.id), frames_path)
 
-            # Change sound analysis and similarity states
-            self.sound.set_analysis_state('OK')
-            self.sound.set_similarity_state('PE')  # Set similarity to PE so sound will get indexed to Gaia
+                self.log_info("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
 
-        except AudioProcessingException as e:
-            self.failure(e)
-            return False
-        except (Exception, OSError) as e:
-            self.failure("unexpected error in analysis ", e)
-            return False
+                # Change sound analysis and similarity states
+                self.sound.set_analysis_state('OK')
+                self.sound.set_similarity_state('PE')  # Set similarity to PE so sound will get indexed to Gaia
 
-        # Clean up temp files
-        self.cleanup()
+            except AudioProcessingException as e:
+                self.failure(e)
+                return False
+            except (Exception, OSError) as e:
+                self.failure("unexpected error in analysis ", e)
+                return False
 
         # Copy analysis files to mirror locations
         copy_analysis_to_mirror_locations(self.sound)

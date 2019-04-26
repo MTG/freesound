@@ -68,24 +68,12 @@ def cancel_timeout_alarm():
     signal.alarm(0)
 
 
-def cleanup_tmp_directory(tmp_directory):
-    """
-    Removes tmp_directory and its contents. Does not raise an exception of the direcotry does not exist.
-    :param str tmp_directory: path of the directory to be removed
-    """
-    if tmp_directory is not None:
-        try:
-            remove_directory(tmp_directory)
-        except Exception as e:
-            log_error("Could not clean tmp files in %s: %s" % (tmp_directory, e))
-
-
 def log_error(message):
     logger.error(message)
     logger_error.info(message)
 
 
-def check_if_free_space(directory='/tmp/', min_disk_space_percentage=0.05):
+def check_if_free_space(directory=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH, min_disk_space_percentage=0.05):
     """
     Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
     volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
@@ -129,7 +117,6 @@ class Command(BaseCommand):
         logger.info('Ended work')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
-        tmp_directory = None
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
         set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
@@ -137,8 +124,7 @@ class Command(BaseCommand):
         logger.info("---- Starting analysis of sound with id %s ----" % sound_id)
         try:
             check_if_free_space()
-            tmp_directory = tempfile.mkdtemp(prefix='analysis_%s_' % sound_id)
-            result = FreesoundAudioAnalyzer(sound_id=sound_id, tmp_directory=tmp_directory).analyze()
+            result = FreesoundAudioAnalyzer(sound_id=sound_id).analyze()
             if result:
                 logger.info("Successfully analyzed sound %s" % sound_id)
             else:
@@ -151,11 +137,9 @@ class Command(BaseCommand):
             log_error('Unexpected error while analyzing sound %s' % e)
 
         cancel_timeout_alarm()
-        cleanup_tmp_directory(tmp_directory)
         return ''  # Gearman requires return value to be a string
 
     def task_process_sound(self, gearman_worker, gearman_job):
-        tmp_directory = None
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
         skip_previews = job_data.get('skip_previews', False)
@@ -165,8 +149,7 @@ class Command(BaseCommand):
         logger.info("---- Starting processing of sound with id %s ----" % sound_id)
         try:
             check_if_free_space()
-            tmp_directory = tempfile.mkdtemp(prefix='processing_%s_' % sound_id)
-            result = FreesoundAudioProcessor(sound_id=sound_id, tmp_directory=tmp_directory)\
+            result = FreesoundAudioProcessor(sound_id=sound_id)\
                 .process(skip_displays=skip_displays, skip_previews=skip_previews)
             if result:
                 logger.info("Successfully processed sound %s" % sound_id)
@@ -180,5 +163,4 @@ class Command(BaseCommand):
             log_error('Unexpected error while processing sound %s' % e)
 
         cancel_timeout_alarm()
-        cleanup_tmp_directory(tmp_directory)
         return ''  # Gearman requires return value to be a string

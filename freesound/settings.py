@@ -282,12 +282,20 @@ STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../_san
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 
 # Sound analysis/processing worker properties
-WORKER_TIMEOUT = 5 * 60  # General timeout for processing/analysis workers to avoid to hang forever
+#############################################
+
+# General timeout for processing/analysis workers (in seconds)
+WORKER_TIMEOUT = 5 * 60
+
 ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
-ESSENTIA_PROFILE_FILE_PATH = None  # Used to configure output formats in newer FreesoundExtractor versions
 ESSENTIA_STATS_OUT_FORMAT = 'yaml'
 ESSENTIA_FRAMES_OUT_FORMAT = 'json'
-MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25  # In bytes, after converting to 16bit mono PCM (~5MB per minute).
+
+# Used to configure output formats in newer FreesoundExtractor versions
+ESSENTIA_PROFILE_FILE_PATH = None
+
+# Files above this filesize after converting to 16bit mono PCM won't be analyzed (in bytes, ~5MB per minute).
+MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 
 
 # APIV2 settings

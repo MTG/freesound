@@ -38,6 +38,11 @@ logger_error = logging.getLogger("processing_errors")
 
 
 class WorkerException(Exception):
+    """
+    Exception raised by the worker if:
+    i) the analysis/processing function takes longer than the timeout specified in settings.WORKER_TIMEOUT
+    ii) the check for free disk space  before running the analysis/processing function fails
+    """
     pass
 
 

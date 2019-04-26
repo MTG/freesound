@@ -174,7 +174,7 @@ class Command(BaseCommand):
                 log_error("Failed processing sound %s" % sound_id)
 
         except WorkerException as e:
-            log_error('%s' % e)
+            log_error(str(e))
 
         except Exception as e:
             log_error('Unexpected error while processing sound %s' % e)

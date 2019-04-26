@@ -1,3 +1,8 @@
+#NOTE: before running pip, install the following system packages
+#apt-get install libyaml-dev (to allow the cloader)
+#apt-get install libjpeg-dev
+#apt-get install zlib1g-dev
+#apt-get install libpng12-dev
 BeautifulSoup==3.2.0
 beautifulsoup4==4.6.0
 bleach==3.1.0
@@ -42,7 +47,3 @@ boto3==1.7.10
 xlrd==1.1.0
 numpy==1.9.0
 scikits.audiolab==0.11.0
-#apt-get install libyaml-dev (to allow the cloader)
-#apt-get install libjpeg-dev
-#apt-get install zlib1g-dev
-#apt-get install libpng12-dev

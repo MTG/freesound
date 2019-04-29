@@ -569,6 +569,11 @@ class Sound(SocialModel):
         return [ti.tag.name for ti in self.tags.select_related("tag").all()[0:limit]]
 
     def set_tags(self, tags):
+        """
+        Updates the tags of the Sound object. To do that it first removes all TaggedItem objects which relate the sound
+        with tags which are not in the provided list of tags, and then adds the new tags.
+        :param list tags: list of strings representing the new tags that the Sound object should be assigned
+        """
         # remove tags that are not in the list
         for tagged_item in self.tags.all():
             if tagged_item.tag.name not in tags:
@@ -585,8 +590,7 @@ class Sound(SocialModel):
         """
         Set `new_license` as the current license of the sound. Create the corresponding SoundLicenseHistory object.
         Note that this method *does not save* the sound object, it needs to be manually done afterwards.
-        :param new_license: License object representing the new license
-        :return:
+        :param License new_license: License object representing the new license
         """
         self.license = new_license
         SoundLicenseHistory.objects.create(sound=self, license=new_license)
@@ -595,18 +599,46 @@ class Sound(SocialModel):
     # want to save an individual field of the model to prevent overwritting other model fields.
 
     def set_processing_ongoing_state(self, state):
+        """
+        Updates self.processing_ongoing_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.processing_ongoing_state should be set
+        """
         self.processing_ongoing_state = state
         self.save(update_fields=['processing_ongoing_state'])
 
     def set_analysis_state(self, state):
+        """
+        Updates self.analysis_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.analysis_state should be set
+        """
         self.analysis_state = state
         self.save(update_fields=['analysis_state'])
 
     def set_similarity_state(self, state):
+        """
+        Updates self.similarity_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.similarity_state should be set
+        """
         self.similarity_state = state
         self.save(update_fields=['similarity_state'])
 
     def set_audio_info_fields(self, samplerate=None, bitrate=None, bitdepth=None, channels=None, duration=None):
+        """
+        Updates several fields of the Sound object which store some audio properties and saves to DB without
+        updating other fields. This function is used in cases when two instances of the same Sound object could be
+        edited by two processes in parallel and we want to avoid possible field overwrites.
+        :param int samplerate: saplerate to store
+        :param int bitrate: bitrate to store
+        :param int bitdepth: bitdepth to store
+        :param int channels: number of channels to store
+        :param float duration: duration to store
+        """
         update_fields = []
         if samplerate is not None:
             self.samplerate = samplerate

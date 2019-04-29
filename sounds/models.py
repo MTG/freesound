@@ -657,45 +657,43 @@ class Sound(SocialModel):
             update_fields.append('duration')
         self.save(update_fields=update_fields)
 
-    def change_moderation_state(self, new_state, commit=True, do_not_update_related_stuff=False):
+    def change_moderation_state(self, new_state):
         """
         Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
-        or sending a pack to process if required. We do name this method 'set_moderation_state' to maintain consistency
-        with other set_xxx methods in Sound model (set_xxx methods only do low-level update of the field, with no other
-        checks).
+        or sending a pack to process if required.
+        :param str new_state: new moderation state to which the sound should be set
         """
         current_state = self.moderation_state
         if current_state != new_state:
             self.mark_index_dirty(commit=False)
             self.moderation_state = new_state
             self.moderation_date = datetime.datetime.now()
-            if commit:
-                self.save()
-            if new_state != "OK":
-                # Sound became non approved
+            self.save()
+
+            if new_state != 'OK':
+                # If the mdoeration state changed and now the sound is not moderated OK, delete it from indexes
                 self.delete_from_indexes()
-            if not do_not_update_related_stuff and commit:
-                if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
-                    # Sound either passed from being approved to not being approved, or from not being approved to
-                    # being appoved. Update related stuff (must be done after save)
-                    self.user.profile.update_num_sounds()
-                    if self.pack:
-                        self.pack.process()
+
+            if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
+                # Sound either passed from being approved to not being approved, or from not being approved to
+                # being appoved. In that case we need to update num_sounds counts of sound's author and pack (if any)
+                self.user.profile.update_num_sounds()
+                if self.pack:
+                    self.pack.process()
         else:
-            # Only set moderation date
+            # If the moderation state has not changed, only update moderation date
             self.moderation_date = datetime.datetime.now()
-            if commit:
-                self.save()
+            self.save()
 
         self.invalidate_template_caches()
 
-    def change_processing_state(self, new_state, processing_log=None, commit=True):
+    def change_processing_state(self, new_state, processing_log=None):
         """
         Change the processing state of a sound and perform related tasks such as set the sound as index dirty if
         required. Only the fields that are changed are saved to the object. This is needed when the processing tasks
-        change the processing state of the sound to avoid potential collisions when saving the whole object. We do not
-        name this method 'set_processing_state' to maintain consistency  with other set_xxx methods in Sound model
-        (set_xxx methods only do low-level update of the field, with no other checks).
+        change the processing state of the sound to avoid potential collisions when saving the whole object.
+        :param str new_state: new processing state to which the sound should be set
+        :param str processing_log: processing log to be saved in the Sound object
         """
         current_state = self.processing_state
         if current_state != new_state:
@@ -704,24 +702,22 @@ class Sound(SocialModel):
             self.processing_state = new_state
             self.processing_date = datetime.datetime.now()
             self.processing_log = processing_log
-            if commit:
-                self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
+            self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
 
-            if new_state == "FA":
-                # Sound became processing failed
+            if new_state == 'FA':
+                # Sound became processing failed, delete it from indexes
                 self.delete_from_indexes()
-            if commit:
-                # Update related stuff such as users' num_counts or reprocessing affected pack
-                # We only do these updates if commit=True as otherwise the changes would have not been saved
-                # in the DB and updates would have no effect.
-                self.user.profile.update_num_sounds()
-                if self.pack:
-                    self.pack.process()
+
+            # Update num_sounds counts of sound's author and pack (if any)
+            self.user.profile.update_num_sounds()
+            if self.pack:
+                self.pack.process()
+
         else:
+            # If processing state has not changed, only update the processing date and log
             self.processing_date = datetime.datetime.now()
             self.processing_log = processing_log
-            if commit:
-                self.save(update_fields=['processing_date', 'processing_log'])
+            self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
 

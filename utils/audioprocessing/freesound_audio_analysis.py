@@ -35,8 +35,8 @@ logger = logging.getLogger("processing")
 
 class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
 
-    def failure(self, message, error=None, failure_state="FA"):
-        super(FreesoundAudioAnalyzer, self).failure(message, error)
+    def set_failure(self, message, error=None, failure_state="FA"):
+        super(FreesoundAudioAnalyzer, self).set_failure(message, error)
         self.sound.set_analysis_state(failure_state)
 
     def analyze(self):
@@ -53,8 +53,8 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
                 # Check if filesize of the converted file
                 if settings.MAX_FILESIZE_FOR_ANALYSIS is not None:
                     if os.path.getsize(tmp_wavefile) > settings.MAX_FILESIZE_FOR_ANALYSIS:
-                        self.failure('converted file is larger than %sMB and therefore it won\'t be analyzed.' %
-                                     (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
+                        self.set_failure('converted file is larger than %sMB and therefore it won\'t be analyzed.' %
+                                         (int(settings.MAX_FILESIZE_FOR_ANALYSIS/1024/1024)), failure_state='SK')
                         return False
 
                 # Create directories where to store analysis files and move them there
@@ -84,10 +84,10 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
                 self.sound.set_similarity_state('PE')  # Set similarity to PE so sound will get indexed to Gaia
 
             except AudioProcessingException as e:
-                self.failure(e)
+                self.set_failure(e)
                 return False
             except (Exception, OSError) as e:
-                self.failure("unexpected error in analysis ", e)
+                self.set_failure("unexpected error in analysis ", e)
                 return False
 
         # Copy analysis files to mirror locations

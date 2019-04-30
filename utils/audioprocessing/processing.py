@@ -595,8 +595,6 @@ def analyze_using_essentia(essentia_executable_path, input_filename, output_file
     """
     runs Essentia's FreesoundExtractor analsyis
     """
-    essentia_dir = os.path.dirname(os.path.abspath(essentia_executable_path))
-    os.chdir(essentia_dir)
     exec_array = [essentia_executable_path, input_filename, output_filename_base]
     if essentia_profile_path is not None:
         exec_array += [essentia_profile_path]

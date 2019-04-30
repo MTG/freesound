@@ -91,7 +91,11 @@ class FreesoundAudioProcessorBase(object):
         """
         # Convert to PCM and save PCM version in `tmp_wavefile`
         try:
-            _, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+            # Create a temp file to which audioprocessing.stereofy_and_find_info will write
+            # NOTE: We close the returned file handler imediately after it is returned because we don't use it
+            # from ptyhon and not closing the file would cause problems when deleting it at the end of processing
+            fh, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+            os.close(fh)
             if force_use_ffmpeg:
                 raise AudioProcessingException()  # Go to directly to ffmpeg conversion
             if not audioprocessing.convert_to_pcm(sound_path, tmp_wavefile):
@@ -146,7 +150,11 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
             # Now get info about the file, stereofy it and save new stereofied PCM version in `tmp_wavefile2`
             try:
-                _, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+                # Create a temp file to which audioprocessing.stereofy_and_find_info will write
+                # NOTE: We close the returned file handler imediately after it is returned because we don't use it
+                # from ptyhon and not closing the file would cause problems when deleting it at the end of processing
+                fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+                os.close(fh)
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
                 if self.sound.type in ["mp3", "ogg", "m4a"]:
                     info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth

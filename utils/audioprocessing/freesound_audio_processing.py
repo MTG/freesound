@@ -91,10 +91,8 @@ class FreesoundAudioProcessorBase(object):
         """
         # Convert to PCM and save PCM version in `tmp_wavefile`
         try:
-            # Create a temp file to which audioprocessing.stereofy_and_find_info will write
-            # NOTE: We close the returned file handler imediately after it is returned because we don't use it
-            # from ptyhon and not closing the file would cause problems when deleting it at the end of processing
             fh, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+            # Close file handler as we don't use it from Python
             os.close(fh)
             if force_use_ffmpeg:
                 raise AudioProcessingException()  # Go to directly to ffmpeg conversion
@@ -150,10 +148,8 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
             # Now get info about the file, stereofy it and save new stereofied PCM version in `tmp_wavefile2`
             try:
-                # Create a temp file to which audioprocessing.stereofy_and_find_info will write
-                # NOTE: We close the returned file handler imediately after it is returned because we don't use it
-                # from ptyhon and not closing the file would cause problems when deleting it at the end of processing
                 fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+                # Close file handler as we don't use it from Python
                 os.close(fh)
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
                 if self.sound.type in ["mp3", "ogg", "m4a"]:

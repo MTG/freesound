@@ -97,20 +97,34 @@ def remove_directory_if_empty(path):
         os.rmdir(path)
 
 
-def create_directories(path):
+def create_directories(path, exist_ok=True):
+    """
+    Creates directory at the specified path, including all intermediate-level directories needed to contain it.
+    NOTE: after migrating to Python3, this util function can be entirely replaced by calling
+    "os.makedirs(path, exist_ok=True)".
+    :param str path: path of the direcotry to create
+    :param bool exist_ok: if set to True, exceptions won't be raised if the target direcotry already exists
+    """
     try:
         os.makedirs(path)
     except OSError as exc:
-        if exc.errno != errno.EEXIST:
-            raise  # Ignore exception if directory already existing
+        # Ignore exception if directory already existing
+        if exist_ok and exc.errno != errno.EEXIST:
+            raise
 
 
 def remove_directory(path):
+    """
+    Removes the directory at the specified path and all of its contents (including files and other direcotries).
+    No exception is raised if no direcotry exists at the given path.
+    :param str path: path of the direcotry to delete
+    """
     try:
         shutil.rmtree(path)
     except OSError as e:
+        # Ignore exception if directory does not exist
         if e.errno != errno.ENOENT:
-            raise  # Ignore exception if directory does not exist
+            raise
 
 
 class TemporaryDirectory(object):

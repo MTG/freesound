@@ -59,7 +59,7 @@ class Command(BaseCommand):
         # this we'll have to change the frequency with which we run create_front_page_caches management command
 
         # Generate trending sounds cache
-        trending_sound_ids = list(Download.objects.order_by('-created').values_list('sound_id', flat=True)[0:3])
+        trending_sound_ids = list(Download.objects.order_by('-created').values_list('sound_id', flat=True)[0:9])
         cache.set("trending_sound_ids", trending_sound_ids,  cache_time)
 
         # TODO: decide how to compute trending sounds. Current implementation simply takes the 3 most recent downloads.

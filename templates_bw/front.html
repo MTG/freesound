@@ -68,13 +68,23 @@
         <hr />
         <section class="v-spacing-6">
           <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
-          <div class="row">
-          {% for sound_id in trending_sound_ids %}
-            <div class="col">
-                {% display_sound sound_id %}
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel v-padding-bottom-4">
+                {% for sound_ids in trending_sound_ids|chunks:3 %}
+                <div>
+                  <div class="row">
+                  {% for sound_id in sound_ids %}
+                    <div class="col">
+                        {% display_sound sound_id %}
+                    </div>
+                  {% endfor %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
             </div>
-          {% endfor %}
-          </div>
+	      </div>
         </section>
       {% endif %}
       </main>

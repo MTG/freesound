@@ -73,7 +73,8 @@ def log_error(message):
     logger_error.info(message)
 
 
-def check_if_free_space(directory=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH, min_disk_space_percentage=0.05):
+def check_if_free_space(directory=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH,
+                        min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
     """
     Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
     volume is lower than 'min_disk_space_percentage', this function raises WorkerException.

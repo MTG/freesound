@@ -284,6 +284,9 @@ SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 # Sound analysis/processing worker properties
 #############################################
 
+# Min free disk space percentage for worker (worker will raise exception if not enough free disk space is available)
+WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
+
 # General timeout for processing/analysis workers (in seconds)
 WORKER_TIMEOUT = 5 * 60
 

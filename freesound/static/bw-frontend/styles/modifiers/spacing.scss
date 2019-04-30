@@ -46,6 +46,10 @@
     padding-bottom: nth($spacing-values-list, $i);
   }
 
+  .v-padding-bottom-#{$i} {
+    padding-bottom: nth($spacing-values-list, $i);
+  }
+
   .padding-#{$i} {
     padding-left: nth($spacing-values-list, $i);
     padding-right: nth($spacing-values-list, $i);

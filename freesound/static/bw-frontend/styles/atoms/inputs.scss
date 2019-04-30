@@ -32,9 +32,10 @@ input {
   color: $black;
   background: none;
   border: 0;
+  font-weight: 600;
 
-  &:placeholder {
-    color: $navy-grey;
+  &::placeholder {
+    color: $black-hover;
   }
 
   &:focus {

@@ -202,7 +202,7 @@ def front_page(request):
                                                           'last_post__author',
                                                           'last_post__thread',
                                                           'last_post__thread__forum')
-    latest_additions = Sound.objects.latest_additions(5, '2 days')
+    latest_additions = Sound.objects.latest_additions(5 if not using_beastwhoosh(request) else 9, '2 days')
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
         random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
@@ -232,6 +232,7 @@ def front_page(request):
         'latest_additions': latest_additions,
         'random_sound': random_sound,
         'top_donor': top_donor,
+        'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,  # Not needed for NG
     }
     return render(request, 'front.html', tvars)
 

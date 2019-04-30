@@ -21,8 +21,7 @@
   <!-- end parcel hack -->
 {% endmacro %}
 
-{% macro 
-  smallPlayer(
+{% macro smallPlayer(
     title = 'My sound',
     author = 'giuband',
     description = 'Sound description',
@@ -30,7 +29,11 @@
     img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png'
   ) %}
   {{ player('small', title, url, img) }}
-  <h5 class="v-spacing-top-1">{{ title }}</h5>
-  <a>{{ author }}</a>
+  <h5 class="v-spacing-top-1">
+    <a href="#" class="bw-link--black">
+      {{ title }}
+    </a>
+  </h5>
+  <a href="#">{{ author }}</a>
   <p class="text-grey">{{ description }}</p>
 {% endmacro %}

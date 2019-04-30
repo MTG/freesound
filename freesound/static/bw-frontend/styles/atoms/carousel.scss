@@ -1,0 +1,45 @@
+.bw-carousel-container {
+  position: relative;
+
+  &:hover .bw-carousel-icon {
+    opacity: 1;
+  }
+}
+
+.bw-carousel-wrapper {
+  overflow: hidden;
+}
+
+.bw-carousel {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+}
+
+.bw-carousel-icon {
+  position: absolute;
+  top: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  background: $white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.carousel-right {
+  transform: translateX(50%) translateY(-50%);
+  right: 0px;
+}
+
+.carousel-left {
+  transform: rotate(-180deg) translateY(50%) translateX(50%);
+  left: 0;
+}
+
+.carousel-nav-hidden {
+  display: none;
+}

@@ -13,16 +13,16 @@
     </div>
     <ul class="bw-nav__actions">
       <li class="bw-nav__action">
-        <a class="bw-link--grey" href="{% url 'sounds' %}">Sounds</a>
+        <a class="bw-link--grey font-weight-bold" href="{% url 'sounds' %}">Sounds</a>
       </li>
       <li class="bw-nav__action">
-        <a class="bw-link--grey" href="{% url 'packs' %}">Packs</a>
+        <a class="bw-link--grey font-weight-bold" href="{% url 'packs' %}">Packs</a>
       </li>
       <li class="bw-nav__action">
-        <a class="bw-link--grey" href="{% url 'forums-forums' %}">Forum</a>
+        <a class="bw-link--grey font-weight-bold" href="{% url 'forums-forums' %}">Forum</a>
       </li>
       <li class="bw-nav__action">
-        <a class="bw-link--grey" href="{% url 'geotags' %}">Map</a>
+        <a class="bw-link--grey font-weight-bold" href="{% url 'geotags' %}">Map</a>
       </li>
       <li class="bw-nav__action dropdown">
         <a class="bw-link--grey bw-nav__menu dropdown-toggle no-hover bw-icon-ellipsis" id="three-dots-menu" aria-haspopup="true"
@@ -107,10 +107,10 @@
             </ul>
           </li>
           <li class="bw-nav__action">
-            <button class="btn-secondary">Donate</button>
+            <a class="no-hover" href="{% url 'donate' %}"><button class="btn-secondary">Donate</button></a>
           </li>
           <li class="bw-nav__action">
-            <button class="btn-primary">Upload sound</button>
+            <a class="no-hover" href="{% url 'accounts-upload' %}"><button class="btn-primary">Upload sound</button></a>
           </li>
           {% endcache %}
       {% else %}
@@ -118,7 +118,7 @@
             <a class="bw-link--black" href="{% url 'login' %}">Log in</a>
           </li>
           <li class="bw-nav__action">
-            <button class="btn-primary">Join</button>
+              <a class="no-hover" href="{% url 'accounts-register' %}"><button class="btn-primary">Join</button></a>
           </li>
       {% endif %}
 

@@ -3,6 +3,7 @@
 {% load static %}
 {% load cache %}
 {% load display_sound %}
+{% load util %}
 
 {% block title %}Freesound{% endblock title %}
 
@@ -29,41 +30,69 @@
         {% endif %}
 
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4">Latest additions</h2>
-          <div class="row">
-          {% for sound in latest_additions %}
-              {% if forloop.counter0 < 3 %}
-                <div class="col">
-                    {% display_sound sound.sound_id %}
+          <h3 class="v-spacing-4">Latest additions</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel v-padding-bottom-4">
+                {% for sounds in latest_additions|chunks:3 %}
+                <div>
+                  <div class="row">
+                  {% for sound in sounds %}
+                    <div class="col">
+                        {% display_sound sound.sound_id %}
+                    </div>
+                  {% endfor %}
+                  </div>
                 </div>
-              {% endif %}
-          {% endfor %}
-          </div>
+                {% endfor %}
+              </div>
+            </div>
+	      </div>
         </section>
         {% if popular_searches %}
         <hr />
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4 v-spacing-top-4">Popular searches</h2>
-          <div class="row">
-              {% for search_term in popular_searches %}
-                <div class="col">
-                  <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">{{ search_term }}</button>
+          <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel">
+                {% for popular_searches_slice in popular_searches|chunks:4 %}
+                <div>
+                  <div class="row">
+                    {% for search_term in popular_searches_slice %}
+                    <div class="col">
+                      <a class="no-hover" href="{% url 'sounds-search' %}?q={{ search_term }}"><button class="btn-inverse border-grey-light text-center no-border-radius padding-4 text-black no-text-wrap w-100 h-100">{{ search_term }}</button></a>
+                    </div>
+                    {% endfor %}
+                  </div>
                 </div>
-              {% endfor %}
+                {% endfor %}
+              </div>
+            </div>
           </div>
         </section>
         {% endif %}
         {% if trending_sound_ids %}
         <hr />
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4 v-spacing-top-4">Trending sounds</h2>
-          <div class="row">
-          {% for sound_id in trending_sound_ids %}
-            <div class="col">
-                {% display_sound sound_id %}
+          <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel v-padding-bottom-4">
+                {% for sound_ids in trending_sound_ids|chunks:3 %}
+                <div>
+                  <div class="row">
+                  {% for sound_id in sound_ids %}
+                    <div class="col">
+                        {% display_sound sound_id %}
+                    </div>
+                  {% endfor %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
             </div>
-          {% endfor %}
-          </div>
+	      </div>
         </section>
       {% endif %}
       </main>
@@ -72,10 +101,10 @@
           <h4>Enjoying Freesound?</h4>
           <p class="text-grey v-spacing-2">Please consider donating some money</p>
           <div class="between v-spacing-5 wrap">
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button>
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button>
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button>
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button></a>
           </div>
           {% if top_donor %}
               <div class="h-spacing-left-3">
@@ -109,7 +138,7 @@
                 </article>
             {% endfor %}
           <div class="center v-spacing-top-4">
-            <button class="btn-inverse">More posts here</button>
+              <a class="no-hover" href="{% url 'forums-forums' %}"><button class="btn-inverse">More posts here</button></a>
           </div>
         </section>
       </aside>

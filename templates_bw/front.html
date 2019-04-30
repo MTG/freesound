@@ -72,10 +72,10 @@
           <h4>Enjoying Freesound?</h4>
           <p class="text-grey v-spacing-2">Please consider donating some money</p>
           <div class="between v-spacing-5 wrap">
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button>
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button>
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button>
-            <button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button></a>
           </div>
           {% if top_donor %}
               <div class="h-spacing-left-3">

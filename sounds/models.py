@@ -722,6 +722,15 @@ class Sound(SocialModel):
         self.invalidate_template_caches()
 
     def change_owner(self, new_owner):
+        """
+        Change the owner (i.e. author) of a Sound object by assigning a new User object to the user field.
+        If sound is part of a Pack, when changing the owner a new Pack object is created for the new owner.
+        Changing the owner of the sound also includes renaming and moving all associated files (i.e. sound, previews,
+        displays and analysis) to include the ID of the new owner and be located accordingly.
+        NOTE: see comments in https://github.com/MTG/freesound/issues/750 for more information
+        :param User new_owner: User object of the new sound owner
+        """
+
         def replace_user_id_in_path(path, old_owner_id, new_owner_id):
             old_path_beginning = '%i_%i' % (self.id, old_owner_id)
             new_path_beginning = '%i_%i' % (self.id, new_owner_id)

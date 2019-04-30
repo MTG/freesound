@@ -3,6 +3,7 @@
 {% load static %}
 {% load cache %}
 {% load display_sound %}
+{% load util %}
 
 {% block title %}Freesound{% endblock title %}
 
@@ -29,7 +30,7 @@
         {% endif %}
 
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4">Latest additions</h2>
+          <h3 class="v-spacing-4">Latest additions</h3>
           <div class="row">
           {% for sound in latest_additions %}
               {% if forloop.counter0 < 3 %}
@@ -43,20 +44,30 @@
         {% if popular_searches %}
         <hr />
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4 v-spacing-top-4">Popular searches</h2>
-          <div class="row">
-              {% for search_term in popular_searches %}
-                <div class="col">
-                    <a class="no-hover" href="{% url 'sounds-search' %}?q={{ search_term }}"><button class="btn-inverse border-grey-light text-center no-border-radius padding-4 text-black no-text-wrap w-100 h-100">{{ search_term }}</button></a>
+          <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel">
+                {% for popular_searches_slice in popular_searches|chunks:4 %}
+                <div>
+                  <div class="row">
+                    {% for search_term in popular_searches_slice %}
+                    <div class="col">
+                      <a class="no-hover" href="{% url 'sounds-search' %}?q={{ search_term }}"><button class="btn-inverse border-grey-light text-center no-border-radius padding-4 text-black no-text-wrap w-100 h-100">{{ search_term }}</button></a>
+                    </div>
+                    {% endfor %}
+                  </div>
                 </div>
-              {% endfor %}
+                {% endfor %}
+              </div>
+            </div>
           </div>
         </section>
         {% endif %}
         {% if trending_sound_ids %}
         <hr />
         <section class="v-spacing-6">
-          <h2 class="v-spacing-4 v-spacing-top-4">Trending sounds</h2>
+          <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
           <div class="row">
           {% for sound_id in trending_sound_ids %}
             <div class="col">

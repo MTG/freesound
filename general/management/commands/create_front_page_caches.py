@@ -51,7 +51,8 @@ class Command(BaseCommand):
         # TODO: we still don't know how to handle multiple news entries in BW, currently only the latest will be shown
 
         # Generate popular searches cache
-        popular_searches = ['field-recording', 'ambience', 'voice', 'loop']
+        popular_searches = ['wind', 'music', 'footsteps', 'woosh', 'explosion', 'scream', 'click', 'whoosh', 'piano',
+                            'swoosh', 'rain', 'fire']
         cache.set("popular_searches", popular_searches,  cache_time)
 
         # TODO: we have to decide how do we determine "trending searches" and how often these are updated. Depending on

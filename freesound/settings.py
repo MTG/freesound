@@ -193,6 +193,9 @@ USERNAME_CHANGE_MAX_TIMES = 3
 LAST_FORUM_POST_MINIMUM_TIME = 60*5
 BASE_MAX_POSTS_PER_DAY = 5
 
+# Donations
+DONATION_AMOUNT_REQUEST_PARAM = 'dda'
+
 # AudioCommons descriptors stuff
 AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV3'  # This will be used for indexing sounds and returning analysis output
 AUDIOCOMMONS_DESCRIPTOR_PREFIX = 'ac_'

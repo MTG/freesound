@@ -232,6 +232,7 @@ def front_page(request):
         'latest_additions': latest_additions,
         'random_sound': random_sound,
         'top_donor': top_donor,
+        'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,  # Not needed for NG
     }
     return render(request, 'front.html', tvars)
 

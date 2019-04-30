@@ -192,7 +192,8 @@ def donate(request):
             data = {'errors': form.errors}
         return JsonResponse(data)
     else:
-        form = DonateForm(user=request.user)
+        default_donation_amount = request.GET.get(settings.DONATION_AMOUNT_REQUEST_PARAM, None)
+        form = DonateForm(user=request.user, default_donation_amount=default_donation_amount)
         tvars = {'form': form, 'stripe_key': settings.STRIPE_PUBLIC_KEY}
         return render(request, 'donations/donate.html', tvars)
 

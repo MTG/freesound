@@ -47,7 +47,7 @@
           <div class="row">
               {% for search_term in popular_searches %}
                 <div class="col">
-                  <button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">{{ search_term }}</button>
+                    <a class="no-hover" href="{% url 'sounds-search' %}?q={{ search_term }}"><button class="btn-inverse border-grey-light padding-4 text-center no-border-radius w-100 h-100">{{ search_term }}</button></a>
                 </div>
               {% endfor %}
           </div>

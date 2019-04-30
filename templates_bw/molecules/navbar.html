@@ -107,10 +107,10 @@
             </ul>
           </li>
           <li class="bw-nav__action">
-            <button class="btn-secondary">Donate</button>
+            <a class="no-hover" href="{% url 'donate' %}"><button class="btn-secondary">Donate</button></a>
           </li>
           <li class="bw-nav__action">
-            <button class="btn-primary">Upload sound</button>
+            <a class="no-hover" href="{% url 'accounts-upload' %}"><button class="btn-primary">Upload sound</button></a>
           </li>
           {% endcache %}
       {% else %}
@@ -118,7 +118,7 @@
             <a class="bw-link--black" href="{% url 'login' %}">Log in</a>
           </li>
           <li class="bw-nav__action">
-            <button class="btn-primary">Join</button>
+              <a class="no-hover" href="{% url 'accounts-register' %}"><button class="btn-primary">Join</button></a>
           </li>
       {% endif %}
 

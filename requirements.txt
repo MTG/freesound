@@ -34,9 +34,9 @@ django-object-actions==0.8.2
 pillow==5.2.0
 ipython==4.2.0
 stripe==1.65.0
-Sphinx
+Sphinx==1.6.3
 django-fixture-magic
-mock
+mock==2.0.0
 raven==5.10.1
 django-multiupload==0.5
 zenpy==1.1.3

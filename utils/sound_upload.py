@@ -187,7 +187,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     # 8 create moderation tickets if needed
     if user.profile.is_whitelisted:
-        sound.change_moderation_state('OK', do_not_update_related_stuff=True)
+        sound.change_moderation_state('OK')
     else:
         # create moderation ticket!
         sound.create_moderation_ticket()

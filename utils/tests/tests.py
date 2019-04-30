@@ -18,23 +18,32 @@
 #     See AUTHORS file.
 #
 
+import datetime
+import os
+import shutil
+
+import mock
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User
-from django.conf import settings
-from django.core.cache import cache
+
+import utils.downloads
+from donations.models import Donation, DonationsModalSettings
+from sounds.models import Sound, Pack, License, Download
+from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
+from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
+from utils.audioprocessing.processing import AudioProcessingException
 from utils.forms import filename_has_valid_extension
-from utils.tags import clean_and_split_tags
-from utils.text import clean_html
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, create_sound, \
     NoAudioException, AlreadyExistsException
-from sounds.models import Sound, Pack, License, Download
-from donations.models import Donation, DonationsModalSettings
-import shutil
-import datetime
-import utils.downloads
-import tempfile
-import os
+from utils.tags import clean_and_split_tags
+from utils.test_helpers import create_test_files, create_user_and_sounds, override_uploads_path_with_temp_directory, \
+    override_csv_path_with_temp_directory, override_sounds_path_with_temp_directory, \
+    override_previews_path_with_temp_directory, override_displays_path_with_temp_directory, \
+    override_analysis_path_with_temp_directory, override_processing_tmp_path_with_temp_directory
+from utils.text import clean_html
 
 
 class UtilsTest(TestCase):
@@ -70,20 +79,15 @@ class UtilsTest(TestCase):
         ret = utils.downloads.download_sounds(licenses_url, pack)
         self.assertEqual(ret.status_code, 200)
 
-    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    @override_uploads_path_with_temp_directory
     def test_upload_sounds(self):
         # create new sound files
         filenames = ['file1.wav', 'file2.wav']
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
-        for filename in filenames:
-            f = open(user_upload_path + filename, 'a')
-            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
-            f.close()
-
+        create_test_files(filenames, user_upload_path)
         shutil.copyfile(user_upload_path + filenames[0], user_upload_path + "copy.wav")
-
         license = License.objects.all()[0]
         sound_fields = {
             'name': 'new sound',
@@ -308,13 +312,6 @@ class BulkDescribeUtils(TestCase):
     fixtures = ['initial_data']
 
     @staticmethod
-    def create_audio_files(filenames, base_path):
-        for filename in filenames:
-            f = open(base_path + filename, 'a')
-            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
-            f.close()
-
-    @staticmethod
     def create_file_with_lines(filename, lines, base_path):
         csv_file_path = '%s/%s' % (base_path, filename)
         csv_fid = open(csv_file_path, 'w')
@@ -359,14 +356,14 @@ class BulkDescribeUtils(TestCase):
         # evil CSV/XLS/XLSX files that can be out there. I think it is better to make sure that in case of unexpected
         # error we show that message to the users instead of trying to cover all possible errors.
 
-    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
-    @override_settings(CSV_PATH=tempfile.mkdtemp())
+    @override_uploads_path_with_temp_directory
+    @override_csv_path_with_temp_directory
     def test_validate_input_csv_file(self):
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
-        self.create_audio_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
+        create_test_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
@@ -483,19 +480,16 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('username' in lines_validated[0]['line_errors'])  # User does not exist
         self.assertTrue('columns' in lines_validated[1]['line_errors'])  # Invalid number of columns
 
-        # Delete tmp directories
-        shutil.rmtree(settings.UPLOADS_PATH)
-        shutil.rmtree(settings.CSV_PATH)
 
-    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
-    @override_settings(CSV_PATH=tempfile.mkdtemp())
+    @override_uploads_path_with_temp_directory
+    @override_csv_path_with_temp_directory
     def test_bulk_describe_from_csv(self):
 
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
-        self.create_audio_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
+        create_test_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
@@ -562,6 +556,380 @@ class BulkDescribeUtils(TestCase):
         self.assertNotEqual(new_sound1.id, sound1_id)  # Check that IDs are not the same
         self.assertNotEqual(new_sound2.id, sound2_id)  # Check that IDs are not the same
 
-        # Delete tmp directories
-        shutil.rmtree(settings.UPLOADS_PATH)
-        shutil.rmtree(settings.CSV_PATH)
+
+def convert_to_pcm_mock(input_filename, output_filename):
+    return True
+
+
+def convert_to_pcm_mock_create_file(input_filename, output_filename):
+    create_test_files(paths=[output_filename], n_bytes=2048)
+    return True
+
+
+def convert_to_pcm_mock_fail(input_filename, output_filename):
+    raise AudioProcessingException("failed converting to pcm")
+
+
+def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
+    return dict(
+        duration=123.5,
+        channels=2,
+        samplerate=44100,
+        bitrate=128,
+        bitdepth=16)
+
+
+def stereofy_mock_fail(stereofy_executble_path, input_filename, output_filename):
+    raise AudioProcessingException("stereofy has failed")
+
+
+def convert_to_mp3_mock(input_filename, output_filename, quality):
+    create_test_files(paths=[output_filename])
+
+
+def convert_to_mp3_mock_fail(input_filename, output_filename, quality):
+    raise AudioProcessingException("conversion to mp3 (preview) has failed")
+
+
+def convert_to_ogg_mock(input_filename, output_filename, quality):
+    create_test_files(paths=[output_filename])
+
+
+def convert_to_ogg_mock_fail(input_filename, output_filename, quality):
+    raise AudioProcessingException("conversion to ogg (preview) has failed")
+
+
+def create_wave_images_mock(
+        input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, **kwargs):
+    create_test_files(paths=[output_filename_w, output_filename_s])
+
+
+def create_wave_images_mock_fail(
+        input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, **kwargs):
+    raise AudioProcessingException("creation of display images has failed")
+
+
+def analyze_using_essentia_mock(essentia_executable_path, input_filename, output_filename_base, **kwargs):
+    create_test_files(paths=['%s_statistics.yaml' % output_filename_base, '%s_frames.json' % output_filename_base])
+
+
+def analyze_using_essentia_mock_fail(essentia_executable_path, input_filename, output_filename_base, **kwargs):
+    raise AudioProcessingException("essentia extractor returned an error")
+
+
+class AudioProcessingTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def pre_test(self, create_sound_file=True):
+        # Do some stuff which needs to be carried out right before each test
+        self.assertEqual(self.sound.processing_state, "PE")
+        if create_sound_file:
+            create_test_files(paths=[self.sound.locations('path')])  # Create fake file for original sound path
+
+    def setUp(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=1, type="mp3")  # Use mp3 so it needs converstion to PCM
+        self.sound = sounds[0]
+        self.user = user
+
+    def test_sound_object_does_not_exist(self):
+        with self.assertRaises(AudioProcessingException) as cm:
+            FreesoundAudioProcessor(sound_id=999)
+        exc = cm.exception
+        self.assertIn('did not find Sound object', exc.message)
+
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    def test_sound_path_does_not_exist(self):
+        self.pre_test(create_sound_file=False)
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        self.assertFalse(result)  # Processing failed, retutned False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('could not find file with path', self.sound.processing_log)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_fail)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    def test_conversion_to_pcm_failed(self, *args):
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        # will fail because mocked version of convert_to_pcm fails
+        self.assertFalse(result)  # Processing failed, retutned False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('conversion to PCM failed', self.sound.processing_log)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    def test_no_need_to_convert_to_pcm(self):
+        self.sound.type = 'wav'
+        self.sound.save()
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        self.assertFalse(result)  # Processing failed, retutned False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('no need to convert, this file is already PCM data', self.sound.processing_log)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        # NOTE: this test will generate stereofy errors as well but here we only check that a spcific message about
+        # PCM conversion was added to the log. stereofy is tested below.
+
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock_fail)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    def test_stereofy_failed(self, *args):
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        # processing will fail because stereofy mock raises an exception
+        self.assertFalse(result)  # Processing failed, retutned False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('stereofy has failed', self.sound.processing_log)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    def test_set_audio_info_fields(self, *args):
+        self.pre_test()
+        FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.duration, 123.5)  # Assert that info properties were set
+        self.assertEqual(self.sound.channels, 2)
+        self.assertEqual(self.sound.samplerate, 44100)
+        self.assertEqual(self.sound.bitrate, 128)
+        self.assertEqual(self.sound.bitdepth, 0)  # This will be 0 because sound is mp3 and bitdepth is overwritten to 0
+        # NOTE: after calling set_audio_info_fields processing will fail, but we're only interested in testing up to
+        # this point for the present unit test
+
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock_fail)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_previews_path_with_temp_directory
+    def test_make_mp3_previews_fails(self, *args):
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        # processing will fail because convert_to_mp3 mock raises an exception
+        self.assertFalse(result)  # Processing failed, retutned False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('conversion to mp3 (preview) has failed', self.sound.processing_log)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock_fail)
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_previews_path_with_temp_directory
+    def test_make_ogg_previews_fails(self, *args):
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        # processing will fail because convert_to_ogg mock raises an exception
+        self.assertFalse(result)  # Processing failed, retutned False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('conversion to ogg (preview) has failed', self.sound.processing_log)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock_fail)
+    @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_previews_path_with_temp_directory
+    @override_displays_path_with_temp_directory
+    def test_create_images_fails(self, *args):
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        # processing will fail because create_wave_images mock raises an exception
+        self.assertFalse(result)  # Processing failed, retutned False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "FA")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertIn('creation of display images has failed', self.sound.processing_log)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_previews_path_with_temp_directory
+    @override_displays_path_with_temp_directory
+    def test_skip_previews(self, *args):
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id)\
+            .process(skip_previews=True)
+
+        self.assertFalse(os.path.exists(self.sound.locations('preview.LQ.ogg.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('preview.HQ.ogg.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('preview.LQ.mp3.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('preview.HQ.mp3.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral_bw.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral.L.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.spectral_bw.L.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave_bw.M.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave.L.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
+
+        self.assertTrue(result)  # Processing succeeded
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "OK")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
+    @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_previews_path_with_temp_directory
+    @override_displays_path_with_temp_directory
+    def test_skip_displays(self, *args):
+        self.pre_test()
+        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id) \
+            .process(skip_displays=True)
+
+        self.assertTrue(os.path.exists(self.sound.locations('preview.LQ.ogg.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('preview.HQ.ogg.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('preview.LQ.mp3.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('preview.HQ.mp3.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral_bw.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral.L.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.spectral_bw.L.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave_bw.M.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave.L.path')))
+        self.assertFalse(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
+
+        self.assertTrue(result)  # Processing succeeded
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.processing_state, "OK")
+        self.assertEqual(self.sound.processing_ongoing_state, "FI")
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+
+class AudioAnalysisTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def pre_test(self, create_sound_file=True):
+        # Do some stuff which needs to be carried out right before each test
+        self.assertEqual(self.sound.analysis_state, "PE")
+        if create_sound_file:
+            create_test_files(paths=[self.sound.locations('path')])  # Create fake file for original sound path
+
+    def setUp(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=1, type="mp3")  # Use mp3 so it needs converstion to PCM
+        self.sound = sounds[0]
+        self.user = user
+
+    def test_sound_object_does_not_exist(self):
+        with self.assertRaises(AudioProcessingException) as cm:
+            FreesoundAudioAnalyzer(sound_id=999)
+        exc = cm.exception
+        self.assertIn('did not find Sound object', exc.message)
+
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    def test_sound_path_does_not_exist(self):
+        self.pre_test(create_sound_file=False)
+        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
+        # analysis will fail because sound does not exist
+        self.assertFalse(result)  # Analysis failed, returning False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.analysis_state, "FA")
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_fail)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    def test_conversion_to_pcm_failed(self, *args):
+        self.pre_test()
+        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
+        # analysis will fail because mocked convert_to_pcm fails
+        self.assertFalse(result)  # Analysis failed, returning False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.analysis_state, "FA")
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_create_file)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_settings(MAX_FILESIZE_FOR_ANALYSIS=1024)
+    def test_big_pcm_file_is_not_analyzed(self, *args):
+        self.pre_test()
+        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
+        # analysis will skip as generated PCM filesize is biggen than MAX_FILESIZE_FOR_ANALYSIS
+        self.assertFalse(result)  # Analysis failed, returning False
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.analysis_state, "SK")
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.analyze_using_essentia', side_effect=analyze_using_essentia_mock_fail)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_analysis_path_with_temp_directory
+    @override_settings(ESSENTIA_PROFILE_FILE_PATH=None)
+    def test_analysis_created_analysis_files(self, *args):
+        self.pre_test()
+        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
+        # analysis will fail because analyze_using_essentia mock raises exception
+        self.assertFalse(result)  # Analysis failed
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.analysis_state, "OK")
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+
+    @mock.patch('utils.audioprocessing.processing.analyze_using_essentia', side_effect=analyze_using_essentia_mock)
+    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
+    @override_processing_tmp_path_with_temp_directory
+    @override_sounds_path_with_temp_directory
+    @override_analysis_path_with_temp_directory
+    @override_settings(ESSENTIA_PROFILE_FILE_PATH=None)
+    def test_analysis_created_analysis_files(self, *args):
+        self.pre_test()
+        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
+        self.assertTrue(result)  # Analysis succeeded
+        self.assertTrue(os.path.exists(self.sound.locations('analysis.statistics.path')))
+        self.assertTrue(os.path.exists(self.sound.locations('analysis.frames.path')))
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.analysis_state, "OK")
+        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)

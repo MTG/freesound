@@ -369,7 +369,7 @@ class Sound(SocialModel):
     processing_ongoing_state = models.CharField(db_index=True, max_length=2,
                                                 choices=PROCESSING_ONGOING_STATE_CHOICES, default="NO")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last processing attempt
-    processing_log = models.TextField(null=True, blank=True, default=None)  # Currently unused
+    processing_log = models.TextField(null=True, blank=True, default=None)
 
     # state
     is_index_dirty = models.BooleanField(null=False, default=True)
@@ -483,14 +483,16 @@ class Sound(SocialModel):
             ),
             analysis=dict(
                 statistics=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id,
-                                                                                                    sound_user_id)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.yaml" % (id_folder, self.id, sound_user_id)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.%s" % (
+                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
+                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.%s" % (
+                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
                 ),
                 frames=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id,
-                                                                                                sound_user_id)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.json" % (id_folder, self.id, sound_user_id)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.%s" % (
+                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
+                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
+                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
                 )
             )
         )
@@ -567,6 +569,11 @@ class Sound(SocialModel):
         return [ti.tag.name for ti in self.tags.select_related("tag").all()[0:limit]]
 
     def set_tags(self, tags):
+        """
+        Updates the tags of the Sound object. To do that it first removes all TaggedItem objects which relate the sound
+        with tags which are not in the provided list of tags, and then adds the new tags.
+        :param list tags: list of strings representing the new tags that the Sound object should be assigned
+        """
         # remove tags that are not in the list
         for tagged_item in self.tags.all():
             if tagged_item.tag.name not in tags:
@@ -583,128 +590,147 @@ class Sound(SocialModel):
         """
         Set `new_license` as the current license of the sound. Create the corresponding SoundLicenseHistory object.
         Note that this method *does not save* the sound object, it needs to be manually done afterwards.
-        :param new_license: License object representing the new license
-        :return:
+        :param License new_license: License object representing the new license
         """
         self.license = new_license
         SoundLicenseHistory.objects.create(sound=self, license=new_license)
 
-    # N.B. These set functions are used in the distributed processing.
-    # They set a single field to prevent overwriting eachother's result in
-    # the database, which is what happens if you use Django's save() method.
-    def set_single_field(self, field, value, include_quotes=True):
-        self.set_fields([[field, value, include_quotes]])
-
-    def set_fields(self, fields):
-        query = "UPDATE sounds_sound SET "
-        query += ", ".join([('%s = %s' %
-                             (field[0], (field[1] if not field[2] else ("'%s'" % field[1])))) for field in fields])
-        query += " WHERE id = %s" % self.id
-        with transaction.atomic():
-            cursor = connection.cursor()
-            cursor.execute(query)
-
-    def set_processing_state(self, state):
-        self.set_single_field('processing_state', state)
+    # N.B. The set_xxx functions below are used in the distributed processing and other parts of the app where we only
+    # want to save an individual field of the model to prevent overwritting other model fields.
 
     def set_processing_ongoing_state(self, state):
-        self.set_single_field('processing_ongoing_state', state)
-
-    def set_processing_date(self, date):
-        self.set_single_field('processing_date', str(date))  # Date should be datetime object
+        """
+        Updates self.processing_ongoing_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.processing_ongoing_state should be set
+        """
+        self.processing_ongoing_state = state
+        self.save(update_fields=['processing_ongoing_state'])
 
     def set_analysis_state(self, state):
-        self.set_single_field('analysis_state', state)
+        """
+        Updates self.analysis_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.analysis_state should be set
+        """
+        self.analysis_state = state
+        self.save(update_fields=['analysis_state'])
 
     def set_similarity_state(self, state):
-        self.set_single_field('similarity_state', state)
+        """
+        Updates self.similarity_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.similarity_state should be set
+        """
+        self.similarity_state = state
+        self.save(update_fields=['similarity_state'])
 
-    def set_moderation_state(self, state):
-        self.set_single_field('moderation_state', state)
+    def set_audio_info_fields(self, samplerate=None, bitrate=None, bitdepth=None, channels=None, duration=None):
+        """
+        Updates several fields of the Sound object which store some audio properties and saves to DB without
+        updating other fields. This function is used in cases when two instances of the same Sound object could be
+        edited by two processes in parallel and we want to avoid possible field overwrites.
+        :param int samplerate: saplerate to store
+        :param int bitrate: bitrate to store
+        :param int bitdepth: bitdepth to store
+        :param int channels: number of channels to store
+        :param float duration: duration to store
+        """
+        update_fields = []
+        if samplerate is not None:
+            self.samplerate = samplerate
+            update_fields.append('samplerate')
+        if bitrate is not None:
+            self.bitrate = bitrate
+            update_fields.append('bitrate')
+        if bitdepth is not None:
+            self.bitdepth = bitdepth
+            update_fields.append('bitdepth')
+        if channels is not None:
+            self.channels = channels
+            update_fields.append('channels')
+        if duration is not None:
+            self.duration = duration
+            update_fields.append('duration')
+        self.save(update_fields=update_fields)
 
-    def set_moderation_date(self, date):
-        self.set_single_field('moderation_date', str(date))  # Date should be datetime object
-
-    def set_original_path(self, path):
-        self.set_single_field('original_path', path)
-
-    def set_audio_info_fields(self, info):
-        field_names = ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']
-        field_values = [[field, info[field], False] for field in field_names]
-        self.set_fields(field_values)
-
-    def change_moderation_state(self, new_state, commit=True, do_not_update_related_stuff=False):
+    def change_moderation_state(self, new_state):
         """
         Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
-        or sending a pack to process if required. We do not use the similar function above 'set_moderation_state'
-        to maintain consistency with other set_xxx methods in Sound model (set_xxx methods only do low-level update
-        of the field, with no other checks).
+        or sending a pack to process if required.
+        :param str new_state: new moderation state to which the sound should be set
         """
         current_state = self.moderation_state
         if current_state != new_state:
             self.mark_index_dirty(commit=False)
             self.moderation_state = new_state
             self.moderation_date = datetime.datetime.now()
-            if commit:
-                self.save()
-            if new_state != "OK":
-                # Sound became non approved
+            self.save()
+
+            if new_state != 'OK':
+                # If the mdoeration state changed and now the sound is not moderated OK, delete it from indexes
                 self.delete_from_indexes()
-            if not do_not_update_related_stuff and commit:
-                if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
-                    # Sound either passed from being approved to not being approved, or from not being approved to
-                    # being appoved. Update related stuff (must be done after save)
-                    self.user.profile.update_num_sounds()
-                    if self.pack:
-                        self.pack.process()
+
+            if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
+                # Sound either passed from being approved to not being approved, or from not being approved to
+                # being appoved. In that case we need to update num_sounds counts of sound's author and pack (if any)
+                self.user.profile.update_num_sounds()
+                if self.pack:
+                    self.pack.process()
         else:
-            # Only set moderation date
+            # If the moderation state has not changed, only update moderation date
             self.moderation_date = datetime.datetime.now()
-            if commit:
-                self.save()
+            self.save()
 
         self.invalidate_template_caches()
 
-    def change_processing_state(self, new_state, commit=True, use_set_instead_of_save=False):
+    def change_processing_state(self, new_state, processing_log=None):
         """
         Change the processing state of a sound and perform related tasks such as set the sound as index dirty if
-        required. The 'use_set_instead_of_save' can be used to directly set the change of state in the db as an
-        update command without affecting other fields of the Sound model. This is needed when the processing tasks
+        required. Only the fields that are changed are saved to the object. This is needed when the processing tasks
         change the processing state of the sound to avoid potential collisions when saving the whole object.
+        :param str new_state: new processing state to which the sound should be set
+        :param str processing_log: processing log to be saved in the Sound object
         """
         current_state = self.processing_state
         if current_state != new_state:
             # Sound either went from PE to OK, from PE to FA, from OK to FA, or from FA to OK (never from OK/FA to PE)
             self.mark_index_dirty(commit=False)
-            if use_set_instead_of_save and commit:
-                self.set_processing_state(new_state)
-                self.set_processing_date(datetime.datetime.now())
-            else:
-                self.processing_state = new_state
-                self.processing_date = datetime.datetime.now()
-                if commit:
-                    self.save()
-            if new_state == "FA":
-                # Sound became processing failed
+            self.processing_state = new_state
+            self.processing_date = datetime.datetime.now()
+            self.processing_log = processing_log
+            self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
+
+            if new_state == 'FA':
+                # Sound became processing failed, delete it from indexes
                 self.delete_from_indexes()
-            if commit:
-                # Update related stuff such as users' num_counts or reprocessing affected pack
-                # We only do these updates if commit=True as otherwise the changes would have not been saved
-                # in the DB and updates would have no effect.
-                self.user.profile.update_num_sounds()
-                if self.pack:
-                    self.pack.process()
+
+            # Update num_sounds counts of sound's author and pack (if any)
+            self.user.profile.update_num_sounds()
+            if self.pack:
+                self.pack.process()
+
         else:
-            if use_set_instead_of_save:
-                self.set_processing_date(datetime.datetime.now())
-            else:
-                self.processing_date = datetime.datetime.now()
-                if commit:
-                    self.save()
+            # If processing state has not changed, only update the processing date and log
+            self.processing_date = datetime.datetime.now()
+            self.processing_log = processing_log
+            self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
 
     def change_owner(self, new_owner):
+        """
+        Change the owner (i.e. author) of a Sound object by assigning a new User object to the user field.
+        If sound is part of a Pack, when changing the owner a new Pack object is created for the new owner.
+        Changing the owner of the sound also includes renaming and moving all associated files (i.e. sound, previews,
+        displays and analysis) to include the ID of the new owner and be located accordingly.
+        NOTE: see comments in https://github.com/MTG/freesound/issues/750 for more information
+        :param User new_owner: User object of the new sound owner
+        """
+
         def replace_user_id_in_path(path, old_owner_id, new_owner_id):
             old_path_beginning = '%i_%i' % (self.id, old_owner_id)
             new_path_beginning = '%i_%i' % (self.id, new_owner_id)

@@ -4,7 +4,7 @@ addons:
 python:
 - '2.7'
 before_install:
-- sudo apt-get install libarchive-zip-perl
+- sudo apt-get install libarchive-zip-perl libsndfile-dev
 - psql -c 'create database freesound;' -U postgres
 - cp freesound/local_settings.example.py freesound/local_settings.py
 - cp freesound/logger.example.py freesound/logger.py
@@ -17,7 +17,7 @@ before_install:
 - mkdir -p ../freesound-data/avatars
 install:
 - pip install -U pip
-- pip install django-nose
+- pip install django-nose numpy==1.9.0
 - pip install -r requirements.txt
 script:
 - python manage.py test --noinput --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum geotags ratings search sounds support tags tickets utils wiki general monitor

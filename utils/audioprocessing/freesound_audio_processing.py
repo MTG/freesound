@@ -18,206 +18,247 @@
 #     See AUTHORS file.
 #
 
-import errno
 import logging
 import os
-import sys
 import tempfile
 
 from django.conf import settings
 
 import color_schemes
 import utils.audioprocessing.processing as audioprocessing
+from sounds.models import Sound
 from utils.audioprocessing.processing import AudioProcessingException
+from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 
 logger = logging.getLogger("processing")
 
 
-def process(sound, skip_previews=False, skip_displays=False):
+class FreesoundAudioProcessorBase(object):
+    """
+    Base class to be used for Freesound processing and analysis code.
+    It implements methods common to both use cases.
+    """
 
-    def write_log(message):
-        sys.stdout.write(str(message) + '\n')
-        sys.stdout.flush()
-        logger.info("[%d] %i: %s" % (os.getpid(), sound.id, message))
+    work_log = ''
+    sound = None
 
-    def create_directory(path):
-        try:
-            os.makedirs(path)
-        except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                # Directory already exists
-                pass
-            else:
-                # Directory could not be created, raise exception
-                raise
+    def __init__(self, sound_id):
+        self.sound = self.get_sound_object(sound_id)
 
-    def cleanup(files):
-        success("cleaning up processing files: " + ", ".join(files))
-        for filename in files:
-            try:
-                os.unlink(filename)
-            except:
-                pass
+    def log_info(self, message):
+        logger.info("%i - %s" % (self.sound.id, message))
+        self.work_log += message + '\n'
 
-    def failure(message, error=None):
-        sound.set_processing_ongoing_state("FI")
-        sound.change_processing_state("FA", use_set_instead_of_save=True)
-        logging_message = "ERROR: Failed to process sound with id %s\n" % sound.id
+    def log_error(self, message):
+        logger.error("%i %s" % (self.sound.id, message))
+        self.work_log += message + '\n'
+
+    def set_failure(self, message, error=None):
+        logging_message = "sound with id %s failed\n" % self.sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
             logging_message += "\terror: %s" % str(error)
-        write_log(logging_message)
-        cleanup(to_cleanup)
+        self.log_error(logging_message)
 
-    def success(message):
-        write_log('- ' + message)
-
-    to_cleanup = []  # This will hold a list of files to cleanup after processing
-
-    # Change ongoing processing state to "processing" in Sound model
-    sound.set_processing_ongoing_state("PR")
-
-    # Get the path of the original sound
-    sound_path = sound.locations('path')
-    if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
-        sound_path = sound.locations('preview.LQ.mp3.path')
-    if not os.path.exists(sound_path):
-        failure("can't process sound as file does not exist")
-        return False
-    success("file to process found in " + sound_path)
-
-    # Convert to PCM and save PCM version in `tmp_wavefile`
-    try:
-        tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
-        if not audioprocessing.convert_to_pcm(sound_path, tmp_wavefile):
-            tmp_wavefile = sound_path
-            success("no need to convert, this file is already PCM data")
-        else:
-            to_cleanup.append(tmp_wavefile)
-            success("converted to pcm: " + tmp_wavefile)
-    except IOError as e:
-        # Could not create tmp file
-        failure("could not create tmp_wavefile file", e)
-        return False
-    except AudioProcessingException as e:
+    def get_sound_object(self, sound_id):
         try:
-            audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile)
-            to_cleanup.append(tmp_wavefile)
-            success("converted to PCM: " + tmp_wavefile)
+            return Sound.objects.get(id=sound_id)
+        except Sound.DoesNotExist:
+            raise AudioProcessingException("did not find Sound object with id %s" % sound_id)
+        except Exception as e:
+            raise AudioProcessingException("unexpected error getting Sound %s from DB" % sound_id)
+
+    def get_sound_path(self):
+        sound_path = self.sound.locations('path')
+        if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+            sound_path = self.sound.locations('preview.LQ.mp3.path')
+        if not os.path.exists(sound_path):
+            raise AudioProcessingException('could not find file with path %s' % sound_path)
+        self.log_info("file found in " + sound_path)
+        return sound_path
+
+    def convert_to_pcm(self, sound_path, tmp_directory, force_use_ffmpeg=False, mono=False):
+        """
+        Convert a given sound file to PCM. By default we first try to use corresponding decoders for each format and
+        preserve original file properties (sampling rate, etc). If conversion fails with this method we failback to
+        ffmpeg conversion and set standartized 44.1kHz, 16bit output. ffmpeg conversion still preserves number of
+        channels but can be optionally set to output a mono file (useful for analysis code)
+        :param sound_path: path of the audiofile to convert
+        :param force_use_ffmpeg: don't try to use format specific decoder and go straight to ffmpeg
+        :param mono: output mono file (only applies when using ffmpeg conversion)
+        :return: path of the converted audio file
+        """
+        # Convert to PCM and save PCM version in `tmp_wavefile`
+        try:
+            _, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+            if force_use_ffmpeg:
+                raise AudioProcessingException()  # Go to directly to ffmpeg conversion
+            if not audioprocessing.convert_to_pcm(sound_path, tmp_wavefile):
+                tmp_wavefile = sound_path
+                self.log_info("no need to convert, this file is already PCM data")
+
+        except IOError as e:
+            # Could not create tmp file
+            raise AudioProcessingException("could not create tmp_wavefile file: %s" % e)
+        except OSError as e:
+            raise AudioProcessingException("conversion to PCM failed, "
+                                           "make sure that format conversion executables exist: %s" % e)
         except AudioProcessingException as e:
-            failure("conversion to PCM failed", e)
-            return False
-    except Exception as e:
-        failure("unhandled exception while converting to PCM", e)
-        return False
-
-    # Now get info about the file, stereofy it and save new stereofied PCM version in `tmp_wavefile2`
-    try:
-        tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
-        to_cleanup.append(tmp_wavefile2)
-        info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
-        if sound.type in ["mp3", "ogg", "m4a"]:
-            info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
-        success("got sound info and stereofied: " + tmp_wavefile2)
-    except IOError as e:
-        # Could not create tmp file
-        failure("could not create tmp_wavefile2 file", e)
-        return False
-    except AudioProcessingException as e:
-        failure("stereofy has failed", e)
-        return False
-    except Exception as e:
-        failure("unhandled exception while getting info and running stereofy", e)
-        return False
-
-    # Fill audio information fields in Sound object
-    try:
-        sound.set_audio_info_fields(info)
-    except Exception as e:  # Could not catch a more specific exception
-        failure("failed writting audio info fields to db", e)
-        return False
-
-    # Generate MP3 and OGG previews
-    if not skip_previews:
-
-        # Create directory to store previews (if it does not exist)
-        # Same directory is used for all MP3 and OGG previews of a given sound so we only need to run this once
-        try:
-            create_directory(os.path.dirname(sound.locations("preview.LQ.mp3.path")))
-        except OSError:
-            failure("could not create directory for previews")
-            return False
-
-        # Generate MP3 previews
-        for mp3_path, quality in [(sound.locations("preview.LQ.mp3.path"), 70),
-                                  (sound.locations("preview.HQ.mp3.path"), 192)]:
+            # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
             try:
-                audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
+                audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=mono)
             except AudioProcessingException as e:
-                failure("conversion to mp3 (preview) has failed", e)
+                raise AudioProcessingException("conversion to PCM failed: %s" % e)
+            except OSError as e:
+                raise AudioProcessingException("conversion to PCM failed, "
+                                               "make sure that ffmpeg executable exists: %s" % e)
+        except Exception as e:
+            raise AudioProcessingException("unhandled exception while converting to PCM: %s" % e)
+
+        self.log_info("PCM file path: " + tmp_wavefile)
+        return tmp_wavefile
+
+
+class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
+
+    def set_failure(self, message, error=None):
+        super(FreesoundAudioProcessor, self).set_failure(message, error)
+        self.sound.set_processing_ongoing_state("FI")
+        self.sound.change_processing_state("FA", processing_log=self.work_log)
+
+    def process(self, skip_previews=False, skip_displays=False):
+
+        with TemporaryDirectory(
+                prefix='processing_%s_' % self.sound.id,
+                dir=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH) as tmp_directory:
+
+            # Change ongoing processing state to "processing" in Sound model
+            self.sound.set_processing_ongoing_state("PR")
+
+            # Get the path of the original sound and convert to PCM
+            try:
+                sound_path = self.get_sound_path()
+                tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory)
+            except AudioProcessingException as e:
+                self.set_failure(e)
+                return False
+
+            # Now get info about the file, stereofy it and save new stereofied PCM version in `tmp_wavefile2`
+            try:
+                _, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+                info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
+                if self.sound.type in ["mp3", "ogg", "m4a"]:
+                    info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
+                self.log_info("got sound info and stereofied: " + tmp_wavefile2)
+            except IOError as e:
+                # Could not create tmp file
+                self.set_failure("could not create tmp_wavefile2 file", e)
+                return False
+            except OSError as e:
+                self.set_failure("stereofy has failed, "
+                                 "make stereofy sure executable exists at %s: %s" % (settings.SOUNDS_PATH, e))
+                return False
+            except AudioProcessingException as e:
+                self.set_failure("stereofy has failed", e)
                 return False
             except Exception as e:
-                failure("unhandled exception generating MP3 previews", e)
+                self.set_failure("unhandled exception while getting info and running stereofy", e)
                 return False
-            success("created mp3: " + mp3_path)
 
-        # Generate OGG previews
-        for ogg_path, quality in [(sound.locations("preview.LQ.ogg.path"), 1),
-                                  (sound.locations("preview.HQ.ogg.path"), 6)]:
+            # Fill audio information fields in Sound object
             try:
-                audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
-            except AudioProcessingException as e:
-                failure("conversion to ogg (preview) has failed", e)
-                return False
-            except Exception as e:
-                failure("unhandled exception generating OGG previews", e)
-                return False
-            success("created ogg: " + ogg_path)
-
-    # Generate display images for different sizes and colour scheme front-ends
-    if not skip_displays:
-
-        # Create directory to store display images (if it does not exist)
-        # Same directory is used for all displays of a given sound so we only need to run this once
-        try:
-            create_directory(os.path.dirname(sound.locations("display.wave.M.path")))
-        except OSError:
-            failure("could not create directory for displays")
-            return False
-
-        # Generate display images, M and L sizes for NG and BW front-ends
-        for width, height, color_scheme, waveform_path, spectral_path in [
-            (120, 71, color_schemes.FREESOUND2_COLOR_SCHEME,
-             sound.locations("display.wave.M.path"), sound.locations("display.spectral.M.path")),
-            (500, 201, color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-             sound.locations("display.wave_bw.M.path"), sound.locations("display.spectral_bw.M.path")),
-            (900, 201, color_schemes.FREESOUND2_COLOR_SCHEME,
-             sound.locations("display.wave.L.path"), sound.locations("display.spectral.L.path")),
-            (1500, 401, color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-             sound.locations("display.wave_bw.L.path"), sound.locations("display.spectral_bw.L.path"))
-        ]:
-            try:
-                fft_size = 2048
-                audioprocessing.create_wave_images(tmp_wavefile2, waveform_path, spectral_path, width, height,
-                                                   fft_size, color_scheme=color_scheme)
-                success("created wave and spectrogram images: %s, %s" % (waveform_path, spectral_path))
-            except AudioProcessingException as e:
-                failure("creation of display images has failed", e)
-                return False
-            except Exception as e:
-                failure("unhandled exception while generating displays", e)
+                self.sound.set_audio_info_fields(**info)
+            except Exception as e:  # Could not catch a more specific exception
+                self.set_failure("failed writting audio info fields to db", e)
                 return False
 
-    # Clean up temp files
-    cleanup(to_cleanup)
+            # Generate MP3 and OGG previews
+            if not skip_previews:
 
-    # Change processing state and processing ongoing state in Sound model
-    sound.set_processing_ongoing_state("FI")
-    sound.change_processing_state("OK", use_set_instead_of_save=True)
+                # Create directory to store previews (if it does not exist)
+                # Same directory is used for all MP3 and OGG previews of a given sound so we only need to run this once
+                try:
+                    create_directories(os.path.dirname(self.sound.locations("preview.LQ.mp3.path")))
+                except OSError:
+                    self.set_failure("could not create directory for previews")
+                    return False
 
-    # Copy previews and display files to mirror locations
-    copy_previews_to_mirror_locations(sound)
-    copy_displays_to_mirror_locations(sound)
+                # Generate MP3 previews
+                for mp3_path, quality in [(self.sound.locations("preview.LQ.mp3.path"), 70),
+                                          (self.sound.locations("preview.HQ.mp3.path"), 192)]:
+                    try:
+                        audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
+                    except OSError as e:
+                        self.set_failure("conversion to mp3 (preview) has failed, "
+                                         "make sure that lame executable exists: %s" % e)
+                        return False
 
-    return True
+                    except AudioProcessingException as e:
+                        self.set_failure("conversion to mp3 (preview) has failed", e)
+                        return False
+                    except Exception as e:
+                        self.set_failure("unhandled exception generating MP3 previews", e)
+                        return False
+                    self.log_info("created mp3: " + mp3_path)
+
+                # Generate OGG previews
+                for ogg_path, quality in [(self.sound.locations("preview.LQ.ogg.path"), 1),
+                                          (self.sound.locations("preview.HQ.ogg.path"), 6)]:
+                    try:
+                        audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
+                    except OSError as e:
+                        self.set_failure("conversion to ogg (preview) has failed, "
+                                         "make sure that oggenc executable exists: %s" % e)
+                        return False
+                    except AudioProcessingException as e:
+                        self.set_failure("conversion to ogg (preview) has failed", e)
+                        return False
+                    except Exception as e:
+                        self.set_failure("unhandled exception generating OGG previews", e)
+                        return False
+                    self.log_info("created ogg: " + ogg_path)
+
+            # Generate display images for different sizes and colour scheme front-ends
+            if not skip_displays:
+
+                # Create directory to store display images (if it does not exist)
+                # Same directory is used for all displays of a given sound so we only need to run this once
+                try:
+                    create_directories(os.path.dirname(self.sound.locations("display.wave.M.path")))
+                except OSError:
+                    self.set_failure("could not create directory for displays")
+                    return False
+
+                # Generate display images, M and L sizes for NG and BW front-ends
+                for width, height, color_scheme, waveform_path, spectral_path in [
+                    (120, 71, color_schemes.FREESOUND2_COLOR_SCHEME,
+                     self.sound.locations("display.wave.M.path"), self.sound.locations("display.spectral.M.path")),
+                    (500, 201, color_schemes.BEASTWHOOSH_COLOR_SCHEME,
+                     self.sound.locations("display.wave_bw.M.path"), self.sound.locations("display.spectral_bw.M.path")),
+                    (900, 201, color_schemes.FREESOUND2_COLOR_SCHEME,
+                     self.sound.locations("display.wave.L.path"), self.sound.locations("display.spectral.L.path")),
+                    (1500, 401, color_schemes.BEASTWHOOSH_COLOR_SCHEME,
+                     self.sound.locations("display.wave_bw.L.path"), self.sound.locations("display.spectral_bw.L.path"))
+                ]:
+                    try:
+                        fft_size = 2048
+                        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path, spectral_path, width, height,
+                                                           fft_size, color_scheme=color_scheme)
+                        self.log_info("created wave and spectrogram images: %s, %s" % (waveform_path, spectral_path))
+                    except AudioProcessingException as e:
+                        self.set_failure("creation of display images has failed", e)
+                        return False
+                    except Exception as e:
+                        self.set_failure("unhandled exception while generating displays", e)
+                        return False
+
+        # Change processing state and processing ongoing state in Sound model
+        self.sound.set_processing_ongoing_state("FI")
+        self.sound.change_processing_state("OK", processing_log=self.work_log)
+
+        # Copy previews and display files to mirror locations
+        copy_previews_to_mirror_locations(self.sound)
+        copy_displays_to_mirror_locations(self.sound)
+
+        return True

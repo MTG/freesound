@@ -20,10 +20,8 @@
 
 import datetime
 import json
-import tempfile
 import time
 import os
-from itertools import count
 
 import mock
 from django.conf import settings
@@ -46,7 +44,7 @@ from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalys
 from sounds.views import get_sound_of_the_day_id
 from accounts.models import EmailPreferenceType
 from utils.encryption import encrypt
-from utils.tags import clean_and_split_tags
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 from utils.cache import get_template_cache_key
 
 from bs4 import BeautifulSoup
@@ -246,38 +244,6 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(sound.is_index_dirty, True)
 
 
-sound_counter = count()
-
-
-def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None,
-                           processing_state='PE', moderation_state='PE'):
-    count_offset = count_offset + next(sound_counter)
-    if user is None:
-        user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
-    packs = list()
-    for i in range(0, num_packs):
-        pack = Pack.objects.create(user=user, name="Test pack %i" % (i + count_offset))
-        packs.append(pack)
-    sounds = list()
-    for i in range(0, num_sounds):
-        pack = None
-        if packs:
-            pack = packs[i % len(packs)]
-        sound = Sound.objects.create(user=user,
-                                     original_filename="Test sound %i" % (i + count_offset),
-                                     base_filename_slug="test_sound_%i" % (i + count_offset),
-                                     license=License.objects.all()[0],
-                                     pack=pack,
-                                     md5="fakemd5_%i" % (i + count_offset),
-                                     processing_state=processing_state,
-                                     moderation_state=moderation_state)
-
-        if tags is not None:
-            sound.set_tags(clean_and_split_tags(tags))
-        sounds.append(sound)
-    return user, packs, sounds
-
-
 class ChangeSoundOwnerTestCase(TestCase):
 
     fixtures = ['initial_data']
@@ -294,8 +260,8 @@ class ChangeSoundOwnerTestCase(TestCase):
         for sound in soundsA:
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
-            sound.set_original_path(fake_original_path_template.format(sound_id=sound.id, user_id=userA.id))
-            sound.refresh_from_db()
+            sound.original_path = fake_original_path_template.format(sound_id=sound.id, user_id=userA.id)
+            sound.save()
 
         # Check initial number of sounds is ok
         self.assertEqual(userA.profile.num_sounds, 4)
@@ -1379,7 +1345,7 @@ class SoundAnalysisModel(TestCase):
 
     fixtures = ['initial_data']
 
-    @override_settings(ANALYSIS_PATH=tempfile.mkdtemp())
+    @override_analysis_path_with_temp_directory
     def test_get_analysis(self):
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]

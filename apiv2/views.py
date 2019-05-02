@@ -553,7 +553,7 @@ class DownloadLink(DownloadAPIView):
             'user_id': self.user.id,
             'sound_id': sound.id,
             'client_id': self.client_id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.API_DOWNLOAD_TOKEN_LIFETIME),
         }, settings.SECRET_KEY, algorithm='HS256')
         download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token]),
                                      request_is_secure=request.is_secure())

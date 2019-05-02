@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 
-DEBUG = True
-DISPLAY_DEBUG_TOOLBAR = True
 
-SUPPORT = (('Your Email Here', 'abc@gmail.com'), )
-
-# If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
-ALLOWED_EMAILS = []
+# -------------------------------------------------------------------------------
+# Required Django settings
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',  # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': '',                      # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
@@ -19,87 +15,29 @@ DATABASES = {
     }
 }
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = ''
 
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 2525
+# -------------------------------------------------------------------------------
+# Some default configurations for development (no need to make changes here)
 
-PROXIES = {} #'http': 'http://proxy.upf.edu:8080'}
+DEBUG = True
+DISPLAY_DEBUG_TOOLBAR = True
 
-RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
-RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
-AKISMET_KEY = ''
+SECRET_KEY = 'thisisasecretkey'
 
-GOOGLE_ANALYTICS_KEY = ''
-
-USE_ZENDESK_FOR_SUPPORT_REQUESTS = False
-ZENDESK_EMAIL = ''
-ZENDESK_TOKEN = ''
-
+# Default SOLR URLs if running locally
 SOLR_URL = "http://localhost:8983/solr/fs2/"
 SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 
+# Default Gearman hostname:port if running locally
 GEARMAN_JOB_SERVERS = ["localhost:4730"]
 
+# Set data URL to production Freesound as data files will not likely be in local
+DATA_URL = "https://freesound.org/data/"
 
-STRIPE_KEY = "sk_test_..."
-PAYPAL_EMAIL = "paypal@freesound.org"
-PAYPAL_VALIDATION_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
-PAYPAL_PAYMENTS_API_URL = "https://api-3t.sandbox.paypal.com/nvp"
-PAYPAL_PASSWORD = ""
-PAYPAL_USERNAME= ""
-PAYPAL_SIGNATURE = ""
-DONATIONS_PER_PAGE = 40
+WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.0
 
-GRAYLOG_USERNAME = "apiuser"
-GRAYLOG_PASSWORD = "apiuserpassword"
-
-# To customize DATA_URL
-# DATA_URL = "https://freesound.org/data/"
-
-# To customize DATA_PATH
-'''
 import os
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
-AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
-PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
-DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
-SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
-PACKS_PATH = os.path.join(DATA_PATH, "packs/")
-UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
-CSV_PATH = os.path.join(DATA_PATH, "csv/")
-ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
-FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
-PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
-'''
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '_mail'))
 
-# SOLR ranking weights
-DEFAULT_SEARCH_WEIGHTS = {
-    'id' : 4,
-    'tag' : 4,
-    'description' : 3,
-    'username' : 1,
-    'pack_tokenized' : 2,
-    'original_filename' : 2
-}
-
-APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
-    1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
-    2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
-    99: [],  # No limit of requests
-}
-
-APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/minute', '0/day',  '0/hour'],  # Client 'disabled'
-    1: ['30/minute', '500/day', None],  # Ip limit not yet enabled
-    2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
-    99: [],  # No limit of requests
-}
-
-# Sentry
-
-RAVEN_CONFIG = {
-    'dsn': 'DSN_PROVIDED_BY_SENTRY',
-}
+BULK_UPLOAD_MIN_SOUNDS = 0

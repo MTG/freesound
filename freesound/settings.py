@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
-# Test comment
-
-# Django settings for freesound project.
 import os
 import datetime
 import re
 import logging.config
 
+# -------------------------------------------------------------------------------
+# Miscellaneous Django settings
+
 DEBUG = False
+DISPLAY_DEBUG_TOOLBAR = False
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,24 +58,16 @@ INSTALLED_APPS = [
     'corsheaders',
     'follow',
     'fixture_magic',
-    'utils',  # So that we also run utils tests
+    'utils',
     'donations',
     'monitor',
     'raven.contrib.django.raven_compat',
     'django_object_actions',
-    #'test_utils', # Don't use this in production!
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
-AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
-# Email settings
-SERVER_EMAIL = 'noreply@freesound.org'
-EMAIL_SUBJECT_PREFIX = '[freesound] '
-SEND_BROKEN_LINK_EMAILS = True
-DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 25
+AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 # This was the default serializer in django 1.6. Now we keep using it because
 # we saw some erros when running tests, in the future we should change to the
@@ -89,7 +82,8 @@ SITE_ID = 1
 
 USE_X_FORWARDED_HOST = True
 
-# Not using django timezones as project originally with Django 1.3. We might fix this in the future:  https://docs.djangoproject.com/en/1.5/topics/i18n/timezones/#time-zones-migration-guide
+# Not using django timezones as project originally with Django 1.3. We might fix this in the future:
+# https://docs.djangoproject.com/en/1.5/topics/i18n/timezones/#time-zones-migration-guide
 USE_TZ = False
 
 # If you set this to False, Django will make some optimizations so as not
@@ -111,17 +105,12 @@ ROOT_URLCONF = 'freesound.urls'
 
 WSGI_APPLICATION = 'freesound.wsgi.application'
 
-# This configuration is not used by django anymore
-AUTH_PROFILE_MODULE = 'accounts.Profile'
-
 LOGIN_URL = '/home/login/'
 LOGOUT_URL = '/home/logout/'
 LOGIN_REDIRECT_URL = '/home/'
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
 
-#IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
-#IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')
 IGNORABLE_404_URLS = (
     # for each <prefix> in IGNORABLE_404_STARTS
     re.compile(r'^/cgi-bin/'),
@@ -138,6 +127,8 @@ IGNORABLE_404_URLS = (
     re.compile(r'similar$'),
 )
 
+ALLOWED_HOSTS = ['*']
+
 # Silence Django system check urls.W002 "Your URL pattern '/$' has a regex beginning with a '/'.
 # Remove this slash as it is unnecessary." triggered in API urls. Although the check claims the last
 # slash is not necessary, it is in our case as otherwise it breaks some API urls when these don't end
@@ -148,19 +139,63 @@ SILENCED_SYSTEM_CHECKS = ['urls.W002']
 # See debug comments, when DEBUG is True
 INTERNAL_IPS = ['localhost', '127.0.0.1']
 
-# Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+]
+
+
+# -------------------------------------------------------------------------------
+# Email settings
+
+SERVER_EMAIL = 'noreply@freesound.org'
+EMAIL_SUBJECT_PREFIX = '[freesound] '
+SEND_BROKEN_LINK_EMAILS = True
+DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+
+# AWS tokens (for accessing email bounce list and email statistics)
+AWS_REGION = ''
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+
+# Email bounce processing parameters
+AWS_SQS_QUEUE_URL = ''
+AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
+
+# Email stats retrieval parameters (see utils.aws.report_ses_stats for more details)
+AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500  # should be ~ 10000-11000
+AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period (15min)
+
+# If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
+ALLOWED_EMAILS = []
+
+
+# -------------------------------------------------------------------------------
+# Media paths, URLS and static settings
+
+# Absolute path to the directory that holds media (e.g. /home/media/media.lawrence.com/)
 MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../freesound/../media')
 MEDIA_URL = "/media/"
 
-# Static files
-# Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is no an installed Django app)
+# Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
 STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 
-FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
+
+# -------------------------------------------------------------------------------
+# Freesound miscelaneous settings
+
+SUPPORT = ()
 
 IFRAME_PLAYER_SIZE = {
         'large': [920, 245],
@@ -171,32 +206,104 @@ IFRAME_PLAYER_SIZE = {
 
 FREESOUND_RSS = "http://10.55.0.51/?feed=rss2" #"http://blog.freesound.org/?feed=rss2"
 
+# Number of things per page
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 15
 REMIXES_PER_PAGE = 10
-SOUNDS_PER_API_RESPONSE = 30
-MAX_SOUNDS_PER_API_RESPONSE = 100
-SOUNDS_PER_DESCRIBE_ROUND = 10
-USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
-USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
+SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
+DONATIONS_PER_PAGE = 40
+
+# User flagging notification thresholds
+USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
+USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
+
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+
+# Allowed data file extensions for bulk upload
 ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
+
+# Maximum number of times changing the username is allowed
 USERNAME_CHANGE_MAX_TIMES = 3
 
-# Forum restrictions
-LAST_FORUM_POST_MINIMUM_TIME = 60*5
+# Anti-spam restrictions for posting comments, messages and in forums
+# Time since last post (in seconds) and maximum number of posts per day
+LAST_FORUM_POST_MINIMUM_TIME = 60 * 5
 BASE_MAX_POSTS_PER_DAY = 5
 
+# Random Sound of the day settings
+# Don't choose a sound by a user whose sound has been chosen in the last ~1 month
+NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
+NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
+
+# Number of ratings of a sound to start showing average
+MIN_NUMBER_RATINGS = 3
+
+# Buffer size for CRC computation
+CRC_BUFFER_SIZE = 4096
+
+# Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
+BULK_UPLOAD_MIN_SOUNDS = 40
+
+# Turn this option on to log every time a user downloads a pack or sound
+LOG_DOWNLOADS = False
+
+# Followers notifications
+MAX_EMAILS_PER_COMMAND_RUN = 1000
+NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
+
+# -------------------------------------------------------------------------------
+# Freesound data paths and urls
+
+# Base data path. Note that further data subdirectories are defined after the local_settings import
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
+
+# Base data URL. Note that further data sub-urls are defined after the local_settings import
+# You can overwrite this to point to production data ("https://freesound.org/data/")
+DATA_URL = "/data/"
+
+SENDFILE_SECRET_URL = "/secret/"
+SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
+PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
+
+# Locations where sounds, previews and other "static" content will be mirrored (if specified)
+# If locations do not exist, they will be created
+MIRROR_SOUNDS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_PREVIEWS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
+MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
+LOG_START_AND_END_COPYING_FILES = True
+
+
+# -------------------------------------------------------------------------------
 # Donations
+
 DONATION_AMOUNT_REQUEST_PARAM = 'dda'
 
-# AudioCommons descriptors stuff
+# Stripe
+STRIPE_PUBLIC_KEY = ''
+STRIPE_PRIVATE_KEY = ''
+
+# Paypal
+PAYPAL_EMAIL = "fs@freesound.org"
+PAYPAL_VALIDATION_URL = ''
+PAYPAL_PAYMENTS_API_URL = ''
+PAYPAL_PASSWORD = ''
+PAYPAL_USERNAME= ''
+PAYPAL_SIGNATURE = ''
+
+
+# -------------------------------------------------------------------------------
+# AudioCommons analysis settings
+
 AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV3'  # This will be used for indexing sounds and returning analysis output
 AUDIOCOMMONS_DESCRIPTOR_PREFIX = 'ac_'
 AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
@@ -234,59 +341,72 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
     unicode: '_s',
 }
 
-# Random Sound of the day settings
-# Don't choose a sound by a user whose sound has been chosen in the last ~1 month
-NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
-NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 
-# Number of ratings of a sound to start showing average
-MIN_NUMBER_RATINGS = 3
+# -------------------------------------------------------------------------------
+# SOLR settings
+SOLR_URL = ''
+SOLR_FORUM_URL = ''
 
-# Buffer size for CRC computation
-CRC_BUFFER_SIZE = 4096
+# SOLR ranking weights
+DEFAULT_SEARCH_WEIGHTS = {
+    'id': 4,
+    'tag': 4,
+    'description': 3,
+    'username': 1,
+    'pack_tokenized': 2,
+    'original_filename': 2
+}
 
-# Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
-BULK_UPLOAD_MIN_SOUNDS = 40
 
-# Graylog stream ids and domain
+# -------------------------------------------------------------------------------
+# Sentry settings
+RAVEN_CONFIG = {}
+
+
+# -------------------------------------------------------------------------------
+# Google analytics settings
+GOOGLE_ANALYTICS_KEY = ''
+
+
+# -------------------------------------------------------------------------------
+# Zendesk settings
+USE_ZENDESK_FOR_SUPPORT_REQUESTS = True
+ZENDESK_EMAIL = ''
+ZENDESK_TOKEN = ''
+
+# -------------------------------------------------------------------------------
+# Graylog settings
+
 GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
 GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
 GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
-
-# COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
-# $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
-
-DELETED_USER_ID = 1
-
-DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
+GRAYLOG_USERNAME = ''
+GRAYLOG_PASSWORD = ''
 
 # -------------------------------------------------------------------------------
-# Freesound paths and urls
-# If new paths are added here, remember to add a line to create them if not existing in general.apps.GeneralConfig
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
-AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
-PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
-DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
-SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
-PACKS_PATH = os.path.join(DATA_PATH, "packs/")
-UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
-CSV_PATH = os.path.join(DATA_PATH, "csv/")
-ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
-FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
-PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
+# Mapbox
 
-SENDFILE_SECRET_URL = "/secret/"
-SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
-PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
+MAPBOX_ACCESS_TOKEN = ''
+
 
 # -------------------------------------------------------------------------------
+# Recaptcha settings
+
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
+
+# -------------------------------------------------------------------------------
+# Mapbox
+
+AKISMET_KEY = ''
+
+# -------------------------------------------------------------------------------
+# Processing and analysis settings
+
+GEARMAN_JOB_SERVERS = ['']
 
 STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../_sandbox/stereofy/stereofy'))
-
-SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
-
-# Sound analysis/processing worker properties
-#############################################
 
 # Min free disk space percentage for worker (worker will raise exception if not enough free disk space is available)
 WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
@@ -305,8 +425,8 @@ ESSENTIA_PROFILE_FILE_PATH = None
 MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 
 
-# APIV2 settings
-################
+# -------------------------------------------------------------------------------
+# API settings
 
 ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
 APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
@@ -349,11 +469,8 @@ REST_FRAMEWORK = {
     'VIEW_DESCRIPTION_FUNCTION': 'apiv2.apiv2_utils.get_view_description',
 }
 
-DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
+API_DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
 
-# APIv2 throttling limits are defined in local_settings
-
-# Oauth2 provider settings
 OAUTH2_PROVIDER = {
     'ACCESS_TOKEN_EXPIRE_SECONDS': 60*60*24,
     'CLIENT_SECRET_GENERATOR_LENGTH': 40,
@@ -364,43 +481,30 @@ OAUTH2_PROVIDER = {
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
-# Set DATA_URL. You can overwrite this to point to production data ("https://freesound.org/data/") in
-# local settings if needed ;)
-DATA_URL = "/data/"
-
-# Locations where sounds, previews and other "static" content will be mirrored (if specified)
-# If locations do not exist, they will be created
-MIRROR_SOUNDS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_PREVIEWS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
-MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
-LOG_START_AND_END_COPYING_FILES = True
-
-# Turn this option on to log every time a user downloads a pack or sound
-LOG_DOWNLOADS = False
-
-# Stripe keys for testing (never set real keys here!!!)
-STRIPE_PUBLIC_KEY = ""
-STRIPE_PRIVATE_KEY = ""
-
-# Mapbox access token
-MAPBOX_ACCESS_TOKEN = ""
-
-# AWS tokens (for accessing email bounce list and email statistics)
-AWS_REGION = ''
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
-# Email bounce processing parameters
-AWS_SQS_QUEUE_URL = ''
-AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
-# Email stats retrieval parameters (see utils.aws.report_ses_stats for more details)
-AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500  # should be ~ 10000-11000
-AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period (15min)
+# APIv2 throttling limits
+# Define API usage limit rates per defined throttling levels
+# Possible time units: second, minute, hour or day
+# Every level must include three limits, a burst limit, a sustained limit andan ip which are checked separately
+# Burst limit sets the maximum number of requests that an api client can do in a minute
+# Sustained limit sets the maximum number of requests that an api client can do in a day
+# Ip limit sets the maximum number of requests from different ips that a client can do in an hour
+APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
+    0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
+    1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
+    2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
+    99: [],  # No limit of requests
+}
+APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
+    0: ['0/minute', '0/day',  '0/hour'],  # Client 'disabled'
+    1: ['30/minute', '500/day', None],  # Ip limit not yet enabled
+    2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
+    99: [],  # No limit of requests
+}
 
 
-# Frontend preference handling
+# -------------------------------------------------------------------------------
+# Frontend handling
+
 FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
 FRONTEND_SESSION_PARAM_NAME = 'frontend'
 FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
@@ -452,43 +556,54 @@ TEMPLATES = [
 
 ]
 
-
-MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
-
 # We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
 # settings were loaded). We add this variable to the context processor and use it in base.html as a
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
-# Followers notifications
-MAX_EMAILS_PER_COMMAND_RUN = 1000
-NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
-PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
-    'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
-]
-
-# Place settings which depend on other settings potentially modified in local_settings.py BELOW the
-# local settings import
+# -------------------------------------------------------------------------------
+# Import local settings
+# Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
 from local_settings import *
 
 
+# -------------------------------------------------------------------------------
+# Extra Freesound settings
+
+# Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
+# If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure
+# direcotries are created if not existing
+AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
+PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
+DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
+SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
+PACKS_PATH = os.path.join(DATA_PATH, "packs/")
+UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
+CSV_PATH = os.path.join(DATA_PATH, "csv/")
+ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
+FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
+PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
+
+# URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
 
 
+# -------------------------------------------------------------------------------
+# Settings depending on DEBUG config
+
+# In a typical development setup original files won't be available in the filesystem, but preview files
+# might be available as these take much less space. The flag below will configure Freesound to use these
+# preview files (instead of the originals) for processing and downloading when the originals are not available.
+USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING = DEBUG
+
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     INSTALLED_APPS += ['debug_toolbar']
-    #INTERNAL_IPS +=('127.0.0.1', 'localhost')
 
     DEBUG_TOOLBAR_PANELS = [
         'debug_toolbar.panels.versions.VersionsPanel',
@@ -509,13 +624,6 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'INTERCEPT_REDIRECTS': False,
     }
 
-# For using static files served by a javascript webpack server
-USE_JS_DEVELOPMENT_SERVER = DEBUG
-
-# In a typical development setup original files won't be available in the filesystem, but preview files
-# might be available as these take much less space. The flag below will configure Freesound to use these
-# preview files (instead of the originals) for processing and downloading when the originals are not available.
-USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING = DEBUG
-
-
+# -------------------------------------------------------------------------------
+# Import logging settings
 from logger import LOGGING

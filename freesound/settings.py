@@ -156,7 +156,6 @@ PASSWORD_HASHERS = [
 
 SERVER_EMAIL = 'noreply@freesound.org'
 EMAIL_SUBJECT_PREFIX = '[freesound] '
-SEND_BROKEN_LINK_EMAILS = True
 DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
@@ -204,7 +203,7 @@ IFRAME_PLAYER_SIZE = {
         'twitter_card': [440, 132]
     }
 
-FREESOUND_RSS = "http://10.55.0.51/?feed=rss2" #"http://blog.freesound.org/?feed=rss2"
+FREESOUND_RSS = ''
 
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
@@ -370,7 +369,7 @@ GOOGLE_ANALYTICS_KEY = ''
 
 # -------------------------------------------------------------------------------
 # Zendesk settings
-USE_ZENDESK_FOR_SUPPORT_REQUESTS = True
+USE_ZENDESK_FOR_SUPPORT_REQUESTS = False
 ZENDESK_EMAIL = ''
 ZENDESK_TOKEN = ''
 
@@ -379,7 +378,7 @@ ZENDESK_TOKEN = ''
 
 GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
 GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
-GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
+GRAYLOG_DOMAIN = ''
 GRAYLOG_USERNAME = ''
 GRAYLOG_PASSWORD = ''
 

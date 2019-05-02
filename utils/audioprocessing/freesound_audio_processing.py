@@ -91,7 +91,7 @@ class FreesoundAudioProcessorBase(object):
         """
         # Convert to PCM and save PCM version in `tmp_wavefile`
         try:
-            fh, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+            fh, tmp_wavefile = tempfile.mkstemp(suffix=".wav", prefix="%i_" % self.sound.id, dir=tmp_directory)
             # Close file handler as we don't use it from Python
             os.close(fh)
             if force_use_ffmpeg:
@@ -148,7 +148,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
             # Now get info about the file, stereofy it and save new stereofied PCM version in `tmp_wavefile2`
             try:
-                fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix=str(self.sound.id), dir=tmp_directory)
+                fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix="%i_" % self.sound.id, dir=tmp_directory)
                 # Close file handler as we don't use it from Python
                 os.close(fh)
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)

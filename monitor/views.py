@@ -216,7 +216,7 @@ def process_sounds(request):
             sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
                 .exclude(processing_ongoing_state='QU')
             for sound in sounds_to_process:
-                sound.process_and_analyze()
+                sound.process()
 
     # Send sounds to processing according to their processing_ongoing_state
     processing_ongoing_state = request.GET.get('pros', None)
@@ -227,7 +227,7 @@ def process_sounds(request):
 
         if sounds_to_process:
             for sound in sounds_to_process:
-                sound.process_and_analyze()
+                sound.process()
 
     # Send sounds to analysis according to their analysis_state
     analysis_state = request.GET.get('ans', None)
@@ -238,7 +238,7 @@ def process_sounds(request):
 
         if sounds_to_analyze:
             for sound in sounds_to_analyze:
-                sound.process_and_analyze()
+                sound.analyze()
 
     return redirect("monitor-home")
 

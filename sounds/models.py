@@ -818,7 +818,6 @@ class Sound(SocialModel):
         sound_path = self.locations('path')
         if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
             sound_path = self.locations("preview.LQ.mp3.path")
-        print sound_path
 
         with open(sound_path, 'rb') as fp:
             for data in iter(lambda: fp.read(settings.CRC_BUFFER_SIZE), b''):

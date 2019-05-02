@@ -27,6 +27,7 @@ urlpatterns = [
 
     url(r'^processing/process_sounds/$', monitor.views.process_sounds, name='monitor-processing-process'),
     url(r'^stats/$', monitor.views.monitor_stats, name='monitor-stats'),
+    url(r'^gearman_stats/$', monitor.views.get_gearman_status, name='gearman-stats'),
     url(r'^moderators_stats/$', monitor.views.moderators_stats, name='monitor-moderators-stats'),
     url(r'^totals_stats_ajax/$', monitor.views.totals_stats_ajax, name='monitor-totals-stats-ajax'),
     url(r'^ajax_tags_stats/$', monitor.views.tags_stats_ajax, name='monitor-tags-stats-ajax'),

@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'ratings',
     'tags',
-    'general',
+    'general.apps.GeneralConfig',
     'support',
     'wiki',
     'favorites',
@@ -260,9 +260,9 @@ DELETED_USER_ID = 1
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
-#-------------------------------------------------------------------------------
-# freesound paths and urls:
-
+# -------------------------------------------------------------------------------
+# Freesound paths and urls
+# If new paths are added here, remember to add a line to create them if not existing in general.apps.GeneralConfig
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
@@ -279,7 +279,7 @@ SENDFILE_SECRET_URL = "/secret/"
 SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
 PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../_sandbox/stereofy/stereofy'))
 

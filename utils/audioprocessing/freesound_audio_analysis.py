@@ -43,7 +43,7 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
 
         with TemporaryDirectory(
                 prefix='analysis_%s_' % self.sound.id,
-                dir=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH) as tmp_directory:
+                dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             try:
                 # Get the path of the original sound and convert to PCM

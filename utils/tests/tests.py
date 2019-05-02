@@ -648,7 +648,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('could not find file with path', self.sound.processing_log)
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_fail)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
@@ -663,7 +663,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('conversion to PCM failed', self.sound.processing_log)
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     @override_processing_tmp_path_with_temp_directory
@@ -678,7 +678,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('no need to convert, this file is already PCM data', self.sound.processing_log)
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
         # NOTE: this test will generate stereofy errors as well but here we only check that a spcific message about
         # PCM conversion was added to the log. stereofy is tested below.
 
@@ -696,7 +696,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('stereofy has failed', self.sound.processing_log)
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock)
     @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
@@ -731,7 +731,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('conversion to mp3 (preview) has failed', self.sound.processing_log)
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock_fail)
     @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock)
@@ -750,7 +750,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('conversion to ogg (preview) has failed', self.sound.processing_log)
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock_fail)
     @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
@@ -771,7 +771,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
         self.assertIn('creation of display images has failed', self.sound.processing_log)
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock)
     @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
@@ -805,7 +805,7 @@ class AudioProcessingTestCase(TestCase):
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "OK")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.create_wave_images', side_effect=create_wave_images_mock)
     @mock.patch('utils.audioprocessing.processing.convert_to_ogg', side_effect=convert_to_ogg_mock)
@@ -839,7 +839,7 @@ class AudioProcessingTestCase(TestCase):
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "OK")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
 
 class AudioAnalysisTestCase(TestCase):
@@ -872,7 +872,7 @@ class AudioAnalysisTestCase(TestCase):
         self.assertFalse(result)  # Analysis failed, returning False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "FA")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_fail)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
@@ -885,7 +885,7 @@ class AudioAnalysisTestCase(TestCase):
         self.assertFalse(result)  # Analysis failed, returning False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "FA")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_create_file)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
@@ -899,7 +899,7 @@ class AudioAnalysisTestCase(TestCase):
         self.assertFalse(result)  # Analysis failed, returning False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "SK")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.analyze_using_essentia', side_effect=analyze_using_essentia_mock_fail)
     @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
@@ -915,7 +915,7 @@ class AudioAnalysisTestCase(TestCase):
         self.assertFalse(result)  # Analysis failed
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "OK")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
     @mock.patch('utils.audioprocessing.processing.analyze_using_essentia', side_effect=analyze_using_essentia_mock)
     @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
@@ -932,4 +932,4 @@ class AudioAnalysisTestCase(TestCase):
         self.assertTrue(os.path.exists(self.sound.locations('analysis.frames.path')))
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.analysis_state, "OK")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH)), 0)
+        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)

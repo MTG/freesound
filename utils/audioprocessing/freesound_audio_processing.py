@@ -133,7 +133,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
         with TemporaryDirectory(
                 prefix='processing_%s_' % self.sound.id,
-                dir=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH) as tmp_directory:
+                dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             # Change ongoing processing state to "processing" in Sound model
             self.sound.set_processing_ongoing_state("PR")

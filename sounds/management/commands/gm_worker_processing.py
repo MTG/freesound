@@ -73,7 +73,7 @@ def log_error(message):
     logger_error.info(message)
 
 
-def check_if_free_space(directory=settings.PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH,
+def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
                         min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
     """
     Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this

@@ -266,13 +266,14 @@ DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
-DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum views
+DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
+PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
 
 SENDFILE_SECRET_URL = "/secret/"
 SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
@@ -291,10 +292,7 @@ SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
 
 # General timeout for processing/analysis workers (in seconds)
-WORKER_TIMEOUT = 5 * 60
-
-# Base directory where temporary directories needed by the processing/analysis functions will be created
-PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH = '/tmp/'
+WORKER_TIMEOUT = 60 * 60
 
 ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
 ESSENTIA_STATS_OUT_FORMAT = 'yaml'

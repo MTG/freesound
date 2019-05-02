@@ -61,14 +61,17 @@ GRAYLOG_PASSWORD = "apiuserpassword"
 # To customize DATA_PATH
 '''
 import os
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/')) # overriding settings
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
-DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum views
+DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
+CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
+FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
+PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
 '''
 
 # SOLR ranking weights

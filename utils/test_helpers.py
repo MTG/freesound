@@ -141,4 +141,4 @@ override_displays_path_with_temp_directory = \
     partial(override_path_with_temp_directory, settings_path_name='DISPLAYS_PATH')
 
 override_processing_tmp_path_with_temp_directory = \
-    partial(override_path_with_temp_directory, settings_path_name='PROCESSING_ANALYSIS_TMP_DIRS_BASE_PATH')
+    partial(override_path_with_temp_directory, settings_path_name='PROCESSING_TEMP_DIR')

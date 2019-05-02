@@ -135,9 +135,7 @@ ALLOWED_HOSTS = ['*']
 # with slash.
 SILENCED_SYSTEM_CHECKS = ['urls.W002']
 
-# A tuple of IP addresses, as strings, that:
-# See debug comments, when DEBUG is True
-INTERNAL_IPS = ['localhost', '127.0.0.1']
+INTERNAL_IPS = ['127.0.0.1']
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 

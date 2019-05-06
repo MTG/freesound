@@ -26,8 +26,8 @@ from general.models import AkismetSpam
 
 def is_spam(request, comment):
 
-    # If request user has uploaded sounds, we don't check for spam
-    if request.user.sounds.count() > 0:
+    # If request user has uploaded, moderated sounds, we don't check for spam
+    if request.user.profile.num_sounds > 0:
         return False
 
     domain = "http://%s" % Site.objects.get_current().domain

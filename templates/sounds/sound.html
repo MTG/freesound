@@ -18,7 +18,7 @@
     </script>
     <meta property="og:title" content="{{ sound.original_filename }} by {{ sound.user.username }}" />
     <meta property="og:type" content="song" />
-    <meta property="og:audio" content="http://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
+    <meta property="og:audio" content="https://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
     <meta property="og:audio:artist" content="{{ sound.user.username }}" />
     <meta property="og:audio:title" content="{{ sound.original_filename }}" />
     <meta property="og:url" content="{% absurl 'sound' sound.user.username sound.id %}" />

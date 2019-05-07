@@ -473,7 +473,8 @@ def convert_to_pcm(input_filename, output_filename):
     elif sound_type == "m4a":
         cmd = ["faad", "-o", output_filename, input_filename]
         error_messages = ["Unable to find correct AAC sound track in the MP4 file",
-                          "Error: Bitstream value not allowed by specification"]
+                          "Error: Bitstream value not allowed by specification",
+                          "Error opening file"]
     else:
         return False
 

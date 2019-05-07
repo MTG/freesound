@@ -479,7 +479,18 @@ def convert_to_pcm(input_filename, output_filename):
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
-        raise AudioProcessingException("failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+        raise AudioProcessingException("failed converting to pcm data:\n"
+                                       + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+
+    if sound_type == "mp3":
+        if "WAVE file contains 0 PCM samples" in stderr:
+            raise AudioProcessingException("failed converting to pcm data:\n"
+                                           + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+
+    if sound_type == "m4a":
+        if "Unable to find correct AAC sound track in the MP4 file" in stderr:
+            raise AudioProcessingException("failed converting to pcm data:\n"
+                                           + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
     return True
 

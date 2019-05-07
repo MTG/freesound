@@ -1,0 +1,324 @@
+#
+# Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
+#
+# Freesound is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# Freesound is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#     See AUTHORS file.
+#
+
+import datetime
+
+import mock
+from django.contrib.auth.models import User, Permission
+from django.contrib.contenttypes.models import ContentType
+from django.test import TestCase
+from django.urls import reverse
+
+from accounts.models import OldUsername
+from forum.models import Post
+from sounds.models import Sound, SoundOfTheDay
+from tickets.models import Ticket
+
+
+class SimpleUserTest(TestCase):
+    fixtures = ['users', 'sounds_with_tags']
+
+    def setUp(self):
+        self.user = User.objects.all()[0]
+        self.sound = Sound.objects.all()[0]
+        SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
+
+    def test_account_response_ok(self):
+        # 200 response on account access
+        resp = self.client.get(reverse('account', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_sounds_response_ok(self):
+        # 200 response on user sounds access
+        resp = self.client.get(reverse('sounds-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_flag_response_ok(self):
+        # 200 response on user flag and clear flag access
+        self.user.set_password('12345')
+        self.user.is_superuser = True
+        self.user.save()
+        a = self.client.login(username=self.user.username, password='12345')
+        resp = self.client.get(reverse('flag-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('clear-flags-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_comments_response_ok(self):
+        # 200 response on user comments and comments for user access
+        resp = self.client.get(reverse('comments-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('comments-by-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_geotags_response_ok(self):
+        # 200 response on user geotags access
+        resp = self.client.get(reverse('geotags-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_packs_response_ok(self):
+        # 200 response on user packs access
+        resp = self.client.get(reverse('packs-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_downloaded_response_ok(self):
+        # 200 response on user downloaded sounds and packs access
+        resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('user-downloaded-packs', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_bookmarks_response_ok(self):
+        # 200 response on user bookmarks sounds and packs access
+        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_follow_response_ok(self):
+        # 200 response on user user bookmarks sounds and packs access
+        resp = self.client.get(reverse('user-following-users', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('user-followers', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('user-following-tags', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    @mock.patch('gearman.GearmanClient.submit_job')
+    def test_sounds_response_ok(self, submit_job):
+        # 200 response on sounds page access
+        resp = self.client.get(reverse('sounds'))
+        self.assertEqual(resp.status_code, 200)
+
+        self.sound.moderation_state = "OK"
+        self.sound.processing_state = "OK"
+        self.sound.save()
+        user = self.sound.user
+        user.set_password('12345')
+        user.is_superuser = True
+        user.save()
+        self.client.login(username=user.username, password='12345')
+        resp = self.client.get(reverse('sound', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-flag', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(
+            reverse('sound-edit-sources', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-edit', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-geotag', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-delete', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-similar', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(
+            reverse('sound-downloaders', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_tags_response_ok(self):
+        # 200 response on tags page access
+        resp = self.client.get(reverse('tags'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_packs_response_ok(self):
+        # 200 response on packs page access
+        resp = self.client.get(reverse('packs'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_comments_response_ok(self):
+        # 200 response on comments page access
+        resp = self.client.get(reverse('comments'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_remixed_response_ok(self):
+        # 200 response on remixed sounds page access
+        resp = self.client.get(reverse('remix-groups'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_contact_response_ok(self):
+        # 200 response on contact page access
+        resp = self.client.get(reverse('contact'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_sound_search_response_ok(self):
+        # 200 response on sound search page access
+        resp = self.client.get(reverse('sounds-search'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_geotags_box_response_ok(self):
+        # 200 response on geotag box page access
+        resp = self.client.get(reverse('geotags-box'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_geotags_box_iframe_response_ok(self):
+        # 200 response on geotag box iframe
+        resp = self.client.get(reverse('embed-geotags-box-iframe'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_accounts_manage_pages(self):
+        # 200 response on Account registration page
+        resp = self.client.get(reverse('accounts-register'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account reactivation page
+        resp = self.client.get(reverse('accounts-resend-activation'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account username reminder page
+        resp = self.client.get(reverse('accounts-username-reminder'))
+        self.assertEqual(resp.status_code, 200)
+
+        # Login user with moderation permissions
+        user = User.objects.create_user("testuser", password="testpass")
+        ct = ContentType.objects.get_for_model(Ticket)
+        p = Permission.objects.get(content_type=ct, codename='can_moderate')
+        ct2 = ContentType.objects.get_for_model(Post)
+        p2 = Permission.objects.get(content_type=ct2, codename='can_moderate_forum')
+        user.user_permissions.add(p, p2)
+        self.client.login(username='testuser', password='testpass')
+
+        # 200 response on TOS acceptance page
+        resp = self.client.get(reverse('tos-acceptance'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account email reset page
+        resp = self.client.get(reverse('accounts-email-reset'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account home page
+        resp = self.client.get(reverse('accounts-home'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account edit page
+        resp = self.client.get(reverse('accounts-edit'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account edit email settings page
+        resp = self.client.get(reverse('accounts-email-settings'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account attribution page
+        resp = self.client.get(reverse('accounts-attribution'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account stream page
+        resp = self.client.get(reverse('stream'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account messages page
+        resp = self.client.get(reverse('messages'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account archived messages page
+        resp = self.client.get(reverse('messages-archived'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account sent messages page
+        resp = self.client.get(reverse('messages-sent'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account new message page
+        resp = self.client.get(reverse('messages-new'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on Account permissions granted page
+        resp = self.client.get(reverse('access-tokens'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on ticket moderation page
+        resp = self.client.get(reverse('tickets-moderation-home'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on wiki page
+        resp = self.client.get(reverse('wiki'))
+        self.assertEqual(resp.status_code, 302)
+
+        # 200 response on forums moderation page
+        resp = self.client.get(reverse('forums-moderate'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_username_check(self):
+        username = 'test_user_new'
+        resp = self.client.get(reverse('check_username'),
+                               {'username': username})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], True)
+
+        user = User.objects.create_user(username, password="testpass")
+        resp = self.client.get(reverse('check_username'),
+                               {'username': username})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        # Now we change the username and we check that both old and new usernames are not valid
+        user.username = 'other_username'
+        user.save()
+
+        # First we check that the OldUsername object is created
+        self.assertEqual(OldUsername.objects.filter(username=username, user=user).count(), 1)
+
+        resp = self.client.get(reverse('check_username'),
+                               {'username': username})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        resp = self.client.get(reverse('check_username'),
+                               {'username': user.username})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        # Check that a username that doesn't fit the registration guidelines returns "False", even
+        # if the username doesn't exist
+        resp = self.client.get(reverse('check_username'),
+                               {'username': 'username@withat'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        resp = self.client.get(reverse('check_username'),
+                               {'username': 'username^withcaret'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        resp = self.client.get(reverse('check_username'),
+                               {'username': 'username_withunderscore'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], True)
+
+
+class OldUserLinksRedirect(TestCase):
+    fixtures = ['users']
+
+    def setUp(self):
+        self.user = User.objects.all()[0]
+
+    def test_old_user_link_redirect_ok(self):
+        # 301 permanent redirect, result exists
+        resp = self.client.get(reverse('old-account-page'), data={'id': self.user.id})
+        self.assertEqual(resp.status_code, 301)
+
+    def test_old_user_link_redirect_not_exists_id(self):
+        # 404 id does not exist (user with id 999 does not exist in fixture)
+        resp = self.client.get(reverse('old-account-page'), data={'id': 999}, follow=True)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_old_user_link_redirect_invalid_id(self):
+        # 404 invalid id
+        resp = self.client.get(reverse('old-account-page'), data={'id': 'invalid_id'}, follow=True)
+        self.assertEqual(resp.status_code, 404)

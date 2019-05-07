@@ -27,7 +27,6 @@ import math
 import numpy
 import os
 import re
-import signal
 import subprocess
 try:
     from utils.audioprocessing import get_sound_type
@@ -476,21 +475,26 @@ def convert_to_pcm(input_filename, output_filename):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
 
+    # If external process returned an error (return code != 0) or the expected PCM file does not
+    # exist, raise exception
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
         raise AudioProcessingException("failed converting to pcm data:\n"
                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
-    if sound_type == "mp3":
-        if "WAVE file contains 0 PCM samples" in stderr:
-            raise AudioProcessingException("failed converting to pcm data:\n"
-                                           + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-
-    if sound_type == "m4a":
-        if "Unable to find correct AAC sound track in the MP4 file" in stderr:
-            raise AudioProcessingException("failed converting to pcm data:\n"
-                                           + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+    # If external process apparently returned no error (return code = 0) but we see some errors have
+    # been printed in stderr, raise an exception as well
+    specific_error_messages = {
+        "mp3": ["WAVE file contains 0 PCM samples"],
+        "m4a": ["Unable to find correct AAC sound track in the MP4 file",
+                "Error: Bitstream value not allowed by specification"],
+    }
+    for error_sound_type, error_messages in specific_error_messages.items():
+        if sound_type == error_sound_type:
+            if any([error_message in stderr for error_message in error_messages]):
+                raise AudioProcessingException("failed converting to pcm data:\n"
+                                               + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
     return True
 
@@ -582,8 +586,6 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
     converts the incoming wave file to 16bit, 44kHz pcm using fffmpeg
     """
-    def alarm_handler(signum, frame):
-        raise AudioProcessingException("timeout while waiting for ffmpeg")
 
     if not os.path.exists(input_filename):
         raise AudioProcessingException("file %s does not exist" % input_filename)
@@ -594,12 +596,9 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     command += [output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    signal.signal(signal.SIGALRM, alarm_handler)
-    signal.alarm(3 * 60)  # 3 minutes timeout
     (stdout, stderr) = process.communicate()
-    signal.alarm(0)
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException(stdout)
+        raise AudioProcessingException("ffmpeg returned an error\nstdout: %s \nstderr: %s" % (stdout, stderr))
 
 
 def analyze_using_essentia(essentia_executable_path, input_filename, output_filename_base, essentia_profile_path=None):

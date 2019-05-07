@@ -108,6 +108,7 @@ class FreesoundAudioProcessorBase(object):
                                            "make sure that format conversion executables exist: %s" % e)
         except AudioProcessingException as e:
             # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
+            self.log_info("conversion to PCM failed, now trying conversion with ffmpeg")
             try:
                 audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=mono)
             except AudioProcessingException as e:

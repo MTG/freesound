@@ -475,24 +475,26 @@ def convert_to_pcm(input_filename, output_filename):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
 
+    # If external process returned an error (return code != 0) or the expected PCM file does not
+    # exist, raise exception
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
         raise AudioProcessingException("failed converting to pcm data:\n"
                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
-    if sound_type == "mp3":
-        if "WAVE file contains 0 PCM samples" in stderr:
-            raise AudioProcessingException("failed converting to pcm data:\n"
-                                           + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-
-    if sound_type == "m4a":
-        error_messages = ["Unable to find correct AAC sound track in the MP4 file",
-                          "Error: Bitstream value not allowed by specification"]
-
-        if any([error_message in stderr for error_message in error_messages]):
-            raise AudioProcessingException("failed converting to pcm data:\n"
-                                           + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+    # If external process apparently returned no error (return code = 0) but we see some errors have
+    # been printed in stderr, raise an exception as well
+    specific_error_messages = {
+        "mp3": ["WAVE file contains 0 PCM samples"],
+        "m4a": ["Unable to find correct AAC sound track in the MP4 file",
+                "Error: Bitstream value not allowed by specification"],
+    }
+    for error_sound_type, error_messages in specific_error_messages.items():
+        if sound_type == error_sound_type:
+            if any([error_message in stderr for error_message in error_messages]):
+                raise AudioProcessingException("failed converting to pcm data:\n"
+                                               + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
     return True
 

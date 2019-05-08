@@ -584,6 +584,8 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
 def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
     converts the incoming wave file to 16bit, 44kHz pcm using fffmpeg
+    unlike the convert_to_pcm function above, this one does not try to preserve
+    the original sample rate and bit depth.
     """
 
     if not os.path.exists(input_filename):

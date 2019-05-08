@@ -162,7 +162,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                                  "make stereofy sure executable exists at %s: %s" % (settings.SOUNDS_PATH, e))
                 return False
             except AudioProcessingException as e:
-                if "stereofy: failed to open fileFile contains data in an unknown format" in str(e):
+                if "File contains data in an unknown format" in str(e):
                     # Stereofy failed most probably because PCM file is corrupted. This can happen if "convert_to_pcm"
                     # above is skipped because the file is already PCM but it has wrong format. It can also happen in
                     # other occasions where "convert_to_pcm" generates bad PCM files. In this case we try to re-create

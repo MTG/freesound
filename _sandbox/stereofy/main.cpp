@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 	// open the soundfile
 	if(!(fileIn = sf_open (inputFilename.c_str(), SFM_READ, &sfinfoIn)))
 	{
-		std::cout << "stereofy: failed to open file" << sf_strerror(fileIn) << std::endl;
+		std::cout << "stereofy: failed to open file: " << sf_strerror(fileIn) << std::endl;
 		return  1;
 	}
 	else

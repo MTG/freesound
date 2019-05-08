@@ -168,8 +168,16 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     # other occasions where "convert_to_pcm" generates bad PCM files. In this case we try to re-create
                     # the PCM file using ffmpeg and try re-running stereofy
                     self.log_info("stereofy failed, trying re-creating PCM file with ffmpeg and re-running stereofy")
-                    tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory, force_use_ffmpeg=True)
-                    info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
+                    try:
+                        tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory, force_use_ffmpeg=True)
+                        info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH,
+                                                                      tmp_wavefile, tmp_wavefile2)
+                    except AudioProcessingException as e:
+                        self.set_failure("re-run of stereofy with ffmpeg conversion has failed", str(e))
+                        return False
+                    except Exception as e:
+                        self.set_failure("unhandled exception while re-running stereofy with ffmpeg conversion", e)
+                        return False
                 else:
                     self.set_failure("stereofy has failed", str(e))
                     return False

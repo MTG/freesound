@@ -50,43 +50,49 @@ def convert_to_solr_document(post):
     return document
 
 
-def add_post_to_solr(post):
-    logger.info("adding single forum post to solr index")
-    try:
-        Solr(settings.SOLR_FORUM_URL).add([convert_to_solr_document(post)])
-    except SolrException as e:
-        logger.error("failed to add forum post %d to solr index, reason: %s" % (post.id, str(e)))
-
-
-def add_posts_to_solr(posts):
-    logger.info("adding multiple forum posts to solr index")
-    solr = Solr(settings.SOLR_FORUM_URL, auto_commit=False)
-
-
+def send_posts_to_solr(posts):
+    logger.info("adding forum posts to solr index")
     logger.info("creating XML")
-    documents = map(convert_to_solr_document, posts)
-    logger.info("posting to Solr")
-    solr.add(documents)
+    documents = [convert_to_solr_document(p) for p in posts]
 
-    solr.commit()
-    logger.info("optimizing solr index")
-    #solr.optimize()
+    try:
+        logger.info("posting to Solr")
+        solr = Solr(settings.SOLR_FORUM_URL, auto_commit=False)
+
+        solr.add(documents)
+
+        solr.commit()
+    except SolrException as e:
+        logger.error("failed to add posts to solr index, reason: %s" % str(e))
     logger.info("done")
 
-def add_all_posts_to_solr(post_queryset, slice_size=4000, mark_index_clean=False):
-    # Pass in a queryset to avoid needing a reference to
-    # the Post class, it causes circular imports.
-    num_posts = post_queryset.count()
-    for i in range(0, num_posts, slice_size):
-        try:
-            posts = post_queryset[i:i+slice_size]
-            add_posts_to_solr(posts)
-        except SolrException as e:
-            logger.error("failed to add post batch to solr index, reason: %s" % str(e))
 
-def delete_post_from_solr(post):
-    logger.info("deleting post with id %d" % post.id)
+def add_post_to_solr(post_id):
+    """Add a forum post to solr
+    Arguments:
+        post_id (int): ID of a post object"""
+
+    logger.info("adding single forum post to solr index")
+    post = forum.models.Post.objects.select_related("thread", "author", "thread__author", "thread__forum").get(id=post_id)
+    send_posts_to_solr([post])
+
+
+def add_all_posts_to_solr(slice_size=4000):
+    """Add all forum posts to solr
+    Arguments:
+        slice_size (int): The number of posts to send to solr at a time"""
+
+    posts = forum.models.Post.objects.select_related("thread", "author", "thread__author", "thread__forum").all()
+
+    num_posts = posts.count()
+    for i in range(0, num_posts, slice_size):
+        posts_slice = posts[i:i+slice_size]
+        send_posts_to_solr(posts_slice)
+
+
+def delete_post_from_solr(post_id):
+    logger.info("deleting post with id %d" % post_id)
     try:
-        Solr(settings.SOLR_FORUM_URL).delete_by_id(post.id)
-    except Exception as e:
-        logger.error('could not delete post with id %s (%s).' % (post.id, e))
+        Solr(settings.SOLR_FORUM_URL).delete_by_id(post_id)
+    except SolrException as e:
+        logger.error('could not delete post with id %s (%s).' % (post_id, e))

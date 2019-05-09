@@ -30,7 +30,7 @@ from django.db.models.signals import post_delete, pre_delete, pre_save, post_sav
 from django.dispatch import receiver
 from utils.cache import invalidate_template_cache
 from django.utils.translation import ugettext as _
-from utils.search.search_forum import delete_post_from_solr
+from utils.search.search_forum import delete_post_from_solr, send_posts_to_solr
 import accounts
 import logging
 
@@ -134,6 +134,15 @@ def update_num_threads_on_thread_update(sender, instance, **kwargs):
                 old_thread.forum.save()
                 instance.forum.num_threads = F('num_threads') + 1
                 instance.forum.save()
+
+
+@receiver(post_save, sender=Thread)
+def index_posts_on_thread_update(sender, instance, **kwargs):
+    """Update posts in solr if a Thread is saved
+    If a thread is renamed, or moved from one Forum to another we need to update these fields in solr"""
+    # Reload the thread because its num_posts may still be an F-expression
+    instance.refresh_from_db()
+    send_posts_to_solr(instance.post_set.all())
 
 
 @receiver(post_delete, sender=Thread)
@@ -240,7 +249,7 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
     the only post in a thread, also delete the thread.
     """
     post = instance
-    delete_post_from_solr(post)
+    delete_post_from_solr(post.id)
     if post.moderation_state == "NM":
         # If the first post is NM and there are subsequent posts in this thread then
         # we won't correctly set thread.first_post. This won't happen in regular use,

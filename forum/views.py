@@ -191,7 +191,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
-                    add_post_to_solr(post)
+                    add_post_to_solr(post.id)
                     set_to_moderation = False
 
                 if form.cleaned_data["subscribe"]:
@@ -267,7 +267,7 @@ def new_thread(request, forum_name_slug):
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=post_body, thread=thread)
-                    add_post_to_solr(post)
+                    add_post_to_solr(post.id)
                     set_to_moderation = False
 
                 # Add first post to thread (first post will always be the same)
@@ -385,7 +385,7 @@ def post_edit(request, post_id):
             if form.is_valid():
                 post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
-                add_post_to_solr(post)  # Update post in solr
+                add_post_to_solr(post.id)  # Update post in solr
                 return HttpResponseRedirect(
                     reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:

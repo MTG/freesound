@@ -17,32 +17,35 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-from solr import Solr, SolrException
-from django.conf import settings
 import logging
+
+from django.conf import settings
+
+import forum.models
+from solr import Solr, SolrException
+from utils.text import remove_control_chars
 
 logger = logging.getLogger("search")
 
+
 def convert_to_solr_document(post):
-    #logger.info("creating solr XML from forum post %d" % post.id)
-    document = {}
+    document = {
+        "id": post.id,
+        "thread_id": post.thread.id,
+        "thread_title": remove_control_chars(post.thread.title),
+        "thread_author": post.thread.author,
+        "thread_created": post.thread.created,
 
-    document["id"] = post.id
-    document["thread_id"] = post.thread.id
-    document["thread_title"] = post.thread.title
-    document["thread_author"] = post.thread.author
-    document["thread_created"] = post.thread.created
+        "forum_name": post.thread.forum.name,
+        "forum_name_slug": post.thread.forum.name_slug,
 
-    document["forum_name"] = post.thread.forum.name
-    document["forum_name_slug"] = post.thread.forum.name_slug
+        "post_author": post.author,
+        "post_created": post.created,
+        "post_body": remove_control_chars(post.body),
 
-    document["post_author"] = post.author
-    document["post_created"] = post.created
-    document["post_body"] = post.body
-
-    document["num_posts"] = post.thread.num_posts
-    document["has_posts"] = False if post.thread.num_posts == 0 else True
+        "num_posts": post.thread.num_posts,
+        "has_posts": False if post.thread.num_posts == 0 else True
+    }
 
     return document
 

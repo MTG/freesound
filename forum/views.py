@@ -35,7 +35,7 @@ from forum.models import Forum, Thread, Post, Subscription
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_post_to_solr, delete_post_from_solr
-from utils.text import text_may_be_spam
+from utils.text import text_may_be_spam, remove_control_chars
 
 
 def deactivate_spammer(user_id):
@@ -253,17 +253,20 @@ def new_thread(request, forum_name_slug):
         form = NewThreadForm(request.POST)
         if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
-                thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                may_be_spam = text_may_be_spam(form.cleaned_data["body"]) or \
-                              text_may_be_spam(form.cleaned_data["title"])
+                post_title = form.cleaned_data["title"]
+                post_body = form.cleaned_data["body"]
+                thread = Thread.objects.create(forum=forum, author=request.user, title=post_title)
+                may_be_spam = text_may_be_spam(post_body) or \
+                              text_may_be_spam(post_title)
 
+                post_body = remove_control_chars(post_body)
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
-                    post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread,
+                    post = Post.objects.create(author=request.user, body=post_body, thread=thread,
                                                moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
                     set_to_moderation = True
                 else:
-                    post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+                    post = Post.objects.create(author=request.user, body=post_body, thread=thread)
                     add_post_to_solr(post)
                     set_to_moderation = False
 
@@ -380,8 +383,7 @@ def post_edit(request, post_id):
         if request.method == 'POST':
             form = PostReplyForm(request, '', request.POST)
             if form.is_valid():
-                delete_post_from_solr(post)
-                post.body = form.cleaned_data['body']
+                post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
                 add_post_to_solr(post)  # Update post in solr
                 return HttpResponseRedirect(

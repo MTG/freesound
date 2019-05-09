@@ -160,8 +160,8 @@ class Post(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
     MODERATION_STATE_CHOICES = (
-        ("NM",_('NEEDS_MODERATION')),
-        ("OK",_('OK')),
+        ("NM", _('NEEDS_MODERATION')),
+        ("OK", _('OK')),
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 
@@ -180,7 +180,8 @@ class Post(models.Model):
 
 @receiver(pre_save, sender=Post)
 def update_num_posts_on_save_if_moderation_changes(sender, instance, **kwargs):
-    """If the moderation state of a post changed to or from OK, update counts."""
+    """If a post is edited and the moderation state changed to or from OK, update counts.
+    Counts should only reflect OK moderated items."""
     post = instance
     if post.pk:
         with transaction.atomic():
@@ -201,7 +202,12 @@ def update_num_posts_on_save_if_moderation_changes(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Post)
 def update_num_posts_on_post_insert(sender, instance, created, **kwargs):
-    """Increase num_posts and set last_post when a new Post is created"""
+    """Increase num_posts counts when a new Post is created, and update last_posts
+    If a new post is created with a moderation state of OK, update counts
+    and set last_post explicitly to this post.
+    If a post is edited, set thread and forum last posts (this considers the case where
+    a post moderation state changes to or from OK and now becomes or is removed from
+    last_post of the forum or thread)"""
     post = instance
     if created and post.moderation_state == "OK":
         with transaction.atomic():
@@ -214,7 +220,7 @@ def update_num_posts_on_post_insert(sender, instance, created, **kwargs):
             post.thread.last_post = post
             post.thread.save()
         invalidate_template_cache('latest_posts')
-    elif not created and post.moderation_state == "OK":
+    elif not created:
         post.thread.forum.set_last_post()
         post.thread.forum.save(update_fields=['last_post'])
         post.thread.set_last_post()
@@ -222,7 +228,7 @@ def update_num_posts_on_post_insert(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=Post)
-def update_last_post_on_post_delete(sender, instance, **kwargs):
+def update_thread_on_post_delete(sender, instance, **kwargs):
     """Update num_posts counts and last_post pointers when a Post is deleted.
 
     Reduce num_posts by 1 for the author, forum, and thread
@@ -230,11 +236,22 @@ def update_last_post_on_post_delete(sender, instance, **kwargs):
     Set last_post for the thread. If this was the only remaining post
     in the thread and it was deleted, also delete the thread.
 
-    If the post was not moderated, don't update the values
+    If the post was not moderated, don't update num_posts counts, but if it's
+    the only post in a thread, also delete the thread.
     """
     post = instance
     delete_post_from_solr(post)
-    if post.moderation_state == "OK":
+    if post.moderation_state == "NM":
+        # If the first post is NM and there are subsequent posts in this thread then
+        # we won't correctly set thread.first_post. This won't happen in regular use,
+        # so we ignore this case
+
+        # Even though we call set_last_post, we just use it to see if there exist OK posts
+        # on this thread so that we can delete the thread if necessary.
+        thread_has_posts = post.thread.set_last_post()
+        if not thread_has_posts:
+            post.thread.delete()
+    elif post.moderation_state == "OK":
         try:
             with transaction.atomic():
                 post.author.profile.num_posts = F('num_posts') - 1

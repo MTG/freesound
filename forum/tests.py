@@ -143,14 +143,25 @@ class ForumPostSignalTestCase(TestCase):
         self.assertEqual(self.thread.num_posts, 1)
         self.assertEqual(self.thread.last_post, firstpost)
 
-    def test_remove_last_post_moderated(self):
-        """If the last post of a thread is deleted, the thread is removed"""
+    def test_remove_only_post_moderated(self):
+        """If the only moderated post of a thread is deleted, the thread is removed"""
 
         post = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
 
         self.thread.refresh_from_db()
         self.assertEqual(self.thread.num_posts, 1)
 
+        post.delete()
+
+        with self.assertRaises(Thread.DoesNotExist):
+            self.thread.refresh_from_db()
+
+    def test_remove_only_post_unmoderated(self):
+        """If the only unmoderated post of a thread is deleted, the thread is removed"""
+
+        post = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
+        self.thread.first_post = post
+        self.thread.save()
         post.delete()
 
         with self.assertRaises(Thread.DoesNotExist):
@@ -163,6 +174,9 @@ class ForumPostSignalTestCase(TestCase):
         unmodpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
 
         self.thread.refresh_from_db()
+        self.thread.first_post = modpost
+        self.thread.save()
+
         self.assertEqual(self.thread.num_posts, 1)
 
         modpost.delete()
@@ -171,6 +185,31 @@ class ForumPostSignalTestCase(TestCase):
         self.thread.refresh_from_db()
         self.assertEqual(self.thread.num_posts, 0)
         self.assertEqual(self.thread.last_post, None)
+
+    def test_remove_first_post_set_to_moderated(self):
+        """If the first post of a thread is removed, update it to the next earliest post"""
+        firstpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        secondpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        self.thread.first_post = firstpost
+        self.thread.save()
+
+        firstpost.delete()
+        self.thread.refresh_from_db()
+        self.assertEqual(self.thread.first_post, secondpost)
+
+    def test_remove_first_post_set_to_unmoderated(self):
+        """If the first post of a thread is removed, update it to the next post even if it's unmoderated"""
+        firstpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        secondpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
+        self.thread.refresh_from_db()
+        self.thread.first_post = firstpost
+        self.thread.save()
+
+        self.assertEqual(self.thread.first_post, firstpost)
+        firstpost.delete()
+        self.thread.refresh_from_db()
+
+        self.assertEqual(self.thread.first_post, secondpost)
 
     def test_remove_post_last_in_thread_not_in_forum(self):
         """If the last post of a thread is removed, the last post of the forum may be

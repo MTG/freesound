@@ -269,6 +269,8 @@ def new_thread(request, forum_name_slug):
 
                 # Add first post to thread (first post will always be the same)
                 # We need to reload thread object from DB, not so overwrite the object we created before when saving
+                # TODO: Ideally we would have a specific function to create a Post and add it to a thread immediately
+                #       so that we can use this functionality in tests too
                 updated_thread = Thread.objects.get(id=thread.id)
                 updated_thread.first_post = post
                 updated_thread.save()

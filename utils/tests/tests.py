@@ -43,7 +43,6 @@ from utils.test_helpers import create_test_files, create_user_and_sounds, overri
     override_csv_path_with_temp_directory, override_sounds_path_with_temp_directory, \
     override_previews_path_with_temp_directory, override_displays_path_with_temp_directory, \
     override_analysis_path_with_temp_directory, override_processing_tmp_path_with_temp_directory
-from utils.text import clean_html
 
 
 class UtilsTest(TestCase):
@@ -230,81 +229,6 @@ class ShouldSuggestDonationTest(TestCase):
             created=datetime.datetime.now())
         # Change downloads date again to be recent (however modal won't show because probability is 0.0)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
-
-
-class CleanHtmlTest(TestCase):
-
-    def test_clean_html(self):
-        # Test if the text input contains allowed html tags
-        # The only supported tags are : a, img, strong, b, em, li, u, p, br, blockquote and code
-        ret = clean_html(u'a b c d')
-        self.assertEqual(u'a b c d', ret)
-
-        # Also make sure links contains rel="nofollow"
-        ret = clean_html(u'<a href="http://www.google.com" rel="squeek">google</a>')
-        self.assertEqual(u'<a href="http://www.google.com" rel="nofollow">google</a>', ret)
-
-        ret = clean_html(u'<a href="http://www.google.com">google</a>')
-        self.assertEqual(u'<a href="http://www.google.com" rel="nofollow">google</a>', ret)
-
-        ret = clean_html(u'<h1>this should return the <strong>substring</strong> just <b>fine</b></h1>')
-        self.assertEqual(u'this should return the <strong>substring</strong> just <b>fine</b>', ret)
-
-        ret = clean_html(u'<table><tr><td>amazing</td><td>grace</td></tr></table>')
-        self.assertEqual(u'amazinggrace', ret)
-
-        ret = clean_html(u'<a href="javascript:void(0)">click me</a>')
-        self.assertEqual(u'click me', ret)
-
-        ret = clean_html(u'<p class="hello">click me</p>')
-        self.assertEqual(u'<p>click me</p>', ret)
-
-        ret = clean_html(u'<a></a>')
-        self.assertEqual(u'', ret)
-
-        ret = clean_html(u'<a>hello</a>')
-        self.assertEqual(u'hello', ret)
-
-        ret = clean_html(u'<p class="hello" id="1">a<br/>b<br/></a>')
-        self.assertEqual(u'<p>a<br>b<br></p>', ret)
-
-        ret = clean_html(u'<p></p>')
-        self.assertEqual(u'<p></p>', ret)
-
-        ret = clean_html(u'<A REL="nofollow" hREF="http://www.google.com"><strong>http://www.google.com</strong></a>')
-        self.assertEqual(u'<a href="http://www.google.com" rel="nofollow"><strong>http://www.google.com</strong></a>', ret)
-
-        ret = clean_html(u'<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>')
-        self.assertEqual(u'<a href="http://www.google.com" rel="nofollow"><strong>http://www.google.com</strong></a>', ret)
-
-        ret = clean_html(u'http://www.google.com <a href="">http://www.google.com</a>')
-        self.assertEqual(u'<a href="http://www.google.com" rel="nofollow">http://www.google.com</a> <a href="http://www.google.com" rel="nofollow">http://www.google.com</a>', ret)
-
-        ret = clean_html(u'<ul><p id=5><a href="123">123</a>hello<strong class=156>there http://www.google.com</strong></p></ul>')
-        self.assertEqual(u'<ul><p>123hello<strong>there <a href="http://www.google.com" rel="nofollow">http://www.google.com</a></strong></p></ul>', ret)
-
-        ret = clean_html(u'abc http://www.google.com abc')
-        self.assertEqual(u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc', ret)
-
-        # The links inside <> are encoded by &lt; and &gt;
-        ret = clean_html(u'abc <http://www.google.com> abc')
-        self.assertEqual(u'abc &lt; <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> &gt; abc', ret)
-
-        ret = clean_html(u'GALORE: https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
-        self.assertEqual(u'GALORE: <a href="https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator', ret)
-
-        # Allow custom placeholders
-        ret = clean_html(u'<a href="${sound_id}">my sound id</a>')
-        self.assertEqual(u'<a href="${sound_id}" rel="nofollow">my sound id</a>', ret)
-
-        ret = clean_html(u'<a href="${sound_url}">my sound url</a>')
-        self.assertEqual(u'<a href="${sound_url}" rel="nofollow">my sound url</a>', ret)
-
-        ret = clean_html(u'<img src="https://freesound.org/media/images/logo.png">')
-        self.assertEqual(u'<img src="https://freesound.org/media/images/logo.png">', ret)
-
-        ret = clean_html(u'<ul><li>Some list</li></ul>')
-        self.assertEqual(u'<ul><li>Some list</li></ul>', ret)
 
 
 class BulkDescribeUtils(TestCase):

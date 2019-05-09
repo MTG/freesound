@@ -40,7 +40,7 @@ def convert_to_solr_document(sound):
 
     # Basic sound fields
     keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels', 'md5',
-                   'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
+                      'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
     for key in keep_fields:
         document[key] = getattr(sound, key)
     document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))

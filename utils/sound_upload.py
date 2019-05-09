@@ -18,26 +18,27 @@
 #     See AUTHORS file.
 #
 
+import csv
+import json
+import logging
 import os
 import shutil
-import csv
-import logging
-import json
-import xlrd
-from django.urls import reverse
-from django.contrib.auth.models import User
-from utils.audioprocessing import get_sound_type
-from geotags.models import GeoTag
-from utils.filesystem import md5file, remove_directory_if_empty
-from utils.text import slugify
-from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
-    remove_uploaded_file_from_mirror_locations
-from utils.cache import invalidate_template_cache
-from django.contrib.auth.models import Group
-from gearman.errors import ServerUnavailable
-from django.apps import apps
 from collections import defaultdict
 
+import xlrd
+from django.apps import apps
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import User
+from django.urls import reverse
+from gearman.errors import ServerUnavailable
+
+from geotags.models import GeoTag
+from utils.audioprocessing import get_sound_type
+from utils.cache import invalidate_template_cache
+from utils.filesystem import md5file, remove_directory_if_empty
+from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
+    remove_uploaded_file_from_mirror_locations
+from utils.text import slugify, remove_control_chars
 
 console_logger = logging.getLogger("console")
 
@@ -173,7 +174,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             sound.geotag = geotag
 
     # 6 set description, tags
-    sound.description = sound_fields['description']
+    sound.description = remove_control_chars(sound_fields['description'])
     sound.set_tags(sound_fields['tags'])
 
     if 'is_explicit' in sound_fields:

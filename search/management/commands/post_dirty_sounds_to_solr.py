@@ -31,7 +31,7 @@ console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
-    help = 'Add all sounds with is_index_dirty flag True to SOLR index'
+    help = 'Add all sounds with is_index_dirty flag True to Solr index'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -39,7 +39,7 @@ class Command(BaseCommand):
             action='store_true',
             dest='delete-if-existing',
             default=False,
-            help='Using the option --delete-if-existing, sounds already existing in the SOLR index will be removed'
+            help='Using the option --delete-if-existing, sounds already existing in the Solr index will be removed'
                  ' before (re-)indexing.')
 
     def handle(self, *args, **options):

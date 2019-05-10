@@ -78,7 +78,7 @@ def convert_to_solr_document(sound):
     # descriptor fields under a property called 'ac_analysis'.
     ac_analysis = getattr(sound, "ac_analysis")
     if ac_analysis is not None:
-        # If analysis is present, index all existing analysis fields under SOLR's dynamic fields "*_i", "*_d", "*_s"
+        # If analysis is present, index all existing analysis fields under Solr's dynamic fields "*_i", "*_d", "*_s"
         # and "*_b" depending on the value's type. Also add Audio Commons prefix.
         for key, value in ac_analysis.items():
             suffix = settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
@@ -98,13 +98,13 @@ def add_sounds_to_solr(sounds):
 
 def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=False, delete_if_existing=False):
     """
-    Add all sounds from the sound_queryset to the SOLR index.
+    Add all sounds from the sound_queryset to the Solr index.
     :param QuerySet sound_queryset: queryset of Sound objects.
     :param int slice_size: sounds are indexed iteratively in chunks of this size.
     :param bool mark_index_clean: if True, set 'is_index_dirty=False' for the indexed sounds' objects.
-    :param bool delete_if_existing: if True, delete sounds from SOLR index before (re-)indexing them. This is used
+    :param bool delete_if_existing: if True, delete sounds from Solr index before (re-)indexing them. This is used
     because our sounds include dynamic fields which otherwise might not be properly updated when adding a sound that
-    already exists in the SOLR index.
+    already exists in the Solr index.
     :return int: number of correctly indexed sounds
     """
     num_correctly_indexed_sounds = 0

@@ -57,7 +57,7 @@ def send_posts_to_solr(posts):
 
     try:
         logger.info("posting to Solr")
-        solr = Solr(settings.SOLR_FORUM_URL, auto_commit=False)
+        solr = Solr(settings.SOLR_FORUM_URL)
 
         solr.add(documents)
 
@@ -93,6 +93,8 @@ def add_all_posts_to_solr(slice_size=4000):
 def delete_post_from_solr(post_id):
     logger.info("deleting post with id %d" % post_id)
     try:
-        Solr(settings.SOLR_FORUM_URL).delete_by_id(post_id)
+        solr = Solr(settings.SOLR_FORUM_URL)
+        solr.delete_by_id(post_id)
+        solr.commit()
     except SolrException as e:
         logger.error('could not delete post with id %s (%s).' % (post_id, e))

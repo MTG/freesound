@@ -463,12 +463,18 @@ def convert_to_pcm(input_filename, output_filename):
 
     if sound_type == "mp3":
         cmd = ["lame", "--decode", input_filename, output_filename]
+        error_messages = ["WAVE file contains 0 PCM samples"]
     elif sound_type == "ogg":
         cmd = ["oggdec", input_filename, "-o", output_filename]
+        error_messages = []
     elif sound_type == "flac":
         cmd = ["flac", "-f", "-d", "-s", "-o", output_filename, input_filename]
+        error_messages = []
     elif sound_type == "m4a":
         cmd = ["faad", "-o", output_filename, input_filename]
+        error_messages = ["Unable to find correct AAC sound track in the MP4 file",
+                          "Error: Bitstream value not allowed by specification",
+                          "Error opening file"]
     else:
         return False
 
@@ -483,18 +489,11 @@ def convert_to_pcm(input_filename, output_filename):
         raise AudioProcessingException("failed converting to pcm data:\n"
                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
-    # If external process apparently returned no error (return code = 0) but we see some errors have
-    # been printed in stderr, raise an exception as well
-    specific_error_messages = {
-        "mp3": ["WAVE file contains 0 PCM samples"],
-        "m4a": ["Unable to find correct AAC sound track in the MP4 file",
-                "Error: Bitstream value not allowed by specification"],
-    }
-    for error_sound_type, error_messages in specific_error_messages.items():
-        if sound_type == error_sound_type:
-            if any([error_message in stderr for error_message in error_messages]):
-                raise AudioProcessingException("failed converting to pcm data:\n"
-                                               + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+    # If external process apparently returned no error (return code = 0) but we see some errors from our list of
+    # known errors have been printed in stderr, raise an exception as well
+    if any([error_message in stderr for error_message in error_messages]):
+        raise AudioProcessingException("failed converting to pcm data:\n"
+                                       + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
     return True
 
@@ -585,6 +584,8 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
 def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
     converts the incoming wave file to 16bit, 44kHz pcm using fffmpeg
+    unlike the convert_to_pcm function above, this one does not try to preserve
+    the original sample rate and bit depth.
     """
 
     if not os.path.exists(input_filename):

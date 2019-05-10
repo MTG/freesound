@@ -108,7 +108,7 @@ class FreesoundAudioProcessorBase(object):
                                            "make sure that format conversion executables exist: %s" % e)
         except AudioProcessingException as e:
             # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
-            self.log_info("conversion to PCM failed, now trying conversion with ffmpeg")
+            self.log_info("conversion to PCM failed or skipped, now trying conversion with ffmpeg")
             try:
                 audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=mono)
             except AudioProcessingException as e:
@@ -153,9 +153,6 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Close file handler as we don't use it from Python
                 os.close(fh)
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
-                if self.sound.type in ["mp3", "ogg", "m4a"]:
-                    info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
-                self.log_info("got sound info and stereofied: " + tmp_wavefile2)
             except IOError as e:
                 # Could not create tmp file
                 self.set_failure("could not create tmp_wavefile2 file", e)
@@ -165,14 +162,35 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                                  "make stereofy sure executable exists at %s: %s" % (settings.SOUNDS_PATH, e))
                 return False
             except AudioProcessingException as e:
-                self.set_failure("stereofy has failed", e)
-                return False
+                if "File contains data in an unknown format" in str(e):
+                    # Stereofy failed most probably because PCM file is corrupted. This can happen if "convert_to_pcm"
+                    # above is skipped because the file is already PCM but it has wrong format. It can also happen in
+                    # other occasions where "convert_to_pcm" generates bad PCM files. In this case we try to re-create
+                    # the PCM file using ffmpeg and try re-running stereofy
+                    self.log_info("stereofy failed, trying re-creating PCM file with ffmpeg and re-running stereofy")
+                    try:
+                        tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory, force_use_ffmpeg=True)
+                        info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH,
+                                                                      tmp_wavefile, tmp_wavefile2)
+                    except AudioProcessingException as e:
+                        self.set_failure("re-run of stereofy with ffmpeg conversion has failed", str(e))
+                        return False
+                    except Exception as e:
+                        self.set_failure("unhandled exception while re-running stereofy with ffmpeg conversion", e)
+                        return False
+                else:
+                    self.set_failure("stereofy has failed", str(e))
+                    return False
             except Exception as e:
                 self.set_failure("unhandled exception while getting info and running stereofy", e)
                 return False
 
+            self.log_info("got sound info and stereofied: " + tmp_wavefile2)
+
             # Fill audio information fields in Sound object
             try:
+                if self.sound.type in ["mp3", "ogg", "m4a"]:
+                    info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
                 self.sound.set_audio_info_fields(**info)
             except Exception as e:  # Could not catch a more specific exception
                 self.set_failure("failed writting audio info fields to db", e)

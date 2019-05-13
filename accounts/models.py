@@ -278,7 +278,7 @@ class Profile(SocialModel):
 
             # Do not allow posts if last post is not older than 5 minutes
             seconds_per_post = settings.LAST_FORUM_POST_MINIMUM_TIME
-            if (today - self.user.posts.all().reverse()[0].created).seconds < seconds_per_post:
+            if (today - self.user.posts.all().reverse()[0].created).total_seconds() < seconds_per_post:
                 return False, "We're sorry but you can't post to the forum because your last post was less than 5 " \
                               "minutes ago"
 

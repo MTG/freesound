@@ -267,6 +267,11 @@ class Profile(SocialModel):
                  ORDER BY tags_tag.name;""" % self.user_id)
 
     def can_post_in_forum(self):
+
+        # A forum moderator can always post
+        if self.user.has_perm('forum.can_moderate_forum'):
+            return True, ""
+
         user_has_posts_pending_to_moderate = self.user.posts.filter(moderation_state="NM").count() > 0
         if user_has_posts_pending_to_moderate:
             return False, "We're sorry but you can't post to the forum because you have previous posts still " \

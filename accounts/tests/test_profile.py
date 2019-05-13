@@ -17,12 +17,13 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+import datetime
 import os
 
+import freezegun
 import mock
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import call_command
 from django.test import TestCase
@@ -32,6 +33,7 @@ import accounts.models
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
 from accounts.models import EmailPreferenceType, EmailBounce
 from accounts.views import handle_uploaded_image
+from forum.models import Forum, Thread, Post
 from sounds.models import Pack
 from tags.models import TaggedItem
 from utils.mail import send_mail
@@ -345,3 +347,83 @@ class ProfileEmailIsValid(TestCase):
         # Test email is still invalid after user is deleted and bounces happened
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
         self.assertEqual(user.profile.email_is_valid(), False)
+
+
+class ProfilePostInForumTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+        self.forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
+        self.thread = Thread.objects.create(forum=self.forum, title="testThread", author=self.user)
+
+    def test_can_post_in_forum_unmoderated(self):
+        """If you have an unmoderated post, you can't make another post"""
+        post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="NM")
+
+        can_post, reason = self.user.profile.can_post_in_forum()
+        self.assertFalse(can_post)
+        self.assertIn("you have previous posts", reason)
+
+    def test_can_post_in_forum_time(self):
+        """If you have no sounds, you can't post within 5 minutes of the last one"""
+        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
+        post.created = created
+        post.save()
+        with freezegun.freeze_time("2019-02-03 10:52:30"):
+            can_post, reason = self.user.profile.can_post_in_forum()
+            self.assertFalse(can_post)
+            self.assertIn("was less than 5", reason)
+
+        with freezegun.freeze_time("2019-02-03 11:03:30"):
+            can_post, reason = self.user.profile.can_post_in_forum()
+            self.assertTrue(can_post)
+
+    def test_can_post_in_forum_has_sounds(self):
+        """If you have sounds you can post even within 5 minutes of the last one"""
+        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
+        post.created = created
+        post.save()
+        self.user.profile.num_sounds = 3
+        self.user.profile.save()
+
+        with freezegun.freeze_time("2019-02-03 10:52:30"):
+            can_post, reason = self.user.profile.can_post_in_forum()
+            self.assertTrue(can_post)
+
+    def test_can_post_in_forum_numposts(self):
+        """If you have no sounds, you can't post more than x posts per day.
+        this is 5 + d^2 posts, where d is the number of days between your first post and now"""
+        # our first post, 2 days ago
+        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
+        post.created = created
+        post.save()
+
+        # a bunch of posts now
+        today = datetime.datetime(2019, 2, 5, 1, 50, 00)
+        for i in range(9):
+            post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
+            today = today + datetime.timedelta(minutes=i+10)
+            post.created = today
+            post.save()
+
+        # 2 days later, maximum for today will be 5 + 4 = 9
+        with freezegun.freeze_time("2019-02-05 14:52:30"):
+            can_post, reason = self.user.profile.can_post_in_forum()
+            self.assertFalse(can_post)
+            self.assertIn("you exceeded your maximum", reason)
+
+    def test_can_post_in_forum_admin(self):
+        """If you're a forum admin, you can post even if you have no sounds, you're within
+        5 minutes of the last one, and you've gone over the limit of posts for the day"""
+        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
+        post.created = created
+        post.save()
+        perm = Permission.objects.get_by_natural_key('can_moderate_forum', 'forum', 'post')
+        self.user.user_permissions.add(perm)
+
+        with freezegun.freeze_time("2019-02-04 10:00:30"):
+            can_post, reason = self.user.profile.can_post_in_forum()
+            self.assertTrue(can_post)

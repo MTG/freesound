@@ -272,7 +272,7 @@ class Profile(SocialModel):
             return False, "We're sorry but you can't post to the forum because you have previous posts still " \
                           "pending to moderate"
 
-        if self.user.posts.all().count() >= 1 and self.user.sounds.all().count() == 0:
+        if self.num_posts >= 1 and self.num_sounds == 0:
             today = datetime.datetime.today()
             reference_date = self.user.posts.all()[0].created
 
@@ -282,9 +282,9 @@ class Profile(SocialModel):
                 return False, "We're sorry but you can't post to the forum because your last post was less than 5 " \
                               "minutes ago"
 
-            # Do not allow posts if user has already posyted N posts that day
+            # Do not allow posts if user has already posted N posts that day
             max_posts_per_day = settings.BASE_MAX_POSTS_PER_DAY + pow((today - reference_date).days, 2)
-            if self.user.posts.filter(created__range=(today-datetime.timedelta(days=1), today)).count() > \
+            if self.user.posts.filter(created__range=(today-datetime.timedelta(days=1), today)).count() >= \
                     max_posts_per_day:
                 return False, "We're sorry but you can't post to the forum because you exceeded your maximum number " \
                               "of posts per day"

@@ -315,7 +315,7 @@ class ForumPageResponses(TestCase):
     def setUp(self):
         self.N_FORUMS = 1
         self.N_THREADS = 1
-        self.N_POSTS = 5
+        self.N_POSTS = 4
         self.user = User.objects.create_user(username='testuser', email='email@example.com', password='12345')
         _create_forums_threads_posts(self.user, self.N_FORUMS, self.N_THREADS, self.N_POSTS)
 

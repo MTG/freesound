@@ -22,14 +22,11 @@ import datetime
 
 import mock
 from django.contrib.auth.models import User, Permission
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import OldUsername
-from forum.models import Post
 from sounds.models import Sound, SoundOfTheDay
-from tickets.models import Ticket
 
 
 class SimpleUserTest(TestCase):
@@ -55,7 +52,7 @@ class SimpleUserTest(TestCase):
         self.user.set_password('12345')
         self.user.is_superuser = True
         self.user.save()
-        a = self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('flag-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('clear-flags-user', kwargs={'username': self.user.username}))
@@ -112,7 +109,7 @@ class SimpleUserTest(TestCase):
         user.set_password('12345')
         user.is_superuser = True
         user.save()
-        self.client.login(username=user.username, password='12345')
+        self.client.force_login(user)
         resp = self.client.get(reverse('sound', kwargs={'username': user.username, "sound_id": self.sound.id}))
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('sound-flag', kwargs={'username': user.username, "sound_id": self.sound.id}))
@@ -187,12 +184,10 @@ class SimpleUserTest(TestCase):
 
         # Login user with moderation permissions
         user = User.objects.create_user("testuser", password="testpass")
-        ct = ContentType.objects.get_for_model(Ticket)
-        p = Permission.objects.get(content_type=ct, codename='can_moderate')
-        ct2 = ContentType.objects.get_for_model(Post)
-        p2 = Permission.objects.get(content_type=ct2, codename='can_moderate_forum')
+        p = Permission.objects.get_by_natural_key('can_moderate', 'tickets', 'ticket')
+        p2 = Permission.objects.get_by_natural_key('can_moderate_forum', 'forum', 'post')
         user.user_permissions.add(p, p2)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
 
         # 200 response on TOS acceptance page
         resp = self.client.get(reverse('tos-acceptance'))

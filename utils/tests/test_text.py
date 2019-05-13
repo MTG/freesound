@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +21,7 @@
 
 from django.test import TestCase
 
-from utils.text import clean_html, is_shouting, text_may_be_spam
+from utils.text import clean_html, is_shouting, text_may_be_spam, remove_control_chars
 
 
 class TextUtilTest(TestCase):
@@ -49,6 +50,18 @@ class TextUtilTest(TestCase):
         self.assertTrue(text_may_be_spam(u'love marriage problem solution'))
         self.assertTrue(text_may_be_spam(u'fbdad8fbdad8fbdad8'))
         self.assertTrue(text_may_be_spam(u'fbdad8'))
+
+    def test_remove_control_chars(self):
+        text = "some \xf0\x9f\x98\x80 emoji"
+        self.assertEqual(remove_control_chars(text), "some \xf0\x9f\x98\x80 emoji")
+        unicodeemoji = u"hello \U0001f600"
+        self.assertEqual(remove_control_chars(unicodeemoji), u"hello \U0001f600")
+        text = "normal text"
+        self.assertEqual(remove_control_chars(text), "normal text")
+        text = "text with \n newline"
+        self.assertEqual(remove_control_chars(text), "text with \n newline")
+        text = "text with control\x08char"
+        self.assertEqual(remove_control_chars(text), "text with controlchar")
 
 
 class CleanHtmlTest(TestCase):

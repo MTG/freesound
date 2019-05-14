@@ -60,6 +60,7 @@ import gearman
 import subprocess
 import datetime
 import json
+import zlib
 
 
 search_logger = logging.getLogger('search')
@@ -84,7 +85,12 @@ class License(OrderedModel):
 class SoundManager(models.Manager):
 
     def latest_additions(self, num_sounds, period='2 weeks', use_interval=True):
-        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) if use_interval else ""
+        if settings.DEBUG:
+            # If in DEBUG mode it is likely that database does not contain sounds in the requested period. To compensate
+            # that we never use the interval filter in DEBUG mode and instead get the `num_sounds` latest additions.
+            use_interval = False
+        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) \
+            if use_interval else ""
         query = """
                 select
                     username,
@@ -132,7 +138,9 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        """Get data to insert into solr for many sounds in a single query"""
+        """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
+        of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
+        method, all the information for all requested sounds is obtained with a single query."""
         query = """SELECT
           auth_user.username,
           sound.user_id,
@@ -159,6 +167,7 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          ac_analsyis.analysis_data as ac_analysis,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -166,7 +175,7 @@ class SoundManager(models.Manager):
             FROM tags_tag
             LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
           WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=20) AS tag_array,
+           AND tags_taggeditem.content_type_id=%s) AS tag_array,
           ARRAY(
             SELECT comments_comment.comment
             FROM comments_comment
@@ -177,11 +186,19 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
+                                                         AND ac_analsyis.extractor = %s)
         WHERE
           sound.id IN %s """
-        return self.raw(query, [sound_ids])
+        return self.raw(query, [ContentType.objects.get_for_model(Sound).id,
+                                settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                                tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
+        """For each sound, get all fields needed to display a sound on the web (using display_raw_sound templatetag) or
+         in the API (including AudioCommons output analysis). Using this custom query to avoid the need of having to do
+         some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
+         information for all requested sounds is obtained with a single query."""
         query = """SELECT
           auth_user.username,
           sound.id,
@@ -207,20 +224,25 @@ class SoundManager(models.Manager):
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
           sounds_remixgroup_sounds.id as remixgroup_id,
+          ac_analsyis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
             LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
           WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=20) AS tag_array
+           AND tags_taggeditem.content_type_id=%s) AS tag_array
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
+                                                         AND ac_analsyis.extractor = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (where, )
+        WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,
+                        "'%s'" % settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                        where, )
         if order_by:
             query = "%s ORDER BY %s" % (query, order_by)
         if limit:
@@ -269,12 +291,18 @@ class Sound(SocialModel):
     user = models.ForeignKey(User, related_name="sounds")
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    # filenames
-    # original_filename = name of the file the user uploaded (can be renamed on file desipction)
-    # original_path = name of the file on disk before processing
-    # base_filename_slug = base of the filename, this will be something like: id__username__filenameslug
-    original_filename = models.CharField(max_length=512)  #
+    # "original_filename" is the name given to the sound, which typically is similar to the filename. note that this
+    # property is named in a misleading way and should probably be renamed to "name" or "sound_name".
+    original_filename = models.CharField(max_length=512)
+
+    # "original_path" is the path on disk of the original sound file. This property is only used at upload time and
+    # updated when the sound is moved from its upload location to the final destination. After that the property should
+    # never be used again as Sound.locations('path') is preferred. For more clarity this property should be renamed to
+    # "path" or "sound_path"
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+
+    # "base_filename_slug" is a slugified version of the original filename, set at upload time. This is used
+    # to create the friendly filename when downloading the sound and once set is never changed.
     base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None)
 
     # user defined fields
@@ -341,7 +369,7 @@ class Sound(SocialModel):
     processing_ongoing_state = models.CharField(db_index=True, max_length=2,
                                                 choices=PROCESSING_ONGOING_STATE_CHOICES, default="NO")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last processing attempt
-    processing_log = models.TextField(null=True, blank=True, default=None)  # Currently unused
+    processing_log = models.TextField(null=True, blank=True, default=None)
 
     # state
     is_index_dirty = models.BooleanField(null=False, default=True)
@@ -427,18 +455,44 @@ class Sound(SocialModel):
                                                                                                    sound_user_id)),
                         url=settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
                     )
+                ),
+                spectral_bw=dict(
+                    M=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
+                    ),
+                    L=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_L.jpg" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
+                    )
+                ),
+                wave_bw=dict(
+                    M=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
+                    ),
+                    L=dict(
+                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_L.png" % (self.id,
+                                                                                                   sound_user_id)),
+                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
+                    )
                 )
             ),
             analysis=dict(
                 statistics=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id,
-                                                                                                    sound_user_id)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.yaml" % (id_folder, self.id, sound_user_id)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.%s" % (
+                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
+                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.%s" % (
+                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
                 ),
                 frames=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id,
-                                                                                                sound_user_id)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.json" % (id_folder, self.id, sound_user_id)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.%s" % (
+                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
+                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
+                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
                 )
             )
         )
@@ -515,6 +569,11 @@ class Sound(SocialModel):
         return [ti.tag.name for ti in self.tags.select_related("tag").all()[0:limit]]
 
     def set_tags(self, tags):
+        """
+        Updates the tags of the Sound object. To do that it first removes all TaggedItem objects which relate the sound
+        with tags which are not in the provided list of tags, and then adds the new tags.
+        :param list tags: list of strings representing the new tags that the Sound object should be assigned
+        """
         # remove tags that are not in the list
         for tagged_item in self.tags.all():
             if tagged_item.tag.name not in tags:
@@ -531,128 +590,147 @@ class Sound(SocialModel):
         """
         Set `new_license` as the current license of the sound. Create the corresponding SoundLicenseHistory object.
         Note that this method *does not save* the sound object, it needs to be manually done afterwards.
-        :param new_license: License object representing the new license
-        :return:
+        :param License new_license: License object representing the new license
         """
         self.license = new_license
         SoundLicenseHistory.objects.create(sound=self, license=new_license)
 
-    # N.B. These set functions are used in the distributed processing.
-    # They set a single field to prevent overwriting eachother's result in
-    # the database, which is what happens if you use Django's save() method.
-    def set_single_field(self, field, value, include_quotes=True):
-        self.set_fields([[field, value, include_quotes]])
-
-    def set_fields(self, fields):
-        query = "UPDATE sounds_sound SET "
-        query += ", ".join([('%s = %s' %
-                             (field[0], (field[1] if not field[2] else ("'%s'" % field[1])))) for field in fields])
-        query += " WHERE id = %s" % self.id
-        with transaction.atomic():
-            cursor = connection.cursor()
-            cursor.execute(query)
-
-    def set_processing_state(self, state):
-        self.set_single_field('processing_state', state)
+    # N.B. The set_xxx functions below are used in the distributed processing and other parts of the app where we only
+    # want to save an individual field of the model to prevent overwritting other model fields.
 
     def set_processing_ongoing_state(self, state):
-        self.set_single_field('processing_ongoing_state', state)
-
-    def set_processing_date(self, date):
-        self.set_single_field('processing_date', str(date))  # Date should be datetime object
+        """
+        Updates self.processing_ongoing_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.processing_ongoing_state should be set
+        """
+        self.processing_ongoing_state = state
+        self.save(update_fields=['processing_ongoing_state'])
 
     def set_analysis_state(self, state):
-        self.set_single_field('analysis_state', state)
+        """
+        Updates self.analysis_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.analysis_state should be set
+        """
+        self.analysis_state = state
+        self.save(update_fields=['analysis_state'])
 
     def set_similarity_state(self, state):
-        self.set_single_field('similarity_state', state)
+        """
+        Updates self.similarity_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.similarity_state should be set
+        """
+        self.similarity_state = state
+        self.save(update_fields=['similarity_state'])
 
-    def set_moderation_state(self, state):
-        self.set_single_field('moderation_state', state)
+    def set_audio_info_fields(self, samplerate=None, bitrate=None, bitdepth=None, channels=None, duration=None):
+        """
+        Updates several fields of the Sound object which store some audio properties and saves to DB without
+        updating other fields. This function is used in cases when two instances of the same Sound object could be
+        edited by two processes in parallel and we want to avoid possible field overwrites.
+        :param int samplerate: saplerate to store
+        :param int bitrate: bitrate to store
+        :param int bitdepth: bitdepth to store
+        :param int channels: number of channels to store
+        :param float duration: duration to store
+        """
+        update_fields = []
+        if samplerate is not None:
+            self.samplerate = samplerate
+            update_fields.append('samplerate')
+        if bitrate is not None:
+            self.bitrate = bitrate
+            update_fields.append('bitrate')
+        if bitdepth is not None:
+            self.bitdepth = bitdepth
+            update_fields.append('bitdepth')
+        if channels is not None:
+            self.channels = channels
+            update_fields.append('channels')
+        if duration is not None:
+            self.duration = duration
+            update_fields.append('duration')
+        self.save(update_fields=update_fields)
 
-    def set_moderation_date(self, date):
-        self.set_single_field('moderation_date', str(date))  # Date should be datetime object
-
-    def set_original_path(self, path):
-        self.set_single_field('original_path', path)
-
-    def set_audio_info_fields(self, info):
-        field_names = ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']
-        field_values = [[field, info[field], False] for field in field_names]
-        self.set_fields(field_values)
-
-    def change_moderation_state(self, new_state, commit=True, do_not_update_related_stuff=False):
+    def change_moderation_state(self, new_state):
         """
         Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
-        or sending a pack to process if required. We do not use the similar function above 'set_moderation_state'
-        to maintain consistency with other set_xxx methods in Sound model (set_xxx methods only do low-level update
-        of the field, with no other checks).
+        or sending a pack to process if required.
+        :param str new_state: new moderation state to which the sound should be set
         """
         current_state = self.moderation_state
         if current_state != new_state:
             self.mark_index_dirty(commit=False)
             self.moderation_state = new_state
             self.moderation_date = datetime.datetime.now()
-            if commit:
-                self.save()
-            if new_state != "OK":
-                # Sound became non approved
+            self.save()
+
+            if new_state != 'OK':
+                # If the mdoeration state changed and now the sound is not moderated OK, delete it from indexes
                 self.delete_from_indexes()
-            if not do_not_update_related_stuff and commit:
-                if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
-                    # Sound either passed from being approved to not being approved, or from not being approved to
-                    # being appoved. Update related stuff (must be done after save)
-                    self.user.profile.update_num_sounds()
-                    if self.pack:
-                        self.pack.process()
+
+            if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
+                # Sound either passed from being approved to not being approved, or from not being approved to
+                # being appoved. In that case we need to update num_sounds counts of sound's author and pack (if any)
+                self.user.profile.update_num_sounds()
+                if self.pack:
+                    self.pack.process()
         else:
-            # Only set moderation date
+            # If the moderation state has not changed, only update moderation date
             self.moderation_date = datetime.datetime.now()
-            if commit:
-                self.save()
+            self.save()
 
         self.invalidate_template_caches()
 
-    def change_processing_state(self, new_state, commit=True, use_set_instead_of_save=False):
+    def change_processing_state(self, new_state, processing_log=None):
         """
         Change the processing state of a sound and perform related tasks such as set the sound as index dirty if
-        required. The 'use_set_instead_of_save' can be used to directly set the change of state in the db as an
-        update command without affecting other fields of the Sound model. This is needed when the processing tasks
+        required. Only the fields that are changed are saved to the object. This is needed when the processing tasks
         change the processing state of the sound to avoid potential collisions when saving the whole object.
+        :param str new_state: new processing state to which the sound should be set
+        :param str processing_log: processing log to be saved in the Sound object
         """
         current_state = self.processing_state
         if current_state != new_state:
             # Sound either went from PE to OK, from PE to FA, from OK to FA, or from FA to OK (never from OK/FA to PE)
             self.mark_index_dirty(commit=False)
-            if use_set_instead_of_save and commit:
-                self.set_processing_state(new_state)
-                self.set_processing_date(datetime.datetime.now())
-            else:
-                self.processing_state = new_state
-                self.processing_date = datetime.datetime.now()
-                if commit:
-                    self.save()
-            if new_state == "FA":
-                # Sound became processing failed
+            self.processing_state = new_state
+            self.processing_date = datetime.datetime.now()
+            self.processing_log = processing_log
+            self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
+
+            if new_state == 'FA':
+                # Sound became processing failed, delete it from indexes
                 self.delete_from_indexes()
-            if commit:
-                # Update related stuff such as users' num_counts or reprocessing affected pack
-                # We only do these updates if commit=True as otherwise the changes would have not been saved
-                # in the DB and updates would have no effect.
-                self.user.profile.update_num_sounds()
-                if self.pack:
-                    self.pack.process()
+
+            # Update num_sounds counts of sound's author and pack (if any)
+            self.user.profile.update_num_sounds()
+            if self.pack:
+                self.pack.process()
+
         else:
-            if use_set_instead_of_save:
-                self.set_processing_date(datetime.datetime.now())
-            else:
-                self.processing_date = datetime.datetime.now()
-                if commit:
-                    self.save()
+            # If processing state has not changed, only update the processing date and log
+            self.processing_date = datetime.datetime.now()
+            self.processing_log = processing_log
+            self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
 
     def change_owner(self, new_owner):
+        """
+        Change the owner (i.e. author) of a Sound object by assigning a new User object to the user field.
+        If sound is part of a Pack, when changing the owner a new Pack object is created for the new owner.
+        Changing the owner of the sound also includes renaming and moving all associated files (i.e. sound, previews,
+        displays and analysis) to include the ID of the new owner and be located accordingly.
+        NOTE: see comments in https://github.com/MTG/freesound/issues/750 for more information
+        :param User new_owner: User object of the new sound owner
+        """
+
         def replace_user_id_in_path(path, old_owner_id, new_owner_id):
             old_path_beginning = '%i_%i' % (self.id, old_owner_id)
             new_path_beginning = '%i_%i' % (self.id, new_owner_id)
@@ -660,24 +738,28 @@ class Sound(SocialModel):
 
         # Rename related files in disk
         paths_to_rename = [
-            self.locations()['path'],  # original file path
-            self.locations()['analysis']['frames']['path'],  # analysis frames file
-            self.locations()['analysis']['statistics']['path'],  # analysis statistics file
-            self.locations()['display']['spectral']['L']['path'],  # spectrogram L
-            self.locations()['display']['spectral']['M']['path'],  # spectrogram M
-            self.locations()['display']['wave']['L']['path'],  # waveform L
-            self.locations()['display']['wave']['M']['path'],  # waveform M
-            self.locations()['preview']['HQ']['mp3']['path'],  # preview HQ mp3
-            self.locations()['preview']['HQ']['ogg']['path'],  # preview HQ ogg
-            self.locations()['preview']['LQ']['mp3']['path'],  # preview LQ mp3
-            self.locations()['preview']['LQ']['ogg']['path'],  # preview LQ ogg
+            self.locations('path'),  # original file path
+            self.locations('analysis.frames.path'),  # analysis frames file
+            self.locations('analysis.statistics.path'),  # analysis statistics file
+            self.locations('display.spectral.L.path'),  # spectrogram L
+            self.locations('display.spectral.M.path'),  # spectrogram M
+            self.locations('display.wave_bw.L.path'),  # waveform BW L
+            self.locations('display.wave_bw.M.path'),  # waveform BW M
+            self.locations('display.spectral_bw.L.path'),  # spectrogram BW L
+            self.locations('display.spectral_bw.M.path'),  # spectrogram BW M
+            self.locations('display.wave.L.path'),  # waveform L
+            self.locations('display.wave.M.path'),  # waveform M
+            self.locations('preview.HQ.mp3.path'),  # preview HQ mp3
+            self.locations('preview.HQ.ogg.path'),  # preview HQ ogg
+            self.locations('preview.LQ.mp3.path'),  # preview LQ mp3
+            self.locations('preview.LQ.ogg.path'),  # preview LQ ogg
         ]
         for path in paths_to_rename:
             try:
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
             except OSError:
                 web_logger.info('WARNING changing owner of sound %i: Could not rename file %s because '
-                                 'it does not exist.\n' % (self.id, path))
+                                'it does not exist.\n' % (self.id, path))
 
         # Deal with pack
         # If sound is in pack, replicate pack in new user.
@@ -694,6 +776,9 @@ class Sound(SocialModel):
         # Change user field
         old_owner = self.user
         self.user = new_owner
+
+        # Change original_path field
+        self.original_path = replace_user_id_in_path(self.original_path, old_owner.id, new_owner.id)
 
         # Set index dirty
         self.mark_index_dirty(commit=True)  # commit=True does save
@@ -729,8 +814,17 @@ class Sound(SocialModel):
             self.save()
 
     def compute_crc(self, commit=True):
-        p = subprocess.Popen(["crc32", self.locations('path')], stdout=subprocess.PIPE)
-        self.crc = p.communicate()[0].split(" ")[0][:-1]
+        crc = 0
+        sound_path = self.locations('path')
+        if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+            sound_path = self.locations("preview.LQ.mp3.path")
+
+        with open(sound_path, 'rb') as fp:
+            for data in iter(lambda: fp.read(settings.CRC_BUFFER_SIZE), b''):
+                crc = zlib.crc32(data, crc)
+
+        self.crc = '{:0>8x}'.format(crc & 0xffffffff)  # right aligned with zero-padding, width of 8 chars
+
         if commit:
             self.save()
 
@@ -758,15 +852,46 @@ class Sound(SocialModel):
         except Ticket.DoesNotExist:
             pass
 
-    def process(self, force=False):
+    def process_and_analyze(self, force=False, high_priority=False):
+        """
+        Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
+        other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
+        state and analysis state of the sound. 'high_priority' can be set to True to send the processing and/or
+        analysis jobs with high priority to the gearman job server.
+        """
+        self.process(force=force, high_priority=high_priority)
+        self.analyze(force=force, high_priority=high_priority)
+
+    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
+        """
+        Trigger processing of the sound if analysis_state is not "OK" or force=True.
+        'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
+        'high_priority' argument can be set to True to send the processing job with high priority to the gearman job
+        server. Processing code generates the file previews and display images as well as fills some audio fields
+        of the Sound model.
+        """
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
             self.set_processing_ongoing_state("QU")
-            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
+            gm_client.submit_job("process_sound", json.dumps({
+                'sound_id': self.id,
+                'skip_previews': skip_previews,
+                'skip_displays': skip_displays
+            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
+
+    def analyze(self, force=False, high_priority=False):
+        """
+        Trigger analysis of the sound if analysis_state is not "OK" or force=True. 'high_priority' argument can be
+        set to True to send the processing job with high priority to the gearman job server. Analysis code runs
+        Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
+        """
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.analysis_state != "OK":
             self.set_analysis_state("QU")
-            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+            gm_client.submit_job("analyze_sound", json.dumps({
+                'sound_id': self.id
+            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):
@@ -1143,8 +1268,46 @@ class SoundLicenseHistory(models.Model):
         ordering = ("-created",)
 
 
+class SoundAnalysis(models.Model):
+    """Reference to the analysis output for a given sound and extractor.
+    The actual output can be either directly stored in the model (using analysis_data field),
+    or can be stored in a JSON file in disk (using the analysis_filename field).
+
+    NOTE: currently we only use this model to store the output of the Audio Commons extractor (using
+    analysis_data field). We chose to implement it more generically (i.e. name the model SoundAnalysis
+    instead of AudioCommonsAnalysis) so that we can use it in the future for standard Essentia analysis
+    or for other extractors as well, but for the current use case that wouldn't be needed.
+    """
+    sound = models.ForeignKey(Sound, related_name='analyses')
+    created = models.DateTimeField(auto_now_add=True)
+    extractor = models.CharField(db_index=True, max_length=255)
+    analysis_filename = models.CharField(max_length=255, null=True)
+    analysis_data = JSONField(null=True)
+
+    @property
+    def analysis_filepath(self):
+        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_PATH
+        and under a sound ID folder structure like sounds and other sound-related files."""
+        id_folder = str(self.id / 1000)
+        return os.path.join(settings.ANALYSIS_PATH, id_folder, "%s" % self.analysis_filename)
+
+    def get_analysis(self):
+        """Returns the contents of the analysis"""
+        if self.analysis_data:
+            return self.analysis_data
+        elif self.analysis_filename:
+            try:
+                return json.load(open(self.analysis_filepath))
+            except IOError:
+                pass
+        return None
+
+    class Meta:
+        unique_together = (("sound", "extractor"),)
+
+
 class BulkUploadProgress(models.Model):
-    """Stroe progress status for a Bulk Describe process."""
+    """Store progress status for a Bulk Describe process."""
 
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)

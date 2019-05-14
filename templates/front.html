@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% load cache %}
+{% load display_sound %}
+
+{% block page_css_id %}home{% endblock %}
+
+{% block title %}Freesound{% endblock title %}
+
+{% block content %}
+<div id="content">
+    <!-- featured sound -->
+    <div id="featured_sound" class="content_box">
+        <h3>Random sound of the day</h3>
+            {% if random_sound %}
+                {% display_raw_sound random_sound %}
+            {% endif %}
+    </div>
+    <!-- news -->
+    <div id="latest_news" class="content_box">
+        <h3>Freesound Blog</h3>
+        {% if rss_cache %}
+            {{ rss_cache }}
+        {% endif %}
+    </div>
+
+    <!-- recent additions -->
+    {% cache 300 latest_additions %}
+    <div id="recent_additions" class="content_box">
+        <h3>Recent Additions</h3>
+        {% for latest_addition in latest_additions %}
+            {% display_sound latest_addition.sound_id %}
+            {% if latest_addition.extra %}
+            <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url 'account' latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
+            {% endif %}
+        {% empty %}
+          <p>No sounds in the database!
+        {% endfor %}
+    	<p class="more_button" ><a href="{% url 'sounds-search' %}?q=&f=&s=created+desc">more...</a></p>
+    </div>
+    {% endcache %}
+</div>
+
+<div id="sidebar">
+
+    <!-- about and t-shirts -->
+    <div class="continuous_sidebar_box">
+        <div id="about">
+            <div id="post_it">
+            <h2>Welcome to Freesound</h2>
+            <p>Freesound is a collaborative database of Creative Commons Licensed sounds. Browse, download and share sounds.</p>
+            </div>
+        </div>
+        <div id="support">
+            <img src="{{media_url}}images/content/tshirt.png" alt="" width="166" height="167" />
+            <h3>Support Us. Get your Freesound T-Shirt!</h3>
+            <p>Select your store:</p>
+
+            <a href="https://freesound.spreadshirt.net/" class="external_link">Europe</a>
+            <a href="https://freesound.spreadshirt.com/" class="external_link">US Canada and Asia</a>
+        </div>
+    </div>
+
+    <!-- donations -->
+    <div id="donation_box">
+        <p><strong>Love Freesound?</strong></p>
+        <a class="donation_button" href="{% url 'donate' %}">Donate Now</a>
+    </div>
+
+    <!-- latest forum posts -->
+    {% cache 300 latest_posts %}
+    <div id="latest_forum_posts" class="sidebar_box">
+        <h3>Active Forum Threads</h3>
+        <ul>
+            {% for forum in current_forum_threads %}
+            <li class="{% cycle 'odd' 'even' %}">
+                <a class="post_title" href="{{forum.last_post.get_absolute_url}}">{{forum.title}}</a><br />
+                in <a href="{{forum.forum.get_absolute_url}}">{{forum.forum}}</a><br />
+                by <a href="{% url 'account' forum.last_post.author.username %}">{{forum.last_post.author.username}}</a>, {{forum.last_post.created|timesince}} ago
+            </li>
+            {% endfor %}
+        </ul>
+        <a class="more_posts_button" href="{% url 'forums-forums' %}"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
+    </div>
+    {% endcache %}
+
+    <!-- subprojects -->
+    <div class="sidebar_box">
+        <h3>Freesound Projects</h3>
+        <div id="freesound_projects">
+            <a href="https://labs.freesound.org/" target="_blank"><img src="{{media_url}}images/freesoundlabs_logo.png" width="200px" alt="Freesound Labs" /></a>
+            <a href="https://annotator.freesound.org/" target="_blank"><img src="{{media_url}}images/freesound_annotator_logo.png" width="250px" alt="Freesound Annotator" /></a>
+        </div>
+    </div>
+</div>
+
+<!-- credits -->
+<div id="credits">
+    An initiative of <a href="https://www.upf.edu/web/mtg" id="mtg_link"><img src="{{media_url}}images/credits/mtg_nou.png" alt="Music Technology Group" /></a>
+</div>
+
+{% endblock %}

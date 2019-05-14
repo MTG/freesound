@@ -40,7 +40,7 @@ class ApiV2Client(models.Model):
     user = models.ForeignKey(User, related_name='apiv2_client')
     status = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
     name = models.CharField(max_length=64)
-    url = models.URLField()
+    url = models.URLField(blank=True)
     redirect_uri = models.URLField()
     description = models.TextField(blank=True)
     accepted_tos = models.BooleanField(default=False)

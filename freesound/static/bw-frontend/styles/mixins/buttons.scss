@@ -1,0 +1,59 @@
+@mixin border-bottom-on-hover {
+  &:before {
+    content: '';
+    position: absolute;
+    display: block;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    box-shadow: none;
+  }
+
+  @include active() {
+    &:before {
+      opacity: 1;
+    }
+  }
+}
+
+@mixin rounded-button($color, $hover-color) {
+  padding-top: 14px;
+  padding-right: 30px;
+  padding-bottom: 14px;
+  padding-left: 30px;
+  border-radius: $button-border-radius;
+  background-color: $color;
+  color: $white;
+  transition: background-color 0.2s ease;
+
+  @include active() {
+    &:focus-visible {
+      outline-width: 0;
+    }
+  }
+
+  @include active() {
+    background-color: $hover-color;
+  }
+}
+
+@mixin reset-rounded-button($color, $hover-color) {
+  color: $color;
+  background-color: transparent;
+  padding: unset;
+  border-radius: 0;
+
+  @include border-bottom-on-hover;
+
+  @include active() {
+    color: $hover-color;
+
+    &:focus {
+      outline-width: 5px;
+    }
+  }
+}

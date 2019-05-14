@@ -18,6 +18,7 @@ class DonateForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
+        default_donation_amount = kwargs.pop('default_donation_amount', None)
         super(DonateForm, self).__init__(*args, **kwargs)
 
         choices = [
@@ -33,6 +34,9 @@ class DonateForm(forms.Form):
             self.initial['donation_type'] = '1'
 
         self.fields['donation_type'].choices = choices
+
+        if default_donation_amount is not None:
+            self.initial['amount'] = float(default_donation_amount)
 
     def clean(self):
         cleaned_data = super(DonateForm, self).clean()

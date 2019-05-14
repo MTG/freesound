@@ -1,0 +1,8 @@
+{% macro icon(iconName, className = '') %}
+  <span class="bw-icon-{{ iconName }} {{ className }}">
+    {% if iconName == 'half-star' %}
+      <span class="path1"></span>
+      <span class="path2"></span>
+    {% endif %}
+  </span>
+{% endmacro %}

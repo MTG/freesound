@@ -1,0 +1,30 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#000000">
+    <title>Freesound - {% block title %}{% endblock %}</title>
+    <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
+    <meta name="keywords" content="free, sound">
+    {% block extrahead %}
+    {% endblock %}
+    <link rel="stylesheet" href="{% static 'bw-frontend/dist/src.7ed060e2.css' %}">
+  </head>
+
+  <body>
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <div class="notifications-wrapper"></div>
+    <div class="bw-page">
+    {% block content %}
+    {% endblock %}
+    </div>
+    <script src="{% static 'bw-frontend/dist/src.7ed060e2.js' %}"></script>
+    {% block extrabody %}
+    {% endblock %}
+  </body>
+</html>

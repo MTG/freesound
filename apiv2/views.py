@@ -68,7 +68,7 @@ from ratings.models import SoundRating
 from utils.cache import invalidate_template_cache
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.nginxsendfile import sendfile
+from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
 logger = logging.getLogger("api")
@@ -100,7 +100,7 @@ class TextSearch(GenericAPIView):
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
         if search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None:
-            raise BadRequestException(msg='At lesast one request parameter from Text Search should be included '
+            raise BadRequestException(msg='At least one request parameter from Text Search should be included '
                                           'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
@@ -186,7 +186,7 @@ class ContentSearch(GenericAPIView):
         if not search_form.cleaned_data['target'] and \
                 not search_form.cleaned_data['descriptors_filter'] and \
                 not self.analysis_file:
-            raise BadRequestException(msg='At lesast one parameter from Content Search should be included '
+            raise BadRequestException(msg='At least one parameter from Content Search should be included '
                                           'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
@@ -528,11 +528,10 @@ class DownloadSound(DownloadAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-
-        if not os.path.exists(sound.locations('path')):
+        sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
+        if not os.path.exists(sound_path):
             raise NotFoundException(resource=self)
-
-        return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+        return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
 class DownloadLink(DownloadAPIView):
@@ -554,7 +553,7 @@ class DownloadLink(DownloadAPIView):
             'user_id': self.user.id,
             'sound_id': sound.id,
             'client_id': self.client_id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.API_DOWNLOAD_TOKEN_LIFETIME),
         }, settings.SECRET_KEY, algorithm='HS256')
         download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token]),
                                      request_is_secure=request.is_secure())
@@ -1164,9 +1163,10 @@ def download_from_token(request, token):
         sound = Sound.objects.get(id=token_contents.get('sound_id', None))
     except Sound.DoesNotExist:
         raise NotFoundException
-    if not os.path.exists(sound.locations('path')):
+    sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
+    if not os.path.exists(sound_path):
         raise NotFoundException
-    return sendfile(sound.locations('path'), sound.friendly_filename(), sound.locations('sendfile_url'))
+    return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
 class Me(OauthRequiredAPIView):

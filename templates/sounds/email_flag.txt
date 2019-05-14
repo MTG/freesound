@@ -5,25 +5,8 @@
 {% block salutation %}admin{% endblock %}
 
 {% block body %}
-A sound was flagged:
-
-
-Sound: {% absurl 'sound' flag.sound.user.username flag.sound.id %}
-{% if flag.reporting_user %}
-Reporting user:
-
-<{% absurl 'account' flag.reporting_user.username %}>
-
-{% endif %}
-Reason type: {{flag.get_reason_type_display}}
-
-Email: {{flag.email}}
-
-Reason:
-{{flag.reason|safe}}
-
-Discard flag:
-
-<{% absurl 'admin:sounds_flag_delete' flag.id %}>
+Flagged: {% absurl 'sound' flag.sound.user.username flag.sound.id %}
+Admin: https://freesound.org/admin/sounds/flag/
 {% endblock %}
+
 {% block ps %}{% endblock %}

@@ -18,21 +18,36 @@
 #     See AUTHORS file.
 #
 
-import requests
 import datetime
-import tickets
+from collections import Counter
+
 import gearman
-from django.shortcuts import render
+import requests
 from django.conf import settings
-from django.core.cache import cache
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-from django.shortcuts import redirect
-from django.http import HttpResponse, JsonResponse
+from django.core.cache import cache
 from django.db.models import Count
-from tickets import TICKET_STATUS_CLOSED
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
+from django.shortcuts import render
+from django.urls import reverse
+
+import tickets
 from sounds.models import Sound
-from collections import Counter
+from tickets import TICKET_STATUS_CLOSED
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def get_gearman_status(request):
+    try:
+        gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
+        gearman_status = gm_admin_client.get_status()
+    except gearman.errors.ServerUnavailable:
+        gearman_status = list()
+    return render(request, 'monitor/gearman_status.html', {'gearman_status': gearman_status})
+
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
@@ -73,13 +88,6 @@ def monitor_home(request):
     sounds_analysis_skipped_count = Sound.objects.filter(
         analysis_state='SK').count()
 
-    # Get gearman status
-    try:
-        gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
-        gearman_status = gm_admin_client.get_status()
-    except gearman.errors.ServerUnavailable:
-        gearman_status = list()
-
     tvars = {"new_upload_count": new_upload_count,
              "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
              "tardy_user_sounds_count": tardy_user_sounds_count,
@@ -93,8 +101,8 @@ def monitor_home(request):
              "sounds_analysis_ok_count": sounds_analysis_ok_count,
              "sounds_analysis_failed_count": sounds_analysis_failed_count,
              "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
-             "gearman_status": gearman_status,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count
+             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
+             "gearman_stats_url": reverse('gearman-stats'),
     }
 
     return render(request, 'monitor/monitor.html', tvars)
@@ -137,8 +145,11 @@ def queries_stats_ajax(request):
         }
         req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/terms',
                 auth=auth, params=params)
+        req.raise_for_status()
         return JsonResponse(req.json())
     except requests.HTTPError:
+        return HttpResponse(status=500)
+    except ValueError:
         return HttpResponse(status=500)
 
 
@@ -154,8 +165,11 @@ def api_usage_stats_ajax(request, client_id):
         }
         req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/histogram',
                 auth=auth, params=params)
+        req.raise_for_status()
         return JsonResponse(req.json())
     except requests.HTTPError:
+        return HttpResponse(status=500)
+    except ValueError:
         return HttpResponse(status=500)
 
 
@@ -232,7 +246,7 @@ def process_sounds(request):
 
         if sounds_to_analyze:
             for sound in sounds_to_analyze:
-                sound.process()
+                sound.analyze()
 
     return redirect("monitor-home")
 
@@ -248,5 +262,3 @@ def moderator_stats_ajax(request):
             .order_by().annotate(Count('id'))
 
     return JsonResponse(list(tickets_mod), safe=False)
-
-

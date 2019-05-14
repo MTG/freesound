@@ -20,8 +20,9 @@
 #     See AUTHORS file.
 #
 
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 
 class FollowingUserItem(models.Model):
     user_from = models.ForeignKey(User, related_name='following_items')
@@ -35,10 +36,11 @@ class FollowingUserItem(models.Model):
         verbose_name_plural = "Users"
         unique_together = ("user_from", "user_to")
 
+
 class FollowingQueryItem(models.Model):
     user = models.ForeignKey(User)
     # TODO: refactor to tags instead of query
-    query = models.CharField(max_length=200)
+    query = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):

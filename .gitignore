@@ -27,6 +27,11 @@ tagrecommendation/tagrecommendation_settings.py
 similarity/similarity_settings.py
 .env
 start_freesound_services.sh
+
+# BW fornt end
+.cache
 node_modules
-freesound/static/dist
+freesound/static/bw-frontend/dist/
+bw_static/
 npm-debug.log
+

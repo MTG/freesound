@@ -40,7 +40,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.cache import never_cache
 from django.utils.http import base36_to_int
@@ -50,8 +50,9 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
-from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm
+from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
+    UsernameReminderForm, \
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField
 from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, \
     EmailBounce
 from accounts.forms import EmailResetForm
@@ -148,11 +149,23 @@ def multi_email_cleanup(request):
 
 
 def check_username(request):
+    """AJAX endpoint to check if a specified username is available to be registered.
+    This checks against the normal username validator, and then also verifies to see
+    if the username already exists in the database.
+
+    Returns JSON {'result': true} if the username is valid and can be used"""
     username = request.GET.get('username', None)
     username_valid = False
+    username_field = UsernameField()
     if username:
-        user = get_user_from_username_or_oldusername(username)
-        username_valid = user == None
+        try:
+            username_field.run_validators(username)
+            # If the validator passes, check if the username exists in the database
+            user = get_user_from_username_or_oldusername(username)
+            username_valid = user is None
+        except ValidationError:
+            username_valid = False
+
     return JsonResponse({'result': username_valid})
 
 
@@ -665,7 +678,7 @@ def describe_sounds(request):
         # In the future if django-workers do not write to the db this might be changed
         try:
             for s in sounds_to_process:
-                s.process()
+                s.process_and_analyze(high_priority=True)
         except Exception as e:
             audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
         for p in dirty_packs:
@@ -1107,7 +1120,7 @@ def email_reset(request):
                 send_mail(subject, email_body, email_to=email)
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
-        form = EmailResetForm(user = request.user)
+        form = EmailResetForm(user=request.user)
     tvars = {'form': form}
     return render(request, 'accounts/email_reset_form.html', tvars)
 

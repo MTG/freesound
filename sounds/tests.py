@@ -19,8 +19,9 @@
 #
 
 import datetime
+import json
 import time
-from itertools import count
+import os
 
 import mock
 from django.conf import settings
@@ -39,11 +40,11 @@ import accounts
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
 from sounds.models import Pack, Sound, SoundOfTheDay, License, DeletedSound, Flag
-from sounds.models import Download, PackDownload, PackDownloadSound
+from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis
 from sounds.views import get_sound_of_the_day_id
 from accounts.models import EmailPreferenceType
 from utils.encryption import encrypt
-from utils.tags import clean_and_split_tags
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 from utils.cache import get_template_cache_key
 
 from bs4 import BeautifulSoup
@@ -59,6 +60,10 @@ class OldSoundLinksRedirectTestCase(TestCase):
     def test_old_sound_link_redirect_ok(self):
         # 301 permanent redirect, result exists
         response = self.client.get(reverse('old-sound-page'), data={'id': self.sound.id})
+        self.assertEqual(response.status_code, 301)
+
+        # id is valid but has a space after it
+        response = self.client.get(reverse('old-sound-page'), data={'id': '%d ' % self.sound.id})
         self.assertEqual(response.status_code, 301)
 
     def test_old_sound_link_redirect_not_exists_id(self):
@@ -82,6 +87,10 @@ class OldPackLinksRedirectTestCase(TestCase):
 
     def test_old_pack_link_redirect_ok(self):
         response = self.client.get(reverse('old-pack-page'), data={'id': self.pack.id})
+        self.assertEqual(response.status_code, 301)
+
+        # id is valid but has a space after it
+        response = self.client.get(reverse('old-pack-page'), data={'id': '%d ' % self.pack.id})
         self.assertEqual(response.status_code, 301)
 
     def test_old_pack_link_redirect_not_exists_id(self):
@@ -235,34 +244,6 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(sound.is_index_dirty, True)
 
 
-sound_counter = count()
-
-
-def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None):
-    count_offset = count_offset + next(sound_counter)
-    if user is None:
-        user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
-    packs = list()
-    for i in range(0, num_packs):
-        pack = Pack.objects.create(user=user, name="Test pack %i" % (i + count_offset))
-        packs.append(pack)
-    sounds = list()
-    for i in range(0, num_sounds):
-        pack = None
-        if packs:
-            pack = packs[i % len(packs)]
-        sound = Sound.objects.create(user=user,
-                                     original_filename="Test sound %i" % (i + count_offset),
-                                     base_filename_slug="test_sound_%i" % (i + count_offset),
-                                     license=License.objects.all()[0],
-                                     pack=pack,
-                                     md5="fakemd5_%i" % (i + count_offset))
-        if tags is not None:
-            sound.set_tags(clean_and_split_tags(tags))
-        sounds.append(sound)
-    return user, packs, sounds
-
-
 class ChangeSoundOwnerTestCase(TestCase):
 
     fixtures = ['initial_data']
@@ -273,9 +254,14 @@ class ChangeSoundOwnerTestCase(TestCase):
         userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
         userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
                                              user=User.objects.create_user("testuser2", password="testpass2"))
+
+        fake_original_path_template = '/test/path/{sound_id}_{user_id}.wav'
+
         for sound in soundsA:
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
+            sound.original_path = fake_original_path_template.format(sound_id=sound.id, user_id=userA.id)
+            sound.save()
 
         # Check initial number of sounds is ok
         self.assertEqual(userA.profile.num_sounds, 4)
@@ -303,6 +289,7 @@ class ChangeSoundOwnerTestCase(TestCase):
         self.assertEqual(sound.pack.num_sounds, 1)
         self.assertEqual(target_sound_pack.num_sounds, 3)
         self.assertEqual(sound.pack.user, userB)
+        self.assertEqual(sound.original_path, fake_original_path_template.format(sound_id=sound.id, user_id=userB.id))
 
         # Delete original user and perform further checks
         userA.delete()  # Completely delete form db (instead of user.profile.delete_user())
@@ -1078,6 +1065,7 @@ class SoundTemplateCacheTests(TestCase):
 
     # Downloads are only cached in display
     @mock.patch('sounds.views.sendfile', return_value=HttpResponse('Dummy response'))
+    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     def test_download(self, sendfile):
         cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
@@ -1351,3 +1339,236 @@ class SoundTemplateCacheTests(TestCase):
             lambda: all([text in self.client.get(self._get_sound_url('sound-display')).content
                          for text in ['Moderation state:', 'Pending']])
         )
+
+
+class SoundAnalysisModel(TestCase):
+
+    fixtures = ['initial_data']
+
+    @override_analysis_path_with_temp_directory
+    def test_get_analysis(self):
+        _, _, sounds = create_user_and_sounds(num_sounds=1)
+        sound = sounds[0]
+        analysis_data = {'descriptor1': 0.56, 'descirptor2': 1.45, 'descriptor3': 'label'}
+
+        # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
+        sa = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor1", analysis_data=analysis_data)
+        self.assertEquals(sound.analyses.all().count(), 1)
+        self.assertEquals(sa.get_analysis().keys(), analysis_data.keys())
+        self.assertEquals(sa.get_analysis()['descriptor1'], 0.56)
+
+        # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
+        analysis_filename = '%i_testextractor_out.json'
+        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
+        os.mkdir(sound_analysis_folder)
+        json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
+        sa2 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor2", analysis_filename=analysis_filename)
+        self.assertEquals(sound.analyses.all().count(), 2)
+        self.assertEquals(sa2.get_analysis().keys(), analysis_data.keys())
+        self.assertEquals(sa2.get_analysis()['descriptor1'], 0.56)
+
+        # Create an analysis object which refeences a non-existing file. Check that get_analysis returns None.
+        sa3 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor3",
+                                           analysis_filename='non_existing_file.json')
+        self.assertEquals(sound.analyses.all().count(), 3)
+        self.assertEquals(sa3.get_analysis(), None)
+
+
+class SoundManagerQueryMethods(TestCase):
+
+    fixtures = ['initial_data']
+
+    fields_to_check_bulk_query_id = ['username', 'id', 'type', 'user_id', 'original_filename', 'is_explicit',
+                                     'avg_rating', 'num_ratings', 'description', 'moderation_state', 'processing_state',
+                                     'processing_ongoing_state', 'similarity_state', 'created', 'num_downloads',
+                                     'num_comments', 'pack_id', 'duration', 'pack_name', 'license_id', 'license_name',
+                                     'license_deed_url', 'geotag_id', 'remixgroup_id', 'ac_analysis', 'tag_array']
+
+    fields_to_check_bulk_query_solr = ['username', 'user_id', 'id', 'type', 'original_filename', 'is_explicit',
+                                       'filesize', 'md5', 'channels', 'avg_rating', 'num_ratings', 'description',
+                                       'created', 'num_downloads', 'num_comments', 'duration', 'pack_id', 'geotag_id',
+                                       'bitrate', 'bitdepth', 'samplerate', 'pack_name', 'license_name', 'geotag_lat',
+                                       'geotag_lon', 'ac_analysis', 'is_remix', 'was_remixed', 'tag_array',
+                                       'comments_array']
+
+    def setUp(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=1, tags="tag1 tag2 tag3")
+        self.sound_ids = [s.id for s in sounds]
+        self.user = user
+        self.pack = packs[0]
+
+    def test_bulk_query_id_num_queries(self):
+
+        # Check that all fields for each sound are retrieved with one query
+        with self.assertNumQueries(1):
+            for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids):
+                for field in self.fields_to_check_bulk_query_id:
+                    self.assertTrue(hasattr(sound, field), True)
+
+    def test_bulk_query_id_field_contents(self):
+
+        # Check the contents of some fields are correct
+        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids):
+            self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
+            self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
+            self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
+            self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
+            self.assertItemsEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
+
+    def test_bulk_query_solr_num_queries(self):
+
+        # Check that all fields for each sound are retrieved with one query
+        with self.assertNumQueries(1):
+            for sound in Sound.objects.bulk_query_solr(sound_ids=self.sound_ids):
+                for field in self.fields_to_check_bulk_query_solr:
+                    self.assertTrue(hasattr(sound, field), True)
+
+    def test_bulk_query_solr_field_contents(self):
+
+        # Check the contents of some fields are correct
+        for sound in Sound.objects.bulk_query_solr(sound_ids=self.sound_ids):
+            self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
+            self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
+            self.assertEqual(Sound.objects.get(id=sound.id).md5, sound.md5)
+            self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
+            self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
+            self.assertItemsEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
+
+    def test_ordered_ids(self):
+
+        # This method is similar to SoundManager.bulk_query_id but returns the sounds in the same order as the
+        # the IDs in sound_ids. Here we only check that the sorting is correct. (the other things like returned
+        # sound fields being correct are already tested in previous tests).
+        with self.assertNumQueries(1):
+            for i, sound in enumerate(Sound.objects.ordered_ids(sound_ids=self.sound_ids)):
+                self.assertEqual(self.sound_ids[i], sound.id)
+
+    def test_bulk_sounds_for_user(self):
+
+        # This method uses SoundManager.bulk_query internally (also used by SoundManager.bulk_query_id) to retrieve
+        # sounds by a user. We only check that filtering by user works here (the other things like returned sound fields
+        # being correct are already tested in previous tests).
+
+        # Created sounds are not yet moderated and processed ok, so bulk_sounds_for_user should return no sounds
+        self.assertEqual(len(list(Sound.objects.bulk_sounds_for_user(user_id=self.user.id))), 0)
+
+        # Now we set user sounds to moderated and processed ok (and set user_sound_ids for later use)
+        user_sound_ids = []
+        for sound in Sound.objects.filter(user=self.user):
+            sound.moderation_state = 'OK'
+            sound.processing_state = 'OK'
+            sound.save()
+            user_sound_ids.append(sound.id)
+
+        # Check that now sounds returned by bulk_sounds_for_user are ok
+        user_sound_ids_bulk_query = []
+        with self.assertNumQueries(1):
+            for i, sound in enumerate(Sound.objects.bulk_sounds_for_user(user_id=self.user.id)):
+                self.assertEqual(self.user.id, sound.user_id)
+                user_sound_ids_bulk_query.append(sound.id)
+        self.assertItemsEqual(user_sound_ids, user_sound_ids_bulk_query)
+
+    def test_bulk_sounds_for_pack(self):
+
+        # This method uses SoundManager.bulk_query internally (also used by SoundManager.bulk_query_id) to retrieve
+        # sounds of a pack. We only check that filtering by pack works here (the other things like returned sound fields
+        # being correct are already tested in previous tests).
+
+        # Created sounds are not yet moderated and processed ok, so bulk_sounds_for_pack should return no sounds
+        self.assertEqual(len(list(Sound.objects.bulk_sounds_for_pack(pack_id=self.pack.id))), 0)
+
+        # Now we set user sounds to moderated and processed ok (and set pack_sound_ids for later use)
+        pack_sound_ids = []
+        for sound in Sound.objects.filter(pack=self.pack):
+            sound.moderation_state = 'OK'
+            sound.processing_state = 'OK'
+            sound.save()
+            pack_sound_ids.append(sound.id)
+
+        # Check that now sounds returned by bulk_sounds_for_pack are ok
+        pack_sound_ids_bulk_query = []
+        with self.assertNumQueries(1):
+            for i, sound in enumerate(Sound.objects.bulk_sounds_for_pack(pack_id=self.pack.id)):
+                self.assertEqual(self.user.id, sound.user_id)
+                pack_sound_ids_bulk_query.append(sound.id)
+        self.assertItemsEqual(pack_sound_ids, pack_sound_ids_bulk_query)
+
+
+class SoundEditDeletePermissionTestCase(TestCase):
+    """Test that when editing and deleting sounds and packs only the user who owns
+    them, or a specific admin can make the change"""
+
+    fixtures = ['sounds.json']
+
+    def setUp(self):
+        # From sounds.json fixture
+        self.sound = Sound.objects.get(pk=6)
+        self.pack = Pack.objects.get(pk=5103)
+        self.sound_user = User.objects.get(username=self.sound.user.username)
+        self.other_user = User.objects.get(username='Anton')
+        self.admin_user = User.objects.get(username='Bram')
+
+    def test_edit_sound_owner(self):
+        # Sound owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_delete_sound_owner(self):
+        # Sound owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_edit_pack_owner(self):
+        # Pack owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_delete_pack_owner(self):
+        # Pack owner
+        self.client.force_login(self.sound_user)
+        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Admin
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Other user
+        self.client.force_login(self.other_user)
+        resp = self.client.post(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
+        self.assertEqual(resp.status_code, 403)
+

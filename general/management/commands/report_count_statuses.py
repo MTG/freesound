@@ -179,11 +179,19 @@ class Command(BaseCommand):
             user_profile = user.profile
             real_num_posts = user.real_num_posts
             if real_num_posts != user_profile.num_posts:
-                mismatches_report['User.num_posts'] += 1
-                mismatches_object_ids['User.num_posts'].append(user.id)
-                user_profile.num_posts = real_num_posts
-                if not options['no-changes']:
-                    user_profile.save()
+                # Only moderated posts shoud count in profile.num_posts, therore the fact that we reach this part of the
+                # code does not mean profile.num_posts is wrong because the difference between real_num_posts and
+                # profile.num_posts could be due to unmoderated posts being wrongly counted in the annotated query
+                # Ideally we should filter out unmoderated post in the annotated Count(), but it is easier to do the
+                # check here as this is a case that will rarely happen and filtering in an annotation is complex without
+                # writting custom SQL.
+                real_num_moderated_posts = user.posts.exclude(moderation_state="NM").count()
+                if real_num_moderated_posts != user_profile.num_posts:
+                    mismatches_report['User.num_posts'] += 1
+                    mismatches_object_ids['User.num_posts'].append(user.id)
+                    user_profile.num_posts = real_num_moderated_posts
+                    if not options['no-changes']:
+                        user_profile.save()
             report_progress('Checking number of posts in %i users... %.2f%%', total, count)
 
         if not options['skip-downloads']:

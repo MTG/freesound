@@ -38,7 +38,6 @@ def context_extra(request):
         num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
 
     return {
-        'use_js_dev_server': settings.USE_JS_DEVELOPMENT_SERVER,
         'media_url': settings.MEDIA_URL,
         'request': request,
         'last_restart_date': settings.LAST_RESTART_DATE,

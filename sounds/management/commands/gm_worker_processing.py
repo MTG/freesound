@@ -18,23 +18,75 @@
 #     See AUTHORS file.
 #
 
+import json
 import logging
+import os
+import signal
+import sys
+import tempfile
 
 import gearman
-import os
-import sys
-import traceback
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db import connection
-from django.db.utils import DatabaseError
-from psycopg2 import InterfaceError
 
-from sounds.models import Sound
-from utils.audioprocessing.essentia_analysis import analyze
-from utils.audioprocessing.freesound_audio_processing import process
+from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
+from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
+from utils.filesystem import remove_directory
 
-logger = logging.getLogger("console")
+logger = logging.getLogger("processing")
+logger_error = logging.getLogger("processing_errors")
+
+
+class WorkerException(Exception):
+    """
+    Exception raised by the worker if:
+    i) the analysis/processing function takes longer than the timeout specified in settings.WORKER_TIMEOUT
+    ii) the check for free disk space  before running the analysis/processing function fails
+    """
+    pass
+
+
+def set_timeout_alarm(time, msg):
+    """
+    Sets a timeout alarm which raises a WorkerException after a number of seconds.
+    :param float time: seconds until WorkerException is raised
+    :param str msg: message to add to WorkerException when raised
+    :raises WorkerException: when timeout is reached
+    """
+
+    def alarm_handler(signum, frame):
+        raise WorkerException(msg)
+
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(time)
+
+
+def cancel_timeout_alarm():
+    """
+    Cancels an exsting timeout alarm (or does nothing if no alarm was set).
+    """
+    signal.alarm(0)
+
+
+def log_error(message):
+    logger.error(message)
+    logger_error.info(message)
+
+
+def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
+                        min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
+    """
+    Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
+    volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
+    :param str directory: path of the directory whose volume will be checked for free space
+    :param float min_disk_space_percentage: free disk space percentage to check against
+    :raises WorkerException: if available percentage of free space is below the threshold
+    """
+    stats = os.statvfs(directory)
+    percentage_free = stats.f_bfree * 1.0 / stats.f_blocks
+    if percentage_free < min_disk_space_percentage:
+        raise WorkerException("Disk is running out of space, "
+                              "aborting task as there might not be enough space for temp files")
 
 
 class Command(BaseCommand):
@@ -48,73 +100,68 @@ class Command(BaseCommand):
             default='process_sound',
             help='Register this function (default: process_sound)')
 
-    def write_stdout(self, msg):
-        logger.info("[%d] %s" % (os.getpid(),msg))
-        self.stdout.write(msg)
-        self.stdout.flush()
-
     def handle(self, *args, **options):
-        # N.B. don't take out the print statements as they're
-        # very very very very very very very very very very
-        # helpful in debugging supervisor+worker+gearman
-        self.write_stdout('Starting worker\n')
+        logger.info('Starting worker')
         task_name = 'task_%s' % options['queue']
-        self.write_stdout('Task: %s\n' % task_name)
+        logger.info('Task: %s' % task_name)
         if task_name not in dir(self):
-            self.write_stdout("Wow.. That's crazy! Maybe try an existing queue?\n")
+            logger.info("Wow.. That's crazy! Maybe try an existing queue?")
             sys.exit(1)
+
         task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
-        self.write_stdout('Initializing gm_worker\n')
+        logger.info('Initializing gm_worker')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        self.write_stdout('Registering task %s, function %s\n' % (task_name, task_func))
+        logger.info('Registering task %s, function %s' % (task_name, task_func))
         gm_worker.register_task(options['queue'], task_func)
-        self.write_stdout('Starting work\n')
+        logger.info('Starting work')
         gm_worker.work()
-        self.write_stdout('Ended work\n')
+        logger.info('Ended work')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
-        return self.task_process_x(gearman_worker, gearman_job, analyze)
+        job_data = json.loads(gearman_job.data)
+        sound_id = job_data['sound_id']
+        set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
+
+        logger.info("---- Starting analysis of sound with id %s ----" % sound_id)
+        try:
+            check_if_free_space()
+            result = FreesoundAudioAnalyzer(sound_id=sound_id).analyze()
+            if result:
+                logger.info("Successfully analyzed sound %s" % sound_id)
+            else:
+                log_error("Failed analyizing sound %s" % sound_id)
+
+        except WorkerException as e:
+            log_error('%s' % e)
+
+        except Exception as e:
+            log_error('Unexpected error while analyzing sound %s' % e)
+
+        cancel_timeout_alarm()
+        return ''  # Gearman requires return value to be a string
 
     def task_process_sound(self, gearman_worker, gearman_job):
-        return self.task_process_x(gearman_worker, gearman_job, process)
+        job_data = json.loads(gearman_job.data)
+        sound_id = job_data['sound_id']
+        skip_previews = job_data.get('skip_previews', False)
+        skip_displays = job_data.get('skip_displays', False)
+        set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
 
-    def task_process_x(self, gearman_worker, gearman_job, func):
-        sound_id = gearman_job.data
-        self.write_stdout("Processing sound with id %s\n" % sound_id)
-        sound = False
+        logger.info("---- Starting processing of sound with id %s ----" % sound_id)
         try:
-            # If the database connection has become invalid, try to reset the
-            # connection (max of 'intent' times)
-            intent = 3
-            while intent > 0:
-                try:
-                    # Try to get the sound, and if we succeed continue as normal
-                    sound = Sound.objects.get(id=sound_id)
-                    break
-                except (InterfaceError, DatabaseError):
-                    # Try to close the current connection (it probably already is closed)
-                    try:
-                        connection.connection.close()
-                    except:
-                        pass
-                    # Trick Django into creating a fresh connection on the next db use attempt
-                    connection.connection = None
-                    intent -= 1
+            check_if_free_space()
+            result = FreesoundAudioProcessor(sound_id=sound_id)\
+                .process(skip_displays=skip_displays, skip_previews=skip_previews)
+            if result:
+                logger.info("Successfully processed sound %s" % sound_id)
+            else:
+                log_error("Failed processing sound %s" % sound_id)
 
-            # if we didn't succeed in resetting the connection, quit the worker
-            if intent <= 0:
-                self.write_stdout("Problems while connecting to the database, could not reset the connection and "
-                                  "will kill the worker.\n")
-                sys.exit(255)
+        except WorkerException as e:
+            log_error(str(e))
 
-            result = func(sound)
-            self.write_stdout("Finished, sound: %s, processing %s\n" % \
-                              (sound_id, ("ok" if result else "failed")))
-            return 'true' if result else 'false'
-        except Sound.DoesNotExist:
-            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
-            return 'false'
         except Exception as e:
-            self.write_stdout("\t something went terribly wrong: %s\n" % e)
-            self.write_stdout("\t%s\n" % traceback.format_exc())
-            return 'false'
+            log_error('Unexpected error while processing sound %s' % e)
+
+        cancel_timeout_alarm()
+        return ''  # Gearman requires return value to be a string

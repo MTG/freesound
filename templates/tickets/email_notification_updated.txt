@@ -9,6 +9,6 @@ The ticket "{{ ticket.title }}" has been updated.
 
 To see the update see the following link:
 
-<{% absurl 'tickets-ticket' ticket.key %}>
+{% absurl 'tickets-ticket' ticket.key %}
 
 {% endblock %}

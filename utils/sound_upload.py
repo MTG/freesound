@@ -187,7 +187,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
 
     # 8 create moderation tickets if needed
     if user.profile.is_whitelisted:
-        sound.change_moderation_state('OK', do_not_update_related_stuff=True)
+        sound.change_moderation_state('OK')
     else:
         # create moderation ticket!
         sound.create_moderation_ticket()
@@ -196,15 +196,12 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
         for moderator in moderators:
             invalidate_template_cache("user_header", moderator.id)
 
-    # 9 proces sound and packs
-    try:
-        sound.compute_crc()
-    except:
-        pass
+    # 9 process sound and packs
+    sound.compute_crc()
 
     if process:
         try:
-            sound.process()
+            sound.process_and_analyze(high_priority=True)
 
             if sound.pack:
                 sound.pack.process()
@@ -518,7 +515,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             # Process sound and pack
             error_sending_to_process = None
             try:
-                sound.process()
+                sound.process_and_analyze(high_priority=True)
             except Exception as e:
                 error_sending_to_process = str(e)
             if sound.pack:

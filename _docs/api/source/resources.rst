@@ -49,36 +49,74 @@ Search results can be filtered by specifying a series of properties that sounds 
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
 Filters are defined with a syntax like ``filter=fieldname:value fieldname:value`` (that is the Solr filter syntax).
 Use double quotes for multi-word queries (``filter=fieldname:"val ue"``).
-Field names can be any of the following:
+Filter names can be any of the following:
 
 
-======================  ====================================================
-id		        integer, sound id on freesound
-username: 		string, not tokenized
-created: 		date
-original_filename: 	string, tokenized
-description: 		string, tokenized
-tag: 			string
-license: 		string ("Attribution", "Attribution Noncommercial" or "Creative Commons 0")
-is_remix: 		boolean
-was_remixed: 		boolean
-pack: 			string
-pack_tokenized: 	string, tokenized
-is_geotagged: 		boolean
-type: 			string, original file type ("wav", "aif", "aiff", "ogg", "mp3", "m4a" or "flac")
-duration: 		numerical, duration of sound in seconds
-bitdepth: 		integer, WARNING is not to be trusted right now
-bitrate: 		numerical, WARNING is not to be trusted right now
-samplerate: 		integer
-filesize: 		integer, file size in bytes
-channels: 		integer, number of channels in sound (mostly 1 or 2)
-md5: 			string, 32-byte md5 hash of file
-num_downloads: 		integer
-avg_rating: 		numerical, average rating, from 0 to 5
-num_ratings: 		integer, number of ratings
-comment: 		string, tokenized (filter is satisfied if sound contains the specified value in at least one of its comments)
-comments: 		numerical, number of comments
-======================  ====================================================
+======================  =============  ====================================================
+Filter name             Type           Description
+======================  =============  ====================================================
+``id``                  integer        Sound ID on Freesound.
+``username``            string         Username of the sound uploader (not tokenized).
+``created``             date           Date in which the sound was added to Freesound (see date example filters below).
+``original_filename``   string         Name given to the sound (tokenized).
+``description``         string         Textual description given to the sound (tokenized).
+``tag``                 string         Tag
+``license``             string         Name of the Creative Commons license, one of["Attribution", "Attribution Noncommercial", "Creative Commons 0"].
+``is_remix``            boolean        Whether the sound is a remix of another Freesound sound.
+``was_remixed``         boolean        Whether the sound has remixes in Freesound.
+``pack``                string         Pack name (not tokenized).
+``pack_tokenized``      string         Pack name (tokenized).
+``is_geotagged``        boolean        Whether the sound has geotag information.
+``type``                string         Original file type, one off ["wav", "aiff", "ogg", "mp3", "m4a", "flac"].
+``duration``            numerical      Duration of sound in seconds.
+``bitdepth``            integer        Encoding bitdepth. WARNING is not to be trusted right now.
+``bitrate``             numerical      Encoding bitrate. WARNING is not to be trusted right now.
+``samplerate``          integer        Samplerate.
+``filesize``            integer        File size in bytes.
+``channels``            integer        Number of channels in sound (mostly 1 or 2).
+``md5``                 string         32-byte md5 hash of file
+``num_downloads``       integer        Number of times the sound has been downloaded.
+``avg_rating``          numerical      Average rating for the sound in the range [0, 5].
+``num_ratings``         integer        Number of times the sound has been rated.
+``comment``             string         Textual content of the comments of a sound  (tokenized). The filter is satisfied if sound contains the filter value in at least one of its comments.
+``comments``            integer        Number of times the sound cas been commented.
+======================  =============  ====================================================
+
+
+Additionally, the following filters (comming from the research carried out within the AudioCommons_ project) can also
+be used when narrowing down a query:
+
+
+==========================  =============  ====================================================
+Filter name                 Type           Description
+==========================  =============  ====================================================
+``ac_loudness``             numerical      The integrated (overall) loudness (LUFS) measured using the EBU R128 standard.
+``ac_dynamic_range``        numerical      Loudness range (dB, LU) measured using the EBU R128 standard.
+``ac_temporal_centroid``    numerical      Temporal centroid (sec.) of the audio signal. It is the point in time in a signal that is a temporal balancing point of the sound event energy.
+``ac_log_attack_time``      numerical      The log (base 10) of the attack time of a signal envelope. The attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
+``ac_single_event``         boolean        Whether the audio file contains one *single audio event* or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.
+``ac_tonality``             string         Key value estimated by key detection algorithm. Key is in format *root_note scale* where *root_note* is one of ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], and *scale* is one of ["major", "minor"]. E.g. "C minor", "F# major".
+``ac_tonality_confidence``  numerical      Reliability of the key estimation in a range of [0, 1].
+``ac_loop``                 boolean        Whether audio file is *loopable*.
+``ac_tempo``                integer        BPM value estimated by beat tracking algorithm.
+``ac_tempo_confidence``     numerical      Reliability of the tempo estimation in a range of [0, 1].
+``ac_note_midi``            integer        MIDI value corresponding to the estimated note (makes more sense for ac_single_event sounds).
+``ac_note_name``            string         Pitch note name based on median of estimated fundamental frequency (makes more sense for ac_single_event sounds). Note name must be one of  ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number. E.g. "A4", "E#7".
+``ac_note_frequency``       numerical      Frequency corresponding to the estimated note (makes more sense for ac_single_event sounds).
+``ac_note_confidence``      numerical      Reliability of the note name/midi/frequency estimation in a range of [0, 1].
+``ac_brightness``           numerical      Brightness of the analyzed audio in a scale from [0-100]. A *bright* sound is one that is clear/vibrant and/or contains significant high-pitched elements.
+``ac_depth``                numerical      Depth of the analyzed audio in a scale from [0-100]. A *deep* sound is one that conveys the sense of having been made far down below the surface of its source.
+``ac_hardness``             numerical      Hardness of the analyzed audio in a scale from [0-100]. A *hard* sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
+``ac_roughness``            numerical      Roughness of the analyzed audio in a scale from [0-100]. A *rough* sound is one that has an uneven or irregular sonic texture.
+``ac_boominess``            numerical      Bominess of the analyzedn sound in a scale from [0-100]. A *boomy* sound is one that conveys a sense of loudness, depth and resonance.
+``ac_warmth``               numerical      Warmth of the analyzedn sound in a scale from [0-100]. A *warm* sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.
+``ac_sharpness``            numerical      Sharpness of the analyzedn sound in a scale from [0-100]. A *sharp* sound is one that suggests it might cut if it were to take on physical form.
+``ac_reverb``               boolean        Whether the signal is reverberated or not.
+==========================  =============  ====================================================
+
+
+.. _AudioCommons: http://www.audiocommons.org/
+
 
 For numeric or integer filters, a range can also be specified using the following syntax (the "TO" needs
 to be upper case!)::
@@ -188,7 +226,7 @@ Name                    Type                       Description
 ======================  =========================  ======================
 ``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
 ``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Not that with bigger ``page_size``, more data will need to be transferred.
-``fields``              comma separated strings    Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response`, and must be separated by commas. For example, if ``fields=name,avg_rating,license``, results will include sound name, average rating and license for every returned sound. **Use this parameter to optimize request times by only requesting the information you really need**.
+``fields``              comma separated strings    Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response`, and must be separated by commas. For example, if ``fields=name,avg_rating,license``, results will include sound name, average rating and license for every returned sound. **Use this parameter to optimize request time by only requesting the information you really need.**
 ``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. **This parameter will have no effect if** ``analysis`` **property is not included in the** ``fields`` **request parameter**. Descriptor names can be any of those listed in :ref:`available-descriptors`, and must be separated by commas. For example, if ``fields=analysis&descriptors=lowlevel.spectral_centroid,lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names are found or the analysis data of a particular sound is not available.
 ``normalized``          bool (yes=1, no=0)         Indicates whether the returned sound content-based descriptors should be normalized or not. ``normalized=1`` will return normalized descriptor values. By default, ``normalized=0``.
 ======================  =========================  ======================
@@ -459,9 +497,10 @@ Name                  Type              Description
 ``num_comments``      number            The number of comments.
 ``comment``           URI               The URI to comment the sound.
 ``similar_sounds``    URI               URI pointing to the similarity resource (to get a list of similar sounds).
-``analysis``          object            Object containing requested descriptors information according to the ``descriptors`` request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
+``analysis``          object            Dictionary containing requested descriptors information according to the ``descriptors`` request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
 ``analysis_stats``    URI               URI pointing to the complete analysis results of the sound (see :ref:`analysis-docs`).
 ``analysis_frames``   URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
+``ac_analysis``       object            Dictionary containing the results of the AudioCommons analysis for the given sound.
 ====================  ================  ====================================================================================
 
 

@@ -265,11 +265,10 @@
 
 
 	<fields>
+        <!-- Basic sound fields -->
 		<field name="id" type="sint" indexed="true" stored="true" required="true" />
 		<field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
-
 		<field name="created" type="date" indexed="true" stored="true" required="true" />
-
 		<field name="original_filename" type="text" indexed="true" stored="true" required="true" />
 
 		<field name="description" type="text" indexed="true" stored="true" required="false" />
@@ -310,8 +309,18 @@
 		<field name="spectral_path_m" type="string" indexed="false" stored="true" required="true" />
 		<field name="spectral_path_l" type="string" indexed="false" stored="true" required="true" />
 		<field name="preview_path" type="string" indexed="false" stored="true" required="true" />
-                <field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>
-                <dynamicField name="random_*" type="random" indexed="true" stored="false"/>
+
+        <!-- Dynamic fields -->
+        <!-- This will be used to index Audio Commons analysis fields and potentially other stuff -->
+        <dynamicField name="*_i" type="sint" indexed="true" stored="true"/>
+        <dynamicField name="*_d" type="sdouble" indexed="true" stored="true"/>
+        <dynamicField name="*_b" type="boolean" indexed="true" stored="true"/>
+        <dynamicField name="*_s" type="string" indexed="true" stored="true"/>
+
+        <!-- Other fields -->
+        <field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>
+        <dynamicField name="random_*" type="random" indexed="true" stored="false"/>
+
 	</fields>
 	
 	<copyField source="pack" dest="pack_tokenized" />

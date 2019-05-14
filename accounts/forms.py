@@ -312,25 +312,27 @@ class ProfileForm(forms.ModelForm):
 
     def clean_about(self):
         about = self.cleaned_data['about']
-        if is_spam(self.request, about):
+        if about and is_spam(self.request, about):
             raise forms.ValidationError("Your 'about' text was considered spam, please edit and resubmit. If it keeps "
                                         "failing please contact the admins.")
         return about
 
     def clean_signature(self):
         signature = self.cleaned_data['signature']
-        if is_spam(self.request, signature):
+        if signature and is_spam(self.request, signature):
             raise forms.ValidationError("Your signature was considered spam, please edit and resubmit. If it keeps "
                                         "failing please contact the admins.")
         return signature
 
     def clean_sound_signature(self):
         sound_signature = self.cleaned_data['sound_signature']
-        if is_spam(self.request, sound_signature):
-            raise forms.ValidationError("Your sound signature was considered spam, please edit and resubmit. If it "
-                                        "keeps failing please contact the admins.")
+
         if len(sound_signature) > 256:
             raise forms.ValidationError("Your sound signature must not exeed 256 chars, please edit and resubmit.")
+
+        if sound_signature and is_spam(self.request, sound_signature):
+            raise forms.ValidationError("Your sound signature was considered spam, please edit and resubmit. If it "
+                                        "keeps failing please contact the admins.")
 
         return sound_signature
 

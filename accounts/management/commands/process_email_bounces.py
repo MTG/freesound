@@ -24,9 +24,11 @@ from django.contrib.auth.models import User
 from django.utils.dateparse import parse_datetime
 from django.db import IntegrityError
 from accounts.models import EmailBounce
+
+from utils.aws import init_client, AwsCredentialsNotConfigured
 from utils.filesystem import create_directories
-from boto3 import client
 from botocore.exceptions import EndpointConnectionError
+
 import json
 import logging
 import time
@@ -34,6 +36,26 @@ import os
 
 logger_web = logging.getLogger('web')
 logger_console = logging.getLogger('console')
+
+
+def process_message(data):
+    bounce_type = EmailBounce.type_from_string(data['bounceType'])
+    timestamp = parse_datetime(data['timestamp'])
+    is_duplicate = False
+    n_recipients = 0
+
+    for recipient in data['bouncedRecipients']:
+        email = recipient['emailAddress']
+        try:
+            user = User.objects.get(email__iexact=email)
+            EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
+            n_recipients += 1
+        except User.DoesNotExist:  # user probably got deleted
+            logger_console.info('User {} not found in database (probably deleted)'.format(email))
+        except IntegrityError:  # message duplicated
+            is_duplicate = True
+
+    return is_duplicate, n_recipients
 
 
 def create_dump_file():
@@ -77,8 +99,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
-            logger_console.error('AWS credentials are not configured')
+        try:
+            sqs = init_client('sqs')
+        except AwsCredentialsNotConfigured as e:
+            logger_console.error(e.message)
             return
 
         queue_url = settings.AWS_SQS_QUEUE_URL
@@ -95,10 +119,6 @@ class Command(BaseCommand):
         no_delete = options['no_delete']
         if no_delete:
             logger_console.info('Running without deleting messages from queue (one batch)')
-
-        sqs = client('sqs', region_name=settings.AWS_REGION,
-                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
         total_messages = 0
         total_bounces = 0  # counts multiple recipients of the same mail
@@ -127,21 +147,8 @@ class Command(BaseCommand):
                 data = json.loads(body['Message'])
 
                 if data['notificationType'] == 'Bounce':
-                    bounce_data = data['bounce']
-                    bounce_type = EmailBounce.type_from_string(bounce_data['bounceType'])
-                    timestamp = parse_datetime(bounce_data['timestamp'])
-                    is_duplicate = False
 
-                    for recipient in bounce_data['bouncedRecipients']:
-                        email = decode_idna_email(recipient['emailAddress'])
-                        try:
-                            user = User.objects.get(email__iexact=email)
-                            EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
-                            total_bounces += 1
-                        except User.DoesNotExist:  # user probably got deleted
-                            logger_console.info(u'User {} not found in database (probably deleted)'.format(email))
-                        except IntegrityError:  # message duplicated
-                            is_duplicate = True
+                    is_duplicate, n_recipients = process_message(data['bounce'])
 
                     if not no_delete:
                         sqs.delete_message(

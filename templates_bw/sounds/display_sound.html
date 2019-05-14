@@ -1,0 +1,19 @@
+{% load cache %}
+{% load util %}
+{% load ratings %}
+{% if sound %}
+{% cache 43200 bw_display_sound sound_id is_authenticated is_explicit %}
+    <div
+        class="bw-player"
+        data-size="small"
+        data-mp3="{{ sound.locations.preview.LQ.mp3.url }}"
+        data-ogg="{{ sound.locations.preview.LQ.ogg.url }}"
+        data-waveform="{{ sound.locations.display.wave_bw.M.url }}"
+        data-spectrum="{{ sound.locations.display.spectral_bw.M.url }}"
+        data-title="{{ sound.original_filename }}">
+    </div>
+    <h5 class="v-spacing-top-1"><a class="bw-link--black" href="{% url 'sound' sound_user sound_id %}">{{ sound.original_filename }}</a></h5>
+    <a href="{% url 'account' sound_user %}">{{ sound_user }}</a>
+    <p class="text-grey">{{ sound.description | truncatewords:10 }}</p>
+{% endcache %}
+{% endif %}

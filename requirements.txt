@@ -1,8 +1,11 @@
+#NOTE: before running pip, install the following system packages
+#apt-get install libyaml-dev (to allow the cloader)
+#apt-get install libjpeg-dev
+#apt-get install zlib1g-dev
+#apt-get install libpng12-dev
 BeautifulSoup==3.2.0
 beautifulsoup4==4.6.0
-html5lib==1.0b10 # this is required for bleach, but needs to be installed separately to avoid this bug: https://github.com/mozilla/bleach/issues/337
-bleach==2.1.2
-#apt-get install libyaml-dev (to allow the cloader)
+bleach==3.1.0
 PyYAML==3.11
 pycrypto==2.6.1
 feedparser==5.1.3
@@ -15,10 +18,10 @@ networkx==1.5
 gearman==2.0.2
 recaptcha-client==1.0.6
 graypy==0.2.12
-Django==1.11
+Django==1.11.20
 django-extensions==1.7.8
 django-debug-toolbar==1.7
-gunicorn==19.1.1
+gunicorn==19.9.0
 akismet==0.2.0
 django-cors-headers==2.0.2
 django-oauth2-provider==0.2.6.1
@@ -28,15 +31,12 @@ djangorestframework-xml==1.3.0
 djangorestframework-yaml==1.0.3
 django-oauth-toolkit==0.10.0
 django-object-actions==0.8.2
-pillow==2.6.0
-#apt-get install libjpeg-dev
-#apt-get install zlib1g-dev
-#apt-get install libpng12-dev
+pillow==5.2.0
 ipython==4.2.0
 stripe==1.65.0
-Sphinx
+Sphinx==1.6.3
 django-fixture-magic
-mock
+mock==2.0.0
 raven==5.10.1
 django-multiupload==0.5
 zenpy==1.1.3
@@ -45,3 +45,5 @@ ConcurrentLogHandler==0.9.1
 freezegun==0.3.9
 boto3==1.7.10
 xlrd==1.1.0
+numpy==1.9.0
+scikits.audiolab==0.11.0

@@ -93,7 +93,10 @@ def copy_previews_to_mirror_locations(sound):
 
 def copy_displays_to_mirror_locations(sound):
     copy_files_to_mirror_locations(
-        sound, ['display.spectral.L.path', 'display.spectral.M.path', 'display.wave.L.path', 'display.wave.M.path'],
+        sound, ['display.spectral.L.path', 'display.spectral.M.path',
+                'display.wave.L.path', 'display.wave.M.path',
+                'display.spectral_bw.L.path', 'display.spectral_bw.M.path',
+                'display.wave_bw.L.path', 'display.wave_bw.M.path'],
         settings.DISPLAYS_PATH, settings.MIRROR_DISPLAYS)
 
 

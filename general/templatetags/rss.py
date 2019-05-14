@@ -32,7 +32,7 @@ class RssParserNode(template.Node):
         self.var_name = var_name
 
     def render(self, context):
-        proxy = urllib2.ProxyHandler( settings.PROXIES )
+        proxy = urllib2.ProxyHandler({})
         if self.url:
             context[self.var_name] = feedparser.parse(self.url, handlers=[proxy])
         else:

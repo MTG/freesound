@@ -4,7 +4,7 @@ function setSurveyVisited(num_days){
 }
 
 function openSurveyPage(){
-    window.open('https://docs.google.com/forms/d/e/1FAIpQLSfO7NFjVwwNaIfl4J95tlz10Oz-_Vc1IEbPpFqAkPV33TeqEw/viewform', '_blank');
+    window.open('https://freesound.org/forum/freesound-project/41697/', '_blank');
 }
 
 function isSurveyVisited(){

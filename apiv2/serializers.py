@@ -20,18 +20,18 @@
 #     See AUTHORS file.
 #
 
-from sounds.models import Sound, Pack
-from ratings.models import SoundRating
-from comments.models import Comment
-from bookmarks.models import BookmarkCategory, Bookmark
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import serializers
-from utils.tags import clean_and_split_tags
+
+from apiv2_utils import prepend_base
+from bookmarks.models import BookmarkCategory, Bookmark
+from comments.models import Comment
+from sounds.models import Sound, Pack, SoundAnalysis
 from utils.forms import filename_has_valid_extension
 from utils.similarity_utilities import get_sounds_descriptors
-from apiv2_utils import prepend_base
+from utils.tags import clean_and_split_tags
 
 
 ###################
@@ -44,17 +44,17 @@ DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
 class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
-    '''
+    """
     In this abstract class we define ALL possible fields that a sound object should serialize/deserialize.
     Inherited classes set the default fields that will be shown in each view, although those can be altered using
     the 'fields' request parameter.
-    '''
+    """
     default_fields = None
 
     def __init__(self, *args, **kwargs):
         super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
-        if not requested_fields: # If parameter is in url but parameter is empty, set to default
+        if not requested_fields:  # If parameter is in url but parameter is empty, set to default
             requested_fields = self.default_fields
 
         if requested_fields:
@@ -63,11 +63,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-
     class Meta:
         model = Sound
         fields = ('id',
-                  #'uri',
                   'url',
                   'name',
                   'tags',
@@ -82,7 +80,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'bitdepth',
                   'duration',
                   'samplerate',
-                  #'user',
                   'username',
                   'pack',
                   'pack_name',
@@ -101,20 +98,13 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis',
                   'analysis_frames',
                   'analysis_stats',
+                  'ac_analysis',
                   )
-
-
-    #uri = serializers.SerializerMethodField()
-    #def get_uri(self, obj):
-    #    return prepend_base(reverse('apiv2-sound-instance', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     url = serializers.SerializerMethodField()
     def get_url(self, obj):
-        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
-
-    #user = serializers.SerializerMethodField()
-    #def get_user(self, obj):
-    #    return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField()
     def get_username(self, obj):
@@ -149,7 +139,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_pack(self, obj):
         try:
             if obj.pack_id:
-                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack_id]), request_is_secure=self.context['request'].is_secure())
+                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack_id]),
+                                    request_is_secure=self.context['request'].is_secure())
             else:
                 return None
         except:
@@ -165,63 +156,87 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     previews = serializers.SerializerMethodField()
     def get_previews(self, obj):
         return {
-                'preview-hq-mp3': prepend_base(obj.locations("preview.HQ.mp3.url"), request_is_secure=self.context['request'].is_secure()),
-                'preview-hq-ogg': prepend_base(obj.locations("preview.HQ.ogg.url"), request_is_secure=self.context['request'].is_secure()),
-                'preview-lq-mp3': prepend_base(obj.locations("preview.LQ.mp3.url"), request_is_secure=self.context['request'].is_secure()),
-                'preview-lq-ogg': prepend_base(obj.locations("preview.LQ.ogg.url"), request_is_secure=self.context['request'].is_secure()),
+            'preview-hq-mp3': prepend_base(obj.locations("preview.HQ.mp3.url"),
+                                           request_is_secure=self.context['request'].is_secure()),
+            'preview-hq-ogg': prepend_base(obj.locations("preview.HQ.ogg.url"),
+                                           request_is_secure=self.context['request'].is_secure()),
+            'preview-lq-mp3': prepend_base(obj.locations("preview.LQ.mp3.url"),
+                                           request_is_secure=self.context['request'].is_secure()),
+            'preview-lq-ogg': prepend_base(obj.locations("preview.LQ.ogg.url"),
+                                           request_is_secure=self.context['request'].is_secure()),
         }
 
     images = serializers.SerializerMethodField()
     def get_images(self, obj):
         return {
-                'waveform_m': prepend_base(obj.locations("display.wave.M.url"), request_is_secure=self.context['request'].is_secure()),
-                'waveform_l': prepend_base(obj.locations("display.wave.L.url"), request_is_secure=self.context['request'].is_secure()),
-                'spectral_m': prepend_base(obj.locations("display.spectral.M.url"), request_is_secure=self.context['request'].is_secure()),
-                'spectral_l': prepend_base(obj.locations("display.spectral.L.url"), request_is_secure=self.context['request'].is_secure()),
+            'waveform_m': prepend_base(obj.locations("display.wave.M.url"),
+                                       request_is_secure=self.context['request'].is_secure()),
+            'waveform_l': prepend_base(obj.locations("display.wave.L.url"),
+                                       request_is_secure=self.context['request'].is_secure()),
+            'spectral_m': prepend_base(obj.locations("display.spectral.M.url"),
+                                       request_is_secure=self.context['request'].is_secure()),
+            'spectral_l': prepend_base(obj.locations("display.spectral.L.url"),
+                                       request_is_secure=self.context['request'].is_secure()),
+            'waveform_bw_m': prepend_base(obj.locations("display.wave_bw.M.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
+            'waveform_bw_l': prepend_base(obj.locations("display.wave_bw.L.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
+            'spectral_bw_m': prepend_base(obj.locations("display.spectral_bw.M.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
+            'spectral_bw_l': prepend_base(obj.locations("display.spectral_bw.L.url"),
+                                          request_is_secure=self.context['request'].is_secure()),
         }
+
 
     analysis = serializers.SerializerMethodField()
     def get_analysis(self, obj):
-        # Fake implementation. Method implemented in subclasses
-        return None
+        raise NotImplementedError  # Should be implemented in subclasses
 
     analysis_frames = serializers.SerializerMethodField()
     def get_analysis_frames(self, obj):
         if obj.analysis_state != 'OK':
             return None
-        return prepend_base(obj.locations('analysis.frames.url'), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(obj.locations('analysis.frames.url'),
+                            request_is_secure=self.context['request'].is_secure())
 
     analysis_stats = serializers.SerializerMethodField()
     def get_analysis_stats(self, obj):
         if obj.analysis_state != 'OK':
             return None
-        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     similar_sounds = serializers.SerializerMethodField()
     def get_similar_sounds(self, obj):
         if obj.similarity_state != 'OK':
             return None
-        return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     download = serializers.SerializerMethodField()
     def get_download(self, obj):
-        return prepend_base(reverse('apiv2-sound-download', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-sound-download', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     rate = serializers.SerializerMethodField()
     def get_rate(self, obj):
-        return prepend_base(reverse('apiv2-user-create-rating', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-user-create-rating', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     bookmark = serializers.SerializerMethodField()
     def get_bookmark(self, obj):
-        return prepend_base(reverse('apiv2-user-create-bookmark', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-user-create-bookmark', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     comment = serializers.SerializerMethodField()
     def get_comment(self, obj):
-        return prepend_base(reverse('apiv2-user-create-comment', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-user-create-comment', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     ratings = serializers.SerializerMethodField()
     def get_ratings(self, obj):
-        return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     avg_rating = serializers.SerializerMethodField()
     def get_avg_rating(self, obj):
@@ -229,7 +244,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     comments = serializers.SerializerMethodField()
     def get_comments(self, obj):
-        return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     geotag = serializers.SerializerMethodField()
     def get_geotag(self, obj):
@@ -237,6 +253,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             return str(obj.geotag.lat) + " " + str(obj.geotag.lon)
         else:
             return None
+
+    ac_analysis = serializers.SerializerMethodField()
+    def get_ac_analysis(self, obj):
+        raise NotImplementedError  # Should be implemented in subclasses
 
 
 class SoundListSerializer(AbstractSoundSerializer):
@@ -253,6 +273,14 @@ class SoundListSerializer(AbstractSoundSerializer):
             return self.context['view'].sound_analysis_data[str(obj.id)]
         except Exception as e:
             return None
+
+    def get_ac_analysis(self, obj):
+        # Get ac analysis data form the object itself as it will have been included in the Sound
+        # by SoundManager.bulk_query
+        if obj.ac_analysis:
+            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value
+                    for key, value in obj.ac_analysis.items()}
+        return None
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -273,8 +301,18 @@ class SoundSerializer(AbstractSoundSerializer):
                                               self.context['request'].GET.get('normalized', '0') == '1',
                                               only_leaf_descriptors=True)[str(obj.id)]
             else:
-                return 'No descriptors specified. You should indicate which descriptors you want with the \'descriptors\' request parameter.'
+                return 'No descriptors specified. You should indicate which descriptors you want with ' \
+                       'the \'descriptors\' request parameter.'
         except Exception as e:
+            return None
+
+    def get_ac_analysis(self, obj):
+        try:
+            # Retreive analysis data from the related SoundAnalysis object corresponding to the Audio Commons extractor
+            # Add Audio Commons descirptor prefix so names better match with the names used in filters
+            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value for key, value
+                    in obj.analyses.get(extractor=settings.AUDIOCOMMONS_EXTRACTOR_NAME).get_analysis().items()}
+        except SoundAnalysis.DoesNotExist:
             return None
 
 
@@ -287,8 +325,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = (#'uri',
-                  'url',
+        fields = ('url',
                   'username',
                   'about',
                   'home_page',
@@ -305,30 +342,33 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     url = serializers.SerializerMethodField()
     def get_url(self, obj):
-        return prepend_base(reverse('account', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
-
-    #uri = serializers.SerializerMethodField('get_uri')
-    #def get_uri(self, obj):
-    #    return prepend_base(reverse('apiv2-user-instance', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('account', args=[obj.username]),
+                            request_is_secure=self.context['request'].is_secure())
 
     sounds = serializers.SerializerMethodField()
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]),
+                            request_is_secure=self.context['request'].is_secure())
 
     packs = serializers.SerializerMethodField()
     def get_packs(self, obj):
-        return prepend_base(reverse('apiv2-user-packs', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-user-packs', args=[obj.username]),
+                            request_is_secure=self.context['request'].is_secure())
 
     bookmark_categories = serializers.SerializerMethodField()
     def get_bookmark_categories(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]),
+                            request_is_secure=self.context['request'].is_secure())
 
     avatar = serializers.SerializerMethodField()
     def get_avatar(self, obj):
         return {
-                'small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].is_secure()),
-                'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].is_secure()),
-                'large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].is_secure()),
+            'small': prepend_base(obj.profile.locations()['avatar']['S']['url'],
+                                  request_is_secure=self.context['request'].is_secure()),
+            'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'],
+                                   request_is_secure=self.context['request'].is_secure()),
+            'large': prepend_base(obj.profile.locations()['avatar']['L']['url'],
+                                  request_is_secure=self.context['request'].is_secure()),
         }
 
     about = serializers.SerializerMethodField()
@@ -366,12 +406,10 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Pack
         fields = ('id',
-                  #'uri',
                   'url',
                   'description',
                   'created',
                   'name',
-                  #'user',
                   'username',
                   'num_sounds',
                   'sounds',
@@ -379,19 +417,13 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
     url = serializers.SerializerMethodField()
     def get_url(self, obj):
-        return prepend_base(reverse('pack', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
-
-    #uri = serializers.SerializerMethodField('get_uri')
-    #def get_uri(self, obj):
-    #    return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('pack', args=[obj.user.username, obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     sounds = serializers.SerializerMethodField()
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
-
-    #user = serializers.SerializerMethodField('get_user')
-    #def get_user(self, obj):
-    #    return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField()
     def get_username(self, obj):
@@ -404,6 +436,7 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     created = serializers.SerializerMethodField()
     def get_created(self, obj):
         return obj.created.replace(microsecond=0)
+
 
 ##################
 # BOOKMARK SERIALIZERS
@@ -423,25 +456,33 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.SerializerMethodField()
     def get_url(self, obj):
         if obj.id != 0:
-            return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
+            return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]),
+                                request_is_secure=self.context['request'].is_secure())
         else:
-            return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
+            return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]),
+                                request_is_secure=self.context['request'].is_secure())
 
     num_sounds = serializers.SerializerMethodField()
     def get_num_sounds(self, obj):
         if obj.id != 0:  # Category is not 'uncategorized'
             return obj.bookmarks.filter(sound__processing_state="OK", sound__moderation_state="OK").count()
         else:
-            return Bookmark.objects.select_related("sound").filter(user__username=obj.user.username, category=None).count()
+            return Bookmark.objects.select_related("sound").filter(user__username=obj.user.username,
+                                                                   category=None).count()
 
     sounds = serializers.SerializerMethodField()
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
+        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]),
+                            request_is_secure=self.context['request'].is_secure())
 
 
 class CreateBookmarkSerializer(serializers.Serializer):
-    category = serializers.CharField(max_length=128, required=False, help_text='Not required. Name you want to give to the category under which the bookmark will be classified (leave empty for no category).')
-    name = serializers.CharField(max_length=128, required=False, help_text='Not required. Name you want to give to the bookmark (if empty, sound name will be used).')
+    category = serializers.CharField(max_length=128, required=False,
+                                     help_text='Not required. Name you want to give to the category under which the '
+                                               'bookmark will be classified (leave empty for no category).')
+    name = serializers.CharField(max_length=128, required=False,
+                                 help_text='Not required. Name you want to give to the bookmark (if empty, sound '
+                                           'name will be used).')
 
     def validate_category(self, value):
         if value.isspace():
@@ -459,32 +500,28 @@ class CreateBookmarkSerializer(serializers.Serializer):
 ####################
 
 
-
-
 class CreateRatingSerializer(serializers.Serializer):
-    rating = serializers.IntegerField(required=True, help_text='Required. Chose an integer rating between 0 and 5 (both included).')
+    rating = serializers.IntegerField(required=True,
+                                      help_text='Required. Chose an integer rating between 0 and 5 (both included).')
 
     def validate_rating(self, value):
         if (value not in [0, 1, 2, 3, 4, 5]):
             raise serializers.ValidationError('You have to introduce an integer value between 0 and 5 (both included).')
         return value
 
+
 ####################
 # COMMENTS SERIALIZERS
 ####################
+
 
 class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Comment
-        fields = (#'user',
-                  'username',
+        fields = ('username',
                   'comment',
                   'created')
-
-    #user = serializers.SerializerMethodField()
-    #def get_user(self, obj):
-    #    return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField()
     def get_username(self, obj):
@@ -508,9 +545,11 @@ class CreateCommentSerializer(serializers.Serializer):
 # UPLOAD SERIALIZERS
 ####################
 
+
 def validate_license(value):
     if value not in [key for key, name in LICENSE_CHOICES]:
-        raise serializers.ValidationError('Invalid License, must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+        raise serializers.ValidationError('Invalid License, must be either \'Attribution\', \'Attribution '
+                                          'Noncommercial\' or \'Creative Commons 0\'.')
     return value
 
 
@@ -557,7 +596,8 @@ def validate_geotag(value):
         except:
             fails = True
         if fails:
-            raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively).')
+            raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, '
+                                              'longitude and zoom respectively).')
         else:
             # Check that ranges are corrent
             if float(data[0]) > 90 or float(data[0]) < -90:
@@ -576,18 +616,28 @@ LICENSE_CHOICES = (
 
 
 class SoundDescriptionSerializer(serializers.Serializer):
-    upload_filename = serializers.CharField(max_length=512, help_text='Must match a filename from \'Pending Uploads\' resource.')
-    name = serializers.CharField(max_length=512, required=False, help_text='Not required. Name you want to give to the sound (by default it will be the original filename).')
-    tags = serializers.CharField(max_length=512, help_text='Separate tags with spaces. Join multi-word tags with dashes.')
+    upload_filename = serializers.CharField(max_length=512,
+                                            help_text='Must match a filename from \'Pending Uploads\' resource.')
+    name = serializers.CharField(max_length=512, required=False,
+                                 help_text='Not required. Name you want to give to the sound (by default it will be '
+                                           'the original filename).')
+    tags = serializers.CharField(max_length=512,
+                                 help_text='Separate tags with spaces. Join multi-word tags with dashes.')
     description = serializers.CharField(help_text='Textual description of the sound.')
-    license = serializers.ChoiceField(choices=LICENSE_CHOICES, help_text='License for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
-    pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
-    geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
+    license = serializers.ChoiceField(choices=LICENSE_CHOICES,
+                                      help_text='License for the sound. Must be either \'Attribution\', \'Attribution '
+                                                'Noncommercial\' or \'Creative Commons 0\'.')
+    pack = serializers.CharField(required=False, help_text='Not required. Pack name (if there is no such pack with '
+                                                           'that name, a new one will be created).')
+    geotag = serializers.CharField(max_length=100, required=False,
+                                   help_text='Not required. Latitude, longitude and zoom values in the form '
+                                             'lat,lon,zoom (ex: \'2.145677,3.22345,14\').')
 
     def validate_upload_filename(self, value):
         if 'not_yet_described_audio_files' in self.context:
             if value not in self.context['not_yet_described_audio_files']:
-                raise serializers.ValidationError('Upload filename (%s) must match with a filename from \'Pending Uploads\' resource.' % value)
+                raise serializers.ValidationError('Upload filename (%s) must match with a filename from '
+                                                  '\'Pending Uploads\' resource.' % value)
         return value
 
     def validate_geotag(self, value):
@@ -607,12 +657,23 @@ class SoundDescriptionSerializer(serializers.Serializer):
 
 
 class EditSoundDescriptionSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=512, required=False, help_text='Not required. New name you want to give to the sound.')
-    tags = serializers.CharField(max_length=512, required=False, help_text='Not required. Tags that should be assigned to the sound (note that existing ones will be deleted). Separate tags with spaces. Join multi-word tags with dashes.')
-    description = serializers.CharField(required=False, help_text='Not required. New textual description for the sound.')
-    license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES, help_text='Not required. New license for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
-    pack = serializers.CharField(required=False, help_text='Not required. New pack name for the sound (if there is no such pack with that name, a new one will be created).')
-    geotag = serializers.CharField(required=False, max_length=100, help_text='Not required. New geotag for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').')
+    name = serializers.CharField(max_length=512, required=False,
+                                 help_text='Not required. New name you want to give to the sound.')
+    tags = serializers.CharField(max_length=512, required=False,
+                                 help_text='Not required. Tags that should be assigned to the sound (note that '
+                                           'existing ones will be deleted). Separate tags with spaces. Join multi-word '
+                                           'tags with dashes.')
+    description = serializers.CharField(required=False,
+                                        help_text='Not required. New textual description for the sound.')
+    license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES,
+                                      help_text='Not required. New license for the sound. Must be either '
+                                                '\'Attribution\', \'Attribution Noncommercial\' or '
+                                                '\'Creative Commons 0\'.')
+    pack = serializers.CharField(required=False, help_text='Not required. New pack name for the sound (if there is no '
+                                                           'such pack with that name, a new one will be created).')
+    geotag = serializers.CharField(required=False, max_length=100,
+                                   help_text='Not required. New geotag for the sound. Latitude, longitude and zoom '
+                                             'values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').')
 
     def validate_geotag(self, value):
         return validate_geotag(value)
@@ -631,16 +692,30 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
 
 
 class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
-    audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Required. Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
-    name = serializers.CharField(max_length=512, required=False, help_text='Not required. Name you want to give to the sound (by default it will be the original filename).')
-    tags = serializers.CharField(max_length=512, required=False, help_text='Only required if providing file description. Separate tags with spaces. Join multi-word tags with dashes.')
-    description = serializers.CharField(required=False, help_text='Only required if providing file description. Textual description of the sound.')
-    license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES, help_text='Only required if providing file description. License for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
-    pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
-    geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
+    audiofile = serializers.FileField(max_length=100, allow_empty_file=False,
+                                      help_text='Required. Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
+    name = serializers.CharField(max_length=512, required=False,
+                                 help_text='Not required. Name you want to give to the sound (by default it will be '
+                                           'the original filename).')
+    tags = serializers.CharField(max_length=512, required=False,
+                                 help_text='Only required if providing file description. Separate tags with spaces. '
+                                           'Join multi-word tags with dashes.')
+    description = serializers.CharField(required=False,
+                                        help_text='Only required if providing file description. Textual '
+                                                  'description of the sound.')
+    license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES,
+                                      help_text='Only required if providing file description. License for the sound. '
+                                                'Must be either \'Attribution\', \'Attribution Noncommercial\' '
+                                                'or \'Creative Commons 0\'.')
+    pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new '
+                                           'one will be created).', required=False)
+    geotag = serializers.CharField(max_length=100,
+                                   help_text='Not required. Latitude, longitude and zoom values in the form '
+                                             'lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
     def is_providing_description(self, attrs):
-        if 'name' in attrs or 'license' in attrs or 'tags' in attrs or 'geotag' in attrs or 'pack' in attrs or  'description' in attrs:
+        if 'name' in attrs or 'license' in attrs or 'tags' in attrs or 'geotag' in attrs or 'pack' in attrs \
+                or 'description' in attrs:
             return True
         return False
 
@@ -689,14 +764,18 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
             raise serializers.ValidationError(errors)
         return data
 
+
 ########################
 # SIMILARITY SERIALIZERS
 ########################
 
+
 ALLOWED_ANALYSIS_EXTENSIONS = ['json']
 
 class SimilarityFileSerializer(serializers.Serializer):
-    analysis_file = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Analysis file created with the latest freesound extractor. Must be in .json format.')
+    analysis_file = serializers.FileField(max_length=100, allow_empty_file=False,
+                                          help_text='Analysis file created with the latest freesound extractor. '
+                                                    'Must be in .json format.')
 
     def validate_analysis_file(self, value):
         try:

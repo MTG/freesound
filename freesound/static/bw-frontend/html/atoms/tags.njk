@@ -1,0 +1,11 @@
+{% macro tag(tagName, size=1, classname="") %}
+  <button class="btn-inverse border-grey-light text-center no-border-radius padding-{{size}} text-black no-text-wrap {{classname}}">
+    {{ tagName }}
+  </button>
+{% endmacro %}
+
+{% macro tags(allTags) %}
+  {% for tagName in allTags %}
+    {{ tag(tagName) }}
+  {% endfor %}
+{% endmacro %}

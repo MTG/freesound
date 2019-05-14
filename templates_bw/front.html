@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load cache %}
+{% load display_sound %}
+{% load util %}
+
+{% block title %}Freesound{% endblock title %}
+
+{% block content %}
+  {% include './molecules/navbar.html' %}
+
+  <div class="container">
+    <div class="bw-front__hero-container">
+      <header>
+        <h1>Find any sound, for free</h1>
+        <p class="bw-front__subheader">In a collaborative database crafted by our community</p>
+      </header>
+      <div class="bw-front__hero-container--search">
+        <div class="input-wrapper">
+          <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." />
+        </div>
+      </div>
+    </div>
+    <div class="row bw-front__content">
+      <main class="col-md-9">
+
+        {% if rss_cache %}
+          {{ rss_cache }}
+        {% endif %}
+
+        <section class="v-spacing-6">
+          <h3 class="v-spacing-4">Latest additions</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel v-padding-bottom-4">
+                {% for sounds in latest_additions|chunks:3 %}
+                <div>
+                  <div class="row">
+                  {% for sound in sounds %}
+                    <div class="col">
+                        {% display_sound sound.sound_id %}
+                    </div>
+                  {% endfor %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+	      </div>
+        </section>
+        {% if popular_searches %}
+        <hr />
+        <section class="v-spacing-6">
+          <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel">
+                {% for popular_searches_slice in popular_searches|chunks:4 %}
+                <div>
+                  <div class="row">
+                    {% for search_term in popular_searches_slice %}
+                    <div class="col">
+                      <a class="no-hover" href="{% url 'sounds-search' %}?q={{ search_term }}"><button class="btn-inverse border-grey-light text-center no-border-radius padding-4 text-black no-text-wrap w-100 h-100">{{ search_term }}</button></a>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </section>
+        {% endif %}
+        {% if trending_sound_ids %}
+        <hr />
+        <section class="v-spacing-6">
+          <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel v-padding-bottom-4">
+                {% for sound_ids in trending_sound_ids|chunks:3 %}
+                <div>
+                  <div class="row">
+                  {% for sound_id in sound_ids %}
+                    <div class="col">
+                        {% display_sound sound_id %}
+                    </div>
+                  {% endfor %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+	      </div>
+        </section>
+      {% endif %}
+      </main>
+      <aside class="col-md-3">
+        <section class="v-spacing-7">
+          <h4>Enjoying Freesound?</h4>
+          <p class="text-grey v-spacing-2">Please consider donating some money</p>
+          <div class="between v-spacing-5 wrap">
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button></a>
+            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button></a>
+          </div>
+          {% if top_donor %}
+              <div class="h-spacing-left-3">
+                <div>Top donor this week:</div>
+                <div class="middle">
+                  <div class="avatar h-spacing-2">
+                    <img src="{{ top_donor.profile.locations.avatar.M.url }}" />
+                  </div>
+                  <div>
+                    <a href="{% url 'account' top_donor.username %}">{{ top_donor.username }}</a>
+                    <br />
+                    <div class="text-light-grey">{{ top_donor.profile.num_sounds }} sound{{ top_donor.profile.num_sounds|pluralize }} &middot; {{ top_donor.profile.num_posts }} post{{ top_donor.profile.num_posts|pluralize }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+        </section>
+        <hr />
+        <section class="v-padding-7">
+          <h4 class="v-spacing-3">Hot forum threads</h4>
+            {% for forum in current_forum_threads %}
+                <article class="v-padding-2">
+                    <div class="v-spacing-1">
+                      <a class="bw-link--black" href="{{forum.last_post.get_absolute_url}}">{{ forum.title }}</a>
+                    </div>
+                    <div class="text-grey">
+                      in <a class="bw-link--grey" href="{{forum.forum.get_absolute_url}}">{{forum.forum}}</a>,
+                      by <a href="{% url 'account' forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a>
+                      <br>{{forum.last_post.created|timesince}} ago
+                    </div>
+                </article>
+            {% endfor %}
+          <div class="center v-spacing-top-4">
+              <a class="no-hover" href="{% url 'forums-forums' %}"><button class="btn-inverse">More posts here</button></a>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  {% include './molecules/footer.html' %}
+  {% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/front.8b360dcd.js' %}"></script>
+  {% endblock %}
+{% endblock %}

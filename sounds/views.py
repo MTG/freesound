@@ -409,7 +409,7 @@ def sound_edit(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
+    if not (request.user.is_superuser or sound.user == request.user):
         raise PermissionDenied
 
     def is_selected(prefix):
@@ -612,7 +612,7 @@ def sound_edit_sources(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
+    if not (request.user.is_superuser or sound.user == request.user):
         raise PermissionDenied
 
     current_sources = Sound.objects.ordered_ids([element['id'] for element in sound.sources.all().values('id')])

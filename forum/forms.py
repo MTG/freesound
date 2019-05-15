@@ -19,12 +19,16 @@
 #
 
 from django import forms
+
 from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
+
 class PostReplyForm(forms.Form):
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=20)))
-    subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}))
+    subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.",
+                                   required=False, initial=True)
+
     def __init__(self, request, quote, *args, **kwargs):
         self.request = request
         self.quote = quote
@@ -43,8 +47,9 @@ class PostReplyForm(forms.Form):
 
 
 class NewThreadForm(forms.Form):
-    title = forms.CharField(max_length=250)
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
+    title = forms.CharField(max_length=250,
+                            widget=forms.TextInput(attrs={'size': 100}))
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}))
     subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
 
 

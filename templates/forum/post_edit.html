@@ -12,15 +12,14 @@
 <div id="edit_post_form">
     <form method="post" action=".">{% csrf_token %}
         {% include 'forum/html_explanation.html' %}
-        <br>
-        {{ form.errors }}
-        <br>
-        {% for field in form %}
-            {% if field.label == 'Body' %}
-                {{ field }}
-            {% endif %}
-        {% endfor %}
-        <br><br>
+<div>
+    {{ form.non_field_errors }}
+    {{ form.body.errors }}
+<p>
+    <label for="{{ form.body.id_for_label }}">Body:</label><br>
+    {{ form.body }}
+</p>
+</div>
         <input type="submit" value="submit" />
     </form>
 </div>

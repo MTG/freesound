@@ -13,10 +13,22 @@
 
 {% include 'forum/html_explanation.html' %}
 
-
-<table>
-{{form.as_p}}
-</table>
+<div>
+    {{ form.non_field_errors }}
+    {{ form.title.errors }}
+<p>
+    <label for="{{ form.title.id_for_label }}">Thread title:</label><br>
+    {{ form.title }}
+</p>
+    {{ form.body.errors }}
+<p>
+    <label for="{{ form.body.id_for_label }}">Body:</label><br>
+    {{ form.body }}
+</p>
+<p>
+    {{ form.subscribe }} <label for="{{ form.subscribe.id_for_label }}">{{ form.subscribe.help_text }}</label><br>
+</p>
+</div>
 <input type="submit" value="create thread" />
 </form>
 

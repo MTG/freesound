@@ -71,7 +71,8 @@ class SoundDescriptionForm(forms.Form):
     is_explicit = forms.BooleanField(required=False)
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
                     help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                              "For example: <i>field-recording</i> is a popular tag.")
+                              "For example: <i>field-recording</i> is a popular tag."
+                              "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
     def __init__(self, *args, **kwargs):

@@ -96,7 +96,7 @@ class UserEditProfile(TestCase):
 
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
-        user = User.objects.create_user("testuser", password="testpass")
+        user = User.objects.create_user("testuser")
         f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'), None, None, None, None, None)
         handle_uploaded_image(user.profile, f)
 
@@ -106,8 +106,8 @@ class UserEditProfile(TestCase):
         self.assertEqual(os.path.exists(user.profile.locations("avatar.L.path")), True)
 
     def test_edit_user_profile(self):
-        User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user = User.objects.create_user("testuser")
+        self.client.force_login(user)
         self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
             'profile-username': 'testuser',
@@ -148,8 +148,8 @@ class UserEditProfile(TestCase):
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
-        User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user = User.objects.create_user("testuser")
+        self.client.force_login(user)
         response = self.client.post("/home/email-settings/", {
             'email_types': 1,
         })
@@ -160,8 +160,8 @@ class UserEditProfile(TestCase):
 
     @override_avatars_path_with_temp_directory
     def test_edit_user_avatar(self):
-        User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        user = User.objects.create_user("testuser")
+        self.client.force_login(user)
         self.client.post("/home/edit/", {
             'image-file': open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'),
             'image-remove': False,
@@ -185,12 +185,10 @@ class AboutFieldVisibilityTest(TestCase):
     """Verifies visibility of about field"""
 
     def setUp(self):
-        self.spammer = User.objects.create_user(username='spammer', email='spammer@example.com', password='testpass')
-        self.downloader = User.objects.create_user(username='downloader', email='downloader@example.com',
-                                                   password='testpass')
-        self.uploader = User.objects.create_user(username='uploader', email='uploader@example.com', password='testpass')
-        self.admin = User.objects.create_user(username='admin', email='admin@example.com', password='testpass',
-                                              is_superuser=True)
+        self.spammer = User.objects.create_user(username='spammer', email='spammer@example.com')
+        self.downloader = User.objects.create_user(username='downloader', email='downloader@example.com')
+        self.uploader = User.objects.create_user(username='uploader', email='uploader@example.com')
+        self.admin = User.objects.create_user(username='admin', email='admin@example.com', is_superuser=True)
 
         self.downloader.profile.num_sound_downloads = 1
         self.uploader.profile.num_sounds = 1
@@ -217,12 +215,12 @@ class AboutFieldVisibilityTest(TestCase):
         self._check_visible()
 
     def test_spammer(self):
-        self.client.login(username='spammer', password='testpass')
+        self.client.force_login(self.spammer)
         self._check_visibility('spammer', True)
         self._check_visible()
 
     def test_admin(self):
-        self.client.login(username='admin', password='testpass')
+        self.client.force_login(self.admin)
         self._check_visibility('spammer', True)
         self._check_visible()
 
@@ -293,8 +291,8 @@ class EmailBounceTest(TestCase):
             pack.refresh_from_db()
 
     def test_request_email_change(self):
-        user = User.objects.create_user('user', email='user@freesound.org', password='testpass')
-        self.client.login(username='user', password='testpass')
+        user = User.objects.create_user('user', email='user@freesound.org')
+        self.client.force_login(user)
         resp = self.client.get(reverse('front-page'))
         self.assertEquals(resp.status_code, 200)
 
@@ -352,7 +350,7 @@ class ProfileEmailIsValid(TestCase):
 
 class ProfilePostInForumTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+        self.user = User.objects.create_user("testuser", email='email@freesound.org')
         self.forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
         self.thread = Thread.objects.create(forum=self.forum, title="testThread", author=self.user)
 

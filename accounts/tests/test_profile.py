@@ -22,6 +22,7 @@ import os
 
 import freezegun
 import mock
+from dateutil.parser import parse as parse_date
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -365,7 +366,7 @@ class ProfilePostInForumTest(TestCase):
 
     def test_can_post_in_forum_time(self):
         """If you have no sounds, you can't post within 5 minutes of the last one"""
-        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        created = parse_date("2019-02-03 10:50:00")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
@@ -380,7 +381,7 @@ class ProfilePostInForumTest(TestCase):
 
     def test_can_post_in_forum_has_sounds(self):
         """If you have sounds you can post even within 5 minutes of the last one"""
-        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        created = parse_date("2019-02-03 10:50:00")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
@@ -395,20 +396,21 @@ class ProfilePostInForumTest(TestCase):
         """If you have no sounds, you can't post more than x posts per day.
         this is 5 + d^2 posts, where d is the number of days between your first post and now"""
         # our first post, 2 days ago
-        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        created = parse_date("2019-02-03 10:50:00")
+
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
 
-        # a bunch of posts now
-        today = datetime.datetime(2019, 2, 5, 1, 50, 00)
+        # 2 days later, the maximum number of posts we can make today will be 5 + 4 = 9
+        today = parse_date("2019-02-05 01:50:00")
         for i in range(9):
             post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
             today = today + datetime.timedelta(minutes=i+10)
             post.created = today
             post.save()
 
-        # 2 days later, maximum for today will be 5 + 4 = 9
+        # After making 9 posts, we can't make any more
         with freezegun.freeze_time("2019-02-05 14:52:30"):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertFalse(can_post)
@@ -417,7 +419,7 @@ class ProfilePostInForumTest(TestCase):
     def test_can_post_in_forum_admin(self):
         """If you're a forum admin, you can post even if you have no sounds, you're within
         5 minutes of the last one, and you've gone over the limit of posts for the day"""
-        created = datetime.datetime(2019, 2, 3, 10, 50, 00)
+        created = parse_date("2019-02-03 10:50:00")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()

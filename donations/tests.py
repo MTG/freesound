@@ -94,17 +94,20 @@ class DonationTest(TestCase):
                 username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.login(username='fsuser', password='top')
         # custom ={u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}
-        params = {
-                'stripeToken': '8B703020T00352816',
-                'stripeEmail': 'donor@freesound.org',
-                'amount': '1.5',
-                'show_amount': True,
-                'donation_type': '2',
-                'name_option': 'test'
+        custom = "eyJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MSwgIm5hbWUiOiAidGVzdCJ9"
+        params = {"data": {"object" :{"id": "txn123",
+                  "customer_email": "donor@freesound.org",
+                  "display_items": [{
+                      "amount": 15,
+                      "currency": "eur",
+                  }],
+                  "success_url": "https://example.com/success?token="+custom
+            }},
+            "type": "checkout.session.completed"
         }
-        with mock.patch('stripe.Charge.create') as mock_create:
-            mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
-            resp = self.client.post(reverse('donation-complete-stripe'), params)
+        with mock.patch('stripe.Webhook.construct_event') as mock_create:
+            mock_create.return_value = params
+            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
@@ -121,17 +124,20 @@ class DonationTest(TestCase):
                 username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.login(username='fsuser', password='top')
         # custom = {u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}
-        params = {
-                'stripeToken': '8B703020T00352816',
-                'stripeEmail': 'donor@freesound.org',
-                'amount': '1.5',
-                'show_amount': True,
-                'donation_type': '0'
-            }
-
-        with mock.patch('stripe.Charge.create') as mock_create:
-            mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
-            resp = self.client.post(reverse('donation-complete-stripe'), params)
+        custom = "eyJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MX0="
+        params = {"data": {"object" :{"id": "txn123",
+                  "customer_email": "donor@freesound.org",
+                  "display_items": [{
+                      "amount": 15,
+                      "currency": "eur",
+                  }],
+                  "success_url": "https://example.com/success?token="+custom
+            }},
+            "type": "checkout.session.completed"
+        }
+        with mock.patch('stripe.Webhook.construct_event') as mock_create:
+            mock_create.return_value = params
+            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
@@ -145,17 +151,20 @@ class DonationTest(TestCase):
         donations.models.DonationCampaign.objects.create(\
                 goal=200, date_start=datetime.datetime.now(), id=1)
         # {u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}
-        params = {
-                'stripeToken': '8B703020T00352816',
-                'stripeEmail': 'donor@freesound.org',
-                'amount': '1.5',
-                'show_amount': True,
-                'donation_type': '1'
-            }
-
-        with mock.patch('stripe.Charge.create') as mock_create:
-            mock_create.return_value = {'status': 'succeeded', 'id': 'txn123'}
-            resp = self.client.post(reverse('donation-complete-stripe'), params)
+        custom = "eyJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MSwgIm5hbWUiOiAiQW5vbnltb3VzIn0="
+        params = {"data": {"object" :{"id": "txn123",
+                  "customer_email": "donor@freesound.org",
+                  "display_items": [{
+                      "amount": 15,
+                      "currency": "eur",
+                  }],
+                  "success_url": "https://example.com/success?token="+custom
+            }},
+            "type": "checkout.session.completed"
+        }
+        with mock.patch('stripe.Webhook.construct_event') as mock_create:
+            mock_create.return_value = params
+            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)

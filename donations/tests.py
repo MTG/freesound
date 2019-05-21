@@ -98,7 +98,7 @@ class DonationTest(TestCase):
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
-                      "amount": 15,
+                      "amount": 1500,
                       "currency": "eur",
                   }],
                   "success_url": "https://example.com/success?token="+custom
@@ -116,6 +116,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, True)
             self.assertEqual(donations_query[0].source, 's')
+            self.assertEqual(donations_query[0].amount, 15.0)
 
     def test_non_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(\
@@ -128,7 +129,7 @@ class DonationTest(TestCase):
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
-                      "amount": 15,
+                      "amount": 1500,
                       "currency": "eur",
                   }],
                   "success_url": "https://example.com/success?token="+custom
@@ -146,6 +147,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, False)
             self.assertEqual(donations_query[0].source, 's')
+            self.assertEqual(donations_query[0].amount, 15.0)
 
     def test_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(\
@@ -155,7 +157,7 @@ class DonationTest(TestCase):
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
-                      "amount": 15,
+                      "amount": 1500,
                       "currency": "eur",
                   }],
                   "success_url": "https://example.com/success?token="+custom
@@ -170,6 +172,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
             self.assertEqual(donations_query[0].source, 's')
+            self.assertEqual(donations_query[0].amount, 15.0)
 
     def test_donation_form(self):
         donations.models.DonationCampaign.objects.create(\

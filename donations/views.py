@@ -103,7 +103,7 @@ def donation_complete_stripe(request):
             session = event['data']['object']
 
             # Fulfill the purchase...
-            amount = session['display_items'][0]['amount']
+            amount = int(session['display_items'][0]['amount'])/100
             encoded_data = session['success_url'].split('?')[1].replace("token=", "")
             customer_email = session['customer_email']
             if customer_email == None:

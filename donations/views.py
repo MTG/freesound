@@ -83,7 +83,8 @@ def donation_complete_stripe(request):
     if "HTTP_STRIPE_SIGNATURE" in request.META:
         payload = request.body
         sig_header = request.META['HTTP_STRIPE_SIGNATURE']
-        endpoint_secret = settings.STRIPE_PRIVATE_KEY
+        endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+        stripe.api_key = settings.STRIPE_PRIVATE_KEY
         event = None
 
         try:
@@ -104,7 +105,11 @@ def donation_complete_stripe(request):
             # Fulfill the purchase...
             amount = session['display_items'][0]['amount']
             encoded_data = session['success_url'].split('?')[1].replace("token=", "")
-            _save_donation(encoded_data, session['customer_email'], amount, 'EUR', session['id'], 's')
+            customer_email = session['customer_email']
+            if customer_email == None:
+                customer = stripe.Customer.retrieve(session['customer'])
+                customer_email = customer['email']
+            _save_donation(encoded_data, customer_email, amount, 'EUR', session['id'], 's')
 
         return HttpResponse(status=200)
     return HttpResponse(status=400)

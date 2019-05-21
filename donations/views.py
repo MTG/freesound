@@ -77,43 +77,46 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
 @csrf_exempt
 def donation_complete_stripe(request):
     """
-    This view receives a stripe token of a validated credit card and requests for the actual donation.
-    If the donation is successfully done it stores it and send the email to the user.
+    This view is called from Stripe when a new donation is completed, here we create and
+    store the donation in the db.
     """
-    donation_received = False
-    donation_error = False
-    if request.method == 'POST':
-        form = DonateForm(request.POST, user=request.user)
+    if "HTTP_STRIPE_SIGNATURE" in request.META:
+        payload = request.body
+        sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+        endpoint_secret = settings.STRIPE_PRIVATE_KEY
+        event = None
 
-        token = request.POST.get('stripeToken', False)
-        email = request.POST.get('stripeEmail', False)
+        try:
+            event = stripe.Webhook.construct_event(
+              payload, sig_header, endpoint_secret
+            )
+        except ValueError as e:
+            # Invalid payload
+            return HttpResponse(status=400)
+        except stripe.error.SignatureVerificationError as e:
+            # Invalid signature
+            return HttpResponse(status=400)
 
-        if form.is_valid() and token and email:
-            amount = form.cleaned_data['amount']
-            stripe.api_key = settings.STRIPE_PRIVATE_KEY
-            try:
-                # Charge the user's card:
-                charge = stripe.Charge.create(
-                  amount=int(amount*100),
-                  currency="eur",
-                  description="Freesound.org Donation",
-                  source=token,
-                )
-                if charge['status'] == 'succeeded':
-                    donation_received = True
-                    messages.add_message(request, messages.INFO, 'Thanks! your donation has been processed.')
-                    _save_donation(form.encoded_data, email, amount, 'eur', charge['id'], 's')
-            except stripe.error.CardError as e:
-                # Since it's a decline, stripe.error.CardError will be caught
-                body = e.json_body
-                err  = body.get('error', {})
-                donation_error = err.get('message', False)
-            except stripe.error.StripeError as e:
-                logger.error("Can't charge donation whith stripe: %s", e)
-    if donation_error:
-        messages.add_message(request, messages.WARNING, 'Error processing the donation. %s' % err.get('message'))
-    elif not donation_received:
-        messages.add_message(request, messages.WARNING, 'Your donation could not be processed.')
+        # Handle the checkout.session.completed event
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+
+            # Fulfill the purchase...
+            amount = session['display_items'][0]['amount']
+            encoded_data = session['success_url'].split('?')[1].replace("token=", "")
+            _save_donation(encoded_data, session['customer_email'], amount, 'EUR', session['id'], 's')
+
+        return HttpResponse(status=200)
+    return HttpResponse(status=400)
+
+
+@csrf_exempt
+def donation_success_stripe(request):
+    """
+    This user reaches this view from sripe when the credit card was valid, here we only
+    add a message to the user and redirect to donations page.
+    """
+    messages.add_message(request, messages.INFO, 'Thanks! we will process you donation and send you an email soon.')
     return redirect('donate')
 
 
@@ -147,6 +150,36 @@ def donation_complete_paypal(request):
                 'p')
     return HttpResponse("OK")
 
+
+def donation_session_stripe(request):
+    ''' Creates a Stripe session object and gets a session id which is used in
+    the frontend to during the redirect to stripe website.
+    '''
+    stripe.api_key = settings.STRIPE_PRIVATE_KEY
+    if request.method == 'POST':
+        form = DonateForm(request.POST, user=request.user)
+        if form.is_valid():
+            email_to = request.user.email if request.user.is_authenticated() else None
+            amount = form.cleaned_data['amount']
+            domain = "http://%s" % Site.objects.get_current().domain
+            return_url_success = urlparse.urljoin(domain, reverse('donation-success-stripe'))
+            return_url_success += '?token={}'.format(form.encoded_data)
+            return_url_cancel = urlparse.urljoin(domain, reverse('donate'))
+            session = stripe.checkout.Session.create(
+                customer_email=email_to,
+                payment_method_types=['card'],
+                line_items=[{
+                    'name': 'Freesound donation',
+                    'description': 'Donation for freesound.org',
+                    'images': ['https://freesound.org/media/images/logo.png'],
+                    'amount': int(amount*100),
+                    'currency': 'eur',
+                    'quantity': 1,
+                }],
+              success_url=return_url_success,
+              cancel_url=return_url_cancel,
+            )
+            return JsonResponse({"session_id":session.id})
 
 def donate(request):
     ''' Donate page: display form for donations where if user is logged in

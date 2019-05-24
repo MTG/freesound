@@ -384,7 +384,7 @@ class SolrException(Exception):
 
 
 class Solr(object):
-    def __init__(self, url="http://localhost:8983/solr", auto_commit=True, verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder()):
+    def __init__(self, url="http://localhost:8983/solr", verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder()):
         url_split = urlparse.urlparse(url)
 
         self.host = url_split.hostname
@@ -394,7 +394,6 @@ class Solr(object):
         self.decoder = decoder
         self.encoder = encoder
         self.verbose = verbose
-        self.auto_commit = auto_commit
 
         self.persistent = persistent
 
@@ -440,19 +439,19 @@ class Solr(object):
         try:
             self._request(message=encoded_docs)
         except error as e:
-            raise SolrException, e
-        #if self.auto_commit:
-        #    self.commit()
+            raise SolrException(e)
 
     def delete_by_id(self, id):
-        self._request(message=u'<delete><id>%s</id></delete>' % unicode(id))
-        #if self.auto_commit:
-        #    self.commit()
+        try:
+            self._request(message=u'<delete><id>%s</id></delete>' % unicode(id))
+        except error as e:
+            raise SolrException(e)
 
     def delete_by_query(self, query):
-        self._request(message=u'<delete><query>%s</query></delete>' % unicode(query))
-        #if self.auto_commit:
-        #    self.commit()
+        try:
+            self._request(message=u'<delete><query>%s</query></delete>' % unicode(query))
+        except error as e:
+            raise SolrException(e)
 
     def commit(self, wait_flush=True, wait_searcher=True):
         message = ET.Element('commit')

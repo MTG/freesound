@@ -35,7 +35,7 @@ from forum.models import Forum, Thread, Post, Subscription
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_post_to_solr, delete_post_from_solr
-from utils.text import text_may_be_spam
+from utils.text import text_may_be_spam, remove_control_chars
 
 
 def deactivate_spammer(user_id):
@@ -174,13 +174,13 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     
     latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum')\
                        .order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
-    user_can_post_in_forum = request.user.profile.can_post_in_forum()
+    user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
 
     if request.method == 'POST':
         form = PostReplyForm(request, quote, request.POST)
 
-        if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
+        if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 may_be_spam = text_may_be_spam(form.cleaned_data.get("body", '')) or \
                               text_may_be_spam(form.cleaned_data.get("title", ''))
@@ -191,7 +191,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
-                    add_post_to_solr(post)
+                    add_post_to_solr(post.id)
                     set_to_moderation = False
 
                 if form.cleaned_data["subscribe"]:
@@ -228,8 +228,8 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         else:
             form = PostReplyForm(request, quote)
 
-    if not user_can_post_in_forum[0]:
-        messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
+    if not user_can_post_in_forum:
+        messages.add_message(request, messages.INFO, user_can_post_message)
 
     if user_is_blocked_for_spam_reports:
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
@@ -246,29 +246,34 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 @transaction.atomic()
 def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
-    user_can_post_in_forum = request.user.profile.can_post_in_forum()
+    user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
 
     if request.method == 'POST':
         form = NewThreadForm(request.POST)
-        if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
+        if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
-                thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                may_be_spam = text_may_be_spam(form.cleaned_data["body"]) or \
-                              text_may_be_spam(form.cleaned_data["title"])
+                post_title = form.cleaned_data["title"]
+                post_body = form.cleaned_data["body"]
+                thread = Thread.objects.create(forum=forum, author=request.user, title=post_title)
+                may_be_spam = text_may_be_spam(post_body) or \
+                              text_may_be_spam(post_title)
 
+                post_body = remove_control_chars(post_body)
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
-                    post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread,
+                    post = Post.objects.create(author=request.user, body=post_body, thread=thread,
                                                moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
                     set_to_moderation = True
                 else:
-                    post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
-                    add_post_to_solr(post)
+                    post = Post.objects.create(author=request.user, body=post_body, thread=thread)
+                    add_post_to_solr(post.id)
                     set_to_moderation = False
 
                 # Add first post to thread (first post will always be the same)
                 # We need to reload thread object from DB, not so overwrite the object we created before when saving
+                # TODO: Ideally we would have a specific function to create a Post and add it to a thread immediately
+                #       so that we can use this functionality in tests too
                 updated_thread = Thread.objects.get(id=thread.id)
                 updated_thread.first_post = post
                 updated_thread.save()
@@ -285,8 +290,8 @@ def new_thread(request, forum_name_slug):
     else:
         form = NewThreadForm()
 
-    if not user_can_post_in_forum[0]:
-        messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
+    if not user_can_post_in_forum:
+        messages.add_message(request, messages.INFO, user_can_post_message)
 
     if user_is_blocked_for_spam_reports:
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
@@ -378,10 +383,9 @@ def post_edit(request, post_id):
         if request.method == 'POST':
             form = PostReplyForm(request, '', request.POST)
             if form.is_valid():
-                delete_post_from_solr(post)
-                post.body = form.cleaned_data['body']
+                post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
-                add_post_to_solr(post)  # Update post in solr
+                add_post_to_solr(post.id)  # Update post in solr
                 return HttpResponseRedirect(
                     reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:

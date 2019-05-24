@@ -12,7 +12,17 @@
 
 <form method="post" action="." class="disable-on-submit">{% csrf_token %}
 {% include 'forum/html_explanation.html' %}
-{{form.as_p}}
+<div>
+    {{ form.non_field_errors }}
+    {{ form.body.errors }}
+<p>
+    <label for="{{ form.body.id_for_label }}">Message:</label><br>
+    {{ form.body }}
+</p>
+<p>
+    {{ form.subscribe }} <label for="{{ form.subscribe.id_for_label }}">{{ form.subscribe.help_text }}</label><br>
+</p>
+</div>
 <input type="submit" value="reply" />
 </form>
 <h2>Latest posts in thread:</h2>

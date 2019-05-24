@@ -35,7 +35,6 @@ from sounds.models import Sound, Pack, License, Download
 from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.forms import filename_has_valid_extension
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, create_sound, \
     NoAudioException, AlreadyExistsException
 from utils.tags import clean_and_split_tags
@@ -48,20 +47,6 @@ from utils.test_helpers import create_test_files, create_user_and_sounds, overri
 class UtilsTest(TestCase):
 
     fixtures = ['initial_data']
-
-    def test_filename_has_valid_extension(self):
-        cases = [
-            ('filaneme.wav', True),
-            ('filaneme.aiff', True),
-            ('filaneme.aif', True),
-            ('filaneme.mp3', True),
-            ('filaneme.ogg', True),
-            ('filaneme.flac', True),
-            ('filaneme.xyz', False),
-            ('wav', False),
-        ]
-        for filename, expected_result in cases:
-            self.assertEqual(filename_has_valid_extension(filename), expected_result)
 
     def test_download_sounds(self):
         user = User.objects.create_user("testuser", password="testpass")

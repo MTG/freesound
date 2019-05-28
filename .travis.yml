@@ -20,7 +20,7 @@ install:
 - pip install django-nose numpy==1.9.0
 - pip install -r requirements.txt
 script:
-- python manage.py test --noinput --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum geotags ratings search sounds support tags tickets utils wiki general monitor
+- python manage.py test --noinput --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum geotags ratings search sounds support tags tickets utils wiki general monitor messages
 notifications:
   slack:
     secure: aVyN2TqUMPbHJ4gmp2U/NEZC2rom5KZvvd3YCvcxlNt9ec/r4RlnHM2R+U0SV1aMhz3qmtlol20TEMPVgp9jWN/PTp6/6ryr6v30CEAczEoWwYvvMEX4+juqAn5lQrOujmsTwyyOB9mxHi19rYJd9g9gdekerp242lZ8yBdt3c4=

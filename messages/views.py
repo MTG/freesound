@@ -31,7 +31,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.urls import reverse
 
-from messages.forms import MessageReplyForm, MessageReplyFormNoCaptcha
+from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_template_cache
 from utils.mail import send_mail_template
@@ -114,13 +114,14 @@ def message(request, message_id):
 @login_required
 @transaction.atomic()
 def new_message(request, username=None, message_id=None):
+
+    if request.user.profile.num_sounds > 0 or request.user.profile.num_posts > 5:
+        form_class = MessageReplyForm
+    else:
+        form_class = MessageReplyFormWithCaptcha
     
     if request.method == 'POST':
-
-        if request.user.profile.num_sounds:
-            form = MessageReplyFormNoCaptcha(request.POST)
-        else:
-            form = MessageReplyForm(request.POST)
+        form = form_class(request.POST)
 
         if request.user.profile.is_blocked_for_spam_reports():
             messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account "
@@ -152,11 +153,7 @@ def new_message(request, username=None, message_id=None):
 
                 return HttpResponseRedirect(reverse("messages"))
     else:
-        if request.user.profile.num_sounds:
-            form = MessageReplyFormNoCaptcha()
-        else:
-            form = MessageReplyForm()
-
+        form = form_class(request.POST)
         if message_id:
             try:
                 message = Message.objects.get(id=message_id)
@@ -173,17 +170,11 @@ def new_message(request, username=None, message_id=None):
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                if request.user.profile.num_sounds:
-                    form = MessageReplyFormNoCaptcha(initial=dict(to=to, subject=subject, body=body))
-                else:
-                    form = MessageReplyForm(initial=dict(to=to, subject=subject, body=body))
+                form = form_class(initial=dict(to=to, subject=subject, body=body))
             except Message.DoesNotExist:
                 pass
         elif username:
-            if request.user.profile.num_sounds:
-                form = MessageReplyFormNoCaptcha(initial=dict(to=username))
-            else:
-                form = MessageReplyForm(initial=dict(to=username))
+            form = form_class(initial=dict(to=username))
 
     tvars = {'form': form}
     return render(request, 'messages/new.html', tvars)

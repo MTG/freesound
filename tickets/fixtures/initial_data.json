@@ -87,13 +87,10 @@
     ["change_queue", "tickets", "queue"],
     ["delete_queue", "tickets", "queue"],
     ["add_ticket", "tickets", "ticket"],
-    ["can_change_queue", "tickets", "ticket"],
-    ["can_change_status", "tickets", "ticket"],
     ["can_moderate", "tickets", "ticket"],
     ["change_ticket", "tickets", "ticket"],
     ["delete_ticket", "tickets", "ticket"],
     ["add_ticketcomment", "tickets", "ticketcomment"],
-    ["can_add_moderator_only_message", "tickets", "ticketcomment"],
     ["change_ticketcomment", "tickets", "ticketcomment"],
     ["delete_ticketcomment", "tickets", "ticketcomment"],
     ["add_userannotation", "tickets", "userannotation"],
@@ -105,5 +102,5 @@
     ["add_page", "wiki", "page"],
     ["change_page", "wiki", "page"],
     ["delete_page", "wiki", "page"]]
-    }}, {"pk": 5, "model": "auth.group", "fields": {"name": "support", "permissions": [["can_change_queue", "tickets", "ticket"], ["can_change_status", "tickets", "ticket"], ["can_moderate", "tickets", "ticket"], ["can_add_moderator_only_message", "tickets", "ticketcomment"], ["add_userannotation", "tickets", "userannotation"]]}}, {"pk": 3, "model": "auth.group", "fields": {"name": "moderators", "permissions": [["change_comment", "comments", "comment"], ["delete_comment", "comments", "comment"], ["change_pack", "sounds", "pack"], ["delete_pack", "sounds", "pack"], ["change_sound", "sounds", "sound"], ["delete_sound", "sounds", "sound"], ["can_change_queue", "tickets", "ticket"], ["can_change_status", "tickets", "ticket"], ["can_moderate", "tickets", "ticket"], ["can_add_moderator_only_message", "tickets", "ticketcomment"], ["add_userannotation", "tickets", "userannotation"]]}},
+    }}, {"pk": 5, "model": "auth.group", "fields": {"name": "support", "permissions": [["can_moderate", "tickets", "ticket"], ["add_userannotation", "tickets", "userannotation"]]}}, {"pk": 3, "model": "auth.group", "fields": {"name": "moderators", "permissions": [["change_comment", "comments", "comment"], ["delete_comment", "comments", "comment"], ["change_pack", "sounds", "pack"], ["delete_pack", "sounds", "pack"], ["change_sound", "sounds", "sound"], ["delete_sound", "sounds", "sound"], ["can_moderate", "tickets", "ticket"], ["add_userannotation", "tickets", "userannotation"]]}},
  {"pk": 1, "model": "tickets.queue", "fields": {"notify_by_email": false, "name": "sound moderation", "groups": [3]}}, {"pk": 4, "model": "tickets.queue", "fields": {"notify_by_email": true, "name": "management", "groups": [2]}}, {"pk": 3, "model": "tickets.queue", "fields": {"notify_by_email": true, "name": "bug reports", "groups": [5]}}, {"pk": 2, "model": "tickets.queue", "fields": {"notify_by_email": false, "name": "support requests", "groups": [5]}}]

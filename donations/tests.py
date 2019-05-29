@@ -98,7 +98,7 @@ class DonationTest(TestCase):
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
-                      "amount": 1500,
+                      "amount": 1510,
                       "currency": "eur",
                   }],
                   "success_url": "https://example.com/success?token="+custom
@@ -116,7 +116,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, True)
             self.assertEqual(donations_query[0].source, 's')
-            self.assertEqual(donations_query[0].amount, 15.0)
+            self.assertEqual(donations_query[0].amount*100, 1510)
 
     def test_non_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(\

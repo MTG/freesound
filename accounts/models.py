@@ -297,8 +297,20 @@ class Profile(SocialModel):
         return True, ""
 
     def can_do_bulk_upload(self):
-        # Bulk uploads are allowed if the user has uploaded more than N sounds or if the user is whitelisted
-        return self.num_sounds >= settings.BULK_UPLOAD_MIN_SOUNDS or self.is_whitelisted
+        """
+        Returns True if the corresponding User is allowed to use the bulk upload feature. This will happen if one of
+        the following conditions is met:
+        * User has uploaded at least settings.BULK_UPLOAD_MIN_SOUNDS sounds
+        * User is whitelisted
+        * User has been granted special permissions for bulk upload
+
+        Returns:
+            bool: True if user ca do bulk upload, False otherwise.
+        """
+
+        return self.num_sounds >= settings.BULK_UPLOAD_MIN_SOUNDS or \
+               self.is_whitelisted or \
+               self.user.has_perm('sounds.can_describe_in_bulk')
 
     def is_blocked_for_spam_reports(self):
         reports_count = UserFlag.objects.filter(user__username=self.user.username).values('reporting_user').distinct().count()

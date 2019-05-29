@@ -22,7 +22,7 @@ import os
 
 import mock
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.utils import override_settings, skipIf
@@ -159,6 +159,32 @@ class UserUploadAndDescribeSounds(TestCase):
 
 class BulkDescribe(TestCase):
     fixtures = ['initial_data']
+
+    @override_settings(BULK_UPLOAD_MIN_SOUNDS=40)
+    def test_can_do_bulk_describe(self):
+        user = User.objects.create_user("testuser")
+
+        # Newly created user can't do bulk upload
+        self.assertFalse(user.profile.can_do_bulk_upload())
+
+        # When user has uploaded BULK_UPLOAD_MIN_SOUNDS, now she can bulk upload
+        user.profile.num_sounds = settings.BULK_UPLOAD_MIN_SOUNDS
+        self.assertTrue(user.profile.can_do_bulk_upload())
+
+        # If user is whitelisted, she can bulk upload
+        user.profile.refresh_from_db()
+        self.assertFalse(user.profile.can_do_bulk_upload())
+        user.profile.is_whitelisted = True
+        self.assertTrue(user.profile.can_do_bulk_upload())
+
+        # If user is assigned the bulk_uploaders group then bulk upload is allowed
+        user.profile.refresh_from_db()
+        self.assertFalse(user.profile.can_do_bulk_upload())
+        group = Group.objects.get(name="bulk_uploaders")
+        user.groups.add(group)
+        # Reload object from db to refresh permission's caches (Note that refresh_from_db() does clear permission cache)
+        user = User.objects.get(id=user.id)
+        self.assertTrue(user.profile.can_do_bulk_upload())
 
     @override_csv_path_with_temp_directory
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)

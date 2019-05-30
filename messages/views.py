@@ -171,11 +171,11 @@ def new_message(request, username=None, message_id=None):
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                form = form_class(initial=dict(to=to, subject=subject, body=body))
+                form = form_class(initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
                 pass
         elif username:
-            form = form_class(initial=dict(to=username))
+            form = form_class(initial={"to": username})
 
     tvars = {'form': form}
     return render(request, 'messages/new.html', tvars)

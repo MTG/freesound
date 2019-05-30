@@ -427,3 +427,38 @@ class ProfilePostInForumTest(TestCase):
         with freezegun.freeze_time("2019-02-04 10:00:30"):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
+
+
+class ProfileIsTrustWorthy(TestCase):
+    """
+    Test the is_truthworthy method of Profile model
+    """
+
+    fixtures = ['initial_data']
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='user', email='user@example.com')
+
+    def test_user_trustworthy_when_has_uploaded_sounds(self):
+        self.assertFalse(self.user.profile.is_trustworthy())
+        self.user.profile.num_sounds = 1
+        self.user.profile.save()
+        self.assertTrue(self.user.profile.is_trustworthy())
+
+    def test_user_trustworthy_when_has_posts(self):
+        self.assertFalse(self.user.profile.is_trustworthy())
+        self.user.profile.num_posts = 6
+        self.user.profile.save()
+        self.assertTrue(self.user.profile.is_trustworthy())
+
+    def test_user_trustworthy_when_is_staff(self):
+        self.assertFalse(self.user.profile.is_trustworthy())
+        self.user.is_staff = True
+        self.user.profile.save()
+        self.assertTrue(self.user.profile.is_trustworthy())
+
+    def test_user_trustworthy_when_is_superuser(self):
+        self.assertFalse(self.user.profile.is_trustworthy())
+        self.user.is_superuser = True
+        self.user.profile.save()
+        self.assertTrue(self.user.profile.is_trustworthy())

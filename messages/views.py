@@ -22,6 +22,7 @@ import json
 from textwrap import wrap
 
 from BeautifulSoup import BeautifulSoup
+from collections import Counter
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -115,7 +116,7 @@ def message(request, message_id):
 @transaction.atomic()
 def new_message(request, username=None, message_id=None):
 
-    if request.user.profile.num_sounds > 0 or request.user.profile.num_posts > 5:
+    if request.user.profile.is_trustworthy():
         form_class = MessageReplyForm
     else:
         form_class = MessageReplyFormWithCaptcha
@@ -170,25 +171,28 @@ def new_message(request, username=None, message_id=None):
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                form = form_class(initial=dict(to=to, subject=subject, body=body))
+                form = form_class(initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
                 pass
         elif username:
-            form = form_class(initial=dict(to=username))
+            form = form_class(initial={"to": username})
 
     tvars = {'form': form}
     return render(request, 'messages/new.html', tvars)
 
 
+def get_previously_contacted_usernames(user):
+    # Get a list of previously contacted usernames (in no particular order)
+    usernames = list(Message.objects.select_related('user_from', 'user_to')
+                     .filter(Q(user_from=user) | Q(user_to=user))
+                     .values_list('user_to__username', 'user_from__username'))
+    return list(set([item for sublist in usernames for item in sublist]))
+
+
+@login_required
 def username_lookup(request):
     results = []
     if request.method == "GET":
-        # Only autocompleting for previously contacted users
-        previously_contacted_user = list(
-            Message.objects.filter(user_from=request.user.id).values_list('user_to__username', flat='True').distinct())
-        previously_contacted_user2 = list(
-            Message.objects.filter(user_to=request.user.id).values_list('user_from__username', flat='True').distinct())
-
-        results = list(set(previously_contacted_user + previously_contacted_user2))
+        results = get_previously_contacted_usernames(request.user)
     json_resp = json.dumps(results)
     return HttpResponse(json_resp, content_type='application/json')

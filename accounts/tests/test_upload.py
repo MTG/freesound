@@ -182,7 +182,7 @@ class BulkDescribe(TestCase):
         self.assertFalse(user.profile.can_do_bulk_upload())
         group = Group.objects.get(name="bulk_uploaders")
         user.groups.add(group)
-        # Reload object from db to refresh permission's caches (Note that refresh_from_db() does clear permission cache)
+        # Reload object from db to refresh permission's caches (Note that refresh_from_db() doesn't clear perms cache)
         user = User.objects.get(id=user.id)
         self.assertTrue(user.profile.can_do_bulk_upload())
 

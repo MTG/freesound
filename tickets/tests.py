@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from models import Ticket, Queue
-from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
+from tickets import QUEUE_SOUND_MODERATION
 from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED
 from sounds.models import Sound
 import mock
@@ -40,7 +40,7 @@ class NewTicketTests(TestCase):
         ticket = Ticket()
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
-        ticket.queue = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
+        ticket.queue = Queue.objects.get(name=QUEUE_SOUND_MODERATION)
         ticket.save()
         self.assertEqual(ticket.assignee, None)
 

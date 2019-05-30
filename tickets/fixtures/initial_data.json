@@ -1,106 +1,62 @@
-[{"pk": 2, "model": "auth.group", "fields": {"name": "core", "permissions":
-    [["add_profile", "accounts", "profile"],
-    ["change_profile", "accounts", "profile"],
-    ["delete_profile", "accounts", "profile"],
-    ["add_logentry", "admin", "logentry"],
-    ["change_logentry", "admin", "logentry"],
-    ["delete_logentry", "admin", "logentry"],
-    ["add_group", "auth", "group"],
-    ["change_group", "auth", "group"],
-    ["delete_group", "auth", "group"],
-    ["add_permission", "auth", "permission"],
-    ["change_permission", "auth", "permission"],
-    ["delete_permission", "auth", "permission"],
-    ["add_user", "auth", "user"],
-    ["change_user", "auth", "user"],
-    ["delete_user", "auth", "user"],
-    ["add_comment", "comments", "comment"],
-    ["change_comment", "comments", "comment"],
-    ["delete_comment", "comments", "comment"],
-    ["add_contenttype", "contenttypes", "contenttype"],
-    ["change_contenttype", "contenttypes", "contenttype"],
-    ["delete_contenttype", "contenttypes", "contenttype"],
-    ["add_favorite", "favorites", "favorite"],
-    ["change_favorite", "favorites", "favorite"],
-    ["delete_favorite", "favorites", "favorite"],
-    ["add_flatpage", "flatpages", "flatpage"],
-    ["change_flatpage", "flatpages", "flatpage"],
-    ["delete_flatpage", "flatpages", "flatpage"],
-    ["add_forum", "forum", "forum"],
-    ["change_forum", "forum", "forum"],
-    ["delete_forum", "forum", "forum"],
-    ["add_post", "forum", "post"],
-    ["change_post", "forum", "post"],
-    ["delete_post", "forum", "post"],
-    ["add_subscription", "forum", "subscription"],
-    ["change_subscription", "forum", "subscription"],
-    ["delete_subscription", "forum", "subscription"],
-    ["add_thread", "forum", "thread"],
-    ["change_thread", "forum", "thread"],
-    ["delete_thread", "forum", "thread"],
-    ["add_akismetspam", "general", "akismetspam"],
-    ["change_akismetspam", "general", "akismetspam"],
-    ["delete_akismetspam", "general", "akismetspam"],
-    ["add_geotag", "geotags", "geotag"],
-    ["change_geotag", "geotags", "geotag"],
-    ["delete_geotag", "geotags", "geotag"],
-    ["add_message", "fsmessages", "message"],
-    ["change_message", "fsmessages", "message"],
-    ["delete_message", "fsmessages", "message"],
-    ["add_messagebody", "fsmessages", "messagebody"],
-    ["change_messagebody", "fsmessages", "messagebody"],
-    ["delete_messagebody", "fsmessages", "messagebody"],
-    ["add_soundrating", "ratings", "soundrating"],
-    ["change_soundrating", "ratings", "soundrating"],
-    ["delete_soundrating", "ratings", "soundrating"],
-    ["add_session", "sessions", "session"],
-    ["change_session", "sessions", "session"],
-    ["delete_session", "sessions", "session"],
-    ["add_site", "sites", "site"],
-    ["change_site", "sites", "site"],
-    ["delete_site", "sites", "site"],
-    ["add_download", "sounds", "download"],
-    ["change_download", "sounds", "download"],
-    ["delete_download", "sounds", "download"],
-    ["add_flag", "sounds", "flag"],
-    ["change_flag", "sounds", "flag"],
-    ["delete_flag", "sounds", "flag"],
-    ["add_license", "sounds", "license"],
-    ["change_license", "sounds", "license"],
-    ["delete_license", "sounds", "license"],
-    ["add_pack", "sounds", "pack"],
-    ["change_pack", "sounds", "pack"],
-    ["delete_pack", "sounds", "pack"],
-    ["add_sound", "sounds", "sound"],
-    ["change_sound", "sounds", "sound"],
-    ["delete_sound", "sounds", "sound"],
-    ["add_fs1tag", "tags", "fs1tag"],
-    ["change_fs1tag", "tags", "fs1tag"],
-    ["delete_fs1tag", "tags", "fs1tag"],
-    ["add_tag", "tags", "tag"],
-    ["change_tag", "tags", "tag"],
-    ["delete_tag", "tags", "tag"],
-    ["add_taggeditem", "tags", "taggeditem"],
-    ["change_taggeditem", "tags", "taggeditem"],
-    ["delete_taggeditem", "tags", "taggeditem"],
-    ["add_queue", "tickets", "queue"],
-    ["change_queue", "tickets", "queue"],
-    ["delete_queue", "tickets", "queue"],
-    ["add_ticket", "tickets", "ticket"],
-    ["can_moderate", "tickets", "ticket"],
-    ["change_ticket", "tickets", "ticket"],
-    ["delete_ticket", "tickets", "ticket"],
-    ["add_ticketcomment", "tickets", "ticketcomment"],
-    ["change_ticketcomment", "tickets", "ticketcomment"],
-    ["delete_ticketcomment", "tickets", "ticketcomment"],
-    ["add_userannotation", "tickets", "userannotation"],
-    ["change_userannotation", "tickets", "userannotation"],
-    ["delete_userannotation", "tickets", "userannotation"],
-    ["add_content", "wiki", "content"],
-    ["change_content", "wiki", "content"],
-    ["delete_content", "wiki", "content"],
-    ["add_page", "wiki", "page"],
-    ["change_page", "wiki", "page"],
-    ["delete_page", "wiki", "page"]]
-    }}, {"pk": 5, "model": "auth.group", "fields": {"name": "support", "permissions": [["can_moderate", "tickets", "ticket"], ["add_userannotation", "tickets", "userannotation"]]}}, {"pk": 3, "model": "auth.group", "fields": {"name": "moderators", "permissions": [["change_comment", "comments", "comment"], ["delete_comment", "comments", "comment"], ["change_pack", "sounds", "pack"], ["delete_pack", "sounds", "pack"], ["change_sound", "sounds", "sound"], ["delete_sound", "sounds", "sound"], ["can_moderate", "tickets", "ticket"], ["add_userannotation", "tickets", "userannotation"]]}},
- {"pk": 1, "model": "tickets.queue", "fields": {"notify_by_email": false, "name": "sound moderation", "groups": [3]}}, {"pk": 4, "model": "tickets.queue", "fields": {"notify_by_email": true, "name": "management", "groups": [2]}}, {"pk": 3, "model": "tickets.queue", "fields": {"notify_by_email": true, "name": "bug reports", "groups": [5]}}, {"pk": 2, "model": "tickets.queue", "fields": {"notify_by_email": false, "name": "support requests", "groups": [5]}}]
+[
+  {
+    "pk": 3,
+    "model": "auth.group",
+    "fields": {
+      "name": "moderators",
+      "permissions": [
+        [
+          "change_comment",
+          "comments",
+          "comment"
+        ],
+        [
+          "delete_comment",
+          "comments",
+          "comment"
+        ],
+        [
+          "change_pack",
+          "sounds",
+          "pack"
+        ],
+        [
+          "delete_pack",
+          "sounds",
+          "pack"
+        ],
+        [
+          "change_sound",
+          "sounds",
+          "sound"
+        ],
+        [
+          "delete_sound",
+          "sounds",
+          "sound"
+        ],
+        [
+          "can_moderate",
+          "tickets",
+          "ticket"
+        ],
+        [
+          "add_userannotation",
+          "tickets",
+          "userannotation"
+        ]
+      ]
+    }
+  },
+  {
+    "pk": 1,
+    "model": "tickets.queue",
+    "fields": {
+      "notify_by_email": false,
+      "name": "sound moderation",
+      "groups": [
+        3
+      ]
+    }
+  }
+]

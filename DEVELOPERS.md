@@ -43,5 +43,5 @@ be created in the corresponding database migration in which the permission is ad
 
 Currently, we only use the following custom permissions:
 * `tickets.can_moderate` (in `Ticket` model, used to allow sound moderation)
-* `forum.can_moderate_forum` (in `Post` model, used to allowforum moderation)
+* `forum.can_moderate_forum` (in `Post` model, used to allow forum moderation)
 * `sounds.can_describe_in_bulk` (in `BulkUploadProgress` model, used to allow bulk upload for users who don't meet the other common requirements)

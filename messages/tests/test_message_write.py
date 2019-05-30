@@ -47,7 +47,7 @@ class RecaptchaPresenceInMessageForms(TestCase):
 
     def test_captcha_presence_in_new_message_form(self):
 
-        # No spammer case, recaptcha field should NOT be shown
+        # Not a spammer case, recaptcha field should NOT be shown
         self.client.force_login(user=self.no_spammer)
         resp = self.client.get(reverse('messages-new'))
         self.assertNotIn('recaptcha', resp.content)

@@ -18,24 +18,26 @@
 #     See AUTHORS file.
 #
 
+import json
+from textwrap import wrap
+
+from BeautifulSoup import BeautifulSoup
+from collections import Counter
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from django.db.models import Q
 from django.db import transaction
+from django.db.models import Q
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
-from django.template import RequestContext
-from messages.forms import MessageReplyForm, MessageReplyFormNoCaptcha
+from django.urls import reverse
+
+from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_template_cache
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from BeautifulSoup import BeautifulSoup
-import json
-from textwrap import wrap
-from accounts.models import User
-from django.http import HttpResponse
-from django.contrib import messages
+
 
 @login_required
 def messages_change_state(request):
@@ -53,7 +55,8 @@ def messages_change_state(request):
                     pass
 
         if choice and message_ids:
-            messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) | Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
+            messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) |
+                                              Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
 
             if choice == "a":
                 messages.update(is_archived=True)
@@ -65,6 +68,7 @@ def messages_change_state(request):
             invalidate_template_cache("user_header", request.user.id)
 
     return HttpResponseRedirect(request.POST.get("next", reverse("messages")))
+
 
 # base query object
 base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
@@ -107,19 +111,22 @@ def message(request, message_id):
     tvars = {'message': message}
     return render(request, 'messages/message.html', tvars)
 
+
 @login_required
 @transaction.atomic()
 def new_message(request, username=None, message_id=None):
+
+    if request.user.profile.is_trustworthy():
+        form_class = MessageReplyForm
+    else:
+        form_class = MessageReplyFormWithCaptcha
     
     if request.method == 'POST':
-
-        if request.user.profile.num_sounds:
-            form = MessageReplyFormNoCaptcha(request.POST)
-        else:
-            form = MessageReplyForm(request.POST)
+        form = form_class(request.POST)
 
         if request.user.profile.is_blocked_for_spam_reports():
-            messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account has been temporaly blocked after multiple spam reports")
+            messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account "
+                                                         "has been temporaly blocked after multiple spam reports")
         else:
             if form.is_valid():
                 user_from = request.user
@@ -127,8 +134,10 @@ def new_message(request, username=None, message_id=None):
                 subject = form.cleaned_data["subject"]
                 body = MessageBody.objects.create(body=form.cleaned_data["body"])
 
-                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=True, is_archived=False, is_read=False)
-                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False, is_archived=False, is_read=False)
+                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=True,
+                                       is_archived=False, is_read=False)
+                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False,
+                                       is_archived=False, is_read=False)
 
                 invalidate_template_cache("user_header", user_to.id)
 
@@ -145,11 +154,7 @@ def new_message(request, username=None, message_id=None):
 
                 return HttpResponseRedirect(reverse("messages"))
     else:
-        if request.user.profile.num_sounds:
-            form = MessageReplyFormNoCaptcha()
-        else:
-            form = MessageReplyForm()
-
+        form = form_class(request.POST)
         if message_id:
             try:
                 message = Message.objects.get(id=message_id)
@@ -159,38 +164,35 @@ def new_message(request, username=None, message_id=None):
                 
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = ''.join(BeautifulSoup(body).findAll(text=True))
-                body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(),60)) for line in body.split("\n")])
+                body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
+                                  for line in body.split("\n")])
                 body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
 
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                if request.user.profile.num_sounds:
-                    form = MessageReplyFormNoCaptcha(initial=dict(to=to, subject=subject, body=body))
-                else:
-                    form = MessageReplyForm(initial=dict(to=to, subject=subject, body=body))
+                form = form_class(initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
                 pass
         elif username:
-            if request.user.profile.num_sounds:
-                form = MessageReplyFormNoCaptcha(initial=dict(to=username))
-            else:
-                form = MessageReplyForm(initial=dict(to=username))
+            form = form_class(initial={"to": username})
 
     tvars = {'form': form}
     return render(request, 'messages/new.html', tvars)
 
 
+def get_previously_contacted_usernames(user):
+    # Get a list of previously contacted usernames (in no particular order)
+    usernames = list(Message.objects.select_related('user_from', 'user_to')
+                     .filter(Q(user_from=user) | Q(user_to=user))
+                     .values_list('user_to__username', 'user_from__username'))
+    return list(set([item for sublist in usernames for item in sublist]))
+
+
+@login_required
 def username_lookup(request):
     results = []
     if request.method == "GET":
-                # Only autocompleting for previously contacted users
-                previously_contacted_user = list(Message.objects.filter(user_from = request.user.id)\
-                        .values_list('user_to__username', flat='True').distinct())
-                previously_contacted_user2 = list(Message.objects.filter(user_to = request.user.id)\
-                        .values_list('user_from__username', flat='True').distinct())
-
-                results = list(set(previously_contacted_user + previously_contacted_user2))
+        results = get_previously_contacted_usernames(request.user)
     json_resp = json.dumps(results)
     return HttpResponse(json_resp, content_type='application/json')
-

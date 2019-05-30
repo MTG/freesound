@@ -45,7 +45,6 @@ from bookmarks.models import Bookmark
 from donations.models import Donation
 from messages.models import Message
 from apiv2.models import ApiV2Client
-import uuid
 import tickets.models
 import datetime
 import random
@@ -265,6 +264,15 @@ class Profile(SocialModel):
                         DESC LIMIT 10) AS X
                 LEFT JOIN tags_tag ON tags_tag.id=X.tag_id
                  ORDER BY tags_tag.name;""" % self.user_id)
+
+    def is_trustworthy(self):
+        """
+        Method used to determine whether a user can be a priori considered trustworthy (e.g. not a spammer) and we
+        don't need to apply certain restrictions like asking for captcha when sending private messages.
+        Returns:
+            bool: True if the user is trustworthy, False otherwise.
+        """
+        return self.num_sounds > 0 or self.num_posts > 5 or self.user.is_superuser or self.user.is_staff
 
     def can_post_in_forum(self):
 

@@ -45,7 +45,6 @@ from bookmarks.models import Bookmark
 from donations.models import Donation
 from messages.models import Message
 from apiv2.models import ApiV2Client
-import uuid
 import tickets.models
 import datetime
 import random
@@ -273,7 +272,7 @@ class Profile(SocialModel):
         Returns:
             bool: True if the user is trustworthy, False otherwise.
         """
-        return self.num_sounds > 0 or self.num_posts > 5
+        return self.num_sounds > 0 or self.num_posts > 5 or self.user.is_superuser or self.user.is_staff
 
     def can_post_in_forum(self):
 

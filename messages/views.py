@@ -115,7 +115,7 @@ def message(request, message_id):
 @transaction.atomic()
 def new_message(request, username=None, message_id=None):
 
-    if request.user.profile.num_sounds > 0 or request.user.profile.num_posts > 5:
+    if request.user.profile.is_trustworthy():
         form_class = MessageReplyForm
     else:
         form_class = MessageReplyFormWithCaptcha

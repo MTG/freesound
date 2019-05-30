@@ -266,6 +266,15 @@ class Profile(SocialModel):
                 LEFT JOIN tags_tag ON tags_tag.id=X.tag_id
                  ORDER BY tags_tag.name;""" % self.user_id)
 
+    def is_trustworthy(self):
+        """
+        Method used to determine whether a user can be a priori considered trustworthy (e.g. not a spammer) and we
+        don't need to apply certain restrictions like asking for captcha when sending private messages.
+        Returns:
+            bool: True if the user is trustworthy, False otherwise.
+        """
+        return self.num_sounds > 0 or self.num_posts > 5
+
     def can_post_in_forum(self):
 
         # A forum moderator can always post

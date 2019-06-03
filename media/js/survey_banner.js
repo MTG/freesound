@@ -4,6 +4,7 @@ function setSurveyVisited(num_days){
 }
 
 function openSurveyPage(){
+    // Change the URL here to point to wherever the survey bannder should point to
     window.open('https://freesound.org/forum/freesound-project/41697/', '_blank');
 }
 

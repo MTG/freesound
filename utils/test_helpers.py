@@ -61,7 +61,7 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
     Creates User, Sound and Pack objects useful for testing. A 'sound_counter' is used to make sound names unique as
     well as other fields like md5.
     NOTE: creating sounds requires License objects to exist in DB. Do that by making sure your test case loads
-    'initial_data' fixture, i.e. "fixtures = ['initial_data']".
+    'licenses' fixture, i.e. "fixtures = ['licenses']".
     :param num_sounds: N sounds to generate
     :param num_packs: N packs in which the sounds above will be grouped
     :param user: user owner of the created sounds (if not provided, a new user will be created)

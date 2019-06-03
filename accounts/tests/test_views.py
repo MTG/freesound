@@ -22,19 +22,27 @@ import datetime
 
 import mock
 from django.contrib.auth.models import User, Permission
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import OldUsername
-from sounds.models import Sound, SoundOfTheDay
+from sounds.models import SoundOfTheDay
+from utils.test_helpers import create_user_and_sounds
 
 
 class SimpleUserTest(TestCase):
-    fixtures = ['users', 'sounds_with_tags']
+
+    fixtures = ['licenses']
 
     def setUp(self):
-        self.user = User.objects.all()[0]
-        self.sound = Sound.objects.all()[0]
+        user, _, sounds = create_user_and_sounds()
+        self.user = user
+        self.sound = sounds[0]
+        self.sound.moderation_state = "OK"
+        self.sound.processing_state = "OK"
+        self.sound.analysis_state = "OK"
+        self.sound.similarity_state = "OK"
+        self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
 
     def test_account_response_ok(self):
@@ -102,9 +110,6 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('sounds'))
         self.assertEqual(resp.status_code, 200)
 
-        self.sound.moderation_state = "OK"
-        self.sound.processing_state = "OK"
-        self.sound.save()
         user = self.sound.user
         user.set_password('12345')
         user.is_superuser = True
@@ -121,9 +126,9 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('sound-geotag', kwargs={'username': user.username, "sound_id": self.sound.id}))
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('sound-delete', kwargs={'username': user.username, "sound_id": self.sound.id}))
-        self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('sound-similar', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-delete', kwargs={'username': user.username, "sound_id": self.sound.id}))
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(
             reverse('sound-downloaders', kwargs={'username': user.username, "sound_id": self.sound.id}))
@@ -183,7 +188,7 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # Login user with moderation permissions
-        user = User.objects.create_user("testuser", password="testpass")
+        user = User.objects.create_user("anothertestuser")
         p = Permission.objects.get_by_natural_key('can_moderate', 'tickets', 'ticket')
         p2 = Permission.objects.get_by_natural_key('can_moderate_forum', 'forum', 'post')
         user.user_permissions.add(p, p2)

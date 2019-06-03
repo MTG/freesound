@@ -36,7 +36,7 @@ class ReportSpamOffensive(TestCase):
     NOTE: for simplicity in  variable names, etc we only refer to the "spam" case.
     """
 
-    fixtures = ['initial_data', 'sounds']
+    fixtures = ['licenses', 'sounds']
 
     def setUp(self):
         # Create users reporting spam

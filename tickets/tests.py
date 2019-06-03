@@ -33,7 +33,7 @@ import tickets
 
 
 class NewTicketTests(TestCase):
-    fixtures = ['initial_data.json', 'moderation_test_users.json']
+    fixtures = ['licenses', 'moderation_queues', 'moderation_groups', 'moderation_test_users']
 
     def test_new_ticket(self):
         """New tickets shouldn't have an assignee"""
@@ -63,7 +63,7 @@ class NewTicketTests(TestCase):
 
 class TicketTests(TestCase):
     """Superclass that has several helper methods"""
-    fixtures = ['initial_data.json', 'moderation_test_users.json']
+    fixtures = ['licenses', 'moderation_queues', 'moderation_groups', 'moderation_test_users']
 
     @staticmethod
     def _create_test_sound(user, filename='test_sound.wav', moderation_state='PE', processing_state='OK'):
@@ -104,6 +104,7 @@ class TicketTests(TestCase):
 
 
 class MiscTicketTests(TicketTests):
+
     def test_new_sound_tickets_count(self):
         """New ticket count should only include new tickets without an assignee"""
         # Normal ticket that is new and unassigned
@@ -146,6 +147,7 @@ class MiscTicketTests(TicketTests):
 
 class TicketTestsFromQueue(TicketTests):
     """Ticket state changes in a response to actions from moderation queue"""
+
     def setUp(self):
         TicketTests.setUp(self)
         self.ticket = self._create_assigned_ticket()

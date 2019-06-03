@@ -28,7 +28,7 @@ from utils.test_helpers import create_user_and_sounds
 
 class ReportCountStatusesManagementCommandTestCase(TestCase):
 
-    fixtures = ['initial_data']  # Needed for loading licenses, etc
+    fixtures = ['licenses']  # Needed for loading licenses, etc
 
     def test_report_count_statuses(self):
 

@@ -122,7 +122,7 @@ class RatingsTestCase(TestCase):
 
 class RatingsPageTestCase(TestCase):
 
-    fixtures = ['sounds', 'auth_group']
+    fixtures = ['sounds', 'moderation_groups']
 
     def setUp(self):
         self.sound = sounds.models.Sound.objects.get(pk=16)

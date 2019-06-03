@@ -30,7 +30,7 @@ from exceptions import BadRequestException
 
 
 class TestAPiViews(TestCase):
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def test_pack_views_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
@@ -94,7 +94,7 @@ class TestAPiViews(TestCase):
 
 
 class TestAPI(TestCase):
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def test_cors_header(self):
         # Create App to login using token

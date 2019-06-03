@@ -434,8 +434,6 @@ class ProfileIsTrustWorthy(TestCase):
     Test the is_truthworthy method of Profile model
     """
 
-    fixtures = ['initial_data']
-
     def setUp(self):
         self.user = User.objects.create_user(username='user', email='user@example.com')
 

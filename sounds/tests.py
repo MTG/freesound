@@ -113,7 +113,7 @@ class RandomSoundAndUploaderTestCase(TestCase):
 
 class RandomSoundViewTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     @mock.patch('sounds.views.get_random_sound_from_solr')
     def test_random_sound_view(self, random_sound):
@@ -246,7 +246,7 @@ class CommentSoundsTestCase(TestCase):
 
 class ChangeSoundOwnerTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     @mock.patch('sounds.models.delete_sound_from_solr')
     def test_change_sound_owner(self, delete_sound_solr):
@@ -301,7 +301,7 @@ class ChangeSoundOwnerTestCase(TestCase):
 
 class ProfileNumSoundsTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     @mock.patch('sounds.models.delete_sound_from_solr')
     def test_moderation_and_processing_state_changes(self, delete_sound_solr):
@@ -377,7 +377,7 @@ class ProfileNumSoundsTestCase(TestCase):
 
 class PackNumSoundsTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     @mock.patch('sounds.models.delete_sound_from_solr')
     def test_create_and_delete_sounds(self, delete_sound_solr):
@@ -460,7 +460,7 @@ class PackNumSoundsTestCase(TestCase):
 
 class SoundViewsTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     @mock.patch('sounds.models.delete_sound_from_solr')
     def test_delete_sound_view(self, delete_sound_solr):
@@ -552,7 +552,7 @@ class RandomSoundTestCase(TestCase):
     """ Test that sounds that don't fall under our criteria don't get selected
         as a random sound."""
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def _create_test_sound(self):
         """Create a sound which is suitable for being chosen as a random sound"""
@@ -750,7 +750,7 @@ class DisplaySoundTemplatetagTestCase(TestCase):
 
 class SoundPackDownloadTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
@@ -884,7 +884,7 @@ class SoundPackDownloadTestCase(TestCase):
 
 class SoundSignatureTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses', 'moderation_groups']
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=1)
@@ -951,7 +951,7 @@ class SoundSignatureTestCase(TestCase):
 
 
 class SoundTemplateCacheTests(TestCase):
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def setUp(self):
         cache.clear()
@@ -1343,7 +1343,7 @@ class SoundTemplateCacheTests(TestCase):
 
 class SoundAnalysisModel(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     @override_analysis_path_with_temp_directory
     def test_get_analysis(self):
@@ -1376,7 +1376,7 @@ class SoundAnalysisModel(TestCase):
 
 class SoundManagerQueryMethods(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     fields_to_check_bulk_query_id = ['username', 'id', 'type', 'user_id', 'original_filename', 'is_explicit',
                                      'avg_rating', 'num_ratings', 'description', 'moderation_state', 'processing_state',

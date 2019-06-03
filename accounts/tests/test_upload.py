@@ -158,9 +158,8 @@ class UserUploadAndDescribeSounds(TestCase):
 
 
 class BulkDescribe(TestCase):
-    fixtures = ['licenses']
+    fixtures = ['licenses', 'bulk_uploaders_group']
 
-    @skipIf(True, "Test not ready")
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=40)
     def test_can_do_bulk_describe(self):
         user = User.objects.create_user("testuser")
@@ -182,9 +181,6 @@ class BulkDescribe(TestCase):
         user.profile.refresh_from_db()
         self.assertFalse(user.profile.can_do_bulk_upload())
         group = Group.objects.get(name="bulk_uploaders")
-
-        # TODO: create fixtrue for the bulk_uploaders group, also load in production after deployment (add instructions)
-
         user.groups.add(group)
         # Reload object from db to refresh permission's caches (Note that refresh_from_db() doesn't clear perms cache)
         user = User.objects.get(id=user.id)

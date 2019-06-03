@@ -1,0 +1,10 @@
+[
+  {
+    "model": "auth.group",
+    "pk": null,
+    "fields": {
+      "name": "bulk_uploaders",
+      "permissions": [["can_describe_in_bulk", "sounds", "bulkuploadprogress"]]
+    }
+  }
+]

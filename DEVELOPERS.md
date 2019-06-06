@@ -39,7 +39,10 @@ If there is a need for defining custom permissions we should define them in the 
 as [described in the Django docs](https://docs.djangoproject.com/en/dev/topics/auth/customizing/#custom-permissions). There
 is no generic model to **host** all custom permissions, but we'll add them to the most closely related model. These
 permissions should then be added to a `Group` so that we can manage them properly in the Django admin. The `Group` should
-be created in the corresponding database migration in which the permission is added to the model.
+be created in a fixture that will be manually loaded to the database. See [example fixture here](https://github.com/MTG/freesound/blob/master/sounds/fixtures/bulk_uploaders_group.json).
+
+NOTE: Currently these fixtures need to be loaded manually to the database. We have plans for writing a command that will
+automatically load the important fixtures (in the past Django used to do that automatically with fixtures named `initial_data`).
 
 Currently, we only use the following custom permissions:
 * `tickets.can_moderate` (in `Ticket` model, used to allow sound moderation)

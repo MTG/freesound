@@ -85,7 +85,7 @@ solr_select_returned_data = {
 
 class SearchPageTests(TestCase):
 
-    fixtures = ['users', 'sounds_with_tags']
+    fixtures = ['licenses', 'users', 'sounds_with_tags']
 
     def setUp(self):
         # Generate a fake solr response data to mock perform_solr_query function

@@ -52,7 +52,7 @@ from bs4 import BeautifulSoup
 
 class OldSoundLinksRedirectTestCase(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def setUp(self):
         self.sound = Sound.objects.all()[0]
@@ -104,7 +104,7 @@ class OldPackLinksRedirectTestCase(TestCase):
 
 class RandomSoundAndUploaderTestCase(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def test_random_sound(self):
         sound_obj = Sound.objects.random()
@@ -173,7 +173,7 @@ class RandomSoundViewTestCase(TestCase):
 
 class CommentSoundsTestCase(TestCase):
 
-    fixtures = ['sounds', 'email_preference_type']
+    fixtures = ['licenses', 'sounds', 'email_preference_type']
 
     def test_add_comment(self):
         sound = Sound.objects.get(id=19)
@@ -626,7 +626,7 @@ class RandomSoundTestCase(TestCase):
 
 class SoundOfTheDayTestCase(TestCase):
 
-    fixtures = ['sounds', 'email_preference_type']
+    fixtures = ['licenses', 'sounds', 'email_preference_type']
 
     def setUp(self):
         cache.clear()
@@ -700,7 +700,7 @@ class SoundOfTheDayTestCase(TestCase):
 
 class DisplaySoundTemplatetagTestCase(TestCase):
 
-    fixtures = ['sounds_with_tags']
+    fixtures = ['licenses', 'sounds_with_tags']
 
     def setUp(self):
         # A sound which has tags
@@ -1498,7 +1498,7 @@ class SoundEditDeletePermissionTestCase(TestCase):
     """Test that when editing and deleting sounds and packs only the user who owns
     them, or a specific admin can make the change"""
 
-    fixtures = ['sounds.json']
+    fixtures = ['licenses', 'sounds']
 
     def setUp(self):
         # From sounds.json fixture

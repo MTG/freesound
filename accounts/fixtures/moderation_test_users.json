@@ -1,5 +1,68 @@
-[{"pk": 1, "model": "auth.user", "fields": {"username": "test_user", "first_name": "", "last_name": "", "is_active": true, "is_superuser": false, "is_staff": false, "last_login": "2011-03-01 15:43:05", "groups": [], "user_permissions": [], "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=", "email": "test.user+1@gmail.com", "date_joined": "2011-03-01 15:43:05"}},
+[
+  {
+    "pk": null,
+    "model": "auth.user",
+    "fields": {
+      "username": "test_user",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_superuser": false,
+      "is_staff": false,
+      "last_login": "2011-03-01 15:43:05",
+      "groups": [
 
-{"pk": 2, "model": "auth.user", "fields": {"username": "test_moderator", "first_name": "", "last_name": "", "is_active": true, "is_superuser": true, "is_staff": true, "last_login": "2011-03-01 15:43:05", "groups": [], "user_permissions": [], "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=", "email": "test.user+2@gmail.com", "date_joined": "2011-03-01 15:43:05"}},
+      ],
+      "user_permissions": [
 
-{"pk": 3, "model": "auth.user", "fields": {"username": "test_admin", "first_name": "", "last_name": "", "is_active": true, "is_superuser": true, "is_staff": true, "last_login": "2011-03-01 15:43:05", "groups": [], "user_permissions": [], "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=", "email": "test.user+3@gmail.com", "date_joined": "2011-03-01 15:43:05"}}]
+      ],
+      "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=",
+      "email": "test.user+1@gmail.com",
+      "date_joined": "2011-03-01 15:43:05"
+    }
+  },
+  {
+    "pk": null,
+    "model": "auth.user",
+    "fields": {
+      "username": "test_moderator",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_superuser": true,
+      "is_staff": true,
+      "last_login": "2011-03-01 15:43:05",
+      "groups": [
+
+      ],
+      "user_permissions": [
+
+      ],
+      "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=",
+      "email": "test.user+2@gmail.com",
+      "date_joined": "2011-03-01 15:43:05"
+    }
+  },
+  {
+    "pk": null,
+    "model": "auth.user",
+    "fields": {
+      "username": "test_admin",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_superuser": true,
+      "is_staff": true,
+      "last_login": "2011-03-01 15:43:05",
+      "groups": [
+
+      ],
+      "user_permissions": [
+
+      ],
+      "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=",
+      "email": "test.user+3@gmail.com",
+      "date_joined": "2011-03-01 15:43:05"
+    }
+  }
+]

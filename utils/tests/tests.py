@@ -46,7 +46,7 @@ from utils.test_helpers import create_test_files, create_user_and_sounds, overri
 
 class UtilsTest(TestCase):
 
-    fixtures = ['licenses', 'moderation_queues', 'moderation_groups']
+    fixtures = ['licenses', 'moderation_groups', 'moderation_queues']
 
     def test_download_sounds(self):
         user = User.objects.create_user("testuser", password="testpass")

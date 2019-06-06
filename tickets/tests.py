@@ -33,7 +33,7 @@ import tickets
 
 
 class NewTicketTests(TestCase):
-    fixtures = ['licenses', 'moderation_queues', 'moderation_groups', 'moderation_test_users']
+    fixtures = ['licenses', 'moderation_groups', 'moderation_queues', 'moderation_test_users']
 
     def test_new_ticket(self):
         """New tickets shouldn't have an assignee"""
@@ -63,7 +63,7 @@ class NewTicketTests(TestCase):
 
 class TicketTests(TestCase):
     """Superclass that has several helper methods"""
-    fixtures = ['licenses', 'moderation_queues', 'moderation_groups', 'moderation_test_users']
+    fixtures = ['licenses', 'moderation_groups', 'moderation_queues', 'moderation_test_users']
 
     @staticmethod
     def _create_test_sound(user, filename='test_sound.wav', moderation_state='PE', processing_state='OK'):

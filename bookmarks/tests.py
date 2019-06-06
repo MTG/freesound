@@ -26,7 +26,7 @@ import bookmarks.models
 
 class BookmarksTest(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def test_bookmarks_context(self):
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))

@@ -1,7 +1,7 @@
 [
    {
       "model":"auth.group",
-      "pk":3,
+      "pk": null,
       "fields":{
          "name":"moderators",
          "permissions":[

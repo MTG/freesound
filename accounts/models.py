@@ -313,7 +313,7 @@ class Profile(SocialModel):
         * User has been granted special permissions for bulk upload
 
         Returns:
-            bool: True if user ca do bulk upload, False otherwise.
+            bool: True if user can do bulk upload, False otherwise.
         """
 
         return self.num_sounds >= settings.BULK_UPLOAD_MIN_SOUNDS or \

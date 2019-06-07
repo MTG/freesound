@@ -36,7 +36,7 @@ from utils.test_helpers import create_test_files, override_uploads_path_with_tem
 
 
 class UserUploadAndDescribeSounds(TestCase):
-    fixtures = ['licenses', 'moderation_groups', 'moderation_queues']
+    fixtures = ['licenses', 'user_groups', 'moderation_queues']
 
     @skipIf(True, "Test not ready for new uploader")
     @override_uploads_path_with_temp_directory
@@ -158,7 +158,7 @@ class UserUploadAndDescribeSounds(TestCase):
 
 
 class BulkDescribe(TestCase):
-    fixtures = ['licenses', 'bulk_uploaders_group']
+    fixtures = ['licenses', 'user_groups']
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=40)
     def test_can_do_bulk_describe(self):

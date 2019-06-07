@@ -884,7 +884,7 @@ class SoundPackDownloadTestCase(TestCase):
 
 class SoundSignatureTestCase(TestCase):
 
-    fixtures = ['licenses', 'moderation_groups']
+    fixtures = ['licenses', 'user_groups']
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=1)

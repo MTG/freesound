@@ -59,25 +59,23 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
                            processing_state='PE', moderation_state='PE', type='wav'):
     """Creates User, Sound and Pack objects useful for testing.
 
-    A 'sound_counter' is used to make sound names unique as well as other fields like md5.
+    A counter is used to make sound names unique as well as other fields like md5 (see `sound_counter` variable).
     NOTE: creating sounds requires License objects to exist in DB. Do that by making sure your test case loads
     'licenses' fixture, i.e. "fixtures = ['licenses']".
 
     Args:
-        num_sounds (int): N sounds to generate
-        num_packs (int): N packs in which the sounds above will be grouped
-        user (User): user owner of the created sounds (if not provided, a new user will be created)
-        count_offset (int): start counting sounds at X
-        tags (str): string of tags to be added to the sounds (all sounds will have the same tags)
-        processing_state (str): processing state of the created sounds
-        moderation_state (str): moderation state of the created sounds
-        type (str): type of the sounds to be created (e.g. 'wav')
+        num_sounds (int): N sounds to generate.
+        num_packs (int): N packs in which the sounds above will be grouped.
+        user (User): user owner of the created sounds (if not provided, a new user will be created).
+        count_offset (int): start counting sounds at X.
+        tags (str): string of tags to be added to the sounds (all sounds will have the same tags).
+        processing_state (str): processing state of the created sounds.
+        moderation_state (str): moderation state of the created sounds.
+        type (str): type of the sounds to be created (e.g. 'wav').
 
     Returns:
-        (tuple): 3-element tuple containing:
-            (User): the User owning the sounds
-            (List[Pack]): list of Packs created
-            (List[Sound]): list of Sounds created
+        (Tuple(User, List[Pack], List[Sound]): 3-element tuple containing the user owning the sounds,
+            a list of the packs created and a list of the sounds created.
     """
     count_offset = count_offset + next(sound_counter)
     if user is None:

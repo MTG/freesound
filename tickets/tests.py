@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from models import Ticket, Queue
-from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
+from tickets import QUEUE_SOUND_MODERATION
 from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED
 from sounds.models import Sound
 import mock
@@ -33,14 +33,14 @@ import tickets
 
 
 class NewTicketTests(TestCase):
-    fixtures = ['initial_data.json', 'moderation_test_users.json']
+    fixtures = ['licenses', 'user_groups', 'moderation_queues', 'moderation_test_users']
 
     def test_new_ticket(self):
         """New tickets shouldn't have an assignee"""
         ticket = Ticket()
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
-        ticket.queue = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
+        ticket.queue = Queue.objects.get(name=QUEUE_SOUND_MODERATION)
         ticket.save()
         self.assertEqual(ticket.assignee, None)
 
@@ -63,7 +63,7 @@ class NewTicketTests(TestCase):
 
 class TicketTests(TestCase):
     """Superclass that has several helper methods"""
-    fixtures = ['initial_data.json', 'moderation_test_users.json']
+    fixtures = ['licenses', 'user_groups', 'moderation_queues', 'moderation_test_users']
 
     @staticmethod
     def _create_test_sound(user, filename='test_sound.wav', moderation_state='PE', processing_state='OK'):
@@ -104,6 +104,7 @@ class TicketTests(TestCase):
 
 
 class MiscTicketTests(TicketTests):
+
     def test_new_sound_tickets_count(self):
         """New ticket count should only include new tickets without an assignee"""
         # Normal ticket that is new and unassigned
@@ -146,6 +147,7 @@ class MiscTicketTests(TicketTests):
 
 class TicketTestsFromQueue(TicketTests):
     """Ticket state changes in a response to actions from moderation queue"""
+
     def setUp(self):
         TicketTests.setUp(self)
         self.ticket = self._create_assigned_ticket()

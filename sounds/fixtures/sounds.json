@@ -631,18 +631,5 @@
             "channels": 1,
             "pack": 4
         }
-    },
-    {
-        "pk": 1,
-        "model": "sounds.license",
-        "fields": {
-            "deed_url": "http://creativecommons.org/licenses/sampling+/1.0/",
-            "name": "Sampling+",
-            "summary": "<p>\r\n    You are free:\r\n</p>\r\n<ul>\r\n    <li>To sample, mash-up, or otherwise creatively transform this work for commercial or noncommercial purposes.</li>\r\n    <li>To perform, display, and distribute copies of this whole work for noncommercial purposes (e.g., file-sharing or noncommercial webcasting).</li>\r\n<ul>\r\n\r\n<p>Under the following conditions:</p>\r\n<ul>\r\n    <li>You must attribute the work in the manner specified by the author or licensor (but not in any way that suggests that they endorse you or your use of the work).</li>\r\n    <li>You may not use this work to advertise for or promote anything but the work you create from it.</li>\r\n    <li>For any reuse or distribution, you must make clear to others the license terms of this work. The best way to do this is with a link to this web page.</li>\r\n</ul>",
-            "abbreviation": "samp+",
-            "is_public": false,
-            "order": 1,
-            "legal_code_url": "http://creativecommons.org/licenses/sampling+/1.0/legalcode"
-        }
     }
 ]

@@ -46,7 +46,7 @@ from utils.test_helpers import create_test_files, create_user_and_sounds, overri
 
 class UtilsTest(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses', 'user_groups', 'moderation_queues']
 
     def test_download_sounds(self):
         user = User.objects.create_user("testuser", password="testpass")
@@ -109,7 +109,7 @@ class UtilsTest(TestCase):
 
 class ShouldSuggestDonationTest(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def test_should_suggest_donation_probabilty_1(self):
 
@@ -218,7 +218,7 @@ class ShouldSuggestDonationTest(TestCase):
 
 class BulkDescribeUtils(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     @staticmethod
     def create_file_with_lines(filename, lines, base_path):
@@ -528,7 +528,7 @@ def analyze_using_essentia_mock_fail(essentia_executable_path, input_filename, o
 
 class AudioProcessingTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def pre_test(self, create_sound_file=True):
         # Do some stuff which needs to be carried out right before each test
@@ -753,7 +753,7 @@ class AudioProcessingTestCase(TestCase):
 
 class AudioAnalysisTestCase(TestCase):
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def pre_test(self, create_sound_file=True):
         # Do some stuff which needs to be carried out right before each test

@@ -42,7 +42,7 @@ from utils.test_helpers import override_avatars_path_with_temp_directory
 
 
 class ProfileGetUserTags(TestCase):
-    fixtures = ['sounds_with_tags']
+    fixtures = ['licenses', 'sounds_with_tags']
 
     def test_user_tagcloud_solr(self):
         user = User.objects.get(username="Anton")
@@ -433,8 +433,6 @@ class ProfileIsTrustWorthy(TestCase):
     """
     Test the is_truthworthy method of Profile model
     """
-
-    fixtures = ['initial_data']
 
     def setUp(self):
         self.user = User.objects.create_user(username='user', email='user@example.com')

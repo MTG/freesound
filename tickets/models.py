@@ -104,9 +104,7 @@ class Ticket(models.Model):
     class Meta:
         ordering = ("-created",)
         permissions = (
-            ("can_change_status", "Can change the status of the ticket."),
-            ("can_change_queue", "Can change the queue of the ticket."),
-            ("can_moderate", "Can moderate stuff.")
+            ("can_moderate", "Can moderate stuff."),
         )
 
 
@@ -123,9 +121,6 @@ class TicketComment(models.Model):
 
     class Meta:
         ordering = ("-created",)
-        permissions = (
-            ("can_add_moderator_only_message", "Can add read-by-moderator-only messages."),
-        )
 
 
 def create_ticket_message(sender, instance, created, **kwargs):

@@ -1488,3 +1488,8 @@ class BulkUploadProgress(models.Model):
         if self.validation_output is not None:
             return len(self.validation_output['lines_with_errors']) > 0
         return False
+
+    class Meta:
+        permissions = (
+            ("can_describe_in_bulk", "Can use the Bulk Describe feature."),
+        )

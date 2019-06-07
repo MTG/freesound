@@ -11,7 +11,7 @@ import views
 
 
 class DonationTest(TestCase):
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def test_non_annon_donation_with_name_paypal(self):
         donations.models.DonationCampaign.objects.create(\

@@ -146,7 +146,7 @@ class UserRegistrationAndActivation(TestCase):
 
 
 class UserDelete(TestCase):
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def create_user_and_content(self, is_index_dirty=True):
         user = User.objects.create_user("testuser", password="testpass")

@@ -1,0 +1,15 @@
+[
+  {
+  "model": "tickets.queue",
+    "pk": null,
+    "fields": {
+      "name": "sound moderation",
+      "notify_by_email": false,
+      "groups": [
+        [
+          "moderators"
+        ]
+      ]
+    }
+  }
+]

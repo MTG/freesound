@@ -28,7 +28,7 @@ from sounds.models import Sound
 
 class GeoTagsTests(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def check_context(self, context, values):
         for k, v in values.items():

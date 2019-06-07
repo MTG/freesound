@@ -25,7 +25,7 @@ from zenpy.lib.api import serialize
 
 
 class SupportRequestsTest(TestCase):
-    fixtures = ['initial_data.json', 'moderation_test_users.json']
+    fixtures = ['moderation_test_users']
 
     @override_settings(SUPPORT=(('Name', 'email@freesound.org'),))
     def test_send_support_request_email(self):

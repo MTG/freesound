@@ -32,7 +32,7 @@ class RecaptchaPresenceInMessageForms(TestCase):
     Test whether the recapctha field should or should not be present in new message/reply message forms.
     """
 
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def setUp(self):
         # Create one user which is a potential spammer and one which is not

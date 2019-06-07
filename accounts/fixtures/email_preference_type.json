@@ -1,7 +1,7 @@
 [
 {
   "model": "accounts.emailpreferencetype",
-  "pk": 1,
+  "pk": null,
   "fields": {
     "description": "Email notification sent when user's sound is selected as random sound of the day",
     "name": "random_sound",
@@ -11,7 +11,7 @@
 },
 {
   "model": "accounts.emailpreferencetype",
-  "pk": 2,
+  "pk": null,
   "fields": {
     "description": "Email notification sent when user's receives a private message",
     "name": "private_message",
@@ -21,7 +21,7 @@
 },
 {
   "model": "accounts.emailpreferencetype",
-  "pk": 3,
+  "pk": null,
   "fields": {
     "description": "Email notification sent when user's receives a comment on a sound",
     "name": "new_comment",
@@ -31,7 +31,7 @@
 },
 {
   "model": "accounts.emailpreferencetype",
-  "pk": 4,
+  "pk": null,
   "fields": {
     "description": "Receive weekly stream update email notifications, only when new sounds are uploaded by users you follow or that have tags you follow",
     "name": "stream_emails",

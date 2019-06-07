@@ -1,0 +1,54 @@
+[
+  {
+    "pk": 1,
+    "model": "sounds.license",
+    "fields": {
+      "deed_url": "http://creativecommons.org/licenses/sampling+/1.0/",
+      "name": "Sampling+",
+      "summary": "<p>\r\n    You are free:\r\n</p>\r\n<ul>\r\n    <li>To sample, mash-up, or otherwise creatively transform this work for commercial or noncommercial purposes.</li>\r\n    <li>To perform, display, and distribute copies of this whole work for noncommercial purposes (e.g., file-sharing or noncommercial webcasting).</li>\r\n<ul>\r\n\r\n<p>Under the following conditions:</p>\r\n<ul>\r\n    <li>You must attribute the work in the manner specified by the author or licensor (but not in any way that suggests that they endorse you or your use of the work).</li>\r\n    <li>You may not use this work to advertise for or promote anything but the work you create from it.</li>\r\n    <li>For any reuse or distribution, you must make clear to others the license terms of this work. The best way to do this is with a link to this web page.</li>\r\n</ul>",
+      "abbreviation": "samp+",
+      "is_public": true,
+      "order": 1,
+      "legal_code_url": "http://creativecommons.org/licenses/sampling+/1.0/legalcode"
+    }
+  },
+  {
+    "pk": 2,
+    "model": "sounds.license",
+    "fields": {
+      "deed_url": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "name": "Creative Commons 0",
+      "summary": "<p>The person who associated a work with this deed has dedicated the work to the public domain by waiving all of his or her rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.</p>",
+      "abbreviation": "cc0",
+      "is_public": true,
+      "order": 2,
+      "legal_code_url": "http://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  {
+    "pk": 3,
+    "model": "sounds.license",
+    "fields": {
+      "deed_url": "http://creativecommons.org/licenses/by/3.0/",
+      "name": "Attribution",
+      "summary": "<p>\r\n    You are free:\r\n</p>\r\n<ul>\r\n    <li>To Share \u2014 to copy, distribute and transmit the work</li>\r\n    <li>To Remix \u2014 to adapt the work</li>\r\n<ul>\r\n\r\n<p>\r\n    Under the following conditions:\r\n</p>\r\n<ul>\r\n    <li>Attribution. You must attribute the work in the manner specified by the author or licensor (but not in any way that suggests that they endorse you or your use of the work).</li>\r\n</ul>\r\n\r\n<ul>\r\n    <li>For any reuse or distribution, you must make clear to others the license terms of this work. The best way to do this is with a link to this web page.</li>\r\n    <li>Any of the above conditions can be waived if you get permission from the copyright holder.</li>\r\n    <li>Nothing in this license impairs or restricts the author's moral rights.</li>\r\n</ul>",
+      "abbreviation": "by",
+      "is_public": true,
+      "order": 3,
+      "legal_code_url": "http://creativecommons.org/licenses/by/3.0/legalcode"
+    }
+  },
+  {
+    "pk": 4,
+    "model": "sounds.license",
+    "fields": {
+      "deed_url": "http://creativecommons.org/licenses/by-nc/3.0/",
+      "name": "Attribution Noncommercial",
+      "summary": "<p>\r\n    You are free:\r\n</p>\r\n<ul>\r\n    <li>To Share \u2014 to copy, distribute and transmit the work</li>\r\n    <li>To Remix \u2014 to adapt the work</li>\r\n<ul>\r\n\r\n<p>\r\n    Under the following conditions:\r\n</p>\r\n<ul>\r\n    <li>Attribution. You must attribute the work in the manner specified by the author or licensor (but not in any way that suggests that they endorse you or your use of the work).</li>\r\n    <li>Noncommercial. You may not use this work for commercial purposes.</li>\r\n</ul>\r\n\r\n<ul>\r\n    <li>For any reuse or distribution, you must make clear to others the license terms of this work. The best way to do this is with a link to this web page.</li>\r\n    <li>Any of the above conditions can be waived if you get permission from the copyright holder.</li>\r\n    <li>Nothing in this license impairs or restricts the author's moral rights.</li>\r\n<ul>",
+      "abbreviation": "by-nc",
+      "is_public": true,
+      "order": 4,
+      "legal_code_url": "http://creativecommons.org/licenses/by-nc/3.0/legalcode"
+    }
+  }
+]

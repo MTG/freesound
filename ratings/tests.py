@@ -28,7 +28,7 @@ import sounds.models
 
 class RatingsTestCase(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def setUp(self):
         self.sound = sounds.models.Sound.objects.get(pk=16)
@@ -122,7 +122,7 @@ class RatingsTestCase(TestCase):
 
 class RatingsPageTestCase(TestCase):
 
-    fixtures = ['sounds', 'auth_group']
+    fixtures = ['licenses', 'sounds', 'user_groups']
 
     def setUp(self):
         self.sound = sounds.models.Sound.objects.get(pk=16)

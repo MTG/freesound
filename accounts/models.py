@@ -496,7 +496,7 @@ pre_save.connect(presave_user, sender=User)
 
 class EmailPreferenceType(models.Model):
     description = models.TextField(max_length=1024, null=True, blank=True)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255)
     send_by_default = models.BooleanField(default=True,
         help_text="Indicates if the user should receive an email, if " +

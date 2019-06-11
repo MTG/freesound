@@ -350,7 +350,7 @@ def edit_email_settings(request):
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()
-        form = profile_form = EmailSettingsForm(initial={
+        form = EmailSettingsForm(initial={
             'email_types': all_emails,
             })
     tvars = {'form': form}

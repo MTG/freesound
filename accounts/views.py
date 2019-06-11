@@ -1121,7 +1121,7 @@ def email_reset(request):
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user=request.user)
-    tvars = {'form': form}
+    tvars = {'form': form, 'user': request.user}
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 

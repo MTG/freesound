@@ -125,6 +125,16 @@
             $("#id_" + idx0 + "-zoom").val(Math.floor(zoom));
         }
 
+        function centerMapToLatLonZoomFields(n) {
+            var idx = parseInt(n,10);
+            var idx0 = idx - 1; // Get map number
+            var lat = $("#id_" + idx0 + "-lon").val();
+            var lon = $("#id_" + idx0 + "-lat").val();
+            var zoom = $("#id_" + idx0 + "-zoom").val();
+            maps[idx].setZoom(parseInt(zoom, 10) - 1);
+            maps[idx].setCenter([parseFloat(lat), parseFloat(lon)]);
+        }
+
         function init_map(n) {
             console.log("initializing MAP ", n)
             var idx = parseInt(n,10);
@@ -297,6 +307,16 @@
                                 $("#{{form.geotag.zoom.auto_id}}").attr('disabled', false);
                             }
                         });
+                        $("#{{form.geotag.lon.auto_id}}").change(function (event) {
+                            centerMapToLatLonZoomFields({{forloop.counter}});
+                        });
+                        $("#{{form.geotag.lat.auto_id}}").change(function (event) {
+                            centerMapToLatLonZoomFields({{forloop.counter}});
+                        });
+                        $("#{{form.geotag.zoom.auto_id}}").change(function (event) {
+                            centerMapToLatLonZoomFields({{forloop.counter}});
+                        });
+
                         setMapVisibility({{forloop.counter}});
 
                     </script>

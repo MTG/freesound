@@ -279,6 +279,14 @@
         $("#{{geotag_form.zoom.auto_id}}").val(Math.floor(zoom));
     }
 
+    function centerMapToLatLonZoomFields() {
+        var lat = $("#{{geotag_form.lon.auto_id}}").val();
+        var lon = $("#{{geotag_form.lat.auto_id}}").val();
+        var zoom = $("#{{geotag_form.zoom.auto_id}}").val();
+        window.map.setZoom(parseInt(zoom, 10) - 1);
+        window.map.setCenter([parseFloat(lat), parseFloat(lon)]);
+    }
+
     $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {
         if (this.checked)
         {
@@ -292,6 +300,15 @@
             $("#{{geotag_form.lat.auto_id}}").attr('disabled', false);
             $("#{{geotag_form.zoom.auto_id}}").attr('disabled', false);
         }
+    });
+    $("#{{geotag_form.lon.auto_id}}").change(function (event) {
+        centerMapToLatLonZoomFields({{forloop.counter}});
+    });
+    $("#{{geotag_form.lat.auto_id}}").change(function (event) {
+        centerMapToLatLonZoomFields({{forloop.counter}});
+    });
+    $("#{{geotag_form.zoom.auto_id}}").change(function (event) {
+        centerMapToLatLonZoomFields({{forloop.counter}});
     });
 
 </script>

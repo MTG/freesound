@@ -1,0 +1,12 @@
+{% extends "email_base.txt" %}
+
+{% load absurl %}
+
+{% block salutation %}{{user.username}}{% endblock %}
+
+{% block body %}
+This message is to inform that your e-mail address "{{ old_email }}" will no longer be associated with the Freesound
+user account "{{ user.username }}" because a new e-mail address has been set. You will not receive more e-mails
+from Freesound to this e-mail address.
+
+{% endblock %}

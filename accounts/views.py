@@ -1151,13 +1151,17 @@ def email_reset_complete(request, uidb36=None, token=None):
     user.email = rer.email
     user.save()
 
-    # Remove temporal mail change information ftom the DB
+    # Remove temporal mail change information from the DB
     ResetEmailRequest.objects.get(user=user).delete()
 
     # Clear saved email bounces for old email
     EmailBounce.objects.filter(user=user).delete()
 
+    # Send email to the old address notifying about the change
     tvars = {'old_email': old_email, 'user': user}
+    send_mail_template(u'E-mail reset',
+                       'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
+
     return render(request, 'accounts/email_reset_complete.html', tvars)
 
 

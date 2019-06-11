@@ -248,8 +248,8 @@
 <a id="geotag"></a>
 <form method="post" action="#geotag">{% csrf_token %}
  <p>Drag this map to set the geotag:</p>
-    	<div id="map_canvas" style="width: 400px; height:400px; margin-bottom: 1em; float:left"></div>
-    	<div style="float:ledt;margin-left:430px;">{{geotag_form.as_p}}</div>
+    	<div id="map_canvas" class="geotag_edit_map_size" style="margin-bottom: 1em; float:left"></div>
+    	<div style="float:left;margin-left:20px;">{{geotag_form.as_p}}</div>
         <br style="clear: both;" />
     <input type="submit" name="submit" value="submit" />
 </form>

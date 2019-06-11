@@ -1130,6 +1130,7 @@ def email_reset_done(request):
 
 
 @never_cache
+@login_required
 @transaction.atomic()
 def email_reset_complete(request, uidb36=None, token=None):
     # Check that the link is valid and the base36 corresponds to a user id
@@ -1138,6 +1139,10 @@ def email_reset_complete(request, uidb36=None, token=None):
         uid_int = base36_to_int(uidb36)
         user = User.objects.get(id=uid_int)
     except (ValueError, User.DoesNotExist):
+        raise Http404
+
+    # Check that the user makind the request is the same user in the base36 data
+    if request.user != user:
         raise Http404
 
     # Retreive the new mail from the DB

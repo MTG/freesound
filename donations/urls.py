@@ -27,7 +27,8 @@ urlpatterns = [
     url(r'^donate/$', views.donate, name="donate"),
     url(r'^donors/$', views.DonationsList.as_view(), name="donors"),
     url(r'^donation-session-stripe/$', views.donation_session_stripe, name="donation-session-stripe"),
-    url(r'^donation-success-stripe/$', views.donation_success_stripe, name="donation-success-stripe"),
+    url(r'^donation-session-paypal/$', views.donation_session_paypal, name="donation-session-paypal"),
+    url(r'^donation-success/$', views.donation_success, name="donation-success"),
     url(r'^donation-complete-stripe/$', views.donation_complete_stripe, name="donation-complete-stripe"),
     url(r'^donation-complete-paypal/$', views.donation_complete_paypal, name="donation-complete-paypal"),
 

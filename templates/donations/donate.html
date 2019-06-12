@@ -40,7 +40,7 @@
     <div id="donation_form_wrapper">
 
       <div id="donation_form">
-        <form method="post" action="{% url 'donate' %}">
+        <form method="post" action="{% url 'donation-session-paypal' %}">
           <ul class="errorlist nonfield"></ul>
           <ul style="list-style-type: none;padding-left:0px;line-height: 18px;">
           {% csrf_token %}

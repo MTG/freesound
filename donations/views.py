@@ -116,7 +116,7 @@ def donation_complete_stripe(request):
 
 
 @csrf_exempt
-def donation_success_stripe(request):
+def donation_success(request):
     """
     This user reaches this view from sripe when the credit card was valid, here we only
     add a message to the user and redirect to donations page.
@@ -167,7 +167,7 @@ def donation_session_stripe(request):
             email_to = request.user.email if request.user.is_authenticated() else None
             amount = form.cleaned_data['amount']
             domain = "http://%s" % Site.objects.get_current().domain
-            return_url_success = urlparse.urljoin(domain, reverse('donation-success-stripe'))
+            return_url_success = urlparse.urljoin(domain, reverse('donation-success'))
             return_url_success += '?token={}'.format(form.encoded_data)
             return_url_cancel = urlparse.urljoin(domain, reverse('donate'))
             session = stripe.checkout.Session.create(
@@ -186,7 +186,8 @@ def donation_session_stripe(request):
             )
             return JsonResponse({"session_id":session.id})
 
-def donate(request):
+
+def donation_session_paypal(request):
     ''' Donate page: display form for donations where if user is logged in
     we give the option to doneate anonymously otherwise we just give the option
     to enter the name that will be displayed.
@@ -229,11 +230,18 @@ def donate(request):
         else:
             data = {'errors': form.errors}
         return JsonResponse(data)
-    else:
-        default_donation_amount = request.GET.get(settings.DONATION_AMOUNT_REQUEST_PARAM, None)
-        form = DonateForm(user=request.user, default_donation_amount=default_donation_amount)
-        tvars = {'form': form, 'stripe_key': settings.STRIPE_PUBLIC_KEY}
-        return render(request, 'donations/donate.html', tvars)
+
+
+def donate(request):
+    ''' Donate page: display form for donations where if user is logged in
+    we give the option to doneate anonymously otherwise we just give the option
+    to enter the name that will be displayed.
+    If request is post we generate the data to send to paypal.
+    '''
+    default_donation_amount = request.GET.get(settings.DONATION_AMOUNT_REQUEST_PARAM, None)
+    form = DonateForm(user=request.user, default_donation_amount=default_donation_amount)
+    tvars = {'form': form, 'stripe_key': settings.STRIPE_PUBLIC_KEY}
+    return render(request, 'donations/donate.html', tvars)
 
 
 class DonationsList(ListView):

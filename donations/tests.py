@@ -182,26 +182,26 @@ class DonationTest(TestCase):
             'show_amount': True,
             'donation_type': '1',
         }
-        ret = self.client.post("/donations/donate/", data)
+        ret = self.client.post("/donations/donation-session-paypal/", data)
         response =  ret.json()
         # Decimals must have '.' and not ','
         self.assertTrue('errors' in response)
 
         data['amount'] = '0.1'
-        ret = self.client.post("/donations/donate/", data)
+        ret = self.client.post("/donations/donation-session-paypal/", data)
         response =  ret.json()
         # amount must be greater than 1
         self.assertTrue('errors' in response)
 
         data['amount'] = '5.1'
-        ret = self.client.post("/donations/donate/", data)
+        ret = self.client.post("/donations/donation-session-paypal/", data)
         response =  ret.json()
         self.assertFalse('errors' in response)
 
         long_mail = ('1'*256) + '@freesound.org'
         data['name_option'] = long_mail
         data['donation_type'] = '2'
-        ret = self.client.post("/donations/donate/", data)
+        ret = self.client.post("/donations/donation-session-paypal/", data)
         response =  ret.json()
         self.assertTrue('errors' in response)
 

@@ -15,6 +15,9 @@ Post URL:
 
 
 
-If you wish to stop receiving subscription messages, you can unsubscribe by clicking this link:
+If you wish to stop receiving subscription messages from this thread, you can unsubscribe by clicking this link:
 {% absurl "forums-thread-unsubscribe" forum.name_slug thread.id %}
+
+Also, if you don't want to receive subscription messages from any threads you can turn them off at {% absurl "accounts-email-settings" %}
+
 {% endblock %}

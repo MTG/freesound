@@ -15,4 +15,6 @@ The remix is called {{remix.original_filename}}, listen to it here:
 
 {% absurl 'sound' remix.user.username remix.id %}
 
+If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}
+
 {% endblock %}

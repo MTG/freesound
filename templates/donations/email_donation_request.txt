@@ -18,4 +18,7 @@ Why should you donate to Freesound?
 In case you want to donate, please use the link below:
 
 {% absurl 'donate' %}
+
+If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}
+
 {% endblock %}

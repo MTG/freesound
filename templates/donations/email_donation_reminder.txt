@@ -13,4 +13,7 @@ Your money will be used for further development of Freesound and for general sup
 Please, feel free to use the link below to make a new donation:
 
 {% absurl 'donate' %}
+
+If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}
+
 {% endblock %}

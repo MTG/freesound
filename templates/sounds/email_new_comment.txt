@@ -14,4 +14,7 @@ The user '{{user.username}}' posted the following comment about {{sound.original
 To see this comment in context, please visit:
 
 <{% absurl 'sound' sound.user.username sound.id %}>
+
+If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}
+
 {% endblock %}

@@ -10,4 +10,6 @@ Good news! your sound {{sound.original_filename}} has been selected as the rando
 To see the random sound of the day, please visit:
 <https://freesound.org>
 
+If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}
+
 {% endblock %}

@@ -23,6 +23,7 @@ from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from accounts.models import EmailPreferenceType, UserEmailSetting
 from forum.models import Forum, Thread, Post, Subscription
 
 
@@ -312,6 +313,8 @@ def _create_forums_threads_posts(author, n_forums=1, n_threads=1, n_posts=5):
 
 class ForumPageResponses(TestCase):
 
+    fixtures = ['email_preference_type']
+
     def setUp(self):
         self.N_FORUMS = 1
         self.N_THREADS = 1
@@ -572,4 +575,29 @@ class ForumPageResponses(TestCase):
 
         # Both users are subscribed but the email is not sent to the user that is sending the post
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], self.user.email)
         self.assertEqual(mail.outbox[0].subject, "[freesound] topic reply notification - Thread 0 of forum 0")
+
+    def test_emails_not_sent_for_subscription_to_thread_if_preference_disabled(self):
+        forum = Forum.objects.first()
+        thread = forum.thread_set.first()
+        post = thread.post_set.first()
+
+        # A user is subscribed to a thread...
+        _, _ = Subscription.objects.get_or_create(thread=thread, subscriber=self.user)
+
+        # ...but has forum emails disabled
+        # Create email preference object for the email type (which will mean user does not want forum
+        # emails as it is enabled by default and the preference indicates user does not want it).
+        email_pref = EmailPreferenceType.objects.get(name="new_post")
+        UserEmailSetting.objects.create(user=self.user, email_type=email_pref)
+
+        # A second user replies to that thread
+        user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        self.client.force_login(user2)
+        self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
+            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+        })
+
+        # No emails sent
+        self.assertEqual(len(mail.outbox), 0)

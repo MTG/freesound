@@ -271,13 +271,10 @@ def sound(request, username, sound_id):
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
                     try:
-                        if sound.user.profile.email_not_disabled("new_comment"):
-                            # Send the user an email to notify him of the new comment!
-                            logger.info("Notifying user %s of a new comment by %s" % (sound.user.username,
-                                                                                      request.user.username))
-                            send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
-                                               {'sound': sound, 'user': request.user, 'comment': comment_text},
-                                               user_to=sound.user)
+                        # Send the user an email to notify him of the new comment!
+                        send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
+                                           {'sound': sound, 'user': request.user, 'comment': comment_text},
+                                           user_to=sound.user, email_type_preference_check="new_comment")
                     except Exception as e:
                         # If the email sending fails, ignore...
                         logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.username, e))

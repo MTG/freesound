@@ -197,7 +197,10 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(mail.outbox[0].subject, u'[freesound] You have a new comment.')
 
         # Now update preferences of sound.user to disable comment notification emails
-        sound.user.profile.update_enabled_email_types([])  # Will set all to disabled if none is passed
+        # We create an email preference object for the email type (which will mean user does not want new comment
+        # emails as it is enabled by default and the preference indicates user does not want it).
+        email_pref = accounts.models.EmailPreferenceType.objects.get(name="new_comment")
+        accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 
         # Make the comment again and assert no new email has been sent
         self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': u'Test comment'})

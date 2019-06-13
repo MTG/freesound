@@ -118,15 +118,7 @@ class RemixForm(forms.Form):
             try:
                 source = Sound.objects.get(id=sid)
                 self.sound.sources.remove(source)
-
                 source.invalidate_template_caches()
-
-                # modify remix_group
-                send_mail_template(
-                    u'Sound removed as remix source', 'sounds/email_remix_update.txt',
-                    {'source': source, 'action': 'removed', 'remix': self.sound},
-                    user_to=source.user
-                )
             except Sound.DoesNotExist:
                 pass
             except Exception as e:
@@ -143,7 +135,7 @@ class RemixForm(forms.Form):
                 send_mail_template(
                     u'Sound added as remix source', 'sounds/email_remix_update.txt',
                     {'source': source, 'action': 'added', 'remix': self.sound},
-                    user_to=source.user
+                    user_to=source.user, email_type_preference_check='new_remix'
                 )
             except Exception as e:
                 # Report any exception but fail silently

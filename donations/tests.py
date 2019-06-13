@@ -1,17 +1,21 @@
 import datetime
+
+import mock
 from django.contrib.auth.models import User
+from django.core import mail
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
-from django.core.management import call_command
-import mock
-import sounds.models
+
 import donations.models
+import sounds.models
+from accounts.models import EmailPreferenceType, UserEmailSetting
 from sounds.models import License
-import views
 
 
 class DonationTest(TestCase):
-    fixtures = ['licenses']
+
+    fixtures = ['licenses', 'email_preference_type']
 
     def test_non_annon_donation_with_name_paypal(self):
         donations.models.DonationCampaign.objects.create(\
@@ -192,7 +196,6 @@ class DonationTest(TestCase):
         ret = self.client.post("/donations/donate/", data)
         response =  ret.json()
         self.assertTrue('errors' in response)
-
 
     def test_donation_response(self):
         # 200 response on donate page
@@ -388,3 +391,62 @@ class DonationTest(TestCase):
         # Check that now user_a does not receive an email beacuse he donated recently
         self.user_a.profile.refresh_from_db()
         self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+
+    def test_donation_emails_not_sent_when_preference_disabled(self):
+        donation_settings, _ = donations.models.DonationsEmailSettings.objects.get_or_create()
+        TEST_DOWNLOADS_IN_PERIOD = 1
+        donation_settings.downloads_in_period = TEST_DOWNLOADS_IN_PERIOD
+        donation_settings.enabled = True
+        donation_settings.save()
+
+        # Create user a
+        self.user_a = User.objects.create_user(username='user_a', email='user_a@test.com')
+        self.assertIsNone(self.user_a.profile.last_donation_email_sent)
+
+        # Create user b
+        self.user_b = User.objects.create_user(username='user_b', email='user_b@test.com')
+        self.assertIsNone(self.user_b.profile.last_donation_email_sent)
+
+        # Create user c (uploader)
+        self.user_c = User.objects.create_user(username='user_c', email='user_c@test.com')
+        self.assertIsNone(self.user_c.profile.last_donation_email_sent)
+
+        # Simulate a donation from the user (older than donation_settings.minimum_days_since_last_donation)
+        old_donation_date = datetime.datetime.now() - datetime.timedelta(
+            days=donation_settings.minimum_days_since_last_donation + 100)
+        donation = donations.models.Donation.objects.create(
+            user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')
+        # NOTE: use .update(created=...) to avoid field auto_now to take over
+        donations.models.Donation.objects.filter(pk=donation.pk).update(created=old_donation_date)
+
+        # Simulate uploads from user_c
+        for i in range(0, TEST_DOWNLOADS_IN_PERIOD + 1):
+            sounds.models.Sound.objects.create(
+                user=self.user_c,
+                original_filename="Test sound %i" % i,
+                base_filename_slug="test_sound_%i" % i,
+                license=sounds.models.License.objects.all()[0],
+                md5="fakemd5_%i" % i)
+        self.user_c.profile.num_sounds = TEST_DOWNLOADS_IN_PERIOD + 1
+        self.user_c.profile.save()
+
+        # Simulate downloads from user_b
+        for sound in sounds.models.Sound.objects.all():
+            sounds.models.Download.objects.create(user=self.user_b, sound=sound, license=License.objects.first())
+
+        # Set user_a and user_b donation email preference to none
+        # Create email preference object for the email type (which will mean user does not want donation
+        # emails as it is enabled by default and the preference indicates user does not want it).
+        email_pref = EmailPreferenceType.objects.get(name="donation_request")
+        UserEmailSetting.objects.create(user=self.user_a, email_type=email_pref)
+        UserEmailSetting.objects.create(user=self.user_b, email_type=email_pref)
+
+        # Run command for sending donation emails
+        call_command('donations_mails')
+
+        # Check that both user_a and user_b have not received any email because their preferences are set to none
+        self.user_a.profile.refresh_from_db()
+        self.assertIsNone(self.user_a.profile.last_donation_email_sent)
+        self.user_b.profile.refresh_from_db()
+        self.assertIsNone(self.user_b.profile.last_donation_email_sent)
+        self.assertEqual(len(mail.outbox), 0)

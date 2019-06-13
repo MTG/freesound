@@ -293,11 +293,11 @@ class EmailBounceTest(TestCase):
     def test_request_email_change(self):
         user = User.objects.create_user('user', email='user@freesound.org')
         self.client.force_login(user)
-        resp = self.client.get(reverse('front-page'))
+        resp = self.client.get(reverse('accounts-home'))
         self.assertEquals(resp.status_code, 200)
 
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
-        resp = self.client.get(reverse('front-page'))
+        resp = self.client.get(reverse('accounts-home'))
         self.assertRedirects(resp, reverse('accounts-email-reset'))
 
     def test_populate_bounce(self):

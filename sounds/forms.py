@@ -242,7 +242,7 @@ class FlagForm(forms.Form):
                                              ' email address appears to be invalid, please check if it\'s correct.'})
     reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
     reason = forms.CharField(widget=forms.Textarea)
-    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
     def clean_recaptcha_response(self):
         captcha_response = self.cleaned_data.get("recaptcha_response")

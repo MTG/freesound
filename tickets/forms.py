@@ -44,7 +44,7 @@ class UserContactForm(UserMessageForm):
 
 class AnonymousMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea)
-    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
     def clean_recaptcha_response(self):
         captcha_response = self.cleaned_data.get("recaptcha_response")

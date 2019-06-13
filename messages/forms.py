@@ -21,6 +21,8 @@
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _
+
 from utils.forms import CaptchaWidget, HtmlCleaningCharField
 
 
@@ -41,10 +43,11 @@ class MessageReplyForm(forms.Form):
 
 
 class MessageReplyFormWithCaptcha(MessageReplyForm):
-    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
     def clean_recaptcha_response(self):
         captcha_response = self.cleaned_data.get("recaptcha_response")
-        if not captcha_response and settings.RECAPTCHA_PUBLIC_KEY:
-            raise forms.ValidationError(_("Captcha is not correct"))
+        if settings.RECAPTCHA_PUBLIC_KEY:
+            if not captcha_response:
+                raise forms.ValidationError(_("Captcha is not correct"))
         return captcha_response

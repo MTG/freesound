@@ -980,14 +980,12 @@ class SoundOfTheDay(models.Model):
             audio_logger.info("Email was already sent")
             return False
 
-        if self.sound.user.profile.email_not_disabled("random_sound"):
-            send_mail_template(
-                u'One of your sounds has been chosen as random sound of the day!',
-                'sounds/email_random_sound.txt',
-                {'sound': self.sound, 'user': self.sound.user},
-                user_to=self.sound.user)
-            self.email_sent = True
-            self.save()
+        send_mail_template(
+            u'One of your sounds has been chosen as random sound of the day!', 'sounds/email_random_sound.txt',
+            {'sound': self.sound, 'user': self.sound.user},
+            user_to=self.sound.user, email_type_preference_check="random_sound")
+        self.email_sent = True
+        self.save()
 
         audio_logger.info("Finished sending mail to user %s of random sound of the day %s" %
                           (self.sound.user, self.sound))

@@ -682,6 +682,9 @@ class SoundOfTheDayTestCase(TestCase):
     def test_user_disable_email_notifications(self):
         """If the chosen Sound's user has disabled email notifications, don't send an email"""
         sound = Sound.objects.get(id=19)
+
+        # Create email preference object for the email type (which will mean user does not want random sound of the
+        # day emails as it is enabled by default and the preference indicates user does not want it).
         email_pref = accounts.models.EmailPreferenceType.objects.get(name="random_sound")
         accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 

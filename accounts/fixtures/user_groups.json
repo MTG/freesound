@@ -1,59 +1,132 @@
 [
-  {
-    "model":"auth.group",
-    "pk": null,
-    "fields":{
-      "name":"moderators",
-      "permissions":[
-        [
-          "change_comment",
-          "comments",
-          "comment"
-        ],
-        [
-          "delete_comment",
-          "comments",
-          "comment"
-        ],
-        [
-          "change_pack",
-          "sounds",
-          "pack"
-        ],
-        [
-          "delete_pack",
-          "sounds",
-          "pack"
-        ],
-        [
-          "change_sound",
-          "sounds",
-          "sound"
-        ],
-        [
-          "delete_sound",
-          "sounds",
-          "sound"
-        ],
-        [
-          "can_moderate",
-          "tickets",
-          "ticket"
-        ],
-        [
-          "add_userannotation",
-          "tickets",
-          "userannotation"
-        ]
-      ]
-    }
-  },
-  {
+{
     "model": "auth.group",
-    "pk": null,
+    "pk": 3,
     "fields": {
-      "name": "bulk_uploaders",
-      "permissions": [["can_describe_in_bulk", "sounds", "bulkuploadprogress"]]
+        "name": "moderators",
+        "permissions": [
+            [
+                "change_comment",
+                "comments",
+                "comment"
+            ],
+            [
+                "delete_comment",
+                "comments",
+                "comment"
+            ],
+            [
+                "change_pack",
+                "sounds",
+                "pack"
+            ],
+            [
+                "delete_pack",
+                "sounds",
+                "pack"
+            ],
+            [
+                "change_sound",
+                "sounds",
+                "sound"
+            ],
+            [
+                "delete_sound",
+                "sounds",
+                "sound"
+            ],
+            [
+                "can_moderate",
+                "tickets",
+                "ticket"
+            ],
+            [
+                "add_userannotation",
+                "tickets",
+                "userannotation"
+            ]
+        ]
     }
-  }
+},
+{
+    "model": "auth.group",
+    "pk": 6,
+    "fields": {
+        "name": "forum_moderators",
+        "permissions": [
+            [
+                "can_moderate_forum",
+                "forum",
+                "post"
+            ],
+            [
+                "change_post",
+                "forum",
+                "post"
+            ],
+            [
+                "delete_post",
+                "forum",
+                "post"
+            ],
+            [
+                "change_thread",
+                "forum",
+                "thread"
+            ],
+            [
+                "delete_thread",
+                "forum",
+                "thread"
+            ]
+        ]
+    }
+},
+{
+    "model": "auth.group",
+    "pk": 7,
+    "fields": {
+        "name": "wiki",
+        "permissions": [
+            [
+                "add_page",
+                "wiki",
+                "page"
+            ],
+            [
+                "change_page",
+                "wiki",
+                "page"
+            ]
+        ]
+    }
+},
+{
+    "model": "auth.group",
+    "pk": 8,
+    "fields": {
+        "name": "can_edit_users",
+        "permissions": [
+            [
+                "change_user",
+                "auth",
+                "user"
+            ]
+        ]
+    }
+},
+{
+    "model": "auth.group",
+    "pk": 9,
+    "fields": {
+        "name": "bulk_uploaders",
+        "permissions": [
+            [
+                "can_describe_in_bulk",
+                "sounds",
+                "bulkuploadprogress"
+            ]
+        ]
+    }
+}
 ]

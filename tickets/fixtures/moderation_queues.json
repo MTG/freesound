@@ -1,7 +1,7 @@
 [
   {
   "model": "tickets.queue",
-    "pk": null,
+    "pk": 1,
     "fields": {
       "name": "sound moderation",
       "notify_by_email": false,

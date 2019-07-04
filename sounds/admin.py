@@ -98,7 +98,7 @@ class FlagAdmin(admin.ModelAdmin):
 
     def sound_link(self, obj):
         return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
-                                                              truncatechars(obj.sound.original_filename, 50))
+                                                              truncatechars(obj.sound.base_filename_slug, 50))
     sound_link.allow_tags = True
     sound_link.admin_order_field = 'sound__original_filename'
     sound_link.short_description = 'Sound'

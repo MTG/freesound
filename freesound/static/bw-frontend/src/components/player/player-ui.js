@@ -1,55 +1,7 @@
 import playerSettings from './settings'
 import { formatAudioDuration } from './utils'
 import { createIconElement } from '../../utils/icons'
-
-const players = [...document.getElementsByClassName('bw-player')]
-
-const usePlayIcon = parentNode => {
-  const bwPlayBtn = parentNode.getElementsByClassName('bw-player__play-btn')[0]
-  const playerStatusIcon = bwPlayBtn.getElementsByTagName('i')[0]
-  const playIcon = createIconElement('bw-icon-play')
-  bwPlayBtn.replaceChild(playIcon, playerStatusIcon)
-}
-
-const usePauseIcon = parentNode => {
-  const bwPlayBtn = parentNode.getElementsByClassName('bw-player__play-btn')[0]
-  const playerStatusIcon = bwPlayBtn.getElementsByTagName('i')[0]
-  const pauseIcon = createIconElement('bw-icon-pause')
-  bwPlayBtn.replaceChild(pauseIcon, playerStatusIcon)
-}
-
-const usePlayingStatus = (audioElement, parentNode) => {
-  const progressIndicator = parentNode.getElementsByClassName(
-    'bw-player__progress-indicator'
-  )[0]
-  const { duration } = audioElement
-  progressIndicator.style.animationDuration = `${duration}s`
-  progressIndicator.style.animationPlayState = 'running'
-  parentNode.classList.add('bw-player--playing')
-  usePauseIcon(parentNode)
-}
-
-const removePlayingStatus = (audioElement, parentNode) => {
-  parentNode.classList.remove('bw-player--playing')
-  const progressIndicator = parentNode.getElementsByClassName(
-    'bw-player__progress-indicator'
-  )[0]
-  progressIndicator.style.animationPlayState = 'paused'
-  usePlayIcon(parentNode)
-}
-
-const onPlayerTimeUpdate = (audioElement, parentNode) => {
-  const progressStatus = parentNode.getElementsByClassName(
-    'bw-player__progress'
-  )[0]
-  const { duration, currentTime } = audioElement
-  const progress = playerSettings.showRemainingTime
-    ? duration - currentTime
-    : currentTime
-  progressStatus.innerHTML = `${
-    playerSettings.showRemainingTime ? '-' : ''
-  }${formatAudioDuration(progress)}`
-}
+import { createAudioElement } from './audio-element'
 
 const createProgressIndicator = () => {
   const progressIndicator = document.createElement('div')
@@ -67,7 +19,7 @@ const createProgressStatus = audioElement => {
   return progressStatus
 }
 
-const createPlayerControls = (parentNode, audioElement) => {
+const createPlayerControls = audioElement => {
   const playerControls = document.createElement('div')
   playerControls.className = 'bw-player__controls'
   const playButton = document.createElement('button')
@@ -94,7 +46,7 @@ const createWaveformImage = (parentNode, audioElement) => {
   waveformImage.src = waveform
   waveformImage.alt = title
   const progressIndicator = createProgressIndicator()
-  const playerControls = createPlayerControls(parentNode, audioElement)
+  const playerControls = createPlayerControls(audioElement)
   imageContainer.appendChild(waveformImage)
   imageContainer.appendChild(progressIndicator)
   imageContainer.appendChild(playerControls)
@@ -103,31 +55,6 @@ const createWaveformImage = (parentNode, audioElement) => {
     imageContainer.appendChild(progressStatus)
   })
   return imageContainer
-}
-
-const createAudioElement = parentNode => {
-  const { mp3, ogg } = parentNode.dataset
-  const audioElement = document.createElement('audio')
-  audioElement.setAttribute('controls', true)
-  audioElement.setAttribute('controlslist', 'nodownload')
-  const mp3Source = document.createElement('source')
-  mp3Source.setAttribute('src', mp3)
-  mp3Source.setAttribute('type', 'audio/mpeg')
-  const oggSource = document.createElement('source')
-  oggSource.setAttribute('src', ogg)
-  oggSource.setAttribute('type', 'audio/ogg')
-  audioElement.appendChild(mp3Source)
-  audioElement.appendChild(oggSource)
-  audioElement.addEventListener('play', () => {
-    usePlayingStatus(audioElement, parentNode)
-  })
-  audioElement.addEventListener('pause', () => {
-    removePlayingStatus(audioElement, parentNode)
-  })
-  audioElement.addEventListener('timeupdate', () => {
-    onPlayerTimeUpdate(audioElement, parentNode)
-  })
-  return audioElement
 }
 
 const createPlayer = parentNode => {
@@ -139,6 +66,7 @@ const createPlayer = parentNode => {
 }
 
 const setupPlayers = () => {
+  const players = [...document.getElementsByClassName('bw-player')]
   players.forEach(createPlayer)
 }
 

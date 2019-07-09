@@ -240,7 +240,7 @@ def send_activation(user):
         'username': username,
         'hash': uid_hash
     }
-    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, user_to=user)
+    send_mail_template(u'Your activation link.', 'accounts/email_activation.txt', tvars, user_to=user)
 
 
 def resend_activation(request):
@@ -270,7 +270,7 @@ def username_reminder(request):
 
             try:
                 user = User.objects.get(email__iexact=email)
-                send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt',
+                send_mail_template(u'Username reminder.', 'accounts/email_username_reminder.txt',
                                    {'user': user}, user_to=user)
             except User.DoesNotExist:
                 pass
@@ -1164,7 +1164,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     # Send email to the old address notifying about the change
     tvars = {'old_email': old_email, 'user': user}
-    send_mail_template(u'Email reset',
+    send_mail_template(u'Email address changed for account {0}'.format(user.username),
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 
     return render(request, 'accounts/email_reset_complete.html', tvars)

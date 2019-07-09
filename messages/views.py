@@ -146,7 +146,7 @@ def new_message(request, username=None, message_id=None):
                     tvars = {'user_to': user_to,
                              'user_from': user_from}
                     if user_to.profile.email_not_disabled("private_message"):
-                        send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', tvars,
+                        send_mail_template(u'You have a private message.', 'messages/email_new_message.txt', tvars,
                                            user_to=user_to)
                 except:
                     # if the email sending fails, ignore...

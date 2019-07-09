@@ -1,1 +1,0 @@
-{% autoescape off %}Email reset on {{ site_name }}{% endautoescape %}

@@ -1,13 +1,13 @@
 {% extends "accounts/_section.html" %}
 
-{% block title %}E-mail reset{% endblock %}
+{% block title %}Email reset{% endblock %}
 
 {% block content %}
 
-<h1>E-mail update</h1>
+<h1>Email update</h1>
 
 <p> You're currently receiving e-mails at {{ user.email }}.
-    Enter your new e-mail address and your current password in the form below, and we'll e-mail instructions for activation.</p>
+    Enter your new email address and your current password in the form below, and we'll email instructions for activation.</p>
 
 <form action="." method="post">{% csrf_token %}
 

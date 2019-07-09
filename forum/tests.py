@@ -572,4 +572,4 @@ class ForumPageResponses(TestCase):
 
         # Both users are subscribed but the email is not sent to the user that is sending the post
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "[freesound] topic reply notification - Thread 0 of forum 0")
+        self.assertEqual(mail.outbox[0].subject, "[freesound] Topic reply notification - Thread 0 of forum 0")

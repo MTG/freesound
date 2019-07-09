@@ -12,5 +12,6 @@ Please go to the following page to confirm your new email address:
 
 {% absurl 'accounts-email-reset-complete' uid token %}
 
-If you have not requested a change of email, you can safely ignore this email.
+If you have not requested a change of email, please contact us at support@freesound.org so that we can take any needed actions.
+
 {% endblock %}

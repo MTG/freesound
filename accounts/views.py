@@ -240,7 +240,7 @@ def send_activation(user):
         'username': username,
         'hash': uid_hash
     }
-    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, user_to=user)
+    send_mail_template(u'Your activation link.', 'accounts/email_activation.txt', tvars, user_to=user)
 
 
 def resend_activation(request):
@@ -270,7 +270,7 @@ def username_reminder(request):
 
             try:
                 user = User.objects.get(email__iexact=email)
-                send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt',
+                send_mail_template(u'Username reminder.', 'accounts/email_username_reminder.txt',
                                    {'user': user}, user_to=user)
             except User.DoesNotExist:
                 pass
@@ -1090,7 +1090,7 @@ def email_reset(request):
             except User.DoesNotExist:
                 user = None
             # Check password is OK
-            if user == None and request.user.check_password(form.cleaned_data["password"]):
+            if user is None and request.user.check_password(form.cleaned_data["password"]):
                 # Save new email info to DB (temporal)
                 try:
                     rer = ResetEmailRequest.objects.get(user=request.user)
@@ -1102,26 +1102,19 @@ def email_reset(request):
                 # Send email to the new address
                 user = request.user
                 email = form.cleaned_data["email"]
-                current_site = get_current_site(request)
-                site_name = current_site.name
-                domain = current_site.domain
-                c = {
-                    'email': email,
-                    'domain': domain,
-                    'site_name': site_name,
+                tvars = {
                     'uid': int_to_base36(user.id),
                     'user': user,
                     'token': default_token_generator.make_token(user),
-                    'protocol': 'http',
                 }
-                subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
-                subject = ''.join(subject.splitlines())
-                email_body = loader.render_to_string('accounts/email_reset_email.html', c)
-                send_mail(subject, email_body, email_to=email)
+                send_mail_template(u'Email address changed',
+                                   'accounts/email_reset_email.txt', tvars,
+                                   email_to=email)
+
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user=request.user)
-    tvars = {'form': form}
+    tvars = {'form': form, 'user': request.user}
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 
@@ -1130,6 +1123,7 @@ def email_reset_done(request):
 
 
 @never_cache
+@login_required
 @transaction.atomic()
 def email_reset_complete(request, uidb36=None, token=None):
     # Check that the link is valid and the base36 corresponds to a user id
@@ -1138,6 +1132,10 @@ def email_reset_complete(request, uidb36=None, token=None):
         uid_int = base36_to_int(uidb36)
         user = User.objects.get(id=uid_int)
     except (ValueError, User.DoesNotExist):
+        raise Http404
+
+    # Check that the user makind the request is the same user in the base36 data
+    if request.user != user:
         raise Http404
 
     # Retreive the new mail from the DB
@@ -1151,13 +1149,17 @@ def email_reset_complete(request, uidb36=None, token=None):
     user.email = rer.email
     user.save()
 
-    # Remove temporal mail change information ftom the DB
+    # Remove temporal mail change information from the DB
     ResetEmailRequest.objects.get(user=user).delete()
 
     # Clear saved email bounces for old email
     EmailBounce.objects.filter(user=user).delete()
 
+    # Send email to the old address notifying about the change
     tvars = {'old_email': old_email, 'user': user}
+    send_mail_template(u'Email address changed',
+                       'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
+
     return render(request, 'accounts/email_reset_complete.html', tvars)
 
 

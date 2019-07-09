@@ -345,7 +345,7 @@ class ProfileForm(forms.ModelForm):
         return [self['about'], self['signature'], self['sound_signature']]
 
 class EmailResetForm(forms.Form):
-    email = forms.EmailField(label=_("New e-mail address"), max_length=254)
+    email = forms.EmailField(label=_("New email address"), max_length=254)
     password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
 
     def __init__(self, *args, **kwargs):

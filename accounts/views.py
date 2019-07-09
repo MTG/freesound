@@ -1164,7 +1164,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     # Send email to the old address notifying about the change
     tvars = {'old_email': old_email, 'user': user}
-    send_mail_template(u'E-mail reset',
+    send_mail_template(u'Email reset',
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 
     return render(request, 'accounts/email_reset_complete.html', tvars)

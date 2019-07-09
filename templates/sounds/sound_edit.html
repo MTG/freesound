@@ -273,6 +273,9 @@
 
     window.map = make_geotag_edit_map('map_canvas', '{{media_url}}/images/arrow.png', updateLatLonZoomFields, center_lat, center_lon, zoom);
 
+    var centerMapTimer = undefined;
+    var centerMapTimeout = 1000;  // In milliseconds
+
     function updateLatLonZoomFields(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
         $("#{{geotag_form.lon.auto_id}}").val(lon);
         $("#{{geotag_form.lat.auto_id}}").val(lat);
@@ -280,11 +283,20 @@
     }
 
     function centerMapToLatLonZoomFields() {
-        var lat = $("#{{geotag_form.lon.auto_id}}").val();
-        var lon = $("#{{geotag_form.lat.auto_id}}").val();
-        var zoom = $("#{{geotag_form.zoom.auto_id}}").val();
-        window.map.setZoom(parseInt(zoom, 10) - 1);
-        window.map.setCenter([parseFloat(lat), parseFloat(lon)]);
+        // To avoid too many updates of the map, only re-sync it with the contents of the lat, lon and zoom fields
+        // after centerMapTimeout has passed since the last change event
+
+        if (centerMapTimer !== undefined){
+            clearTimeout(centerMapTimer);
+        }
+
+        centerMapTimer = setTimeout(function (){
+            var lat = $("#{{geotag_form.lon.auto_id}}").val();
+            var lon = $("#{{geotag_form.lat.auto_id}}").val();
+            var zoom = $("#{{geotag_form.zoom.auto_id}}").val();
+            window.map.setZoom(parseInt(zoom, 10) - 1);
+            window.map.setCenter([parseFloat(lat), parseFloat(lon)]);
+        }, centerMapTimeout);
     }
 
     $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {
@@ -301,13 +313,13 @@
             $("#{{geotag_form.zoom.auto_id}}").attr('disabled', false);
         }
     });
-    $("#{{geotag_form.lon.auto_id}}").change(function (event) {
+    $("#{{geotag_form.lon.auto_id}}").bind('input', function (event) {
         centerMapToLatLonZoomFields({{forloop.counter}});
     });
-    $("#{{geotag_form.lat.auto_id}}").change(function (event) {
+    $("#{{geotag_form.lat.auto_id}}").bind('input', function (event) {
         centerMapToLatLonZoomFields({{forloop.counter}});
     });
-    $("#{{geotag_form.zoom.auto_id}}").change(function (event) {
+    $("#{{geotag_form.zoom.auto_id}}").bind('input', function (event) {
         centerMapToLatLonZoomFields({{forloop.counter}});
     });
 

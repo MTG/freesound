@@ -47,7 +47,7 @@ class MessageReceivedEmailNotification(TestCase):
         })
         self.assertRedirects(resp, reverse('messages'))
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "[freesound] you have a private message.")
+        self.assertEqual(mail.outbox[0].subject, "[freesound] You have a private message.")
 
     @override_settings(RECAPTCHA_PUBLIC_KEY='')
     def test_message_email_preference_disabled(self):

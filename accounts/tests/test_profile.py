@@ -25,6 +25,7 @@ import mock
 from dateutil.parser import parse as parse_date
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
+from django.core.cache import cache
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import call_command
 from django.test import TestCase
@@ -293,11 +294,12 @@ class EmailBounceTest(TestCase):
     def test_request_email_change(self):
         user = User.objects.create_user('user', email='user@freesound.org')
         self.client.force_login(user)
-        resp = self.client.get(reverse('accounts-home'))
+        cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
+        resp = self.client.get(reverse('front-page'))
         self.assertEquals(resp.status_code, 200)
-
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
-        resp = self.client.get(reverse('accounts-home'))
+        cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
+        resp = self.client.get(reverse('front-page'))
         self.assertRedirects(resp, reverse('accounts-email-reset'))
 
     def test_populate_bounce(self):

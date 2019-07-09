@@ -1046,7 +1046,7 @@ This resource allows the retrieval of a list of sounds uploaded by a particular 
 Response
 --------
 
-Similar Sounds resource returns a sound list just like :ref:`sound-list-response`.
+User Sounds resource returns a sound list just like :ref:`sound-list-response`.
 The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
 
 Examples

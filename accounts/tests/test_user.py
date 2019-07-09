@@ -697,6 +697,19 @@ class ChangeUsernameTest(TestCase):
         self.assertEqual(OldUsername.objects.filter(username='userANewNewName', user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
 
+    def test_change_username_case_insensitiveness(self):
+        """Test that changing the username for a new version of the username with different capitalization does not
+        create a new OldUsername object.
+        """
+        # Create user and login
+        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        self.client.login(username='userA', password='testpass')
+
+        # Rename "userA" to "UserA", should not create OldUsername object
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'UserA']})
+        self.assertRedirects(resp, reverse('accounts-home'))
+        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 0)
+
 
 class UsernameValidatorTest(TestCase):
     """ Makes sure that username validation works as intended """

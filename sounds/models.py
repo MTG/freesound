@@ -490,9 +490,9 @@ class Sound(SocialModel):
                 ),
                 frames=dict(
                     path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.%s" % (
-                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
+                        self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)),
                     url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
-                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
+                        id_folder, self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)
                 )
             )
         )

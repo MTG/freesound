@@ -125,14 +125,27 @@
             $("#id_" + idx0 + "-zoom").val(Math.floor(zoom));
         }
 
+        var centerMapTimers = {};
+        var centerMapTimeout = 1000; // In milliseconds
+
         function centerMapToLatLonZoomFields(n) {
-            var idx = parseInt(n,10);
-            var idx0 = idx - 1; // Get map number
-            var lat = $("#id_" + idx0 + "-lon").val();
-            var lon = $("#id_" + idx0 + "-lat").val();
-            var zoom = $("#id_" + idx0 + "-zoom").val();
-            maps[idx].setZoom(parseInt(zoom, 10) - 1);
-            maps[idx].setCenter([parseFloat(lat), parseFloat(lon)]);
+            // To avoid too many updates of the map, only re-sync it with the contents of the lat, lon and zoom fields
+            // after centerMapTimeout has passed since the last change event
+
+            var idx = parseInt(n, 10);
+
+            if (centerMapTimers[idx] !== undefined){
+                clearTimeout(centerMapTimers[idx]);
+            }
+
+            centerMapTimers[idx] = setTimeout(function (){
+                var idx0 = idx - 1; // Get map number
+                var lat = $("#id_" + idx0 + "-lon").val();
+                var lon = $("#id_" + idx0 + "-lat").val();
+                var zoom = $("#id_" + idx0 + "-zoom").val();
+                maps[idx].setZoom(parseInt(zoom, 10) - 1);
+                maps[idx].setCenter([parseFloat(lat), parseFloat(lon)]);
+            }, centerMapTimeout);
         }
 
         function init_map(n) {
@@ -307,13 +320,13 @@
                                 $("#{{form.geotag.zoom.auto_id}}").attr('disabled', false);
                             }
                         });
-                        $("#{{form.geotag.lon.auto_id}}").change(function (event) {
+                        $("#{{form.geotag.lon.auto_id}}").bind('input', function (event) {
                             centerMapToLatLonZoomFields({{forloop.counter}});
                         });
-                        $("#{{form.geotag.lat.auto_id}}").change(function (event) {
+                        $("#{{form.geotag.lat.auto_id}}").bind('input', function (event) {
                             centerMapToLatLonZoomFields({{forloop.counter}});
                         });
-                        $("#{{form.geotag.zoom.auto_id}}").change(function (event) {
+                        $("#{{form.geotag.zoom.auto_id}}").bind('input', function (event) {
                             centerMapToLatLonZoomFields({{forloop.counter}});
                         });
 

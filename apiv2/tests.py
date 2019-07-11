@@ -276,3 +276,20 @@ class TestSoundCombinedSearchFormAPI(SimpleTestCase):
         form = SoundCombinedSearchFormAPI(data={'target': target})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data['target'], target)
+
+
+class TestSoundListSerializer(TestCase):
+
+    def test_num_fields(self):
+        # TODO: Test that serializer returns only fields included in fields parameter of the request
+        pass
+
+    def test_field_contents(self):
+        # TODO: Test that the content of the fields returned by the serializer is correct
+        pass
+
+    def test_num_queries(self):
+        # TODO: Test that the number of queries performed to the DB when serializing sounds does not change
+        # TODO: depending on the fields we include. Test with the serialization of only 1 sound and also with
+        # TODO: the serialization of N sounds
+        pass

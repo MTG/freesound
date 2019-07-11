@@ -172,7 +172,7 @@ def packs(request):
                      .exclude(is_deleted=True) \
                      .order_by(order)
     tvars = {'order': order}
-    tvars.update(paginate(request, qs, settings.PACKS_PER_PAGE, cache_count=True))
+    tvars.update(paginate(request, qs, settings.PACKS_PER_PAGE))
     return render(request, 'sounds/browse_packs.html', tvars)
 
 

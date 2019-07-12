@@ -103,7 +103,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     url = serializers.SerializerMethodField()
     def get_url(self, obj):
-        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]),
+        username = self.get_username(obj)
+        return prepend_base(reverse('sound', args=[username, obj.id]),
                             request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField()

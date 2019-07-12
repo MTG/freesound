@@ -17,13 +17,16 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, RequestFactory
 from django.urls import reverse
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 
 from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
+from apiv2.serializers import SoundListSerializer, DEFAULT_FIELDS_IN_SOUND_LIST
 from forms import SoundCombinedSearchFormAPI
+from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
 
 from exceptions import BadRequestException
@@ -280,16 +283,57 @@ class TestSoundCombinedSearchFormAPI(SimpleTestCase):
 
 class TestSoundListSerializer(TestCase):
 
-    def test_num_fields(self):
-        # TODO: Test that serializer returns only fields included in fields parameter of the request
-        pass
+    fixtures = ['licenses', 'sounds']
 
-    def test_field_contents(self):
-        # TODO: Test that the content of the fields returned by the serializer is correct
-        pass
+    def setUp(self):
+        self.ss = Sound.objects.all()[0:5]
+        self.sids = [s.id for s in self.ss]
+        self.factory = RequestFactory()
+
+    def test_num_fields(self):
+        # Test that serializer returns only fields included in fields parameter of the request
+
+        sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
+
+        # When 'fields' parameter is not used, return default ones
+        dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': ''})
+        serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+        self.assertItemsEqual(serialized_sound.keys(), DEFAULT_FIELDS_IN_SOUND_LIST.split(','))
+
+        # When only some parameters are specified
+        fields_parameter = 'id,username'
+        dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
+        serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+        self.assertItemsEqual(serialized_sound.keys(), fields_parameter.split(','))
+
+        # When all parameters are specified
+        fields_parameter = ','.join(SoundListSerializer.Meta.fields)
+        dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
+        serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+        self.assertItemsEqual(serialized_sound.keys(), fields_parameter.split(','))
 
     def test_num_queries(self):
-        # TODO: Test that the number of queries performed to the DB when serializing sounds does not change
-        # TODO: depending on the fields we include. Test with the serialization of only 1 sound and also with
-        # TODO: the serialization of N sounds
-        pass
+        # Test that we only perform one DB query when serializing sounds regardless of the number of sounds and the
+        # number of requested fields
+
+        ContentType.objects.get_for_model(Sound)  # Make sure sound content type is cached to avoid further queries
+
+        field_sets = [
+            '',  # default fields
+            ','.join(SoundListSerializer.Meta.fields),  # all fields
+        ]
+
+        # Test when serializing a single sound
+        for field_set in field_sets:
+            with self.assertNumQueries(1):
+                sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0])
+                dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
+                SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request})
+
+        # Test when serializing mulitple sounds
+        for field_set in field_sets:
+            with self.assertNumQueries(1):
+                sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
+                dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
+                for sound in sounds_dict.values():
+                    SoundListSerializer(sound, context={'request': dummy_request})

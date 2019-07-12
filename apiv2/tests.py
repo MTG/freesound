@@ -316,7 +316,8 @@ class TestSoundListSerializer(TestCase):
         # Test that we only perform one DB query when serializing sounds regardless of the number of sounds and the
         # number of requested fields
 
-        ContentType.objects.get_for_model(Sound)  # Make sure sound content type is cached to avoid further queries
+        # Make sure sound content type is cached to avoid further queries
+        ContentType.objects.get_for_model(Sound)
 
         field_sets = [
             '',  # default fields

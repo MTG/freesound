@@ -126,25 +126,33 @@
         }
 
         var centerMapTimers = {};
-        var centerMapTimeout = 1000; // In milliseconds
+        var centerMapTimeout = 500; // In milliseconds
 
         function centerMapToLatLonZoomFields(n) {
             // To avoid too many updates of the map, only re-sync it with the contents of the lat, lon and zoom fields
             // after centerMapTimeout has passed since the last change event
 
             var idx = parseInt(n, 10);
+            var idx0 = idx - 1; // Get map number
+            var lon = $("#id_" + idx0 + "-lon").val();
+            var lat = $("#id_" + idx0 + "-lat").val();
+            var zoom = $("#id_" + idx0 + "-zoom").val();
+            if (!latLonZoomAreValid(lat, lon, zoom)){
+                // If not all paramters are valid and set, map can't be updated and function returns early
+                return;
+            }
+
+            var latLonClipped = clipLatLonRanges(lat, lon);
+            lat = latLonClipped[0];
+            lon = latLonClipped[1];
 
             if (centerMapTimers[idx] !== undefined){
                 clearTimeout(centerMapTimers[idx]);
             }
 
             centerMapTimers[idx] = setTimeout(function (){
-                var idx0 = idx - 1; // Get map number
-                var lat = $("#id_" + idx0 + "-lon").val();
-                var lon = $("#id_" + idx0 + "-lat").val();
-                var zoom = $("#id_" + idx0 + "-zoom").val();
                 maps[idx].setZoom(parseInt(zoom, 10) - 1);
-                maps[idx].setCenter([parseFloat(lat), parseFloat(lon)]);
+                maps[idx].setCenter([parseFloat(lon), parseFloat(lat)]);
             }, centerMapTimeout);
         }
 

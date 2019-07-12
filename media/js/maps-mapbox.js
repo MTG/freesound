@@ -321,6 +321,7 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
       center: initial_center, // starting position as [lng, lat]
       zoom: parseInt(zoom, 10) - 1,  // Subtract 1 for compatibility with gmaps zoom levels
       maxZoom: 18,
+        maxBounds: [[-360,-90],[360,90]]
     });
     map.dragRotate.disable();
     map.touchZoomRotate.disableRotation();
@@ -417,4 +418,23 @@ function toggleMapStyle(idx){
         map.setStyle('mapbox://styles/freesound/' + FREESOUND_STREETS_STYLE_ID);
         $('#' + map_element_id).find('.map_terrain_menu')[0].innerText = 'Show terrain';
     }
+}
+
+function latLonZoomAreValid(lat, lon, zoom){
+    return !(isNaN(lat) || (isNaN(lon)) || (isNaN(zoom) || lat === '' || lon === '' || zoom === ''))
+}
+
+function clipLatLonRanges(lat, lon){
+    if ((lat < -90)){
+        lat = -90;
+    } else if ((lat > 90)){
+        lat = 90;
+    }
+    if ((lon < -180)){
+        lon = -180;
+    } else if ((lon > 180)){
+        lon = 180;
+    }
+
+    return [lat, lon];
 }

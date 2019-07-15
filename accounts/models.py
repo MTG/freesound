@@ -231,39 +231,23 @@ class Profile(SocialModel):
             self.last_stream_email_sent = datetime.datetime.now()
             self.save()
 
-    def get_user_tags(self, use_solr=True):
-        if use_solr:
-            query = SolrQuery()
-            query.set_dismax_query('')
-            filter_query = 'username:\"%s\"' % self.user.username
-            query.set_query_options(field_list=["id"], filter_query=filter_query)
-            query.add_facet_fields("tag")
-            query.set_facet_options("tag", limit=10, mincount=1)
-            solr = Solr(settings.SOLR_URL)
+    def get_user_tags(self):
+        query = SolrQuery()
+        query.set_dismax_query('')
+        filter_query = 'username:\"%s\"' % self.user.username
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        query.add_facet_fields("tag")
+        query.set_facet_options("tag", limit=10, mincount=1)
+        solr = Solr(settings.SOLR_URL)
 
-            try:
-                results = SolrResponseInterpreter(solr.select(unicode(query)))
-            except SolrException as e:
-                return False
-            except Exception as e:
-                return False
+        try:
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+        except SolrException as e:
+            return False
+        except Exception as e:
+            return False
 
-            return [{'name': tag, 'count': count} for tag, count in results.facets['tag']]
-
-        else:
-            return DelayedQueryExecuter("""
-                   SELECT tags_tag.name AS name, X.c AS count
-                     FROM ( SELECT tag_id, count(*) as c
-                              FROM tags_taggeditem
-                         LEFT JOIN sounds_sound ON object_id=sounds_sound.id
-                             WHERE tags_taggeditem.user_id=%d AND
-                                   sounds_sound.moderation_state='OK' AND
-                                   sounds_sound.processing_state='OK'
-                          GROUP BY tag_id
-                          ORDER BY c
-                        DESC LIMIT 10) AS X
-                LEFT JOIN tags_tag ON tags_tag.id=X.tag_id
-                 ORDER BY tags_tag.name;""" % self.user_id)
+        return [{'name': tag, 'count': count} for tag, count in results.facets['tag']]
 
     def is_trustworthy(self):
         """

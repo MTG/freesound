@@ -22,7 +22,7 @@
 	<h3>Uncategorized bookmarks</h3>
     {% endif %}
 
-    {% if bookmarked_sounds %}
+    {% if page.object_list %}
 
 	{% show_paginator paginator page current_page request "bookmark" %}
 

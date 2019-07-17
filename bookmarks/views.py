@@ -54,7 +54,6 @@ def bookmarks(request, username, category_id=None):
     tvars = {'user': user,
              'is_owner': is_owner,
              'n_uncat': n_uncat,
-             'bookmarked_sounds': bookmarked_sounds,
              'category': category,
              'bookmark_categories': bookmark_categories}
     tvars.update(paginate(request, bookmarked_sounds, 30))

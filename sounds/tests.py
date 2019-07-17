@@ -1367,11 +1367,35 @@ class SoundAnalysisModel(TestCase):
         self.assertEquals(sa2.get_analysis().keys(), analysis_data.keys())
         self.assertEquals(sa2.get_analysis()['descriptor1'], 0.56)
 
-        # Create an analysis object which refeences a non-existing file. Check that get_analysis returns None.
+        # Create an analysis object which references a non-existing file. Check that get_analysis returns None.
         sa3 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor3",
                                            analysis_filename='non_existing_file.json')
         self.assertEquals(sound.analyses.all().count(), 3)
         self.assertEquals(sa3.get_analysis(), None)
+
+
+class PublicSoundManagerTest(TestCase):
+    fixtures = ['licenses', 'sounds']
+
+    def test_public_sounds(self):
+        # Sounds.public manager only selects sounds which have
+        # processing state and moderation state set to OK
+        all_sounds = Sound.objects.all()
+        public_sounds = Sound.public.all()
+
+        self.assertEqual(len(all_sounds), len(public_sounds))
+
+        s1 = all_sounds[0]
+        s2 = all_sounds[1]
+        s1.processing_state = 'PE'
+        s1.save()
+        s2.moderation_state = 'PE'
+        s2.save()
+
+        all_sounds = Sound.objects.all()
+        public_sounds = Sound.public.all()
+
+        self.assertEqual(len(all_sounds), len(public_sounds) + 2)
 
 
 class SoundManagerQueryMethods(TestCase):

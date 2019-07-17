@@ -23,7 +23,6 @@ from django.contrib.auth.models import User
 from accounts.models import OldUsername
 from django.http import Http404
 from django.shortcuts import redirect
-from django.core.urlresolvers import NoReverseMatch
 from django.urls import reverse
 
 
@@ -43,7 +42,7 @@ def get_user_from_username_or_oldusername(username):
 def get_user_or_404(username):
     # Helper to get the user from an username or raise 404
     user = get_user_from_username_or_oldusername(username)
-    if user == None:
+    if user is None:
         raise Http404
     return user
 
@@ -56,12 +55,13 @@ def redirect_if_old_username_or_404(func):
     internal URL that require users being logged in. This is because there should not be public links pointing to
     internal URLs.
     """
+
     def inner(request, *args, **kwargs):
         new_user = get_user_or_404(kwargs['username'])
         if kwargs['username'] != new_user.username:
             kwargs['username'] = new_user.username
             return redirect(reverse(inner, args=args, kwargs=kwargs), permanent=True)
+        request.parameter_user = new_user
         return func(request, *args, **kwargs)
+
     return inner
-
-

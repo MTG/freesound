@@ -742,7 +742,7 @@ def attribution(request):
 
 @redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
     page = paginator["page"]
@@ -757,7 +757,7 @@ def downloaded_sounds(request, username):
 
 @redirect_if_old_username_or_404
 def downloaded_packs(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)
     page = paginator["page"]
@@ -856,7 +856,7 @@ def accounts(request):
 
 @redirect_if_old_username_or_404
 def account(request, username):
-    user = User.objects.select_related('profile').get(username__iexact=username)
+    user = request.parameter_user
 
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))

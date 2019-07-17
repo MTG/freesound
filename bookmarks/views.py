@@ -35,7 +35,7 @@ from utils.username import redirect_if_old_username_or_404
 
 @redirect_if_old_username_or_404
 def bookmarks(request, username, category_id=None):
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
 
     is_owner = request.user.is_authenticated and user == request.user
 

@@ -150,7 +150,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     pack_name = serializers.SerializerMethodField()
     def get_pack_name(self, obj):
         try:
-            return obj.pack.name
+            return obj.pack_name
         except AttributeError:
             return None
 

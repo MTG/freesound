@@ -22,6 +22,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -43,12 +44,12 @@ def bookmarks(request, username, category_id=None):
 
     if not category_id:
         category = None
-        bookmarked_sounds = Bookmark.objects.select_related("sound").filter(user=user, category=None)
+        bookmarked_sounds = Bookmark.objects.select_related("sound", "sound__user").filter(user=user, category=None)
     else:
         category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
-        bookmarked_sounds = category.bookmarks.select_related("sound").all()
+        bookmarked_sounds = category.bookmarks.select_related("sound", "sound__user").all()
 
-    bookmark_categories = BookmarkCategory.objects.filter(user=user)
+    bookmark_categories = BookmarkCategory.objects.filter(user=user).annotate(num_bookmarks=Count('bookmarks'))
 
     tvars = {'user': user,
              'is_owner': is_owner,

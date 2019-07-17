@@ -179,9 +179,8 @@ def bulk_license_change(request):
             Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
             for sound in Sound.objects.filter(user=request.user).all():
                 SoundLicenseHistory.objects.create(sound=sound, license=selected_license)
-            Profile.objects.filter(user=request.user).update(has_old_license=False)
-            cache.set('has-old-license-%s' % request.user.id,
-                      [False, Sound.objects.filter(user=request.user).exists()], 2592000)
+            request.user.profile.has_old_license = False
+            request.user.profile.save()
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = NewLicenseForm()

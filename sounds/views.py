@@ -980,7 +980,7 @@ def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
-    qs = PackDownload.objects.filter(pack_id=pack_id)
+    qs = PackDownload.objects.filter(pack_id=pack_id).select_related("user", "user__profile")
     paginator = paginate(request, qs, 32, object_count=pack.num_downloads)
 
     tvars = {'username': username,

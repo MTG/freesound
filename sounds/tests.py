@@ -788,7 +788,7 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check num_sound_downloads in user profile has been updated
             self.user.profile.refresh_from_db()
-            self.assertEquals(self.user.profile.num_sound_downloads, 1)
+            self.assertEqual(self.user.profile.num_sound_downloads, 1)
 
             # Delete all Download objects and check num_download attribute of Sound is 0
             Download.objects.all().delete()
@@ -797,7 +797,7 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check num_sound_downloads in user profile has been updated
             self.user.profile.refresh_from_db()
-            self.assertEquals(self.user.profile.num_sound_downloads, 0)
+            self.assertEqual(self.user.profile.num_sound_downloads, 0)
 
     def test_download_sound_oldusername(self):
         # Test if download works if username changed
@@ -849,7 +849,7 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check num_pack_downloads in user profile has been updated
             self.user.profile.refresh_from_db()
-            self.assertEquals(self.user.profile.num_pack_downloads, 1)
+            self.assertEqual(self.user.profile.num_pack_downloads, 1)
 
             # Delete all Download objects and check num_download attribute of Sound is 0
             PackDownload.objects.all().delete()
@@ -858,7 +858,7 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check num_pack_downloads in user profile has been updated
             self.user.profile.refresh_from_db()
-            self.assertEquals(self.user.profile.num_pack_downloads, 0)
+            self.assertEqual(self.user.profile.num_pack_downloads, 0)
 
     def test_download_pack_oldusername(self):
         # Test if download pack works if username changed
@@ -1292,7 +1292,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Check remix icon being absent
         self.sound.refresh_from_db()
-        self.assertEquals(self.sound.remix_group.count(), 0)
+        self.assertEqual(self.sound.remix_group.count(), 0)
         self.assertFalse(check_present())
 
     def test_add_remove_remixes_display(self):
@@ -1353,9 +1353,9 @@ class SoundAnalysisModel(TestCase):
 
         # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
         sa = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor1", analysis_data=analysis_data)
-        self.assertEquals(sound.analyses.all().count(), 1)
-        self.assertEquals(sa.get_analysis().keys(), analysis_data.keys())
-        self.assertEquals(sa.get_analysis()['descriptor1'], 0.56)
+        self.assertEqual(sound.analyses.all().count(), 1)
+        self.assertEqual(sa.get_analysis().keys(), analysis_data.keys())
+        self.assertEqual(sa.get_analysis()['descriptor1'], 0.56)
 
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
         analysis_filename = '%i_testextractor_out.json'
@@ -1363,15 +1363,15 @@ class SoundAnalysisModel(TestCase):
         os.mkdir(sound_analysis_folder)
         json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
         sa2 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor2", analysis_filename=analysis_filename)
-        self.assertEquals(sound.analyses.all().count(), 2)
-        self.assertEquals(sa2.get_analysis().keys(), analysis_data.keys())
-        self.assertEquals(sa2.get_analysis()['descriptor1'], 0.56)
+        self.assertEqual(sound.analyses.all().count(), 2)
+        self.assertEqual(sa2.get_analysis().keys(), analysis_data.keys())
+        self.assertEqual(sa2.get_analysis()['descriptor1'], 0.56)
 
         # Create an analysis object which refeences a non-existing file. Check that get_analysis returns None.
         sa3 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor3",
                                            analysis_filename='non_existing_file.json')
-        self.assertEquals(sound.analyses.all().count(), 3)
-        self.assertEquals(sa3.get_analysis(), None)
+        self.assertEqual(sound.analyses.all().count(), 3)
+        self.assertEqual(sa3.get_analysis(), None)
 
 
 class SoundManagerQueryMethods(TestCase):

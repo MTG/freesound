@@ -291,12 +291,12 @@ class UserEmailsUniqueTestCase(TestCase):
         self.user_c.save()
         resp = self.client.post(reverse('login'), follow=True,
                                 data={'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
-        self.assertEquals(resp.redirect_chain[0][0],
+        self.assertEqual(resp.redirect_chain[0][0],
                           reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
-        self.assertEquals(resp.redirect_chain[1][0], reverse('messages'))
+        self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
 
         # Also check that related SameUser objects have been removed
-        self.assertEquals(SameUser.objects.all().count(), 0)
+        self.assertEqual(SameUser.objects.all().count(), 0)
 
         resp = self.client.get(reverse('logout'))
         # Now next time user_c tries to go to messages again, there is only one redirect (like for user_a)
@@ -318,16 +318,16 @@ class UserEmailsUniqueTestCase(TestCase):
         self.user_b.save()
         resp = self.client.post(reverse('login'), follow=True,
                                 data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertEquals(resp.redirect_chain[0][0],
+        self.assertEqual(resp.redirect_chain[0][0],
                           reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
-        self.assertEquals(resp.redirect_chain[1][0], reverse('messages'))
+        self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
 
         # Check that user_c email was changed
         self.user_c = User.objects.get(id=self.user_c.id)  # Reload user from db
-        self.assertEquals(self.user_c.email, self.original_shared_email)
+        self.assertEqual(self.user_c.email, self.original_shared_email)
 
         # Also check that related SameUser objects have been removed
-        self.assertEquals(SameUser.objects.all().count(), 0)
+        self.assertEqual(SameUser.objects.all().count(), 0)
 
         resp = self.client.get(reverse('logout'))
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
@@ -350,16 +350,16 @@ class UserEmailsUniqueTestCase(TestCase):
         self.user_c.save()
         resp = self.client.post(reverse('login'), follow=True,
                                 data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertEquals(resp.redirect_chain[0][0],
+        self.assertEqual(resp.redirect_chain[0][0],
                           reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
-        self.assertEquals(resp.redirect_chain[1][0], reverse('messages'))
+        self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
 
         # Check that user_c email was not changed
         self.user_c = User.objects.get(id=self.user_c.id)  # Reload user from db
-        self.assertEquals(self.user_c.email, 'new2w@email.com')
+        self.assertEqual(self.user_c.email, 'new2w@email.com')
 
         # Also check that related SameUser objects have been removed
-        self.assertEquals(SameUser.objects.all().count(), 0)
+        self.assertEqual(SameUser.objects.all().count(), 0)
 
         resp = self.client.get(reverse('logout'))
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
@@ -377,17 +377,17 @@ class UserEmailsUniqueTestCase(TestCase):
         # Here we test that when we send an email to users that have SameUser objects we chose the right email address
 
         # user_a has no SameUser objects, emails should be sent directly to his address
-        self.assertEquals(self.user_a.profile.get_email_for_delivery(), self.user_a.email)
+        self.assertEqual(self.user_a.profile.get_email_for_delivery(), self.user_a.email)
 
         # user_b has SameUser with user_c, but user_b is main user so emails should be sent directly to his address
-        self.assertEquals(self.user_b.profile.get_email_for_delivery(), self.user_b.email)
+        self.assertEqual(self.user_b.profile.get_email_for_delivery(), self.user_b.email)
 
         # user_c should get emails at user_b email address (user_b is main user)
-        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_b.email)
+        self.assertEqual(self.user_c.profile.get_email_for_delivery(), self.user_b.email)
 
         # If we remove SameUser entries, email of user_c is sent directly to his address
         SameUser.objects.all().delete()
-        self.assertEquals(self.user_c.profile.get_email_for_delivery(), self.user_c.email)
+        self.assertEqual(self.user_c.profile.get_email_for_delivery(), self.user_c.email)
 
 
 class PasswordReset(TestCase):

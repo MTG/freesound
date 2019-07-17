@@ -274,7 +274,7 @@ class DonationTest(TestCase):
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
-        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+        self.assertEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
 
         # Check that user_b has received an email
         self.user_b.profile.refresh_from_db()
@@ -294,11 +294,11 @@ class DonationTest(TestCase):
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
-        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+        self.assertEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
 
         # Check that user_b has not received any new email
         self.user_b.profile.refresh_from_db()
-        self.assertEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+        self.assertEqual(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
 
         # Check that user_c has not received any new email (because he's an uploader)
         self.user_c.profile.refresh_from_db()
@@ -313,11 +313,11 @@ class DonationTest(TestCase):
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
-        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+        self.assertEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
 
         # Check that user_b has not received any new email
         self.user_b.profile.refresh_from_db()
-        self.assertEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+        self.assertEqual(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
 
         # Check that now user_c has been sent an email
         self.user_c.profile.refresh_from_db()
@@ -353,15 +353,15 @@ class DonationTest(TestCase):
 
         # Check that user_a has not received any new email (no new downloads)
         self.user_a.profile.refresh_from_db()
-        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+        self.assertEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
 
         # Check that user_b has not received any new email (no new downloads)
         self.user_b.profile.refresh_from_db()
-        self.assertEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+        self.assertEqual(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
 
         # Check that user_c has not received any new email (no new downloads)
         self.user_c.profile.refresh_from_db()
-        self.assertEquals(self.user_c.profile.last_donation_email_sent, user_c_last_donation_email_sent)
+        self.assertEqual(self.user_c.profile.last_donation_email_sent, user_c_last_donation_email_sent)
 
         # Now simulate downloads for all users and check again
         for sound in sounds.models.Sound.objects.all():
@@ -374,16 +374,16 @@ class DonationTest(TestCase):
 
         # Check that user_a has received new email
         self.user_a.profile.refresh_from_db()
-        self.assertNotEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+        self.assertNotEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
         user_a_last_donation_email_sent = self.user_a.profile.last_donation_email_sent
 
         # Check that user_b has received new email
         self.user_b.profile.refresh_from_db()
-        self.assertNotEquals(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
+        self.assertNotEqual(self.user_b.profile.last_donation_email_sent, user_b_last_donation_email_sent)
 
         # Check that user_c has not received any new email (he is an uploader)
         self.user_c.profile.refresh_from_db()
-        self.assertEquals(self.user_c.profile.last_donation_email_sent, user_c_last_donation_email_sent)
+        self.assertEqual(self.user_c.profile.last_donation_email_sent, user_c_last_donation_email_sent)
 
         # Simulate user_a makes a new donation and then downloads some sounds
         donations.models.Donation.objects.create(
@@ -399,4 +399,4 @@ class DonationTest(TestCase):
 
         # Check that now user_a does not receive an email beacuse he donated recently
         self.user_a.profile.refresh_from_db()
-        self.assertEquals(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
+        self.assertEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)

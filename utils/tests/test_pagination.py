@@ -37,11 +37,11 @@ class PaginationTest(TestCase):
         with self.assertNumQueries(2):
             paginator = CountProvidedPaginator(sounds, 10)
             # Call count twice, should only run one query
-            self.assertEquals(paginator.count, 14)
-            self.assertEquals(paginator.count, 14)
+            self.assertEqual(paginator.count, 14)
+            self.assertEqual(paginator.count, 14)
             # and another query to evaluate the page. Call len() to force the qs to be evaluated
             first_page = paginator.page(1)
-            self.assertEquals(len(first_page), 10)
+            self.assertEqual(len(first_page), 10)
 
     def test_pagination_provide_object_count(self):
         """If you pass a count into the paginator it won't call .count() on the queryset to
@@ -52,8 +52,8 @@ class PaginationTest(TestCase):
         with self.assertNumQueries(1):
             paginator = CountProvidedPaginator(sounds, 10, object_count=14)
             # Calls to .count will return the right value but won't cause a query to run
-            self.assertEquals(paginator.count, 14)
-            self.assertEquals(paginator.count, 14)
+            self.assertEqual(paginator.count, 14)
+            self.assertEqual(paginator.count, 14)
             # This should be the only query that runs, call len() to force the qs to be evaluated
             first_page = paginator.page(1)
-            self.assertEquals(len(first_page), 10)
+            self.assertEqual(len(first_page), 10)

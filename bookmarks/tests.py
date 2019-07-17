@@ -84,7 +84,7 @@ class BookmarksTest(TestCase):
         response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(3, len(response.context['bookmarked_sounds']))
+        self.assertEqual(3, len(response.context['bookmarked_sounds']))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Uncategorized bookmarks')
         self.assertContains(response, 'BookmarkedSound')
@@ -126,7 +126,7 @@ class BookmarksTest(TestCase):
                                            kwargs={'username': user.username, 'category_id': category.id}))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(2, len(response.context['bookmarked_sounds']))
+        self.assertEqual(2, len(response.context['bookmarked_sounds']))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')
@@ -156,7 +156,7 @@ class BookmarksTest(TestCase):
         self.assertEqual(200, response.status_code)
 
 
-        self.assertEquals(2, len(response.context['bookmarked_sounds']))
+        self.assertEqual(2, len(response.context['bookmarked_sounds']))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')

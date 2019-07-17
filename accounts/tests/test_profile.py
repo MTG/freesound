@@ -296,7 +296,7 @@ class EmailBounceTest(TestCase):
         self.client.force_login(user)
         cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
         resp = self.client.get(reverse('front-page'))
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
         cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
         resp = self.client.get(reverse('front-page'))
@@ -317,7 +317,7 @@ class EmailBounceTest(TestCase):
     def test_idna_email(self):
         encoded_email = u'user@xn--eb-tbv.de'
         decoded_email = u'user@\u2211eb.de'
-        self.assertEquals(decoded_email, decode_idna_email(encoded_email))
+        self.assertEqual(decoded_email, decode_idna_email(encoded_email))
 
 
 class ProfileEmailIsValid(TestCase):

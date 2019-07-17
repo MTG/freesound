@@ -255,7 +255,7 @@ class BulkDescribe(TestCase):
         # Test that chosing option to delete existing BulkUploadProgress really does it
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=delete')
         self.assertRedirects(resp, reverse('accounts-describe'))  # Redirects to describe page after delete
-        self.assertEquals(BulkUploadProgress.objects.filter(user=user).count(), 0)
+        self.assertEqual(BulkUploadProgress.objects.filter(user=user).count(), 0)
 
         # Test that chosing option to start describing files triggers bulk describe gearmnan job
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")

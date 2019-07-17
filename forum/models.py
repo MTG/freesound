@@ -21,6 +21,7 @@
 #
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models, transaction
 from django.db.models import F
 from django.urls import reverse
@@ -35,6 +36,7 @@ import accounts
 import logging
 
 logger = logging.getLogger('web')
+
 
 class Forum(OrderedModel):
 
@@ -173,6 +175,7 @@ class Post(models.Model):
         ("OK", _('OK')),
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
+    flags = GenericRelation('accounts.UserFlag')
 
     class Meta:
         ordering = ('created',)

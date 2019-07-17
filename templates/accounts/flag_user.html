@@ -1,8 +1,4 @@
-
-{% if no_show %}
-    <!-- do noting -->
-{% else %}
-    {% if user_sounds < 1 %}
+{% if show %}
 
     <script type="text/javascript">
 
@@ -32,7 +28,7 @@
             $("#" + id.toString() + "_link").html("");
             $("#" + id.toString() + "_info").html("<span style='color:green'>Spam/Offensive report sent!</span>");
             setTimeout(function() {
-                $("#" + id.toString() + "_info").hide()
+                $("#" + id.toString() + "_info").hide();
                 $("#" + id.toString() + "_link").html("<span style='color:#808080;'>{{ done_text }}</span>");
             }, 2000);
         }
@@ -41,7 +37,7 @@
             $("#" + id.toString() + "_link").html("");
             $("#" + id.toString() + "_info").html("<span style='color:red'>Some error occurred! Try again later...</span>")
             setTimeout(function() {
-                $("#" + id.toString() + "_info").hide()
+                $("#" + id.toString() + "_info").hide();
                 $("#" + id.toString() + "_link").html("<span style='color:#808080;'>Spam/Offensive reporting failed</span>");
             }, 2000);
         }
@@ -64,5 +60,4 @@
         {% endcomment %}
     </span>
 
-    {% endif %}
 {% endif %}

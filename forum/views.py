@@ -23,6 +23,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
+from django.db.models import Sum, Case, When, IntegerField
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render, get_object_or_404, redirect
@@ -54,9 +55,9 @@ class last_action(object):
         self.view_func = view_func
         self.__name__ = view_func.__name__
         self.__doc__ = view_func.__doc__
-    
+
     def __call__(self, request, *args, **kwargs):
-        
+
         if not request.user.is_authenticated:
             return self.view_func(request, *args, **kwargs)
 
@@ -64,9 +65,9 @@ class last_action(object):
         date_format = "%Y-%m-%d %H:%M:%S:%f"
         date2string = lambda date: date.strftime(date_format)
         string2date = lambda date_string: datetime.strptime(date_string, date_format)
-        
+
         key = "forum-last-visited"
-        
+
         now = datetime.now()
         now_as_string = date2string(now)
 
@@ -112,8 +113,22 @@ def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
 
-    paginator = paginate(request, Post.objects.select_related('author', 'author__profile').filter(
-        thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE)
+    qs = Post.objects.select_related('author', 'author__profile').filter(
+        thread=thread, moderation_state="OK")
+
+    # If the user is logged in, we may show an indicator to report a comment as spam.
+    # Here we check if the user has already reported a specific comment as spam, only if they're
+    # logged in (to save doing this query if it's an anonymous user)
+    # TODO: This can be replaced by Conditional Aggregation in Django 2
+    #       https://docs.djangoproject.com/en/2.2/ref/models/conditional-expressions/#conditional-aggregation
+    if request.user.is_authenticated:
+        qs = qs.annotate(num_flags=Sum(Case(
+            When(flags__reporting_user=request.user, then=1),
+            default=0,
+            output_field=IntegerField()
+        )))
+
+    paginator = paginate(request, qs, settings.FORUM_POSTS_PER_PAGE)
 
     has_subscription = False
     # a logged in user watching a thread can activate his subscription to that thread!
@@ -171,7 +186,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     else:
         post = None
         quote = ""
-    
+
     latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum')\
                        .order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()

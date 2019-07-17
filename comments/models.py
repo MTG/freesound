@@ -19,12 +19,11 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-import sounds
-from django.contrib.auth.models import User
-from django.contrib.contenttypes import fields
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models.signals import post_delete
+
+import sounds
 
 
 class Comment(models.Model):
@@ -33,6 +32,7 @@ class Comment(models.Model):
     comment = models.TextField()
     parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    flags = GenericRelation('accounts.UserFlag')
 
     def __unicode__(self):
         return u"%s comment on %s" % (self.user, self.sound)

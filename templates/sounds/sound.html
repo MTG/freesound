@@ -120,7 +120,7 @@
                     {{comment.comment|replace_img|safe|linebreaks}}
 
                     <div style="text-align: right; font-size: 10px; margin-bottom: -8px">
-                        {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                        {% flag_user "SC" comment comment.user %}
                     </div>
 
                 </li>

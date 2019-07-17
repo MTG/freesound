@@ -43,7 +43,7 @@ from utils.pagination import paginate
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
-        
+
         # get all message ids in the format `cb_[number]` which have a value of 'on'
         message_ids = []
         for key, val in request.POST.items():
@@ -120,7 +120,7 @@ def new_message(request, username=None, message_id=None):
         form_class = MessageReplyForm
     else:
         form_class = MessageReplyFormWithCaptcha
-    
+
     if request.method == 'POST':
         form = form_class(request.POST)
 
@@ -161,7 +161,7 @@ def new_message(request, username=None, message_id=None):
 
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
-                
+
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = ''.join(BeautifulSoup(body).findAll(text=True))
                 body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))

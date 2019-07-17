@@ -23,7 +23,7 @@
 		{{message.body.body|smileys|safe|linebreaks}}
 	</div>
 	<span class="reply_button"><a href="{% url "message-reply" message.id %}">Reply</a></span>
-    <div style="font-size: 11px;font-weight: normal;margin-left: 5px">{% flag_user "PM" message.user_from.username message.id "" message.user_from.profile.num_sounds %}</div>
+    <div style="font-size: 11px;font-weight: normal;margin-left: 5px">{% flag_user "PM" message message.user_from %}</div>
 </div>
 
 {% endblock %}

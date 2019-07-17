@@ -33,7 +33,7 @@ from django.contrib.auth.models import User, Group
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField, Sum
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect, JsonResponse
@@ -288,6 +288,18 @@ def sound(request, username, sound_id):
 
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
+
+    # If the user is logged in, we may show an indicator to report a comment as spam.
+    # Here we check if the user has already reported a specific comment as spam, only if they're
+    # logged in (to save doing this query if it's an anonymous user)
+    # TODO: This can be replaced by Conditional Aggregation in Django 2
+    #       https://docs.djangoproject.com/en/2.2/ref/models/conditional-expressions/#conditional-aggregation
+    if request.user.is_authenticated:
+        qs = qs.annotate(num_flags=Sum(Case(
+            When(flags__reporting_user=request.user, then=1),
+            default=0,
+            output_field=IntegerField()
+        )))
     display_random_link = request.GET.get('random_browsing', False)
     is_following = False
     if request.user.is_authenticated:

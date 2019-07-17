@@ -21,6 +21,7 @@
 #
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.encoding import smart_unicode
 
@@ -86,23 +87,24 @@ class Message(models.Model):
 
     user_from = models.ForeignKey(User, related_name='messages_sent')
     user_to = models.ForeignKey(User, related_name='messages_received')
-    
+
     subject = models.CharField(max_length=128)
-    
+
     body = models.ForeignKey(MessageBody)
 
     is_sent = models.BooleanField(default=True, db_index=True)
     is_read = models.BooleanField(default=False, db_index=True)
     is_archived = models.BooleanField(default=False, db_index=True)
-    
+
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+    flags = GenericRelation('accounts.UserFlag')
+
     def get_absolute_url(self):
         return "message", (smart_unicode(self.id),)
 
     def __unicode__(self):
         return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
-    
+
     class Meta:
         ordering = ('-created',)
 

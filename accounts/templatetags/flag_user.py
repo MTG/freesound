@@ -19,32 +19,36 @@
 #
 
 from django import template
+
 from accounts.models import UserFlag
+
 register = template.Library()
 
 
 @register.inclusion_tag("accounts/flag_user.html", takes_context=True)
-def flag_user(context, flag_type, username, content_id, text = None, user_sounds = None):
-
-    no_show = False
+def flag_user(context, flag_type, item, content_user):
+    show = True
     link_text = "Report spam/offensive"
 
-    if not context['request'].user.is_authenticated:
-        no_show = True
-        flagged = []
+    if hasattr(item, 'num_flags'):
+        flagged = item.num_flags > 0
     else:
-        flagged = UserFlag.objects.filter(user__username=username,
+        # TODO: Bug here that only checks the object id and not the content type id
+        flagged = UserFlag.objects.filter(user=content_user,
                                           reporting_user=context['request'].user,
-                                          object_id=content_id).values('reporting_user').distinct()
-        if text:
-            link_text = text
+                                          object_id=item.id).exists()
 
-    return {'user_sounds': user_sounds,
+    if not context['request'].user.is_authenticated:
+        show = False
+
+    show = show and content_user.profile.is_trustworthy()
+
+    return {
             'done_text': "Marked as spam/offensive",
-            'flagged': len(flagged),
+            'flagged': flagged,
             'flag_type': flag_type,
-            'username': username,
-            'content_obj_id': content_id,
+            'username': content_user.username,
+            'content_obj_id': item.id,
             'media_url': context['media_url'],
             'link_text': link_text,
-            'no_show': no_show}
+            'show': show}

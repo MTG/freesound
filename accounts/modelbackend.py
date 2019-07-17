@@ -17,20 +17,22 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.backends import ModelBackend
+
+UserModel = get_user_model()
 
 
 class CustomModelBackend(ModelBackend):
 
     def authenticate(self, request, username=None, password=None, **kwargs):
         """ authenticate against case insensitive username or email
-        
+
         In case there is an @ sign in the provided username field, it is likely that
         the user is trying to authenticate by providing an email+password pair (rather than
         username+password). In that case, we first try to authenticate using the email and
-        if it does not succeed we try to eithenticate using username. We do email first
+        if it does not succeed we try to authenticate using username. We do email first
         because it could happen that a_user.username == another_user.email (if a_user.username
         contains an @ and has email form). If that was the case, then another_user would not
         be able to login using email.
@@ -57,3 +59,13 @@ class CustomModelBackend(ModelBackend):
             pass
 
         return None
+
+    def get_user(self, user_id):
+        """A custom get_user method which additionally selects the user profile in the same query.
+        This means that most pages that check a field on the profile will no longer have to
+        perform an additional query to get the profile."""
+        try:
+            user = UserModel._default_manager.select_related("profile").get(pk=user_id)
+        except UserModel.DoesNotExist:
+            return None
+        return user if self.user_can_authenticate(user) else None

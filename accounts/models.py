@@ -34,7 +34,6 @@ from django.urls import reverse
 from general.models import SocialModel
 from geotags.models import GeoTag
 from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
-from utils.sql import DelayedQueryExecuter
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from forum.models import Post, Thread

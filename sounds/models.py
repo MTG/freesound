@@ -37,7 +37,6 @@ from django.urls import reverse
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
-from utils.sql import DelayedQueryExecuter
 from utils.cache import invalidate_template_cache
 from utils.text import slugify
 from utils.locations import locations_decorator
@@ -84,34 +83,41 @@ class License(OrderedModel):
 
 class SoundManager(models.Manager):
 
-    def latest_additions(self, num_sounds, period='2 weeks', use_interval=True):
+    def latest_additions(self, num_sounds, period_days=5):
         if settings.DEBUG:
-            # If in DEBUG mode it is likely that database does not contain sounds in the requested period. To compensate
-            # that we never use the interval filter in DEBUG mode and instead get the `num_sounds` latest additions.
-            use_interval = False
-        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) \
-            if use_interval else ""
+            # In DEBUG mode we probably won't have any sounds from the requested period, so we
+            # see what the most recent sound and go back from then instead
+            latest_sound = Sound.public.order_by('-created').first()
+            date_threshold = latest_sound.created
+        else:
+            date_threshold = datetime.datetime.now()
+
+        date_threshold = date_threshold - datetime.timedelta(days=period_days)
+
+        # We leave the `greatest(created, moderation_date)` condition in the query because in combination
+        # with an index in the table this give us fast lookups. If we remove it, postgres resorts to
+        # a table scan.
         query = """
                 select
-                    username,
-                    sound_id,
-                    extra
+                    user_id,
+                    id,
+                    n_other_sounds
                 from (
                 select
-                    (select username from auth_user where auth_user.id = user_id) as username,
-                    max(id) as sound_id,
+                    user_id,
+                    max(id) as id,
                     greatest(max(created), max(moderation_date)) as created,
-                    count(*) - 1 as extra
+                    count(*) - 1 as n_other_sounds
                 from
                     sounds_sound
                 where
                     processing_state = 'OK' and
                     moderation_state = 'OK'
-                    %s
+                    and greatest(created, moderation_date) > %s
                 group by
                     user_id
-                ) as X order by created desc limit %d;""" % (interval_query, num_sounds)
-        return DelayedQueryExecuter(query)
+                ) as X order by created desc limit %s"""
+        return self.raw(query, (date_threshold.isoformat(), num_sounds))
 
     def random(self, excludes=None):
         """ Select a random sound from the database which is suitable for display.
@@ -671,12 +677,12 @@ class Sound(SocialModel):
             self.save()
 
             if new_state != 'OK':
-                # If the mdoeration state changed and now the sound is not moderated OK, delete it from indexes
+                # If the moderation state changed and now the sound is not moderated OK, delete it from indexes
                 self.delete_from_indexes()
 
             if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
                 # Sound either passed from being approved to not being approved, or from not being approved to
-                # being appoved. In that case we need to update num_sounds counts of sound's author and pack (if any)
+                # being approved. In that case we need to update num_sounds counts of sound's author and pack (if any)
                 self.user.profile.update_num_sounds()
                 if self.pack:
                     self.pack.process()

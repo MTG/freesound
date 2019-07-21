@@ -10,24 +10,50 @@ const useActionIcon = (parentNode, action) => {
   bwPlayBtn.replaceChild(pauseIcon, playerStatusIcon)
 }
 
-const usePlayingStatus = (audioElement, parentNode) => {
+/**
+ * @param {number} progressPercentage
+ * @param {HTMLDivElement} parentNode
+ */
+export const setProgressIndicator = (progressPercentage, parentNode) => {
   const progressIndicator = parentNode.getElementsByClassName(
     'bw-player__progress-indicator'
   )[0]
-  const { duration } = audioElement
-  progressIndicator.style.animationDuration = `${duration}s`
-  progressIndicator.style.animationPlayState = 'running'
-  parentNode.classList.add('bw-player--playing')
-  useActionIcon(parentNode, 'pause')
+  progressIndicator.style.transform = `translateX(${-100 +
+    progressPercentage}%)`
 }
 
-const removePlayingStatus = parentNode => {
+/**
+ * @param {HTMLAudioElement} audioElement
+ * @param {HTMLDivElement} parentNode
+ */
+const usePlayingAnimation = (audioElement, parentNode) => {
+  const { duration, currentTime } = audioElement
+  const progress = Math.ceil((currentTime / duration) * 100)
+  setProgressIndicator(progress, parentNode)
+  if (!audioElement.paused) {
+    window.requestAnimationFrame(() =>
+      usePlayingAnimation(audioElement, parentNode)
+    )
+  }
+}
+
+const usePlayingStatus = (audioElement, parentNode) => {
+  parentNode.classList.add('bw-player--playing')
+  useActionIcon(parentNode, 'pause')
+  requestAnimationFrame(() => usePlayingAnimation(audioElement, parentNode))
+}
+
+/**
+ * @param {HTMLDivElement} parentNode
+ * @param {HTMLAudioElement} audioElement
+ */
+const removePlayingStatus = (parentNode, audioElement) => {
   parentNode.classList.remove('bw-player--playing')
-  const progressIndicator = parentNode.getElementsByClassName(
-    'bw-player__progress-indicator'
-  )[0]
-  progressIndicator.style.animationPlayState = 'paused'
   useActionIcon(parentNode, 'play')
+  const didReachTheEnd = audioElement.duration === audioElement.currentTime
+  if (didReachTheEnd) {
+    setTimeout(() => setProgressIndicator(0, parentNode), 100)
+  }
 }
 
 const onPlayerTimeUpdate = (audioElement, parentNode) => {
@@ -44,7 +70,7 @@ const onPlayerTimeUpdate = (audioElement, parentNode) => {
 }
 
 /**
- * @param {HTMLDivElement} parentNode 
+ * @param {HTMLDivElement} parentNode
  * @returns {HTMLAudioElement}
  */
 export const createAudioElement = parentNode => {
@@ -64,7 +90,7 @@ export const createAudioElement = parentNode => {
     usePlayingStatus(audioElement, parentNode)
   })
   audioElement.addEventListener('pause', () => {
-    removePlayingStatus(parentNode)
+    removePlayingStatus(parentNode, audioElement)
   })
   audioElement.addEventListener('timeupdate', () => {
     onPlayerTimeUpdate(audioElement, parentNode)

@@ -2,7 +2,7 @@
 import playerSettings from './settings'
 import { formatAudioDuration } from './utils'
 import { createIconElement } from '../../utils/icons'
-import { createAudioElement } from './audio-element'
+import { createAudioElement, setProgressIndicator } from './audio-element'
 
 const createProgressIndicator = () => {
   const progressIndicator = document.createElement('div')
@@ -53,12 +53,14 @@ const createPlayButton = audioElement => {
 
 /**
  * @param {HTMLAudioElement} audioElement
+ * @param {HTMLDivElement} parentNode
  */
-const createStopButton = audioElement => {
+const createStopButton = (audioElement, parentNode) => {
   const stopButton = createControlButton('stop')
   stopButton.addEventListener('click', () => {
     audioElement.pause()
     audioElement.currentTime = 0
+    setProgressIndicator(0, parentNode)
   })
   return stopButton
 }
@@ -83,11 +85,11 @@ const createLoopButton = audioElement => {
 /**
  * @param {HTMLAudioElement} audioElement
  */
-const createPlayerControls = audioElement => {
+const createPlayerControls = (audioElement, parentNode) => {
   const playerControls = document.createElement('div')
   playerControls.className = 'bw-player__controls'
   const playButton = createPlayButton(audioElement)
-  const stopButton = createStopButton(audioElement)
+  const stopButton = createStopButton(audioElement, parentNode)
   const loopButton = createLoopButton(audioElement)
   const controls = [playButton, stopButton, loopButton]
   controls.forEach(el => playerControls.appendChild(el))
@@ -103,7 +105,7 @@ const createWaveformImage = (parentNode, audioElement) => {
   waveformImage.src = waveform
   waveformImage.alt = title
   const progressIndicator = createProgressIndicator()
-  const playerControls = createPlayerControls(audioElement)
+  const playerControls = createPlayerControls(audioElement, parentNode)
   imageContainer.appendChild(waveformImage)
   imageContainer.appendChild(progressIndicator)
   imageContainer.appendChild(playerControls)

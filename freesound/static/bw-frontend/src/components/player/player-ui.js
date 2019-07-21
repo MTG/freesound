@@ -29,7 +29,7 @@ const createProgressStatus = audioElement => {
  */
 const createControlButton = action => {
   const controlButton = document.createElement('button')
-  controlButton.className = 'no-border-bottom-on-hover'
+  controlButton.className = 'no-border-bottom-on-hover bw-player-control-btn'
   controlButton.appendChild(createIconElement(`bw-icon-${action}`))
   return controlButton
 }

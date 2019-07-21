@@ -27,12 +27,23 @@
   }
 }
 
+.bw-player-control-btn {
+  background-color: transparent;
+  opacity: 0.7;
+  i {
+    font-weight: 900 !important;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 .bw-player__controls {
   position: absolute;
   bottom: 0;
   left: 0;
   opacity: 0;
-  background: $white;
   color: $navy-grey;
   transition: opacity 0.2s ease;
 

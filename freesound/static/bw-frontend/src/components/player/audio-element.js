@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import playerSettings from './settings'
 import { formatAudioDuration } from './utils'
 import { createIconElement } from '../../utils/icons'
@@ -42,6 +43,10 @@ const onPlayerTimeUpdate = (audioElement, parentNode) => {
   }${formatAudioDuration(progress)}`
 }
 
+/**
+ * @param {HTMLDivElement} parentNode 
+ * @returns {HTMLAudioElement}
+ */
 export const createAudioElement = parentNode => {
   const { mp3, ogg } = parentNode.dataset
   const audioElement = document.createElement('audio')

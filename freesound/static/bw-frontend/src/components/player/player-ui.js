@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import playerSettings from './settings'
 import { formatAudioDuration } from './utils'
 import { createIconElement } from '../../utils/icons'
@@ -9,6 +10,9 @@ const createProgressIndicator = () => {
   return progressIndicator
 }
 
+/**
+ * @param {HTMLAudioElement} audioElement
+ */
 const createProgressStatus = audioElement => {
   const { duration } = audioElement
   const progressStatus = document.createElement('div')
@@ -19,12 +23,23 @@ const createProgressStatus = audioElement => {
   return progressStatus
 }
 
-const createPlayerControls = audioElement => {
-  const playerControls = document.createElement('div')
-  playerControls.className = 'bw-player__controls'
-  const playButton = document.createElement('button')
-  playButton.className = 'bw-player__play-btn no-border-bottom-on-hover'
-  playButton.appendChild(createIconElement('bw-icon-play'))
+/**
+ *
+ * @param {'play' | 'stop' | 'loop'} action
+ */
+const createControlButton = action => {
+  const controlButton = document.createElement('button')
+  controlButton.className = 'no-border-bottom-on-hover'
+  controlButton.appendChild(createIconElement(`bw-icon-${action}`))
+  return controlButton
+}
+
+/**
+ * @param {HTMLAudioElement} audioElement
+ */
+const createPlayButton = audioElement => {
+  const playButton = createControlButton('play')
+  playButton.classList.add('bw-player__play-btn')
   playButton.addEventListener('click', () => {
     const isPlaying = !audioElement.paused
     if (isPlaying) {
@@ -33,7 +48,49 @@ const createPlayerControls = audioElement => {
       audioElement.play()
     }
   })
-  playerControls.appendChild(playButton)
+  return playButton
+}
+
+/**
+ * @param {HTMLAudioElement} audioElement
+ */
+const createStopButton = audioElement => {
+  const stopButton = createControlButton('stop')
+  stopButton.addEventListener('click', () => {
+    audioElement.pause()
+    audioElement.currentTime = 0
+  })
+  return stopButton
+}
+
+/**
+ * @param {HTMLAudioElement} audioElement
+ */
+const createLoopButton = audioElement => {
+  const loopButton = createControlButton('loop')
+  loopButton.addEventListener('click', () => {
+    const willLoop = !audioElement.loop
+    if (willLoop) {
+      loopButton.classList.add('text-red')
+    } else {
+      loopButton.classList.remove('text-red')
+    }
+    audioElement.loop = willLoop
+  })
+  return loopButton
+}
+
+/**
+ * @param {HTMLAudioElement} audioElement
+ */
+const createPlayerControls = audioElement => {
+  const playerControls = document.createElement('div')
+  playerControls.className = 'bw-player__controls'
+  const playButton = createPlayButton(audioElement)
+  const stopButton = createStopButton(audioElement)
+  const loopButton = createLoopButton(audioElement)
+  const controls = [playButton, stopButton, loopButton]
+  controls.forEach(el => playerControls.appendChild(el))
   return playerControls
 }
 
@@ -57,6 +114,9 @@ const createWaveformImage = (parentNode, audioElement) => {
   return imageContainer
 }
 
+/**
+ * @param {HTMLDivElement} parentNode
+ */
 const createPlayer = parentNode => {
   const audioElement = createAudioElement(parentNode)
   const waveformImage = createWaveformImage(parentNode, audioElement)

@@ -125,6 +125,37 @@
             $("#id_" + idx0 + "-zoom").val(Math.floor(zoom));
         }
 
+        var centerMapTimers = {};
+        var centerMapTimeout = 500; // In milliseconds
+
+        function centerMapToLatLonZoomFields(n) {
+            // To avoid too many updates of the map, only re-sync it with the contents of the lat, lon and zoom fields
+            // after centerMapTimeout has passed since the last change event
+
+            var idx = parseInt(n, 10);
+            var idx0 = idx - 1; // Get map number
+            var lon = $("#id_" + idx0 + "-lon").val();
+            var lat = $("#id_" + idx0 + "-lat").val();
+            var zoom = $("#id_" + idx0 + "-zoom").val();
+            if (!latLonZoomAreValid(lat, lon, zoom)){
+                // If not all paramters are valid and set, map can't be updated and function returns early
+                return;
+            }
+
+            var latLonClipped = clipLatLonRanges(lat, lon);
+            lat = latLonClipped[0];
+            lon = latLonClipped[1];
+
+            if (centerMapTimers[idx] !== undefined){
+                clearTimeout(centerMapTimers[idx]);
+            }
+
+            centerMapTimers[idx] = setTimeout(function (){
+                maps[idx].setZoom(parseInt(zoom, 10) - 1);
+                maps[idx].setCenter([parseFloat(lon), parseFloat(lat)]);
+            }, centerMapTimeout);
+        }
+
         function init_map(n) {
             console.log("initializing MAP ", n)
             var idx = parseInt(n,10);
@@ -279,7 +310,7 @@
             </p>
             <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}">
                 <p>Drag this map to set a geotag:</p>
-                <div class="describe-gmap" id="gmap{{forloop.counter}}" style="width: 400px; height:300px;"></div>
+                <div class="describe-gmap geotag_edit_map_size" id="gmap{{forloop.counter}}"></div>
                 <div class="describe-geotag-form">{{ form.geotag.as_p }}
                     <script type="text/javascript">
 
@@ -297,6 +328,16 @@
                                 $("#{{form.geotag.zoom.auto_id}}").attr('disabled', false);
                             }
                         });
+                        $("#{{form.geotag.lon.auto_id}}").bind('input', function (event) {
+                            centerMapToLatLonZoomFields({{forloop.counter}});
+                        });
+                        $("#{{form.geotag.lat.auto_id}}").bind('input', function (event) {
+                            centerMapToLatLonZoomFields({{forloop.counter}});
+                        });
+                        $("#{{form.geotag.zoom.auto_id}}").bind('input', function (event) {
+                            centerMapToLatLonZoomFields({{forloop.counter}});
+                        });
+
                         setMapVisibility({{forloop.counter}});
 
                     </script>

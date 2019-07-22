@@ -248,8 +248,8 @@
 <a id="geotag"></a>
 <form method="post" action="#geotag">{% csrf_token %}
  <p>Drag this map to set the geotag:</p>
-    	<div id="map_canvas" style="width: 400px; height:400px; margin-bottom: 1em; float:left"></div>
-    	<div style="float:ledt;margin-left:430px;">{{geotag_form.as_p}}</div>
+    	<div id="map_canvas" class="geotag_edit_map_size" style="margin-bottom: 1em; float:left"></div>
+    	<div style="float:left;margin-left:20px;">{{geotag_form.as_p}}</div>
         <br style="clear: both;" />
     <input type="submit" name="submit" value="submit" />
 </form>
@@ -273,10 +273,39 @@
 
     window.map = make_geotag_edit_map('map_canvas', '{{media_url}}/images/arrow.png', updateLatLonZoomFields, center_lat, center_lon, zoom);
 
+    var centerMapTimer = undefined;
+    var centerMapTimeout = 500;  // In milliseconds
+
     function updateLatLonZoomFields(map_element_id, lat, lon, zoom, box_bl_lat, box_bl_lon, box_tr_lat, box_tr_lon) {
-        $("#{{geotag_form.lon.auto_id}}").val(lon);
-        $("#{{geotag_form.lat.auto_id}}").val(lat);
+        $("#{{geotag_form.lon.auto_id}}").val(lon.toFixed(5));
+        $("#{{geotag_form.lat.auto_id}}").val(lat.toFixed(5));
         $("#{{geotag_form.zoom.auto_id}}").val(Math.floor(zoom));
+    }
+
+    function centerMapToLatLonZoomFields() {
+        // To avoid too many updates of the map, only re-sync it with the contents of the lat, lon and zoom fields
+        // after centerMapTimeout has passed since the last change event
+
+        if (centerMapTimer !== undefined){
+            clearTimeout(centerMapTimer);
+        }
+
+        var lon = $("#{{geotag_form.lon.auto_id}}").val();
+        var lat = $("#{{geotag_form.lat.auto_id}}").val();
+        var zoom = $("#{{geotag_form.zoom.auto_id}}").val();
+        if (!latLonZoomAreValid(lon, lat, zoom)){
+            // If not all paramters are valid and set, map can't be updated and function returns early
+            return;
+        }
+
+        var latLonClipped = clipLatLonRanges(lat, lon);
+        lat = latLonClipped[0];
+        lon = latLonClipped[1];
+
+        centerMapTimer = setTimeout(function (){
+            window.map.setZoom(parseInt(zoom, 10) - 1);
+            window.map.setCenter([parseFloat(lon), parseFloat(lat)]);
+        }, centerMapTimeout);
     }
 
     $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {
@@ -292,6 +321,15 @@
             $("#{{geotag_form.lat.auto_id}}").attr('disabled', false);
             $("#{{geotag_form.zoom.auto_id}}").attr('disabled', false);
         }
+    });
+    $("#{{geotag_form.lon.auto_id}}").bind('input', function (event) {
+        centerMapToLatLonZoomFields();
+    });
+    $("#{{geotag_form.lat.auto_id}}").bind('input', function (event) {
+        centerMapToLatLonZoomFields();
+    });
+    $("#{{geotag_form.zoom.auto_id}}").bind('input', function (event) {
+        centerMapToLatLonZoomFields();
     });
 
 </script>

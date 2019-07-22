@@ -3156,6 +3156,11 @@ use classes from pack edition
     float: left;
 }
 
+.geotag_edit_map_size {
+    width: 600px;
+    height:400px;
+}
+
 /* Notification messages
 ------------------------------------------------------*/
 ul.messages {

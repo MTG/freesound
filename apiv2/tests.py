@@ -331,8 +331,8 @@ class TestSoundListSerializer(TestCase):
             with self.assertNumQueries(1):
                 sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0])
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
-                # Call serializer .data property to actually get the data and trigger potential queries
-                SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+                # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
+                _ = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
 
         # Test when serializing mulitple sounds
         for field_set in field_sets:
@@ -340,5 +340,5 @@ class TestSoundListSerializer(TestCase):
                 sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 for sound in sounds_dict.values():
-                    # Call serializer .data property to actually get the data and trigger potential queries
-                    SoundListSerializer(sound, context={'request': dummy_request}).data
+                    # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
+                    _ = SoundListSerializer(sound, context={'request': dummy_request}).data

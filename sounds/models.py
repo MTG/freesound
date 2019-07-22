@@ -83,7 +83,7 @@ class License(OrderedModel):
 
 class SoundManager(models.Manager):
 
-    def latest_additions(self, num_sounds, period_days=5):
+    def latest_additions(self, num_sounds, period_days=2):
         if settings.DEBUG:
             # In DEBUG mode we probably won't have any sounds from the requested period, so we
             # see what the most recent sound and go back from then instead

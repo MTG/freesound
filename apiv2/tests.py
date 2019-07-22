@@ -21,6 +21,7 @@ from django.test import TestCase, SimpleTestCase, RequestFactory
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 
 from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
@@ -316,8 +317,9 @@ class TestSoundListSerializer(TestCase):
         # Test that we only perform one DB query when serializing sounds regardless of the number of sounds and the
         # number of requested fields
 
-        # Make sure sound content type is cached to avoid further queries
+        # Make sure sound content type and site objects are cached to avoid further queries
         ContentType.objects.get_for_model(Sound)
+        Site.objects.get_current()
 
         field_sets = [
             '',  # default fields
@@ -329,7 +331,8 @@ class TestSoundListSerializer(TestCase):
             with self.assertNumQueries(1):
                 sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0])
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
-                SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request})
+                # Call serializer .data property to actually get the data and trigger potential queries
+                SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
 
         # Test when serializing mulitple sounds
         for field_set in field_sets:
@@ -337,4 +340,5 @@ class TestSoundListSerializer(TestCase):
                 sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 for sound in sounds_dict.values():
-                    SoundListSerializer(sound, context={'request': dummy_request})
+                    # Call serializer .data property to actually get the data and trigger potential queries
+                    SoundListSerializer(sound, context={'request': dummy_request}).data

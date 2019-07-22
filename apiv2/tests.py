@@ -146,7 +146,7 @@ class ApiSearchPaginatorTest(TestCase):
         paginator = ApiSearchPaginator([1, 2, 3, 4, 5], 5, 2)
         page = paginator.page(2)
 
-        self.assertEquals(page, {'object_list': [1, 2, 3, 4, 5],
+        self.assertEqual(page, {'object_list': [1, 2, 3, 4, 5],
                                  'has_next': True,
                                  'has_previous': True,
                                  'has_other_pages': True,

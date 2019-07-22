@@ -432,7 +432,7 @@ class BulkDescribeUtils(TestCase):
         sound1 = Sound.objects.get(user=user, original_filename='file1.wav')  # Get first correct sound
         sound1_id = sound1.id  # This is used in a test below
         self.assertTrue(sound1.geotag)  # Check sound has geotag object assigned
-        self.assertEquals(sound1.pack.name, 'ambient')  # Check sound has pack and name of pack is 'ambient'
+        self.assertEqual(sound1.pack.name, 'ambient')  # Check sound has pack and name of pack is 'ambient'
         sound2 = Sound.objects.get(user=user, original_filename='file5.wav')  # Get last correct sound
         sound2_id = sound2.id  # This is used in a test below
         self.assertIsNone(sound2.geotag)  # Check sound has no geotag

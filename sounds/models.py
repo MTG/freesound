@@ -283,8 +283,8 @@ class SoundManager(models.Manager):
 
 class PublicSoundManager(models.Manager):
     """ a class which only returns public sounds """
-    def get_query_set(self):
-        return super(PublicSoundManager, self).get_query_set().filter(moderation_state="OK", processing_state="OK")
+    def get_queryset(self):
+        return super(PublicSoundManager, self).get_queryset().filter(moderation_state="OK", processing_state="OK")
 
 
 class Sound(SocialModel):

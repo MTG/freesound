@@ -308,12 +308,26 @@ class SoundSerializer(AbstractSoundSerializer):
             return None
 
     def get_ac_analysis(self, obj):
-        try:
-            # Retreive analysis data from the related SoundAnalysis object corresponding to the Audio Commons extractor
+        # Retreive analysis data already loaded in the provided object of get it from related SoundAnalysis object
+        # corresponding to the Audio Commons extractor.
+
+        analysis_items = {}
+        if hasattr(obj, 'ac_analysis'):
+            if obj.ac_analysis is not None:
+                analysis_items = obj.ac_analysis.items()
+        else:
+            # No ac analysis data already loaded in the object, load it with an extra query
+            try:
+                analysis_items = obj.analyses.get(extractor=settings.AUDIOCOMMONS_EXTRACTOR_NAME).get_analysis().items()
+            except SoundAnalysis.DoesNotExist:
+                # Do nothing, will lead to end of the method returning None
+                pass
+
+        if analysis_items:
             # Add Audio Commons descirptor prefix so names better match with the names used in filters
-            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value for key, value
-                    in obj.analyses.get(extractor=settings.AUDIOCOMMONS_EXTRACTOR_NAME).get_analysis().items()}
-        except SoundAnalysis.DoesNotExist:
+            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value
+                    for key, value in analysis_items}
+        else:
             return None
 
 

@@ -1,8 +1,14 @@
-const padSingleDigits = number => (number < 10 ? `0${number}` : number);
+/* eslint-disable import/prefer-default-export */
+/**
+ * @param {number} value
+ */
+const padSingleDigits = value => (value < 10 ? `0${value}` : value)
 
-// eslint-disable-next-line import/prefer-default-export
+/**
+ * @param {number} duration
+ */
 export const formatAudioDuration = duration => {
-  const minutes = Math.floor(duration / 60);
-  const seconds = Math.floor(duration % 60);
-  return `${padSingleDigits(minutes)}:${padSingleDigits(seconds)}`;
-};
+  const minutes = Math.floor(duration / 60)
+  const seconds = Math.floor(duration % 60)
+  return `${padSingleDigits(minutes)}:${padSingleDigits(seconds)}`
+}

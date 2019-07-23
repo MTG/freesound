@@ -121,7 +121,7 @@ class UsernameLookup(TestCase):
         self.client.force_login(self.sender)
         resp = self.client.get(reverse('messages-username_lookup'))
         response_json = json.loads(resp.content)
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         self.assertItemsEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username,
                                self.sender2.username, self.sender.username],
                               response_json)

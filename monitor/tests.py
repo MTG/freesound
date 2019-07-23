@@ -19,7 +19,7 @@ class QueryStatsAjaxTestCase(TestCase):
         mock_get.return_value.status_code = 404
         resp = self.client.get(reverse('monitor-queries-stats-ajax'))
 
-        self.assertEquals(resp.status_code, 500)
+        self.assertEqual(resp.status_code, 500)
         mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY)
 
     @override_settings(GRAYLOG_DOMAIN='http://graylog')
@@ -31,7 +31,7 @@ class QueryStatsAjaxTestCase(TestCase):
         mock_get.return_value._content = '<html>this is definitely not json</html>'
         resp = self.client.get(reverse('monitor-queries-stats-ajax'))
 
-        self.assertEquals(resp.status_code, 500)
+        self.assertEqual(resp.status_code, 500)
         mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY)
 
     @override_settings(GRAYLOG_DOMAIN='http://graylog')
@@ -44,8 +44,8 @@ class QueryStatsAjaxTestCase(TestCase):
 
         resp = self.client.get(reverse('monitor-queries-stats-ajax'))
 
-        self.assertEquals(resp.status_code, 200)
-        self.assertEquals(json.loads(resp.content), {'response': 'ok'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content), {'response': 'ok'})
         mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY)
 
 
@@ -64,7 +64,7 @@ class UsageStatsAjaxTestCase(TestCase):
         mock_get.return_value.status_code = 404
         resp = self.client.get(reverse('monitor-api-stats-ajax', kwargs={'client_id': 'test'}))
 
-        self.assertEquals(resp.status_code, 500)
+        self.assertEqual(resp.status_code, 500)
         mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/histogram', auth=mock.ANY, params=mock.ANY)
 
     @override_settings(GRAYLOG_DOMAIN='http://graylog')
@@ -76,7 +76,7 @@ class UsageStatsAjaxTestCase(TestCase):
         mock_get.return_value._content = '<html>this is definitely not json</html>'
         resp = self.client.get(reverse('monitor-api-stats-ajax', kwargs={'client_id': 'test'}))
 
-        self.assertEquals(resp.status_code, 500)
+        self.assertEqual(resp.status_code, 500)
         mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/histogram', auth=mock.ANY, params=mock.ANY)
 
     @override_settings(GRAYLOG_DOMAIN='http://graylog')
@@ -89,6 +89,6 @@ class UsageStatsAjaxTestCase(TestCase):
 
         resp = self.client.get(reverse('monitor-api-stats-ajax', kwargs={'client_id': 'test'}))
 
-        self.assertEquals(resp.status_code, 200)
-        self.assertEquals(json.loads(resp.content), {'response': 'ok'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content), {'response': 'ok'})
         mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/histogram', auth=mock.ANY, params=mock.ANY)

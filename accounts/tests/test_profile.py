@@ -68,7 +68,7 @@ class ProfileGetUserTags(TestCase):
         }
         mock_solr.return_value.configure_mock(**conf)
         accounts.models.Solr = mock_solr
-        tag_names = [item["name"] for item in list(user.profile.get_user_tags(use_solr=True))]
+        tag_names = [item["name"] for item in list(user.profile.get_user_tags())]
         used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
         non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
 
@@ -79,17 +79,7 @@ class ProfileGetUserTags(TestCase):
         # Test solr not available return False
         conf = {'select.side_effect': Exception}
         mock_solr.return_value.configure_mock(**conf)
-        self.assertEqual(user.profile.get_user_tags(use_solr=True), False)
-
-    def test_user_tagcloud_db(self):
-        user = User.objects.get(username="Anton")
-        tag_names = [item["name"] for item in list(user.profile.get_user_tags(use_solr=False))]
-        used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
-        non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
-
-        # Test that tags retrieved with get_user_tags are those found in db
-        self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
-        self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
+        self.assertEqual(user.profile.get_user_tags(), False)
 
 
 class UserEditProfile(TestCase):
@@ -296,7 +286,7 @@ class EmailBounceTest(TestCase):
         self.client.force_login(user)
         cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
         resp = self.client.get(reverse('front-page'))
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
         cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
         resp = self.client.get(reverse('front-page'))
@@ -317,7 +307,7 @@ class EmailBounceTest(TestCase):
     def test_idna_email(self):
         encoded_email = u'user@xn--eb-tbv.de'
         decoded_email = u'user@\u2211eb.de'
-        self.assertEquals(decoded_email, decode_idna_email(encoded_email))
+        self.assertEqual(decoded_email, decode_idna_email(encoded_email))
 
 
 class ProfileEmailIsValid(TestCase):

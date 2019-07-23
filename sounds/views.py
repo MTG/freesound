@@ -21,7 +21,6 @@
 import datetime
 import json
 import logging
-import os
 import time
 from collections import defaultdict
 from operator import itemgetter
@@ -107,9 +106,7 @@ def get_sound_of_the_day_id():
 
 
 def sounds(request):
-    latest_sounds = Sound.objects.latest_additions(5, '2 days')
-    latest_sound_objects = Sound.objects.ordered_ids([latest_sound['sound_id'] for latest_sound in latest_sounds])
-    latest_sounds = [(latest_sound, latest_sound_objects[index],) for index, latest_sound in enumerate(latest_sounds)]
+    latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
     last_week = get_n_weeks_back_datetime(n_weeks=1)
     popular_sound_ids = [snd.id for snd in Sound.objects.filter(
@@ -202,7 +199,8 @@ def front_page(request):
                                                           'last_post__author',
                                                           'last_post__thread',
                                                           'last_post__thread__forum')
-    latest_additions = Sound.objects.latest_additions(5 if not using_beastwhoosh(request) else 9, '2 days')
+    num_latest_sounds = 5 if not using_beastwhoosh(request) else 9
+    latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
         random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
@@ -211,7 +209,7 @@ def front_page(request):
 
     top_donor = None
     if using_beastwhoosh(request):
-        # TODO: simplify the calclation of the top donor using annotate in the query
+        # TODO: simplify the calculation of the top donor using annotate in the query
         # TODO: add pertinent caching strategy here
         last_week = get_n_weeks_back_datetime(n_weeks=1)
         top_donor_data = defaultdict(int)
@@ -229,7 +227,7 @@ def front_page(request):
         'popular_searches': popular_searches,
         'trending_sound_ids': trending_sound_ids,
         'current_forum_threads': current_forum_threads,
-        'latest_additions': latest_additions,
+        'latest_sounds': latest_sounds,
         'random_sound': random_sound,
         'top_donor': top_donor,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,  # Not needed for NG
@@ -240,7 +238,10 @@ def front_page(request):
 @redirect_if_old_username_or_404
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id, user__username=username)
+        sound = Sound.objects.prefetch_related("tags__tag")\
+            .select_related("license", "user", "user__profile", "pack")\
+            .get(id=sound_id, user__username=username)
+
         user_is_owner = request.user.is_authenticated and \
             (sound.user == request.user or request.user.is_superuser or request.user.is_staff or
              Group.objects.get(name='moderators') in request.user.groups.all())
@@ -721,7 +722,7 @@ def pack(request, username, pack_id):
 
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
@@ -736,7 +737,7 @@ def packs_for_user(request, username):
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
-    sound_user = get_object_or_404(User, username__iexact=username)
+    sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     user_sounds = Sound.objects.ordered_ids(sound_ids)
@@ -863,7 +864,7 @@ def display_sound_wrapper(request, username, sound_id):
     if sound_obj.user.username.lower() != username.lower():
         raise Http404
 
-    # The following code is duplicated in sounds.tempaltetags.display_sound. This could be optimized.
+    # The following code is duplicated in sounds.templatetags.display_sound. This could be optimized.
     is_explicit = False
     if sound_obj is not None:
         is_explicit = sound_obj.is_explicit and \
@@ -979,7 +980,7 @@ def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
-    qs = PackDownload.objects.filter(pack_id=pack_id)
+    qs = PackDownload.objects.filter(pack_id=pack_id).select_related("user", "user__profile")
     paginator = paginate(request, qs, 32, object_count=pack.num_downloads)
 
     tvars = {'username': username,

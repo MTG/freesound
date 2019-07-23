@@ -19,12 +19,10 @@
 #
 
 from django.conf import settings
-from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 
-from sounds.models import Sound
 from utils.onlineusers import cache_online_users
 
 
@@ -55,20 +53,9 @@ class BulkChangeLicenseHandler(object):
                 and not request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
-            cache_key = "has-old-license-%s" % user.id
-            cache_info = cache.get(cache_key)
+            if user.profile.has_old_license:
+                return HttpResponseRedirect(reverse("bulk-license-change"))
 
-            if cache_info is None or 0 or not isinstance(cache_info, (list, tuple)):
-                has_old_license = user.profile.has_old_license
-                has_sounds = Sound.objects.filter(user=user).exists()
-                cache.set(cache_key, [has_old_license, has_sounds], 2592000)  # 30 days cache
-                if has_old_license and has_sounds:
-                    return HttpResponseRedirect(reverse("bulk-license-change"))
-            else:
-                has_old_license = cache_info[0]
-                has_sounds = cache_info[1]
-                if has_old_license and has_sounds:
-                    return HttpResponseRedirect(reverse("bulk-license-change"))
         response = self.get_response(request)
         return response
 
@@ -105,18 +92,8 @@ class TosAcceptanceHandler(object):
                 and not request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
-            cache_key = "has-accepted-tos-%s" % user.id
-            cache_info = cache.get(cache_key)
-
-            if not cache_info:
-                has_accepted_tos = user.profile.accepted_tos
-                if not has_accepted_tos:
-                    return HttpResponseRedirect(reverse("tos-acceptance"))
-                else:
-                    cache.set(cache_key, 'yes', 2592000)  # 30 days cache
-            else:
-                # If there is cache it means the terms has been accepted
-                pass
+            if not user.profile.accepted_tos:
+                return HttpResponseRedirect(reverse("tos-acceptance"))
 
         response = self.get_response(request)
         return response

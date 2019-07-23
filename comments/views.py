@@ -54,7 +54,7 @@ def delete(request, comment_id):
 @redirect_if_old_username_or_404
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     sounds = Sound.objects.filter(user=user)
     qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
@@ -71,7 +71,7 @@ def for_user(request, username):
 @redirect_if_old_username_or_404
 def by_user(request, username):
     """ Display all comments made by the user """
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     qs = Comment.objects.filter(user=user).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list

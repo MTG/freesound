@@ -719,7 +719,7 @@ def pack(request, username, pack_id):
 
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
@@ -734,7 +734,7 @@ def packs_for_user(request, username):
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
-    sound_user = get_object_or_404(User, username__iexact=username)
+    sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     user_sounds = Sound.objects.ordered_ids(sound_ids)

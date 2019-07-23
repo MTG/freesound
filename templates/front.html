@@ -24,21 +24,8 @@
         {% endif %}
     </div>
 
-    <!-- recent additions -->
-    {% cache 300 latest_additions %}
-    <div id="recent_additions" class="content_box">
-        <h3>Recent Additions</h3>
-        {% for latest_addition in latest_additions %}
-            {% display_sound latest_addition.sound_id %}
-            {% if latest_addition.extra %}
-            <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url 'account' latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
-            {% endif %}
-        {% empty %}
-          <p>No sounds in the database!
-        {% endfor %}
-    	<p class="more_button" ><a href="{% url 'sounds-search' %}?q=&f=&s=created+desc">more...</a></p>
-    </div>
-    {% endcache %}
+    {% include "sounds/latest_sounds.html" %}
+
 </div>
 
 <div id="sidebar">

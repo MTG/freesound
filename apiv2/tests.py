@@ -25,7 +25,7 @@ from django.contrib.sites.models import Site
 
 from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
-from apiv2.serializers import SoundListSerializer, DEFAULT_FIELDS_IN_SOUND_LIST
+from apiv2.serializers import SoundListSerializer, DEFAULT_FIELDS_IN_SOUND_LIST, SoundSerializer
 from forms import SoundCombinedSearchFormAPI
 from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
@@ -314,8 +314,9 @@ class TestSoundListSerializer(TestCase):
         self.assertItemsEqual(serialized_sound.keys(), fields_parameter.split(','))
 
     def test_num_queries(self):
-        # Test that we only perform one DB query when serializing sounds regardless of the number of sounds and the
-        # number of requested fields
+        # Test that the serializer does not perform any extra query when serializing sounds regardless of the number
+        # of sounds and the number of requested fields. This will be as long as sound object passed to the serializer
+        # has been obtained using Sound.objects.dict_ids or Sound.objects.bulk_query_id
 
         # Make sure sound content type and site objects are cached to avoid further queries
         ContentType.objects.get_for_model(Sound)
@@ -328,16 +329,16 @@ class TestSoundListSerializer(TestCase):
 
         # Test when serializing a single sound
         for field_set in field_sets:
-            with self.assertNumQueries(1):
-                sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0])
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0])
+            with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
                 _ = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
 
         # Test when serializing mulitple sounds
         for field_set in field_sets:
-            with self.assertNumQueries(1):
-                sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
+            with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 for sound in sounds_dict.values():
                     # Call serializer .data to actually get the data and potentially trigger unwanted extra queries

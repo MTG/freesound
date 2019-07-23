@@ -56,7 +56,8 @@ def for_user(request, username):
     """ Display all comments for the sounds of the user """
     user = request.parameter_user
     sounds = Sound.objects.filter(user=user)
-    qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile")
+    qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile",
+                                                                 "sound__user", "sound__user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list
     tvars = {
@@ -72,7 +73,8 @@ def for_user(request, username):
 def by_user(request, username):
     """ Display all comments made by the user """
     user = request.parameter_user
-    qs = Comment.objects.filter(user=user).select_related("user", "user__profile")
+    qs = Comment.objects.filter(user=user).select_related("user", "user__profile",
+                                                          "sound__user", "sound__user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list
     tvars = {
@@ -86,7 +88,7 @@ def by_user(request, username):
 
 def all(request):
     """ Display all comments """
-    qs = Comment.objects.select_related("user", "user__profile")
+    qs = Comment.objects.select_related("user", "user__profile", "sound__user", "sound__user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list
     tvars = {

@@ -238,7 +238,10 @@ def front_page(request):
 @redirect_if_old_username_or_404
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id, user__username=username)
+        sound = Sound.objects.prefetch_related("tags__tag")\
+            .select_related("license", "user", "user__profile", "pack")\
+            .get(id=sound_id, user__username=username)
+
         user_is_owner = request.user.is_authenticated and \
             (sound.user == request.user or request.user.is_superuser or request.user.is_staff or
              Group.objects.get(name='moderators') in request.user.groups.all())
@@ -977,7 +980,7 @@ def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
-    qs = PackDownload.objects.filter(pack_id=pack_id)
+    qs = PackDownload.objects.filter(pack_id=pack_id).select_related("user", "user__profile")
     paginator = paginate(request, qs, 32, object_count=pack.num_downloads)
 
     tvars = {'username': username,

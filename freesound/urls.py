@@ -153,7 +153,10 @@ urlpatterns = [
     url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
     url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
+
 ]
+
+urlpatterns += [url(r'^silk/', include('silk.urls', namespace='silk'))]
 
 # if you need django to host the admin files...
 from django.conf import settings

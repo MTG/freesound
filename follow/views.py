@@ -36,7 +36,7 @@ from utils.username import redirect_if_old_username_or_404
 
 @redirect_if_old_username_or_404
 def following_users(request, username):
-    user = get_object_or_404(User, username=username)
+    user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -50,7 +50,7 @@ def following_users(request, username):
 
 @redirect_if_old_username_or_404
 def followers(request, username):
-    user = get_object_or_404(User, username=username)
+    user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
@@ -64,7 +64,7 @@ def followers(request, username):
 
 @redirect_if_old_username_or_404
 def following_tags(request, username):
-    user = get_object_or_404(User, username=username)
+    user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user

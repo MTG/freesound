@@ -1,16 +1,8 @@
-@keyframes progress-indicator-animation {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
 .bw-player__img-container {
   position: relative;
   height: 100px;
   display: flex;
+  overflow-x: hidden;
 }
 
 .bw-player__img {
@@ -25,14 +17,24 @@
   opacity: 0;
   top: 0;
   left: 0;
-  border-left: 1px solid $black;
-  animation-timing-function: linear;
-  animation-play-state: paused;
-  animation-iteration-count: 1;
+  transform: translateX(-100%);
+  border-right: 4px solid white;
   transition: opacity 0.2s ease;
+  background: rgba(255, 255, 255, 0.7);
 
   .bw-player--playing & {
-    animation-name: progress-indicator-animation;
+    opacity: 1;
+  }
+}
+
+.bw-player-control-btn {
+  background-color: transparent;
+  opacity: 0.7;
+  i {
+    font-weight: 900 !important;
+  }
+
+  &:hover {
     opacity: 1;
   }
 }
@@ -42,7 +44,6 @@
   bottom: 0;
   left: 0;
   opacity: 0;
-  background: $white;
   color: $navy-grey;
   transition: opacity 0.2s ease;
 

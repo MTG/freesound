@@ -33,7 +33,7 @@ class GeoTagsTests(TestCase):
     def check_context(self, context, values):
         for k, v in values.items():
             self.assertIn(k, context)
-            self.assertEquals(context[k], v)
+            self.assertEqual(context[k], v)
 
     def test_browse_geotags(self):
         resp = self.client.get(reverse('geotags', kwargs={'tag': 'soundscape'}))

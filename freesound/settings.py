@@ -18,6 +18,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'silk.middleware.SilkyMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -63,7 +64,15 @@ INSTALLED_APPS = [
     'monitor',
     'raven.contrib.django.raven_compat',
     'django_object_actions',
+    'silk',
 ]
+
+# Silk is the Request/SQL logging platform. We install it but leave it disabled
+# It can be activated in local_settings by changing INTERCEPT_FUNC
+SILKY_AUTHENTICATION = True  # User must login
+SILKY_AUTHORISATION = True  # User must have permissions
+SILKY_PERMISSIONS = lambda user: user.is_superuser
+SILKY_INTERCEPT_FUNC = lambda request: False
 
 CORS_ORIGIN_ALLOW_ALL = True
 

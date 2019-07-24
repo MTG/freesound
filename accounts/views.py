@@ -179,9 +179,8 @@ def bulk_license_change(request):
             Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
             for sound in Sound.objects.filter(user=request.user).all():
                 SoundLicenseHistory.objects.create(sound=sound, license=selected_license)
-            Profile.objects.filter(user=request.user).update(has_old_license=False)
-            cache.set('has-old-license-%s' % request.user.id,
-                      [False, Sound.objects.filter(user=request.user).exists()], 2592000)
+            request.user.profile.has_old_license = False
+            request.user.profile.save()
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = NewLicenseForm()
@@ -742,7 +741,7 @@ def attribution(request):
 
 @redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
     page = paginator["page"]
@@ -757,7 +756,7 @@ def downloaded_sounds(request, username):
 
 @redirect_if_old_username_or_404
 def downloaded_packs(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)
     page = paginator["page"]
@@ -856,7 +855,7 @@ def accounts(request):
 
 @redirect_if_old_username_or_404
 def account(request, username):
-    user = User.objects.select_related('profile').get(username__iexact=username)
+    user = request.parameter_user
 
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))

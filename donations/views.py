@@ -230,6 +230,8 @@ def donation_session_paypal(request):
         else:
             data = {'errors': form.errors}
         return JsonResponse(data)
+    # If request is GET redirect to donations page
+    return HttpResponseRedirect(reverse('donate'))
 
 
 def donate(request):

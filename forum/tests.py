@@ -446,7 +446,7 @@ class ForumPageResponses(TestCase):
         })
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
         edited_post = Post.objects.get(id=post.id)
-        self.assertEquals(edited_post.body, u'Edited post body')
+        self.assertEqual(edited_post.body, u'Edited post body')
 
     def test_delete_post_response_ok(self):
         forum = Forum.objects.first()
@@ -466,7 +466,7 @@ class ForumPageResponses(TestCase):
         # Assert logged in user can delete post (see delete confirmation page)
         self.client.force_login(self.user)
         resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
 
     def test_delete_post_confirm_response_ok(self):
         forum = Forum.objects.first()

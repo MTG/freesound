@@ -25,7 +25,7 @@
     <div id="most_downloaded_sounds" class="content_box">
         <h3>Most downloaded sounds (uploaded in the last week)</h3>
         {% for sound in popular_sounds %}
-            {% display_raw_sound sound %}
+            {% display_sound sound %}
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}

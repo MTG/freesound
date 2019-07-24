@@ -388,11 +388,11 @@ class Sound(SocialModel):
     similarity_state = models.CharField(db_index=True, max_length=2, choices=SIMILARITY_STATE_CHOICES, default="PE")
     analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")
 
-    # counts
-    num_comments = models.PositiveIntegerField(default=0)  # Updated via django (sound view and delete comment view)
-    num_downloads = models.PositiveIntegerField(default=0, db_index=True)  # Updated via database trigger
-    avg_rating = models.FloatField(default=0)  # Updated via database trigger
-    num_ratings = models.PositiveIntegerField(default=0)  # Updated via database trigger
+    # counts, updated by django signals
+    num_comments = models.PositiveIntegerField(default=0)
+    num_downloads = models.PositiveIntegerField(default=0, db_index=True)
+    avg_rating = models.FloatField(default=0)
+    num_ratings = models.PositiveIntegerField(default=0)
 
     objects = SoundManager()
     public = PublicSoundManager()

@@ -351,16 +351,16 @@ def sound_download(request, username, sound_id):
         raise Http404
 
     if 'HTTP_RANGE' not in request.META:
-        '''
+        """
         Download managers and some browsers use the range header to download files in multiple parts. We have observed 
         that all clients first make a GET with no range header (to get the file length) and then make multiple other 
         requests. We ignore all requests that have range header because we assume that a first query has already been 
         made. We additionally guard against users clicking on download multiple times by storing a sentinel in the 
         cache for 5 minutes.
-        '''
+        """
         cache_key = 'sdwn_%s_%d' % (sound_id, request.user.id)
         if cache.get(cache_key, None) is None:
-            Download.objects.create(user=request.user, sound=sound, license=sound.license)
+            Download.objects.create(user=request.user, sound=sound, license_id=sound.license_id)
             sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
 
@@ -378,19 +378,19 @@ def pack_download(request, username, pack_id):
         raise Http404
 
     if 'HTTP_RANGE' not in request.META:
-        '''
+        """
         Download managers and some browsers use the range header to download files in multiple parts. We have observed 
         that all clients first make a GET with no range header (to get the file length) and then make multiple other 
         requests. We ignore all requests that have range header because we assume that a first query has already been 
         made. We additionally guard against users clicking on download multiple times by storing a sentinel in the 
         cache for 5 minutes.
-        '''
+        """
         cache_key = 'pdwn_%s_%d' % (pack_id, request.user.id)
         if cache.get(cache_key, None) is None:
             pd = PackDownload.objects.create(user=request.user, pack=pack)
             pds = []
             for sound in pack.sounds.all():
-                pds.append(PackDownloadSound(sound=sound, license=sound.license, pack_download=pd))
+                pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
             PackDownloadSound.objects.bulk_create(pds)
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/pack in the next 5 minutes
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))

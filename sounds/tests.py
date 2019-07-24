@@ -957,7 +957,7 @@ class SoundSignatureTestCase(TestCase):
 
 
 class SoundTemplateCacheTests(TestCase):
-    fixtures = ['licenses']
+    fixtures = ['licenses', 'email_preference_type']
 
     def setUp(self):
         cache.clear()

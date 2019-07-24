@@ -75,7 +75,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         for user in user_to:
 
             # Check that user has preference enabled for that type of email
-            email_type_enabled = user.profile.email_not_disabled(email_type_preference_check) \
+            email_type_enabled = user.profile.email_type_enabled(email_type_preference_check) \
                 if email_type_preference_check is not None else True
 
             # Check if user's email is valid for delivery and add the correct email address to the list of email_to

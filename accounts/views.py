@@ -342,7 +342,7 @@ def edit_email_settings(request):
         form = EmailSettingsForm(request.POST)
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
-            request.user.profile.update_enabled_email_types(email_type_ids)
+            request.user.profile.set_enabled_email_types(email_type_ids)
             messages.add_message(request, messages.INFO, 'Your email notification preferences have been updated')
             return HttpResponseRedirect(reverse("accounts-edit"))
     else:

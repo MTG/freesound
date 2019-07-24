@@ -20,7 +20,6 @@
 
 from django import forms
 from django.conf import settings
-from django.utils.translation import ugettext as _
 from utils.forms import CaptchaWidget
 from utils.forms import HtmlCleaningCharField
 
@@ -50,7 +49,7 @@ class AnonymousMessageForm(forms.Form):
         captcha_response = self.cleaned_data.get("recaptcha_response")
         if settings.RECAPTCHA_PUBLIC_KEY:
             if not captcha_response:
-                raise forms.ValidationError(_("Captcha is not correct"))
+                raise forms.ValidationError("Captcha is not correct")
         return captcha_response
 
 

@@ -27,7 +27,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_unicode
-from django.utils.translation import ugettext as _
 from django.db import models, connection, transaction
 from django.db.models import F
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
@@ -352,9 +351,9 @@ class Sound(SocialModel):
 
     # moderation and index
     MODERATION_STATE_CHOICES = (
-        ("PE", _('Pending')),
-        ("OK", _('OK')),
-        ("DE", _('Deferred')),
+        ("PE", 'Pending'),
+        ("OK", 'OK'),
+        ("DE", 'Deferred'),
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
     moderation_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last moderation state change
@@ -364,17 +363,17 @@ class Sound(SocialModel):
 
     # processing
     PROCESSING_STATE_CHOICES = (
-        ("PE", _('Pending')),  # Sounds will only be in "PE" before the very first time they are processed
-        ("OK", _('OK')),
-        ("FA", _('Failed')),
+        ("PE", 'Pending'),  # Sounds will only be in "PE" before the very first time they are processed
+        ("OK", 'OK'),
+        ("FA", 'Failed'),
     )
     PROCESSING_ONGOING_STATE_CHOICES = (
-        ("NO", _('None')),
-        ("QU", _('Queued')),
-        ("PR", _('Processing')),
-        ("FI", _('Finished')),
+        ("NO", 'None'),
+        ("QU", 'Queued'),
+        ("PR", 'Processing'),
+        ("FI", 'Finished'),
     )
-    ANALYSIS_STATE_CHOICES = PROCESSING_STATE_CHOICES + (("SK", _('Skipped')), ("QU", _('Queued')),)
+    ANALYSIS_STATE_CHOICES = PROCESSING_STATE_CHOICES + (("SK", 'Skipped'), ("QU", 'Queued'),)
     SIMILARITY_STATE_CHOICES = PROCESSING_STATE_CHOICES
 
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
@@ -1183,9 +1182,9 @@ class Flag(models.Model):
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
     email = models.EmailField()
     REASON_TYPE_CHOICES = (
-        ("O", _('Offending sound')),
-        ("I", _('Illegal sound')),
-        ("T", _('Other problem')),
+        ("O", 'Offending sound'),
+        ("I", 'Illegal sound'),
+        ("T", 'Other problem'),
     )
     reason_type = models.CharField(max_length=1, choices=REASON_TYPE_CHOICES, default="I")
     reason = models.TextField()

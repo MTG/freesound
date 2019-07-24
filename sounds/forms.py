@@ -23,7 +23,6 @@ from django import forms
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.conf import settings
-from django.utils.translation import ugettext as _
 from django.core.exceptions import PermissionDenied
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
@@ -240,7 +239,7 @@ class FlagForm(forms.Form):
         captcha_response = self.cleaned_data.get("recaptcha_response")
         if settings.RECAPTCHA_PUBLIC_KEY:
             if not captcha_response:
-                raise forms.ValidationError(_("Captcha is not correct"))
+                raise forms.ValidationError("Captcha is not correct")
         return captcha_response
 
     def save(self):

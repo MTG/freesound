@@ -338,7 +338,6 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
-    profile = request.user.profile
     if request.method == "POST":
         form = EmailSettingsForm(request.POST)
         if form.is_valid():

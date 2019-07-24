@@ -390,7 +390,7 @@ class Sound(SocialModel):
 
     # counts
     num_comments = models.PositiveIntegerField(default=0)  # Updated via django (sound view and delete comment view)
-    num_downloads = models.PositiveIntegerField(default=0)  # Updated via database trigger
+    num_downloads = models.PositiveIntegerField(default=0, db_index=True)  # Updated via database trigger
     avg_rating = models.FloatField(default=0)  # Updated via database trigger
     num_ratings = models.PositiveIntegerField(default=0)  # Updated via database trigger
 
@@ -1104,7 +1104,7 @@ class Pack(SocialModel):
     description = models.TextField(null=True, blank=True, default=None)
     is_dirty = models.BooleanField(db_index=True, default=False)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    license_crc = models.CharField(max_length=8,blank=True)
+    license_crc = models.CharField(max_length=8, blank=True)
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method

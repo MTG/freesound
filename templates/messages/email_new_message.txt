@@ -11,6 +11,6 @@ To read the message go to:
 
 {% absurl "messages" %}
 
-If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}
+{% include "email_opt_out_text.txt" %}
 
 {% endblock %}

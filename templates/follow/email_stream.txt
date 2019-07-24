@@ -25,6 +25,6 @@ Check out these new cool sounds that you might be interested in:
     {% absurl "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}
 {% endif %}
 
-If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}
+{% include "email_opt_out_text.txt" %}
 
 {% endfor %}{% endblock %}

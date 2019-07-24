@@ -1,9 +1,0 @@
-Hello {{ username }},
-
-We want to tell you about some new features in Freesound!
-
-etc...
-
-Best wishes,
-
-The Freesound team

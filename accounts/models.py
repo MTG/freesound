@@ -81,8 +81,12 @@ class Profile(SocialModel):
     accepted_tos = models.BooleanField(default=False)
     last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
-    last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
+
+    # Fields to keep track of donation emails
+    # donations_reminder_email_sent should be set to True when an email has been sent, and reset to False when user
+    # makes a donation (and therefore we'll check if a new email should be sent comparing with last_donation_email_sent)
     donations_reminder_email_sent = models.BooleanField(default=False)
+    last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
 
     # The following 4 fields are updated using django signals (methods 'update_num_downloads*')
     num_sounds = models.PositiveIntegerField(editable=False, default=0)

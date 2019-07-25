@@ -81,8 +81,12 @@ class Profile(SocialModel):
     accepted_tos = models.BooleanField(default=False)
     last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
-    last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
+
+    # Fields to keep track of donation emails
+    # donations_reminder_email_sent should be set to True when an email has been sent, and reset to False when user
+    # makes a donation (and therefore we'll check if a new email should be sent comparing with last_donation_email_sent)
     donations_reminder_email_sent = models.BooleanField(default=False)
+    last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None, blank=True)
 
     # The following 4 fields are updated using django signals (methods 'update_num_downloads*')
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
@@ -176,56 +180,81 @@ class Profile(SocialModel):
             uploads_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id))
         )
 
-    def email_not_disabled(self, email_type_name):
-        # Raise exception if the email_type doesn't exists
-        email_type = EmailPreferenceType.objects.get(name=email_type_name)
+    def email_type_enabled(self, email_type):
+        """
+        Checkes user email settings to determine whether emails for the email_type_name should be sent.
+        If the email type has send_by_default = True it menas the email should be sent if user has no assiciated
+        UserEmailSetting object for this email type. If send_by_default = False, it means the email should be sent
+        if the user has a UserEmailSetting for that type. This was implemented in this way to minimize the number
+        of objects that need to be created in the UserEmailSetting table.
 
-        # when send_by_default == invert_default means email is disabled
-        invert_default = UserEmailSetting.objects.filter(user=self.user,
-                email_type=email_type).exists()
-        return email_type.send_by_default != invert_default
+        Args:
+            email_type (EmailPreferenceType|str): EmailPreferenceType object or name of the EmailPreferenceType to check
+
+        Returns:
+            bool: True if the email type is enabled
+
+        Raises:
+            EmailPreferenceTypeNotFound: if no EmailPreferenceType exists for the given name
+        """
+        if not isinstance(email_type, EmailPreferenceType):
+            email_type = EmailPreferenceType.objects.get(name=email_type)
+
+        email_type_in_user_email_settings = \
+            UserEmailSetting.objects.filter(user=self.user, email_type=email_type).exists()
+
+        return (email_type.send_by_default and not email_type_in_user_email_settings) or \
+               (not email_type.send_by_default and email_type_in_user_email_settings)
 
     def get_enabled_email_types(self):
-        # Get list of all enabled email types for this user
-        all_emails = EmailPreferenceType.objects
-        email_preferences = self.user.email_settings.values('email_type__id')
-        # if email_type not in email_preferences then default value must be True
-        not_disabled = all_emails.exclude(id__in=email_preferences)\
-                .filter(send_by_default=True)
+        """
+        Checks which types of emails should be sent to a user according to her preferences and returns a list with all
+        enabled types.
 
-        # if email_type in email_preferences then default value must be False
-        enabled = all_emails.filter(id__in=email_preferences,
-                send_by_default=False)
+        Returns:
+            List[EmailPreferenceType]: EmailPreferenceType objects corresponding to email types enabled by the user
+        """
+        enabled_email_types = list()
+        for email_type in EmailPreferenceType.objects.all():
+            if self.email_type_enabled(email_type):
+                enabled_email_types.append(email_type)
 
-        return set(enabled) | set(not_disabled)
+        return enabled_email_types
 
-    def update_enabled_email_types(self, email_type_ids):
-        # Update user's email_settings from the list of enabled email_types
+    def set_enabled_email_types(self, email_type_ids):
+        """
+        Configure user email preferences so that email types corresponding to the given list of email_type_ids are set
+        to enabled for that user (and those types not included in email_type_ids set to disabled). This method takes
+        into account the fact that some email types should be sent by default (i.e. have send_by_default=True) and
+        some not, and creates/deletes the necessary UserEmailSetting objects.
 
-        stream_emails = EmailPreferenceType.objects.get(name='stream_emails')
-        # First get current value of stream_email to know if
-        # profile.last_stream_email_sent must be initialized
-        had_enabled_stream_emails = self.user.email_settings.filter(email_type=stream_emails).exists()
+        Args:
+            email_type_ids (List[int]): IDs of the EmailPreferenceType objects corresponding to the email types that
+                should be enabled for the user.
+        """
 
-        all_emails = EmailPreferenceType.objects
+        # First get current value of stream_email to know if profile.last_stream_email_sent must be set to
+        # now (see below)
+        stream_emails_type = EmailPreferenceType.objects.get(name='stream_emails')
+        had_enabled_stream_emails = self.user.email_settings.filter(email_type=stream_emails_type).exists()
 
-        # If an email_type is not enabled and default value is True then must
-        # be on UserEmailSetting
-        disabled = all_emails.filter(send_by_default=True).exclude(id__in=email_type_ids)
+        # Now check for which email types we'll need to create UserEmailSetting objects. This will be the email types
+        # which either:
+        # 1) have send_by_default=False and are in email_type_ids (the object indicates email should be sent)
+        email_preference_types_to_add = \
+            list(EmailPreferenceType.objects.filter(send_by_default=False, id__in=email_type_ids))
+        # 2) have send_by_default=True and are not in email_type_ids  (the object indicates email should not be sent)
+        email_preference_types_to_add += \
+            list(EmailPreferenceType.objects.filter(send_by_default=True).exclude(id__in=email_type_ids))
 
-        # If an email_type is enabled and default value is False then must
-        # be on UserEmailSetting
-        enabled = all_emails.filter(send_by_default=False, id__in=email_type_ids)
-
-        all_emails = list(enabled) + list(disabled)
-
-        # Recreate email settings
+        # Now recreate email settings objects. Delete all existing and then create those listed in
+        # email_preference_types_to_add
         self.user.email_settings.all().delete()
-        for i in all_emails:
-            UserEmailSetting.objects.create(user=self.user, email_type=i)
+        for email_type in email_preference_types_to_add:
+            UserEmailSetting.objects.create(user=self.user, email_type=email_type)
 
-        enabled_stream_emails = enabled.filter(id=stream_emails.id).exists()
-        # If is enabling stream emails, set last_stream_email_sent to now
+        # If we have just enabled stream emails, we should set last_stream_email_sent to now
+        enabled_stream_emails = self.email_type_enabled(stream_emails_type)
         if not had_enabled_stream_emails and enabled_stream_emails:
             self.last_stream_email_sent = datetime.datetime.now()
             self.save()
@@ -479,7 +508,7 @@ pre_save.connect(presave_user, sender=User)
 
 class EmailPreferenceType(models.Model):
     description = models.TextField(max_length=1024, null=True, blank=True)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255)
     send_by_default = models.BooleanField(default=True,
         help_text="Indicates if the user should receive an email, if " +

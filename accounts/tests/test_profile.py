@@ -33,7 +33,7 @@ from django.urls import reverse
 
 import accounts.models
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
-from accounts.models import EmailPreferenceType, EmailBounce
+from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Thread, Post
 from sounds.models import Pack
@@ -452,3 +452,33 @@ class ProfileIsTrustWorthy(TestCase):
         self.user.is_superuser = True
         self.user.profile.save()
         self.assertTrue(self.user.profile.is_trustworthy())
+
+
+class ProfileEnabledEmailTypes(TestCase):
+    """
+    Test the get_enabled_email_types method of Profile model
+    """
+
+    fixtures = ['email_preference_type']
+
+    def test_get_enabled_email_types(self):
+        user = User.objects.create_user("testuser")
+
+        # Defaults (all email types with sent_by_default=True should be enabled)
+        default_email_types = user.profile.get_enabled_email_types()
+        self.assertEqual(len(default_email_types), EmailPreferenceType.objects.filter(send_by_default=True).count())
+
+        # Disable email preferences which are set to true by default
+        # At each iteraiton of the foorloop, one less email type should be returned by get_enabled_email_types
+        for count, email_type in enumerate(EmailPreferenceType.objects.filter(send_by_default=True)):
+            UserEmailSetting.objects.create(user=user, email_type=email_type)
+            email_types = user.profile.get_enabled_email_types()
+            self.assertEqual(len(email_types), len(default_email_types) - (count + 1))
+
+        # Test adding email types which are not sent by default adds them to the result of get_enabled_email_types
+        # Because at the start of the loop there are no email types enabled, at each iteration of the loop the
+        # list returned by get_enabled_email_types should be increased by one element
+        for count, email_type in enumerate(EmailPreferenceType.objects.filter(send_by_default=False)):
+            UserEmailSetting.objects.create(user=user, email_type=email_type)
+            email_types = user.profile.get_enabled_email_types()
+            self.assertEqual(len(email_types), count + 1)

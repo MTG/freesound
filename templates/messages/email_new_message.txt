@@ -11,4 +11,6 @@ To read the message go to:
 
 {% absurl "messages" %}
 
+{% include "email_opt_out_text.txt" %}
+
 {% endblock %}

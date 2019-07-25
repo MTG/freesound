@@ -76,16 +76,20 @@ class Command(BaseCommand):
             .exclude(id__in=donors_within_donation_timespan)
 
         for user in users_to_notify.all():
-            send_mail_template(
+            email_sent_successfully = send_mail_template(
                 u'Thanks for contributing to Freesound',
-                'donations/email_donation_reminder.txt', {
-                    'user': user,
-                    }, user_to=user)
-            user.profile.last_donation_email_sent = datetime.datetime.now()
-            user.profile.donations_reminder_email_sent = True
-            user.profile.save()
-            logger.info("Sent donation email (%s)" % json.dumps(
-                {'user_id': user.id, 'donation_email_type': 'reminder'}))
+                'donations/email_donation_reminder.txt', {'user': user},
+                user_to=user, email_type_preference_check='donation_request')
+            if email_sent_successfully:
+                user.profile.last_donation_email_sent = datetime.datetime.now()
+                user.profile.donations_reminder_email_sent = True
+                user.profile.save()
+                logger.info("Sent donation email (%s)" %
+                            json.dumps({'user_id': user.id, 'donation_email_type': 'reminder'}))
+            else:
+                logger.info("Didn't send donation email due to email address being invalid or donation"
+                            "emails preference disabled (%s)" %
+                            json.dumps({'user_id': user.id, 'donation_email_type': 'reminder'}))
 
         # 2) Send email to users that download a lot of sounds without donating
         # potential_users -> All users that:
@@ -136,19 +140,20 @@ class Command(BaseCommand):
                         send_email = True
 
                 if send_email:
-                    res = send_mail_template(
+                    email_sent_successfully = send_mail_template(
                         u'Have you considered making a donation?',
                         'donations/email_donation_request.txt', {
                             'user': user,
-                            }, user_to=user)
+                            }, user_to=user, email_type_preference_check='donation_request')
 
-                    if res:
+                    if email_sent_successfully:
                         user.profile.last_donation_email_sent = datetime.datetime.now()
                         user.profile.save()
-                        logger.info("Sent donation email (%s)" % json.dumps(
-                            {'user_id': user.id, 'donation_email_type': 'request'}))
+                        logger.info("Sent donation email (%s)" %
+                                    json.dumps({'user_id': user.id, 'donation_email_type': 'request'}))
                     else:
-                        logger.info("Didn't send donation email due to email address being invalid (%s)" % json.dumps(
-                            {'user_id': user.id, 'donation_email_type': 'request'}))
+                        logger.info("Didn't send donation email due to email address being invalid or donation"
+                                    "emails preference disabled (%s)" %
+                                    json.dumps({'user_id': user.id, 'donation_email_type': 'request'}))
 
         logger.info("Finished sending donation emails")

@@ -14,4 +14,7 @@ The user '{{user.username}}' posted the following comment about {{sound.original
 To see this comment in context, please visit:
 
 <{% absurl 'sound' sound.user.username sound.id %}>
+
+{% include "email_opt_out_text.txt" %}
+
 {% endblock %}

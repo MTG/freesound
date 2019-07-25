@@ -197,7 +197,10 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(mail.outbox[0].subject, u'[freesound] You have a new comment.')
 
         # Now update preferences of sound.user to disable comment notification emails
-        sound.user.profile.update_enabled_email_types([])  # Will set all to disabled if none is passed
+        # We create an email preference object for the email type (which will mean user does not want new comment
+        # emails as it is enabled by default and the preference indicates user does not want it).
+        email_pref = accounts.models.EmailPreferenceType.objects.get(name="new_comment")
+        accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 
         # Make the comment again and assert no new email has been sent
         self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': u'Test comment'})
@@ -679,6 +682,9 @@ class SoundOfTheDayTestCase(TestCase):
     def test_user_disable_email_notifications(self):
         """If the chosen Sound's user has disabled email notifications, don't send an email"""
         sound = Sound.objects.get(id=19)
+
+        # Create email preference object for the email type (which will mean user does not want random sound of the
+        # day emails as it is enabled by default and the preference indicates user does not want it).
         email_pref = accounts.models.EmailPreferenceType.objects.get(name="random_sound")
         accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 
@@ -951,7 +957,7 @@ class SoundSignatureTestCase(TestCase):
 
 
 class SoundTemplateCacheTests(TestCase):
-    fixtures = ['licenses']
+    fixtures = ['licenses', 'email_preference_type']
 
     def setUp(self):
         cache.clear()

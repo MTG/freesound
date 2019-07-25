@@ -68,7 +68,7 @@ is no generic model to **host** all custom permissions, but we'll add them to th
 permissions should then be added to a `Group` so that we can manage them properly in the Django admin. The `Group` should
 be added in the [`user_groups`](https://github.com/MTG/freesound/blob/master/accounts/fixtures/user_groups.json)
 fixture and then the fixture needs to be manually loaded to the database. Loading the fixture won't duplicate
-groups which are already existing.
+groups which are already existing if the `pk` is specified in the fixture.
 
 
 NOTE: Currently this fixture needs to be loaded manually to the database. We have plans for writing a command that will

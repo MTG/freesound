@@ -18,4 +18,7 @@ Why should you donate to Freesound?
 In case you want to donate, please use the link below:
 
 {% absurl 'donate' %}
+
+{% include "email_opt_out_text.txt" %}
+
 {% endblock %}

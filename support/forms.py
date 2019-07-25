@@ -20,6 +20,7 @@
 
 from django import forms
 from django.conf import settings
+
 from utils.forms import CaptchaWidget
 
 
@@ -27,12 +28,12 @@ class ContactForm(forms.Form):
     your_email = forms.EmailField()
     subject = forms.CharField()
     message = forms.CharField(widget=forms.Textarea(attrs={'rows': 10, 'cols': 50}))
-    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
     def clean_recaptcha_response(self):
         captcha_response = self.cleaned_data.get("recaptcha_response")
         if settings.RECAPTCHA_PUBLIC_KEY:
             if not captcha_response:
-                raise forms.ValidationError(_("Captcha is not correct"))
+                raise forms.ValidationError("Captcha is not correct")
         return captcha_response
 

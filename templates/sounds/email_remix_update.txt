@@ -15,4 +15,6 @@ The remix is called {{remix.original_filename}}, listen to it here:
 
 {% absurl 'sound' remix.user.username remix.id %}
 
+{% include "email_opt_out_text.txt" %}
+
 {% endblock %}

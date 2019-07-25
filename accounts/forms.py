@@ -27,7 +27,6 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models import Q
-from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -138,14 +137,13 @@ class UsernameField(forms.CharField):
     """ Username field, 3~30 characters, allows only alphanumeric chars, required by default """
     def __init__(self, required=True):
         super(UsernameField, self).__init__(
-            label=_("Username"),
+            label="Username",
             min_length=3,
             max_length=30,
             validators=[RegexValidator(r'^[\w.+-]+$')],  # is the same as Django UsernameValidator except for '@' symbol
-            help_text=_("30 characters or fewer. Can contain: letters, digits, underscores, dots, "
-                        "dashes and plus signs."),
-            error_messages={'invalid': _("This value must contain only letters, digits, underscores, dots, dashes and "
-                                         "plus signs.")},
+            help_text="30 characters or fewer. Can contain: letters, digits, underscores, dots, dashes and plus signs.",
+            error_messages={'invalid': "This value must contain only letters, digits, underscores, dots, dashes and "
+                                       "plus signs."},
             required=required)
 
 
@@ -153,14 +151,14 @@ class RegistrationForm(forms.Form):
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
     username = UsernameField()
 
-    email1 = forms.EmailField(label=_("Email"), help_text=_("We will send you a confirmation/activation email, so make "
-                                                            "sure this is correct!."), max_length=254)
-    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+    email1 = forms.EmailField(label="Email", help_text="We will send you a confirmation/activation email, so make "
+                                                       "sure this is correct!.", max_length=254)
+    password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
         label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
                         'Freesound website'),
         required=True,
-        error_messages={'required': _('You must accept the terms of use in order to register to Freesound.')}
+        error_messages={'required': 'You must accept the terms of use in order to register to Freesound.'}
     )
 
     def clean_username(self):
@@ -172,14 +170,14 @@ class RegistrationForm(forms.Form):
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
                 return username
-        raise forms.ValidationError(_("A user with that username already exists."))
+        raise forms.ValidationError("A user with that username already exists.")
 
     def clean_email1(self):
         email1 = self.cleaned_data["email1"]
         try:
             get_user_by_email(email1)
             logger.info('User trying to register with an already existing email')
-            raise forms.ValidationError(_("A user using that email address already exists."))
+            raise forms.ValidationError("A user using that email address already exists.")
         except User.DoesNotExist:
             pass
         return email1
@@ -223,12 +221,10 @@ class FsAuthenticationForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super(FsAuthenticationForm, self).__init__(*args, **kwargs)
         self.error_messages.update({
-            'inactive': mark_safe(_("You are trying to log in with an inactive account, please <a href=\"%s\">activate "
-                                    "your account</a> first." % reverse("accounts-resend-activation"))),
-            'invalid_login': _(
-                "Please enter a correct username/email and password. Note that "
-                "passwords are case-sensitive."
-            ),
+            'inactive': mark_safe("You are trying to log in with an inactive account, please <a href=\"%s\">activate "
+                                  "your account</a> first." % reverse("accounts-resend-activation")),
+            'invalid_login': "Please enter a correct username/email and password. "
+                             "Note that passwords are case-sensitive.",
         })
         self.fields['username'].label = 'Username or email'
 
@@ -308,7 +304,7 @@ class ProfileForm(forms.ModelForm):
                     raise forms.ValidationError("Your username can't be changed any further. Please contact support "
                                                 "if you still need to change it.")
                 return username
-        raise forms.ValidationError(_("This username is already taken or has been in used in the past."))
+        raise forms.ValidationError("This username is already taken or has been in used in the past.")
 
     def clean_about(self):
         about = self.cleaned_data['about']
@@ -345,8 +341,8 @@ class ProfileForm(forms.ModelForm):
         return [self['about'], self['signature'], self['sound_signature']]
 
 class EmailResetForm(forms.Form):
-    email = forms.EmailField(label=_("New email address"), max_length=254)
-    password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
+    email = forms.EmailField(label="New email address", max_length=254)
+    password = forms.CharField(label="Your password", widget=forms.PasswordInput)
 
     def __init__(self, *args, **kwargs):
         # Using init function to pass user variable so later we can perform check_password in clean_password function
@@ -355,7 +351,7 @@ class EmailResetForm(forms.Form):
 
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):
-            raise forms.ValidationError(_("Incorrect password."))
+            raise forms.ValidationError("Incorrect password.")
         return self.cleaned_data['password']
 
 
@@ -374,7 +370,7 @@ class DeleteUserForm(forms.Form):
     def clean_password(self):
         user = User.objects.get(id=self.user_id)
         if not user.check_password(self.cleaned_data["password"]):
-            raise forms.ValidationError(_("Incorrect password."))
+            raise forms.ValidationError("Incorrect password.")
         return None
 
     def clean(self):

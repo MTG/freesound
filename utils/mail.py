@@ -40,19 +40,30 @@ def _ensure_list(item):
     return item
 
 
-def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None, reply_to=None):
+def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None, reply_to=None,
+              email_type_preference_check=None):
+    """Sends email with a lot of defaults.
+
+    The function will check if user's email is valid based on bounce info. The function will also check email
+    preferences of destinataries of the email. Parameters user_to and email_to are mutually exclusive, if one is set,
+    other should be None.
+
+    Args:
+        subject (str): subject of the email.
+        email_body (str): body of the email.
+        user_to (Union[User, List[User]]): a User object or a list of User objects to send the email to. If user_to
+            is set, email_to should be None.
+        email_to (Union[str, List[str]]): a string representing an email address or a list of strings representing
+            email addresses who to send the email to.  If email_to is set, user_to should be None.
+        email_from (str): email string that shows up as sender. The default value is DEFAULT_FROM_EMAIL in config.
+        reply_to (str): cemail string that will be added as a "Reply-To" header to all mails being sent.
+        email_type_preference_check (str): name of EmailPreferenceType that users should have enabled for the email to
+            be sent. If set to None, no checks will be carried out.
+
+    Returns:
+        (bool): True if all emails were sent successfully, False otherwise.
     """
-    Sends email with a lot of defaults. The function will check if user's email is valid based on bounce info and will
-    not send to this user in other case. Parameters user_to and email_to are mutually exclusive, if one is set, other
-    should be None.
-    @:param user_to is a single user object, or a list of them. If it is set, email_to parameter should be None
-    @:param email_to is a single email string, or a list of them. If it is set, user_to parameter should be None.
-    Strings should be only used for emails that are not related to users, e.g. support or admins, otherwise user_to
-    parameter should be used to provide user object(s) instead of email address
-    @:param email_from is a email string that shows up as sender. The default value is DEFAULT_FROM_EMAIL in config
-    @:param reply_to can only be a single email address that will be added as a header to all mails being sent
-    @:returns False if no emails were send successfully, True otherwise
-    """
+
     assert bool(user_to) != bool(email_to), "One of parameters user_to and email_to should be set, but not both"
 
     if email_from is None:
@@ -63,12 +74,17 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         email_to = []
         for user in user_to:
 
-            # check if user's email is valid for delivery and add the correct email address to the list og email_to
-            if user.profile.email_is_valid():
+            # Check that user has preference enabled for that type of email
+            email_type_enabled = user.profile.email_type_enabled(email_type_preference_check) \
+                if email_type_preference_check is not None else True
+
+            # Check if user's email is valid for delivery and add the correct email address to the list of email_to
+            if user.profile.email_is_valid() and email_type_enabled:
                 email_to.append(user.profile.get_email_for_delivery())
 
-            if len(email_to) == 0:  # all users have invalid emails
-                return False
+        # If all users have invalid emails or failed preference check, send no emails
+        if len(email_to) == 0:
+            return False
 
     if email_to:
         email_to = _ensure_list(email_to)
@@ -95,9 +111,11 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         return False
 
 
-def send_mail_template(subject, template, context, user_to=None, email_to=None, email_from=None, reply_to=None):
+def send_mail_template(subject, template, context, user_to=None, email_to=None, email_from=None, reply_to=None,
+                       email_type_preference_check=None):
     context["settings"] = settings
-    return send_mail(subject, render_to_string(template, context), user_to, email_to, email_from, reply_to)
+    return send_mail(subject, render_to_string(template, context), user_to, email_to, email_from, reply_to,
+                     email_type_preference_check)
 
 
 def send_mail_template_to_support(subject, template, context, email_from=None, reply_to=None):

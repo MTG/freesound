@@ -1,0 +1,1 @@
+{% load absurl %}If you don't want to receive these kind of notifications anymore you can turn them off at {% absurl "accounts-email-settings" %}

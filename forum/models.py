@@ -29,7 +29,6 @@ from general.models import OrderedModel
 from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
 from django.dispatch import receiver
 from utils.cache import invalidate_template_cache
-from django.utils.translation import ugettext as _
 from utils.search.search_forum import delete_post_from_solr, send_posts_to_solr
 import accounts
 import logging
@@ -169,8 +168,8 @@ class Post(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
     MODERATION_STATE_CHOICES = (
-        ("NM", _('NEEDS_MODERATION')),
-        ("OK", _('OK')),
+        ("NM", 'NEEDS_MODERATION'),
+        ("OK", 'OK'),
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 

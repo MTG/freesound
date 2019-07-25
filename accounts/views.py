@@ -338,18 +338,17 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
-    profile = request.user.profile
     if request.method == "POST":
         form = EmailSettingsForm(request.POST)
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
-            request.user.profile.update_enabled_email_types(email_type_ids)
+            request.user.profile.set_enabled_email_types(email_type_ids)
             messages.add_message(request, messages.INFO, 'Your email notification preferences have been updated')
             return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()
-        form = profile_form = EmailSettingsForm(initial={
+        form = EmailSettingsForm(initial={
             'email_types': all_emails,
             })
     tvars = {'form': form}

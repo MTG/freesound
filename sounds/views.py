@@ -32,7 +32,7 @@ from django.contrib.auth.models import User, Group
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
-from django.db.models import Q
+from django.db.models.functions import Greatest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect, JsonResponse
@@ -73,7 +73,7 @@ def get_n_weeks_back_datetime(n_weeks):
     Returns a datetime object set to a time `n_weeks` back from now.
     If DEBUG=True, it is likely that the contents of the development databse have not been updated and no
     activity will be registered for the last `n_weeks`. To compensate for that, when in DEBUG mode the returned
-    date is calculated with respect to the date of the most recent download sotred in database. In this way it is
+    date is calculated with respect to the date of the most recent download stored in database. In this way it is
     more likely that the selected time range will include activity in database.
     """
     now = datetime.datetime.now()
@@ -109,10 +109,10 @@ def sounds(request):
     latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
     last_week = get_n_weeks_back_datetime(n_weeks=1)
-    popular_sound_ids = [snd.id for snd in Sound.objects.filter(
-            Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
-    popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
-    popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
+    popular_sounds = Sound.public.select_related('license', 'user') \
+                                 .annotate(greatest_date=Greatest('created', 'moderation_date')) \
+                                 .filter(greatest_date__gte=last_week).order_by("-num_downloads")[0:5]
+    popular_packs = Pack.objects.select_related('user').filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
         random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]

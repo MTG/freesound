@@ -387,11 +387,11 @@ class Sound(SocialModel):
     similarity_state = models.CharField(db_index=True, max_length=2, choices=SIMILARITY_STATE_CHOICES, default="PE")
     analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")
 
-    # counts
-    num_comments = models.PositiveIntegerField(default=0)  # Updated via django (sound view and delete comment view)
-    num_downloads = models.PositiveIntegerField(default=0)  # Updated via database trigger
-    avg_rating = models.FloatField(default=0)  # Updated via database trigger
-    num_ratings = models.PositiveIntegerField(default=0)  # Updated via database trigger
+    # counts, updated by django signals
+    num_comments = models.PositiveIntegerField(default=0)
+    num_downloads = models.PositiveIntegerField(default=0, db_index=True)
+    avg_rating = models.FloatField(default=0)
+    num_ratings = models.PositiveIntegerField(default=0)
 
     objects = SoundManager()
     public = PublicSoundManager()
@@ -1101,7 +1101,7 @@ class Pack(SocialModel):
     description = models.TextField(null=True, blank=True, default=None)
     is_dirty = models.BooleanField(db_index=True, default=False)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    license_crc = models.CharField(max_length=8,blank=True)
+    license_crc = models.CharField(max_length=8, blank=True)
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method

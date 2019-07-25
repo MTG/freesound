@@ -692,12 +692,12 @@ def pack(request, username, pack_id):
     if pack.is_deleted:
         return render(request, 'sounds/deleted_pack.html')
 
-    qs = Sound.objects.only('id').filter(pack=pack, moderation_state='OK', processing_state='OK')
+    qs = Sound.public.only('id').filter(pack=pack)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 
-    num_sounds_ok = len(qs)
+    num_sounds_ok = paginator['paginator'].count
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else:

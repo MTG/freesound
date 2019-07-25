@@ -30,27 +30,11 @@
 <div class="sounds_in_pack">
 {% with pack.get_random_sounds_from_pack as sounds %}
     <span class="text">Some random samples from the pack:</span><br>
-    <div class="sound">
-    {% with sounds.0 as sound %}
-        {% if sound %}
-            {% include "sounds/player_medium.html" %}
-        {% endif %}
-    {% endwith %}
-    </div>
-    <div class="sound">
-    {% with sounds.1 as sound %}
-        {% if sound %}
-            {% include "sounds/player_medium.html" %}
-        {% endif %}
-    {% endwith %}
-    </div>
-    <div class="sound">
-    {% with sounds.2 as sound %}
-        {% if sound %}
-            {% include "sounds/player_medium.html" %}
-        {% endif %}
-    {% endwith %}
-    </div>
+    {% for sound in sounds %}
+        <div class="sound">
+        {% include "sounds/player_medium.html" %}
+        </div>
+    {% endfor %}
 {% endwith %}
 </div>
 </div>

@@ -87,7 +87,7 @@ const createLoopButton = audioElement => {
  */
 const createPlayerControls = (audioElement, parentNode) => {
   const playerControls = document.createElement('div')
-  playerControls.className = 'bw-player__controls'
+  playerControls.className = 'bw-player__controls stop-propagation'
   const playButton = createPlayButton(audioElement)
   const stopButton = createStopButton(audioElement, parentNode)
   const loopButton = createLoopButton(audioElement)
@@ -113,8 +113,19 @@ const createWaveformImage = (parentNode, audioElement) => {
     const progressStatus = createProgressStatus(audioElement)
     imageContainer.appendChild(progressStatus)
   })
+  imageContainer.addEventListener('click', evt => {
+    const clickPosition = evt.layerX
+    const width = evt.target.clientWidth
+    const positionRatio = clickPosition / width
+    const time = audioElement.duration * positionRatio
+    audioElement.currentTime = time
+    if (audioElement.paused) {
+      audioElement.play()
+    }
+  })
   return imageContainer
 }
+
 
 /**
  * @param {HTMLDivElement} parentNode

@@ -3,6 +3,10 @@
   height: 100px;
   display: flex;
   overflow-x: hidden;
+
+  &.bw-player__img-container--big {
+    height: 300px;
+  }
 }
 
 .bw-player__img {
@@ -46,21 +50,41 @@
   opacity: 0;
   color: $navy-grey;
   transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
 
   button:focus {
     outline: none;
     color: $black;
+  }
+
+  &.bw-player__controls--big {
+    font-size: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 20px;
+
+    .bw-player__play-btn {
+      font-size: 36px;
+    }
   }
 }
 
 .bw-player__progress {
   position: absolute;
   bottom: 0;
-  right: 0;
-  background-color: transparentize($white, 0.5);
-  padding: 2px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row-reverse;
+  pointer-events: none;
+
+  span {
+    background-color: transparentize($white, 0.5);
+    padding: 2px;
+    border-radius: 2px;
+  }
   color: $navy-grey;
-  border-radius: 2px;
 }
 
 .bw-player {

@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import playerSettings from './settings'
 import { formatAudioDuration } from './utils'
 import { createIconElement } from '../../utils/icons'
@@ -6,8 +5,11 @@ import { createIconElement } from '../../utils/icons'
 const useActionIcon = (parentNode, action) => {
   const bwPlayBtn = parentNode.getElementsByClassName('bw-player__play-btn')[0]
   const playerStatusIcon = bwPlayBtn.getElementsByTagName('i')[0]
-  const pauseIcon = createIconElement(`bw-icon-${action}`)
-  bwPlayBtn.replaceChild(pauseIcon, playerStatusIcon)
+  const playerSize = parentNode.dataset.size
+  const actionIcon = createIconElement(
+    `bw-icon-${action}${playerSize === 'big' ? '-stroke' : ''}`
+  )
+  bwPlayBtn.replaceChild(actionIcon, playerStatusIcon)
 }
 
 /**
@@ -60,11 +62,12 @@ const onPlayerTimeUpdate = (audioElement, parentNode) => {
   const progressStatus = parentNode.getElementsByClassName(
     'bw-player__progress'
   )[0]
+  const progressIndicator = [...progressStatus.childNodes][1]
   const { duration, currentTime } = audioElement
   const progress = playerSettings.showRemainingTime
     ? duration - currentTime
     : currentTime
-  progressStatus.innerHTML = `${
+  progressIndicator.innerHTML = `${
     playerSettings.showRemainingTime ? '-' : ''
   }${formatAudioDuration(progress)}`
 }

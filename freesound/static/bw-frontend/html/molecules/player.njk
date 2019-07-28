@@ -2,7 +2,8 @@
     size = 'small',
     title = 'My sound',
     url = 'https://freesound.org/data/previews/55/55228_350554',
-    img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png'
+    img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png',
+    spectogram = '/spectrogram_39452.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).4124b153.jpg'
 ) %}
   <div
     class="bw-player"
@@ -10,13 +11,15 @@
     data-mp3="{{ url }}-lq.mp3"
     data-ogg="{{ url }}-lq.ogg"
     data-waveform="{{ img }}"
-    data-spectrum="{{ img }}"
+    data-spectrum="{{ spectogram }}"
     data-title="{{ title }}">
   </div>
 
   <!-- The following is a hack for Parcel to serve the white waveform images, no need to put this part in production -->
   <div class="hidden">
     <img src="../public/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" />
+    <img src="../public/waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).png" />
+    <img src="../public/spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).jpg" />
   </div>
   <!-- end parcel hack -->
 {% endmacro %}
@@ -36,4 +39,14 @@
   </h5>
   <a href="#">{{ author }}</a>
   <p class="text-grey">{{ description }}</p>
+{% endmacro %}
+
+{% macro bigPlayer(
+    title = 'My sound',
+    url = 'https://freesound.org/data/previews/55/55228_350554',
+    img = '/waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).cada6dac.png',
+    spectogram = '/spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).4124b153.jpg'
+  ) %}
+  {{ player('big', title, url, img, spectogram) }}
+  <div class="bw-player-big__controls"></div>
 {% endmacro %}

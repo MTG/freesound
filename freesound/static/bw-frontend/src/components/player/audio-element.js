@@ -20,8 +20,17 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
   const progressIndicator = parentNode.getElementsByClassName(
     'bw-player__progress-indicator'
   )[0]
+  const progressBarIndicator = parentNode.getElementsByClassName(
+    'bw-player__progress-bar-indicator'
+  )[0]
   progressIndicator.style.transform = `translateX(${-100 +
     progressPercentage}%)`
+  if (progressBarIndicator) {
+    const parentWidth = progressBarIndicator.parentElement.clientWidth
+    progressBarIndicator.style.transform = `translateX(${(parentWidth *
+      progressPercentage) /
+      100}px)`
+  }
 }
 
 /**
@@ -64,9 +73,12 @@ const onPlayerTimeUpdate = (audioElement, parentNode) => {
   )[0]
   const progressIndicator = [...progressStatus.childNodes][1]
   const { duration, currentTime } = audioElement
+  const didReachTheEnd = duration === currentTime
+  // reset progress at the end of playback
+  const timeElapsed = didReachTheEnd ? 0 : currentTime
   const progress = playerSettings.showRemainingTime
-    ? duration - currentTime
-    : currentTime
+    ? duration - timeElapsed
+    : timeElapsed
   progressIndicator.innerHTML = `${
     playerSettings.showRemainingTime ? '-' : ''
   }${formatAudioDuration(progress)}`

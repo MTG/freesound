@@ -5,9 +5,44 @@ import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator } from './audio-element'
 
 const createProgressIndicator = () => {
+  const progressIndicatorContainer = document.createElement('div')
+  progressIndicatorContainer.className = 'bw-player__progress-indicator-container'
   const progressIndicator = document.createElement('div')
   progressIndicator.className = 'bw-player__progress-indicator'
-  return progressIndicator
+  progressIndicatorContainer.appendChild(progressIndicator)
+  return progressIndicatorContainer
+}
+
+/**
+ * @param {HTMLAudioElement} audioElement
+ */
+const createProgressBar = audioElement => {
+  const progressBar = document.createElement('div')
+  progressBar.className = 'bw-player__progress-bar'
+  const progressBarIndicator = document.createElement('div')
+  progressBarIndicator.className = 'bw-player__progress-bar-indicator'
+  const progressBarIndicatorGhost = document.createElement('div')
+  progressBarIndicatorGhost.className =
+    'bw-player__progress-bar-indicator--ghost'
+  const progressBarTime = document.createElement('div')
+  progressBarTime.className = 'bw-player__progress-bar-indicator--time'
+  progressBar.appendChild(progressBarIndicator)
+  progressBar.appendChild(progressBarIndicatorGhost)
+  progressBar.appendChild(progressBarTime)
+  progressBar.addEventListener('mouseenter', evt => {
+    progressBarIndicatorGhost.style.transform = `translateX(${evt.layerX}px)`
+    progressBarTime.style.transform = `translateX(calc(${evt.layerX}px - 50%))`
+    progressBarIndicatorGhost.style.opacity = 0.5
+    progressBarTime.style.opacity = 1
+    progressBarTime.innerHTML = formatAudioDuration(
+      (audioElement.duration * evt.layerX) / progressBar.clientWidth
+    )
+  })
+  progressBar.addEventListener('mouseleave', () => {
+    progressBarIndicatorGhost.style.opacity = 0
+    progressBarTime.style.opacity = 0
+  })
+  return progressBar
 }
 
 /**
@@ -16,12 +51,16 @@ const createProgressIndicator = () => {
  */
 const createProgressStatus = (audioElement, playerSize) => {
   const { duration } = audioElement
+  const progressStatusContainer = document.createElement('div')
+  progressStatusContainer.className = 'bw-player__progress-container'
+  const progressBar = createProgressBar(audioElement)
   const progressStatus = document.createElement('div')
   progressStatus.className = 'bw-player__progress'
   const durationIndicator = document.createElement('span')
   const progressIndicator = document.createElement('span')
   progressIndicator.classList.add('hidden')
   if (playerSize === 'big') {
+    progressStatusContainer.classList.add('bw-player__progress-container--big')
     progressStatus.classList.add('bw-player__progress--big')
     progressIndicator.classList.remove('hidden')
   }
@@ -31,7 +70,11 @@ const createProgressStatus = (audioElement, playerSize) => {
   progressIndicator.innerHTML = formatAudioDuration(0)
   progressStatus.appendChild(durationIndicator)
   progressStatus.appendChild(progressIndicator)
-  return progressStatus
+  if (playerSize === 'big') {
+    progressStatusContainer.appendChild(progressBar)
+  }
+  progressStatusContainer.appendChild(progressStatus)
+  return progressStatusContainer
 }
 
 /**

@@ -16,6 +16,8 @@ carousels.forEach(carousel => {
   if (!carouselContainer) return
   const totalPages = carouselContainer.childElementCount
   let currentPage = 0
+  const leftArrow = document.createElement('div')
+  const rightArrow = document.createElement('div')
   const setPage = desiredPage => {
     if (desiredPage < 0 || desiredPage >= totalPages) return
     currentPage = desiredPage
@@ -38,11 +40,10 @@ carousels.forEach(carousel => {
   carouselContainer.style.width = width
   const children = [...carouselContainer.children]
   children.forEach(child => {
+    // eslint-disable-next-line no-param-reassign
     child.style.width = `${100 / totalPages}%`
   })
 
-  const leftArrow = document.createElement('div')
-  const rightArrow = document.createElement('div')
   const navigationArrows = [leftArrow, rightArrow]
   navigationArrows.forEach(element => {
     element.classList.add('bw-carousel-icon')

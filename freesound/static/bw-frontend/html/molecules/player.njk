@@ -1,10 +1,4 @@
-{% macro player(
-    size = 'small',
-    title = 'My sound',
-    url = 'https://freesound.org/data/previews/55/55228_350554',
-    img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png',
-    spectogram = '/spectrogram_39452.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).4124b153.jpg'
-) %}
+{% macro player(size = 'small', title = 'My sound', url = 'https://freesound.org/data/previews/55/55228_350554', img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png', spectogram = '/spectrogram_39452.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).4124b153.jpg') %}
   <div
     class="bw-player"
     data-size="{{ size }}"
@@ -12,8 +6,7 @@
     data-ogg="{{ url }}-lq.ogg"
     data-waveform="{{ img }}"
     data-spectrum="{{ spectogram }}"
-    data-title="{{ title }}">
-  </div>
+    data-title="{{ title }}"></div>
 
   <!-- The following is a hack for Parcel to serve the white waveform images, no need to put this part in production -->
   <div class="hidden">
@@ -24,13 +17,7 @@
   <!-- end parcel hack -->
 {% endmacro %}
 
-{% macro smallPlayer(
-    title = 'My sound',
-    author = 'giuband',
-    description = 'Sound description',
-    url = 'https://freesound.org/data/previews/55/55228_350554',
-    img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png'
-  ) %}
+{% macro smallPlayer(title = 'My sound', author = 'giuband', description = 'Sound description', url = 'https://freesound.org/data/previews/55/55228_350554', img = '/waveform_39452.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).41eeecea.png') %}
   {{ player('small', title, url, img) }}
   <h5 class="v-spacing-top-1">
     <a href="#" class="bw-link--black">
@@ -41,12 +28,30 @@
   <p class="text-grey">{{ description }}</p>
 {% endmacro %}
 
-{% macro bigPlayer(
-    title = 'My sound',
-    url = 'https://freesound.org/data/previews/55/55228_350554',
-    img = '/waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).cada6dac.png',
-    spectogram = '/spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).4124b153.jpg'
-  ) %}
+{% macro bigPlayer(title = 'My sound', url = 'https://freesound.org/data/previews/55/55228_350554', img = '/waveform_43209.wav_w_(500, 201, 2048, _wave_marc_3_, (255, 255, 255)).cada6dac.png', spectogram = '/spectrogram_43209.wav_s_(500, 201, 2048, _spec_marc_3_, (0, 0, 0)).4124b153.jpg') %}
   {{ player('big', title, url, img, spectogram) }}
   <div class="bw-player-big__controls"></div>
+{% endmacro %}
+
+{% macro smallPack(title, count, author) %}
+  <div>
+    <div class="bw-carousel-container">
+      <div class="bw-carousel-wrapper">
+        <div class="bw-carousel">
+          {% for i in range(0, count) %}
+            <div>
+              {{ player() }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <h5 class="v-spacing-top-1">
+      <a href="#" class="bw-link--black">
+        {{ title }}
+      </a>
+    </h5>
+    <p>{{ count }} sounds by <a href="#">{{ author }}</a>
+    </p>
+  </div>
 {% endmacro %}

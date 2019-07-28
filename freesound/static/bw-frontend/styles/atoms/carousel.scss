@@ -1,7 +1,7 @@
 .bw-carousel-container {
   position: relative;
 
-  &:hover .bw-carousel-icon {
+  &:hover >.bw-carousel-icon {
     opacity: 1;
   }
 }

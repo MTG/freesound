@@ -141,6 +141,14 @@
   color: $navy-grey;
 }
 
+.bw-player__favorite {
+  position: absolute;
+  top: 0;
+  right: -8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
 .bw-player {
   user-select: none;
 
@@ -149,7 +157,8 @@
   }
 
   &:hover {
-    .bw-player__controls {
+    .bw-player__controls,
+    .bw-player__favorite {
       opacity: 0.7;
     }
     .bw-player__progress {

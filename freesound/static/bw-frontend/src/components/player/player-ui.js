@@ -237,6 +237,33 @@ const createPlayerControls = (parentNode, audioElement, playerSize) => {
 }
 
 /**
+ *
+ * @param {HTMLDivElement} parentNode
+ */
+const createSetFavoriteButton = parentNode => {
+  const getIsFavorite = () => parentNode.dataset.favorite === 'true'
+  const favoriteButtonContainer = document.createElement('div')
+  const favoriteButton = createControlButton('bookmark')
+  const unfavoriteButton = createControlButton('bookmark-filled')
+  favoriteButtonContainer.classList.add(
+    'bw-player__favorite',
+    'stop-propagation'
+  )
+  favoriteButtonContainer.appendChild(
+    getIsFavorite() ? unfavoriteButton : favoriteButton
+  )
+  favoriteButtonContainer.addEventListener('click', () => {
+    const isCurrentlyFavorite = getIsFavorite()
+    favoriteButtonContainer.innerHTML = ''
+    favoriteButtonContainer.appendChild(
+      isCurrentlyFavorite ? favoriteButton : unfavoriteButton
+    )
+    parentNode.dataset.favorite = `${!isCurrentlyFavorite}`
+  })
+  return favoriteButtonContainer
+}
+
+/**
  * @param {HTMLDivElement} parentNode
  */
 const createPlayer = parentNode => {
@@ -248,10 +275,12 @@ const createPlayer = parentNode => {
     playerSize
   )
   const controls = createPlayerControls(parentNode, audioElement, playerSize)
+  const bookmarkButton = createSetFavoriteButton(parentNode)
 
   parentNode.appendChild(waveformImage)
   parentNode.appendChild(audioElement)
   waveformImage.appendChild(controls)
+  waveformImage.appendChild(bookmarkButton)
 }
 
 const setupPlayers = () => {

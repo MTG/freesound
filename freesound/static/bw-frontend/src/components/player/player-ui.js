@@ -1,15 +1,37 @@
 /* eslint-disable no-param-reassign */
+import throttle from 'lodash.throttle'
 import playerSettings from './settings'
 import { formatAudioDuration } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator } from './audio-element'
 
-const createProgressIndicator = () => {
+/**
+ *
+ * @param {HTMLDivElement} parentNode
+ * @param {HTMLAudioElement} audioElement
+ */
+const createProgressIndicator = (parentNode, audioElement) => {
   const progressIndicatorContainer = document.createElement('div')
-  progressIndicatorContainer.className = 'bw-player__progress-indicator-container'
+  progressIndicatorContainer.className =
+    'bw-player__progress-indicator-container'
   const progressIndicator = document.createElement('div')
   progressIndicator.className = 'bw-player__progress-indicator'
   progressIndicatorContainer.appendChild(progressIndicator)
+  progressIndicatorContainer.addEventListener(
+    'mousemove',
+    throttle(evt => {
+      const progressPercentage =
+        evt.layerX / progressIndicatorContainer.clientWidth
+      setProgressIndicator(progressPercentage * 100, parentNode)
+    }),
+    50
+  )
+  progressIndicatorContainer.addEventListener('mouseleave', () => {
+    setProgressIndicator(
+      ((100 * audioElement.currentTime) / audioElement.duration) % 100,
+      parentNode
+    )
+  })
   return progressIndicatorContainer
 }
 
@@ -29,15 +51,18 @@ const createProgressBar = audioElement => {
   progressBar.appendChild(progressBarIndicator)
   progressBar.appendChild(progressBarIndicatorGhost)
   progressBar.appendChild(progressBarTime)
-  progressBar.addEventListener('mouseenter', evt => {
-    progressBarIndicatorGhost.style.transform = `translateX(${evt.layerX}px)`
-    progressBarTime.style.transform = `translateX(calc(${evt.layerX}px - 50%))`
-    progressBarIndicatorGhost.style.opacity = 0.5
-    progressBarTime.style.opacity = 1
-    progressBarTime.innerHTML = formatAudioDuration(
-      (audioElement.duration * evt.layerX) / progressBar.clientWidth
-    )
-  })
+  progressBar.addEventListener(
+    'mousemove',
+    throttle(evt => {
+      progressBarIndicatorGhost.style.transform = `translateX(${evt.layerX}px)`
+      progressBarIndicatorGhost.style.opacity = 0.5
+      progressBarTime.style.transform = `translateX(calc(${evt.layerX}px - 50%))`
+      progressBarTime.style.opacity = 1
+      progressBarTime.innerHTML = formatAudioDuration(
+        (audioElement.duration * evt.layerX) / progressBar.clientWidth
+      )
+    }, 30)
+  )
   progressBar.addEventListener('mouseleave', () => {
     progressBarIndicatorGhost.style.opacity = 0
     progressBarTime.style.opacity = 0
@@ -166,7 +191,7 @@ const createWaveformImage = (parentNode, audioElement, playerSize) => {
   waveformImage.className = 'bw-player__img'
   waveformImage.src = waveform
   waveformImage.alt = title
-  const progressIndicator = createProgressIndicator()
+  const progressIndicator = createProgressIndicator(parentNode, audioElement)
   imageContainer.appendChild(waveformImage)
   imageContainer.appendChild(progressIndicator)
   audioElement.addEventListener('loadedmetadata', () => {

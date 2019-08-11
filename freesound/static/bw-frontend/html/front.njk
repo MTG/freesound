@@ -1,9 +1,10 @@
 {% import './molecules/player.njk' as players %}
 {% import './atoms/tags.njk' as tags %}
+{% import './molecules/navbar.njk' as navbars %}
 {% extends "base.njk" %}
 
 {% block content %}
-  {% include './molecules/navbar.njk' %}
+  {{ navbars.frontNavbar() }}
 
   <div class="container">
     <div class="bw-front__hero-container">

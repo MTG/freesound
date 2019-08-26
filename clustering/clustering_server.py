@@ -98,7 +98,7 @@ class ClusteringServer(resource.Resource):
         return node_community_centralities
     
     def _save_results_to_file(self, query_params, features, graph_json, sound_ids, modularity, 
-                              num_communities, ratio_intra_community_edges, ami, ss, ci):
+                              num_communities, ratio_intra_community_edges, ami, ss, ci, communities):
         result = {
             'query_params' : query_params,
             'sound_ids': sound_ids,
@@ -110,6 +110,7 @@ class ClusteringServer(resource.Resource):
             'average_mutual_information_tags': ami,
             'silouhette_coeff_tags': ss,
             'calinski_harabaz_score': ci,
+            'communities': communities
         }
         json.dump(result, open('{}/{}.json'.format(SAVE_RESULTS_FOLDER, query_params[0]), 'w'))
 
@@ -118,6 +119,7 @@ class ClusteringServer(resource.Resource):
         graph = nx.Graph()
         graph.add_nodes_from(sound_ids_list)
         k = int(np.ceil(np.log2(len(sound_ids_list))))
+        k = 5
 
         for sound_id in sound_ids_list:
             try:
@@ -237,8 +239,8 @@ class ClusteringServer(resource.Resource):
         # Export graph as json
         graph_json = json_graph.node_link_data(graph)
 
-        # self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
-        #                            num_communities, ratio_intra_community_edges, ami, ss, ci)
+        self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
+                                   num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
 
         return json.dumps({'error': False, 'result': communities, 'graph': graph_json})
 

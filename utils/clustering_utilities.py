@@ -23,7 +23,7 @@ def cluster_sound_results(query_params, features):
     query_params_formatted = copy.copy(query_params)
     query_params_formatted['filter_query'] = query_params_formatted['filter_query'].replace('\\"', '"')
 
-    cache_key = 'cluster-search-results-q-{}-f-{}-s-{}-tw-{}-uw-{}-idw-{}-dw-{}-pw-{}-fw-{}-feat-{}'.format(
+    cache_key = 'cluster-search-results-q-{}-f-{}-s-{}-tw-{}-uw-{}-idw-{}-dw-{}-pw-{}-fw-{}-g-{}-feat-{}'.format(
         query_params['search_query'],
         query_params['filter_query'],
         str(query_params['sort'][0]),  # str cast to avoid having sometimes unicode != string
@@ -33,6 +33,7 @@ def cluster_sound_results(query_params, features):
         query_params['description_weight'],
         query_params['pack_tokenized_weight'],
         query_params['original_filename_weight'],
+        query_params['grouping'],
         features,
     ).replace(' ', '')
 

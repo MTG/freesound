@@ -48,3 +48,5 @@ xlrd==1.1.0
 numpy==1.9.0
 scikits.audiolab==0.11.0
 django-silk==3.0.2
+celery==4.1.1
+redis==3.2.0

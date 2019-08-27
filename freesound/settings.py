@@ -573,6 +573,27 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 # -------------------------------------------------------------------------------
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+]
+
+
+# CELERY STUFF
+CELERY_BROKER_URL = 'redis://localhost:6380'
+CELERY_RESULT_BACKEND = 'redis://localhost:6380'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+
+# Place settings which depend on other settings potentially modified in local_settings.py BELOW the
+# local settings import
 from local_settings import *
 
 

@@ -78,14 +78,7 @@
         }
 
         // Ajax request clustering
-        $.get({% url 'cluster-sounds' %}, 
-                {
-                    query_params: '{{ query_params | safe }}',
-                    sort_unformatted: '{{ sort_unformatted }}',
-                }, 
-                function( data ) {
-                    $('#clusters-div').replaceWith(data);
-        });
+        request_clustering();
 
     });
 
@@ -209,6 +202,25 @@
         var value = $("#filter_query").val();
         var cleaned = $.trim(value.replace(tag + " ", "").replace(tag, ""));
         $("#filter_query").val(cleaned);
+    }
+
+    // function for requesting clustering
+    function request_clustering()
+    {
+        $.get({% url 'cluster-sounds' %}, 
+                {
+                    query_params: '{{ query_params | safe }}',
+                    sort_unformatted: '{{ sort_unformatted }}',
+                }, 
+                function( data ) {
+                    if (data === 0) {
+                        setTimeout(() => {
+                            request_clustering();
+                        }, 500);
+                    } else {
+                        $('#clusters-div').replaceWith(data);
+                    }
+        });
     }
 
 </script>

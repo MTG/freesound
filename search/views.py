@@ -40,8 +40,6 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 from clustering.interface import cluster_sound_results
 
-from time import sleep  # for dev debug propose
-
 logger = logging.getLogger("search")
 
 
@@ -274,10 +272,7 @@ def cluster_sounds(request):
         results = result['result']
         num_clusters = num_clusters = len(results) + 1
     else:
-        sleep(4)  # hack for dev purpose TODO: make the client periodically ask for the results
-        result = cluster_sound_results(query_params, 'audio_as')
-        results = result['result']
-        num_clusters = num_clusters = len(results) + 1
+        return JsonResponse(0, safe=False)
 
     num_sounds_per_cluster = [len(cluster) for cluster in results]
     classes = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}

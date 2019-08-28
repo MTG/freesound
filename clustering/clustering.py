@@ -1,7 +1,5 @@
 import os, sys
 from time import time
-from twisted.web import server, resource
-from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
 import numpy as np
 from sklearn import metrics
@@ -14,33 +12,12 @@ from networkx.readwrite import json_graph
 import community as com
 from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
 
-
-def server_interface(resource):
-    return {
-        'cluster_points': resource.cluster_points, # query, features, sound_ids
-        'k_nearest_neighbors': resource.k_nearest_neighbors, # sound_id, k
-    }
+logger = logging.getLogger('clustering')
 
 
-class ClusteringServer(resource.Resource):
+class ClusteringServer():
     def __init__(self):
-        resource.Resource.__init__(self)
-        self.methods = server_interface(self)
-        self.isLeaf = False
         self.gaia = GaiaWrapper()
-        self.request = None
-
-    def error(self, message):
-        return json.dumps({'Error': message})
-    
-    def getChild(self, name, request):
-        return self
-
-    def render_GET(self, request):
-        return self.methods[request.prepath[1]](request=request, **request.args)
-
-    def render_POST(self, request):
-        return self.methods[request.prepath[1]](request=request, **request.args)
 
     def _prepare_clustering_result_for_evaluation(self, classes):
         sound_ids_list, clusters = zip(*classes.items())
@@ -200,10 +177,9 @@ class ClusteringServer(resource.Resource):
                 classes[snd] -= 1
         return graph, classes, communities, ratio_intra_community_edges
 
-    def cluster_points(self, request, query_params, features, sound_ids):
+    def cluster_points(self, query_params, features, sound_ids):
         start_time = time()
-        sound_ids_list = sound_ids[0].split(',')
-        features = features[0]
+        sound_ids_list = [str(fs_id) for fs_id in sound_ids.split(',')]
         logger.info('Request clustering of {} points: {} ... from the query "{}"'
                 .format(len(sound_ids_list), ', '.join(sound_ids_list[:20]), json.dumps(query_params)))
 
@@ -242,30 +218,9 @@ class ClusteringServer(resource.Resource):
         self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
                                    num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
 
-        return json.dumps({'error': False, 'result': communities, 'graph': graph_json})
+        return {'error': False, 'result': communities, 'graph': graph_json}
 
-    def k_nearest_neighbors(self, request, sound_id, k):
+    def k_nearest_neighbors(self, sound_id, k):
         logger.info('Request k nearest neighbors of point {}'.format(sound_id[0]))
         results = self.gaia.search_nearest_neighbors(sound_id[0], int(k[0]))
         return json.dumps(results)
-
-
-if __name__ == '__main__':
-    # Set up logging
-    logger = logging.getLogger('clustering')
-    logger.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-    # Start service
-    logger.info('Configuring clustering service...')
-    root = resource.Resource()
-    root.putChild("clustering", ClusteringServer())
-    site = server.Site(root)
-    reactor.listenTCP(LISTEN_PORT, site)
-    logger.info('Started clustering service, listening to port ' + str(LISTEN_PORT) + "...")
-    reactor.run()
-    logger.info('Service stopped.')

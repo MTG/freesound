@@ -11,7 +11,8 @@ CLUSTERING_ADDRESS      = 'localhost'
 CLUSTERING_PORT         = 8010
 
 # OTHER
-CLUSTERING_CACHE_TIME   = 60*60*1
+CLUSTERING_CACHE_TIME           = 24*60*60*1  # one day timeout for keeping clustering results
+CLUSTERING_PENDING_CACHE_TIME   = 60*1        # one minute timeout for keeping the pending state
 
 # FOLDER in which we save the clustering results with evaluation
 SAVE_RESULTS_FOLDER     = '/home/xavierfav/Documents/dev/search-result-clustering/result_clusterings/'

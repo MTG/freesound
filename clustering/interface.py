@@ -1,13 +1,14 @@
+import copy
 import traceback, logging
 from django.conf import settings
 from django.core.cache import cache
-from clustering.client import Clustering
-from clustering.clustering_settings import CLUSTERING_CACHE_TIME
 from utils.encryption import create_hash
 from utils.search.search_general import search_prepare_query, perform_solr_query
-import copy
 
-logger = logging.getLogger('web')
+from tasks import cluster_sound_results_celery
+from clustering_settings import CLUSTERING_CACHE_TIME
+
+logger = logging.getLogger('clustering')
 
 
 def get_sound_ids_from_solr_query(query_params, num_sounds=1000):
@@ -40,39 +41,28 @@ def cluster_sound_results(query_params, features):
     cache_key_hashed = hash_cache_key(cache_key)
 
     # check if result is in cache
-    if len(cache_key) >= 250:
-        returned_sounds = False
-    else:
-        result = cache.get(cache_key_hashed)
-        if result:
-            returned_sounds = result[0]
-            graph = result[1]
-        else:
-            returned_sounds = False
+    result = cache.get(cache_key_hashed)
 
-    # if not in cache, query solr and perform clustering
-    if not returned_sounds:
+    if result and result != 'pending':
+        # reset the value in cache so that it presist
+        cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
+
+        result.update({'finished': True})
+        
+        return result
+
+    elif result == 'pending':
+        return {'finished': False}
+
+    else:
+        # if not in cache, query solr and perform clustering
         sound_ids = get_sound_ids_from_solr_query(query_params_formatted)
         sound_ids_string = ','.join([str(sound_id) for sound_id in sound_ids])
 
-        result = Clustering.cluster_points(
-            query=cache_key,
-            sound_ids=sound_ids_string,
-            features=features
-        )
+        # launch celery async task
+        cluster_sound_results_celery.delay(cache_key_hashed, sound_ids_string, features)
 
-        returned_sounds = result[0]
-        graph = result[1]
-
-        if len(returned_sounds) > 0 and len(cache_key) < 250:
-            cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
-
-    try:
-        num_clusters = len(returned_sounds) + 1
-    except ValueError:
-        num_clusters = 0
-
-    return returned_sounds, num_clusters, graph
+        return {'finished': False}
 
 
 def hash_cache_key(key):

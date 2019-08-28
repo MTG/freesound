@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'bookmarks',
     'forum',
     'search',
+    'clustering',
     'django_extensions',
     'tickets',
     'gunicorn',
@@ -100,10 +101,16 @@ USE_TZ = False
 USE_I18N = False
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://localhost:6380",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        },
+        "KEY_PREFIX": "example"
     }
 }
+
 
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
@@ -590,6 +597,9 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6380'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6380
 
 
 # Place settings which depend on other settings potentially modified in local_settings.py BELOW the

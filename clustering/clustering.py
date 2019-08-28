@@ -186,6 +186,9 @@ class ClusteringServer():
         graph = self.create_knn_graph(sound_ids_list, features=features)
         # graph = self.create_common_nn_graph(sound_ids_list, features=features)
 
+        if len(graph.nodes) == 0:  # the graph does not contain any node
+            return {'error': False, 'result': None, 'graph': None}
+
         classes, num_communities, communities, modularity = self.cluster_graph(graph)
         # classes, num_communities, communities, modularity = self.cluster_graph_overlap(graph)
         ratio_intra_community_edges = self._ratio_intra_community_edges(graph, communities)

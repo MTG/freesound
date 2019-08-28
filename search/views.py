@@ -269,8 +269,11 @@ def cluster_sounds(request):
     result = cluster_sound_results(query_params, 'audio_as')
 
     if result['finished']:
-        results = result['result']
-        num_clusters = num_clusters = len(results) + 1
+        if result['result'] is not None:
+            results = result['result']
+            num_clusters = num_clusters = len(results) + 1
+        else:
+             return JsonResponse(1, safe=False)
     else:
         return JsonResponse(0, safe=False)
 

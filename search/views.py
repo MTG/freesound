@@ -290,7 +290,7 @@ def cluster_sounds(request):
     cluster_tags_with_count = {k: sorted([(t, tags.count(t)) for t in set(tags)], 
                                          key=lambda x: x[1], reverse=True)
                                for k, tags in cluster_tags.iteritems()}
-    cluster_most_occuring_tags = [' '.join(zip(*tags[:3])[0]) for tags in cluster_tags_with_count.values()]  # dict values sorted?!
+    cluster_most_occuring_tags = [' '.join(zip(*tags[:3])[0]) for tags in cluster_tags_with_count.values() if len(tags)>2]  # dict values sorted?!
 
     return render(request, 'search/clustering_facet.html', {
             'results': classes,

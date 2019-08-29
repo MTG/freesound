@@ -149,7 +149,7 @@ def search_prepare_query(search_query,
 
 def perform_solr_query(q, current_page):
     """
-    This util function performs the query to SOLR and returns needed parameters to continue with the view.
+    This util function performs the query to Solr and returns needed parameters to continue with the view.
     The main reason to have this util function is to facilitate mocking in unit tests for this view.
     """
     solr = Solr(settings.SOLR_URL)

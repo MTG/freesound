@@ -185,6 +185,8 @@ def donation_session_stripe(request):
               cancel_url=return_url_cancel,
             )
             return JsonResponse({"session_id":session.id})
+    # If request is GET return an error 400
+    return HttpResponse(status=400)
 
 
 def donation_session_paypal(request):

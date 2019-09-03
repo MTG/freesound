@@ -55,8 +55,9 @@ def search(request):
     del query_params['in_ids']  # apply cluster filter does not change the results to cluster
 
     # pass the url query params for later sending it to the clustering engine
-    url_query_params_string = request.get_full_path().split('?')[1]  # TODO handle case with no params
-    
+    url_query_params_string = request.META['QUERY_STRING']
+    print(url_query_params_string)
+
     try:
         non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, tvars['current_page'])
         resultids = [d.get("id") for d in docs]
@@ -112,7 +113,7 @@ def get_ids_in_cluster(request, requested_cluster_id):
 
 def cluster_sounds(request):
     # pass the url query params for later sending it to the clustering engine
-    url_query_params_string = request.get_full_path().split('?')[1]  # TODO handle case with no params
+    url_query_params_string = request.META['QUERY_STRING']  # TODO handle case with no params
     sort_unformatted = request.GET.get("sort_unformatted", "")
 
     result = cluster_sound_results(request, 'audio_as')

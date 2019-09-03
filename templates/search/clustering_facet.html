@@ -1,7 +1,7 @@
 <ul>
     {% for cluster_id, num_results, tags in cluster_id_num_results %}
         <li class="facet_item">
-            <a href=".?{{url_query_params_string}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
+            <a href="{% url 'sounds-search' %}?{{url_query_params_string}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
             </a> ({{tags}}, {{num_results}})
         </li>
     {% endfor %}

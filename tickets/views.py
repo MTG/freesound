@@ -392,6 +392,7 @@ def moderation_assigned(request, user_id):
         msg_form = ModerationMessageForm(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
+
             ticket_ids = mod_sound_form.cleaned_data.get("ticket", '').split('|')
             tickets = Ticket.objects.filter(id__in=ticket_ids)
             msg = msg_form.cleaned_data.get("message", False)
@@ -416,8 +417,8 @@ def moderation_assigned(request, user_id):
                 elif is_explicit_choice_key == IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY:
                     # Don't update the 'is_explicit' field and leave it as the user originally set it
                     pass
-
                 Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
+
                 if msg:
                     notification = Ticket.NOTIFICATION_APPROVED_BUT
                 else:

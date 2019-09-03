@@ -34,7 +34,7 @@ import forms
 import sounds
 import forum
 from utils.search.search_general import search_prepare_sort, search_process_filter, \
-    search_prepare_query, perform_solr_query
+    search_prepare_query, perform_solr_query, search_prepare_parameters
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
@@ -44,173 +44,21 @@ logger = logging.getLogger("search")
 
 
 def search(request):
-    search_query = request.GET.get("q", "")
-    filter_query = request.GET.get("f", "")
-    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+    query_params, tvars = search_prepare_parameters(request)
+    
+    # get sound ids of the requested cluster. TODO: replace query_params with url query params
     cluster_id = request.GET.get('cluster_id', "")
+    in_ids = get_ids_in_cluster(request, cluster_id)
+    query_params.update({'in_ids': in_ids})  # for added cluster facet filter
 
-    # Generate array with information of filters
-    filter_query_split = []
-    if filter_query != "":
-        for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
-            valid_filter = True
-            filter_str = filter_str + '"'
-            filter_display = filter_str.replace('"', '')
-            filter_name = filter_str.split(":")[0]
-            if filter_name != "duration" and filter_name != "is_geotagged":
-                if filter_name == "grouping_pack":
-                    val = filter_display.split(":")[1]
-                    # If pack does not contain "_" then it's not a valid pack filter
-                    if "_" in val:
-                        filter_display = "pack:"+ val.split("_")[1]
-                    else:
-                        valid_filter = False
+    query = search_prepare_query(**query_params)
+    del query_params['in_ids']  # apply cluster filter does not change the results to cluster
 
-                if valid_filter:
-                    filter = {
-                        'name': filter_display,
-                        'remove_url': filter_query.replace(filter_str, ''),
-                    }
-                    filter_query_split.append(filter)
-
-    if cluster_id != "":  # cluster filter is in a separate query parameter
-        filter_query_split.append({
-            'name': "Cluster #" + cluster_id,
-            'remove_url': filter_query,
-        })
-
+    # pass the url query params for later sending it to the clustering engine
+    url_query_params_string = request.get_full_path().split('?')[1]  # TODO handle case with no params
+    
     try:
-        current_page = int(request.GET.get("page", 1))
-    except ValueError:
-        current_page = 1
-    sort_unformatted = request.GET.get("s", None)
-    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-    grouping = request.GET.get("g", "1")  # Group by default
-
-    # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
-    # If the query is through AJAX (for sources remix editing), do not collapse
-    if "pack" in filter_query or request.GET.get("ajax", "") == "1":
-        grouping = ""
-
-    # Set default values
-    id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
-    tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
-    description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
-    username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
-    pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
-    original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
-
-    # Parse advanced search options
-    advanced = request.GET.get("advanced", "")
-    advanced_search_params_dict = {}
-
-    # if advanced search
-    if advanced == "1":
-        a_tag = request.GET.get("a_tag", "")
-        a_filename = request.GET.get("a_filename", "")
-        a_description = request.GET.get("a_description", "")
-        a_packname = request.GET.get("a_packname", "")
-        a_soundid = request.GET.get("a_soundid", "")
-        a_username = request.GET.get("a_username", "")
-        advanced_search_params_dict.update({  # These are stored in a dict to facilitate logging and passing to template
-            'a_tag': a_tag,
-            'a_filename': a_filename,
-            'a_description': a_description,
-            'a_packname': a_packname,
-            'a_soundid': a_soundid,
-            'a_username': a_username,
-        })
-
-        # If none is selected use all (so other filter can be appleid)
-        if a_tag or a_filename or a_description or a_packname or a_soundid or a_username != "" :
-
-            # Initialize all weights to 0
-            id_weight = 0
-            tag_weight = 0
-            description_weight = 0
-            username_weight = 0
-            pack_tokenized_weight = 0
-            original_filename_weight = 0
-
-            # Set the weights of selected checkboxes
-            if a_soundid != "":
-                id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
-            if a_tag != "":
-                tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
-            if a_description != "":
-                description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
-            if a_username != "":
-                username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
-            if a_packname != "":
-                pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
-            if a_filename != "":
-                original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
-
-    sort = search_prepare_sort(sort_unformatted, forms.SEARCH_SORT_OPTIONS_WEB)
-
-    logger.info(u'Search (%s)' % json.dumps({
-        'ip': get_client_ip(request),
-        'query': search_query,
-        'filter': filter_query,
-        'username': request.user.username,
-        'page': current_page,
-        'sort': sort[0],
-        'group_by_pack': grouping,
-        'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
-    }))
-
-    # we send the query parameters in the context for clustering
-    query_params = {
-        'search_query': search_query,
-        'filter_query': filter_query.replace('"', '\\"'),  # " can appear when filtering with facets
-        'sort': sort,
-        'current_page': current_page,
-        'sounds_per_page': settings.SOUNDS_PER_PAGE,
-        'id_weight': id_weight,
-        'tag_weight': tag_weight,
-        'description_weight': description_weight,
-        'username_weight': username_weight,
-        'pack_tokenized_weight': pack_tokenized_weight,
-        'original_filename_weight': original_filename_weight,
-        'grouping': grouping
-    }
-
-    # get sound ids of the requested cluster
-    in_ids = get_ids_in_cluster(query_params, cluster_id)
-
-    query = search_prepare_query(search_query,
-                                 filter_query,
-                                 sort,
-                                 current_page,
-                                 settings.SOUNDS_PER_PAGE,
-                                 id_weight,
-                                 tag_weight,
-                                 description_weight,
-                                 username_weight,
-                                 pack_tokenized_weight,
-                                 original_filename_weight,
-                                 grouping=grouping,
-                                 in_ids=in_ids,
-                                 )
-
-    tvars = {
-        'error_text': None,
-        'filter_query': filter_query,
-        'filter_query_split': filter_query_split,
-        'search_query': search_query,
-        'grouping': grouping,
-        'advanced': advanced,
-        'sort': sort,
-        'sort_unformatted': sort_unformatted,
-        'sort_options': sort_options,
-        'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
-        'current_page': current_page,
-    }
-    if advanced == "1":
-        tvars.update(advanced_search_params_dict)
-
-    try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, tvars['current_page'])
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
@@ -223,14 +71,14 @@ def search(request):
         docs = [doc for doc in docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
-
+        
         tvars.update({
             'paginator': paginator,
             'page': page,
             'docs': docs,
             'facets': facets,
             'non_grouped_number_of_results': non_grouped_number_of_results,
-            'query_params': json.dumps(query_params),
+            'query_params': url_query_params_string,
         })
 
     except SolrException as e:
@@ -246,14 +94,14 @@ def search(request):
         return render(request, 'search/search_ajax.html', tvars)
 
 
-def get_ids_in_cluster(query_params, requested_cluster_id):
+def get_ids_in_cluster(request, requested_cluster_id):
     if requested_cluster_id == "":
         return []
     else:
         requested_cluster_id = int(requested_cluster_id) - 1
 
         # results are cached in clustering_utilities, features are: 'audio_fs', 'audio_as', 'audio_fs_selected', 'tag'
-        result = cluster_sound_results(query_params, 'audio_as')
+        result = cluster_sound_results(request, 'audio_as')
         results = result['result']
         num_clusters = num_clusters = len(results) + 1
 
@@ -263,10 +111,11 @@ def get_ids_in_cluster(query_params, requested_cluster_id):
 
 
 def cluster_sounds(request):
-    query_params = json.loads(request.GET.get("query_params", ""))
+    # pass the url query params for later sending it to the clustering engine
+    url_query_params_string = request.get_full_path().split('?')[1]  # TODO handle case with no params
     sort_unformatted = request.GET.get("sort_unformatted", "")
 
-    result = cluster_sound_results(query_params, 'audio_as')
+    result = cluster_sound_results(request, 'audio_as')
 
     if result['finished']:
         if result['result'] is not None:
@@ -284,7 +133,8 @@ def cluster_sounds(request):
     sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, classes.keys()))
     sound_tags = {sound.id: sound.get_sound_tags() for sound in sound_instances}
     cluster_tags = defaultdict(list)
-    query_terms = {t.lower() for t in query_params['search_query'].split(' ')}
+    # query_terms = {t.lower() for t in query_params['search_query'].split(' ')}
+    query_terms = {t.lower() for t in request.GET.get('q', '').split(' ')}
     for sound_id, tags in sound_tags.iteritems():
         cluster_tags[classes[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
     cluster_tags_with_count = {k: sorted([(t, tags.count(t)) for t in set(tags)], 
@@ -294,7 +144,7 @@ def cluster_sounds(request):
 
     return render(request, 'search/clustering_facet.html', {
             'results': classes,
-            'query_params': query_params,
+            'url_query_params_string': url_query_params_string,
             'sort_unformatted': sort_unformatted,
             'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster, cluster_most_occuring_tags),
     })

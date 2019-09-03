@@ -3,7 +3,8 @@ import traceback, logging
 from django.conf import settings
 from django.core.cache import cache
 from utils.encryption import create_hash
-from utils.search.search_general import search_prepare_query, perform_solr_query
+from utils.search.search_general import search_prepare_query, perform_solr_query, \
+    search_prepare_parameters
 
 from tasks import cluster_sound_results_celery
 from clustering_settings import CLUSTERING_CACHE_TIME
@@ -20,9 +21,10 @@ def get_sound_ids_from_solr_query(query_params, num_sounds=1000):
     return resultids
 
 
-def cluster_sound_results(query_params, features):
-    query_params_formatted = copy.copy(query_params)
-    query_params_formatted['filter_query'] = query_params_formatted['filter_query'].replace('\\"', '"')
+def cluster_sound_results(request, features):
+    query_params, tvars = search_prepare_parameters(request)
+    # query_params_formatted = copy.copy(query_params)
+    # query_params_formatted['filter_query'] = query_params_formatted['filter_query'].replace('\\"', '"')
 
     cache_key = 'cluster-search-results-q-{}-f-{}-s-{}-tw-{}-uw-{}-idw-{}-dw-{}-pw-{}-fw-{}-g-{}-feat-{}'.format(
         query_params['search_query'],
@@ -56,7 +58,7 @@ def cluster_sound_results(query_params, features):
 
     else:
         # if not in cache, query solr and perform clustering
-        sound_ids = get_sound_ids_from_solr_query(query_params_formatted)
+        sound_ids = get_sound_ids_from_solr_query(query_params)
         sound_ids_string = ','.join([str(sound_id) for sound_id in sound_ids])
 
         # launch celery async task

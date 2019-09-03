@@ -207,9 +207,9 @@
     // function for requesting clustering
     function request_clustering()
     {
-        $.get({% url 'cluster-sounds' %}, 
+        $.get({% url 'cluster-sounds' %} + '?{{ query_params }}', 
                 {
-                    query_params: '{{ query_params | safe }}',
+                    // query_params: '{{ query_params | safe }}',
                     sort_unformatted: '{{ sort_unformatted }}',
                 }, 
                 function( data ) {

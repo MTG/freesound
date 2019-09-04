@@ -19,9 +19,10 @@
 #
 
 from __future__ import absolute_import
-from sounds.models import Sound
+
 from django import template
-from django.conf import settings
+
+from sounds.models import Sound
 
 register = template.Library()
 

@@ -208,6 +208,7 @@ def front_page(request):
         random_sound = None
 
     top_donor = None
+    trending_packs = None
     if using_beastwhoosh(request):
         # TODO: simplify the calculation of the top donor using annotate in the query
         # TODO: add pertinent caching strategy here
@@ -222,15 +223,20 @@ def front_page(request):
             top_donor_username = sorted(top_donor_data.items(), key=lambda x: x[1], reverse=True)[0][0]
             top_donor = User.objects.get(username=top_donor_username)
 
+        # TODO: decide what we consider to be a trending pack, for now we just take the last 9 that were updated
+        # TODO: add pertinent cachin strategy here/consider moving this to create_front_page_caches management command
+        trending_packs = Pack.objects.select_related('user').filter(num_sounds__gte=3).order_by('-last_updated')[:9]
+
     tvars = {
         'rss_cache': rss_cache,
         'popular_searches': popular_searches,
         'trending_sound_ids': trending_sound_ids,
+        'trending_packs': trending_packs,
         'current_forum_threads': current_forum_threads,
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,
         'top_donor': top_donor,
-        'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,  # Not needed for NG
+        'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
     }
     return render(request, 'front.html', tvars)
 

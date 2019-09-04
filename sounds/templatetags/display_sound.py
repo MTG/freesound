@@ -101,7 +101,13 @@ def display_sound(context, sound, player_size='small'):
             'sound': None,
         }
     else:
-        request = context['request']
+        try:
+            request = context['request']
+        except KeyError:
+            # Apparently when a templatetag is called inside another templatetag, the 'request' object seems to be
+            # added as an attribute of the context rather than as a key in a sort of context dictionary.
+            # TODO: further investigate this issue and if possible refactor this bit of code
+            request = context.request
         return {
             'sound':        sound_obj,
             'sound_tags':   sound_obj.tag_array,

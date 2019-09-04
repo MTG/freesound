@@ -1131,9 +1131,10 @@ class Pack(SocialModel):
             self.last_updated = sounds[0].created
         self.save()
 
-    def get_random_sounds_from_pack(self):
+    def get_random_sounds_from_pack(self, N=3):
         """Get 3 random sounds from this pack"""
-        return Sound.public.filter(pack=self.id).order_by('?')[:3]
+        sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
+        return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
     def get_pack_tags(self, max_tags=50):
         pack_tags = get_pack_tags(self)

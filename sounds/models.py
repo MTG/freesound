@@ -200,7 +200,7 @@ class SoundManager(models.Manager):
                                 tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
-        """For each sound, get all fields needed to display a sound on the web (using display_raw_sound templatetag) or
+        """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or
          in the API (including AudioCommons output analysis). Using this custom query to avoid the need of having to do
          some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
          information for all requested sounds is obtained with a single query."""

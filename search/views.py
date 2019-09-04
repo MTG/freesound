@@ -56,7 +56,6 @@ def search(request):
 
     # pass the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
-    print(url_query_params_string)
 
     try:
         non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, tvars['current_page'])
@@ -79,7 +78,7 @@ def search(request):
             'docs': docs,
             'facets': facets,
             'non_grouped_number_of_results': non_grouped_number_of_results,
-            'query_params': url_query_params_string,
+            'url_query_params_string': url_query_params_string,
         })
 
     except SolrException as e:
@@ -113,8 +112,7 @@ def get_ids_in_cluster(request, requested_cluster_id):
 
 def cluster_sounds(request):
     # pass the url query params for later sending it to the clustering engine
-    url_query_params_string = request.META['QUERY_STRING']  # TODO handle case with no params
-    sort_unformatted = request.GET.get("sort_unformatted", "")
+    url_query_params_string = request.META['QUERY_STRING']
 
     result = cluster_sound_results(request, 'audio_as')
 
@@ -146,21 +144,19 @@ def cluster_sounds(request):
     return render(request, 'search/clustering_facet.html', {
             'results': classes,
             'url_query_params_string': url_query_params_string,
-            'sort_unformatted': sort_unformatted,
             'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster, cluster_most_occuring_tags),
     })
 
 
 def cluster_visualisation(request):
-    query_params = json.loads(request.GET.get("query_params", ""))
+    url_query_params_string = request.META['QUERY_STRING']
     return render(request, 'search/clusters.html', {
-            'query_params': request.GET.get("query_params", ""),
+            'url_query_params_string': url_query_params_string,
     })
 
 
 def return_clustered_graph(request):
-    query_params = json.loads(request.GET.get("query_params", ""))
-    result = cluster_sound_results(query_params, 'audio_as')
+    result = cluster_sound_results(request, 'audio_as')
     graph = result['graph']
 
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])

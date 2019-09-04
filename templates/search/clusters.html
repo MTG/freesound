@@ -121,10 +121,9 @@
             .append("g")
 
         // request clustered graph
-        $.get("{% url 'return-clustered-graph' %}", {
-            query_params: '{{ query_params | safe }}',
+        $.get("{% url 'return-clustered-graph' %}"+"?{{url_query_params_string | safe}}", {
         }).then(res => JSON.parse(res)).then(graph => {
-            
+            console.log(graph)
             var init_graph = JSON.parse(JSON.stringify(graph));
 
             var nodeById = d3.map();

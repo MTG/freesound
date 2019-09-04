@@ -207,11 +207,8 @@
     // function for requesting clustering
     function request_clustering()
     {
-        $.get({% url 'cluster-sounds' %} + '?{{ query_params | safe }}', 
-                {
-                    // query_params: '{{ query_params | safe }}',
-                    // sort_unformatted: '{{ sort_unformatted }}',
-                }, 
+        $.get({% url 'cluster-sounds' %} + '?{{ url_query_params_string | safe }}', 
+                {}, 
                 function( data ) {
                     if (data === 0) {
                         setTimeout(() => {
@@ -231,7 +228,7 @@
     {% if facets %}
     <div id="sidebar" style="float:right">
         <h3>clusters 
-            <a href="{% url 'cluster-visualisation' %}?query_params={{query_params}}">
+            <a href="{% url 'cluster-visualisation' %}"+ "?{{ url_query_params_string | safe }}">
                 <img src='{{media_url}}images/eye-open.png' width="30px"/>
             </a>
         </h3>

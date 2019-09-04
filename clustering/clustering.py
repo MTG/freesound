@@ -218,8 +218,8 @@ class ClusteringServer():
         # Export graph as json
         graph_json = json_graph.node_link_data(graph)
 
-        self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
-                                   num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
+        # self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
+        #                            num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
 
         return {'error': False, 'result': communities, 'graph': graph_json}
 

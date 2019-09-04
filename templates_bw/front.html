@@ -3,6 +3,7 @@
 {% load static %}
 {% load cache %}
 {% load display_sound %}
+{% load display_pack %}
 {% load util %}
 
 {% block title %}Freesound{% endblock title %}
@@ -49,6 +50,7 @@
             </div>
 	      </div>
         </section>
+
         {% if popular_searches %}
         <hr />
         <section class="v-spacing-6">
@@ -72,6 +74,7 @@
           </div>
         </section>
         {% endif %}
+
         {% if trending_sound_ids %}
         <hr />
         <section class="v-spacing-2">
@@ -97,10 +100,11 @@
       {% endif %}
 
       {% if random_sound %}
-        <section class="v-spacing-6">
-          <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
-          {% display_sound_big random_sound %}
-        </section>
+      <hr />
+      <section class="v-spacing-6">
+        <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
+        {% display_sound_big_no_info random_sound %}
+      </section>
       {% endif %}
 
       </main>

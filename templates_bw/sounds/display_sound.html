@@ -1,8 +1,9 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
+
 {% if sound %}
-{% cache 43200 bw_display_sound sound_id is_authenticated is_explicit player_size %}
+{% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size %}
     <div
         class="bw-player"
         data-size="{{ player_size }}"
@@ -14,11 +15,19 @@
         data-favorite="false">
     </div>
     {% if player_size == 'small' %}
-        <h5 class="v-spacing-top-1"><a class="bw-link--black" href="{% url 'sound' sound_user sound_id %}">{{ sound.original_filename }}</a></h5>
+        {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
+        <h5 class="v-spacing-top-1">
+            <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename }}</a>
+        </h5>
         <a href="{% url 'account' sound_user %}">{{ sound_user }}</a>
         <p class="text-grey">{{ sound.description | truncatewords:10 }}</p>
-    {% elif player_size == 'big' %}
+    {% elif player_size == 'big_no_info' %}
+        {% comment %}This size includes a placeholder for the controls of the big player but shows no sound
+        metadata{% endcomment %}
         <div class="bw-player-big__controls"></div>
+    {% elif player_size == 'small_no_info' %}
+        {% comment %}This size will be used inside a packa crousel. For this size we only include the basic
+        player and show no sound metadata{% endcomment %}
     {% endif %}
 {% endcache %}
 {% endif %}

@@ -39,8 +39,8 @@ def display_sound(context, sound, player_size='small'):
           argument is automatically added by Django when calling the templatetag inside a template.
         sound (int or Sound): sound ID or Sound object of the sound that will be shown. If no sound exists for the
           given ID, the display_sound.html will be rendered with empty HTML.
-        player_size (str, optional): size of the player to display. Must be one of ['small', 'big'].
-          Defaults to 'small'.
+        player_size (str, optional): size of the player to display. Must be one of ['small', 'big_no_info',
+          'small_no_info']. Defaults to 'small'.
 
     Returns:
         dict: dictionary with the variables needed for rendering the sound with the display_sound.html templtate
@@ -103,7 +103,6 @@ def display_sound(context, sound, player_size='small'):
     else:
         request = context['request']
         return {
-            'sound_id':     sound_obj.id,
             'sound':        sound_obj,
             'sound_tags':   sound_obj.tag_array,
             'sound_user':   sound_obj.username,
@@ -118,5 +117,10 @@ def display_sound(context, sound, player_size='small'):
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound_big(context, sound):
-    return display_sound(context, sound, player_size='big')
+def display_sound_big_no_info(context, sound):
+    return display_sound(context, sound, player_size='big_no_info')
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_info(context, sound):
+    return display_sound(context, sound, player_size='small_no_info')

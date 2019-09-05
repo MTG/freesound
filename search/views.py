@@ -112,6 +112,7 @@ def get_ids_in_cluster(request, requested_cluster_id):
 def cluster_sounds(request):
     # pass the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
+    url_query_params_string = re.sub(r"(&cluster_id=[0-9]*)", "", url_query_params_string)
 
     result = cluster_sound_results(request, 'audio_as')
 

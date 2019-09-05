@@ -122,6 +122,8 @@ def cluster_sounds(request):
             num_clusters = num_clusters = len(results) + 1
         else:
              return JsonResponse(1, safe=False)
+    elif result['error']:
+        return JsonResponse(1, safe=False)
     else:
         return JsonResponse(0, safe=False)
 

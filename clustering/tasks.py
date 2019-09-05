@@ -17,5 +17,5 @@ def cluster_sound_results_celery(cache_key_hashed, sound_ids, features):
         # store result in cache
         cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
 
-    except:  # delete pending state if exception raised during clustering
-        cache.delete(cache_key_hashed)
+    except Exception as e:  # delete pending state if exception raised during clustering
+        cache.set(cache_key_hashed, 'failed', CLUSTERING_PENDING_CACHE_TIME)

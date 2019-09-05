@@ -45,16 +45,19 @@ def cluster_sound_results(request, features):
     # check if result is in cache
     result = cache.get(cache_key_hashed)
 
-    if result and result != 'pending':
+    if result and result not in ('pending', 'failed'):
         # reset the value in cache so that it presist
         cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
 
-        result.update({'finished': True})
+        result.update({'finished': True, 'error': False})
         
         return result
 
     elif result == 'pending':
-        return {'finished': False}
+        return {'finished': False, 'error': False}
+
+    elif result == 'failed':
+        return {'finished': False, 'error': True}
 
     else:
         # if not in cache, query solr and perform clustering
@@ -64,7 +67,7 @@ def cluster_sound_results(request, features):
         # launch celery async task
         cluster_sound_results_celery.delay(cache_key_hashed, sound_ids_string, features)
 
-        return {'finished': False}
+        return {'finished': False, 'error': False}
 
 
 def hash_cache_key(key):

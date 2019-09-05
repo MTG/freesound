@@ -214,6 +214,9 @@
                         setTimeout(() => {
                             request_clustering();
                         }, 500);
+                    } else if (data === 1) {
+                        // clustering failed
+                        $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
                     } else {
                         $('#clusters-div').replaceWith(data);
                     }

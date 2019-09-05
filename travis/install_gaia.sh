@@ -7,4 +7,4 @@ echo "> Installing Gaia..."
 cd gaia
 ./waf configure --with-python-bindings
 ./waf
-./waf install
+sudo ./waf install

@@ -16,7 +16,7 @@ before_install:
 - mkdir -p ../freesound-data/uploads
 - mkdir -p ../freesound-data/avatars
 - sudo apt-get install build-essential libqt4-dev libyaml-dev swig python-dev pkg-config
-- ./travis/install_gaia.sh
+- sudo ./travis/install_gaia.sh
 install:
 - pip install -U pip
 - pip install django-nose numpy==1.9.0

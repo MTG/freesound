@@ -41,10 +41,11 @@ class GaiaWrapper:
     def __load_datasets(self):
         self.as_dataset.load(self.__get_dataset_path(clust_settings.INDEX_NAME_AS))
         self.as_view = View(self.as_dataset)
-        # self.as_metric = DistanceFunctionFactory.create('euclidean', self.as_dataset.layout())
+        self.as_metric = DistanceFunctionFactory.create('euclidean', self.as_dataset.layout(), 
+            {'descriptorNames': 'AS_embeddings_ppc_max_energy'})
         # self.as_metric = DistanceFunctionFactory.create('CosineSimilarity',  self.as_dataset.layout())
         # self.as_metric = DistanceFunctionFactory.create('CosineAngle',  self.as_dataset.layout())
-        self.as_metric = DistanceFunctionFactory.create('Manhattan',  self.as_dataset.layout())
+        # self.as_metric = DistanceFunctionFactory.create('Manhattan',  self.as_dataset.layout())
 
         self.tag_dataset.load(self.__get_dataset_path(clust_settings.INDEX_NAME_TAG))
         self.tag_view = View(self.tag_dataset)

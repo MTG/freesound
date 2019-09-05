@@ -2,7 +2,7 @@
 {% load display_sound %}
 
 {% if pack %}
-{% cache 3600 display_pack pack.0.id %}
+{% cache 3600 bw_display_pack pack.0.id %}
 {% with pack.0 as pack %}
     <div>
         <div class="bw-carousel-container">

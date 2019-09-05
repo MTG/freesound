@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import datetime
 import logging
 
 from django.core.management.base import BaseCommand
@@ -26,7 +25,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.cache import cache
 
-from sounds.models import Download
+from sounds.models import Download, Pack
 
 logger = logging.getLogger("web")
 
@@ -65,3 +64,10 @@ class Command(BaseCommand):
         # TODO: decide how to compute trending sounds. Current implementation simply takes the 3 most recent downloads.
         # Depending on the calculation of trending sounds we might need to change periodicity with which we run
         # create_front_page_caches
+
+        # Generate trending packs cache
+        trending_pack_ids = list(Pack.objects.select_related('user').filter(num_sounds__gte=3)
+                                 .order_by('-last_updated').values_list('id', flat=True)[:9])
+        cache.set("trending_pack_ids", trending_pack_ids, cache_time)
+
+        # TODO: decide what we consider to be a trending pack, for now we just take the last 9 that were updated

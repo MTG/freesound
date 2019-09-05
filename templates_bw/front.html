@@ -97,19 +97,19 @@
         </section>
       {% endif %}
 
-      {% if trending_packs %}
+      {% if trending_pack_ids %}
       <hr />
       <section class="v-spacing-2">
         <h3 class="v-spacing-4 v-spacing-top-4">Trending packs</h3>
         <div class="bw-carousel-container">
           <div class="bw-carousel-wrapper">
             <div class="bw-carousel v-padding-bottom-4">
-              {% for packs in trending_packs|chunks:3 %}
+              {% for pack_ids in trending_pack_ids|chunks:3 %}
                 <div>
                   <div class="row no-margins">
-                  {% for pack in packs %}
+                  {% for pack_id in pack_ids %}
                     <div class="col">
-                        {% display_pack pack %}
+                        {% display_pack pack_id %}
                     </div>
                   {% endfor %}
                   </div>

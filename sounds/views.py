@@ -188,6 +188,7 @@ def front_page(request):
 
     rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
     trending_sound_ids = cache.get("trending_sound_ids", None)
+    trending_pack_ids = cache.get("trending_pack_ids", None)
     popular_searches = cache.get("popular_searches", None)
     current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),
                                                   first_post__moderation_state="OK",
@@ -208,7 +209,6 @@ def front_page(request):
         random_sound = None
 
     top_donor = None
-    trending_packs = None
     if using_beastwhoosh(request):
         # TODO: simplify the calculation of the top donor using annotate in the query
         # TODO: add pertinent caching strategy here
@@ -223,15 +223,11 @@ def front_page(request):
             top_donor_username = sorted(top_donor_data.items(), key=lambda x: x[1], reverse=True)[0][0]
             top_donor = User.objects.get(username=top_donor_username)
 
-        # TODO: decide what we consider to be a trending pack, for now we just take the last 9 that were updated
-        # TODO: add pertinent cachin strategy here/consider moving this to create_front_page_caches management command
-        trending_packs = Pack.objects.select_related('user').filter(num_sounds__gte=3).order_by('-last_updated')[:9]
-
     tvars = {
         'rss_cache': rss_cache,
         'popular_searches': popular_searches,
         'trending_sound_ids': trending_sound_ids,
-        'trending_packs': trending_packs,
+        'trending_pack_ids': trending_pack_ids,
         'current_forum_threads': current_forum_threads,
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,

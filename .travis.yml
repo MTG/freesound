@@ -15,7 +15,7 @@ before_install:
 - mkdir -p ../freesound-data/packs
 - mkdir -p ../freesound-data/uploads
 - mkdir -p ../freesound-data/avatars
-- sudo apt-get install build-essential libqt4-dev libyaml-dev swig python-dev pkg-config
+- sudo apt-get install build-essential libqt4-dev libyaml-dev swig=3.0.12-1 python-dev pkg-config
 - sudo sh travis/install_gaia.sh
 install:
 - pip install -U pip

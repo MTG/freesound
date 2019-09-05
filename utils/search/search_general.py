@@ -185,25 +185,6 @@ def search_prepare_parameters(request):
         'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
     }))
 
-    # # we send the query parameters in the context for clustering
-    # query_params = {
-    #     'search_query': search_query,
-    #     'filter_query': filter_query.replace('"', '\\"'),  # " can appear when filtering with facets
-    #     'sort': sort,
-    #     'current_page': current_page,
-    #     'sounds_per_page': settings.SOUNDS_PER_PAGE,
-    #     'id_weight': id_weight,
-    #     'tag_weight': tag_weight,
-    #     'description_weight': description_weight,
-    #     'username_weight': username_weight,
-    #     'pack_tokenized_weight': pack_tokenized_weight,
-    #     'original_filename_weight': original_filename_weight,
-    #     'grouping': grouping
-    # }
-
-    # # get sound ids of the requested cluster
-    # in_ids = get_ids_in_cluster(query_params, cluster_id)
-
     query_params = {
         'search_query': search_query,
         'filter_query': filter_query,
@@ -217,7 +198,6 @@ def search_prepare_parameters(request):
         'pack_tokenized_weight': pack_tokenized_weight,
         'original_filename_weight': original_filename_weight,
         'grouping': grouping,
-        # 'in_ids': in_ids,
     }
 
     tvars = {

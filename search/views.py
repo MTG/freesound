@@ -46,13 +46,12 @@ logger = logging.getLogger("search")
 def search(request):
     query_params, tvars = search_prepare_parameters(request)
     
-    # get sound ids of the requested cluster. TODO: replace query_params with url query params
+    # get sound ids of the requested cluster
     cluster_id = request.GET.get('cluster_id', "")
     in_ids = get_ids_in_cluster(request, cluster_id)
     query_params.update({'in_ids': in_ids})  # for added cluster facet filter
 
     query = search_prepare_query(**query_params)
-    del query_params['in_ids']  # apply cluster filter does not change the results to cluster
 
     # pass the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']

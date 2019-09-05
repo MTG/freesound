@@ -4,7 +4,7 @@ from gaia_wrapper import GaiaWrapper
 import numpy as np
 from sklearn import metrics
 from sklearn.feature_selection import mutual_info_classif
-from clustering_settings import LISTEN_PORT, SAVE_RESULTS_FOLDER
+from clustering_settings import SAVE_RESULTS_FOLDER
 import logging
 import json
 import networkx as nx

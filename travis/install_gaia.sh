@@ -2,12 +2,13 @@
 
 echo "> Installing swig 3.0.12..."
 # Install newer version of swig (gaia fails with swig 3.0.8)
-sudo apt-get install libpcre3-dev
+sudo apt-get install libpcre3-dev autotools-dev automake
 wget -O swig-3.0.12.tar.gz https://github.com/swig/swig/archive/rel-3.0.12.tar.gz
-tar -xzvf swig-3.0.12.tar.gz
+tar -xzf swig-3.0.12.tar.gz
 cd swig-rel-3.0.12
+./autogen.sh
 ./configure
-make -j 4
+make
 sudo make install
 cd ..
 

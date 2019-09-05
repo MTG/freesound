@@ -1,12 +1,5 @@
-PyYAML==3.11
-Twisted==14.0.2
-graypy==0.2.11
 numpy==1.14.1
-ConcurrentLogHandler==0.9.1
-networkx==1.11
-git+https://github.com/taynaud/python-louvain.git
+networkx==2.2
+python-louvain==0.13
 scikit-learn==0.19.1
 scipy==0.18.1
-#apt-get build-dep python-scipy
-#scikit-learn==0.15.2
-#gaia2

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "> Cloning Gaia repo..."
-git clone git@github.com:MTG/gaia.git
+git clone https://github.com/MTG/gaia.git
 
 echo "> Installing Gaia..."
 cd gaia

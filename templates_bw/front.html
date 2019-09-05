@@ -157,6 +157,7 @@
             {% endif %}
         </section>
         <hr />
+        {% cache 300 bw_forum_threads %}
         <section class="v-padding-7">
           <h4 class="v-spacing-3">Hot forum threads</h4>
             {% for forum in current_forum_threads %}
@@ -175,6 +176,7 @@
               <a class="no-hover" href="{% url 'forums-forums' %}"><button class="btn-inverse">More posts here</button></a>
           </div>
         </section>
+        {% endcache %}
       </aside>
     </div>
   </div>

@@ -20,3 +20,5 @@ cd gaia
 ./waf configure --with-python-bindings
 ./waf
 sudo ./waf install
+# move gaia file to the virtual env
+cp -r /usr/local/lib/python2.7/dist-packages/gaia2/ /home/travis/virtualenv/python2.7.15/lib/python2.7/site-packages/

@@ -571,6 +571,10 @@ TEMPLATES = [
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 
+# Environment variable set when running celery worker. Enables to import clustering dependencies only in celery workers
+ENV_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None)
+
+
 # -------------------------------------------------------------------------------
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import

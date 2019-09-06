@@ -1,16 +1,19 @@
 import os, sys
 from time import time
-from gaia_wrapper import GaiaWrapper
-import numpy as np
-from sklearn import metrics
-from sklearn.feature_selection import mutual_info_classif
-from clustering_settings import SAVE_RESULTS_FOLDER
 import logging
-import json
-import networkx as nx
-from networkx.readwrite import json_graph
-import community as com
-from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
+from django.conf import settings
+
+if settings.ENV_CELERY_WORKER == '1':  # import only in celery workers
+    from gaia_wrapper import GaiaWrapper
+    import numpy as np
+    from sklearn import metrics
+    from sklearn.feature_selection import mutual_info_classif
+    from clustering_settings import SAVE_RESULTS_FOLDER
+    import json
+    import networkx as nx
+    from networkx.readwrite import json_graph
+    import community as com
+    from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
 
 logger = logging.getLogger('clustering')
 

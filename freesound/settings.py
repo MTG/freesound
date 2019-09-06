@@ -601,6 +601,8 @@ CELERY_RESULT_SERIALIZER = 'json'
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6380
 
+ENV_CELERY_WORKER = os.environ.get('ENV_CELERY_WORKER')
+
 
 # Place settings which depend on other settings potentially modified in local_settings.py BELOW the
 # local settings import

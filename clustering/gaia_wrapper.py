@@ -2,14 +2,16 @@ import logging
 import os
 import sys
 import time
-
 import yaml
-from gaia2 import DataSet, View, DistanceFunctionFactory
+from django.conf import settings
 
-import clustering_settings as clust_settings
+if settings.ENV_CELERY_WORKER == '1':
+    from gaia2 import DataSet, View, DistanceFunctionFactory
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-from similarity.gaia_wrapper import GaiaWrapper as GaiaWrapperSimilarity
+    import clustering_settings as clust_settings
+
+    sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+    from similarity.gaia_wrapper import GaiaWrapper as GaiaWrapperSimilarity
 
 logger = logging.getLogger('clustering')
 

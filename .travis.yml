@@ -15,13 +15,10 @@ before_install:
 - mkdir -p ../freesound-data/packs
 - mkdir -p ../freesound-data/uploads
 - mkdir -p ../freesound-data/avatars
-- sudo apt-get install build-essential libqt4-dev libyaml-dev python-dev pkg-config
-- sudo sh travis/install_gaia.sh
 install:
 - pip install -U pip
 - pip install django-nose numpy==1.9.0
 - pip install -r requirements.txt
-- pip install -r requirements_clustering.txt
 script:
 - python manage.py test --noinput --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum geotags ratings search sounds support tags tickets utils wiki general monitor messages
 notifications:

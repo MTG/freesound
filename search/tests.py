@@ -189,7 +189,7 @@ class SearchPageTests(TestCase):
         with self.assertNumQueries(1):
             self.client.get(reverse('sounds-search'))
 
-    @mock.patch('utils.search.search_general.perform_solr_query')
+    @mock.patch('search.views.perform_solr_query')
     def test_search_page_with_filters(self, perform_solr_query):
         perform_solr_query.return_value = self.perform_solr_query_response
 

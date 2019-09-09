@@ -121,11 +121,11 @@ def cluster_sounds(request):
             results = result['result']
             num_clusters = num_clusters = len(results) + 1
         else:
-             return JsonResponse(1, safe=False)
+             return JsonResponse({'status': 'failed'}, safe=False)
     elif result['error']:
-        return JsonResponse(1, safe=False)
+        return JsonResponse({'status': 'failed'}, safe=False)
     else:
-        return JsonResponse(0, safe=False)
+        return JsonResponse({'status': 'pending'}, safe=False)
 
     num_sounds_per_cluster = [len(cluster) for cluster in results]
     classes = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}

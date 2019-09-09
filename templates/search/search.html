@@ -210,11 +210,11 @@
         $.get({% url 'cluster-sounds' %} + '?{{ url_query_params_string | safe }}', 
                 {}, 
                 function( data ) {
-                    if (data === 0) {
+                    if (data.status === 'pending') {
                         setTimeout(() => {
                             request_clustering();
                         }, 500);
-                    } else if (data === 1) {
+                    } else if (data.status === 'failed') {
                         // clustering failed
                         $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
                     } else {

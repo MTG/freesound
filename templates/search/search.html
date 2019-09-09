@@ -78,7 +78,9 @@
         }
 
         // Ajax request clustering
-        request_clustering();
+        {% if clustering_on %}
+            request_clustering();
+        {% endif %}
 
     });
 
@@ -230,14 +232,17 @@
 {% else %}
     {% if facets %}
     <div id="sidebar" style="float:right">
-        <h3>clusters 
-            <a href="{% url 'cluster-visualisation' %}?{{ url_query_params_string | safe }}">
-                <img src='{{media_url}}images/eye-open.png' width="30px"/>
-            </a>
-        </h3>
-        <div id='clusters-div'>...
-            <br><br>
-        </div>
+
+        {% if clustering_on %}
+            <h3>clusters 
+                <a href="{% url 'cluster-visualisation' %}?{{ url_query_params_string | safe }}">
+                    <img src='{{media_url}}images/eye-open.png' width="30px"/>
+                </a>
+            </h3>
+            <div id='clusters-div'>...
+                <br><br>
+            </div>
+        {% endif %}
 
         {% if facets.license and facets.license|length > 1 %}
             <h3>licenses</h3>

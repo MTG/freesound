@@ -571,8 +571,11 @@ TEMPLATES = [
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 
-# Environment variable set when running celery worker. Enables to import clustering dependencies only in celery workers
+# Search Result Clustering Environment variables
+# Set to 1 when running celery worker. Enables to import clustering dependencies only in celery workers
 ENV_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None)
+# Set to 1 when running clustering service. Enables to do js calls & html clustering facets rendering
+ENV_CLUSTERING_ENGINE = os.getenv('ENV_CLUSTERING_ENGINE', None)
 
 
 # -------------------------------------------------------------------------------

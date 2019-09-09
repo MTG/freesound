@@ -87,6 +87,9 @@ def search(request):
         logger.error('Could probably not connect to Solr - %s' % e)
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
+    if settings.ENV_CLUSTERING_ENGINE == "1":  # enables AJAX clustering call & html clustering facets rendering
+        tvars.update({'clustering_on': True})
+
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', tvars)
     else:

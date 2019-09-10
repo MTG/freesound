@@ -8,8 +8,9 @@ from django.conf import settings
 if settings.ENV_CELERY_WORKER == '1':
     from gaia2 import DataSet, View, DistanceFunctionFactory
 
-    import clustering_settings as clust_settings
+    from clustering_settings import clustering_settings as clust_settings
 
+    # for re-using gaia similarity dataset
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
     from similarity.gaia_wrapper import GaiaWrapper as GaiaWrapperSimilarity
 
@@ -18,13 +19,13 @@ logger = logging.getLogger('clustering')
 
 class GaiaWrapper:
     def __init__(self):
-        self.as_dataset = DataSet()
-        self.tag_dataset = DataSet()
-        self.fs_dataset = DataSet()
-        self.ac_dataset = DataSet()
+        self.as_dataset = None
+        self.tag_dataset = None
+        self.fs_dataset = None
+        self.ac_dataset = None
         self.gaia_similiarity = None
 
-        self.index_path = clust_settings.INDEX_DIR
+        self.index_path = clust_settings.get('INDEX_DIR')
 
         self.as_view = None
         self.as_metric = None
@@ -38,31 +39,41 @@ class GaiaWrapper:
         self.__load_datasets()
 
     def __get_dataset_path(self, ds_name):
-        return os.path.join(clust_settings.INDEX_DIR, ds_name + '.db')
+        return os.path.join(clust_settings.get('INDEX_DIR'), ds_name + '.db')
 
     def __load_datasets(self):
-        self.as_dataset.load(self.__get_dataset_path(clust_settings.INDEX_NAME_AS))
-        self.as_view = View(self.as_dataset)
-        self.as_metric = DistanceFunctionFactory.create('euclidean', self.as_dataset.layout(), 
-            {'descriptorNames': 'AS_embeddings_ppc_max_energy'})
-        # self.as_metric = DistanceFunctionFactory.create('CosineSimilarity',  self.as_dataset.layout())
-        # self.as_metric = DistanceFunctionFactory.create('CosineAngle',  self.as_dataset.layout())
-        # self.as_metric = DistanceFunctionFactory.create('Manhattan',  self.as_dataset.layout())
+        # Could avoid code repetition here by creating an abstracted function for creating gaia DS, view & metric
+        if clust_settings.get('INDEX_NAME_AS', None):
+            self.as_dataset = DataSet()
+            self.as_dataset.load(self.__get_dataset_path(clust_settings.get('INDEX_NAME_AS')))
+            self.as_view = View(self.as_dataset)
+            self.as_metric = DistanceFunctionFactory.create('euclidean', self.as_dataset.layout(), 
+                {'descriptorNames': 'AS_embeddings_ppc_max_energy'})
+            # self.as_metric = DistanceFunctionFactory.create('CosineSimilarity',  self.as_dataset.layout())
+            # self.as_metric = DistanceFunctionFactory.create('CosineAngle',  self.as_dataset.layout())
+            # self.as_metric = DistanceFunctionFactory.create('Manhattan',  self.as_dataset.layout())
 
-        self.tag_dataset.load(self.__get_dataset_path(clust_settings.INDEX_NAME_TAG))
-        self.tag_view = View(self.tag_dataset)
-        self.tag_metric = DistanceFunctionFactory.create('euclidean', self.tag_dataset.layout())
+        if clust_settings.get('INDEX_NAME_TAG', None):
+            self.tag_dataset = DataSet()
+            self.tag_dataset.load(self.__get_dataset_path(clust_settings.get('INDEX_NAME_TAG')))
+            self.tag_view = View(self.tag_dataset)
+            self.tag_metric = DistanceFunctionFactory.create('euclidean', self.tag_dataset.layout())
 
-        self.fs_dataset.load(self.__get_dataset_path(clust_settings.INDEX_NAME_FS))
-        self.fs_view = View(self.fs_dataset)
-        self.fs_metric = DistanceFunctionFactory.create('euclidean', self.fs_dataset.layout(), {'descriptorNames': 'pca'})
+        if clust_settings.get('INDEX_NAME_FS', None):
+            self.fs_dataset = DataSet()
+            self.fs_dataset.load(self.__get_dataset_path(clust_settings.get('INDEX_NAME_FS')))
+            self.fs_view = View(self.fs_dataset)
+            self.fs_metric = DistanceFunctionFactory.create('euclidean', self.fs_dataset.layout(), {'descriptorNames': 'pca'})
+        
+        if clust_settings.get('INDEX_NAME_AC', None):
+            self.__load_ac_descriptors_dataset()
 
-        # self.gaia_similiarity = GaiaWrapperSimilarity()
-
-        self.__load_ac_descriptors_dataset()
+        if clust_settings.get('FS_SIMILARITY', False):
+            self.gaia_similiarity = GaiaWrapperSimilarity()
 
     def __load_ac_descriptors_dataset(self):
-        self.ac_dataset.load(self.__get_dataset_path('FS_AC_descriptors_normalized'))  # TODO: add this in clustering settings
+        self.ac_dataset = DataSet()
+        self.ac_dataset.load(self.__get_dataset_path(clust_settings.get('INDEX_NAME_AC')))
         self.ac_view = View(self.ac_dataset)
         self.ac_metric = DistanceFunctionFactory.create('euclidean', self.ac_dataset.layout(), 
             {'descriptorNames': [
@@ -97,7 +108,8 @@ class GaiaWrapper:
             if not nearest_neighbors:
                 logger.info("No nearest neighbors found for point with id '{}'".format(sound_id))
             return nearest_neighbors
-        except Exception as e:
+
+        except Exception as e:  # probably be more specific here...
             logger.info(e)
             return []
 
@@ -105,7 +117,7 @@ class GaiaWrapper:
         tag_features = []
         for sound_id in sound_ids:
             try:
-                tag_features.append(self.tag_dataset.point(sound_id).value('tags_lda'))  # TODO: add this in clustering settings
+                tag_features.append(self.tag_dataset.point(sound_id).value('tags_lda'))
             except Exception as e:
                 #logger.info(e)
                 tag_features.append(None)

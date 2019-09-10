@@ -7,7 +7,9 @@ from utils.search.search_general import search_prepare_query, perform_solr_query
     search_prepare_parameters
 
 from tasks import cluster_sound_results_celery
-from clustering_settings import CLUSTERING_CACHE_TIME
+from clustering_settings import clustering_settings as clust_settings
+
+CLUSTERING_CACHE_TIME = clust_settings.get('CLUSTERING_CACHE_TIME')
 
 logger = logging.getLogger('clustering')
 
@@ -22,7 +24,7 @@ def get_sound_ids_from_solr_query(query_params, num_sounds=1000):
 
 
 def cluster_sound_results(request, features):
-    query_params, tvars = search_prepare_parameters(request)
+    query_params, _ = search_prepare_parameters(request)
     # query_params_formatted = copy.copy(query_params)
     # query_params_formatted['filter_query'] = query_params_formatted['filter_query'].replace('\\"', '"')
 

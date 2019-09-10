@@ -8,7 +8,7 @@ if settings.ENV_CELERY_WORKER == '1':  # import only in celery workers
     import numpy as np
     from sklearn import metrics
     from sklearn.feature_selection import mutual_info_classif
-    from clustering_settings import SAVE_RESULTS_FOLDER
+    from clustering_settings import clustering_settings as clust_settings
     import json
     import networkx as nx
     from networkx.readwrite import json_graph
@@ -79,20 +79,21 @@ class ClusteringServer():
     
     def _save_results_to_file(self, query_params, features, graph_json, sound_ids, modularity, 
                               num_communities, ratio_intra_community_edges, ami, ss, ci, communities):
-        result = {
-            'query_params' : query_params,
-            'sound_ids': sound_ids,
-            'num_clusters': num_communities,
-            'graph': graph_json,
-            'features': features,
-            'modularity': modularity,
-            'ratio_intra_community_edges': ratio_intra_community_edges,
-            'average_mutual_information_tags': ami,
-            'silouhette_coeff_tags': ss,
-            'calinski_harabaz_score': ci,
-            'communities': communities
-        }
-        json.dump(result, open('{}/{}.json'.format(SAVE_RESULTS_FOLDER, query_params[0]), 'w'))
+        if clust_settings.get('SAVE_RESULTS_FOLDER', None):
+            result = {
+                'query_params' : query_params,
+                'sound_ids': sound_ids,
+                'num_clusters': num_communities,
+                'graph': graph_json,
+                'features': features,
+                'modularity': modularity,
+                'ratio_intra_community_edges': ratio_intra_community_edges,
+                'average_mutual_information_tags': ami,
+                'silouhette_coeff_tags': ss,
+                'calinski_harabaz_score': ci,
+                'communities': communities
+            }
+            json.dump(result, open('{}/{}.json'.format(clust_settings.get('SAVE_RESULTS_FOLDER'), query_params[0]), 'w'))
 
     def create_knn_graph(self, sound_ids_list, features='audio_as'):
         # Create k nearest neighbors graph        

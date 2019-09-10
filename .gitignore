@@ -25,6 +25,7 @@ freesound/logger.py
 tagrecommendation/TODO.txt
 tagrecommendation/tagrecommendation_settings.py
 similarity/similarity_settings.py
+clustering/clustering_settings.py
 .env
 start_freesound_services.sh
 

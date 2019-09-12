@@ -53,10 +53,9 @@ Prefer to create a pull request for all changes. This allows us to keep a record
 that were made, and allow feedback if necessary
 
 
-Deployment process:
-When PRs are merged, add the [merged] label to the ticket that it solves. This allows us to make a list of 
-changes for release notes or other documentation. Once the release has been made, remove these labels from 
-these tickets.
+*Merging and deployment process (for admins only)*
+When PRs are merged, we add the [merged] label to the ticket that it solves. This allows us to make a list of 
+changes for release notes or other documentation. Once the release has been made we finally close the tickets.
 
 ## Specific notes
 

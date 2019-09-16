@@ -3,7 +3,9 @@ from time import time
 import logging
 from django.conf import settings
 
-if settings.ENV_CELERY_WORKER == '1':  # import only in celery workers
+# The following packages are only needed if the running process is configured to be a Celery worker. 
+# We avoid importing them in appservers to avoid having to install unneeded dependencies.
+if settings.ENV_CELERY_WORKER == '1':
     from gaia_wrapper import GaiaWrapper
     import numpy as np
     from sklearn import metrics
@@ -18,7 +20,7 @@ if settings.ENV_CELERY_WORKER == '1':  # import only in celery workers
 logger = logging.getLogger('clustering')
 
 
-class ClusteringServer():
+class ClusteringEngine():
     def __init__(self):
         self.gaia = GaiaWrapper()
 

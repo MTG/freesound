@@ -25,38 +25,102 @@ class ClusteringEngine():
         self.gaia = GaiaWrapper()
 
     def _prepare_clustering_result_for_evaluation(self, classes):
+        """Extract tag features, remove sounds with missing features.
+
+        Args:
+            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+
+        Returns:
+            Tuple(List[List[Float]], List[Int]): 2-element tuple containing a list of tag-based features 
+                and list of classes (clusters) idx.
+        """
         sound_ids_list, clusters = zip(*classes.items())
         tag_features = self.gaia.return_sound_tag_features(sound_ids_list)
-        idx_to_remove = set([idx for idx, feature in enumerate(tag_features) if feature == None])  # sound not in gaia tag dataset
+
+        # Remove sounds that are not in the gaia tag dataset
+        idx_to_remove = set([idx for idx, feature in enumerate(tag_features) if feature == None])
         tag_features_filtered = [f for idx, f in enumerate(tag_features) if idx not in idx_to_remove]
         clusters_filtered = [c for idx, c in enumerate(clusters) if idx not in idx_to_remove]
+
         return tag_features_filtered, clusters_filtered
 
     def _average_mutual_information_tags_clusters(self, classes):
+        """Estimates Average Mutual Information between tag-based features and the given clustering classes.
+
+        Args:
+            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+
+        Returns:
+            Numpy.float: Average Mutual Information.
+        """
         tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
         return np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
 
     def _silouhette_coeff_tags_clusters(self, classes):
+        """Computes mean Silhouette Coefficient score between tag-based features and the given clustering classes.
+
+        Args:
+            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+
+        Returns:
+            Numpy.float: mean Silhouette Coefficient.
+        """
         tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
         return metrics.silhouette_score(tag_features, clusters, metric='euclidean')
 
     def _calinski_idx_tags_clusters(self, classes):
+        """Computes the Calinski and Harabaz score between tag-based features and the given clustering classes.
+
+        Args:
+            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+
+        Returns:
+            Numpy.float: Calinski and Harabaz score.
+        """
         tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
         return metrics.calinski_harabaz_score(tag_features, clusters)
     
     def _davies_idx_tags_clusters(self, classes):
-        # not included in current used sklearn version
+        """Computes the Davies-Bouldin score between tag-based features and the given clustering classes.
+
+        Args:
+            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+
+        Returns:
+            Numpy.float: Davies-Bouldin score.
+        """
+        # This metric is not included in current used sklearn version
         tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
         return metrics.davies_bouldin_score(tag_features, clusters)
 
     def _evaluation_metrics(self, classes):
+        """Computes different scores related to the clustering performance.
+
+        Args:
+            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+
+        Returns:
+            Tuple(Numpy.float, Numpy.float, Numpy.float): 3-element tuple containing the Average Mutual Information
+                score, the Silhouette Coefficient and the Calinski and Harabaz score.
+        """
         tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
-        ami = np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))  # set to False if lda is used
+        ami = np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
         ss = metrics.silhouette_score(tag_features, clusters, metric='euclidean')
         ci = metrics.calinski_harabaz_score(tag_features, clusters)
         return ami, ss, ci
 
     def _ratio_intra_community_edges(self, graph, communities):
+        """Computes the ratio of the number of intra-community (cluster) edges to the total number of edges in the cluster.
+
+        This may be useful for estimating how distinctive each cluster is against the other clusters.
+
+        Args:
+            graph (nx.Graph): NetworkX graph representation of sounds.
+            communities (List[List[Int]]): List storing Lists containing the Sound ids that are in each community (cluster).
+
+        Returns:
+            List[Float]: ratio value for each cluster.
+        """
         # Assess individual communities quality
         community_num_nodes = [len(community) for community in communities]
         # counts the number of edges inside a community
@@ -70,7 +134,20 @@ class ClusteringEngine():
         return ratio_intra_community_edges
 
     def _point_centralities(self, graph, communities):
-        # Find representative examples of cluster, partitions central nodes
+        """Computes graph centrality of each node in the given communities (clusters) of the given graph.
+
+        This may be useful for selecting representative examples of a cluster. A sound that is central in his cluster may be
+        represent what a cluster contains the most.
+
+        Args:
+            graph (nx.Graph): NetworkX graph representation of sounds.
+            communities (List[List[Int]]): List storing Lists containing the Sound ids that are in each community (cluster).
+
+        Returns:
+            Dict{Int: Float}: Dict containing the community centrality value for each sound 
+                ({<sound_id>: <community_centrality>}).
+        """
+        # 
         subgraphs = [graph.subgraph(community) for community in communities]
         communities_centralities = [nx.algorithms.centrality.degree_centrality(subgraph) for subgraph in subgraphs]
 
@@ -81,6 +158,27 @@ class ClusteringEngine():
     
     def _save_results_to_file(self, query_params, features, graph_json, sound_ids, modularity, 
                               num_communities, ratio_intra_community_edges, ami, ss, ci, communities):
+        """Procedure which stores clustering results and evaluation metrics in file on disk.
+
+        This is used when developing the clustering method. The results and the evaluation metrics are made accessible 
+        for post-analysis.
+        
+        Args:
+            query_params (str): string representing the query parameters submited by the user to the search engine.
+            features (str): name of the features used for clustering. 
+            graph_json: (dict) NetworkX graph representation of sounds data in node-link format that is suitable for JSON 
+                serialization.
+            sound_ids (List[Int]): list of the sound ids.
+            modularity (float): modularity of the graph partition.
+            num_communities (Int): number of communities (clusters).
+            ratio_intra_community_edges (List[Float]): intra-community edges ratio.
+            ami (Numpy.float): Average Mutual Information score.
+            ss (Numpy.float): Silhouette Coefficient score.
+            ci (Numpy.float): Calinski and Harabaz Index score.
+            communities (List[List[Int]]): List storing Lists containing the Sound ids that are in each community (cluster).
+
+        Saves a json file to disk containing the given information.
+        """
         if clust_settings.get('SAVE_RESULTS_FOLDER', None):
             result = {
                 'query_params' : query_params,
@@ -98,6 +196,15 @@ class ClusteringEngine():
             json.dump(result, open('{}/{}.json'.format(clust_settings.get('SAVE_RESULTS_FOLDER'), query_params[0]), 'w'))
 
     def create_knn_graph(self, sound_ids_list, features='audio_as'):
+        """Creates a K-Nearest Neighbors Graph representation of the given sounds.
+
+        Args:
+            sound_ids_list (List[str]): list of sound ids.
+            features (str): name of the features used for nearest neighbors computation (e.g. 'audio_as').
+
+        Returns:
+            (nx.Graph): NetworkX graph representation of sounds.
+        """
         # Create k nearest neighbors graph        
         graph = nx.Graph()
         graph.add_nodes_from(sound_ids_list)
@@ -119,6 +226,15 @@ class ClusteringEngine():
         return graph
 
     def create_common_nn_graph(self, sound_ids_list, features='audio_as'):
+        """Creates a Common Nearest Neighbors Graph representation of the given sounds.
+
+        Args:
+            sound_ids_list (List[str]): list of sound ids.
+            features (str): name of the features used for nearest neighbors computation (e.g. 'audio_as').
+
+        Returns:
+            (nx.Graph): NetworkX graph representation of sounds.
+        """
         # first create a knn graph
         knn_graph = self.create_knn_graph(sound_ids_list, features=features)
 
@@ -149,6 +265,19 @@ class ClusteringEngine():
         return graph
 
     def cluster_graph(self, graph):
+        """Applies community detection in the given graph.
+
+        Uses the Louvain method to extract communities from the given graph.
+
+        Args:
+            graph (nx.Graph): NetworkX graph representation of sounds.
+
+        Returns:
+            Tuple(dict, int, List[List[Int]], float): 4-element tuple containing the clustering classes for each sound 
+                {<sound_id>: <class_idx>}, the number of communities (clusters), the sound ids in the communities and
+                the modularity of the graph partition.
+        
+        """ 
         # Community detection in the graph
         classes = com.best_partition(graph)
         num_communities = max(classes.values()) + 1
@@ -160,6 +289,20 @@ class ClusteringEngine():
         return classes, num_communities, communities, modularity
 
     def cluster_graph_overlap(sefl, graph, k=5):
+        """Applies overlapping community detection in the given graph.
+
+        Uses the percolation method for finding the k-clique communities in the given graph.
+        This method returns 4 elements to follow the same structure as cluster_graph().
+        However the modularity of an overlapping partition cannot be defined, we return None instead.
+
+        Args:
+            graph (nx.Graph): NetworkX graph representation of sounds.
+
+        Returns:
+            Tuple(dict, int, List[List[Int]], None): 4-element tuple containing the clustering classes for each sound 
+                {<sound_id>: <class_idx>}, the number of communities (clusters), the sound ids in the communities and
+                None.
+        """ 
         communities = [list(community) for community in k_clique_communities(graph, k)]
         # communities = [list(community) for community in greedy_modularity_communities(graph)]
         greedy_modularity_communities
@@ -169,7 +312,24 @@ class ClusteringEngine():
         return  classes, num_communities, communities, None
 
     def remove_lowest_quality_cluster(self, graph, classes, communities, ratio_intra_community_edges):
-        if len(communities) < 3:  # if two clusters or less, we do not remove any
+        """Removes the lowest quality cluster in the given graph.
+
+        Discards the cluster that has the lowest ratio of the number of intra-community edges. Removes the related values 
+        of the removed cluster from the given clustering information.
+
+        Args:
+            graph (nx.Graph): NetworkX graph representation of sounds.
+            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            communities (List[List[Int]]): List storing Lists containing the Sound ids that are in each community (cluster).
+            ratio_intra_community_edges (List[Float]): intra-community edges ratio.
+
+        Returns:
+            Tuple(nx.Graph, dict, List[List[Int]], List[float]): 4-element tuple containing the graph representation of the 
+            sounds, the clustering classes for each sound {<sound_id>: <class_idx>}, the sound ids in the communities and the 
+            ratio of intra-community edges in each cluster.
+        """
+        # if two clusters or less, we do not remove any
+        if len(communities) < 3:
             return graph, classes, communities, ratio_intra_community_edges
         min_ratio_idx = np.argmin(ratio_intra_community_edges)
         sounds_to_remove = communities[min_ratio_idx]
@@ -184,6 +344,16 @@ class ClusteringEngine():
         return graph, classes, communities, ratio_intra_community_edges
 
     def cluster_points(self, query_params, features, sound_ids):
+        """Applies clustering on the requested sounds using the given features name.
+
+        Args:
+            query_params (str): string representing the query parameters submited by the user to the search engine.
+            features (str): name of the features used for clustering the sounds.
+            sound_ids (str): string containing comma-separated sound ids.
+        
+        Returns:
+            Dict: contains the resulting clustering classes and the graph in node-link format suitable for JSON serialization.
+        """
         start_time = time()
         sound_ids_list = [str(fs_id) for fs_id in sound_ids.split(',')]
         logger.info('Request clustering of {} points: {} ... from the query "{}"'
@@ -230,6 +400,15 @@ class ClusteringEngine():
         return {'error': False, 'result': communities, 'graph': graph_json}
 
     def k_nearest_neighbors(self, sound_id, k):
-        logger.info('Request k nearest neighbors of point {}'.format(sound_id[0]))
-        results = self.gaia.search_nearest_neighbors(sound_id[0], int(k[0]))
+        """Performs a K-Nearest Neighbors query.
+
+        Args: 
+            sound_id (str): Sound id as query.
+            k (str): number of nearest neighbors to get.
+
+        Returns:
+            str: string containing the comma-separated ids of the nearest neighbors sounds.
+        """
+        logger.info('Request k nearest neighbors of point {}'.format(sound_id))
+        results = self.gaia.search_nearest_neighbors(sound_id, int(k))
         return json.dumps(results)

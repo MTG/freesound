@@ -1,5 +1,6 @@
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
 var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
+var MIN_INPUT_CHARACTERS_FOR_GEOCODER =  3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
 
 function setMaxZoomCenter(lat, lng, zoom) {
     window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels
@@ -101,7 +102,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             map.touchZoomRotate.disableRotation();
             map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
             if (show_search === true){
-                map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
+                map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken, minLength: MIN_INPUT_CHARACTERS_FOR_GEOCODER}), 'top-left');
             }
             window.map = map; // Used to have a global reference to the map
 
@@ -326,7 +327,7 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
     map.dragRotate.disable();
     map.touchZoomRotate.disableRotation();
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
-    map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
+    map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken, minLength: MIN_INPUT_CHARACTERS_FOR_GEOCODER }), 'top-left');
 
     map.toggleStyle = function() {
         toggleMapStyle(map, map_element_id);

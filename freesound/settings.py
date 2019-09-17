@@ -572,10 +572,15 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 
 # Search Result Clustering Environment variables
-# Set to 1 when running celery worker. Enables to import clustering dependencies only in celery workers
+# '1' indicates that a process is running as a celery worker.
+# We get it from environment variable to avoid the need of a specific settings file for celery workers.
+# We enable the imports of clustering dependencies only in celery workers.
 ENV_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None)
-# Set to 1 when running clustering service. Enables to do js calls & html clustering facets rendering
-ENV_CLUSTERING_ENGINE = os.getenv('ENV_CLUSTERING_ENGINE', None)
+
+# Determines whether to use or not the clustering feature.
+# Set to False by default (to be overwritten in local_settings.py)
+# When activated, Enables to do js calls & html clustering facets rendering
+ENABLE_SEARCH_RESULTS_CLUSTERING = False
 
 
 # -------------------------------------------------------------------------------

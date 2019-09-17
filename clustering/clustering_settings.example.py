@@ -18,7 +18,8 @@ clustering_settings = {
 
     # Cache settings
     # One day timeout for keeping clustering results. The cache timer is reset when the clustering is 
-    # requested so that popular queries that are performed once a day minimum will always stay in cache.
+    # requested so that popular queries that are performed once a day minimum will always stay in cache
+    # and won't be recomputed.
     'CLUSTERING_CACHE_TIME':            24*60*60*1,
     # One minute timeout for keeping the pending state. When a clustering is being performed async in a 
     # Celery worker, we consider the clustering as pending for only 1 minute. This may be useful if a 

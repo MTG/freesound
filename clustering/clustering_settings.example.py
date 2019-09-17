@@ -14,6 +14,9 @@ clustering_settings = {
     # AudioCommons timbral descriptors
     'INDEX_NAME_AC':    None,
 
+    # Maximum number of results to cluster
+    'MAX_RESULTS_FOR_CLUSTERING': 1000,
+
     # Enable the use of the similarity gaia dataset (need to configure similarity server)
     # For development, it can be useful to use the same nearest neighbor search that is used for
     # the similar sound feature.

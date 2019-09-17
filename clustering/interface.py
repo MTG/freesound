@@ -8,6 +8,7 @@ from utils.search.search_general import search_prepare_query, perform_solr_query
 
 from tasks import cluster_sound_results_celery
 from clustering_settings import clustering_settings as clust_settings
+from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 
 def get_sound_ids_from_solr_query(query_params):
@@ -56,18 +57,17 @@ def cluster_sound_results(request, features):
     # check if result is in cache
     result = cache.get(cache_key_hashed)
 
-    if result and result not in ('pending', 'failed'):
+    if result and result not in (CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED):
         # reset the value in cache so that it presists
         cache.set(cache_key_hashed, result, clust_settings.get('CLUSTERING_CACHE_TIME'))
-
         result.update({'finished': True, 'error': False})
-        
+
         return result
 
-    elif result == 'pending':
+    elif result == CLUSTERING_RESULT_STATUS_PENDING:
         return {'finished': False, 'error': False}
 
-    elif result == 'failed':
+    elif result == CLUSTERING_RESULT_STATUS_FAILED:
         return {'finished': False, 'error': True}
 
     else:

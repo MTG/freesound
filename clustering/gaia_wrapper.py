@@ -16,7 +16,11 @@ from similarity.gaia_wrapper import GaiaWrapper as GaiaWrapperSimilarity
 logger = logging.getLogger('clustering')
 
 
-class GaiaWrapper:
+class GaiaWrapperClustering:
+    """Gaia wrapper for the clustering engine.
+
+    This class contains helper methods to interface with Gaia.    
+    """
     def __init__(self):
         self.as_dataset = None
         self.tag_dataset = None
@@ -46,11 +50,9 @@ class GaiaWrapper:
             self.as_dataset = DataSet()
             self.as_dataset.load(self.__get_dataset_path(clust_settings.get('INDEX_NAME_AS')))
             self.as_view = View(self.as_dataset)
+            # metrics here can be 'euclidean', 'CosineSimilarity', 'CosineAngle', 'CosineAngle'
             self.as_metric = DistanceFunctionFactory.create('euclidean', self.as_dataset.layout(), 
                 {'descriptorNames': 'AS_embeddings_ppc_max_energy'})
-            # self.as_metric = DistanceFunctionFactory.create('CosineSimilarity',  self.as_dataset.layout())
-            # self.as_metric = DistanceFunctionFactory.create('CosineAngle',  self.as_dataset.layout())
-            # self.as_metric = DistanceFunctionFactory.create('Manhattan',  self.as_dataset.layout())
 
         if clust_settings.get('INDEX_NAME_TAG', None):
             self.tag_dataset = DataSet()
@@ -86,6 +88,17 @@ class GaiaWrapper:
             ]})
 
     def search_nearest_neighbors(self, sound_id, k, in_sound_ids=[], features='audio_as'):
+        """Performs Nearest Neighbors (NN) search on the sound given as query within the given subset with the requested features.
+
+        Args:
+            sound_id (str): id of the sound query.
+            k (int): number of nearest neighbors to retrieve.
+            in_sound_ids (List[str]): ids of the subset of sounds within the one we perform the NN search.
+            features (str): name of the features used for nearest neighbors computation (e.g. 'audio_as').
+
+        Returns:
+            List[str]: ids of the retrieved sounds.
+        """
         if in_sound_ids:
             filter = 'WHERE point.id IN ("' + '", "'.join(in_sound_ids) + '")'
         else:
@@ -108,11 +121,20 @@ class GaiaWrapper:
                 logger.info("No nearest neighbors found for point with id '{}'".format(sound_id))
             return nearest_neighbors
 
-        except Exception as e:  # probably be more specific here...
+        # probably be more specific here...
+        except Exception as e:
             logger.info(e)
             return []
 
     def return_sound_tag_features(self, sound_ids):
+        """Returns the tag-based features for the given sounds.
+
+        Args:
+            sound_ids (List[str]): list containing the ids of the sounds we want the features.
+
+        Returns:
+            List[List[Float]]: list containing the tag-based features of the requested sounds.
+        """
         tag_features = []
         for sound_id in sound_ids:
             try:

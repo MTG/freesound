@@ -6,7 +6,7 @@ from django.conf import settings
 # The following packages are only needed if the running process is configured to be a Celery worker. 
 # We avoid importing them in appservers to avoid having to install unneeded dependencies.
 if settings.ENV_CELERY_WORKER == '1':
-    from gaia_wrapper import GaiaWrapper
+    from gaia_wrapper import GaiaWrapperClustering
     import numpy as np
     from sklearn import metrics
     from sklearn.feature_selection import mutual_info_classif
@@ -22,7 +22,7 @@ logger = logging.getLogger('clustering')
 
 class ClusteringEngine():
     def __init__(self):
-        self.gaia = GaiaWrapper()
+        self.gaia = GaiaWrapperClustering()
 
     def _prepare_clustering_result_for_evaluation(self, classes):
         """Extract tag features, remove sounds with missing features.

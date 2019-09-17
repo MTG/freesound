@@ -7,5 +7,5 @@ class ClusteringConfig(AppConfig):
     name = 'clustering'
     
     def ready(self):
-        if settings.ENV_CELERY_WORKER == '1':  # only in celery workers
+        if settings.ENV_CELERY_WORKER == '1':
             init_clustering_engine()

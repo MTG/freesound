@@ -12,6 +12,8 @@ clustering_settings = {
     'INDEX_NAME_AC':    None,
 
     # Enable the use of the similarity gaia dataset (need to configure similarity server)
+    # For development, it can be useful to use the same nearest neighbor search that is used for
+    # the similar sound feature.
     'FS_SIMILARITY': False,
 
     # Cache settings

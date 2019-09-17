@@ -7,8 +7,11 @@ clustering_settings = {
     'INDEX_NAME_AS':    'FS_AS_embeddings_mean_max_min_nrg_normalized',  # don't include .db extension here
 
     # Other Gaia Datasets
+    # tag-based features (Bag of Words - LDA)
     'INDEX_NAME_TAG':   None,
+    # Acoustic features (selected features from Essentia extractor)
     'INDEX_NAME_FS':    None,
+    # AudioCommons timbral descriptors
     'INDEX_NAME_AC':    None,
 
     # Enable the use of the similarity gaia dataset (need to configure similarity server)

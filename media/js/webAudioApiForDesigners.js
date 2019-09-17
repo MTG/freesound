@@ -3,7 +3,6 @@ var isSafari = navigator.userAgent.indexOf("Safari") != -1;
 var isIe = navigator.userAgent.indexOf("MSIE") != -1;
 var isFireFox = navigator.userAgent.indexOf("Firefox") != -1; // not this one ^^
 
-
 // We need to check if this system has the webAudioContext defined.  
 // As of right now chrome will, but firefox won't because they just started implimenting
 if (typeof(webkitAudioContext) == "undefined" && typeof(mozAudioContext) == "undefined") {

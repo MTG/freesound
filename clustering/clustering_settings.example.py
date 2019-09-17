@@ -2,14 +2,27 @@
 clustering_settings = {
     # Gaia datasets info
     'INDEX_DIR':        '/path/to/directory/containing/gaia/dataset/files',
+
+    # Gaia Dataset with AudioSet Features
     'INDEX_NAME_AS':    'FS_AS_embeddings_mean_max_min_nrg_normalized',  # don't include .db extension here
+
+    # Other Gaia Datasets
+    'INDEX_NAME_TAG':   None,
+    'INDEX_NAME_FS':    None,
+    'INDEX_NAME_AC':    None,
 
     # Enable the use of the similarity gaia dataset (need to configure similarity server)
     'FS_SIMILARITY': False,
 
     # Cache settings
-    'CLUSTERING_CACHE_TIME':            24*60*60*1,  # one day timeout for keeping clustering results
-    'CLUSTERING_PENDING_CACHE_TIME':    60*1,        # one minute timeout for keeping the pending state
+    # One day timeout for keeping clustering results. The cache timer is reset when the clustering is 
+    # requested so that popular queries that are performed once a day minimum will always stay in cache.
+    'CLUSTERING_CACHE_TIME':            24*60*60*1,
+    # One minute timeout for keeping the pending state. When a clustering is being performed async in a 
+    # Celery worker, we consider the clustering as pending for only 1 minute. This may be useful if a 
+    # worker task got stuck. There should be a settings in celery to stop a worker task if it is running 
+    # for too long.
+    'CLUSTERING_PENDING_CACHE_TIME':    60*1,
 
     # Folder for saving the clustering results with evaluation (dev/debug/research purpose)
     'SAVE_RESULTS_FOLDER': None,

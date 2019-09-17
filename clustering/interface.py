@@ -6,7 +6,7 @@ from utils.encryption import create_hash
 from utils.search.search_general import search_prepare_query, perform_solr_query, \
     search_prepare_parameters
 
-from tasks import cluster_sound_results_celery
+from tasks import cluster_sounds
 from clustering_settings import clustering_settings as clust_settings
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
@@ -75,8 +75,8 @@ def cluster_sound_results(request, features):
         sound_ids = get_sound_ids_from_solr_query(query_params)
         sound_ids_string = ','.join([str(sound_id) for sound_id in sound_ids])
 
-        # launch celery async task
-        cluster_sound_results_celery.delay(cache_key_hashed, sound_ids_string, features)
+        # launch clustering with celery async task
+        cluster_sounds.delay(cache_key_hashed, sound_ids_string, features)
 
         return {'finished': False, 'error': False}
 

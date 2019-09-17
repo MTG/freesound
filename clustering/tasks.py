@@ -5,8 +5,8 @@ from clustering_settings import clustering_settings as clust_settings
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 
-@task(name="cluster_points")
-def cluster_sound_results_celery(cache_key_hashed, sound_ids, features):
+@task(name="cluster_sounds")
+def cluster_sounds(cache_key_hashed, sound_ids, features):
     # this import would be better outside the function, but did not work
     from . import engine
 

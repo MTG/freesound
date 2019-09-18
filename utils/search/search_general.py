@@ -40,7 +40,18 @@ console_logger = logging.getLogger("console")
 
 
 def search_prepare_sort(sort, options):
-    """ for ordering by rating order by rating, then by number of ratings """
+    """Creates sort list for ordering by rating.
+
+    Order by rating, then by number of ratings.
+    
+    Args:
+        sort (str): sort url query parameter.
+        options (List[Tuple(str)]): list containing 2-element tuples with the ordering option names
+        and their corresponding fields in the database. 
+
+    Returns:
+        List[str]: list containing the sorting parameters.
+    """
     if sort in [x[1] for x in options]:
         if sort == "avg_rating desc":
             sort = [sort, "num_ratings desc"]
@@ -54,6 +65,21 @@ def search_prepare_sort(sort, options):
 
 
 def search_process_filter(filter_query):
+    """Process the filter to replace humnan-readable Audio Commons descriptor names.
+
+    Used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i).
+    The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) 
+    and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names so Solr can 
+    treat the types properly. Now we automatically append the suffices to the filter names so users do not 
+    need to deal with that.
+
+    Args:
+        filter_query (str): query filter string.
+
+    Returns:
+        str: processed filter query string.
+    
+    """
     # Process the filter to replace humnan-readable Audio Commons descriptor names for the dynamic field names used in
     # Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i). The dynamic field names we define in Solr
     # schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) and '*_s' (for string). At indexing time

@@ -109,6 +109,7 @@ def split_filter_query(filter_query, cluster_id):
 
     return filter_query_split
 
+
 def search_prepare_parameters(request):
     """Process the query parameters.
 

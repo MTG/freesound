@@ -250,18 +250,15 @@ def search_prepare_query(search_query,
 
     # Set field weights and scoring function
     field_weights = []
-    if id_weight != 0:
-        field_weights.append(("id", id_weight))
-    if tag_weight != 0:
-        field_weights.append(("tag", tag_weight))
-    if description_weight != 0:
-        field_weights.append(("description", description_weight))
-    if username_weight != 0:
-        field_weights.append(("username", username_weight))
-    if pack_tokenized_weight != 0:
-        field_weights.append(("pack_tokenized", pack_tokenized_weight))
-    if original_filename_weight != 0:
-        field_weights.append(("original_filename", original_filename_weight))
+    for weight, weight_str in [(id_weight, "id"),
+                               (tag_weight, "tag"),
+                               (description_weight, "description"), 
+                               (username_weight, "username"),
+                               (pack_tokenized_weight, "pack_tokenized"),
+                               (original_filename_weight, "original_filename")]:
+        if weight != 0:
+            field_weights.append((weight_str, weight))
+
     query.set_dismax_query(search_query,
                            query_fields=field_weights,)
 

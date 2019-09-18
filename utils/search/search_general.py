@@ -78,13 +78,7 @@ def search_process_filter(filter_query):
 
     Returns:
         str: processed filter query string.
-    
     """
-    # Process the filter to replace humnan-readable Audio Commons descriptor names for the dynamic field names used in
-    # Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i). The dynamic field names we define in Solr
-    # schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) and '*_s' (for string). At indexing time
-    # we append these suffixes to the ac descirptor names so Solr can treat the types properly. Now we automatically
-    # append the suffices to the filter names so users do not need to deal with that.
     for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
         filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
                                             .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))

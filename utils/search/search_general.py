@@ -65,16 +65,16 @@ def search_process_filter(filter_query):
     return filter_query
 
 
-def search_prepare_parameters(request):
-    """ Process the query parameters.
-        Returns: - the params for search_prepare_query() in a dict
-                 - the variables for the template context
-    """
-    search_query = request.GET.get("q", "")
-    filter_query = request.GET.get("f", "")
-    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
-    cluster_id = request.GET.get('cluster_id', "")
+def split_filter_query(filter_query, cluster_id):
+    """Splits query filters.
 
+    Args:
+        filter_query (str): query filter string.
+        cluster_id (str): cluster filter string.
+
+    Returns:
+        List[dict]: list of dictionaries containing the filter name and the url when removing the filter.
+    """
     # Generate array with information of filters
     filter_query_split = []
     if filter_query != "":
@@ -99,11 +99,31 @@ def search_prepare_parameters(request):
                     }
                     filter_query_split.append(filter)
 
-    if cluster_id != "":  # cluster filter is in a separate query parameter
+    # cluster filter is in a separate query parameter
+    # it facilitates the reuse of the filter query parameter for performing the query to the audio collection
+    if cluster_id != "":  
         filter_query_split.append({
             'name': "Cluster #" + cluster_id,
             'remove_url': filter_query,
         })
+
+    return filter_query_split
+
+def search_prepare_parameters(request):
+    """Process the query parameters.
+
+    Args:
+        request (HttpRequest): request associated with the search query submited by the user.
+    
+    Returns:
+        Tuple(dict, dict): 2-element tuple containing the query parameters and the context variables of the view.
+    """
+    search_query = request.GET.get("q", "")
+    filter_query = request.GET.get("f", "")
+    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+    cluster_id = request.GET.get('cluster_id', "")
+
+    filter_query_split = split_filter_query(filter_query, cluster_id)
 
     try:
         current_page = int(request.GET.get("page", 1))

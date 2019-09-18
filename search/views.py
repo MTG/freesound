@@ -33,8 +33,9 @@ from django.http import JsonResponse
 import forms
 import sounds
 import forum
+from search.forms import SEARCH_SORT_OPTIONS_WEB
 from utils.search.search_general import search_prepare_sort, search_process_filter, \
-    search_prepare_query, perform_solr_query, search_prepare_parameters
+    search_prepare_query, perform_solr_query, search_prepare_parameters, split_filter_query
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
@@ -44,17 +45,53 @@ logger = logging.getLogger("search")
 
 
 def search(request):
-    query_params, tvars = search_prepare_parameters(request)
-    
-    # get sound ids of the requested cluster
+    filter_query = request.GET.get("f", "")
+    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
+    sort_unformatted = request.GET.get("s", None)
+    advanced = request.GET.get("advanced", "")
+
+    # get the url query params for later sending it to the clustering engine
+    url_query_params_string = request.META['QUERY_STRING']
+
+    query_params, advanced_search_params_dict = search_prepare_parameters(request)
+
+    # get sound ids of the requested cluster when cluster filter facet
     cluster_id = request.GET.get('cluster_id', "")
     in_ids = get_ids_in_cluster(request, cluster_id)
-    query_params.update({'in_ids': in_ids})  # for added cluster facet filter
+    query_params.update({'in_ids': in_ids})
+
+    filter_query_split = split_filter_query(filter_query, cluster_id)
+
+    tvars = {
+        'error_text': None,
+        'filter_query': query_params['filter_query'],
+        'filter_query_split': filter_query_split,
+        'search_query': query_params['search_query'],
+        'grouping': query_params['grouping'],
+        'advanced': advanced,
+        'sort': query_params['sort'],
+        'sort_unformatted': sort_unformatted,
+        'sort_options': sort_options,
+        'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
+        'current_page': query_params['current_page'],
+        'url_query_params_string': url_query_params_string,
+    }
+    
+    tvars.update(advanced_search_params_dict)
+
+    logger.info(u'Search (%s)' % json.dumps({
+        'ip': get_client_ip(request),
+        'query': query_params['search_query'],
+        'filter': query_params['filter_query'],
+        'username': request.user.username,
+        'page': query_params['current_page'],
+        'sort': query_params['sort'][0],
+        'group_by_pack': query_params['grouping'],
+        'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
+    }))
 
     query = search_prepare_query(**query_params)
-
-    # pass the url query params for later sending it to the clustering engine
-    url_query_params_string = request.META['QUERY_STRING']
 
     try:
         non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, tvars['current_page'])
@@ -77,7 +114,6 @@ def search(request):
             'docs': docs,
             'facets': facets,
             'non_grouped_number_of_results': non_grouped_number_of_results,
-            'url_query_params_string': url_query_params_string,
         })
 
     except SolrException as e:

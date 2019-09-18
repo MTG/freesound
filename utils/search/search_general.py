@@ -117,21 +117,17 @@ def search_prepare_parameters(request):
         request (HttpRequest): request associated with the search query submited by the user.
     
     Returns:
-        Tuple(dict, dict): 2-element tuple containing the query parameters and the context variables of the view.
+        Tuple(dict, dict): 2-element tuple containing the query parameters and the advanced search params to log
     """
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
-    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
     cluster_id = request.GET.get('cluster_id', "")
-
-    filter_query_split = split_filter_query(filter_query, cluster_id)
 
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
     sort_unformatted = request.GET.get("s", None)
-    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
     grouping = request.GET.get("g", "1")  # Group by default
 
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
@@ -151,7 +147,6 @@ def search_prepare_parameters(request):
     advanced = request.GET.get("advanced", "")
     advanced_search_params_dict = {}
 
-    # if advanced search
     if advanced == "1":
         a_tag = request.GET.get("a_tag", "")
         a_filename = request.GET.get("a_filename", "")
@@ -159,7 +154,9 @@ def search_prepare_parameters(request):
         a_packname = request.GET.get("a_packname", "")
         a_soundid = request.GET.get("a_soundid", "")
         a_username = request.GET.get("a_username", "")
-        advanced_search_params_dict.update({  # These are stored in a dict to facilitate logging and passing to template
+
+        # These are stored in a dict to facilitate logging and passing to template
+        advanced_search_params_dict.update({
             'a_tag': a_tag,
             'a_filename': a_filename,
             'a_description': a_description,
@@ -195,17 +192,6 @@ def search_prepare_parameters(request):
 
     sort = search_prepare_sort(sort_unformatted, forms.SEARCH_SORT_OPTIONS_WEB)
 
-    logger.info(u'Search (%s)' % json.dumps({
-        'ip': get_client_ip(request),
-        'query': search_query,
-        'filter': filter_query,
-        'username': request.user.username,
-        'page': current_page,
-        'sort': sort[0],
-        'group_by_pack': grouping,
-        'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
-    }))
-
     query_params = {
         'search_query': search_query,
         'filter_query': filter_query,
@@ -221,23 +207,7 @@ def search_prepare_parameters(request):
         'grouping': grouping,
     }
 
-    tvars = {
-        'error_text': None,
-        'filter_query': filter_query,
-        'filter_query_split': filter_query_split,
-        'search_query': search_query,
-        'grouping': grouping,
-        'advanced': advanced,
-        'sort': sort,
-        'sort_unformatted': sort_unformatted,
-        'sort_options': sort_options,
-        'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
-        'current_page': current_page,
-    }
-    if advanced == "1":
-        tvars.update(advanced_search_params_dict)
-
-    return query_params, tvars
+    return query_params, advanced_search_params_dict
 
 
 def search_prepare_query(search_query,

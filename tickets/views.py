@@ -414,9 +414,10 @@ def moderation_assigned(request, user_id):
                     sounds_update_params['is_explicit'] = True
                 elif is_explicit_choice_key == IS_EXPLICIT_REMOVE_FLAG_KEY:
                     sounds_update_params['is_explicit'] = False
-                elif is_explicit_choice_key == IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY:
-                    # Don't update the 'is_explicit' field and leave it as the user originally set it
-                    pass
+
+                # Otherwise is_explicit_choice_key = IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, don't update the
+                # 'is_explicit' field and leave it as the user originally set it
+
                 Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
 
                 if msg:

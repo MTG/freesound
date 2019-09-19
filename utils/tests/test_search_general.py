@@ -22,7 +22,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
-from utils.search.search_general import search_prepare_parameters
+from utils.search.search_general import search_prepare_parameters, split_filter_query
 from search.forms import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_WEB
 
 
@@ -107,3 +107,48 @@ class SearchUtilsTest(TestCase):
         request = self.factory.get(reverse('sounds-search')+u'?q=Æ æ ¿ É')
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
         self.assertEqual(query_params['search_query'], u'\xc6 \xe6 \xbf \xc9')
+
+    def test_split_filter_query_duration_and_facet(self):
+        # We check that the combination of a duration filter and a facet filter (CC Attribution) works correctly.
+        filter_query_string = u'duration:[0 TO 10] license:"Attribution"'
+        filter_query_split = split_filter_query(filter_query_string, '')
+
+        # duraton filter is not a facet, but should stay present when removing a facet.
+        expected_filter_query_split = [
+            {'remove_url': u'duration:[0 TO 10]', 'name': u'license:Attribution'}, 
+        ]
+
+        # we use assertIn because the unicode strings that split_filter_query generates can incorporate 
+        # additional spaces, which is not a problem.
+        self.assertIn(expected_filter_query_split[0]['name'], filter_query_split[0]['name'])
+        self.assertIn(expected_filter_query_split[0]['remove_url'], filter_query_split[0]['remove_url'])
+
+    def test_split_filter_query_cluster_facet(self):
+        # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter
+        # works correctly.
+        filter_query_string = u'duration:[0 TO 10] license:"Attribution"'
+        filter_query_split = split_filter_query(filter_query_string, '1')
+
+        expected_filter_query_split = [
+            {'remove_url': u'duration:[0 TO 10]', 'name': u'license:Attribution'}, 
+            {'remove_url': u'duration:[0 TO 10] license:"Attribution"', 'name': 'Cluster #1'}
+        ]
+
+        # check that the cluster facet exists
+        filter_query_names = [filter_query_dict['name'] for filter_query_dict in expected_filter_query_split]
+        self.assertIn('Cluster #1', filter_query_names)
+
+        # the order does not matter for the list of facet dicts.
+        # we get the index of the correspondings facets dicts.
+        cc_attribution_facet_dict_idx = filter_query_names.index('license:Attribution')
+        cluster_facet_dict_idx = filter_query_names.index('Cluster #1')
+
+        self.assertIn(expected_filter_query_split[0]['name'], 
+                      filter_query_split[cc_attribution_facet_dict_idx]['name'])
+        self.assertIn(expected_filter_query_split[0]['remove_url'], 
+                      filter_query_split[cc_attribution_facet_dict_idx]['remove_url'])
+
+        self.assertIn(expected_filter_query_split[1]['name'], 
+                      filter_query_split[cluster_facet_dict_idx]['name'])
+        self.assertIn(expected_filter_query_split[1]['remove_url'], 
+                      filter_query_split[cluster_facet_dict_idx]['remove_url'])

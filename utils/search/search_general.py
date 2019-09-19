@@ -262,6 +262,29 @@ def search_prepare_query(search_query,
                          grouping_pack_limit=1,
                          offset=None,
                          in_ids=[]):
+    """Create the Solr query object given the query parameters.
+    
+    Args:
+        search_query (str): query string.
+        filter_query (str): query filter string.
+        sort (str): sort option string.
+        current_page (int): requested page of the results.
+        sounds_per_page (int): number of sounds per page.
+        id_weight (int): id weight for the query.
+        tag_weight (int): tag weight for the query.
+        description_weight (int): description weight for the query.
+        username_weight (int): username weight for the query.
+        pack_tokenized_weight (int): pack weight for the query.
+        original_filename_weight (int): filename weight for the query.
+        grouping (bool): only show one (or more) sounds for each pack.
+        include_facets (bool): include facets or no.
+        grouping_pack_limit (int): number of sounds showed for each pack.
+        offset (int): a numerical offset.
+        in_ids (list): list of sound ids for cluster filter facet.
+
+    Returns: (SolrQuery): the solr query object corresponding to the user submitted query.
+
+    """
     query = SolrQuery()
 
     # Set field weights and scoring function

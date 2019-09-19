@@ -50,7 +50,7 @@ def search(request):
 
     # get sound ids of the requested cluster when cluster filter facet
     cluster_id = request.GET.get('cluster_id', "")
-    in_ids = get_ids_in_cluster(request, cluster_id)
+    in_ids = _get_ids_in_cluster(request, cluster_id)
     query_params.update({'in_ids': in_ids})
 
     filter_query_split = split_filter_query(query_params['filter_query'], cluster_id)
@@ -126,7 +126,9 @@ def search(request):
         return render(request, 'search/search_ajax.html', tvars)
 
 
-def get_ids_in_cluster(request, requested_cluster_id):
+def _get_ids_in_cluster(request, requested_cluster_id):
+    """Get the sound ids in the requested cluster. Used for applying a filter by id when using a cluster facet.
+    """
     if requested_cluster_id == "":
         return []
     else:

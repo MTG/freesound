@@ -29,7 +29,7 @@ def get_sound_ids_from_solr_query(query_params):
     return resultids
 
 
-def cluster_sound_results(request, features):
+def cluster_sound_results(request, features='audio_as'):
     """Performs clustering on the search results of the fiven request with the requested features.
 
     This is the main entry to the clustering method. It will either get the clustering results from cache, 

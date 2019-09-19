@@ -133,7 +133,7 @@ def get_ids_in_cluster(request, requested_cluster_id):
         requested_cluster_id = int(requested_cluster_id) - 1
 
         # results are cached in clustering_utilities, features are: 'audio_fs', 'audio_as', 'audio_fs_selected', 'tag'
-        result = cluster_sound_results(request, 'audio_as')
+        result = cluster_sound_results(request, features='audio_as')
         results = result['result']
         num_clusters = num_clusters = len(results) + 1
 
@@ -142,13 +142,18 @@ def get_ids_in_cluster(request, requested_cluster_id):
         return sounds_from_requested_cluster
 
 
-def cluster_sounds(request):
+def clustering_facet(request):
+    """Triggers the computation of the clustering, returns the state of processing or the clustering facet.
+    """
     # pass the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
+    # remove existing cluster facet filter from the params since the returned cluster facets will include 
+    # their correspondinng cluster_id query parameter (done in the template)
     url_query_params_string = re.sub(r"(&cluster_id=[0-9]*)", "", url_query_params_string)
 
-    result = cluster_sound_results(request, 'audio_as')
+    result = cluster_sound_results(request, features='audio_as')
 
+    # check if computation is finished. If not, send computation state.
     if result['finished']:
         if result['result'] is not None:
             results = result['result']
@@ -167,7 +172,6 @@ def cluster_sounds(request):
     sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, classes.keys()))
     sound_tags = {sound.id: sound.get_sound_tags() for sound in sound_instances}
     cluster_tags = defaultdict(list)
-    # query_terms = {t.lower() for t in query_params['search_query'].split(' ')}
     query_terms = {t.lower() for t in request.GET.get('q', '').split(' ')}
     for sound_id, tags in sound_tags.iteritems():
         cluster_tags[classes[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
@@ -191,7 +195,7 @@ def cluster_visualisation(request):
 
 
 def return_clustered_graph(request):
-    result = cluster_sound_results(request, 'audio_as')
+    result = cluster_sound_results(request, features='audio_as')
     graph = result['graph']
 
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])

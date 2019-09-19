@@ -242,7 +242,7 @@ class SearchResultClustering(TestCase):
     @mock.patch('search.views.cluster_sound_results')
     def test_successful_search_result_clustering_view(self, cluster_sound_results):
         cluster_sound_results.return_value = self.successful_clustering_results
-        resp = self.client.get(reverse('cluster-sounds'))
+        resp = self.client.get(reverse('clustering-facet'))
 
         # 200 status code & use of clustering facets template
         self.assertEqual(resp.status_code, 200)
@@ -258,7 +258,7 @@ class SearchResultClustering(TestCase):
     @mock.patch('search.views.cluster_sound_results')
     def test_pending_search_result_clustering_view(self, cluster_sound_results):
         cluster_sound_results.return_value = self.pending_clustering_results
-        resp = self.client.get(reverse('cluster-sounds'))
+        resp = self.client.get(reverse('clustering-facet'))
 
         # 200 status code & JSON response content
         self.assertEqual(resp.status_code, 200)
@@ -267,7 +267,7 @@ class SearchResultClustering(TestCase):
     @mock.patch('search.views.cluster_sound_results')
     def test_failed_search_result_clustering_view(self, cluster_sound_results):
         cluster_sound_results.return_value = self.failed_clustering_results
-        resp = self.client.get(reverse('cluster-sounds'))
+        resp = self.client.get(reverse('clustering-facet'))
 
         # 200 status code & JSON response content
         self.assertEqual(resp.status_code, 200)

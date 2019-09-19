@@ -89,9 +89,10 @@ class SoundModerationForm(forms.Form):
                              error_messages={'required': 'No sound selected...'})
     
     is_explicit = forms.ChoiceField(choices=IS_EXPLICIT_FLAG_CHOICES,
-                                    initial=IS_EXPLICIT_FLAG_CHOICES[0][0],
+                                    initial=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
                                     required=True, 
                                     label=mark_safe("<i>Is explicit</i> flag"))
+
 
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea,

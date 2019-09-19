@@ -44,7 +44,7 @@ def cluster_sound_results(request, features):
         Dict: contains either the state of the clustering ('pending' or 'failed') or the resulting clustering classes 
             and the graph in node-link format suitable for JSON serialization.
     """
-    query_params, _ = search_prepare_parameters(request)
+    query_params, _, _ = search_prepare_parameters(request)
 
     cache_key = 'cluster-results-{search_query}-{filter_query}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
                 '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params)

@@ -30,10 +30,8 @@ from django.shortcuts import render, redirect, reverse
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 
-import forms
 import sounds
 import forum
-from search.forms import SEARCH_SORT_OPTIONS_WEB
 from utils.search.search_general import search_prepare_sort, search_process_filter, \
     search_prepare_query, perform_solr_query, search_prepare_parameters, split_filter_query
 from utils.logging_filters import get_client_ip
@@ -45,23 +43,17 @@ logger = logging.getLogger("search")
 
 
 def search(request):
-    filter_query = request.GET.get("f", "")
-    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
-    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-    sort_unformatted = request.GET.get("s", None)
-    advanced = request.GET.get("advanced", "")
+    query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
     # get the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
-
-    query_params, advanced_search_params_dict = search_prepare_parameters(request)
 
     # get sound ids of the requested cluster when cluster filter facet
     cluster_id = request.GET.get('cluster_id', "")
     in_ids = get_ids_in_cluster(request, cluster_id)
     query_params.update({'in_ids': in_ids})
 
-    filter_query_split = split_filter_query(filter_query, cluster_id)
+    filter_query_split = split_filter_query(query_params['filter_query'], cluster_id)
 
     tvars = {
         'error_text': None,
@@ -69,11 +61,11 @@ def search(request):
         'filter_query_split': filter_query_split,
         'search_query': query_params['search_query'],
         'grouping': query_params['grouping'],
-        'advanced': advanced,
+        'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
-        'sort_unformatted': sort_unformatted,
-        'sort_options': sort_options,
-        'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
+        'sort_unformatted': extra_vars['sort_unformatted'],
+        'sort_options': extra_vars['sort_options'],
+        'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
         'current_page': query_params['current_page'],
         'url_query_params_string': url_query_params_string,
     }
@@ -88,13 +80,14 @@ def search(request):
         'page': query_params['current_page'],
         'sort': query_params['sort'][0],
         'group_by_pack': query_params['grouping'],
-        'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
+        'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else ""
     }))
 
     query = search_prepare_query(**query_params)
 
     try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, tvars['current_page'])
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, 
+                                                                                          query_params['current_page'])
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}

@@ -120,7 +120,7 @@ def split_filter_query(filter_query, cluster_id):
                     filter_query_split.append(filter)
 
     # cluster filter is in a separate query parameter
-    # it facilitates the reuse of the filter query parameter for performing the query to the audio collection
+    # It facilitates to distinguish between classical and cluster facets.
     if cluster_id != "":  
         filter_query_split.append({
             'name': "Cluster #" + cluster_id,
@@ -131,13 +131,19 @@ def split_filter_query(filter_query, cluster_id):
 
 
 def search_prepare_parameters(request):
-    """Process the query parameters.
+    """Construct parameters from the search request object.
+
+    This functions aims at making easier the replication of the Solr query from the clustering engine.
+    From the request object, it constructs all the parameters needed for building the Solr query 
+    object. Additionally, other variables are returned for logging purpose, and for building the search
+    view context variables.
 
     Args:
         request (HttpRequest): request associated with the search query submited by the user.
     
     Returns:
-        Tuple(dict, dict): 2-element tuple containing the query parameters and the advanced search params to log
+        Tuple(dict, dict, dict): 3-element tuple containing the query parameters needed for building the Solr 
+        query, the advanced search params to be logged and some extra parameters needed in the search view. 
     """
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
@@ -210,7 +216,8 @@ def search_prepare_parameters(request):
             if a_filename != "":
                 original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
 
-    sort = search_prepare_sort(sort_unformatted, forms.SEARCH_SORT_OPTIONS_WEB)
+    sort_options = SEARCH_SORT_OPTIONS_WEB
+    sort = search_prepare_sort(sort_unformatted, sort_options)
 
     query_params = {
         'search_query': search_query,
@@ -227,7 +234,16 @@ def search_prepare_parameters(request):
         'grouping': grouping,
     }
 
-    return query_params, advanced_search_params_dict
+    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+
+    extra_vars = {
+        'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
+        'sort_unformatted': sort_unformatted,
+        'advanced': advanced,
+        'sort_options': sort_options,
+    }
+
+    return query_params, advanced_search_params_dict, extra_vars
 
 
 def search_prepare_query(search_query,
@@ -271,9 +287,14 @@ def search_prepare_query(search_query,
     # Process filter
     filter_query = search_process_filter(filter_query)
 
-    # Process filter for clustering (maybe consider only applying this filter in this case...)
+    # Process filter for clustering.
+    # When applying a cluster facet filter, the sounds in the clusters already have been filtered by other 
+    # present filter. So there is no need to keep in filter_query all the other filters.
+    # When a cluster filter is applied and the user applies another facet filter, it simply removes the cluster
+    # filter and re-computes the clustering for the new filters (this logic is done with the facet 
+    # remove_url links).
     if in_ids:
-        filter_query = ''  # for now we remove all the other filters
+        filter_query = ''
         if len(in_ids) == 1:
             filter_query += ' id:{}'.format(in_ids[0])
         else:

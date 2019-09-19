@@ -194,7 +194,9 @@ def cluster_visualisation(request):
     })
 
 
-def return_clustered_graph(request):
+def clustered_graph(request):
+    """Returns the clustered sound graph representation of the search results.
+    """
     result = cluster_sound_results(request, features='audio_as')
     graph = result['graph']
 

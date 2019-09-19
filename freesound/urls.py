@@ -106,7 +106,7 @@ urlpatterns = [
     url(r'^search/$', search.views.search, name='sounds-search'),
     url(r'^cluster/$', search.views.clustering_facet, name='clustering-facet'),
     url(r'^clustering/$', search.views.cluster_visualisation, name='cluster-visualisation'),
-    url(r'^clustered_graph/$', search.views.return_clustered_graph, name='return-clustered-graph'),
+    url(r'^clustered_graph/$', search.views.clustered_graph, name='return-clustered-graph'),
 
     url(r'', include('ratings.urls')),
     url(r'^comments/', include('comments.urls')),

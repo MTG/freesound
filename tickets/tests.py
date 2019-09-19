@@ -227,7 +227,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         TicketTests.setUp(self)
         self.ticket = self._create_assigned_ticket()
 
-    def _perform_action(self, action, is_explicit_flag_key=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY):
+    def _perform_action(self, action, is_explicit_flag_key):
         return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
             'action': action, 'message': u'', 'ticket': self.ticket.id, 'is_explicit': is_explicit_flag_key})
 
@@ -237,7 +237,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action(u'Approve', is_explicit_flag_key=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self._perform_action(u'Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertEqual(self.ticket.sound.is_explicit, True)
 
@@ -247,7 +247,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action(u'Approve', is_explicit_flag_key=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self._perform_action(u'Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertEqual(self.ticket.sound.is_explicit, False)
 
@@ -257,7 +257,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action(u'Approve', is_explicit_flag_key=IS_EXPLICIT_ADD_FLAG_KEY)
+        self._perform_action(u'Approve', IS_EXPLICIT_ADD_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertTrue(self.ticket.sound.is_explicit)
 
@@ -267,7 +267,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action(u'Approve', is_explicit_flag_key=IS_EXPLICIT_ADD_FLAG_KEY)
+        self._perform_action(u'Approve', IS_EXPLICIT_ADD_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertTrue(self.ticket.sound.is_explicit)
 
@@ -277,7 +277,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action(u'Approve', is_explicit_flag_key=IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self._perform_action(u'Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertFalse(self.ticket.sound.is_explicit)
 
@@ -287,6 +287,6 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action(u'Approve', is_explicit_flag_key=IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self._perform_action(u'Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertFalse(self.ticket.sound.is_explicit)

@@ -74,9 +74,9 @@ MODERATION_CHOICES = [(x, x) for x in
 IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY = "K"
 IS_EXPLICIT_ADD_FLAG_KEY = "A"
 IS_EXPLICIT_REMOVE_FLAG_KEY = "R"
-IS_EXPLICIT_FLAG_CHOICES = ((IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, "Keep user preference"),
-                            (IS_EXPLICIT_ADD_FLAG_KEY, "Add \"is explicit\" flag"),
-                            (IS_EXPLICIT_REMOVE_FLAG_KEY, "Remove \"is explicit\" flag"))
+IS_EXPLICIT_FLAG_CHOICES = ((IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, 'Keep user preference'),
+                            (IS_EXPLICIT_ADD_FLAG_KEY, 'Add "is explicit" flag'),
+                            (IS_EXPLICIT_REMOVE_FLAG_KEY, 'Remove "is explicit" flag'))
 
 
 class SoundModerationForm(forms.Form):

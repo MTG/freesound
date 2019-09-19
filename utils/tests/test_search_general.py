@@ -22,7 +22,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
-from utils.search.search_general import search_prepare_parameters, split_filter_query
+from utils.search.search_general import search_prepare_parameters, split_filter_query, search_prepare_query
 from search.forms import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_WEB
 
 
@@ -152,3 +152,43 @@ class SearchUtilsTest(TestCase):
                       filter_query_split[cluster_facet_dict_idx]['name'])
         self.assertIn(expected_filter_query_split[1]['remove_url'], 
                       filter_query_split[cluster_facet_dict_idx]['remove_url'])
+
+    def test_search_prepare_query(self):
+        # we test that some query parameters get correctly setted in the Solr query object.
+        query_params = {
+            'search_query': u'cat',
+            'filter_query': u'duration:[1 TO 10] is_geotagged:1',
+            'sort': [u'duration desc'],
+            'current_page': 1,
+            'sounds_per_page': settings.SOUNDS_PER_PAGE,
+            'id_weight': 10,
+            'tag_weight': 0,
+            'description_weight': 0,
+            'username_weight': 0,
+            'pack_tokenized_weight': 0,
+            'original_filename_weight': 0,
+            'grouping': True,
+            'in_ids': [],
+        }
+
+        query = search_prepare_query(**query_params)
+
+        self.assertEqual(query.params['q'], 'cat')
+        self.assertEqual(query.params['qf'], 'id^10')
+        self.assertEqual(query.params['fq'], 'duration:[1 TO 10] is_geotagged:1')
+        self.assertTrue(query.params['group'])
+        
+    def test_search_prepare_query_cluster_filter(self):
+        # we test that a cluster filter removes all other filters and correctly adds filters by id.
+        query_params = {
+            'search_query': u'cat',
+            'filter_query': u'duration:[1 TO 10] is_geotagged:1',
+            'sort': [u'duration desc'],
+            'current_page': 1,
+            'sounds_per_page': settings.SOUNDS_PER_PAGE,
+            'in_ids': ["1", "2", "3"],
+        }
+
+        query = search_prepare_query(**query_params)
+        self.assertEqual(query.params['fq'], "id:1 OR id:2 OR id:3")
+        

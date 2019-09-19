@@ -319,9 +319,9 @@ def search_prepare_query(search_query,
     if in_ids:
         filter_query = ''
         if len(in_ids) == 1:
-            filter_query += ' id:{}'.format(in_ids[0])
+            filter_query += 'id:{}'.format(in_ids[0])
         else:
-            filter_query += ' id:'
+            filter_query += 'id:'
             filter_query += ' OR id:'.join(in_ids)
 
     # Set all options

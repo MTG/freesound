@@ -209,7 +209,7 @@
     // function for requesting clustering
     function request_clustering()
     {
-        $.get({% url 'cluster-sounds' %} + '?{{ url_query_params_string | safe }}', 
+        $.get({% url 'clustering-facet' %} + '?{{ url_query_params_string | safe }}', 
                 {}, 
                 function( data ) {
                     if (data.status === 'pending') {

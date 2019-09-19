@@ -35,7 +35,7 @@ from models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
-    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm
+    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 
@@ -392,6 +392,7 @@ def moderation_assigned(request, user_id):
         msg_form = ModerationMessageForm(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
+
             ticket_ids = mod_sound_form.cleaned_data.get("ticket", '').split('|')
             tickets = Ticket.objects.filter(id__in=ticket_ids)
             msg = msg_form.cleaned_data.get("message", False)
@@ -403,12 +404,22 @@ def moderation_assigned(request, user_id):
 
             if action == "Approve":
                 tickets.update(status=TICKET_STATUS_CLOSED)
-                explicit = mod_sound_form.cleaned_data.get("is_explicit")
-                Sound.objects.filter(ticket__in=tickets).update(
-                        is_index_dirty=True,
-                        moderation_state='OK',
-                        moderation_date=datetime.datetime.now(),
-                        is_explicit=explicit)
+                sounds_update_params = {
+                    'is_index_dirty': True,
+                    'moderation_state': 'OK',
+                    'moderation_date': datetime.datetime.now()
+                }
+                is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
+                if is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY:
+                    sounds_update_params['is_explicit'] = True
+                elif is_explicit_choice_key == IS_EXPLICIT_REMOVE_FLAG_KEY:
+                    sounds_update_params['is_explicit'] = False
+
+                # Otherwise is_explicit_choice_key = IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, don't update the
+                # 'is_explicit' field and leave it as the user originally set it
+
+                Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
+
                 if msg:
                     notification = Ticket.NOTIFICATION_APPROVED_BUT
                 else:

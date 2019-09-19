@@ -20,16 +20,18 @@
 
 import hashlib
 
+import mock
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
-from models import Ticket, Queue
-from tickets import QUEUE_SOUND_MODERATION
-from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED
-from sounds.models import Sound
-import mock
+
 import sounds
 import tickets
+from models import Ticket, Queue
+from sounds.models import Sound
+from tickets import QUEUE_SOUND_MODERATION
+from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED
+from tickets.forms import IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
 
 
 class NewTicketTests(TestCase):
@@ -154,7 +156,8 @@ class TicketTestsFromQueue(TicketTests):
 
     def _perform_action(self, action):
         return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
-            'action': action, 'message': u'', 'ticket': self.ticket.id})
+            'action': action, 'message': u'', 'ticket': self.ticket.id,
+            'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
 
     @mock.patch('sounds.models.delete_sound_from_solr')
     def test_delete_ticket_from_queue(self, delete_sound_solr):
@@ -215,3 +218,75 @@ class TicketTestsFromTicketViewNew(TicketTestsFromQueue):
     def _perform_action(self, action):
         return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
             'ss-action': action})
+
+
+class TicketTestsIsExplicitFlagFromQueue(TicketTests):
+    """Test that the is_explicit flag of moderated sounds changes in accordance to moderator's choices"""
+
+    def setUp(self):
+        TicketTests.setUp(self)
+        self.ticket = self._create_assigned_ticket()
+
+    def _perform_action(self, action, is_explicit_flag_key):
+        return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
+            'action': action, 'message': u'', 'ticket': self.ticket.id, 'is_explicit': is_explicit_flag_key})
+
+    def test_keep_is_explicit_preference_for_explicit_sound(self):
+        """Test that when approving a sound marked as 'is_explicit' it continues to be marked as such the moderator
+        chooses to preserve author's preference on the flag
+        """
+        self.ticket.sound.is_explicit = True
+        self.ticket.sound.save()
+        self._perform_action(u'Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self.ticket.sound.refresh_from_db()
+        self.assertEqual(self.ticket.sound.is_explicit, True)
+
+    def test_keep_is_explicit_preference_for_non_explicit_sound(self):
+        """Test that when approving a sound not marked as 'is_explicit', the flag does not get added if the moderator
+        chooses to preserve author's preference on the flag
+        """
+        self.ticket.sound.is_explicit = False
+        self.ticket.sound.save()
+        self._perform_action(u'Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self.ticket.sound.refresh_from_db()
+        self.assertEqual(self.ticket.sound.is_explicit, False)
+
+    def test_add_is_explicit_flag_for_explicit_sound(self):
+        """Test that when apporving a sound it's 'is_explicit' flag is set to True if the moderator chooses to add
+        the explicit flag
+        """
+        self.ticket.sound.is_explicit = True
+        self.ticket.sound.save()
+        self._perform_action(u'Approve', IS_EXPLICIT_ADD_FLAG_KEY)
+        self.ticket.sound.refresh_from_db()
+        self.assertTrue(self.ticket.sound.is_explicit)
+
+    def test_add_is_explicit_flag_for_non_explicit_sound(self):
+        """Test that when apporving a sound it's 'is_explicit' flag is set to True if the moderator chooses to add
+        the explicit flag, even if the sound was originally marked as non explicit
+        """
+        self.ticket.sound.is_explicit = False
+        self.ticket.sound.save()
+        self._perform_action(u'Approve', IS_EXPLICIT_ADD_FLAG_KEY)
+        self.ticket.sound.refresh_from_db()
+        self.assertTrue(self.ticket.sound.is_explicit)
+
+    def test_remove_is_explicit_flag_for_non_explicit_sound(self):
+        """Test that when apporving a sound it's 'is_explicit' flag is set to False if the moderator chooses to remove
+        the explicit flag
+        """
+        self.ticket.sound.is_explicit = False
+        self.ticket.sound.save()
+        self._perform_action(u'Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self.ticket.sound.refresh_from_db()
+        self.assertFalse(self.ticket.sound.is_explicit)
+
+    def test_remove_is_explicit_flag_for_explicit_sound(self):
+        """Test that when apporving a sound it's 'is_explicit' flag is set to False if the moderator chooses to remove
+        the explicit flag, even if the sound was originally marked as explicit
+        """
+        self.ticket.sound.is_explicit = True
+        self.ticket.sound.save()
+        self._perform_action(u'Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self.ticket.sound.refresh_from_db()
+        self.assertFalse(self.ticket.sound.is_explicit)

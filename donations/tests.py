@@ -178,7 +178,45 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].source, 's')
             self.assertEqual(donations_query[0].amount, 15.0)
 
-    def test_donation_form(self):
+    def test_donation_form_stripe(self):
+        donations.models.DonationCampaign.objects.create(\
+                goal=200, date_start=datetime.datetime.now(), id=1)
+
+        data = {
+            'amount': '0,1',
+            'show_amount': True,
+            'donation_type': '1',
+        }
+
+        ret = self.client.get("/donations/donation-session-stripe/", data)
+        #  If GET return error 400
+        self.assertEqual(ret.status_code, 400)
+
+        ret = self.client.post("/donations/donation-session-stripe/", data)
+        response =  ret.json()
+        # Decimals must have '.' and not ','
+        self.assertTrue('errors' in response)
+
+        data['amount'] = '0.1'
+        ret = self.client.post("/donations/donation-session-stripe/", data)
+        response =  ret.json()
+        # amount must be greater than 1
+        self.assertTrue('errors' in response)
+
+        data['amount'] = '5.1'
+        ret = self.client.post("/donations/donation-session-stripe/", data)
+        response =  ret.json()
+        self.assertFalse('errors' in response)
+
+        long_mail = ('1'*256) + '@freesound.org'
+        data['name_option'] = long_mail
+        data['donation_type'] = '2'
+        ret = self.client.post("/donations/donation-session-stripe/", data)
+        response =  ret.json()
+        self.assertTrue('errors' in response)
+
+
+    def test_donation_form_paypal(self):
         donations.models.DonationCampaign.objects.create(\
                 goal=200, date_start=datetime.datetime.now(), id=1)
         data = {

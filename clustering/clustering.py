@@ -207,7 +207,8 @@ class ClusteringEngine():
 
         Args:
             sound_ids_list (List[str]): list of sound ids.
-            features (str): name of the features used for nearest neighbors computation (e.g. 'audio_as').
+            features (str): name of the features to be used for nearest neighbors computation. The features are 
+                defined in the clustering settings.
 
         Returns:
             (nx.Graph): NetworkX graph representation of sounds.
@@ -237,7 +238,8 @@ class ClusteringEngine():
 
         Args:
             sound_ids_list (List[str]): list of sound ids.
-            features (str): name of the features used for nearest neighbors computation (e.g. 'audio_as').
+            features (str): name of the features to be used for nearest neighbors computation. The features are 
+                defined in the clustering settings.
 
         Returns:
             (nx.Graph): NetworkX graph representation of sounds.

@@ -135,7 +135,7 @@ def _get_ids_in_cluster(request, requested_cluster_id):
     else:
         requested_cluster_id = int(requested_cluster_id) - 1
 
-        # results are cached in clustering_utilities, features are: 'audio_fs', 'audio_as', 'audio_fs_selected', 'tag'
+        # results are cached in clustering_utilities, available features are defined in the clustering settings file.
         result = cluster_sound_results(request, features=DEFAULT_FEATURES)
         results = result['result']
         num_clusters = num_clusters = len(results) + 1

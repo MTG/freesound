@@ -5,7 +5,7 @@ from django.conf import settings
 
 # The following packages are only needed if the running process is configured to be a Celery worker. 
 # We avoid importing them in appservers to avoid having to install unneeded dependencies.
-if settings.ENV_CELERY_WORKER == '1':
+if settings.IS_CELERY_WORKER:
     from gaia_wrapper import GaiaWrapperClustering
     import numpy as np
     from sklearn import metrics

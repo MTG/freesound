@@ -575,7 +575,7 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 # '1' indicates that a process is running as a celery worker.
 # We get it from environment variable to avoid the need of a specific settings file for celery workers.
 # We enable the imports of clustering dependencies only in celery workers.
-ENV_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None)
+IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
 
 # Determines whether to use or not the clustering feature.
 # Set to False by default (to be overwritten in local_settings.py)

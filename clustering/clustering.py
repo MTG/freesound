@@ -108,11 +108,14 @@ class ClusteringEngine():
             Tuple(Numpy.float, Numpy.float, Numpy.float): 3-element tuple containing the Average Mutual Information
                 score, the Silhouette Coefficient and the Calinski and Harabaz score.
         """
-        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
-        ami = np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
-        ss = metrics.silhouette_score(tag_features, clusters, metric='euclidean')
-        ci = metrics.calinski_harabaz_score(tag_features, clusters)
-        return ami, ss, ci
+        if clust_settings.AVAILABLE_FEATURES.get(clust_settings.TAG_FEATURES, None):
+            tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
+            ami = np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
+            ss = metrics.silhouette_score(tag_features, clusters, metric='euclidean')
+            ci = metrics.calinski_harabaz_score(tag_features, clusters)
+            return ami, ss, ci
+        else:
+            return None, None, None
 
     def _ratio_intra_community_edges(self, graph, communities):
         """Computes the ratio of the number of intra-community (cluster) edges to the total number of edges in the cluster.

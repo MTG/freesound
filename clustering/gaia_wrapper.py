@@ -63,12 +63,12 @@ class GaiaWrapperClustering:
     #         self.gaia_similiarity = GaiaWrapperSimilarity()
 
     def search_nearest_neighbors(self, sound_id, k, in_sound_ids=[], features=clust_settings.DEFAULT_FEATURES):
-        """Performs Nearest Neighbors (NN) search on the sound given as query within the given subset with the requested features.
+        """Find the k nearest neighbours of a target sound within a given subset of sounds and set of features
 
         Args:
             sound_id (str): id of the sound query.
             k (int): number of nearest neighbors to retrieve.
-            in_sound_ids (List[str]): ids of the subset of sounds within the one we perform the NN search.
+            in_sound_ids (List[str]): ids of the subset of sounds within the one we perform the Nearest Neighbors search.
             features (str): name of the features to be used for nearest neighbors computation. The available features 
                 are defined in the clustering settings file.
 

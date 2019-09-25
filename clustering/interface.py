@@ -12,7 +12,11 @@ from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 
 def get_sound_ids_from_solr_query(query_params):
-    """Performs Solr query on the Freesound audio collection.
+    """Performs Solr query and returns results as a list of sound ids.
+
+    This method performs a single query to Solr with a very big page size argument so all results are 
+    returned at once. A very big page size will make the clustering take a lot of time to be performed.
+    The number of results to retrieve is defined in the clustering settings file as MAX_RESULTS_FOR_CLUSTERING.
 
     Args:
         query_params (dict): contains the query parameters to replicate the user query.
@@ -38,7 +42,7 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     Args:
         request (HttpRequest): request associated with the search query submited by the user.
         features (str): name of the features to be used for clustering. The available features are defined in the 
-        clustering settings file.
+            clustering settings file.
 
     Returns:
         Dict: contains either the state of the clustering ('pending' or 'failed') or the resulting clustering classes 

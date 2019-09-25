@@ -3,6 +3,8 @@ from time import time
 import logging
 from django.conf import settings
 
+import clustering_settings as clust_settings
+
 # The following packages are only needed if the running process is configured to be a Celery worker. 
 # We avoid importing them in appservers to avoid having to install unneeded dependencies.
 if settings.IS_CELERY_WORKER:
@@ -10,7 +12,6 @@ if settings.IS_CELERY_WORKER:
     import numpy as np
     from sklearn import metrics
     from sklearn.feature_selection import mutual_info_classif
-    import clustering_settings as clust_settings
     import json
     import networkx as nx
     from networkx.readwrite import json_graph
@@ -201,7 +202,7 @@ class ClusteringEngine():
             }
             json.dump(result, open('{}/{}.json'.format(clust_settings.SAVE_RESULTS_FOLDER, query_params[0]), 'w'))
 
-    def create_knn_graph(self, sound_ids_list, features='audio_as'):
+    def create_knn_graph(self, sound_ids_list, features=clust_settings.DEFAULT_FEATURES):
         """Creates a K-Nearest Neighbors Graph representation of the given sounds.
 
         Args:
@@ -231,7 +232,7 @@ class ClusteringEngine():
 
         return graph
 
-    def create_common_nn_graph(self, sound_ids_list, features='audio_as'):
+    def create_common_nn_graph(self, sound_ids_list, features=clust_settings.DEFAULT_FEATURES):
         """Creates a Common Nearest Neighbors Graph representation of the given sounds.
 
         Args:

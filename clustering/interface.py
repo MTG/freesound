@@ -37,8 +37,8 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
 
     Args:
         request (HttpRequest): request associated with the search query submited by the user.
-        features (str): name of the features to be used for clustering. The features are defined in the clustering 
-            settings.
+        features (str): name of the features to be used for clustering. The available features are defined in the 
+        clustering settings file.
 
     Returns:
         Dict: contains either the state of the clustering ('pending' or 'failed') or the resulting clustering classes 

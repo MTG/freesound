@@ -28,11 +28,12 @@ class GaiaWrapperClustering:
     def __get_dataset_path(self, ds_name):
         return os.path.join(clust_settings.INDEX_DIR, ds_name + '.db')
 
-    def __load_dataset(self, feature_string, gaia_index, gaia_descriptor_names, gaia_metric):
+    def __load_dataset(self, features, gaia_index, gaia_descriptor_names, gaia_metric):
         """Loads a Gaia dataset, view and metric for a specific feature and config.
         
         Args: 
-            feature_string (str): String refering the to the features used for clustering.
+            features (str): name of the features to be used for clustering. The available features are defined in 
+                the clustering settings file.
             gaia_index (str): Name of the Gaia dataset index file.
             gaia_descriptor_names (str or List[str]): Name(s) of the descriptor field to use within the Gaia dataset. 
             gaia_metric (str): Name of the metric to use for nearest neighbors search.
@@ -43,9 +44,9 @@ class GaiaWrapperClustering:
         gaia_metric = DistanceFunctionFactory.create(gaia_metric, gaia_dataset.layout(), 
             {'descriptorNames': gaia_descriptor_names})
 
-        setattr(self, '{}_dataset'.format(feature_string), gaia_dataset)
-        setattr(self, '{}_view'.format(feature_string), gaia_view)
-        setattr(self, '{}_metric'.format(feature_string), gaia_metric)
+        setattr(self, '{}_dataset'.format(features), gaia_dataset)
+        setattr(self, '{}_view'.format(features), gaia_view)
+        setattr(self, '{}_metric'.format(features), gaia_metric)
 
     def __load_datasets(self):
         """Loads all the Gaia dataset that are configured in the clustering settings.
@@ -68,7 +69,8 @@ class GaiaWrapperClustering:
             sound_id (str): id of the sound query.
             k (int): number of nearest neighbors to retrieve.
             in_sound_ids (List[str]): ids of the subset of sounds within the one we perform the NN search.
-            features (str): name of the features used for nearest neighbors computation (e.g. 'audio_as').
+            features (str): name of the features to be used for nearest neighbors computation. The available features 
+                are defined in the clustering settings file.
 
         Returns:
             List[str]: ids of the retrieved sounds.

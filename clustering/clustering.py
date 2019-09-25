@@ -24,11 +24,16 @@ class ClusteringEngine():
     def __init__(self):
         self.gaia = GaiaWrapperClustering()
 
-    def _prepare_clustering_result_for_evaluation(self, classes):
-        """Extract tag features, remove sounds with missing features.
+    def _prepare_clustering_result_and_tag_features_for_evaluation(self, classes):
+        """Formats the clustering classes and some tag-derived features in order to then estimate how good is the 
+        clustering performance according to some semantic caracteristics reflected from the tag-derived features.
+        
+        Extracts tag-derived features for the sounds given as keys of the classes argument.
+        Prepares classes and extracted features in lists in order to compare them.
+        Removes sounds with missing features.
 
         Args:
-            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
 
         Returns:
             Tuple(List[List[Float]], List[Int]): 2-element tuple containing a list of tag-based features 
@@ -48,62 +53,62 @@ class ClusteringEngine():
         """Estimates Average Mutual Information between tag-based features and the given clustering classes.
 
         Args:
-            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
 
         Returns:
             Numpy.float: Average Mutual Information.
         """
-        tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
+        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
         return np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
 
     def _silouhette_coeff_tags_clusters(self, classes):
         """Computes mean Silhouette Coefficient score between tag-based features and the given clustering classes.
 
         Args:
-            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
 
         Returns:
             Numpy.float: mean Silhouette Coefficient.
         """
-        tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
+        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
         return metrics.silhouette_score(tag_features, clusters, metric='euclidean')
 
     def _calinski_idx_tags_clusters(self, classes):
         """Computes the Calinski and Harabaz score between tag-based features and the given clustering classes.
 
         Args:
-            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
 
         Returns:
             Numpy.float: Calinski and Harabaz score.
         """
-        tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
+        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
         return metrics.calinski_harabaz_score(tag_features, clusters)
     
     def _davies_idx_tags_clusters(self, classes):
         """Computes the Davies-Bouldin score between tag-based features and the given clustering classes.
 
         Args:
-            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
 
         Returns:
             Numpy.float: Davies-Bouldin score.
         """
         # This metric is not included in current used sklearn version
-        tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
+        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
         return metrics.davies_bouldin_score(tag_features, clusters)
 
     def _evaluation_metrics(self, classes):
         """Computes different scores related to the clustering performance.
 
         Args:
-            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
 
         Returns:
             Tuple(Numpy.float, Numpy.float, Numpy.float): 3-element tuple containing the Average Mutual Information
                 score, the Silhouette Coefficient and the Calinski and Harabaz score.
         """
-        tag_features, clusters = self._prepare_clustering_result_for_evaluation(classes)
+        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
         ami = np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
         ss = metrics.silhouette_score(tag_features, clusters, metric='euclidean')
         ci = metrics.calinski_harabaz_score(tag_features, clusters)
@@ -158,7 +163,7 @@ class ClusteringEngine():
     
     def _save_results_to_file(self, query_params, features, graph_json, sound_ids, modularity, 
                               num_communities, ratio_intra_community_edges, ami, ss, ci, communities):
-        """Procedure which stores clustering results and evaluation metrics in file on disk.
+        """Saves a json file to disk containing the clustering results information listed below.
 
         This is used when developing the clustering method. The results and the evaluation metrics are made accessible 
         for post-analysis.
@@ -176,8 +181,6 @@ class ClusteringEngine():
             ss (Numpy.float): Silhouette Coefficient score.
             ci (Numpy.float): Calinski and Harabaz Index score.
             communities (List[List[Int]]): List storing Lists containing the Sound ids that are in each community (cluster).
-
-        Saves a json file to disk containing the given information.
         """
         if clust_settings.get('SAVE_RESULTS_FOLDER', None):
             result = {
@@ -273,7 +276,7 @@ class ClusteringEngine():
             graph (nx.Graph): NetworkX graph representation of sounds.
 
         Returns:
-            Tuple(dict, int, List[List[Int]], float): 4-element tuple containing the clustering classes for each sound 
+            Tuple(Dict{Int: Int}, int, List[List[Int]], float): 4-element tuple containing the clustering classes for each sound 
                 {<sound_id>: <class_idx>}, the number of communities (clusters), the sound ids in the communities and
                 the modularity of the graph partition.
         
@@ -299,7 +302,7 @@ class ClusteringEngine():
             graph (nx.Graph): NetworkX graph representation of sounds.
 
         Returns:
-            Tuple(dict, int, List[List[Int]], None): 4-element tuple containing the clustering classes for each sound 
+            Tuple(Dict{Int: Int}, int, List[List[Int]], None): 4-element tuple containing the clustering classes for each sound 
                 {<sound_id>: <class_idx>}, the number of communities (clusters), the sound ids in the communities and
                 None.
         """ 
@@ -319,14 +322,14 @@ class ClusteringEngine():
 
         Args:
             graph (nx.Graph): NetworkX graph representation of sounds.
-            classes (dict): clustering classes for each sound {<sound_id>: <class_idx>}.
+            classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
             communities (List[List[Int]]): List storing Lists containing the Sound ids that are in each community (cluster).
             ratio_intra_community_edges (List[Float]): intra-community edges ratio.
 
         Returns:
-            Tuple(nx.Graph, dict, List[List[Int]], List[float]): 4-element tuple containing the graph representation of the 
-            sounds, the clustering classes for each sound {<sound_id>: <class_idx>}, the sound ids in the communities and the 
-            ratio of intra-community edges in each cluster.
+            Tuple(nx.Graph, Dict{Int: Int}, List[List[Int]], List[float]): 4-element tuple containing the graph representation 
+            of the sounds, the clustering classes for each sound {<sound_id>: <class_idx>}, the sound ids in the communities 
+            and the ratio of intra-community edges in each cluster.
         """
         # if two clusters or less, we do not remove any
         if len(communities) < 3:
@@ -400,7 +403,9 @@ class ClusteringEngine():
         return {'error': False, 'result': communities, 'graph': graph_json}
 
     def k_nearest_neighbors(self, sound_id, k):
-        """Performs a K-Nearest Neighbors query.
+        """Performs a K-Nearest Neighbors search on the sound given as input.
+
+        This is currently not used, but could be useful for instance for the get similar sounds feature.
 
         Args: 
             sound_id (str): Sound id as query.

@@ -10,7 +10,7 @@ if settings.IS_CELERY_WORKER:
     import numpy as np
     from sklearn import metrics
     from sklearn.feature_selection import mutual_info_classif
-    from clustering_settings import clustering_settings as clust_settings
+    import clustering_settings as clust_settings
     import json
     import networkx as nx
     from networkx.readwrite import json_graph
@@ -182,7 +182,7 @@ class ClusteringEngine():
             ci (Numpy.float): Calinski and Harabaz Index score.
             communities (List[List[Int]]): List storing Lists containing the Sound ids that are in each community (cluster).
         """
-        if clust_settings.get('SAVE_RESULTS_FOLDER', None):
+        if clust_settings.SAVE_RESULTS_FOLDER:
             result = {
                 'query_params' : query_params,
                 'sound_ids': sound_ids,
@@ -196,7 +196,7 @@ class ClusteringEngine():
                 'calinski_harabaz_score': ci,
                 'communities': communities
             }
-            json.dump(result, open('{}/{}.json'.format(clust_settings.get('SAVE_RESULTS_FOLDER'), query_params[0]), 'w'))
+            json.dump(result, open('{}/{}.json'.format(clust_settings.SAVE_RESULTS_FOLDER, query_params[0]), 'w'))
 
     def create_knn_graph(self, sound_ids_list, features='audio_as'):
         """Creates a K-Nearest Neighbors Graph representation of the given sounds.

@@ -7,7 +7,7 @@ from utils.search.search_general import search_prepare_query, perform_solr_query
     search_prepare_parameters
 
 from tasks import cluster_sounds
-from clustering_settings import clustering_settings as clust_settings
+from clustering_settings import MAX_RESULTS_FOR_CLUSTERING, CLUSTERING_CACHE_TIME
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 
@@ -21,8 +21,7 @@ def get_sound_ids_from_solr_query(query_params):
         List[int]: list containing the ids of the retrieved sounds.
     """
     current_page = 1
-    num_sounds = clust_settings.get('MAX_RESULTS_FOR_CLUSTERING', 1000)
-    query_params.update({'sounds_per_page': num_sounds})
+    query_params.update({'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING})
     query = search_prepare_query(**query_params)
     non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
     resultids = [d.get("id") for d in docs]
@@ -59,7 +58,7 @@ def cluster_sound_results(request, features='audio_as'):
 
     if result and result not in (CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED):
         # reset the value in cache so that it presists
-        cache.set(cache_key_hashed, result, clust_settings.get('CLUSTERING_CACHE_TIME'))
+        cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
         result.update({'finished': True, 'error': False})
 
         return result

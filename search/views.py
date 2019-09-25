@@ -38,6 +38,7 @@ from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 from clustering.interface import cluster_sound_results
+from clustering.clustering_settings import DEFAULT_FEATURES
 
 logger = logging.getLogger("search")
 
@@ -135,7 +136,7 @@ def _get_ids_in_cluster(request, requested_cluster_id):
         requested_cluster_id = int(requested_cluster_id) - 1
 
         # results are cached in clustering_utilities, features are: 'audio_fs', 'audio_as', 'audio_fs_selected', 'tag'
-        result = cluster_sound_results(request, features='audio_as')
+        result = cluster_sound_results(request, features=DEFAULT_FEATURES)
         results = result['result']
         num_clusters = num_clusters = len(results) + 1
 
@@ -153,7 +154,7 @@ def clustering_facet(request):
     # their correspondinng cluster_id query parameter (done in the template)
     url_query_params_string = re.sub(r"(&cluster_id=[0-9]*)", "", url_query_params_string)
 
-    result = cluster_sound_results(request, features='audio_as')
+    result = cluster_sound_results(request, features=DEFAULT_FEATURES)
 
     # check if computation is finished. If not, send computation state.
     if result['finished']:
@@ -199,7 +200,7 @@ def cluster_visualisation(request):
 def clustered_graph(request):
     """Returns the clustered sound graph representation of the search results.
     """
-    result = cluster_sound_results(request, features='audio_as')
+    result = cluster_sound_results(request, features=DEFAULT_FEATURES)
     graph = result['graph']
 
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])

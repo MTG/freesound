@@ -9,7 +9,8 @@ default_app_config = 'clustering.apps.ClusteringConfig'
 CLUSTERING_RESULT_STATUS_PENDING = "pending"
 CLUSTERING_RESULT_STATUS_FAILED = "failed"
 
-# we only init the clustering engine if running process is configured to be a Celery worker
+# We only init the clustering engine if running process is configured to be a Celery worker.
+# This function is called when Django starts in the ready method of the clustering app.
 def init_clustering_engine():
     global engine
     engine = ClusteringEngine()

@@ -121,7 +121,7 @@ def split_filter_query(filter_query, cluster_id):
 
     # cluster filter is in a separate query parameter
     # It facilitates to distinguish between classical and cluster facets.
-    if cluster_id != "":  
+    if cluster_id and cluster_id.isdigit():
         filter_query_split.append({
             'name': "Cluster #" + cluster_id,
             'remove_url': filter_query,

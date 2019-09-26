@@ -49,9 +49,13 @@ def search(request):
     # get the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
 
-    # get sound ids of the requested cluster when cluster filter facet
-    cluster_id = request.GET.get('cluster_id', "")
-    in_ids = _get_ids_in_cluster(request, cluster_id)
+    # get sound ids of the requested cluster when applying a clustering facet
+    # the list of ids is used to create a Solr query with filter by ids in search_prepare_query()
+    cluster_id = request.GET.get('cluster_id')
+    if cluster_id:
+        in_ids = _get_ids_in_cluster(request, cluster_id)
+    else:
+        in_ids = []
     query_params.update({'in_ids': in_ids})
 
     filter_query_split = split_filter_query(query_params['filter_query'], cluster_id)
@@ -130,19 +134,21 @@ def search(request):
 def _get_ids_in_cluster(request, requested_cluster_id):
     """Get the sound ids in the requested cluster. Used for applying a filter by id when using a cluster facet.
     """
-    if requested_cluster_id == "":
-        return []
-    else:
+    try:
         requested_cluster_id = int(requested_cluster_id) - 1
-
+    
         # results are cached in clustering_utilities, available features are defined in the clustering settings file.
         result = cluster_sound_results(request, features=DEFAULT_FEATURES)
         results = result['result']
-        num_clusters = num_clusters = len(results) + 1
 
         sounds_from_requested_cluster = results[int(requested_cluster_id)]
 
-        return sounds_from_requested_cluster
+    except ValueError:
+        return []
+    except IndexError:
+        return []
+
+    return sounds_from_requested_cluster
 
 
 def clustering_facet(request):

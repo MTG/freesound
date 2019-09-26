@@ -33,7 +33,7 @@ def get_sound_ids_from_solr_query(query_params):
 
 
 def cluster_sound_results(request, features=DEFAULT_FEATURES):
-    """Performs clustering on the search results of the fiven request with the requested features.
+    """Performs clustering on the search results of the given search request with the requested features.
 
     This is the main entry to the clustering method. It will either get the clustering results from cache, 
     or compute it (and store it in cache). When needed, the clustering will be performed async by a celery 

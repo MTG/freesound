@@ -206,6 +206,18 @@ class DonationTest(TestCase):
 
         with mock.patch('stripe.checkout.Session.create') as mock_create:
             mock_create.return_value = session
+            data['amount'] = '5.1'
+            ret = self.client.post("/donations/donation-session-stripe/", data)
+            response = ret.json()
+            _, mock_kargs = mock_create.call_args
+            self.assertEqual(mock_kargs['customer_email'], None)
+            self.assertEqual(mock_kargs['payment_method_types'], ['card'])
+            self.assertEqual(len(mock_kargs['line_items']), 1)
+            self.assertIsNotNone(mock_kargs['success_url'])
+            self.assertIsNotNone(mock_kargs['cancel_url'])
+
+        with mock.patch('stripe.checkout.Session.create') as mock_create:
+            mock_create.return_value = session
             data['amount'] = '0.1'
             ret = self.client.post("/donations/donation-session-stripe/", data)
             response =  ret.json()
@@ -227,7 +239,6 @@ class DonationTest(TestCase):
             ret = self.client.post("/donations/donation-session-stripe/", data)
             response =  ret.json()
             self.assertTrue('errors' in response)
-
 
     def test_donation_form_paypal(self):
         donations.models.DonationCampaign.objects.create(\

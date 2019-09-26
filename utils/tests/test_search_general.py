@@ -31,7 +31,7 @@ class SearchUtilsTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
-    def test_search_prepare_parameters_wo_query_params(self):
+    def test_search_prepare_parameters_without_query_params(self):
         request = self.factory.get(reverse('sounds-search'))
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
@@ -61,7 +61,7 @@ class SearchUtilsTest(TestCase):
         self.assertDictEqual(advanced_search_params_dict, {})
         self.assertDictEqual(extra_vars, expected_extra_vars)
 
-    def test_search_prepare_parameters_w_query_params(self):
+    def test_search_prepare_parameters_with_query_params(self):
         # "dog" query, search only in tags and descriptions, duration from 1-10 sec, only geotag, sort by duration, no group by pack
         url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=duration+desc&advanced=1&a_tag=1&a_description=1&g='
         request = self.factory.get(reverse('sounds-search')+url_query_str)

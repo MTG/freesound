@@ -22,6 +22,20 @@ logger = logging.getLogger('clustering')
 
 
 class ClusteringEngine():
+    """Clustering Engine class.
+
+    This class regroups various methods for performing clustering on a set of sounds.
+
+    Instead of directly using the audio feature space for performing the clustering, it creates a 
+    K-Nearest Neighbors Graph that is then partitioned for obtaining the clusters.
+    It relies on Gaia for performing nearest neighbor searches on a multi-dimentional feature space
+    (in gaia_wrapper.py file). The available features used for clustering are listed in the 
+    clustering_settings.py file. It requires building the Gaia dataset index file in advanced.
+
+    It also includes some methods that enable to automaticaly estimate the performance of the clustering
+    method. Moreover, a few unsued alternative methods for performing some intermediate steps are left 
+    here for developement and research purpose.
+    """
     def __init__(self):
         self.gaia = GaiaWrapperClustering()
 
@@ -217,7 +231,6 @@ class ClusteringEngine():
         graph = nx.Graph()
         graph.add_nodes_from(sound_ids_list)
         k = int(np.ceil(np.log2(len(sound_ids_list))))
-        k = 5
 
         for sound_id in sound_ids_list:
             try:

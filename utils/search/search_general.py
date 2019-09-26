@@ -86,7 +86,11 @@ def search_process_filter(filter_query):
 
 
 def split_filter_query(filter_query, cluster_id):
-    """Splits query filters.
+    """Parses and pre-process search filter parameters and returns the filters' information.
+
+    This function is used in the search template to display the filter and the link when removing them.
+    The clustering facet filter is in a separate query parameter. It facilitates to distinguish them from
+    the classical facet filters.
 
     Args:
         filter_query (str): query filter string.
@@ -119,8 +123,7 @@ def split_filter_query(filter_query, cluster_id):
                     }
                     filter_query_split.append(filter)
 
-    # cluster filter is in a separate query parameter
-    # It facilitates to distinguish between classical and cluster facets.
+    # add cluster filter information
     if cluster_id and cluster_id.isdigit():
         filter_query_split.append({
             'name': "Cluster #" + cluster_id,
@@ -131,12 +134,13 @@ def split_filter_query(filter_query, cluster_id):
 
 
 def search_prepare_parameters(request):
-    """Construct parameters from the search request object.
+    """Parses and pre-process search input parameters from the request object and returns them as a dict.
 
-    This functions aims at making easier the replication of the Solr query from the clustering engine.
     From the request object, it constructs all the parameters needed for building the Solr query 
     object. Additionally, other variables are returned for logging purpose, and for building the search
     view context variables.
+
+    This functions also make easier the replication of the Solr query from the clustering engine.
 
     Args:
         request (HttpRequest): request associated with the search query submited by the user.

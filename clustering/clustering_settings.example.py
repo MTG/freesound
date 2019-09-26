@@ -3,7 +3,9 @@ INDEX_DIR = '/home/xavierfav/Documents/dev/search-result-clustering/'
 
 # Configuration of the features used for clustering or evaluation.
 # We define here for each features the Gaia dataset index file, the descriptor name within the dataset 
-# and the metric used for similarity computation
+# and the metric used for similarity computation.
+# The minimum requirement is to have one available set of features and set it as the default features
+# used for clustering (see variable bellow).
 AVAILABLE_FEATURES = {
     # AudioSet Features (feature vector of the frame of max energy)
     'AUDIOSET_FEATURES': {

@@ -9,9 +9,6 @@ from gaia2 import DataSet, View, DistanceFunctionFactory
 
 import clustering_settings as clust_settings
 
-# for re-using gaia similarity dataset
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-from similarity.gaia_wrapper import GaiaWrapper as GaiaWrapperSimilarity
 
 logger = logging.getLogger('clustering')
 

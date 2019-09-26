@@ -19,7 +19,9 @@ logger = logging.getLogger('clustering')
 class GaiaWrapperClustering:
     """Gaia wrapper for the clustering engine.
 
-    This class contains helper methods to interface with Gaia.    
+    This class contains helper methods to interface with Gaia.
+    When creating the instance object, Gaia datasets corresponding to the features configured in the clustering 
+    settings file will be loaded.
     """
     def __init__(self):
         self.index_path = clust_settings.INDEX_DIR
@@ -49,7 +51,7 @@ class GaiaWrapperClustering:
         setattr(self, '{}_metric'.format(features), gaia_metric)
 
     def __load_datasets(self):
-        """Loads all the Gaia dataset that are configured in the clustering settings.
+        """Loads all the Gaia datasets corresponding to the features that are configured in the clustering settings.
         """
         logger.info('Loading datasets for each features used in clustering')
         for feature_string, feature_config in clust_settings.AVAILABLE_FEATURES.items():
@@ -57,10 +59,6 @@ class GaiaWrapperClustering:
                 self.__load_dataset(feature_string, feature_config['DATASET_FILE'], 
                                     feature_config['GAIA_DESCRIPTOR_NAMES'], feature_config['GAIA_METRIC'])
                 logger.info('{} dataset loaded'.format(feature_string))
-
-    # TODO: create gaia ds for the fs similarity case
-    #     if clust_settings.get('FS_SIMILARITY', False):
-    #         self.gaia_similiarity = GaiaWrapperSimilarity()
 
     def search_nearest_neighbors(self, sound_id, k, in_sound_ids=[], features=clust_settings.DEFAULT_FEATURES):
         """Find the k nearest neighbours of a target sound within a given subset of sounds and set of features
@@ -89,16 +87,6 @@ class GaiaWrapperClustering:
 
             return nearest_neighbors
 
-            # TODO: create gaia ds for the fs similarity case
-            # elif features == 'audio_fs':
-            #     nearest_neighbors = self.gaia_similiarity.view_pca.nnSearch(sound_id, 
-            #                                                                 self.gaia_similiarity.metrics['pca'], 
-            #                                                                 filter).get(k)[1:]
-
-            if not nearest_neighbors:
-                logger.info("No nearest neighbors found for point with id '{}'".format(sound_id))
-            return nearest_neighbors
-
         # probably be more specific here...
         except Exception as e:
             logger.info(e)
@@ -120,6 +108,6 @@ class GaiaWrapperClustering:
             try:
                 tag_features.append(gaia_dataset.point(sound_id).value(gaia_descriptor_names))
             except Exception as e:
-                #logger.info(e)
+                logger.info(e)
                 tag_features.append(None)
         return tag_features

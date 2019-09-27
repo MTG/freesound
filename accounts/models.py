@@ -437,6 +437,22 @@ class Profile(SocialModel):
         ordering = ('-user__date_joined', )
 
 
+class DeletedUser(models.Model):
+    """
+    This model is used to store basic information about users that have been deleted or anonymized.
+    """
+    username = models.CharField(max_length=150)
+    email = models.CharField(max_length=200)
+    deletion_date = models.DateTimeField(db_index=True, auto_now_add=True)
+    DELETION_REASON_CHOICES = (
+        ('ss', 'Sound spammer'),
+        ('fs', 'Forum spammer'),
+        ('ad', 'Deleted by an admin'),
+        ('sd', 'Self deleted')
+    )
+    type = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)  # TODO: should we add db_index=True?
+
+
 class UserFlag(models.Model):
     user = models.ForeignKey(User, related_name="flags")
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)

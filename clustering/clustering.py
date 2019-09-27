@@ -356,7 +356,7 @@ class ClusteringEngine():
             and the ratio of intra-community edges in each cluster.
         """
         # if two clusters or less, we do not remove any
-        if len(communities) < 3:
+        if len(communities) <= 2:
             return graph, classes, communities, ratio_intra_community_edges
         min_ratio_idx = np.argmin(ratio_intra_community_edges)
         sounds_to_remove = communities[min_ratio_idx]

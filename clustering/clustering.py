@@ -39,11 +39,12 @@ class ClusteringEngine():
     def __init__(self):
         self.gaia = GaiaWrapperClustering()
 
-    def _prepare_clustering_result_and_tag_features_for_evaluation(self, classes):
-        """Formats the clustering classes and some tag-derived features in order to then estimate how good is the 
-        clustering performance according to some semantic caracteristics reflected from the tag-derived features.
+    def _prepare_clustering_result_and_reference_features_for_evaluation(self, classes):
+        """Formats the clustering classes and some reference features in order to then estimate how good is the 
+        clustering performance. Tipically the reference features can be tag-derived features that reflect semantic 
+        characteristics of the content. The reference features are defined in the clustering settings file.
         
-        Extracts tag-derived features for the sounds given as keys of the classes argument.
+        Extracts reference features for the sounds given as keys of the classes argument.
         Prepares classes and extracted features in lists in order to compare them.
         Removes sounds with missing features.
 
@@ -51,21 +52,21 @@ class ClusteringEngine():
             classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
 
         Returns:
-            Tuple(List[List[Float]], List[Int]): 2-element tuple containing a list of tag-based features 
+            Tuple(List[List[Float]], List[Int]): 2-element tuple containing a list of evaluation features 
                 and list of classes (clusters) idx.
         """
         sound_ids_list, clusters = zip(*classes.items())
-        tag_features = self.gaia.return_sound_tag_features(sound_ids_list)
+        reference_features = self.gaia.return_sound_reference_features(sound_ids_list)
 
-        # Remove sounds that are not in the gaia tag dataset
-        idx_to_remove = set([idx for idx, feature in enumerate(tag_features) if feature == None])
-        tag_features_filtered = [f for idx, f in enumerate(tag_features) if idx not in idx_to_remove]
+        # Remove sounds that are not in the gaia reference dataset
+        idx_to_remove = set([idx for idx, feature in enumerate(reference_features) if feature == None])
+        reference_features_filtered = [f for idx, f in enumerate(reference_features) if idx not in idx_to_remove]
         clusters_filtered = [c for idx, c in enumerate(clusters) if idx not in idx_to_remove]
 
-        return tag_features_filtered, clusters_filtered
+        return reference_features_filtered, clusters_filtered
 
-    def _average_mutual_information_tags_clusters(self, classes):
-        """Estimates Average Mutual Information between tag-based features and the given clustering classes.
+    def _average_mutual_information_reference_features_clusters(self, classes):
+        """Estimates Average Mutual Information between reference features and the given clustering classes.
 
         Args:
             classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
@@ -73,11 +74,11 @@ class ClusteringEngine():
         Returns:
             Numpy.float: Average Mutual Information.
         """
-        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
-        return np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
+        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
+        return np.average(mutual_info_classif(reference_features, clusters, discrete_features=True))
 
-    def _silouhette_coeff_tags_clusters(self, classes):
-        """Computes mean Silhouette Coefficient score between tag-based features and the given clustering classes.
+    def _silouhette_coeff_reference_features_clusters(self, classes):
+        """Computes mean Silhouette Coefficient score between reference features and the given clustering classes.
 
         Args:
             classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
@@ -85,11 +86,11 @@ class ClusteringEngine():
         Returns:
             Numpy.float: mean Silhouette Coefficient.
         """
-        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
-        return metrics.silhouette_score(tag_features, clusters, metric='euclidean')
+        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
+        return metrics.silhouette_score(reference_features, clusters, metric='euclidean')
 
-    def _calinski_idx_tags_clusters(self, classes):
-        """Computes the Calinski and Harabaz score between tag-based features and the given clustering classes.
+    def _calinski_idx_reference_features_clusters(self, classes):
+        """Computes the Calinski and Harabaz score between reference features and the given clustering classes.
 
         Args:
             classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
@@ -97,11 +98,11 @@ class ClusteringEngine():
         Returns:
             Numpy.float: Calinski and Harabaz score.
         """
-        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
-        return metrics.calinski_harabaz_score(tag_features, clusters)
+        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
+        return metrics.calinski_harabaz_score(reference_features, clusters)
     
-    def _davies_idx_tags_clusters(self, classes):
-        """Computes the Davies-Bouldin score between tag-based features and the given clustering classes.
+    def _davies_idx_reference_features_clusters(self, classes):
+        """Computes the Davies-Bouldin score between reference features and the given clustering classes.
 
         Args:
             classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
@@ -110,11 +111,13 @@ class ClusteringEngine():
             Numpy.float: Davies-Bouldin score.
         """
         # This metric is not included in current used sklearn version
-        tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
-        return metrics.davies_bouldin_score(tag_features, clusters)
+        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
+        return metrics.davies_bouldin_score(reference_features, clusters)
 
     def _evaluation_metrics(self, classes):
-        """Computes different scores related to the clustering performance.
+        """Computes different scores related to the clustering performance by comparing the resulting clustering classes
+        to the reference features defined in the clustering settings file. The reference features tipically correspond to 
+        tag-derived features that can reflect semantic characteristics of the audio clips.
 
         Args:
             classes (Dict{Int: Int}): clustering classes for each sound {<sound_id>: <class_idx>}.
@@ -123,11 +126,11 @@ class ClusteringEngine():
             Tuple(Numpy.float, Numpy.float, Numpy.float): 3-element tuple containing the Average Mutual Information
                 score, the Silhouette Coefficient and the Calinski and Harabaz score.
         """
-        if clust_settings.AVAILABLE_FEATURES.get(clust_settings.TAG_FEATURES, None):
-            tag_features, clusters = self._prepare_clustering_result_and_tag_features_for_evaluation(classes)
-            ami = np.average(mutual_info_classif(tag_features, clusters, discrete_features=True))
-            ss = metrics.silhouette_score(tag_features, clusters, metric='euclidean')
-            ci = metrics.calinski_harabaz_score(tag_features, clusters)
+        if clust_settings.AVAILABLE_FEATURES.get(clust_settings.REFERENCE_FEATURES, None):
+            reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
+            ami = np.average(mutual_info_classif(reference_features, clusters, discrete_features=True))
+            ss = metrics.silhouette_score(reference_features, clusters, metric='euclidean')
+            ci = metrics.calinski_harabaz_score(reference_features, clusters)
             return ami, ss, ci
         else:
             return None, None, None
@@ -209,8 +212,8 @@ class ClusteringEngine():
                 'features': features,
                 'modularity': modularity,
                 'ratio_intra_community_edges': ratio_intra_community_edges,
-                'average_mutual_information_tags': ami,
-                'silouhette_coeff_tags': ss,
+                'average_mutual_information': ami,
+                'silouhette_coeff': ss,
                 'calinski_harabaz_score': ci,
                 'communities': communities
             }
@@ -400,17 +403,17 @@ class ClusteringEngine():
         nx.set_node_attributes(graph, classes, 'group')
         nx.set_node_attributes(graph, node_community_centralities, 'group_centrality')
 
-        # Evaluation metrics vs tag features
+        # Evaluation metrics vs reference features
         ami, ss, ci = self._evaluation_metrics(classes)
 
         end_time = time()
         logger.info('Clustering done! It took {} seconds. '
                     'Modularity: {}, '
                     'Average ratio_intra_community_edges: {}, '
-                    'Average Mutual Information with tags: {}, '
-                    'Silouhette Coefficient with tags: {}, '
-                    'Calinski Index with tags: {}, '
-                    'Davies Index with tags: {}'
+                    'Average Mutual Information with reference: {}, '
+                    'Silouhette Coefficient with reference: {}, '
+                    'Calinski Index with reference: {}, '
+                    'Davies Index with reference: {}'
                     .format(end_time-start_time, modularity, np.mean(ratio_intra_community_edges), ami, ss, ci, None))
 
         # Export graph as json

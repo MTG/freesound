@@ -26,8 +26,9 @@ AVAILABLE_FEATURES = {
 # Default features used for clustering
 DEFAULT_FEATURES = 'AUDIOSET_FEATURES'
 
-# Tag-derived features used for clustering evaluation
-TAG_FEATURES = None
+# Key of AVAILABLE_FEATURES used for evaluating the clustering results
+# Typically tag-derived features
+REFERENCE_FEATURES = None
 
 # Maximum number of results to cluster
 MAX_RESULTS_FOR_CLUSTERING = 1000

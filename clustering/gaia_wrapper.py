@@ -89,22 +89,25 @@ class GaiaWrapperClustering:
             logger.info(e)
             return []
 
-    def return_sound_tag_features(self, sound_ids):
-        """Returns the tag-based features for the given sounds.
+    def return_sound_reference_features(self, sound_ids):
+        """Returns the reference features for the given sounds that are used for evaluating the clustering performance.
+
+        The reference features defined in the clustering settings file.
+        They tipically consists of features derived from the sounds' tags.
 
         Args:
             sound_ids (List[str]): list containing the ids of the sounds we want the features.
 
         Returns:
-            List[List[Float]]: list containing the tag-based features of the requested sounds.
+            List[List[Float]]: list containing the reference features of the requested sounds.
         """
-        tag_features = []
-        gaia_dataset = getattr(self, '{}_dataset'.format(clust_settings.TAG_FEATURES))
-        gaia_descriptor_names = clust_settings.AVAILABLE_FEATURES[clust_settings.TAG_FEATURES]['GAIA_DESCRIPTOR_NAMES']
+        reference_features = []
+        gaia_dataset = getattr(self, '{}_dataset'.format(clust_settings.REFERENCE_FEATURES))
+        gaia_descriptor_names = clust_settings.AVAILABLE_FEATURES[clust_settings.REFERENCE_FEATURES]['GAIA_DESCRIPTOR_NAMES']
         for sound_id in sound_ids:
             try:
-                tag_features.append(gaia_dataset.point(sound_id).value(gaia_descriptor_names))
+                reference_features.append(gaia_dataset.point(sound_id).value(gaia_descriptor_names))
             except Exception as e:
                 logger.info(e)
-                tag_features.append(None)
-        return tag_features
+                reference_features.append(None)
+        return reference_features

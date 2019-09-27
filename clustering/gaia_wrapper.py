@@ -31,8 +31,8 @@ class GaiaWrapperClustering:
         """Loads a Gaia dataset, view and metric for a specific feature and config.
         
         Args: 
-            features (str): name of the features to be used for clustering. The available features are defined in 
-                the clustering settings file.
+            features (str): name of the features to be used for clustering. 
+                Available features are listed in the clustering settings file
             gaia_index (str): Name of the Gaia dataset index file.
             gaia_descriptor_names (str or List[str]): Name(s) of the descriptor field to use within the Gaia dataset. 
             gaia_metric (str): Name of the metric to use for nearest neighbors search.
@@ -64,8 +64,8 @@ class GaiaWrapperClustering:
             sound_id (str): id of the sound query.
             k (int): number of nearest neighbors to retrieve.
             in_sound_ids (List[str]): ids of the subset of sounds within the one we perform the Nearest Neighbors search.
-            features (str): name of the features to be used for nearest neighbors computation. The available features 
-                are defined in the clustering settings file.
+            features (str): name of the features to be used for nearest neighbors computation. 
+                Available features are listed in the clustering settings file
 
         Returns:
             List[str]: ids of the retrieved sounds.

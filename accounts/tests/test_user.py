@@ -180,7 +180,7 @@ class UserDelete(TestCase):
         # This should set user's attribute active to false and anonymize it
         user = self.create_user_and_content(is_index_dirty=False)
         user.profile.delete_user()
-        self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
+        self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
 
         self.assertEqual(user.username, "deleted_user_%s" % user.id)
         self.assertEqual(user.profile.about, '')
@@ -205,7 +205,7 @@ class UserDelete(TestCase):
         user_sounds = Sound.objects.filter(user=user)
         user_sound_ids = [s.id for s in user_sounds]
         user.profile.delete_user(remove_sounds=True)
-        self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
+        self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
         self.assertEqual(user.username, "deleted_user_%s" % user.id)
         self.assertEqual(user.profile.about, '')
         self.assertEqual(user.profile.home_page, '')
@@ -232,7 +232,7 @@ class UserDelete(TestCase):
         resp = self.client.post(reverse('accounts-delete'),
                                 {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
 
-        self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
+        self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
 
     def test_fail_user_delete_using_form(self):
         # This should try to delete the account but with a wrong password
@@ -244,7 +244,7 @@ class UserDelete(TestCase):
                                 {'encrypted_link': encr_link, 'password': 'wrong_pass',
                                  'delete_sounds': 'delete_sounds'})
 
-        self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, False)
+        self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, False)
 
 
 class UserEmailsUniqueTestCase(TestCase):

@@ -94,7 +94,11 @@ class Profile(SocialModel):
     num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)
     num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)
 
-    is_deleted_user = models.BooleanField(db_index=True, default=False)
+    # "is_anonymized_user" indicates that the user account has been anonimized and no longer contains personal data
+    # This is what we do when we delete a user to still preserve statistics and information and downloads
+    # "is_anonymized_user" used to be called "is_deleted_user"
+    is_anonymized_user = models.BooleanField(db_index=True, default=False)
+
     is_adult = models.BooleanField(default=False)
 
     objects = ProfileManager()
@@ -141,7 +145,7 @@ class Profile(SocialModel):
         user = self.get_sameuser_main_user_or_self_user()
         user_has_bounces = \
             user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() > 0
-        return not user_has_bounces and not user.profile.is_deleted_user
+        return not user_has_bounces and not user.profile.is_anonymized_user
 
     @property
     def get_total_downloads(self):
@@ -384,7 +388,7 @@ class Profile(SocialModel):
         self.user.username = 'deleted_user_%s' % self.user.id
         self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
         self.has_avatar = False
-        self.is_deleted_user = True
+        self.is_anonymized_user = True
         self.user.set_unusable_password()
 
         self.about = ''

@@ -177,7 +177,9 @@ class SearchUtilsTest(TestCase):
         self.assertEqual(query.params['qf'], 'id^10')
         self.assertEqual(query.params['fq'], 'duration:[1 TO 10] is_geotagged:1')
         self.assertTrue(query.params['group'])
-        
+        self.assertEqual(query.params['sort'], 'duration desc')
+        self.assertEqual(query.params['rows'], settings.SOUNDS_PER_PAGE)
+
     def test_search_prepare_query_cluster_filter(self):
         # we test that a cluster filter removes all other filters and correctly adds filters by id.
         query_params = {

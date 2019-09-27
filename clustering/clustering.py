@@ -126,7 +126,9 @@ class ClusteringEngine():
             Tuple(Numpy.float, Numpy.float, Numpy.float): 3-element tuple containing the Average Mutual Information
                 score, the Silhouette Coefficient and the Calinski and Harabaz score.
         """
-        if clust_settings.AVAILABLE_FEATURES.get(clust_settings.REFERENCE_FEATURES, None):
+        # we compute the evaluation metrics only if some reference features are available for evaluation
+        # we return None when they are not available not to break the following part of the code
+        if clust_settings.REFERENCE_FEATURES in clust_settings.AVAILABLE_FEATURES:
             reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
             ami = np.average(mutual_info_classif(reference_features, clusters, discrete_features=True))
             ss = metrics.silhouette_score(reference_features, clusters, metric='euclidean')

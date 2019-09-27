@@ -13,14 +13,8 @@ AVAILABLE_FEATURES = {
         'GAIA_DESCRIPTOR_NAMES': 'AS_embeddings_ppc_max_energy',
         'GAIA_METRIC': 'euclidean'
     },
-    # tag-based features (Bag of Words - LDA)
+    # tag-based features used as reference features (Bag of Words - LDA)
     'TAG_DERIVED_FEATURES': None,
-
-    # Acoustic features (selected features from Essentia extractor - PCA)
-    'FREESOUND_EXTRACTOR_SELECTED_FEATURES': None,
-
-    # AudioCommons timbral descriptors
-    'AC_TIMBRAL_FEATURES': None,
 }
 
 # Default features used for clustering

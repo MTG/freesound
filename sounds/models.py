@@ -1088,10 +1088,46 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 class PackManager(models.Manager):
 
-    def ordered_ids(self, pack_ids, select_related=''):
-        # Simplified version of ordered_ids in SoundManager (no need for custom SQL here)
-        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.select_related(select_related)
-                                                           .filter(id__in=pack_ids).exclude(is_deleted=True)}
+    def bulk_query(self, where, order_by, limit, args):
+        """For each pack, get all fields needed to display a pack on the web (using display_pack templatetag) or
+         in the API. Using this custom query to avoid the need of having to do some extra queries when displaying some
+         fields related to the pack (e.g. for the list of tags or for the 3 randomly selected sound packs).
+         Using this method, all the information for all requested packs is obtained with a single query."""
+
+        query = """SELECT 
+          pack.id, 
+          pack.user_id, 
+          pack.name, 
+          pack.description, 
+          pack.is_dirty, 
+          pack.created, 
+          pack.license_crc, 
+          pack.last_updated, 
+          pack.num_downloads, 
+          pack.num_sounds, 
+          pack.is_deleted 
+        FROM 
+          sounds_pack pack
+        WHERE (%s AND NOT (pack.is_deleted = True))""" % (where, )
+
+        if order_by:
+            query = "%s ORDER BY %s" % (query, order_by)
+        if limit:
+            query = "%s LIMIT %s" % (query, limit)
+        print query
+        return self.raw(query, args)
+
+    def bulk_query_id(self, pack_ids):
+        if not isinstance(pack_ids, list):
+            pack_ids = [pack_ids]
+        where = "pack.id = ANY(%s)"
+        return self.bulk_query(where, "", "", (pack_ids, ))
+
+    def dict_ids(self, pack_ids):
+        return {pack_obj.id: pack_obj for pack_obj in self.bulk_query_id(pack_ids)}
+
+    def ordered_ids(self, pack_ids):
+        packs = self.dict_ids(pack_ids)
         return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
 
 

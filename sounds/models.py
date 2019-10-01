@@ -1114,7 +1114,6 @@ class PackManager(models.Manager):
             query = "%s ORDER BY %s" % (query, order_by)
         if limit:
             query = "%s LIMIT %s" % (query, limit)
-        print query
         return self.raw(query, args)
 
     def bulk_query_id(self, pack_ids):

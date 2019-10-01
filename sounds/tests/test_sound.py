@@ -25,13 +25,12 @@ import time
 import mock
 from bs4 import BeautifulSoup
 from django.conf import settings
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import User
 from django.core import mail
 from django.core.cache import cache
 from django.core.cache.backends import locmem
 from django.core.management import call_command
-from django.http import HttpRequest, HttpResponse
-from django.template import Context, Template
+from django.http import HttpResponse
 from django.test import TestCase, RequestFactory, override_settings
 from django.urls import reverse
 
@@ -424,99 +423,6 @@ class SoundViewsTestCase(TestCase):
         url = reverse('sound', args=['wrongusername', sound.id])
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 404)
-
-
-class DisplaySoundTemplatetagTestCase(TestCase):
-
-    fixtures = ['licenses', 'sounds_with_tags']
-
-    def setUp(self):
-        # A sound which has tags
-        self.sound = Sound.objects.get(pk=23)
-
-    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
-    def test_display_sound_from_id(self):
-        """Test that when using the display_sound templatetag with a sound ID as parameter we make only one DB query
-        and all needed metadata for rendering the template is loaded properly.
-        """
-        request = HttpRequest()
-        request.user = AnonymousUser()
-        with self.assertNumQueries(1):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': self.sound.id,
-                'request': request,
-                'media_url': 'http://example.org/'
-            }))
-            #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
-
-    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
-    def test_display_sound_from_standard_sound_obj(self):
-        """Test that when using the display_sound templatetag with a standard Sound object parameter we make only one
-        DB query (to get extra needed metadata) and all needed metadata for rendering the template is loaded properly.
-        """
-        request = HttpRequest()
-        request.user = AnonymousUser()
-        with self.assertNumQueries(1):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': self.sound,
-                'request': request,
-                'media_url': 'http://example.org/'
-            }))
-            #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
-
-    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
-    def test_display_sound_from_bulk_query_id_sound_obj(self):
-        """Test that when using the display_sound templatetag with a Sound object parameter retrieved using
-        Sound.objects.bulk_query_id we make no extra DB queries and all needed metadata for rendering the template is
-        loaded properly.
-        """
-        self.sound = Sound.objects.bulk_query_id([23])[0]
-        request = HttpRequest()
-        request.user = AnonymousUser()
-        with self.assertNumQueries(0):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': self.sound,
-                'request': request,
-                'media_url': 'http://example.org/'
-            }))
-            #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
-
-    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
-    def test_display_sound_from_bad_id(self):
-        """Test that when using display_sound templatetag with an invalid sound ID as a parameter we make no extra
-        DB queries and no exceptions are raised.
-        """
-        request = HttpRequest()
-        request.user = AnonymousUser()
-        with self.assertNumQueries(0):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': 'not_an_integer',
-                'request': request,
-                'media_url': 'http://example.org/'
-            }))
-            #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
-
-    @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
-    def test_display_sound_from_unexisting_sound_id(self):
-        """Test that when using display_sound templatetag with an non-existing sound ID as a parameter we make only
-        one DB query and no exceptions are raised.
-        """
-        request = HttpRequest()
-        request.user = AnonymousUser()
-        with self.assertNumQueries(1):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': -1,
-                'request': request,
-                'media_url': 'http://example.org/'
-            }))
-            #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
-
-    def test_display_sound_wrapper_view(self):
-        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, 921]))  # Non existent ID
-        self.assertEqual(response.status_code, 404)
-
-        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, self.sound.id]))
-        self.assertEqual(response.status_code, 200)
 
 
 class SoundPackDownloadTestCase(TestCase):

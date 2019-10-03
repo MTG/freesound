@@ -1141,7 +1141,15 @@ class Pack(SocialModel):
         self.save()
 
     def get_random_sounds_from_pack(self, N=3):
-        """Get 3 random sounds from this pack"""
+        """
+        Get N random sounds from this pack. If Pack has less than N sounds, then less than N sounds will be returned.
+
+        Args:
+            N (int): maximum number of random sounds to get
+
+        Returns:
+            List[Sound]: List of randomly selected Sound objects from the pack
+        """
         sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 

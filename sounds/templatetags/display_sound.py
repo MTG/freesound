@@ -30,9 +30,7 @@ register = template.Library()
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound(context, sound, player_size='small'):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
-    to the display_sound.html template to show sound information together with the player. This function is supposed
-    to be called from Django templates so it will render the display_sound.html template with the computed variables
-    and then add it to the tempalte from which it was called.
+    to the display_sound.html template to show sound information together with the player.
 
     Args:
         context (django.template.Context): an object with contextual information for rendering a template. This

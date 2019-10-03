@@ -38,7 +38,7 @@ def display_pack(context, pack):
           given ID, the display_pack.html will be rendered with empty HTML.
 
     Returns:
-        dict: dictionary with the variables needed for rendering the pack with the display_pack.html templtate
+        dict: dictionary with the variables needed for rendering the pack with the display_pack.html template
 
     """
     if isinstance(pack, Pack):

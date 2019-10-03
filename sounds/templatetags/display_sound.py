@@ -44,7 +44,7 @@ def display_sound(context, sound, player_size='small'):
           size is given in the display_sound.html template code.
 
     Returns:
-        dict: dictionary with the variables needed for rendering the sound with the display_sound.html templtate
+        dict: dictionary with the variables needed for rendering the sound with the display_sound.html template
 
     """
 

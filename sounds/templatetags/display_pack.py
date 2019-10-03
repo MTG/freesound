@@ -57,7 +57,10 @@ def display_pack(context, pack):
             # Pack does not exist, we set pack_obj to empty list so "if pack" check in template returns False
             pack_obj = []
 
+    # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
+    # display_pack templatetag it is given request in the context as well.
     return {
         'pack': pack_obj,
         'media_url': context['media_url'],
+        'request': context.get('request')
     }

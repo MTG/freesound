@@ -29,9 +29,7 @@ register = template.Library()
 
 @register.inclusion_tag('sounds/display_pack.html', takes_context=True)
 def display_pack(context, pack):
-    """This templatetag is used to display a a pack with 3 randomly selected sound players. This function is supposed
-    to be called from Django templates so it will render the display_pack.html template with the computed variables
-    and then add it to the tempalte from which it was called.
+    """This templatetag is used to display a pack with some randomly selected sound players.
 
     Args:
         context (django.template.Context): an object with contextual information for rendering a template. This

@@ -180,31 +180,11 @@ class PackManagerQueryMethods(TestCase):
         self.pack_ids = [p.id for p in packs]
         self.user = user
 
-    def test_bulk_query_id_num_queries(self):
-
-        # Check that all fields for each pack are retrieved with one query
-        with self.assertNumQueries(1):
-            for pack in Pack.objects.bulk_query_id(pack_ids=self.pack_ids):
-                for field in self.fields_to_check_bulk_query_id:
-                    self.assertTrue(hasattr(pack, field), True)
-                    # TODO: test selected tags and random sounds?
-
-    def test_bulk_query_id_field_contents(self):
-
-        # Check that the contents of some fields are correct
-        for pack in Pack.objects.bulk_query_id(pack_ids=self.pack_ids):
-            self.assertEqual(Pack.objects.get(id=pack.id).name, pack.name)
-            self.assertEqual(Pack.objects.get(id=pack.id).description, pack.description)
-            self.assertEqual(Pack.objects.get(id=pack.id).is_dirty, pack.is_dirty)
-            self.assertEqual(Pack.objects.get(id=pack.id).user_id, pack.user_id)
-            self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, pack.num_sounds)
-            self.assertEqual(Pack.objects.get(id=pack.id).num_downloads, pack.num_downloads)
-
     def test_ordered_ids(self):
 
-        # This method is similar to PackManager.bulk_query_id but returns the packs in the same order as the
-        # the IDs in pack_ids. Here we only check that the sorting is correct. (the other things like returned
-        # pack fields being correct are already tested in previous tests).
+        # Test that ordered_ids returns a sorted list of Pack objects with the requested IDs, including duplicates
         with self.assertNumQueries(1):
-            for i, pack in enumerate(Pack.objects.ordered_ids(pack_ids=self.pack_ids)):
-                self.assertEqual(self.pack_ids[i], pack.id)
+            pack_ids_with_duplicates = self.pack_ids + self.pack_ids
+            for i, pack in enumerate(Pack.objects.ordered_ids(pack_ids=pack_ids_with_duplicates)):
+                self.assertEqual(type(pack), Pack)
+                self.assertEqual(pack_ids_with_duplicates[i], pack.id)

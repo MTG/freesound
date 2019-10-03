@@ -19,33 +19,46 @@
 #
 
 from __future__ import absolute_import
-from sounds.models import Pack, Sound
+
 from django import template
+
+from sounds.models import Pack
 
 register = template.Library()
 
+
 @register.inclusion_tag('sounds/display_pack.html', takes_context=True)
 def display_pack(context, pack):
+    """This templatetag is used to display a pack with some randomly selected sound players.
 
+    Args:
+        context (django.template.Context): an object with contextual information for rendering a template. This
+          argument is automatically added by Django when calling the templatetag inside a template.
+        pack (int or Pack): pack ID or Pack object of the pack that will be shown. If no pack exists for the
+          given ID, the display_pack.html will be rendered with empty HTML.
+
+    Returns:
+        dict: dictionary with the variables needed for rendering the pack with the display_pack.html template
+
+    """
     if isinstance(pack, Pack):
-        pack_id = pack.id
         pack_obj = [pack]
-        
     else:
-        pack_id = int(pack)
         try:
-            #sound_obj = Sound.objects.get(id=sound_id)
-            pack_obj = Pack.objects.select_related('username').filter(id=pack) # need to use filter here because we don't want the query to be evaluated already!
-        except Pack.DoesNotExist:
+            # use filter here instead of get because we don't want the query to be evaluated before rendering the
+            # template as this would bypass the html cache in the template
+            pack_obj = Pack.objects.select_related('user').filter(id=int(pack))
+        except ValueError:
+            # Invalid ID, we set pack_obj to empty list so "if pack" check in template returns False
             pack_obj = []
-    
-    if hasattr(pack, 'num_sounds'):
-        num_sounds = pack.num_sounds
-    else:
-        num_sounds = Sound.objects.filter(pack=pack_id).count()
+        except Pack.DoesNotExist:
+            # Pack does not exist, we set pack_obj to empty list so "if pack" check in template returns False
+            pack_obj = []
 
-    return { 'pack_id':     pack_id,
-             'pack':        pack_obj,
-             'media_url':   context['media_url'],
-             'num_sounds':  num_sounds,
-           }
+    # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
+    # display_pack templatetag it is given request in the context as well.
+    return {
+        'pack': pack_obj,
+        'media_url': context['media_url'],
+        'request': context.get('request')
+    }

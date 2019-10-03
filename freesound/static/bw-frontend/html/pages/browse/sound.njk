@@ -4,53 +4,57 @@
 {% import '../../atoms/icons.njk' as icons %}
 
 {% macro result(title, description) %}
-<div class="bw-search__result">
-  <div class="row no-gutters no-wrap">
-    <div class="col-3">
-      {{ players.player() }}
-    </div>
-    <div class="padding-left-3">
-      <div class="between">
-        <div>
-          <h5 class="v-spacing-top-1 ellipsis">Bass Guitar Solo 01</h5>
-          <div>{{ stars.stars(2.5) }}</div>
-        </div>
-        <div class="text-grey">
-          {{ icons.icon('similar') }}
-          <span class="h-spacing-2"></span>
-          {{ icons.icon('bookmark') }}
-        </div>
+  <div class="bw-search__result">
+    <div class="row no-gutters no-wrap">
+      <div class="col-3">
+        {{ players.player() }}
       </div>
-      
-      <p class="text-grey">My amazing skills at bass</p>
-      {{ tags.tags(['Electronic', 'world', 'ambient', 'synth', 'analog', 'distortion', 'techno', 'dub', 'cc0', 'good', 'mic'])}}
-    </div>
-  </div>
-  <div class="between v-spacing-top-2 v-spacing-3">
-    <div class="middle text-grey">
-      <div class="avatar h-spacing-2">
-        <img src="../public/avatar.jpg" />
+      <div class="padding-left-3">
+        <div class="between">
+          <div>
+            <h5 class="v-spacing-top-1 ellipsis">Bass Guitar Solo 01</h5>
+            <div>{{ stars.stars(2.5) }}</div>
+          </div>
+          <div class="text-grey">
+            <button title="Find similar sounds" class="btn-neutral">
+              {{ icons.icon('similar') }}
+            </button>
+            <span class="h-spacing-2"></span>
+            <button title="Save as favorite" class="btn-neutral">
+              {{ icons.icon('bookmark') }}
+            </button>
+          </div>
+        </div>
+
+        <p class="text-grey">My amazing skills at bass</p>
+        {{ tags.tags(['Electronic', 'world', 'ambient', 'synth', 'analog', 'distortion', 'techno', 'dub', 'cc0', 'good', 'mic'])}}
       </div>
-      <a href="#">giuband</a>
-      <span class="h-spacing-left-2 text-light-grey">February 18th, 2017</span>
     </div>
-    <div class="middle text-light-grey">
-      <span class="bw-icon-pin"></span>
-      <span class="h-spacing-left-1 h-spacing-3">Barcelona</span>
-      <span class="bw-icon-download"></span>
-      <span class="h-spacing-left-1 h-spacing-3">113</span>
-      <span class="bw-icon-comments"></span>
-      <span class="h-spacing-left-1 h-spacing-3">21</span>
-      <span class="bw-icon-cc"></span>
-      <span class="h-spacing-left-1">Creative commons 0</span>
+    <div class="between v-spacing-top-2 v-spacing-3">
+      <div class="middle text-grey h-spacing-1">
+        <div class="avatar h-spacing-1">
+          <img src="../public/avatar.jpg" />
+        </div>
+        <a href="#">giuband</a>
+        <span class="h-spacing-left-2 text-light-grey">February 18th, 2017</span>
+      </div>
+      <div class="middle text-light-grey">
+        <span class="bw-icon-pin"></span>
+        <span class="h-spacing-left-1 h-spacing-3">Barcelona</span>
+        <span class="bw-icon-download"></span>
+        <span class="h-spacing-left-1 h-spacing-3">113</span>
+        <span class="bw-icon-comments"></span>
+        <span class="h-spacing-left-1 h-spacing-3">21</span>
+        <span class="bw-icon-cc"></span>
+        <span class="h-spacing-left-1">Creative commons 0</span>
+      </div>
     </div>
+    <div class="divider-light"></div>
   </div>
-  <div class="divider-light"></div>
-</div>
 {% endmacro %}
 
 {% macro results(count) %}
-{% for i in range(count) -%}
-  {{ result()}}
-{%- endfor %}
+  {% for i in range(count) -%}
+    {{ result()}}
+  {%- endfor %}
 {% endmacro %}

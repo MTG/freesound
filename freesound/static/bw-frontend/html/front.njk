@@ -1,9 +1,10 @@
 {% import './molecules/player.njk' as players %}
 {% import './atoms/tags.njk' as tags %}
+{% import './molecules/navbar.njk' as navbars %}
 {% extends "base.njk" %}
 
 {% block content %}
-  {% include './molecules/navbar.njk' %}
+  {{ navbars.frontNavbar() }}
 
   <div class="container">
     <div class="bw-front__hero-container">
@@ -63,7 +64,7 @@
         </div>
         <section class="v-spacing-6">
           <h3 class="v-spacing-4">For you</h3>
-          <div class="row">
+          <div class="row no-margins">
             <div class="col">
               {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
             </div>
@@ -83,57 +84,57 @@
               <div class="bw-carousel">
                 <div>
                   <div class="row">
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Loop', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Voice', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Wind', 4, 'w-100 h-100')}}
                     </div>
                   </div>
                 </div>
                 <div>
                   <div class="row">
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Loop', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Voice', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Wind', 4, 'w-100 h-100')}}
                     </div>
                   </div>
                 </div>
                 <div>
                   <div class="row">
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Field-recording', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Ambience', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Loop', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Voice', 4, 'w-100 h-100')}}
                     </div>
-                    <div class="col">
+                    <div class="col v-spacing-1">
                       {{ tags.tag('Wind', 4, 'w-100 h-100')}}
                     </div>
                   </div>
@@ -143,13 +144,13 @@
           </div>
         </section>
         <hr />
-        <section class="v-spacing-6">
+        <section class="v-spacing-2">
           <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
           <div class="bw-carousel-container">
             <div class="bw-carousel-wrapper">
               <div class="bw-carousel v-padding-bottom-4">
                 <div>
-                  <div class="row">
+                  <div class="row no-margins">
                     <div class="col">
                       {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
                     </div>
@@ -162,7 +163,7 @@
                   </div>
                 </div>
                 <div>
-                  <div class="row">
+                  <div class="row no-margins">
                     <div class="col">
                       {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
                     </div>
@@ -175,7 +176,7 @@
                   </div>
                 </div>
                 <div>
-                  <div class="row">
+                  <div class="row no-margins">
                     <div class="col">
                       {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
                     </div>
@@ -190,6 +191,60 @@
               </div>
             </div>
           </div>
+        </section>
+        <hr />
+        <section class="v-spacing-2">
+          <h3 class="v-spacing-4 v-spacing-top-4">Trending packs</h3>
+          <div class="bw-carousel-container">
+            <div class="bw-carousel-wrapper">
+              <div class="bw-carousel v-padding-bottom-4">
+                <div>
+                  <div class="row no-margins">
+                    <div class="col">
+                      {{ players.smallPack('String music remixes', 5, 'john') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPack('Ambient', 2, 'matthew__warrior') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPack('Practicing guitar', 4, 'heavy_music') }}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="row no-margins">
+                    <div class="col">
+                      {{ players.smallPack('Cheerful', 3, 'happy') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPack('Drone', 2, 'industrial') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPack('Acoustic stuff', 4, 'indie4life') }}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="row no-margins">
+                    <div class="col">
+                      {{ players.smallPack('Drunk people at sonar', 5, 'giuband') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPack('Noises of barceloneta', 7, 'giuband') }}
+                    </div>
+                    <div class="col">
+                      {{ players.smallPack('Traffic in Gran Via', 4, 'bcn_andy') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <hr />
+        <section class="v-spacing-6">
+          <h3 class="v-spacing-4 v-spacing-top-4">Guess the sound of the day</h3>
+          {{ players.bigPlayer() }}
         </section>
       </main>
       <aside class="col-md-3">

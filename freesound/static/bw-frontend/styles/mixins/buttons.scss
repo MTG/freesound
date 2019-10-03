@@ -20,6 +20,12 @@
   }
 }
 
+@mixin reset-border-bottom-on-hover {
+  &:before {
+    all: unset !important;
+  }
+}
+
 @mixin rounded-button($color, $hover-color) {
   padding-top: 14px;
   padding-right: 30px;

@@ -7,7 +7,7 @@
 <div class="pack_display" id="{{pack.id}}">
 <div class="pack_description">
 
-<h4><a href="{% url "pack" pack.user.username pack.id %}">{{pack.name}}</a> <span style="font-weight:normal;">({{num_sounds}} sound{{ num_sounds|pluralize }}) </span></h4>
+<h4><a href="{% url "pack" pack.user.username pack.id %}">{{pack.name}}</a> <span style="font-weight:normal;">({{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}) </span></h4>
 <p class="text">by <a href="{% url "account" pack.user.username %}">{{pack.user.username}}</a>.
 <a href="{% url "pack-downloaders" pack.user.username pack.id %}">Downloaded {{pack.num_downloads}} times.</a>
 <br>Tags of sounds inside the pack:

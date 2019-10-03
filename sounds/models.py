@@ -200,7 +200,7 @@ class SoundManager(models.Manager):
                                 tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
-        """For each sound, get all fields needed to display a sound on the web (using display_raw_sound templatetag) or
+        """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or
          in the API (including AudioCommons output analysis). Using this custom query to avoid the need of having to do
          some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
          information for all requested sounds is obtained with a single query."""
@@ -1088,10 +1088,19 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 class PackManager(models.Manager):
 
-    def ordered_ids(self, pack_ids, select_related=''):
-        # Simplified version of ordered_ids in SoundManager (no need for custom SQL here)
-        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.select_related(select_related)
-                                                           .filter(id__in=pack_ids).exclude(is_deleted=True)}
+    def ordered_ids(self, pack_ids):
+        """
+        Returns a list of Pack objects with ID in pack_ids and in the same order. pack_ids can include ID duplicates
+        and the returned list will also include duplicated Pack objects.
+
+        Args:
+            pack_ids (List[int]): list with the IDs of the packs to be included in the output
+
+        Returns:
+            List[Pack]: List of Pack objects
+
+        """
+        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.filter(id__in=pack_ids).exclude(is_deleted=True)}
         return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
 
 
@@ -1131,9 +1140,18 @@ class Pack(SocialModel):
             self.last_updated = sounds[0].created
         self.save()
 
-    def get_random_sounds_from_pack(self):
-        """Get 3 random sounds from this pack"""
-        return Sound.public.filter(pack=self.id).order_by('?')[:3]
+    def get_random_sounds_from_pack(self, N=3):
+        """
+        Get N random sounds from this pack. If Pack has less than N sounds, then less than N sounds will be returned.
+
+        Args:
+            N (int): maximum number of random sounds to get
+
+        Returns:
+            List[Sound]: List of randomly selected Sound objects from the pack
+        """
+        sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
+        return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
     def get_pack_tags(self, max_tags=50):
         pack_tags = get_pack_tags(self)

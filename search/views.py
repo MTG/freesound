@@ -24,12 +24,12 @@ import logging
 
 import re
 from django.conf import settings
-from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 
 import forms
 import sounds
 import forum
+from utils.frontend_handling import render
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException

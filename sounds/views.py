@@ -173,24 +173,12 @@ def packs(request):
     return render(request, 'sounds/browse_packs.html', tvars)
 
 
-def get_current_thread_ids():
-    cursor = connection.cursor()
-    cursor.execute("""
-          SELECT forum_thread.id
-            FROM forum_thread, forum_post
-           WHERE forum_thread.last_post_id = forum_post.id
-        ORDER BY forum_post.id DESC LIMIT 10
-    """)
-    return [x[0] for x in cursor.fetchall()]
-
-
 def front_page(request):
-
     rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
     trending_sound_ids = cache.get("trending_sound_ids", None)
+    trending_pack_ids = cache.get("trending_pack_ids", None)
     popular_searches = cache.get("popular_searches", None)
-    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),
-                                                  first_post__moderation_state="OK",
+    current_forum_threads = Thread.objects.filter(first_post__moderation_state="OK",
                                                   last_post__moderation_state="OK") \
                                           .order_by('-last_post__created') \
                                           .select_related('author',
@@ -198,7 +186,8 @@ def front_page(request):
                                                           'last_post',
                                                           'last_post__author',
                                                           'last_post__thread',
-                                                          'last_post__thread__forum')
+                                                          'last_post__thread__forum')[:10]
+
     num_latest_sounds = 5 if not using_beastwhoosh(request) else 9
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
@@ -226,11 +215,12 @@ def front_page(request):
         'rss_cache': rss_cache,
         'popular_searches': popular_searches,
         'trending_sound_ids': trending_sound_ids,
+        'trending_pack_ids': trending_pack_ids,
         'current_forum_threads': current_forum_threads,
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,
         'top_donor': top_donor,
-        'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,  # Not needed for NG
+        'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
     }
     return render(request, 'front.html', tvars)
 

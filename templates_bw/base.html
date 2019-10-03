@@ -20,6 +20,10 @@
     </noscript>
     <div class="notifications-wrapper"></div>
     <div class="bw-page">
+    {% block navbar %}
+        {% comment %}This block can be overriden by pages that use a different navbar{% endcomment %}
+        {% include 'molecules/navbar.html' %}
+    {% endblock %}
     {% block content %}
     {% endblock %}
     </div>

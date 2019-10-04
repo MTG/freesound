@@ -36,7 +36,7 @@
 <p id="filter_query_display">
 
 {% for filter in filter_query_split %}
-    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="remove this filter">{{ filter.name }}</a>
+    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}&s={{sort_unformatted}}" title="remove this filter">{{ filter.name }}</a>
 {% endfor %}
 
 </p>
@@ -76,6 +76,11 @@
         		descriptions[j].innerHTML = descriptions[j].innerHTML.replace(re,"<b>"+term+"</b>");
         	}
         }
+
+        // Ajax request clustering
+        {% if clustering_on %}
+            request_clustering();
+        {% endif %}
 
     });
 
@@ -201,6 +206,25 @@
         $("#filter_query").val(cleaned);
     }
 
+    // function for requesting clustering
+    function request_clustering()
+    {
+        $.get({% url 'clustering-facet' %} + '?{{ url_query_params_string | safe }}', 
+                {}, 
+                function( data ) {
+                    if (data.status === 'pending') {
+                        setTimeout(() => {
+                            request_clustering();
+                        }, 500);
+                    } else if (data.status === 'failed') {
+                        // clustering failed
+                        $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
+                    } else {
+                        $('#clusters-div').replaceWith(data);
+                    }
+        });
+    }
+
 </script>
 
 {% if error_text %}
@@ -208,6 +232,18 @@
 {% else %}
     {% if facets %}
     <div id="sidebar" style="float:right">
+
+        {% if clustering_on %}
+            <h3>clusters 
+                <a href="{% url 'cluster-visualisation' %}?{{ url_query_params_string | safe }}">
+                    <img src='{{media_url}}images/eye-open.png' width="30px"/>
+                </a>
+            </h3>
+            <div id='clusters-div'>...
+                <br><br>
+            </div>
+        {% endif %}
+
         {% if facets.license and facets.license|length > 1 %}
             <h3>licenses</h3>
             {% display_facet "license" facets.license "list" %}

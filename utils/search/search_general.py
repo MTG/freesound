@@ -22,17 +22,354 @@ import logging
 import math
 import random
 import socket
+import json
 
+import re
 from django.conf import settings
 
 import sounds
+from search import forms
 from search.forms import SEARCH_SORT_OPTIONS_WEB
-from search.views import search_prepare_sort, search_prepare_query
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrException
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrException, \
+    SolrResponseInterpreterPaginator
 from utils.text import remove_control_chars
+from utils.logging_filters import get_client_ip
 
 logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
+
+
+def search_prepare_sort(sort, options):
+    """Creates sort list for ordering by rating.
+
+    Order by rating, then by number of ratings.
+    
+    Args:
+        sort (str): sort url query parameter.
+        options (List[Tuple(str)]): list containing 2-element tuples with the ordering option names
+        and their corresponding fields in the database. 
+
+    Returns:
+        List[str]: list containing the sorting parameters.
+    """
+    if sort in [x[1] for x in options]:
+        if sort == "avg_rating desc":
+            sort = [sort, "num_ratings desc"]
+        elif  sort == "avg_rating asc":
+            sort = [sort, "num_ratings asc"]
+        else:
+            sort = [sort]
+    else:
+        sort = [forms.SEARCH_DEFAULT_SORT]
+    return sort
+
+
+def search_process_filter(filter_query):
+    """Process the filter to replace humnan-readable Audio Commons descriptor names.
+
+    Used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i).
+    The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) 
+    and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names so Solr can 
+    treat the types properly. Now we automatically append the suffices to the filter names so users do not 
+    need to deal with that.
+
+    Args:
+        filter_query (str): query filter string.
+
+    Returns:
+        str: processed filter query string.
+    """
+    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
+        filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
+                                            .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
+    return filter_query
+
+
+def split_filter_query(filter_query, cluster_id):
+    """Parses and pre-process search filter parameters and returns the filters' information.
+
+    This function is used in the search template to display the filter and the link when removing them.
+    The clustering facet filter is in a separate query parameter. It facilitates to distinguish them from
+    the classical facet filters.
+
+    Args:
+        filter_query (str): query filter string.
+        cluster_id (str): cluster filter string.
+
+    Returns:
+        List[dict]: list of dictionaries containing the filter name and the url when removing the filter.
+    """
+    # Generate array with information of filters
+    filter_query_split = []
+    if filter_query != "":
+        for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
+            valid_filter = True
+            filter_str = filter_str + '"'
+            filter_display = filter_str.replace('"', '')
+            filter_name = filter_str.split(":")[0]
+            if filter_name != "duration" and filter_name != "is_geotagged":
+                if filter_name == "grouping_pack":
+                    val = filter_display.split(":")[1]
+                    # If pack does not contain "_" then it's not a valid pack filter
+                    if "_" in val:
+                        filter_display = "pack:"+ val.split("_")[1]
+                    else:
+                        valid_filter = False
+
+                if valid_filter:
+                    filter = {
+                        'name': filter_display,
+                        'remove_url': filter_query.replace(filter_str, ''),
+                    }
+                    filter_query_split.append(filter)
+
+    # add cluster filter information
+    if cluster_id and cluster_id.isdigit():
+        filter_query_split.append({
+            'name': "Cluster #" + cluster_id,
+            'remove_url': filter_query,
+        })
+
+    return filter_query_split
+
+
+def search_prepare_parameters(request):
+    """Parses and pre-process search input parameters from the request object and returns them as a dict.
+
+    From the request object, it constructs all the parameters needed for building the Solr query 
+    object. Additionally, other variables are returned for logging purpose, and for building the search
+    view context variables.
+
+    This functions also make easier the replication of the Solr query from the clustering engine.
+
+    Args:
+        request (HttpRequest): request associated with the search query submited by the user.
+    
+    Returns:
+        Tuple(dict, dict, dict): 3-element tuple containing the query parameters needed for building the Solr 
+        query, the advanced search params to be logged and some extra parameters needed in the search view. 
+    """
+    search_query = request.GET.get("q", "")
+    filter_query = request.GET.get("f", "")
+    cluster_id = request.GET.get('cluster_id', "")
+
+    try:
+        current_page = int(request.GET.get("page", 1))
+    except ValueError:
+        current_page = 1
+    sort_unformatted = request.GET.get("s", None)
+    grouping = request.GET.get("g", "1")  # Group by default
+
+    # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
+    # If the query is through AJAX (for sources remix editing), do not collapse
+    if "pack" in filter_query or request.GET.get("ajax", "") == "1":
+        grouping = ""
+
+    # Set default values
+    id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
+    tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
+    description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
+    username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
+    pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
+    original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
+
+    # Parse advanced search options
+    advanced = request.GET.get("advanced", "")
+    advanced_search_params_dict = {}
+
+    if advanced == "1":
+        a_tag = request.GET.get("a_tag", "")
+        a_filename = request.GET.get("a_filename", "")
+        a_description = request.GET.get("a_description", "")
+        a_packname = request.GET.get("a_packname", "")
+        a_soundid = request.GET.get("a_soundid", "")
+        a_username = request.GET.get("a_username", "")
+
+        # These are stored in a dict to facilitate logging and passing to template
+        advanced_search_params_dict.update({
+            'a_tag': a_tag,
+            'a_filename': a_filename,
+            'a_description': a_description,
+            'a_packname': a_packname,
+            'a_soundid': a_soundid,
+            'a_username': a_username,
+        })
+
+        # If none is selected use all (so other filter can be appleid)
+        if a_tag or a_filename or a_description or a_packname or a_soundid or a_username != "" :
+
+            # Initialize all weights to 0
+            id_weight = 0
+            tag_weight = 0
+            description_weight = 0
+            username_weight = 0
+            pack_tokenized_weight = 0
+            original_filename_weight = 0
+
+            # Set the weights of selected checkboxes
+            if a_soundid != "":
+                id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
+            if a_tag != "":
+                tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
+            if a_description != "":
+                description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
+            if a_username != "":
+                username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
+            if a_packname != "":
+                pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
+            if a_filename != "":
+                original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
+
+    sort_options = SEARCH_SORT_OPTIONS_WEB
+    sort = search_prepare_sort(sort_unformatted, sort_options)
+
+    query_params = {
+        'search_query': search_query,
+        'filter_query': filter_query,
+        'sort': sort,
+        'current_page': current_page,
+        'sounds_per_page': settings.SOUNDS_PER_PAGE,
+        'id_weight': id_weight,
+        'tag_weight': tag_weight,
+        'description_weight': description_weight,
+        'username_weight': username_weight,
+        'pack_tokenized_weight': pack_tokenized_weight,
+        'original_filename_weight': original_filename_weight,
+        'grouping': grouping,
+    }
+
+    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+
+    extra_vars = {
+        'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
+        'sort_unformatted': sort_unformatted,
+        'advanced': advanced,
+        'sort_options': sort_options,
+    }
+
+    return query_params, advanced_search_params_dict, extra_vars
+
+
+def search_prepare_query(search_query,
+                         filter_query,
+                         sort,
+                         current_page,
+                         sounds_per_page,
+                         id_weight=settings.DEFAULT_SEARCH_WEIGHTS['id'],
+                         tag_weight=settings.DEFAULT_SEARCH_WEIGHTS['tag'],
+                         description_weight=settings.DEFAULT_SEARCH_WEIGHTS['description'],
+                         username_weight=settings.DEFAULT_SEARCH_WEIGHTS['username'],
+                         pack_tokenized_weight=settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
+                         original_filename_weight=settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
+                         grouping=False,
+                         include_facets=True,
+                         grouping_pack_limit=1,
+                         offset=None,
+                         in_ids=[]):
+    """Create the Solr query object given the query parameters.
+    
+    Args:
+        search_query (str): query string.
+        filter_query (str): query filter string.
+        sort (str): sort option string.
+        current_page (int): requested page of the results.
+        sounds_per_page (int): number of sounds per page.
+        id_weight (int): id weight for the query.
+        tag_weight (int): tag weight for the query.
+        description_weight (int): description weight for the query.
+        username_weight (int): username weight for the query.
+        pack_tokenized_weight (int): pack weight for the query.
+        original_filename_weight (int): filename weight for the query.
+        grouping (bool): only show one (or more) sounds for each pack.
+        include_facets (bool): include facets or no.
+        grouping_pack_limit (int): number of sounds showed for each pack.
+        offset (int): a numerical offset.
+        in_ids (list): list of sound ids for cluster filter facet.
+
+    Returns: (SolrQuery): the solr query object corresponding to the user submitted query.
+
+    """
+    query = SolrQuery()
+
+    # Set field weights and scoring function
+    field_weights = []
+    for weight, weight_str in [(id_weight, "id"),
+                               (tag_weight, "tag"),
+                               (description_weight, "description"), 
+                               (username_weight, "username"),
+                               (pack_tokenized_weight, "pack_tokenized"),
+                               (original_filename_weight, "original_filename")]:
+        if weight != 0:
+            field_weights.append((weight_str, weight))
+
+    query.set_dismax_query(search_query,
+                           query_fields=field_weights,)
+
+    # Set start and rows parameters (offset and size)
+    if not offset:
+        start = (current_page - 1) * sounds_per_page
+    else:
+        start = offset
+
+    # Process filter
+    filter_query = search_process_filter(filter_query)
+
+    # Process filter for clustering.
+    # When applying a cluster facet filter, the sounds in the clusters already have been filtered by other 
+    # present filter. So there is no need to keep in filter_query all the other filters.
+    # When a cluster filter is applied and the user applies another facet filter, it simply removes the cluster
+    # filter and re-computes the clustering for the new filters (this logic is done with the facet 
+    # remove_url links).
+    if in_ids:
+        filter_query = ''
+        if len(in_ids) == 1:
+            filter_query += 'id:{}'.format(in_ids[0])
+        else:
+            filter_query += 'id:'
+            filter_query += ' OR id:'.join(in_ids)
+
+    # Set all options
+    query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
+
+    # Specify query factes
+    if include_facets:
+        query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
+        query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
+        query.set_facet_options("type", limit=len(sounds.models.Sound.SOUND_TYPE_CHOICES))
+        query.set_facet_options("tag", limit=30)
+        query.set_facet_options("username", limit=30)
+        query.set_facet_options("grouping_pack", limit=10)
+        query.set_facet_options("license", limit=10)
+
+    # Add groups
+    if grouping:
+        query.set_group_field(group_field="grouping_pack")
+        query.set_group_options(
+            group_func=None,
+            group_query=None,
+            group_rows=10,
+            group_start=0,
+            group_limit=grouping_pack_limit,  # This is the number of documents that will be returned for each group. By default only 1 is returned.
+            group_offset=0,
+            group_sort=None,
+            group_sort_ingroup=None,
+            group_format='grouped',
+            group_main=False,
+            group_num_groups=True,
+            group_cache_percent=0)
+    return query
+
+
+def perform_solr_query(q, current_page):
+    """
+    This util function performs the query to Solr and returns needed parameters to continue with the view.
+    The main reason to have this util function is to facilitate mocking in unit tests for this view.
+    """
+    solr = Solr(settings.SOLR_URL)
+    results = SolrResponseInterpreter(solr.select(unicode(q)))
+    paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+    page = paginator.page(current_page)
+    return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
 
 def convert_to_solr_document(sound):

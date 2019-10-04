@@ -9,6 +9,7 @@ before_install:
 - cp freesound/local_settings.example.py freesound/local_settings.py
 - cp freesound/logger.example.py freesound/logger.py
 - cp similarity/similarity_settings.example.py similarity/similarity_settings.py
+- cp clustering/clustering_settings.example.py clustering/clustering_settings.py
 - cp tagrecommendation/tagrecommendation_settings.example.py tagrecommendation/tagrecommendation_settings.py
 - sed -i 's$/path/to/django/debug.log$debug.log$' freesound/logger.py
 - sed -i 's$^DISPLAY_DEBUG_TOOLBAR.*$DISPLAY_DEBUG_TOOLBAR = False$' freesound/local_settings.py

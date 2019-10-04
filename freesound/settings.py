@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'bookmarks',
     'forum',
     'search',
+    'clustering',
     'django_extensions',
     'tickets',
     'gunicorn',
@@ -568,6 +569,18 @@ TEMPLATES = [
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
+
+
+# Search Result Clustering Environment variables
+# '1' indicates that a process is running as a celery worker.
+# We get it from environment variable to avoid the need of a specific settings file for celery workers.
+# We enable the imports of clustering dependencies only in celery workers.
+IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
+
+# Determines whether to use or not the clustering feature.
+# Set to False by default (to be overwritten in local_settings.py)
+# When activated, Enables to do js calls & html clustering facets rendering
+ENABLE_SEARCH_RESULTS_CLUSTERING = False
 
 
 # -------------------------------------------------------------------------------

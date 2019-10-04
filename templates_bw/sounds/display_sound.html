@@ -6,7 +6,7 @@
 {% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size %}
     <div
         class="bw-player"
-        data-size="{{ player_size }}"
+        data-size="{% if player_size == 'small' or player_size == 'small_no_info' %}small{% elif player_size == 'big_no_info' %}big{% endif %}"
         data-mp3="{{ sound.locations.preview.LQ.mp3.url }}"
         data-ogg="{{ sound.locations.preview.LQ.ogg.url }}"
         data-waveform="{{ sound.locations.display.wave_bw.M.url }}"

@@ -22,7 +22,7 @@
 import datetime
 import json
 import logging
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 import re
 from django.conf import settings
@@ -173,7 +173,7 @@ def clustering_facet(request):
     if result['finished']:
         if result['result'] is not None:
             results = result['result']
-            num_clusters = num_clusters = len(results) + 1
+            num_clusters = len(results) + 1
         else:
              return JsonResponse({'status': 'failed'}, safe=False)
     elif result['error']:
@@ -188,13 +188,16 @@ def clustering_facet(request):
     sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, classes.keys()))
     sound_tags = {sound.id: sound.tag_array for sound in sound_instances}
     cluster_tags = defaultdict(list)
+
+    # extract tags for each clusters and do not use query terms for labeling clusters
     query_terms = {t.lower() for t in request.GET.get('q', '').split(' ')}
     for sound_id, tags in sound_tags.iteritems():
         cluster_tags[classes[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
-    cluster_tags_with_count = {k: sorted([(t, tags.count(t)) for t in set(tags)], 
-                                         key=lambda x: x[1], reverse=True)
-                               for k, tags in cluster_tags.iteritems()}
-    cluster_most_occuring_tags = [' '.join(zip(*tags[:3])[0]) for tags in cluster_tags_with_count.values() if len(tags)>2]  # dict values sorted?!
+
+    # count 3 most occuring tags
+    # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict 
+    cluster_most_occuring_tags = [' '.join(zip(*Counter(cluster_tags[cluster_id]).most_common(3))[0]) 
+                                  for cluster_id in range(len(results))]
 
     return render(request, 'search/clustering_facet.html', {
             'results': classes,

@@ -147,6 +147,13 @@ def _get_ids_in_cluster(request, requested_cluster_id):
         return []
     except IndexError:
         return []
+    except KeyError:
+        # If the clustering is not in cache the 'result' key won't exist
+        # This means that the clustering computation will be triggered asynchronously.
+        # Moreover, the applied clustering filter will have no effect.
+        # Somehow, we should inform the user that the clustering results were not available yet, and that
+        # he should try again later to use a clustering facet.
+        return []
 
     return sounds_from_requested_cluster
 

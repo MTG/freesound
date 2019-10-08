@@ -235,6 +235,8 @@ class ClusteringEngine():
         # Create k nearest neighbors graph        
         graph = nx.Graph()
         graph.add_nodes_from(sound_ids_list)
+        # we set k to log2(N), where N is the number of elements to cluster. This allows us to reach a sufficient number of 
+        # neighbors for small collections, while limiting it for larger collections, which ensures low-computational complexity.
         k = int(np.ceil(np.log2(len(sound_ids_list))))
 
         for sound_id in sound_ids_list:

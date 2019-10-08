@@ -7,7 +7,8 @@ from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 @task(name="cluster_sounds")
 def cluster_sounds(cache_key_hashed, sound_ids, features):
-    # this import would be better outside the function, but did not work
+    # This ensures that the engine is imported after it is re-assigned in __init__.py
+    # There should be a better way to do it to avoid multiple imports that can decrease performance
     from . import engine
 
     # store pending state in cache

@@ -242,9 +242,9 @@ class ClusteringEngine():
         for sound_id in sound_ids_list:
             try:
                 nearest_neighbors = self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list, features=features)
-                # edges += [(sound_id, i[0]) for i in nearest_neighbors if i[1]<20]
-                graph.add_edges_from([(sound_id, i[0]) for i in nearest_neighbors if i[1]<20])
-                # graph.add_weighted_edges_from([(sound_id, i[0], 1/i[1]) for i in nearest_neighbors if i[1]<10])
+                # edges += [(sound_id, i[0]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE]
+                graph.add_edges_from([(sound_id, i[0]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE])
+                # graph.add_weighted_edges_from([(sound_id, i[0], 1/i[1]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE])
             except ValueError:  # node does not exist in Gaia dataset
                 graph.remove_node(sound_id)
 

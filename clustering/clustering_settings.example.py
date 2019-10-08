@@ -40,3 +40,6 @@ CLUSTERING_PENDING_CACHE_TIME = 60*1
 
 # Folder for saving the clustering results with evaluation (dev/debug/research purpose)
 SAVE_RESULTS_FOLDER = None
+
+# Limit of distance when creating Nearest Neighbors graph
+MAX_NEIGHBORS_DISTANCE = 20

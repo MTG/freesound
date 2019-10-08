@@ -84,7 +84,9 @@ class GaiaWrapperClustering:
 
             return nearest_neighbors
 
-        # probably be more specific here...
+        except AttributeError:
+            logger.info('The requested gaia view or metric corresponding to "{}" features does not exist'.format(features))
+
         except Exception as e:
             logger.info(e)
             return []

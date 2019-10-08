@@ -389,15 +389,15 @@ class ClusteringEngine():
                 .format(len(sound_ids_list), ', '.join(sound_ids_list[:20]), json.dumps(query_params)))
 
         graph = self.create_knn_graph(sound_ids_list, features=features)
-        # graph = self.create_common_nn_graph(sound_ids_list, features=features)
 
         if len(graph.nodes) == 0:  # the graph does not contain any node
             return {'error': False, 'result': None, 'graph': None}
 
         classes, num_communities, communities, modularity = self.cluster_graph(graph)
-        # classes, num_communities, communities, modularity = self.cluster_graph_overlap(graph)
+
         ratio_intra_community_edges = self._ratio_intra_community_edges(graph, communities)
 
+        # Here we could add a step for discarding some clusters, for instance by doing:
         # graph, classes, communities, ratio_intra_community_edges = self.remove_lowest_quality_cluster(
         #         graph, classes, communities, ratio_intra_community_edges)
 
@@ -423,8 +423,9 @@ class ClusteringEngine():
         # Export graph as json
         graph_json = json_graph.node_link_data(graph)
 
-        # self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
-        #                            num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
+        # Save results to file if SAVE_RESULTS_FOLDER is configured in clustering settings
+        self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
+                                   num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
 
         return {'error': False, 'result': communities, 'graph': graph_json}
 

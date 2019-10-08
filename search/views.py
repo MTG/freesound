@@ -186,7 +186,7 @@ def clustering_facet(request):
 
     # label clusters using most occuring tags
     sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, classes.keys()))
-    sound_tags = {sound.id: sound.get_sound_tags() for sound in sound_instances}
+    sound_tags = {sound.id: sound.tag_array for sound in sound_instances}
     cluster_tags = defaultdict(list)
     query_terms = {t.lower() for t in request.GET.get('q', '').split(' ')}
     for sound_id, tags in sound_tags.iteritems():

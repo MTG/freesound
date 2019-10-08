@@ -240,6 +240,9 @@ def search_prepare_parameters(request):
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
+    # These variables are not used for querying the sound collection
+    # We keep them separated in order to facilitate the distinction between variables used for performing
+    # the Solr query and these extra ones needed for rendering the search template page
     extra_vars = {
         'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
         'sort_unformatted': sort_unformatted,

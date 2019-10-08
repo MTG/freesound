@@ -198,7 +198,7 @@ def clustering_facet(request):
 
 def cluster_visualisation(request):
     url_query_params_string = request.META['QUERY_STRING']
-    return render(request, 'search/clustered_graph.html', {
+    return render(request, 'search/clustering_graph_visualisation.html', {
             'url_query_params_string': url_query_params_string,
     })
 

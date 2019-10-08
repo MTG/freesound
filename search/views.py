@@ -220,16 +220,17 @@ def clustered_graph(request):
     graph = result['graph']
 
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
-    preview_urls_name_tags_by_id = {s.id:(s.get_preview_abs_url()[21:],
-                                          s.original_filename,
-                                          ' '.join(s.get_sound_tags()),
-                                          s.get_absolute_url()) for s in results}
+
+    sound_metadata = {s.id:(s.locations()['preview']['LQ']['ogg']['url'],
+                            s.original_filename,
+                            ' '.join(s.tag_array),
+                            s.get_absolute_url()) for s in results}
 
     for node in graph['nodes']:
-        node['url'] = preview_urls_name_tags_by_id[int(node['id'])][0]
-        node['name'] = preview_urls_name_tags_by_id[int(node['id'])][1]
-        node['tags'] = preview_urls_name_tags_by_id[int(node['id'])][2]
-        node['sound_page_url'] = preview_urls_name_tags_by_id[int(node['id'])][3]
+        node['url'] = sound_metadata[int(node['id'])][0]
+        node['name'] = sound_metadata[int(node['id'])][1]
+        node['tags'] = sound_metadata[int(node['id'])][2]
+        node['sound_page_url'] = sound_metadata[int(node['id'])][3]
 
     return JsonResponse(json.dumps(graph), safe=False)
 

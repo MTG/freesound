@@ -54,8 +54,7 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
                 '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params)
 
     cache_key += '-{}'.format(features)
-    cache_key = cache_key.replace(' ', '')
-
+    
     cache_key_hashed = hash_cache_key(cache_key)
 
     # check if result is in cache

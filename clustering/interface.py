@@ -54,17 +54,14 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
                 '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params)
 
     cache_key += '-{}'.format(features)
-    
+
     cache_key_hashed = hash_cache_key(cache_key)
 
     # check if result is in cache
     result = cache.get(cache_key_hashed)
 
     if result and result not in (CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED):
-        # reset the value in cache so that it presists
-        cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
         result.update({'finished': True, 'error': False})
-
         return result
 
     elif result == CLUSTERING_RESULT_STATUS_PENDING:

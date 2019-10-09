@@ -1,8 +1,11 @@
 from django.core.cache import cache
 from celery.decorators import task
+import logging
 
 from clustering_settings import CLUSTERING_CACHE_TIME, CLUSTERING_PENDING_CACHE_TIME
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
+
+logger = logging.getLogger('clustering')
 
 
 @task(name="cluster_sounds")
@@ -24,3 +27,4 @@ def cluster_sounds(cache_key_hashed, sound_ids, features):
     except Exception as e:  
         # delete pending state if exception raised during clustering
         cache.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_FAILED, CLUSTERING_PENDING_CACHE_TIME)
+        logger.error("Exception raised while clustering sounds", exc_info=True)

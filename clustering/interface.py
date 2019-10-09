@@ -25,9 +25,15 @@ def get_sound_ids_from_solr_query(query_params):
         List[int]: list containing the ids of the retrieved sounds.
     """
     current_page = 1
-    query_params.update({'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING})
+
+    # We set include_facets to False in order to reduce the amount of data that Solr will return
+    query_params.update({
+        'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING,
+        'include_facets': False
+    })
     query = search_prepare_query(**query_params)
-    non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
+    _, _, _, _, docs = perform_solr_query(query, current_page)
+
     resultids = [d.get("id") for d in docs]
     return resultids
 

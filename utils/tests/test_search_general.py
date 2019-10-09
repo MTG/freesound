@@ -110,23 +110,54 @@ class SearchUtilsTest(TestCase):
 
     def test_split_filter_query_duration_and_facet(self):
         # We check that the combination of a duration filter and a facet filter (CC Attribution) works correctly.
-        filter_query_string = u'duration:[0 TO 10] license:"Attribution"'
+        filter_query_string = u'duration:[0 TO 10] license:"Attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
         filter_query_split = split_filter_query(filter_query_string, '')
 
         # duraton filter is not a facet, but should stay present when removing a facet.
         expected_filter_query_split = [
             {'remove_url': u'duration:[0 TO 10]', 'name': u'license:Attribution'}, 
         ]
+        expected_filter_query_split = [
+            {'remove_url': u'duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"', 'name': u'license:Attribution'}, 
+            {'remove_url': u'duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"', 'name': u'username:XavierFav'}, 
+            {'remove_url': u'duration:[0 TO 10] license:"Attribution" username:"XavierFav"', 'name': u'pack:best-pack-ever'},
+        ]
+
+        # the order does not matter for the list of facet dicts.
+        # we get the index of the correspondings facets dicts.
+        filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
+        cc_attribution_facet_dict_idx = filter_query_names.index('license:Attribution')
+        username_facer_dict_idx = filter_query_names.index('username:XavierFav')
+        grouping_pack_facet_dict_idx = filter_query_names.index('pack:best-pack-ever')
 
         # we use assertIn because the unicode strings that split_filter_query generates can incorporate 
-        # additional spaces, which is not a problem.
-        self.assertIn(expected_filter_query_split[0]['name'], filter_query_split[0]['name'])
-        self.assertIn(expected_filter_query_split[0]['remove_url'], filter_query_split[0]['remove_url'])
+        # additional spaces at the end of the string, which is not a problem.
+        # Additonally, some additional spaces have been observed in the middle of the remove_url string. We replace double
+        # spaces with single ones in this test. However, we should probably identify where does this additional spaces 
+        # come from.
+        # 1-Attribution
+        self.assertIn(expected_filter_query_split[0]['name'], 
+                      filter_query_split[cc_attribution_facet_dict_idx]['name'])
+        self.assertIn(expected_filter_query_split[0]['remove_url'], 
+                      filter_query_split[cc_attribution_facet_dict_idx]['remove_url'].replace('  ', ' '))
+
+        # 2-Username
+        self.assertIn(expected_filter_query_split[1]['name'], 
+                      filter_query_split[username_facer_dict_idx]['name'])
+        self.assertIn(expected_filter_query_split[1]['remove_url'], 
+                      filter_query_split[username_facer_dict_idx]['remove_url'].replace('  ', ' '))
+
+        # 3-Pack
+        self.assertIn(expected_filter_query_split[2]['name'], 
+                      filter_query_split[grouping_pack_facet_dict_idx]['name'])
+        self.assertIn(expected_filter_query_split[2]['remove_url'], 
+                      filter_query_split[grouping_pack_facet_dict_idx]['remove_url'].replace('  ', ' '))
 
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter
         # works correctly.
         filter_query_string = u'duration:[0 TO 10] license:"Attribution"'
+        # the cluster filter is set in the second argument of split_filter_query()
         filter_query_split = split_filter_query(filter_query_string, '1')
 
         expected_filter_query_split = [
@@ -135,7 +166,7 @@ class SearchUtilsTest(TestCase):
         ]
 
         # check that the cluster facet exists
-        filter_query_names = [filter_query_dict['name'] for filter_query_dict in expected_filter_query_split]
+        filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
         self.assertIn('Cluster #1', filter_query_names)
 
         # the order does not matter for the list of facet dicts.

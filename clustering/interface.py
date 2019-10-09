@@ -79,10 +79,9 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     else:
         # if not in cache, query solr and perform clustering
         sound_ids = get_sound_ids_from_solr_query(query_params)
-        sound_ids_string = ','.join([str(sound_id) for sound_id in sound_ids])
 
         # launch clustering with celery async task
-        cluster_sounds.delay(cache_key_hashed, sound_ids_string, features)
+        cluster_sounds.delay(cache_key_hashed, sound_ids, features)
 
         return {'finished': False, 'error': False}
 

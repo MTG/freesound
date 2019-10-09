@@ -378,17 +378,17 @@ class ClusteringEngine():
         Args:
             query_params (str): string representing the query parameters submited by the user to the search engine.
             features (str): name of the features used for clustering the sounds.
-            sound_ids (str): string containing comma-separated sound ids.
+            sound_ids (List[int]): list containing the ids of the sound to cluster.
         
         Returns:
             Dict: contains the resulting clustering classes and the graph in node-link format suitable for JSON serialization.
         """
         start_time = time()
-        sound_ids_list = [str(fs_id) for fs_id in sound_ids.split(',')]
+        sound_ids = [str(s) for s in sound_ids]
         logger.info('Request clustering of {} points: {} ... from the query "{}"'
-                .format(len(sound_ids_list), ', '.join(sound_ids_list[:20]), json.dumps(query_params)))
+                .format(len(sound_ids), ', '.join(sound_ids[:20]), json.dumps(query_params)))
 
-        graph = self.create_knn_graph(sound_ids_list, features=features)
+        graph = self.create_knn_graph(sound_ids, features=features)
 
         if len(graph.nodes) == 0:  # the graph does not contain any node
             return {'error': False, 'result': None, 'graph': None}

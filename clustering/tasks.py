@@ -17,7 +17,7 @@ def cluster_sounds(cache_key_hashed, sound_ids, features):
 
     Args:
         cache_key_hashed (str): hashed key for storing/retrieving the results in cache.
-        sound_ids (str): string containing comma-separated sound ids.
+        sound_ids (List[int]): list containing the ids of the sound to cluster.
         features (str): name of the features used for clustering the sounds (defined in the clustering settings file).
     """
     # This ensures that the engine is imported after it is re-assigned in __init__.py

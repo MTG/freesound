@@ -110,6 +110,7 @@ class GaiaWrapperClustering:
             try:
                 reference_features.append(gaia_dataset.point(sound_id).value(gaia_descriptor_names))
             except Exception as e:
+                # Gaia raises only broad exceptions. Here it would correspond to a sound that is not found in the dataset
                 logger.info(e)
                 reference_features.append(None)
         return reference_features

@@ -398,6 +398,7 @@ class Profile(SocialModel):
 
         self.save()
         self.user.save()
+
         if remove_sounds:
             Sound.objects.filter(user=self.user).delete()
             Pack.objects.filter(user=self.user).update(is_deleted=True)
@@ -445,6 +446,7 @@ class DeletedUser(models.Model):
     """
     This model is used to store basic information about users that have been deleted or anonymized.
     """
+    user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
     username = models.CharField(max_length=150)
     email = models.CharField(max_length=200)
     deletion_date = models.DateTimeField(db_index=True, auto_now_add=True)

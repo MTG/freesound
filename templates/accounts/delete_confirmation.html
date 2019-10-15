@@ -9,36 +9,53 @@
 {% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} delete-confirmation{% endblock %}
 
 {% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-</div>
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    </div>
 {% endblock %}
 
 {% block content %}
-{% for anon in anonymised %}
-<p>The User "{{anon.name}}" will be {% if anon.deleted %}deleted{% else %}anonymised{% endif %}</p>
-  {% if anon.logic_deleted %} {{ anon.logic_deleted.count}} Packs will be logically deleted {% endif %}
+    {% for user_info in users_to_delete%}
+        <p>The user "{{user_info.profile.user.username}}" will be
+            {% if type == 'delete_preserve_sounds' %}
+                deleted but <b>the sounds will still be available</b>.
+                <br>All user related objects like comments and forum posts will be also preserved but will be displayed
+                as having been created by a "deleted user".
+            {% elif type == 'delete_include_sounds' %}
+                deleted, <b>including its sounds and packs</b>.
+                <br>All user related objects like comments and forum posts will be preserved but will be displayed
+                as having been created by a "deleted user".
+            {% elif type == 'delete_spammer' %}
+                completely deleted from the database because of being a <b>spammer</b>. All related user information
+                such as sounds, packs, forum posts, comments, etc. will be deleted as well.
+            {% elif type == 'full_delete' %}
+                completely deleted from the database, including all the related sound, packs, forum posts, comments
+                and any other related objects. This will not create a <i>DeletedUser</i> record on the DB.
+                <b>This option should only be used if you really know what you're doing...</b>
+            {% endif %}
+        </p>
 
-  {% if anon.model_count %}
-  <p>The following elements will be completely deleted:</p>
-  <ul>
-    {% for model_name, object_count in anon.model_count %}
-    <li>{{ model_name|capfirst }}: {{ object_count }}</li>
+        {% if user_info.deleted_objects_details %}
+            <p>These are the objects that will be deleted:</p>
+            <ul>
+                {% for model_name, object_count in user_info.deleted_objects_details.model_count %}
+                    <li>{{ model_name|capfirst }}: {{ object_count }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
     {% endfor %}
-  </ul>
-  {% endif %}
-  {% endfor %}
-  <form method="post">{% csrf_token %}
-  <div>
-  <input type="hidden" name="post" value="yes" />
-  {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
-  {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
-  <input type="hidden" name="confirmation" value="1" />
-  <input type="submit" value="{% trans "Yes, I'm sure" %}" />
-  {% for param, value in params  %}
-  <input type="hidden" value="{{value}}" name='{{param}}'/>
-  {% endfor %}
-  <a href="#" onclick="window.history.back(); return false;" class="button cancel-link">{% trans "No, take me back" %}</a>
-  </div>
-  </form>
+    <form method="post">{% csrf_token %}
+        <div>
+            <input type="hidden" name="post" value="yes" />
+            {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
+            {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
+            <input type="hidden" name="confirmation" value="1" />
+            <input type="submit" value="{% trans "Yes, I'm sure" %}" />
+            {% for param, value in params  %}
+                <input type="hidden" value="{{value}}" name='{{param}}'/>
+            {% endfor %}
+            <a href="#" onclick="window.history.back(); return false;" class="button cancel-link">{% trans "No, take me back" %}</a>
+        </div>
+    </form>
 {% endblock %}

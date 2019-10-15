@@ -20,19 +20,19 @@
 
 import json
 import logging
+import os
 
 import gearman
-import os
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
+from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
+    DELETE_USER_KEEP_SOUNDS_ACTION_NAME, DELETE_SPAMMER_USER_ACTION_NAME
+from accounts.models import DeletedUser
+from sounds.models import BulkUploadProgress
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
-from sounds.models import BulkUploadProgress
-from sounds.management.commands import csv_bulk_upload
-from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
-    DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 
 logger = logging.getLogger("console")
 logger_async_tasks = logging.getLogger('async_tasks')
@@ -106,34 +106,54 @@ class Command(BaseCommand):
         user = User.objects.get(id=data['user_id'])
 
         try:
+            if data['action'] == DELETE_USER_KEEP_SOUNDS_ACTION_NAME:
+                # This will anonymize the user and will keep the sounds publicly availabe under a "deleted user"
+                # account. A DeletedUser object will be created, but no DeletedSound objects will be created as sound
+                # will be still available. Extra user content (posts, comments, etc) will be preserved but shown as
+                # being authored by a "deleted user".
+
+                user.profile.delete_user(deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN)
+                message = "Async delete user: %d (keep sounds)" % data['user_id']
+                self.write_stdout(message)
+                logger_async_tasks.info(message)
+                return 'true'
+
+            elif data['action'] == DELETE_USER_DELETE_SOUNDS_ACTION_NAME:
+                # This will anonymize the user and remove the sounds. A DeletedUser object will be created
+                # as well as DeletedSound objects for each deleted sound, but sounds will no longer be
+                # publicly available. Extra user content (posts, comments, etc) will be preserved but shown as
+                # being authored by a "deleted user".
+
+                user.profile.delete_user(remove_sounds=True,
+                                         deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN)
+                message = "Async delete user: %d (include sounds)" % data['user_id']
+                self.write_stdout(message)
+                logger_async_tasks.info(message)
+                return 'true'
+
+            if data['action'] == DELETE_SPAMMER_USER_ACTION_NAME:
+                # This will completely remove the user object and all of its related data (including sounds)
+                # from the database. A DeletedUser object will be creaetd to keep a record of a user having been
+                # deleted.
+
+                user.profile.delete_user(delete_user_object_from_db=True,
+                                         deletion_reason=DeletedUser.DELETION_REASON_SPAMMER)
+                message = "Async delete user: %d (spammer)" % data['user_id']
+                self.write_stdout(message)
+                logger_async_tasks.info(message)
+                return 'true'
+
             if data['action'] == FULL_DELETE_USER_ACTION_NAME:
                 # This will fully delete the user and the sounds from the database.
-                # WARNING: Once the sounds are deleted NO DeletedSound object will
-                # be created.
+                # WARNING: This functions creates no DeletedSound nor DeletedUser objects and leaves
+                # absolutely no trace about the user.
+
                 user.delete()
                 message = "Async delete user: %d (full delete)" % data['user_id']
                 self.write_stdout(message)
                 logger_async_tasks.info(message)
                 return 'true'
 
-            elif data['action'] == DELETE_USER_KEEP_SOUNDS_ACTION_NAME:
-                # This will anonymize the user and will keep the sounds publicly
-                # availabe
-                user.profile.delete_user()
-                message = "Async delete user: %d (sounds kept)" % data['user_id']
-                self.write_stdout(message)
-                logger_async_tasks.info(message)
-                return 'true'
-
-            elif data['action'] == DELETE_USER_DELETE_SOUNDS_ACTION_NAME:
-                # This will anonymize the user and remove the sounds, a
-                # DeletedSound object will be created for each sound but kill not
-                # be publicly available
-                user.profile.delete_user(True)
-                message = "Async delete user: %d (including sounds)" % data['user_id']
-                self.write_stdout(message)
-                logger_async_tasks.info(message)
-                return 'true'
         except Exception as e:
             # This exception is broad but we catch it so that we can log that an error happened.
             # TODO: catching more specific exceptions would be desirable

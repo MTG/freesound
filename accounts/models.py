@@ -378,56 +378,99 @@ class Profile(SocialModel):
                 ~Q(sound__moderation_state='OK') &\
                 ~Q(status='closed')))
 
-    def get_info_before_delete_user(self, remove_sounds=False, remove_user=False):
+    def get_info_before_delete_user(self, include_sounds=False, include_other_related_objects=False):
         """
         This method can be called before delete_user to display to the user the
         elements that will be modified
         """
 
         ret = {}
-        if remove_sounds:
+        if include_sounds:
             sounds = Sound.objects.filter(user=self.user)
             packs = Pack.objects.filter(user=self.user)
             collector = NestedObjects(using='default')
             collector.collect(sounds)
             ret['deleted'] = collector
             ret['logic_deleted'] = packs
-        if remove_user:
+        if include_other_related_objects:
             collector = NestedObjects(using='default')
             collector.collect([self.user])
             ret['deleted'] = collector
-        ret['anonymised'] = self
+        ret['profile'] = self
         return ret
 
-    def delete_user(self, remove_sounds=False):
+    def delete_user(self, remove_sounds=False,
+                    delete_user_object_from_db=False,
+                    deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN):
         """
-        User.delete() should never be called as it will completely erase the object from the db.
-        Instead, Profile.delete_user() should be used (or user.profile.delete_user()).
+        Custom method for deleting a user from Freesound.
 
-        This method anonymise the user and flags it as deleted. If
-        remove_sounds is True then the Sound (and Pack) object is removed from
-        the database.
+        Depending on the use case, users can be deleted completely from DB, or anonymized by removing their personal
+        data but keeping related user generated content, etc. This method handles all of that and should be always
+        used instead of User.delete().
+
+        When deleting a user using Profile.delete_user(), a DeletedUser object will be always created to leave a
+        trace of when was the user deleted and what was the reason. The original User object will be preserved but all
+        the personal data will be anonymized, and the user will be flagged as having been deleted.
+
+        When deleting a user, it's sounds and packs can either be deleted or preserved (see function args description
+        below). Other related content (ratings, comments, posts) will be preserved (but appear under a "deleted user"
+        account).
+
+        Optionally, a user can be fully deleted from DB including all of its packs, sounds and other relaed content.
+        Even in this case a DeletedUser object will be created to keep a record.
+
+        Args:
+            remove_sounds (bool): if True the sounds created by the user will be deleted as well. Otherwise the sounds
+              will still be available to other users but appear under a "deleted user" account. Defaults to False.
+            delete_user_object_from_db (bool): if True the user object will be completely removed from the DB together
+              with all related content. Defaults to False.
+            deletion_reason (str): reason for the user being deleted. Should be one of the choices defined in
+              DeletedUser.DELETION_REASON_CHOICES. Defaults to DeletedUser.DELETION_REASON_DELETED_BY_ADMIN.
         """
 
-        self.user.username = 'deleted_user_%s' % self.user.id
-        self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
-        self.has_avatar = False
-        self.is_anonymized_user = True
-        self.user.set_unusable_password()
+        # Run all deletion operations in a single transaction so if there is an error we don't create duplicate
+        # DeletedUser objects
+        with transaction.atomic():
 
-        self.about = ''
-        self.home_page = ''
-        self.signature = ''
-        self.geotag = None
+            # Create a DeletedUser object to store basic information for the record
+            DeletedUser.objects.create(
+                user=self.user,
+                username=self.user.username,
+                email=self.user.email,
+                date_joined=self.user.date_joined,
+                last_login=self.user.last_login,
+                reason=deletion_reason)
 
-        self.save()
-        self.user.save()
+            if delete_user_object_from_db:
+                # If user is to be completely deleted from the DB, simply call delete() method. This will remove all
+                # related objects like sounds, packs, comments, etc...
+                self.delete()
 
-        if remove_sounds:
-            Sound.objects.filter(user=self.user).delete()
-            Pack.objects.filter(user=self.user).update(is_deleted=True)
-        else:
-            Sound.objects.filter(user=self.user).update(is_index_dirty=True)
+            else:
+                # If user object is not to be deleted from DB we need to anonymize it and remove sounds if requested
+
+                # Remove personal data from the user
+                self.user.username = 'deleted_user_%s' % self.user.id
+                self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
+                self.has_avatar = False
+                self.is_anonymized_user = True
+                self.user.set_unusable_password()
+
+                self.about = ''
+                self.home_page = ''
+                self.signature = ''
+                self.geotag = None
+
+                self.save()
+                self.user.save()
+
+                # Remove sounds and packs if requested
+                if remove_sounds:
+                    Sound.objects.filter(user=self.user).delete()
+                    Pack.objects.filter(user=self.user).update(is_deleted=True)
+                else:
+                    Sound.objects.filter(user=self.user).update(is_index_dirty=True)
 
     def has_content(self):
         """
@@ -464,23 +507,6 @@ class Profile(SocialModel):
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
-
-
-class DeletedUser(models.Model):
-    """
-    This model is used to store basic information about users that have been deleted or anonymized.
-    """
-    user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
-    username = models.CharField(max_length=150)
-    email = models.CharField(max_length=200)
-    deletion_date = models.DateTimeField(db_index=True, auto_now_add=True)
-    DELETION_REASON_CHOICES = (
-        ('ss', 'Sound spammer'),
-        ('fs', 'Forum spammer'),
-        ('ad', 'Deleted by an admin'),
-        ('sd', 'Self deleted')
-    )
-    type = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)  # TODO: should we add db_index=True?
 
 
 class UserFlag(models.Model):

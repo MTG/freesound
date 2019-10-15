@@ -18,68 +18,66 @@
 #     See AUTHORS file.
 #
 
-import datetime, logging, os, tempfile, shutil, hashlib, base64, json
-import tickets.views as TicketViews
-import utils.sound_upload
+import datetime
 import errno
-from itertools import chain
-from django.db.models.expressions import Value
-from django.db.models.fields import CharField
+import json
+import logging
+import os
+import tempfile
 import uuid
+
 import gearman
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from django.contrib import messages
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import LoginView
-from django.urls import reverse
+from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 from django.db.models import Count, Q
+from django.db.models.expressions import Value
+from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib import messages
-from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.contrib.auth.tokens import default_token_generator
-from django.views.decorators.cache import never_cache
+from django.urls import reverse
 from django.utils.http import base36_to_int
-from django.template import loader
 from django.utils.http import int_to_base36
-from django.contrib.sites.shortcuts import get_current_site
-from django.db import transaction
-from django.contrib.auth.models import Group
-from django.contrib.auth.decorators import user_passes_test
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
+from oauth2_provider.models import AccessToken
+
+import tickets.views as TicketViews
+import utils.sound_upload
+from accounts.forms import EmailResetForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser, \
-    EmailBounce
-from accounts.forms import EmailResetForm
+from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce, DeletedUser
+from bookmarks.models import Bookmark
 from comments.models import Comment
+from follow import follow_utils
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, License, SoundLicenseHistory, BulkUploadProgress, PackDownload, PackDownloadSound
+from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
-from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
+from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
-from utils.onlineusers import get_online_users
 from utils.encryption import create_hash
-from utils.filesystem import generate_tree, md5file, remove_directory_if_empty
+from utils.filesystem import generate_tree, remove_directory_if_empty
 from utils.images import extract_square
-from utils.pagination import paginate
-from utils.text import slugify, remove_control_chars
-from utils.audioprocessing import get_sound_type
-from utils.mail import send_mail, send_mail_template, send_mail_template_to_support, transform_unique_email
-from geotags.models import GeoTag
-from bookmarks.models import Bookmark
-from messages.models import Message
-from oauth2_provider.models import AccessToken
-from follow import follow_utils
-from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations, \
+from utils.mail import send_mail_template, send_mail_template_to_support
+from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
-
+from utils.onlineusers import get_online_users
+from utils.pagination import paginate
+from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
 
 audio_logger = logging.getLogger('audio')
 logger = logging.getLogger("upload")
@@ -1051,7 +1049,8 @@ def delete(request):
         else:
             delete_sounds =\
                 form.cleaned_data['delete_sounds'] == 'delete_sounds'
-            request.user.profile.delete_user(remove_sounds=delete_sounds)
+            request.user.profile.delete_user(remove_sounds=delete_sounds,
+                                             deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)
             logout(request)
             return HttpResponseRedirect(reverse("front-page"))
     else:

@@ -20,39 +20,63 @@
 #     See AUTHORS file.
 #
 
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import fields
+import datetime
+import os
+import random
+
+from django.conf import settings
 from django.contrib.admin.utils import NestedObjects
-from django.db import models
+from django.contrib.auth.models import User
+from django.contrib.contenttypes import fields
+from django.contrib.contenttypes.models import ContentType
+from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
+from django.urls import reverse
 from django.utils.encoding import smart_unicode
 from django.utils.timezone import now
-from django.conf import settings
-from django.urls import reverse
+
+import tickets.models
+from apiv2.models import ApiV2Client
+from bookmarks.models import Bookmark
+from comments.models import Comment
+from donations.models import Donation
+from forum.models import Post, Thread
 from general.models import SocialModel
 from geotags.models import GeoTag
-from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
+from messages.models import Message
+from ratings.models import SoundRating
+from sounds.models import DeletedSound, Sound, Pack, Download, PackDownload, BulkUploadProgress
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
-from forum.models import Post, Thread
-from comments.models import Comment
-from sounds.models import DeletedSound, Sound, Pack, Download, PackDownload, BulkUploadProgress
-from ratings.models import SoundRating
-from bookmarks.models import Bookmark
-from donations.models import Donation
-from messages.models import Message
-from apiv2.models import ApiV2Client
-import tickets.models
-import datetime
-import random
-import os
+from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
 
 
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
     user = models.OneToOneField(User, db_index=True)
+
+
+class DeletedUser(models.Model):
+    """
+    This model is used to store basic information about users that have been deleted or anonymized.
+    """
+    user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
+    username = models.CharField(max_length=150)
+    email = models.CharField(max_length=200)
+    date_joined = models.DateTimeField()
+    last_login = models.DateTimeField()
+    deletion_date = models.DateTimeField(auto_now_add=True)
+
+    DELETION_REASON_SPAMMER = 'sp'
+    DELETION_REASON_DELETED_BY_ADMIN = 'ad'
+    DELETION_REASON_SELF_DELETED = 'sd'
+    DELETION_REASON_CHOICES = (
+        (DELETION_REASON_SPAMMER, 'Spammer'),
+        (DELETION_REASON_DELETED_BY_ADMIN, 'Deleted by an admin'),
+        (DELETION_REASON_SELF_DELETED, 'Self deleted')
+    )
+    reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)  # TODO: should we add db_index=True?
 
 
 class ProfileManager(models.Manager):

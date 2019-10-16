@@ -19,29 +19,29 @@
 #     See AUTHORS file.
 #
 
+import logging
 import time
+
 from django import forms
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
-from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.db.models import Q
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
-from django.template import loader
-from django.urls import reverse
-from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
+from django.db.models import Q
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.utils.safestring import mark_safe
 from multiupload.fields import MultiFileField
-from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, OldUsername
+
+from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
+from utils.encryption import decrypt, encrypt
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
-from utils.encryption import decrypt, encrypt
-import logging
 
 logger = logging.getLogger('web')
 
@@ -147,6 +147,34 @@ class UsernameField(forms.CharField):
             required=required)
 
 
+def username_taken_by_other_user(username):
+    """
+    Check if a given username is already taken and can't be used for newly created users. Only usernames which
+    are not being used by existing User objects, OldUsername objects and DeletedUser objects are considered to be
+    available.
+
+    Args:
+        username (str): username to check
+
+    Returns:
+        bool: True if the username is already taken (not available), False otherwise
+
+    """
+    try:
+        User.objects.get(username__iexact=username)
+    except User.DoesNotExist:
+        try:
+            OldUsername.objects.get(username__iexact=username)
+        except OldUsername.DoesNotExist:
+            try:
+                DeletedUser.objects.get(username__iexact=username)
+            except DeletedUser.DoesNotExist:
+                # Only if no User, OldUsername or DeletedUser objects exist with that username, we consider it not
+                # being taken
+                return False
+    return True
+
+
 class RegistrationForm(forms.Form):
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
     username = UsernameField()
@@ -163,13 +191,8 @@ class RegistrationForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data["username"]
-        try:
-            User.objects.get(username__iexact=username)
-        except User.DoesNotExist:
-            try:
-                OldUsername.objects.get(username__iexact=username)
-            except OldUsername.DoesNotExist:
-                return username
+        if not username_taken_by_other_user(username):
+            return username
         raise forms.ValidationError("A user with that username already exists.")
 
     def clean_email1(self):

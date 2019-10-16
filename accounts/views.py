@@ -57,7 +57,8 @@ import utils.sound_upload
 from accounts.forms import EmailResetForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
+    username_taken_by_other_user
 from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce, DeletedUser
 from bookmarks.models import Bookmark
 from comments.models import Comment
@@ -158,9 +159,8 @@ def check_username(request):
     if username:
         try:
             username_field.run_validators(username)
-            # If the validator passes, check if the username exists in the database
-            user = get_user_from_username_or_oldusername(username)
-            username_valid = user is None
+            # If the validator passes, check if the username is indeed available
+            username_valid = not username_taken_by_other_user(username)
         except ValidationError:
             username_valid = False
 

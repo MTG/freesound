@@ -27,7 +27,7 @@ from django.urls import reverse
 
 
 def get_user_from_username_or_oldusername(username):
-    # Helper to get the user from an username that could have changed
+    # Helper to get the user from a username that could have changed
     user = None
     try:
         user = User.objects.select_related('profile').get(username__iexact=username)

@@ -274,11 +274,20 @@ class SimpleUserTest(TestCase):
         # First we check that the OldUsername object is created
         self.assertEqual(OldUsername.objects.filter(username=username, user=user).count(), 1)
 
+        # Now check that check_username will return false for both old and new usernames
         resp = self.client.get(reverse('check_username'),
                                {'username': username})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
+        resp = self.client.get(reverse('check_username'),
+                               {'username': user.username})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['result'], False)
+
+        # Now delete user and check that the username before deleting is still not available because we also
+        # forbid reuse of usernames in DeletedUser objects
+        user.profile.delete_user()
         resp = self.client.get(reverse('check_username'),
                                {'username': user.username})
         self.assertEqual(resp.status_code, 200)

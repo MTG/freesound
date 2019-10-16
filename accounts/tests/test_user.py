@@ -29,7 +29,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
-from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername
+from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
 from sounds.models import License, Sound, Pack, DeletedSound
@@ -178,6 +178,7 @@ class UserDelete(TestCase):
 
     def test_user_delete_keep_sounds(self):
         # This should set user's attribute active to false and anonymize it
+        # Sounds and other user content should not be deleted
         user = self.create_user_and_content(is_index_dirty=False)
         user.profile.delete_user()
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
@@ -187,64 +188,158 @@ class UserDelete(TestCase):
         self.assertEqual(user.profile.home_page, '')
         self.assertEqual(user.profile.signature, '')
         self.assertEqual(user.profile.geotag, None)
+        self.assertTrue(DeletedUser.objects.filter(user_id=user.id).exists())
 
-        self.assertEqual(Comment.objects.filter(user__id=user.id).exists(), True)
-        self.assertEqual(Thread.objects.filter(author__id=user.id).exists(), True)
-        self.assertEqual(Post.objects.filter(author__id=user.id).exists(), True)
-        self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), False)
-        self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), True)
-        self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), True)
-        self.assertEqual(Sound.objects.filter(user__id=user.id)[0].is_index_dirty, True)
+        self.assertTrue(Comment.objects.filter(user__id=user.id).exists())
+        self.assertTrue(Thread.objects.filter(author__id=user.id).exists())
+        self.assertTrue(Post.objects.filter(author__id=user.id).exists())
+        self.assertFalse(DeletedSound.objects.filter(user__id=user.id).exists())
+        self.assertTrue(Pack.objects.filter(user__id=user.id).exists())
+        self.assertTrue(Sound.objects.filter(user__id=user.id).exists())
+        self.assertTrue(Sound.objects.filter(user__id=user.id)[0].is_index_dirty)
 
+    @mock.patch('sounds.models.delete_sound_from_gaia')
     @mock.patch('sounds.models.delete_sound_from_solr')
-    def test_user_delete_remove_sounds(self, delete_sound_solr):
-        # This should set user's attribute deleted_user to True and anonymize it,
-        # also should remove users Sounds and Packs, and create DeletedSound
-        # objects
+    def test_user_delete_include_sounds(self, delete_sound_from_solr, delete_sound_from_gaia):
+        # This should set user's attribute deleted_user to True and anonymize it
+        # Sounds and Packs should be deleted (creating DeletedSound objects), but other user content should be presevred
         user = self.create_user_and_content()
         user_sounds = Sound.objects.filter(user=user)
         user_sound_ids = [s.id for s in user_sounds]
         user.profile.delete_user(remove_sounds=True)
+
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
         self.assertEqual(user.username, "deleted_user_%s" % user.id)
         self.assertEqual(user.profile.about, '')
         self.assertEqual(user.profile.home_page, '')
         self.assertEqual(user.profile.signature, '')
         self.assertEqual(user.profile.geotag, None)
+        self.assertTrue(DeletedUser.objects.filter(user_id=user.id).exists())
 
-        self.assertEqual(Comment.objects.filter(user__id=user.id).exists(), True)
-        self.assertEqual(Thread.objects.filter(author__id=user.id).exists(), True)
-        self.assertEqual(Post.objects.filter(author__id=user.id).exists(), True)
-        self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), True)
-        self.assertEqual(Pack.objects.filter(user__id=user.id).all()[0].is_deleted, True)
-        self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
-        self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
+        self.assertTrue(Comment.objects.filter(user__id=user.id).exists())
+        self.assertTrue(Thread.objects.filter(author__id=user.id).exists())
+        self.assertTrue(Post.objects.filter(author__id=user.id).exists())
+        self.assertTrue(Pack.objects.filter(user__id=user.id).exists())
+        self.assertTrue(Pack.objects.filter(user__id=user.id).all()[0].is_deleted)
+        self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
+        self.assertTrue(DeletedSound.objects.filter(user__id=user.id).exists())
 
         calls = [mock.call(i) for i in user_sound_ids]
-        delete_sound_solr.assert_has_calls(calls, any_order=True)
+        delete_sound_from_solr.assert_has_calls(calls, any_order=True)
+        delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
 
-    def test_user_delete_using_form(self):
-        # This should set user's attribute active to false and anonymize it
+    @mock.patch('sounds.models.delete_sound_from_gaia')
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_user_delete_sounds_and_user_object(self, delete_sound_from_solr, delete_sound_from_gaia):
+        # This should delete all user content, including the User object, and create a DeletedUser object. This will
+        # NOT create DeletedSound objects.
+        user = self.create_user_and_content()
+        user_sounds = Sound.objects.filter(user=user)
+        user_sound_ids = [s.id for s in user_sounds]
+        user.profile.delete_user(remove_sounds=True, delete_user_object_from_db=True)
+
+        self.assertFalse(User.objects.filter(id=user.id).exists())
+        self.assertTrue(DeletedUser.objects.filter(user_id=user.id).exists())
+        self.assertFalse(Comment.objects.filter(user__id=user.id).exists())
+        self.assertFalse(Thread.objects.filter(author__id=user.id).exists())
+        self.assertFalse(Post.objects.filter(author__id=user.id).exists())
+        self.assertFalse(Pack.objects.filter(user__id=user.id).exists())
+        self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
+        self.assertFalse(DeletedSound.objects.filter(user__id=user.id).exists())
+
+        calls = [mock.call(i) for i in user_sound_ids]
+        delete_sound_from_solr.assert_has_calls(calls, any_order=True)
+        delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
+
+    @mock.patch('sounds.models.delete_sound_from_gaia')
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_user_full_delete(self, delete_sound_from_solr, delete_sound_from_gaia):
+        # This should delete all user content, including the User object and without creating DeletedUser nor
+        # DeletedSound objects.
+        user = self.create_user_and_content()
+        user_sounds = Sound.objects.filter(user=user)
+        user_sound_ids = [s.id for s in user_sounds]
+        user.delete()
+
+        self.assertFalse(User.objects.filter(id=user.id).exists())
+        self.assertFalse(DeletedUser.objects.filter(user_id=user.id).exists())
+        self.assertFalse(Comment.objects.filter(user__id=user.id).exists())
+        self.assertFalse(Thread.objects.filter(author__id=user.id).exists())
+        self.assertFalse(Post.objects.filter(author__id=user.id).exists())
+        self.assertFalse(Pack.objects.filter(user__id=user.id).exists())
+        self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
+        self.assertFalse(DeletedSound.objects.filter(user__id=user.id).exists())
+
+        calls = [mock.call(i) for i in user_sound_ids]
+        delete_sound_from_solr.assert_has_calls(calls, any_order=True)
+        delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
+
+    def test_user_delete_include_sounds_using_web_form(self):
+        # Test user's option to delete user account including the sounds
+
         user = self.create_user_and_content(is_index_dirty=False)
-        a = self.client.login(username=user.username, password='testpass')
+        self.client.login(username=user.username, password='testpass')
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
-        resp = self.client.post(reverse('accounts-delete'),
-                                {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
+        self.client.post(reverse('accounts-delete'),
+                         {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
 
-        self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
+        # Check user is marked as anonymized
+        self.assertTrue(User.objects.get(id=user.id).profile.is_anonymized_user)
 
-    def test_fail_user_delete_using_form(self):
+        # Check sounds have been deleted as well
+        self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
+
+        # Check DeletedUser object has been created for this user with the "self deleted" reason
+        self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, DeletedUser.DELETION_REASON_SELF_DELETED)
+
+    def test_user_delete_keep_sounds_using_web_form(self):
+        # Test user's option to delete user account but preserving the sounds
+
+        user = self.create_user_and_content(is_index_dirty=False)
+        self.client.login(username=user.username, password='testpass')
+        form = DeleteUserForm(user_id=user.id)
+        encr_link = form.initial['encrypted_link']
+        self.client.post(reverse('accounts-delete'),
+                         {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
+
+        # Check user is marked as anonymized
+        self.assertTrue(User.objects.get(id=user.id).profile.is_anonymized_user)
+
+        # Check sounds have not been deleted
+        self.assertTrue(Sound.objects.filter(user__id=user.id).exists())
+
+        # Check DeletedUser object has been created for this user with the "self deleted" reason
+        self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, DeletedUser.DELETION_REASON_SELF_DELETED)
+
+    def test_fail_user_delete_include_sounds_using_web_form(self):
+        # Test delete user account form with wrong password does not delete
+
         # This should try to delete the account but with a wrong password
         user = self.create_user_and_content(is_index_dirty=False)
-        a = self.client.login(username=user.username, password='testpass')
+        self.client.login(username=user.username, password='testpass')
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
-        resp = self.client.post(reverse('accounts-delete'),
-                                {'encrypted_link': encr_link, 'password': 'wrong_pass',
-                                 'delete_sounds': 'delete_sounds'})
+        self.client.post(reverse('accounts-delete'),
+                         {'encrypted_link': encr_link, 'password': 'wrong_pass', 'delete_sounds': 'delete_sounds'})
 
+        # Check user is not marked as anonymized
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, False)
+
+        # Check sounds still exist
+        self.assertTrue(Sound.objects.filter(user__id=user.id).exists())
+
+        # Check no DeletedUser object has been created for that user
+        self.assertFalse(DeletedUser.objects.filter(user_id=user.id).exists())
+
+    def test_delete_user_reasons(self):
+        # Tests that the reasons passed to Profile.delete_user() are effectively added to the created DeletedUser object
+        for reason in [DeletedUser.DELETION_REASON_SELF_DELETED,
+                       DeletedUser.DELETION_REASON_DELETED_BY_ADMIN,
+                       DeletedUser.DELETION_REASON_SPAMMER]:
+            user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+            user.profile.delete_user(deletion_reason=reason)
+            self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, reason)
 
 
 class UserEmailsUniqueTestCase(TestCase):

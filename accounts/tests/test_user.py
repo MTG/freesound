@@ -150,6 +150,8 @@ class UserDelete(TestCase):
 
     def create_user_and_content(self, is_index_dirty=True):
         user = User.objects.create_user("testuser", password="testpass")
+        OldUsername.objects.create(user=user, username="fake_old_username")
+
         # Create comments
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
@@ -189,6 +191,7 @@ class UserDelete(TestCase):
         self.assertEqual(user.profile.signature, '')
         self.assertEqual(user.profile.geotag, None)
         self.assertTrue(DeletedUser.objects.filter(user_id=user.id).exists())
+        self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
 
         self.assertTrue(Comment.objects.filter(user__id=user.id).exists())
         self.assertTrue(Thread.objects.filter(author__id=user.id).exists())
@@ -215,6 +218,7 @@ class UserDelete(TestCase):
         self.assertEqual(user.profile.signature, '')
         self.assertEqual(user.profile.geotag, None)
         self.assertTrue(DeletedUser.objects.filter(user_id=user.id).exists())
+        self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
 
         self.assertTrue(Comment.objects.filter(user__id=user.id).exists())
         self.assertTrue(Thread.objects.filter(author__id=user.id).exists())
@@ -246,6 +250,7 @@ class UserDelete(TestCase):
         self.assertFalse(Pack.objects.filter(user__id=user.id).exists())
         self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
         self.assertFalse(DeletedSound.objects.filter(user__id=user.id).exists())
+        self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
 
         calls = [mock.call(i) for i in user_sound_ids]
         delete_sound_from_solr.assert_has_calls(calls, any_order=True)
@@ -262,6 +267,7 @@ class UserDelete(TestCase):
         user.delete()
 
         self.assertFalse(User.objects.filter(id=user.id).exists())
+        self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
         self.assertFalse(DeletedUser.objects.filter(user_id=user.id).exists())
         self.assertFalse(Comment.objects.filter(user__id=user.id).exists())
         self.assertFalse(Thread.objects.filter(author__id=user.id).exists())

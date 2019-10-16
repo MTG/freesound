@@ -465,6 +465,9 @@ class Profile(SocialModel):
                 self.save()
                 self.user.save()
 
+                # Remove existing OldUsername objects so there are no redirects to the anonymized/deleted user page
+                OldUsername.objects.filter(user=self.user).delete()
+
                 # Remove sounds and packs if requested
                 if remove_sounds:
                     Sound.objects.filter(user=self.user).delete()

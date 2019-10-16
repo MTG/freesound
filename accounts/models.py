@@ -65,7 +65,7 @@ class DeletedUser(models.Model):
     username = models.CharField(max_length=150)
     email = models.CharField(max_length=200)
     date_joined = models.DateTimeField()
-    last_login = models.DateTimeField()
+    last_login = models.DateTimeField(null=True)
     deletion_date = models.DateTimeField(auto_now_add=True)
 
     DELETION_REASON_SPAMMER = 'sp'

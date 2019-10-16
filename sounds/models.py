@@ -907,7 +907,7 @@ class Sound(SocialModel):
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
-        delete_sound_from_gaia(self)
+        delete_sound_from_gaia(self.id)
 
     def invalidate_template_caches(self):
         for is_explicit in [True, False]:

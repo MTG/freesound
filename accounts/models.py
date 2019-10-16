@@ -443,9 +443,9 @@ class Profile(SocialModel):
                 reason=deletion_reason)
 
             if delete_user_object_from_db:
-                # If user is to be completely deleted from the DB, simply call delete() method. This will remove all
+                # If user is to be completely deleted from the DB, use delete() method. This will remove all
                 # related objects like sounds, packs, comments, etc...
-                self.delete()
+                self.user.delete()
 
             else:
                 # If user object is not to be deleted from DB we need to anonymize it and remove sounds if requested

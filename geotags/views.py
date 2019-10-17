@@ -113,12 +113,12 @@ def geotags(request, tag=None):
     return render(request, 'geotags/geotags.html', tvars)
 
 
+@redirect_if_old_username_or_404
 def for_user(request, username):
-    user = get_user_or_404(username)
     tvars = _get_geotags_query_params(request)
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': None,
-        'username': user,
+        'username': request.parameter_user.username,
     })
     return render(request, 'geotags/geotags.html', tvars)
 

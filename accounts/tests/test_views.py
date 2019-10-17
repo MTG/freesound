@@ -74,8 +74,7 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # If user is deleted, get 404
-        self.user.profile.is_anonymized_user = True
-        self.user.profile.save()
+        self.user.profile.delete_user()
         resp = self.client.get(reverse('comments-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
         resp = self.client.get(reverse('comments-by-user', kwargs={'username': self.user.username}))
@@ -87,8 +86,7 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # If user is deleted, get 404
-        self.user.profile.is_anonymized_user = True
-        self.user.profile.save()
+        self.user.profile.delete_user()
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
 
@@ -105,8 +103,7 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # If user is deleted, get 404
-        self.user.profile.is_anonymized_user = True
-        self.user.profile.save()
+        self.user.profile.delete_user()
         resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
         resp = self.client.get(reverse('user-downloaded-packs', kwargs={'username': self.user.username}))
@@ -118,8 +115,7 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # If user is deleted, get 404
-        self.user.profile.is_anonymized_user = True
-        self.user.profile.save()
+        self.user.profile.delete_user()
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
 
@@ -133,8 +129,7 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # If user is deleted, get 404
-        self.user.profile.is_anonymized_user = True
-        self.user.profile.save()
+        self.user.profile.delete_user()
         resp = self.client.get(reverse('user-following-users', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
         resp = self.client.get(reverse('user-followers', kwargs={'username': self.user.username}))

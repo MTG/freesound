@@ -54,7 +54,7 @@ class GeoTagsTests(TestCase):
     def test_browse_geotags_for_user(self):
         user = User.objects.get(username='Anton')
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
-        check_values = {'tag': None, 'username': user}
+        check_values = {'tag': None, 'username': user.username}
         self.check_context(resp.context, check_values)
 
     def test_browse_geotags_for_user_oldusername(self):
@@ -62,8 +62,13 @@ class GeoTagsTests(TestCase):
         user.username = "new_username"
         user.save()
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
-        check_values = {'tag': None, 'username': user}
-        self.check_context(resp.context, check_values)
+        self.assertRedirects(resp, reverse('geotags-for-user', kwargs={'username': user.username}), status_code=301)
+
+    def test_browse_geotags_for_user_deleted_user(self):
+        user = User.objects.get(username='Anton')
+        user.profile.delete_user()
+        resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
+        self.assertEqual(resp.status_code, 404)
 
     def test_geotags_infowindow(self):
         sound = Sound.objects.first()

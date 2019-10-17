@@ -28,7 +28,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 
 from sounds.models import Sound
-from utils.username import get_user_or_404, redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 
 def generate_bytearray(sound_queryset):
@@ -71,6 +71,7 @@ def geotags_box_barray(request):
         raise Http404
 
 
+@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
 @cache_page(60 * 15)
 def geotags_for_user_barray(request, username):
@@ -78,6 +79,7 @@ def geotags_for_user_barray(request, username):
     return generate_bytearray(sounds)
 
 
+@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
 def geotags_for_user_latest_barray(request, username):
     sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
@@ -113,6 +115,7 @@ def geotags(request, tag=None):
     return render(request, 'geotags/geotags.html', tvars)
 
 
+@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
 def for_user(request, username):
     tvars = _get_geotags_query_params(request)

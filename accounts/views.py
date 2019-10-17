@@ -78,7 +78,7 @@ from utils.mirror_files import copy_avatar_to_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
 from utils.onlineusers import get_online_users
 from utils.pagination import paginate
-from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 audio_logger = logging.getLogger('audio')
 logger = logging.getLogger("upload")
@@ -736,6 +736,7 @@ def attribution(request):
     return render(request, 'accounts/attribution.html', tvars)
 
 
+@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
 def downloaded_sounds(request, username):
     user = request.parameter_user
@@ -751,6 +752,7 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
+@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
 def downloaded_packs(request, username):
     user = request.parameter_user

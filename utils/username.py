@@ -57,11 +57,45 @@ def redirect_if_old_username_or_404(func):
     """
 
     def inner(request, *args, **kwargs):
-        new_user = get_user_or_404(kwargs['username'])
-        if kwargs['username'] != new_user.username:
-            kwargs['username'] = new_user.username
+        if hasattr(request, 'parameter_user'):
+            # If request.parameter_user already exists because it was added by some other decorator, reuse it
+            user = request.parameter_user
+        else:
+            # Otherwise get the corresponding user (considering OldUsernames) object or raise 404
+            user = get_user_or_404(kwargs['username'])
+
+        if kwargs['username'] != user.username:
+            # If the the username is an old username of the user, do redirect
+            kwargs['username'] = user.username
             return redirect(reverse(inner, args=args, kwargs=kwargs), permanent=True)
-        request.parameter_user = new_user
+
+        # Save user object in the request so it can be used by the view and/or other decorators
+        request.parameter_user = user
+        return func(request, *args, **kwargs)
+
+    return inner
+
+
+def raise_404_if_user_is_deleted(func):
+    """
+    This is a decorator that will raise a 404 error if the corresponding user of the <username> part of the URL
+    path is marked as being a deleted user. This is used in views that we don't want to show for a user that has been
+    deleted but for which we have a DB object (i.e. an anonymized user).
+    """
+
+    def inner(request, *args, **kwargs):
+        if hasattr(request, 'parameter_user'):
+            # If request.parameter_user already exists because it was added by some other decorator, reuse it
+            user = request.parameter_user
+        else:
+            # Otherwise get the corresponding user object (considering OldUsernames) or raise 404
+            user = get_user_or_404(kwargs['username'])
+
+        if user.profile.is_anonymized_user:
+            raise Http404
+
+        # Save user object in the request so it can be used by the view and/or other decorators
+        request.parameter_user = user
         return func(request, *args, **kwargs)
 
     return inner

@@ -18,19 +18,17 @@
 #     See AUTHORS file.
 #
 
-from comments.models import Comment
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render_to_response, render
-from django.template.context import RequestContext
 from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+
+from comments.models import Comment
 from sounds.models import Sound
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 
 @login_required
@@ -51,6 +49,7 @@ def delete(request, comment_id):
     return HttpResponseRedirect(next+"?page="+page)
 
 
+@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
@@ -69,6 +68,7 @@ def for_user(request, username):
     return render(request, 'sounds/comments.html', tvars)
 
 
+@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
 def by_user(request, username):
     """ Display all comments made by the user """

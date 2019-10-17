@@ -36,8 +36,8 @@ from follow.models import FollowingUserItem
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def following_users(request, username):
     user = request.parameter_user
     is_owner = False
@@ -51,8 +51,8 @@ def following_users(request, username):
     return render(request, 'follow/following_users.html', tvars)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def followers(request, username):
     user = request.parameter_user
     is_owner = False
@@ -66,8 +66,8 @@ def followers(request, username):
     return render(request, 'follow/followers.html', tvars)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def following_tags(request, username):
     user = request.parameter_user
     is_owner = False

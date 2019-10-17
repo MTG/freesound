@@ -736,8 +736,8 @@ def attribution(request):
     return render(request, 'accounts/attribution.html', tvars)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
     user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
@@ -752,8 +752,8 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
     user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)

@@ -49,8 +49,8 @@ def delete(request, comment_id):
     return HttpResponseRedirect(next+"?page="+page)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
     user = request.parameter_user
@@ -68,8 +68,8 @@ def for_user(request, username):
     return render(request, 'sounds/comments.html', tvars)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def by_user(request, username):
     """ Display all comments made by the user """
     user = request.parameter_user

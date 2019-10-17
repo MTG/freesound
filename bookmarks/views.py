@@ -33,8 +33,8 @@ from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def bookmarks(request, username, category_id=None):
     user = request.parameter_user
 

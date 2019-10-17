@@ -71,16 +71,16 @@ def geotags_box_barray(request):
         raise Http404
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 @cache_page(60 * 15)
 def geotags_for_user_barray(request, username):
     sounds = Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)
     return generate_bytearray(sounds)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
     sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
     return generate_bytearray(sounds)
@@ -115,8 +115,8 @@ def geotags(request, tag=None):
     return render(request, 'geotags/geotags.html', tvars)
 
 
-@raise_404_if_user_is_deleted
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def for_user(request, username):
     tvars = _get_geotags_query_params(request)
     tvars.update({  # Overwrite tag and username query params (if present)

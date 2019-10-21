@@ -59,4 +59,16 @@ carousels.forEach(carousel => {
   leftArrow.addEventListener('click', () => {
     setPage(currentPage - 1)
   })
+  if (carouselContainer.classList.contains('with-dots')) {
+    const dotIconsParent = document.createElement('div')
+    dotIconsParent.classList.add('carousel__dot-icons')
+    for (let i = 0; i < totalPages; i+=1) {
+      const dotIcon = createIconElement('bw-icon-atom')
+      dotIconsParent.append(dotIcon)
+      dotIcon.addEventListener('click', () => {
+        setPage(i)
+      })
+    }
+    carousel.append(dotIconsParent)
+  }
 })

@@ -15,6 +15,7 @@ carousels.forEach(carousel => {
   ][0]
   if (!carouselContainer) return
   const totalPages = carouselContainer.childElementCount
+  const hasDots = carouselContainer.classList.contains('with-dots')
   let currentPage = 0
   const leftArrow = document.createElement('div')
   const rightArrow = document.createElement('div')
@@ -34,6 +35,19 @@ carousels.forEach(carousel => {
     } else {
       leftArrow.classList.remove('carousel-nav-hidden')
       rightArrow.classList.remove('carousel-nav-hidden')
+    }
+    if (hasDots) {
+      const dotsParent = carouselContainer.parentNode.parentNode.getElementsByClassName(
+        'carousel__dot-icons'
+      )[0]
+      const dots = [...dotsParent.getElementsByClassName('bw-icon-atom')]
+      dots.forEach((dot, dotIndex) => {
+        if (dotIndex === desiredPage) {
+          dot.classList.add('active-point')
+        } else {
+          dot.classList.remove('active-point')
+        }
+      })
     }
   }
   const width = `${totalPages * 100}%`
@@ -59,10 +73,16 @@ carousels.forEach(carousel => {
   leftArrow.addEventListener('click', () => {
     setPage(currentPage - 1)
   })
-  if (carouselContainer.classList.contains('with-dots')) {
+  if (hasDots) {
     const dotIconsParent = document.createElement('div')
     dotIconsParent.classList.add('carousel__dot-icons')
-    for (let i = 0; i < totalPages; i+=1) {
+    if (carouselContainer.className.match(/dots-distance-\d/)) {
+      const distance = carouselContainer.className.match(
+        /dots-distance-(\d)/
+      )[1]
+      dotIconsParent.classList.add(`dots-distance-${distance}`)
+    }
+    for (let i = 0; i < totalPages; i += 1) {
       const dotIcon = createIconElement('bw-icon-atom')
       dotIconsParent.append(dotIcon)
       dotIcon.addEventListener('click', () => {
@@ -71,4 +91,5 @@ carousels.forEach(carousel => {
     }
     carousel.append(dotIconsParent)
   }
+  setPage(0)
 })

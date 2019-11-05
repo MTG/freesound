@@ -1,0 +1,21 @@
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding-right: 20px;
+}
+
+.bw-select {
+  display: inline-block;
+  position: relative;
+}
+
+.bw-select__chevron {
+  transform: rotate(180deg);
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+  top: 4px;
+}

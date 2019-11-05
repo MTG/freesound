@@ -262,9 +262,6 @@
             <a href="https://twitter.com/share" class="twitter-share-button" data-count="none">Tweet</a><script type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
             <span id="tumblr_button_abc123" class="social_link"></span>
             <div class="social_link">
-                <g:plusone size="medium" count="false" href="{% absurl 'short-sound-link' sound.id %}"></g:plusone>
-            </div>
-            <div class="social_link">
                 <span id="show_embed_button" onclick="$('#embed_links').toggle(500);">Embed</span>
             </div>
             <br style="clear: both;" />
@@ -304,12 +301,6 @@
                     embed_text = embed_text.replace('HEIGHT', sizes[1]);
                     $('#embed_code').text(embed_text);
                 }
-
-                (function() {
-                    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-                    po.src = 'https://apis.google.com/js/plusone.js';
-                    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-                })();
              </script>
         </div>
         <!--

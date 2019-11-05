@@ -6,7 +6,8 @@
 .bw-search__filter-value {
   display: flex;
   justify-content: space-between;
-  &, & label {
+  &,
+  & label {
     cursor: pointer;
   }
 
@@ -63,4 +64,8 @@
   &::placeholder {
     color: $navy-light-grey;
   }
+}
+
+.browse__search-overview-sorter {
+  flex: 0;
 }

@@ -78,6 +78,9 @@ class DeletedUser(models.Model):
     )
     reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)  # TODO: should we add db_index=True?
 
+    def __unicode__(self):
+        return 'Deleted user object for: {0}'.format(self.username)
+
 
 class ProfileManager(models.Manager):
 

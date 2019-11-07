@@ -38,7 +38,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django_object_actions import DjangoObjectActions
 
-from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser
+from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserGDPRDeletionRequest
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -244,8 +244,41 @@ class OldUsernameAdmin(admin.ModelAdmin):
     list_display = ('user', 'username')
 
 
+class UserGDPRDeletionRequestAdmin(admin.ModelAdmin):
+    search_fields = ('=username', '=email')
+    raw_id_fields = ('user', )
+    list_display = ('email', 'username', 'user_link', 'deleted_user_link', 'status')
+    list_filter = ('status', )
+    fieldsets = (
+        (None, {'fields': ('email', 'status', 'user', 'username')}),
+    )
+
+    def get_queryset(self, request):
+        # overrride 'get_queryset' to optimize query by using select_related on 'user' and 'deleted_user'
+        qs = super(UserGDPRDeletionRequestAdmin, self).get_queryset(request)
+        qs = qs.select_related('user', 'deleted_user')
+        return qs
+
+    def user_link(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('admin:auth_user_change', args=[obj.user_id]),
+                                                              obj.user.username)
+    user_link.allow_tags = True
+    user_link.admin_order_field = 'user'
+    user_link.short_description = 'User object'
+
+    def deleted_user_link(self, obj):
+        if obj.deleted_user is None:
+            return '-'
+        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('admin:accounts_deleteduser_change', args=[obj.deleted_user_id]),
+                                                              obj.deleted_user.username)
+    deleted_user_link.allow_tags = True
+    deleted_user_link.admin_order_field = 'deleted_user'
+    deleted_user_link.short_description = 'Deleted user object'
+
+
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
 admin.site.register(EmailPreferenceType)
 admin.site.register(OldUsername, OldUsernameAdmin)
 admin.site.register(DeletedUser)
+admin.site.register(UserGDPRDeletionRequest, UserGDPRDeletionRequestAdmin)

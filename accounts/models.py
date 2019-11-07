@@ -434,13 +434,17 @@ class Profile(SocialModel):
         with transaction.atomic():
 
             # Create a DeletedUser object to store basic information for the record
-            DeletedUser.objects.create(
+            deleted_user_object = DeletedUser.objects.create(
                 user=self.user,
                 username=self.user.username,
                 email=self.user.email,
                 date_joined=self.user.date_joined,
                 last_login=self.user.last_login,
                 reason=deletion_reason)
+
+            # If UserGDPRDeletionRequest object(s) exist for that user, update their status and deleted_user property
+            UserGDPRDeletionRequest.objects.filter(user_id=self.user.id)\
+                .update(status="de", deleted_user=deleted_user_object)
 
             if delete_user_object_from_db:
                 # If user is to be completely deleted from the DB, use delete() method. This will remove all
@@ -632,3 +636,21 @@ class EmailBounce(models.Model):
     @classmethod
     def type_from_string(cls, value):
         return cls.type_map.get(value, cls.UNDETERMINED)
+
+
+class UserGDPRDeletionRequest(models.Model):
+    """
+    This model is used to store information about deletion requests received via email and to help comply with GDPR
+    """
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='gdpr_deletion_requests')
+    deleted_user = models.ForeignKey(DeletedUser, null=True, on_delete=models.SET_NULL)
+    username = models.CharField(max_length=150, null=True, blank=True)
+    email = models.CharField(max_length=200)
+    date_request_received = models.DateTimeField(auto_now_add=True)
+    GDPR_DELETION_REQUEST_STATUSES = (
+        ('re', 'Received'),
+        ('wa', 'Waiting for user action'),
+        ('ca', 'Request cancelled'),
+        ('de', 'User has been deleted')
+    )
+    status = models.CharField(max_length=2, choices=GDPR_DELETION_REQUEST_STATUSES, db_index=True, default='re')

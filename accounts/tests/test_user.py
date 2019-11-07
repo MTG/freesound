@@ -29,7 +29,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
-from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser
+from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserGDPRDeletionRequest
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
 from sounds.models import License, Sound, Pack, DeletedSound
@@ -346,6 +346,43 @@ class UserDelete(TestCase):
             user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
             user.profile.delete_user(deletion_reason=reason)
             self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, reason)
+
+    def test_deleting_user_updates_existing_gdpr_deletion_request_objects(self):
+        # Tests that when a user is deleted which had existing UserGDPRDeletionRequest objects assigned, these objects
+        # get the status updated and the DeletedUser object is added to them
+        username = "testuser"
+
+        # Test when deleting a user but preserving the user object in DB (anonymizing)
+        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        UserGDPRDeletionRequest.objects.create(user=user, username=username)
+        user.profile.delete_user()
+        deletion_request = UserGDPRDeletionRequest.objects.get(username=username)
+        deleted_user = DeletedUser.objects.get(username=username)
+        self.assertEqual(deletion_request.status, 'de')
+        self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
+        deletion_request.delete()
+        deleted_user.delete()
+
+        # Test when deleting a user and also deleting the user object in DB
+        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        UserGDPRDeletionRequest.objects.create(user=user, username=username)
+        user.profile.delete_user(delete_user_object_from_db=True)
+        deletion_request = UserGDPRDeletionRequest.objects.get(username=username)
+        deleted_user = DeletedUser.objects.get(username=username)
+        self.assertEqual(deletion_request.status, 'de')
+        self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
+        deletion_request.delete()
+        deleted_user.delete()
+
+        # Test with multiple requests
+        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        UserGDPRDeletionRequest.objects.create(user=user, username=username)
+        UserGDPRDeletionRequest.objects.create(user=user, username=username)
+        user.profile.delete_user()
+        deleted_user = DeletedUser.objects.get(username=username)
+        for deletion_request in UserGDPRDeletionRequest.objects.filter(username=username):
+            self.assertEqual(deletion_request.status, 'de')
+            self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
 
 
 class UserEmailsUniqueTestCase(TestCase):

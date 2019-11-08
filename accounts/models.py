@@ -436,18 +436,35 @@ class Profile(SocialModel):
         # DeletedUser objects
         with transaction.atomic():
 
-            # Create a DeletedUser object to store basic information for the record
-            deleted_user_object = DeletedUser.objects.create(
-                user=self.user,
-                username=self.user.username,
-                email=self.user.email,
-                date_joined=self.user.date_joined,
-                last_login=self.user.last_login,
-                reason=deletion_reason)
+            # Create a DeletedUser object to store basic information for the record (user get_or_create in case it
+            # already exists because user was deleted previously but db object preserved
+            try:
+                deleted_user_object = DeletedUser.objects.get(user=self.user)
+            except DeletedUser.DoesNotExist:
+                deleted_user_object = DeletedUser.objects.create(
+                    user=self.user,
+                    username=self.user.username,
+                    email=self.user.email,
+                    date_joined=self.user.date_joined,
+                    last_login=self.user.last_login,
+                    reason=deletion_reason)
 
             # If UserGDPRDeletionRequest object(s) exist for that user, update their status and deleted_user property
             UserGDPRDeletionRequest.objects.filter(user_id=self.user.id)\
                 .update(status="de", deleted_user=deleted_user_object)
+
+            # If Sound/Pack objects will be deleted, we need to make sure that num_sound_downloads and
+            # num_pack_downloads fileds from users that downloaded packs or sounds from the user being delted are
+            # correct. Otherwise this will make the deletion process to fail (violating DB constraints)
+            if delete_user_object_from_db or remove_sounds:
+                sound_downloaders = Download.objects.filter(sound__user=self.user).only('user')
+                pack_downloaders = PackDownload.objects.filter(pack__user=self.user).only('user')
+                for download in sound_downloaders:
+                    download.user.profile.num_sound_downloads = Download.objects.filter(user=download.user).count()
+                    download.user.profile.save()
+                for download in pack_downloaders:
+                    download.user.profile.num_pack_downloads = PackDownload.objects.filter(user=download.user).count()
+                    download.user.profile.save()
 
             if delete_user_object_from_db:
                 # If user is to be completely deleted from the DB, use delete() method. This will remove all

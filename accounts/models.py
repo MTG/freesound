@@ -436,7 +436,7 @@ class Profile(SocialModel):
         # DeletedUser objects
         with transaction.atomic():
 
-            # Create a DeletedUser object to store basic information for the record (user get_or_create in case it
+            # Create a DeletedUser object to store basic information for the record (first check if it
             # already exists because user was deleted previously but db object preserved
             try:
                 deleted_user_object = DeletedUser.objects.get(user=self.user)

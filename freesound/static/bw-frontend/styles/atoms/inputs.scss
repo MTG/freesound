@@ -42,3 +42,29 @@ input {
     outline: none;
   }
 }
+
+.typeahead-wrapper {
+  position: relative;
+}
+
+.input-typeahead-suggestions {
+  position: absolute;
+  box-shadow: $dropdown-shadow;
+  background: $white;
+  width: 100%;
+  max-height: 300px;
+  z-index: get-z-index(dropdown);
+  overflow: auto;
+}
+
+.input-typeahead-suggestion-wrapper {
+  padding: $tiny-spacing;
+  cursor: pointer;
+  
+  &:focus,
+  &:hover,
+  &:active,
+  &.active {
+    background-color: lighten($navy-light-grey, 10%);
+  }
+}

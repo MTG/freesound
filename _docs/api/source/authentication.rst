@@ -1,4 +1,4 @@
-.. _authentication:
+﻿.. _authentication:
 
 Authentication
 <<<<<<<<<<<<<<
@@ -122,7 +122,7 @@ Name                    Description
 ======================  =====================================================
 ``code``                In case user accepts, a ``code`` parameter will be included with a temporary authorization code that you will need to continue with the authentication process.
 ``error``               In case user denies access to your application, an ``error`` parameter will be included with the value "access_denied".
-``state``               This parameter contains the string that you included in Step 1 (only if provided, see above). This string might be useful to indetify requests or user sessions.
+``state``               This parameter contains the string that you included in Step 1 (only if provided, see above). This string might be useful to identify requests or user sessions.
 ``original_path``       This is just a parameter Freesound uses to provide the 'login as another user' option. You can forget about this one ;)
 ======================  =====================================================
 
@@ -221,7 +221,7 @@ application/user pair at once, therefore newly created access tokens overwrite e
 
 Freesound users that have granted access to your application, can revoke this access at any time using their settings page in Freesound.
 Revoking the access means invalidating the access token (and refresh token) that was issued to your application.
-In that case, attepting to use the access token will result in a 401 (Unauthorized) response showing an 'Invalid token' error.
+In that case, attempting to use the access token will result in a 401 (Unauthorized) response showing an 'Invalid token' error.
 
 
 Managing access tokens and multiple users

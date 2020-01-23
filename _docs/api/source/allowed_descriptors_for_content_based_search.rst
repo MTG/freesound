@@ -1,9 +1,9 @@
-.. _content-search-descriptors:
+﻿.. _content-search-descriptors:
 
 Allowed descriptors for content based search
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-Here is the list of features that can be used in content based searches (remember that the point at the beggining is part of the name!).
+Here is the list of features that can be used in content based searches (remember that the point at the beginning is part of the name!).
 For details on the usage of every descriptors refer to the :ref:`analysis-docs`.
 
     - .lowlevel.average_loudness

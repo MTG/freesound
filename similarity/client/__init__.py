@@ -139,7 +139,7 @@ class Similarity():
         url = _BASE_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
-        return _result_or_exception(_get_url_as_json(url, timeout=120))
+        return _result_or_exception(_get_url_as_json(url, timeout=60 * 5))
 
     @classmethod
     def save_indexing_server(cls, filename = None):

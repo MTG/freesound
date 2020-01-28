@@ -103,7 +103,9 @@ urlpatterns = [
         name="remix-group"),
 
     url(r'^contact/', support.views.contact, name="contact"),
+
     url(r'^search/$', search.views.search, name='sounds-search'),
+    url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
 
     url(r'', include('ratings.urls')),
     url(r'^comments/', include('comments.urls')),

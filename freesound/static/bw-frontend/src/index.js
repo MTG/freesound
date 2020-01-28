@@ -1,5 +1,6 @@
 // polyfills and css resets
-import 'babel-polyfill'
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
 import 'whatwg-fetch'
 import 'classlist-polyfill'
 import 'element-closest'

@@ -24,8 +24,10 @@ const checkShouldShowSearchInNavbar = throttle(() => {
 
 window.addEventListener('scroll', checkShouldShowSearchInNavbar)
 
+const query_suggestions_url = process.env.QUERY_SUGGESTIONS_URL
+
 const fetchSuggestions = async query => {
-  let response = await fetch(`/query_suggestions?q=${input.value}`)
+  let response = await fetch(`${query_suggestions_url}?q=${input.value}`)
   let data = await response.json()
   const suggestions = data.suggestions
   return suggestions

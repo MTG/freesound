@@ -350,11 +350,11 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
 
 
 # -------------------------------------------------------------------------------
-# SOLR settings
+# SOLR and search settings
 SOLR_URL = ''
 SOLR_FORUM_URL = ''
 
-# SOLR ranking weights
+ENABLE_QUERY_SUGGESTIONS = False  # Only for BW
 DEFAULT_SEARCH_WEIGHTS = {
     'id': 4,
     'tag': 4,

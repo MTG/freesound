@@ -16,9 +16,11 @@
         <p class="bw-front__subheader">In a collaborative database crafted by our community</p>
       </header>
       <div class="bw-front__hero-container--search">
-        <div class="input-wrapper">
-          <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." />
-        </div>
+        <div class="typeahead-wrapper">
+           <div class="input-wrapper">
+             <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true"{% endif %} />
+           </div>
+         </div>
       </div>
     </div>
     <div class="row bw-front__content">

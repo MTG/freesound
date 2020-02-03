@@ -21,6 +21,7 @@
 #
 
 import json
+import logging
 
 import gearman
 from django.conf import settings
@@ -44,6 +45,8 @@ DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
 DELETE_USER_DELETE_SOUNDS_ACTION_NAME = 'delete_user_delete_sounds'
 DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
+
+logger = logging.getLogger("web")
 
 
 class ProfileAdmin(admin.ModelAdmin):
@@ -135,6 +138,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
+            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                            DELETE_USER_KEEP_SOUNDS_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                     json.dumps({'user_id': obj.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME}),
@@ -156,6 +161,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_include_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
+            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                            DELETE_USER_DELETE_SOUNDS_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps({'user_id': obj.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME}),
@@ -184,6 +191,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_spammer(self, request, obj):
         username = obj.username
         if request.method == "POST":
+            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                            DELETE_SPAMMER_USER_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps({'user_id': obj.id, 'action': DELETE_SPAMMER_USER_ACTION_NAME}),
@@ -211,6 +220,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def full_delete(self, request, obj):
         username = obj.username
         if request.method == "POST":
+            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                            FULL_DELETE_USER_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps({'user_id': obj.id, 'action': FULL_DELETE_USER_ACTION_NAME}),

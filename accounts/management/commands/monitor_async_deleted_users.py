@@ -36,6 +36,15 @@ class Command(BaseCommand):
     help = 'Gets a list of users that should have been asynchronously deleted recently and makes sure that these were' \
            'indeed deleted. The list of users is taken from Graylog "Delete user request" log messages.'
 
+    def add_arguments(self, parser):
+
+        parser.add_argument(
+            '-n', '--n_days',
+            action='store',
+            dest='days',
+            default=15,
+            help='Number of days to search back for deletion requests')
+
     def handle(self, *args, **options):
 
         def get_messages_for_params(params):
@@ -52,7 +61,7 @@ class Command(BaseCommand):
         messages_per_page = 150
         params = {
             'query': '"Requested async deletion of user"',
-            'range': 60 * 60 * 24,  # last 24 hours
+            'range': 60 * 60 * 24 * int(options['days']),
             'fields': 'message',
             'limit': messages_per_page,
             'offset': 0
@@ -111,7 +120,8 @@ class Command(BaseCommand):
         if not users_not_properly_deleted:
             logger.info('All {0} delete users requests were carried out successfully'.format(len(messages)))
         else:
-            logger.info('The following {0} delete users requests seem to have failed'
-                        .format(len(users_not_properly_deleted)))
+            message_to_log = 'The following {0} delete users requests seem to have failed\n'\
+                .format(len(users_not_properly_deleted))
             for user_id, error_message in users_not_properly_deleted:
-                logger.info('- {0}: {1}'.format(user_id, error_message))
+                message_to_log += '- {0}: {1}\n'.format(user_id, error_message)
+            logger.info(message_to_log)

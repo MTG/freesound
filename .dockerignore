@@ -1,0 +1,4 @@
+*.gz
+*.bz2
+env
+freesound-data

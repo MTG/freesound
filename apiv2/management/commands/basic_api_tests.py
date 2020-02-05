@@ -23,11 +23,14 @@
 try:
     import requests
 except:
-    pass  # Ignore requests and let the command fail if requests not installed. This tests will eventually be moved
-          # into unit tests using the standard django framework.
+    # Ignore requests and let the command fail if requests not installed. This tests will eventually be moved
+    # into unit tests using the standard django framework.
+    pass
 import json
 from django.core.management.base import BaseCommand
+from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from apiv2.models import ApiV2Client
 from apiv2.examples import examples
 
 
@@ -59,7 +62,8 @@ def api_request(full_url, type='GET', post_data=None, auth='token', token=None):
 
 
 class Command(BaseCommand):
-    help = "Test apiv2 with examples from apiv2/examples.py. Usage: python manage.py basic_api_tests [custom_base_url] [token] [section]"
+    help = "Test apiv2 with examples from apiv2/examples.py. " \
+           "Usage: python manage.py basic_api_tests [custom_base_url] [token] [section]"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -89,10 +93,13 @@ class Command(BaseCommand):
         if not base_url:
             base_url = "http://%s/" % Site.objects.get_current().domain
 
+        test_client = None
         if not token:
-            from apiv2.models import ApiV2Client
-            client = ApiV2Client.objects.filter(user__username='apitest')[0]
-            token = client.client_secret
+            # If testing locally (localhost) there is no need to provide an API token because it can be generated
+            # automatically and then deleted after the tests
+            user = User.objects.first()
+            test_client = ApiV2Client.objects.create(user=user, throttling_level=99)
+            token = test_client.client_secret
 
         ok = list()
         failed = list()
@@ -135,3 +142,5 @@ class Command(BaseCommand):
         for url, status_code in failed:
             print '\t\t- %s (%i)' % (url, status_code)
 
+        if test_client is not None:
+            test_client.delete()

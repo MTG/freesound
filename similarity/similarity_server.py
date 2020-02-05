@@ -169,7 +169,7 @@ class SimilarityServer(resource.Resource):
                 if not data:
                     return json.dumps({'error': True, 'result': 'You specified \'file\' as target file but attached no analysis file.', 'status_code': BAD_REQUEST_CODE})
                 try:
-                    target = yaml.load(data)
+                    target = yaml.safe_load(data)
                 except:
                     return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
             else:

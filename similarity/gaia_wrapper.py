@@ -172,7 +172,7 @@ class GaiaWrapper:
                 logger.info('Bulding metric for preset %s' % preset)
                 name = preset
                 path = sim_settings.PRESET_DIR + name + ".yaml"
-                preset_file = yaml.load(open(path))
+                preset_file = yaml.safe_load(open(path))
                 distance = preset_file['distance']['type']
                 parameters = preset_file['distance']['parameters']
                 search_metric = DistanceFunctionFactory.create(
@@ -181,7 +181,7 @@ class GaiaWrapper:
 
     def __build_pca_metric(self):
         logger.info('Bulding metric for preset pca')
-        preset_file = yaml.load(open(sim_settings.PRESET_DIR + "pca.yaml"))
+        preset_file = yaml.safe_load(open(sim_settings.PRESET_DIR + "pca.yaml"))
         distance = preset_file['distance']['type']
         parameters = preset_file['distance']['parameters']
         search_metric = DistanceFunctionFactory.create(str(distance), self.pca_dataset.layout(), parameters)

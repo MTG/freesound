@@ -7,7 +7,7 @@ services:
         command: python similarity_server.py
         volumes:
             - .:/code
-            - ../freesound-data/similarity_index:/gaia_index
-            - ../freesound-data/analysis
+            - ../freesound-data/similarity_index:/freesound-data/gaia_index
+            - ../freesound-data/analysis:/freesound-data/analysis
         ports:
             - "8008:8008"

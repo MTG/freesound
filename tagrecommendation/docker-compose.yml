@@ -7,6 +7,6 @@ services:
         command: python tagrecommendation_server.py
         volumes:
             - .:/code
-            - ../freesound-data/tag_recommendation_models:/tag_recommendation_models
+            - ../freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
         ports:
             - "8010:8010"

@@ -62,6 +62,6 @@ LOGSERVER_IP_ADDRESS = 'IP_ADDRESS'
 LOGSERVER_PORT = 0000
 
 # Set to true to log to stdout in addition to files and graylog
-LOG_TO_STDOUT = False
-LOG_TO_GRAYLOG = True
+LOG_TO_STDOUT = True
+LOG_TO_GRAYLOG = False
 LOG_TO_FILE = False

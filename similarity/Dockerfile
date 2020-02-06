@@ -59,8 +59,8 @@ RUN adduser -q --gecos "" --disabled-password fsweb
 
 COPY entrypoint.sh /usr/local/bin
 
-COPY --chown=fsweb:fsweb requirements.txt /code/requirements_similarity.txt
-RUN pip install --no-cache-dir -r requirements_similarity.txt
+COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=fsweb:fsweb . /code
 

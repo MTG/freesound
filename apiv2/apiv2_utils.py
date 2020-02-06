@@ -74,7 +74,7 @@ class FsClientIdGenerator(BaseHashGenerator):
 def get_view_description(cls, html=False):
     description = ''
     if getattr(cls, 'get_description', None):
-        cache_key = cls.__name__
+        cache_key = cls.get_view_name()
         cached_description = cache.get(cache_key)
         if not cached_description:
             description = cls.get_description()

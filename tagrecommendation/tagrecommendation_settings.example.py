@@ -25,19 +25,21 @@ import os
 LOGFILE                     = '/var/log/freesound/tagrecommendation.log'
 LISTEN_PORT                 = 8010
 RECOMMENDATION_DATA_DIR     = '/home/fsweb/freesound/freesound-tagrecommendation/'
-RECOMMENDATION_TMP_DATA_DIR = RECOMMENDATION_DATA_DIR + 'tmp/'
+RECOMMENDATION_TMP_DATA_DIR = os.path.join(RECOMMENDATION_DATA_DIR, 'tmp')
 
 # CLIENT SETTINGS (to be moved to django settings?)
 TAGRECOMMENDATION_ADDRESS          = 'localhost'
 TAGRECOMMENDATION_PORT             = 8010
-TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
+TAGRECOMMENDATION_CACHE_TIME       = 60 * 60 * 24 * 7
 
 # Graylog GELF endpoint
 LOGSERVER_IP_ADDRESS = 'IP_ADDRESS'
 LOGSERVER_PORT = 0000
 
 # Set to true to log to stdout in addition to files and graylog
-LOG_TO_STDOUT = False
+LOG_TO_STDOUT = True
+LOG_TO_GRAYLOG = False
+LOG_TO_FILE = False
 
 
 # This tag recommendation server needs some data files to be in the data folder

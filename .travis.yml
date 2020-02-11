@@ -1,26 +1,15 @@
-language: python
-addons:
-  postgresql: "9.5"
-python:
-- '2.7'
+services:
+  - docker
+
 before_install:
-- sudo apt-get install libarchive-zip-perl libsndfile-dev
-- psql -c 'create database freesound;' -U postgres
 - cp freesound/local_settings.example.py freesound/local_settings.py
-- cp freesound/logger.example.py freesound/logger.py
-- cp similarity/similarity_settings.example.py similarity/similarity_settings.py
-- cp tagrecommendation/tagrecommendation_settings.example.py tagrecommendation/tagrecommendation_settings.py
-- sed -i 's$/path/to/django/debug.log$debug.log$' freesound/logger.py
 - sed -i 's$^DISPLAY_DEBUG_TOOLBAR.*$DISPLAY_DEBUG_TOOLBAR = False$' freesound/local_settings.py
-- mkdir -p ../freesound-data/packs
-- mkdir -p ../freesound-data/uploads
-- mkdir -p ../freesound-data/avatars
-install:
-- pip install -U pip
-- pip install django-nose numpy==1.9.0
-- pip install -r requirements.txt
+- make -C docker
+- docker-compose build db web
+
 script:
-- python manage.py test --noinput --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum geotags ratings search sounds support tags tickets utils wiki general monitor messages
+- docker-compose run --rm web python manage.py test --noinput --settings=freesound.test_settings
+
 notifications:
   slack:
     secure: aVyN2TqUMPbHJ4gmp2U/NEZC2rom5KZvvd3YCvcxlNt9ec/r4RlnHM2R+U0SV1aMhz3qmtlol20TEMPVgp9jWN/PTp6/6ryr6v30CEAczEoWwYvvMEX4+juqAn5lQrOujmsTwyyOB9mxHi19rYJd9g9gdekerp242lZ8yBdt3c4=

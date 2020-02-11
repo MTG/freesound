@@ -130,7 +130,7 @@ docker-compose up web search
 You can run tests using the Django test runner in the `web` container like that:
 
 ```
-docker-compose run --rm web python manage.py test --setings=freesound.test_settings.py  accounts apiv2 bookmarks donations follow forum general geotags messages monitor ratings search sounds support tags tickets utils wiki
+docker-compose run --rm web python manage.py test --settings=freesound.test_settings accounts apiv2 bookmarks donations follow forum general geotags messages monitor ratings search sounds support tags tickets utils wiki
 ```
 
 Note that Django app names need to be specified so we only run tests for the Freesound apps and not for 3rd parties.

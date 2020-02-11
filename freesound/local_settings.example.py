@@ -13,7 +13,7 @@ EMAIL_FILE_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__fi
 # Use cache file backend
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache', # 'django.core.cache.backends.dummy.DummyCache',  # 'django.core.cache.backends.locmem.LocMemCache',  #
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/')), "_cache/"),
     }
 }

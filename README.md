@@ -52,13 +52,14 @@ freesound/freesound-data/avatar/
 4. Download Freesound development similarity index data and tag recommendation models and place them under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). You should request these files to Freesound admins.
 
 
-5. Make your own version of Django local settings file (no need to change any parameter)
+5. Rename `freesound/local_settings.example.py` file so you can customise Django settings if needed and create a `.env` file with your local user UID
 
   ```
 cp freesound/local_settings.example.py freesound/local_settings.py
+echo FS_USER_ID_FROM_ENV=$(id -u) > .env
 ```
 
-6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `local_settings.py` file (check `settings.py` to know the config parameter names that you need to fill in):
+6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `freesound/local_settings.py` file (check `settings.py` to know the config parameter names that you need to fill in):
  * Mapbox
  * Recaptcha 
 

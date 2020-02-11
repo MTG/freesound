@@ -20,6 +20,7 @@ services:
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
 
     web:
         build:
@@ -31,10 +32,12 @@ services:
             - .:/code
             - ./freesound-data/:/freesound-data
             - fswebhome:/home/fsweb
+        ports:
+            - 8000:8000
         env_file:
             - environment
-        ports:
-            - "8000:8000"
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
  
@@ -50,6 +53,8 @@ services:
             - ./utils/search/solr4.5.1/solr.home:/code/solr.home
         ports:
             - 8080:8080
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
          
     tagrecommendation:
         build:
@@ -61,7 +66,9 @@ services:
             - ./tagrecommendation:/code
             - ./freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
         ports:
-            - "8010:8010"
+            - 8010:8010
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
     
     similarity:
         build:
@@ -74,7 +81,9 @@ services:
             - ./freesound-data/similarity_index:/freesound-data/similarity_index
             - ./freesound-data/analysis:/freesound-data/analysis
         ports:
-            - "8008:8008"
+            - 8008:8008
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
 
     gearmand:
         image: artefactual/gearmand
@@ -90,6 +99,8 @@ services:
             - ./freesound-data/:/freesound-data
         env_file:
             - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
             - gearmand
@@ -105,6 +116,8 @@ services:
             - ./freesound-data/:/freesound-data
         env_file:
             - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
             - gearmand
@@ -120,6 +133,8 @@ services:
             - ./freesound-data/:/freesound-data
         env_file:
             - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
             - gearmand

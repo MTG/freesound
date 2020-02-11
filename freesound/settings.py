@@ -372,6 +372,18 @@ DEFAULT_SEARCH_WEIGHTS = {
 
 
 # -------------------------------------------------------------------------------
+# Similarity client settings
+SIMILARITY_ADDRESS = 'similarity'
+SIMILARITY_PORT = 8008
+SIMILARITY_INDEXING_SERVER_PORT = 8009
+
+# -------------------------------------------------------------------------------
+# Tag recommendation client settings
+TAGRECOMMENDATION_ADDRESS = 'tagrecommendation'
+TAGRECOMMENDATION_PORT = 8010
+TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
+
+# -------------------------------------------------------------------------------
 # Sentry settings
 RAVEN_CONFIG = {}
 

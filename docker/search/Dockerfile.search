@@ -8,3 +8,6 @@ ADD . /code
 
 WORKDIR /code
 RUN mvn install
+# Run a command in the jetty plugin so that it downloads all of the
+# jetty dependencies during build
+RUN mvn jetty:help

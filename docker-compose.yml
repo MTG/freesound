@@ -16,7 +16,7 @@ services:
         volumes:
             - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:
-            - "5432:5432"
+            - 5432:5432
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound

@@ -24,3 +24,6 @@ COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=fsweb:fsweb . /code
+
+# NOTE: this image should be build from the /similarity directory so the correct source files are coppied
+# in /code. Using the docker-compose.yml file in the root of this repository will take care of that.

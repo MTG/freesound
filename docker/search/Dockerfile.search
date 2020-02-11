@@ -1,0 +1,10 @@
+FROM ubuntu:16.04
+
+RUN apt-get update && apt-get install -y maven openjdk-8-jdk-headless
+
+RUN mkdir /code
+
+ADD . /code
+
+WORKDIR /code
+RUN mvn install

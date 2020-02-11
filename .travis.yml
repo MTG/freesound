@@ -2,8 +2,11 @@ services:
   - docker
 
 before_install:
-- cp freesound/local_settings.example.py freesound/local_settings.py
+- mkdir -p ./freesound-data/packs
+- mkdir -p ./freesound-data/uploads
+- mkdir -p ./freesound-data/avatars
 - echo FS_USER_ID_FROM_ENV=$(id -u) > .env
+- cp freesound/local_settings.example.py freesound/local_settings.py
 - sed -i 's$^DISPLAY_DEBUG_TOOLBAR.*$DISPLAY_DEBUG_TOOLBAR = False$' freesound/local_settings.py
 - make -C docker
 - docker-compose -f docker-compose.travis.yml build db test_runner

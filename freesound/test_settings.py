@@ -18,3 +18,10 @@ SECRET_KEY = "testsecretwhichhastobeatleast16characterslong"
 RAVEN_CONFIG = {}
 SUPPORT = (('Name Surname', 'support@freesound.org'),)
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
+LOGGING = None  # Avoid logging clutter when running tests

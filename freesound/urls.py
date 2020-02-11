@@ -135,7 +135,7 @@ urlpatterns = [
     # tag recommendation
     url(r'^tagrecommendation/instructions/$', tagrec.new_tagrecommendation_interface_instructions, name="tagrecommendation-instructions"),
     url(r'^tagrecommendation/recommendtags/$', tagrec.get_recommended_tags_view, name="recommend-tags"),
-    url(r'^tagrecommendation/savelog/$', tagrec.log_recommendation_info_view, name="log-recommendation-info"),
+
     # Urls for new tag recommendation interface experiment
     url(r'^tagrecommendation/get_recommendation/$', tagrec.get_recommended_tags_view_new, name="get-recommend-tags-new"),
     url(r'^tagrecommendation/get_recommended_categories/$', tagrec.get_recommended_categories_view, name="get-recommended-categories"),

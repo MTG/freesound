@@ -51,8 +51,9 @@ Below are instructions for setting up a local Freesound installation for develop
        echo FS_USER_ID_FROM_ENV=$(id -u) > .env
 
 6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `freesound/local_settings.py` file (check `settings.py` to know the config parameter names that you need to fill in):
- * Mapbox
- * Recaptcha 
+
+   * Mapbox
+   * Recaptcha 
 
 7. Build the base Freesound Docker image
 

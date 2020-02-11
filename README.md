@@ -9,7 +9,7 @@ Freesound is a project by the [Music Technology Group](http://www.mtg.upf.edu) (
 
 ## License
 
-All the source code in this repository is licensed as GNU Affero. Some of the dependencies might have their own licenses. See the [_LICENSE](https://github.com/MTG/freesound/tree/master/_LICENSE) folder for more details.
+All the source code in this repository is licensed under the GNU Affero General Public License v3. Some of the dependencies might have their own licenses. See the [_LICENSE](https://github.com/MTG/freesound/tree/master/_LICENSE) folder for more details.
 
 
 ## Authors
@@ -19,7 +19,7 @@ For a list of authors please check out the [contributors](https://github.com/MTG
 
 ## Development
 
-Freesound is composed by a numnber of different services which can be run and orchestrated using Docker . The main service is provided by the `web` container which runs the Freesound Django application. Check out [this blog post](https://opensource.creativecommons.org/blog/entries/freesound-intro/) for some information about the Freesound technology stack. If you're to do development for Freesound, please checkout the [DEVELOPERS](https://github.com/MTG/freesound/blob/master/DEVELOPERS.md) file for some guidelines. 
+Freesound is composed by a numnber of different services which can be run and orchestrated using Docker. The main service is provided by the `web` container which runs the Freesound Django application. Check out [this blog post](https://opensource.creativecommons.org/blog/entries/freesound-intro/) for some information about the Freesound technology stack. If you're going to do development on Freesound, please check the [DEVELOPERS](https://github.com/MTG/freesound/blob/master/DEVELOPERS.md) file for some guidelines. 
 
 Below are instructions for setting up a local Freesound installation for development. It is assumed that you have a working Docker installation.
 
@@ -33,13 +33,13 @@ git clone git@github.com:MTG/freesound.git
 cd freesound
 ```
 
-2. Create a directorty named `freesound-data` inside the repository folder
+2. Create a directory named `freesound-data` inside the repository folder
 
   ```
 mkdir freesound-data
 ```
 
-3. Download the Freesound development data zip file (~20GB) and uncompress it inside `freesound-data`. You should request this file to Freesound admins. File structure should look like this:
+3. Download the [Freesound development data zip file](https://drive.google.com/file/d/1ih3or14n-pRVZ-oB0KThp4VVEiKhAeUK/view?usp=sharing) (~20GB) and uncompress it inside `freesound-data`. You should get permission to download this file from Freesound admins. File structure should look like this:
 
   ```
 freesound/
@@ -49,7 +49,7 @@ freesound/freesound-data/avatar/
 ...
 ```
 
-4. Download Freesound development similarity index data and tag recommendation models and place them under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). You should request these files to Freesound admins.
+4. Download [Freesound development similarity index](https://drive.google.com/file/d/1ydJUUXbQZbHrva4UZd3C05wDcOXI7v1m/view?usp=sharing) and the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place their contents under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). You should get permission to download these files from Freesound admins.
 
 
 5. Rename `freesound/local_settings.example.py` file so you can customise Django settings if needed and create a `.env` file with your local user UID
@@ -76,7 +76,7 @@ make -C docker
 docker-compose build
 ```
 
-9. Run the database container and load a development database dump. You should request the development database dump (~50MB) to Freesound admins.
+9. Download the [Freesound development database dump](https://drive.google.com/file/d/1d8_0Sa6J5tDQ3k4kvBp4zLUDuYKPUjnq/view?usp=sharing) (~50MB), run the database container and load the data into it. You should get permission to download this file from Freesound admins.
 
   ```
 docker-compose up -d db
@@ -110,7 +110,7 @@ docker-compose run --rm web python manage.py reindex_solr
 docker-compose run --rm web python manage.py reindex_solr_forum
 ```
 
-After following the steps you'll have a fully functional Freesound installation up and running, including the search, sound similarity and audio processing features (and more!). As a sort of *bonus step*, you can run Django's shell plus command like that:
+After following the steps you'll have a fully functional Freesound installation up and running, including the search, sound similarity and audio processing features (and more!). As a sort of *bonus step*, you can run Django's shell plus command like this:
 
 ```
 docker-compose run --rm web python manage.py shell_plus

@@ -12,6 +12,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install csc-pysparse==1.1.1.4
 
 COPY --chown=fsweb:fsweb . /code
-
-# NOTE: this image should be build from the /tagrecommendation directory so the correct source files are coppied
-# in /code. Using the docker-compose.yml file in the root of this repository will take care of that.

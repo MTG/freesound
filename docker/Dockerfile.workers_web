@@ -40,7 +40,7 @@ RUN make clean && make
 
 FROM freesound:2020-02
 
-# Install spcific dependencies needed for processing
+# Install specific dependencies needed for processing
 RUN apt-get update \ 
 	&& apt-get install -y --no-install-recommends \ 
 		sndfile-programs \
@@ -73,6 +73,3 @@ RUN pip install --no-cache-dir scikits.audiolab==0.11.0
 
 # Copy source code
 COPY --chown=fsweb:fsweb . /code
-
-# NOTE: this image should be build from the root directory of the repository so the correct source files are coppied
-# in /code. Using the docker-compose.yml file in the root of this repository will take care of that.

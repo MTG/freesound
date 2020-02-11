@@ -22,15 +22,15 @@ import os
 # NOTE: In production and test this file is taken from the deploy repository
 
 # SERVER SETTINGS
-LOGFILE                     = '/var/log/freesound/tagrecommendation.log'
-LISTEN_PORT                 = 8010
-RECOMMENDATION_DATA_DIR     = '/home/fsweb/freesound/freesound-tagrecommendation/'
+LOGFILE = '/var/log/freesound/tagrecommendation.log'
+LISTEN_PORT = 8010
+RECOMMENDATION_DATA_DIR = '/freesound-data/tag_recommendation_models/'
 RECOMMENDATION_TMP_DATA_DIR = os.path.join(RECOMMENDATION_DATA_DIR, 'tmp')
 
 # CLIENT SETTINGS (to be moved to django settings?)
-TAGRECOMMENDATION_ADDRESS          = 'localhost'
-TAGRECOMMENDATION_PORT             = 8010
-TAGRECOMMENDATION_CACHE_TIME       = 60 * 60 * 24 * 7
+TAGRECOMMENDATION_ADDRESS = 'tagrecommendation'
+TAGRECOMMENDATION_PORT = 8010
+TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 
 # Graylog GELF endpoint
 LOGSERVER_IP_ADDRESS = 'IP_ADDRESS'
@@ -41,8 +41,7 @@ LOG_TO_STDOUT = True
 LOG_TO_GRAYLOG = False
 LOG_TO_FILE = False
 
-
-# This tag recommendation server needs some data files to be in the data folder
+# NOTE: The tag recommendation server needs some data files to be in the data folder
 #
 # For the class detection step:
 #   Classifier.pkl              (precomputed classifier pickled)
@@ -56,6 +55,8 @@ LOG_TO_FILE = False
 # from freesound which is stored in a file called Index.json. This fille incrementally stores
 # all tag assingment information from freesound. Once this file exists and has some data, the
 # "update_tagrecommendation_data.py" script can be run and will generate the following files:
+# (if running in Docker environment, you can run the script like:
+# docker-compose run tagrecommendation  bash -c "cd /code; python update_tagrecommendation_data.py"
 #
 # For every class used:
 #   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET.npy
@@ -65,4 +66,5 @@ LOG_TO_FILE = False
 #   FREESOUND2012_CFX_SIMILARITY_MATRIX_cosine_SUBSET_TAG_NAMES.npy
 #   ...
 #
-# Once the files are generated the recommendation service is restarted and ready.
+# Once the files are generated, some remaining might be needed here and there and the recommendation system can be
+# restarted. I know, this info is vague. Will be improved at some point :)

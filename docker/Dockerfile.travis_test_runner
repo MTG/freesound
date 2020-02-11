@@ -1,0 +1,21 @@
+# This container is used for testing in travis. it install the same things as the web container except for
+# essentia and other processing depencies. This is to avoid travis compiling essentia everytime we want to
+# run the tests
+
+
+FROM freesound:2020-02
+
+RUN mkdir /code
+RUN mkdir /freesound-data
+WORKDIR /code
+
+# Install python dependencies
+COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r /code/requirements.txt
+
+# To avoid installation problems, scikits.audiolab needs to be installed after the other packages in requirements.txt
+# have been installed. We might want to replace this package in the future to avoid this "hack".
+RUN pip install --no-cache-dir scikits.audiolab==0.11.0
+
+# Copy source code
+COPY --chown=fsweb:fsweb . /code

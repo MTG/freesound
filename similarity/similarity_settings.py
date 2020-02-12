@@ -22,31 +22,26 @@ import os
 # NOTE: In production and test this file is taken from the deploy repository
 
 # SERVER SETTINGS
-INDEX_DIR                   = '/home/fsweb/freesound/freesound-similarity/'
-INDEX_NAME                  = 'fs_index'  # Don't include .db extension in the name here
-INDEXING_SERVER_INDEX_NAME  = 'background_index'
-PRESET_DIR                  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
-PRESETS                     = ['lowlevel', 'pca']
-DEFAULT_PRESET              = "pca"
-SIMILARITY_MINIMUM_POINTS   = 2000
-LOGFILE                     = '/var/log/freesound/similarity.log'
-LOGFILE_INDEXING_SERVER     = '/var/log/freesound/similarity_indexing.log'
-LISTEN_PORT                 = 8008
+INDEX_DIR = '/freesound-data/similarity_index/'
+INDEX_NAME = 'gaia_index_freesound_dev'  # Don't include .db extension in the name here
+INDEXING_SERVER_INDEX_NAME = 'background_index'
+PRESET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
+PRESETS = ['lowlevel', 'pca']
+DEFAULT_PRESET = "pca"
+SIMILARITY_MINIMUM_POINTS = 2000
+LOGFILE = '/var/log/freesound/similarity.log'
+LOGFILE_INDEXING_SERVER = '/var/log/freesound/similarity_indexing.log'
+LISTEN_PORT = 8008
 INDEXING_SERVER_LISTEN_PORT = 8009
-PCA_DIMENSIONS              = 100
-PCA_DESCRIPTORS             = [
-                                 "*lowlevel*mean",
-                                 "*lowlevel*dmean",
-                                 "*lowlevel*dmean2",
-                                 "*lowlevel*var",
-                                 "*lowlevel*dvar",
-                                 "*lowlevel*dvar2"
-                              ]
-
-# CLIENT SETTINGS (to be moved to django settings?)
-SIMILARITY_ADDRESS               = 'localhost'
-SIMILARITY_PORT                  = 8008
-SIMILARITY_INDEXING_SERVER_PORT  = 8009
+PCA_DIMENSIONS = 100
+PCA_DESCRIPTORS = [
+   "*lowlevel*mean",
+   "*lowlevel*dmean",
+   "*lowlevel*dmean2",
+   "*lowlevel*var",
+   "*lowlevel*dvar",
+   "*lowlevel*dvar2"
+]
 
 # OTHER
 SIMILAR_SOUNDS_TO_CACHE = 100

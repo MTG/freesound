@@ -18,18 +18,21 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import BaseCommand
-from sounds.models import Sound
-from similarity.client import Similarity
-from optparse import make_option
-import yaml
 import logging
+
+import yaml
+from django.core.management.base import BaseCommand
+
+from similarity.client import Similarity
+from sounds.models import Sound
+
+logger_console = logging.getLogger('console')
 logger = logging.getLogger("web")
 
 
 class Command(BaseCommand):
-    help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force to " \
-           "force reindex ALL sounds. Use option -l to limit the maximum number of sounds to index " \
+    help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force " \
+           "to force reindex ALL sounds. Use option -l to limit the maximum number of sounds to index " \
            "(to avoid collapsing similarity if using crons). Use option -ev to only index sounds with a specific" \
            "essentia extractor version. For exampel: python manage.py similarity_update -ev 0.3 -l 1000"
 
@@ -66,11 +69,12 @@ class Command(BaseCommand):
 
         limit = int(options['limit'])
         freesound_extractor_version = options['freesound_extractor_version']
-        print limit, freesound_extractor_version
+        logger_console.info(limit, freesound_extractor_version)
         if options['force']:
             to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK').order_by('id')[:limit]
         else:
-            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[:limit]
+            to_be_added = Sound.objects.filter(
+                analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[:limit]
 
         logger.info("Starting similarity update. %i sounds to be added to the similarity index" % to_be_added.count())
         N = len(to_be_added)
@@ -81,19 +85,23 @@ class Command(BaseCommand):
                 try:
                     data = yaml.load(open(sound.locations('analysis.statistics.path')), Loader=yaml.cyaml.CLoader)
                 except:
-                    print 'Sound with id %i was not indexed (no yaml file found when checking for extractor version)' % sound.id
+                    logger_console.info('Sound with id %i was not indexed (no yaml file found when checking for '
+                                        'extractor version)' % sound.id)
                     continue
 
                 if data:
                     if 'freesound_extractor' in data['metadata']['version']:
                         if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
-                            print 'Sound with id %i was not indexed (it was analyzed with extractor version %s)' % (sound.id, data['metadata']['version']['freesound_extractor'])
+                            logger_console.info(
+                                'Sound with id %i was not indexed (it was analyzed with extractor version %s)'
+                                % (sound.id, data['metadata']['version']['freesound_extractor']))
                             continue
                     else:
-                        print 'Sound with id %i was not indexed (it was analyzed with an unknown extractor)' % sound.id
+                        logger_console.info('Sound with id %i was not indexed (it was analyzed with an unknown '
+                                            'extractor)' % sound.id)
                         continue
                 else:
-                    print 'Sound with id %i was not indexed (most probably empty yaml file)' % sound.id
+                    logger_console.info('Sound with id %i was not indexed (most probably empty yaml file)' % sound.id)
                     continue
 
             try:
@@ -103,7 +111,7 @@ class Command(BaseCommand):
                     result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
                     sound.set_similarity_state('OK')
                     sound.invalidate_template_caches()
-                print "%s (%i of %i)" % (result, count+1, N)
+                logger_console.info("%s (%i of %i)" % (result, count+1, N))
 
                 # Every 2000 added sounds, save the index
                 #if count % 2000 == 0:
@@ -115,7 +123,8 @@ class Command(BaseCommand):
             except Exception as e:
                 if not options['indexing_server']:
                     sound.set_similarity_state('FA')
-                print 'Sound could not be added (id: %i, %i of %i): \n\t%s' % (sound.id, count+1, N ,str(e))
+                logger_console.info('Sound could not be added (id: %i, %i of %i): \n\t%s'
+                                    % (sound.id, count+1, N ,str(e)))
 
         logger.info("Finished similarity update. %i sounds added to the similarity index" % to_be_added.count())
         # At the end save the index

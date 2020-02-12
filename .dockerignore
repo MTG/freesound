@@ -2,3 +2,5 @@
 *.bz2
 env
 freesound-data
+.git
+node_modules

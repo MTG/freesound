@@ -18,12 +18,12 @@
 #     See AUTHORS file.
 #
 
-from similarity.similarity_settings import SIMILARITY_ADDRESS, SIMILARITY_PORT, SIMILARITY_INDEXING_SERVER_PORT
+from django.conf import settings
 import json
 import urllib2
 
-_BASE_URL                     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_PORT)
-_BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_INDEXING_SERVER_PORT)
+_BASE_URL                     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_PORT)
+_BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_INDEXING_SERVER_PORT)
 _URL_ADD_POINT                = 'add_point/'
 _URL_DELETE_POINT             = 'delete_point/'
 _URL_GET_DESCRIPTOR_NAMES     = 'get_descriptor_names/'

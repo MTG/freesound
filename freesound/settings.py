@@ -4,12 +4,18 @@ import os
 import datetime
 import re
 import logging.config
+import dj_database_url
 
 # -------------------------------------------------------------------------------
 # Miscellaneous Django settings
 
 DEBUG = False
 DISPLAY_DEBUG_TOOLBAR = False
+
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
+
+default_url = 'postgres://postgres@db/postgres'
+DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=default_url)}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -268,7 +274,7 @@ NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 # Freesound data paths and urls
 
 # Base data path. Note that further data subdirectories are defined after the local_settings import
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/'))
 
 # Base data URL. Note that further data sub-urls are defined after the local_settings import
 # You can overwrite this to point to production data ("https://freesound.org/data/")
@@ -351,8 +357,8 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
 
 # -------------------------------------------------------------------------------
 # SOLR and search settings
-SOLR_URL = ''
-SOLR_FORUM_URL = ''
+SOLR_URL = "http://search:8080/fs2/"
+SOLR_FORUM_URL = "http://search:8080/forum/"
 
 ENABLE_QUERY_SUGGESTIONS = False  # Only for BW
 DEFAULT_SEARCH_WEIGHTS = {
@@ -364,6 +370,18 @@ DEFAULT_SEARCH_WEIGHTS = {
     'original_filename': 2
 }
 
+
+# -------------------------------------------------------------------------------
+# Similarity client settings
+SIMILARITY_ADDRESS = 'similarity'
+SIMILARITY_PORT = 8008
+SIMILARITY_INDEXING_SERVER_PORT = 8009
+
+# -------------------------------------------------------------------------------
+# Tag recommendation client settings
+TAGRECOMMENDATION_ADDRESS = 'tagrecommendation'
+TAGRECOMMENDATION_PORT = 8010
+TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 
 # -------------------------------------------------------------------------------
 # Sentry settings
@@ -411,9 +429,9 @@ AKISMET_KEY = ''
 # -------------------------------------------------------------------------------
 # Processing and analysis settings
 
-GEARMAN_JOB_SERVERS = ['']
+GEARMAN_JOB_SERVERS = ["gearmand:4730"]
 
-STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../_sandbox/stereofy/stereofy'))
+STEREOFY_PATH = '/usr/local/bin/stereofy'
 
 # Min free disk space percentage for worker (worker will raise exception if not enough free disk space is available)
 WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
@@ -421,12 +439,12 @@ WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
 # General timeout for processing/analysis workers (in seconds)
 WORKER_TIMEOUT = 60 * 60
 
-ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
+ESSENTIA_EXECUTABLE = '/usr/local/bin/essentia_streaming_extractor_freesound'
 ESSENTIA_STATS_OUT_FORMAT = 'yaml'
-ESSENTIA_FRAMES_OUT_FORMAT = 'json'
+ESSENTIA_FRAMES_OUT_FORMAT = 'yaml'
 
 # Used to configure output formats in newer FreesoundExtractor versions
-ESSENTIA_PROFILE_FILE_PATH = None
+ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))
 
 # Files above this filesize after converting to 16bit mono PCM won't be analyzed (in bytes, ~5MB per minute).
 MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25

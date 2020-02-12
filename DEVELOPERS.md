@@ -120,3 +120,8 @@ After doing all the changes follow this list as a guideline to check if things a
 - ...
 - Check that CORS headers are working, by using a javascript app
 
+### New developer onboarding (for admins)
+
+* Add to Github team
+* Add to Slack channel
+* Give access to Sentry/Graylog

@@ -24,7 +24,7 @@ from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
 from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, \
     BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT, \
-    LOG_TO_GRAYLOG
+    LOG_TO_GRAYLOG, LOG_TO_FILE
 import logging
 import graypy
 from logging.handlers import RotatingFileHandler
@@ -169,7 +169,7 @@ class SimilarityServer(resource.Resource):
                 if not data:
                     return json.dumps({'error': True, 'result': 'You specified \'file\' as target file but attached no analysis file.', 'status_code': BAD_REQUEST_CODE})
                 try:
-                    target = yaml.load(data)
+                    target = yaml.safe_load(data)
                 except:
                     return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
             else:
@@ -233,11 +233,12 @@ if __name__ == '__main__':
         print("LOG_TO_STDOUT is False, will not log")
     logger = logging.getLogger('similarity')
     logger.setLevel(logging.DEBUG)
-    handler = cloghandler.ConcurrentRotatingFileHandler(LOGFILE, "a", maxBytes=2*1024*1024, backupCount=5)
-    handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    if LOG_TO_FILE:
+        handler = cloghandler.ConcurrentRotatingFileHandler(LOGFILE, "a", maxBytes=2*1024*1024, backupCount=5)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
     if LOG_TO_STDOUT:
         std_handler = logging.StreamHandler()
         std_handler.setLevel(logging.DEBUG)

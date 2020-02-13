@@ -66,10 +66,12 @@ class TagRecommendationServer(resource.Resource):
 
         except:
             self.cbtr = None
-            logger.info("No computed matrices were found, recommendation system not loading for the moment (but service listening for data to come).")
+            logger.info("No computed matrices were found, recommendation system not loading for the moment ("
+                        "but service listening for data to come).")
 
         try:
-            self.index_stats = loadFromJson(tr_settings.RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
+            self.index_stats = loadFromJson(
+                tr_settings.RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
             logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds_in_matrix'])
         except Exception as e:
             print(e)
@@ -78,7 +80,7 @@ class TagRecommendationServer(resource.Resource):
             }
 
         try:
-            self.index = loadFromJson(tr_settings.RECOMMENDATION_DATA_DIR + 'Index.json')
+            self.index = loadFromJson(tr_settings.RECOMMENDATION_DATA_DIR, 'Index.json')
             self.index_stats['biggest_id_in_index'] = max([int(key) for key in self.index.keys()])
             self.index_stats['n_sounds_in_index'] = len(self.index.keys())
         except Exception as e:
@@ -121,9 +123,10 @@ class TagRecommendationServer(resource.Resource):
 
     def last_indexed_id(self):
         result = {'error': False, 'result': self.index_stats['biggest_id_in_index']}
-        logger.info('Getting last indexed id information (%i, %i sounds in index, %i sounds in matrix)' % (self.index_stats['biggest_id_in_index'],
-                                                                                                           self.index_stats['n_sounds_in_index'],
-                                                                                                           self.index_stats['n_sounds_in_matrix']))
+        logger.info('Getting last indexed id information (%i, %i sounds in index, %i sounds in matrix)'
+                    % (self.index_stats['biggest_id_in_index'],
+                       self.index_stats['n_sounds_in_index'],
+                       self.index_stats['n_sounds_in_matrix']))
         return json.dumps(result)
 
     def add_to_index(self, sound_ids, sound_tagss):
@@ -153,18 +156,21 @@ if __name__ == '__main__':
         print("LOG_TO_STDOUT is False, will not log")
     logger = logging.getLogger('tagrecommendation')
     logger.setLevel(logging.DEBUG)
-    handler = cloghandler.ConcurrentRotatingFileHandler(tr_settings.LOGFILE, mode="a", maxBytes=2 * 1024 * 1024, backupCount=5)
-    handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    if tr_settings.LOG_TO_FILE:
+        handler = cloghandler.ConcurrentRotatingFileHandler(tr_settings.LOGFILE,
+                                                            mode="a", maxBytes=2 * 1024 * 1024, backupCount=5)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
     if tr_settings.LOG_TO_STDOUT:
         std_handler = logging.StreamHandler()
         std_handler.setLevel(logging.DEBUG)
         std_handler.setFormatter(formatter)
         logger.addHandler(std_handler)
-    handler_graypy = graypy.GELFHandler(tr_settings.LOGSERVER_IP_ADDRESS, tr_settings.LOGSERVER_PORT)
-    logger.addHandler(handler_graypy)
+    if tr_settings.LOG_TO_GRAYLOG:
+        handler_graypy = graypy.GELFHandler(tr_settings.LOGSERVER_IP_ADDRESS, tr_settings.LOGSERVER_PORT)
+        logger.addHandler(handler_graypy)
 
     # Start service
     logger.info('Configuring tag recommendation service...')

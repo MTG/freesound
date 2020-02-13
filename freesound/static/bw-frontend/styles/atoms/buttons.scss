@@ -33,3 +33,8 @@ button {
   }
   border: 1px solid $navy-light-grey;
 }
+
+.btn-neutral {
+  @include reset-rounded-button($navy-grey, $black);
+  @include reset-border-bottom-on-hover();
+}

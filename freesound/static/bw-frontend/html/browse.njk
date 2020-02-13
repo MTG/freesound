@@ -1,10 +1,11 @@
 {% import './pages/browse/sound.njk' as sound %}
 {% import './pages/browse/filters.njk' as filters %}
 {% import './pages/browse/activeFilters.njk' as activeFilters %}
+{% import './molecules/navbar.njk' as navbars %}
 {% extends "base.njk" %}
 
 {% block content %}
-  {% include './molecules/navbar.njk' %}
+  {{ navbars.browseNavbar(true) }}
   <div class="container">
     <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
       <div class="v-spacing-6 v-spacing-top-4">

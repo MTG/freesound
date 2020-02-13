@@ -77,7 +77,7 @@ class GeoTagsTests(TestCase):
         sound.save()
         resp = self.client.get(reverse('geotags-infowindow', kwargs={'sound_id': sound.id}))
         self.check_context(resp.context, {'sound': sound})
-        self.assertInHTML('<a class="title" target="_blank" href="/people/Anton/sounds/16/">Glass A mf.wav</a>', resp.content)
+        self.assertIn('href="/people/{0}/sounds/{1}/"'.format(sound.user.username, sound.id), resp.content)
 
     def test_browse_geotags_case_insensitive(self):
         user = User.objects.get(username='Anton')

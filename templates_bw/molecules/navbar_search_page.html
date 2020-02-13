@@ -1,0 +1,15 @@
+{% comment %}This is like the default navbar but without the search input box. Used for the search page that
+already has a input box.{% endcomment %}
+<nav class="bw-nav">
+    <div class="container bw-nav__container">
+        <div class="bw-nav__logo-search-container">
+            <div class="bw-nav__logo">
+                <a href="/" class="no-hover"></a>
+            </div>
+        </div>
+        <ul class="bw-nav__actions">
+            {% include 'molecules/navbar_common_actions.html' %}
+            {% include 'molecules/navbar_user_section.html' %}
+        </ul>
+    </div>
+</nav>

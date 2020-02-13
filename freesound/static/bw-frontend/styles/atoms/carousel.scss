@@ -1,7 +1,7 @@
 .bw-carousel-container {
   position: relative;
 
-  &:hover .bw-carousel-icon {
+  &:hover > .bw-carousel-icon {
     opacity: 1;
   }
 }
@@ -42,4 +42,41 @@
 
 .carousel-nav-hidden {
   display: none;
+}
+
+.carousel__dot-icons {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  font-size: 0.5em;
+  opacity: 0;
+
+  .bw-carousel-container:hover > & {
+    opacity: 1;
+  }
+
+  &.dots-distance-1 {
+    bottom: -10px;
+  }
+
+  &.dots-distance-2 {
+    bottom: -20px;
+  }
+
+  &.dots-distance-3 {
+    bottom: -30px;
+  }
+
+  > * {
+    margin-left: 4px;
+    margin-right: 4px;
+    opacity: 0.2;
+    cursor: pointer;
+
+    &:hover,
+    &.active-point {
+      opacity: 1;
+    }
+  }
 }

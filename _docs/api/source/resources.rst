@@ -1,4 +1,4 @@
-cd _do.. _resources:
+﻿cd _do.. _resources:
 
 Resources
 <<<<<<<<<
@@ -12,7 +12,7 @@ Search resources
 
 .. warning:: When using the search resources make sure to include the ``fields`` parameter (see :ref:`sound-list-response`)
   so that you get all needed metadata for each search result in a single request. In this way you'll **avoid  having to perform
-  one extra API request** to retreive the desired metadata for each individual result.
+  one extra API request** to retrieve the desired metadata for each individual result.
 
 
 .. _sound-text-search:
@@ -36,7 +36,7 @@ Text search queries are defined using the following request parameters:
 ======================  =========================  ======================
 Name                    Type                       Description
 ======================  =========================  ======================
-``query``               string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in the tags, etc. You'll find some examples below. Using an empty query (``query=`` or ``query=""``) will return all Freeosund sounds.
+``query``               string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in the tags, etc. You'll find some examples below. Using an empty query (``query=`` or ``query=""``) will return all Freesound sounds.
 ``filter``              string                     Allows filtering query results. See below for more information.
 ``sort``                string                     Indicates how query results should be sorted. See below for a list of the sorting options. By default ``sort=score``.
 ``group_by_pack``       bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
@@ -79,11 +79,11 @@ Filter name             Type           Description
 ``avg_rating``          numerical      Average rating for the sound in the range [0, 5].
 ``num_ratings``         integer        Number of times the sound has been rated.
 ``comment``             string         Textual content of the comments of a sound  (tokenized). The filter is satisfied if sound contains the filter value in at least one of its comments.
-``comments``            integer        Number of times the sound cas been commented.
+``comments``            integer        Number of times the sound has been commented.
 ======================  =============  ====================================================
 
 
-Additionally, the following filters (comming from the research carried out within the AudioCommons_ project) can also
+Additionally, the following filters (coming from the research carried out within the AudioCommons_ project) can also
 be used when narrowing down a query:
 
 
@@ -108,9 +108,9 @@ Filter name                 Type           Description
 ``ac_depth``                numerical      Depth of the analyzed audio in a scale from [0-100]. A *deep* sound is one that conveys the sense of having been made far down below the surface of its source.
 ``ac_hardness``             numerical      Hardness of the analyzed audio in a scale from [0-100]. A *hard* sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
 ``ac_roughness``            numerical      Roughness of the analyzed audio in a scale from [0-100]. A *rough* sound is one that has an uneven or irregular sonic texture.
-``ac_boominess``            numerical      Bominess of the analyzedn sound in a scale from [0-100]. A *boomy* sound is one that conveys a sense of loudness, depth and resonance.
-``ac_warmth``               numerical      Warmth of the analyzedn sound in a scale from [0-100]. A *warm* sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.
-``ac_sharpness``            numerical      Sharpness of the analyzedn sound in a scale from [0-100]. A *sharp* sound is one that suggests it might cut if it were to take on physical form.
+``ac_boominess``            numerical      Boominess of the analyzed sound in a scale from [0-100]. A *boomy* sound is one that conveys a sense of loudness, depth and resonance.
+``ac_warmth``               numerical      Warmth of the analyzed sound in a scale from [0-100]. A *warm* sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.
+``ac_sharpness``            numerical      Sharpness of the analyzed sound in a scale from [0-100]. A *sharp* sound is one that suggests it might cut if it were to take on physical form.
 ``ac_reverb``               boolean        Whether the signal is reverberated or not.
 ==========================  =============  ====================================================
 
@@ -177,7 +177,7 @@ In general, you can define geotagging queries in two ways:
   filter={!geofilt sfield=geotag pt=<LATITUDE>,<LONGITUDE> d=<MAX_DISTANCE_IN_KM>}
 
 
- 2) By specifying an arbirtrary rectangle in space: this way lets you define a rectangle in space by specifying a
+ 2) By specifying an arbitrary rectangle in space: this way lets you define a rectangle in space by specifying a
  minimum latitude and longitude, and a maximum latitude and longitude.
  Query results will only include those points contained in the area.
  You can use the ``filter`` parameter of a standard query to specify minimum and maximum latitude and longitude using the
@@ -193,7 +193,7 @@ In general, you can define geotagging queries in two ways:
         :align: center
 
 
-Please refer to the Solr docummentation on spatial queries for extra information (http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4) and check the examples below.
+Please refer to the Solr documentation on spatial queries for extra information (http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4) and check the examples below.
 
 
 .. _sound-list-response:
@@ -267,7 +267,7 @@ Content search queries are defined using the following request parameters:
 Name                       Type                       Description
 =========================  =========================  ======================
 ``target``                 string or number           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs, or as a sound id. See below.
-``analysis_file``          file                       **Experimental** - Alternatively, targets can be specified by uploading a file with the output of the Essentia Freesound Extractor analysis of any sound that you analized locally (see below). This parameter overrides ``target``, and requires the use of POST method.
+``analysis_file``          file                       **Experimental** - Alternatively, targets can be specified by uploading a file with the output of the Essentia Freesound Extractor analysis of any sound that you analyzed locally (see below). This parameter overrides ``target``, and requires the use of POST method.
 ``descriptors_filter``     string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
 =========================  =========================  ======================
 
@@ -276,7 +276,7 @@ Name                       Type                       Description
 The ``target`` parameter can be used to specify a content-based sorting of your search results.
 Using ``target`` you can sort the query results so that the first results will be the sounds featuring the most similar descriptors to the given target.
 To specify a target you must use a syntax like ``target=descriptor_name:value``.
-You can also set multiple descriptor/value paris in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
+You can also set multiple descriptor/value pairs in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
 Descriptor names must be chosen from those listed in :ref:`available-descriptors`. Only numerical descriptors are allowed.
 Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too (see below).
 Consider the following two ``target`` examples::
@@ -488,7 +488,7 @@ Name                  Type              Description
 ``download``          URI               The URI for retrieving the original sound.
 ``bookmark``          URI               The URI for bookmarking the sound.
 ``previews``          object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively). **API authentication is required for retrieving sound previews (Token or OAuth2)**.
-``images``            object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dinctionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
+``images``            object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
 ``num_downloads``     number            The number of times the sound was downloaded.
 ``avg_rating``        number            The average rating of the sound.
 ``num_ratings``       number            The number of times the sound was rated.
@@ -786,7 +786,7 @@ Pending Uploads (OAuth2 required)
   GET /apiv2/sounds/pending_uploads/
 
 This resource allows you to retrieve a list of audio files uploaded by the Freesound user logged in using OAuth2 that have not yet been described, processed or moderated.
-In Fressound, when sounds are uploaded they first need to be described by their uploaders.
+In Freesound, when sounds are uploaded they first need to be described by their uploaders.
 After the description step, sounds are automatically processed and then enter the moderation phase, where a team of human moderators either accepts or rejects the upload.
 Using this resource, your application can keep track of user uploads status in Freesound.
 This method requires :ref:`oauth-authentication`.

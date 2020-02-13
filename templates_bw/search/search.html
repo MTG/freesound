@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load bw_templatetags %}
+
+{% block title %}Search{% endblock %}
+
+{% block navbar %}{% include 'molecules/navbar_search_page.html' %}{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
+            <div class="v-spacing-6 v-spacing-top-4">
+                <div class="between middle">
+                    <div></div>
+                    <input type="text" placeholder="Start browsing here" class="bw-search__input" />
+                    {% bw_icon 'close' %}
+                </div>
+
+            </div>
+            <div>
+                <div class="divider-light"></div>
+                <div class="padding-3 v-padding-2 between font-weight-bold">
+                    <div>240 sounds</div>
+                    <div>Sounds</div>
+                    <div class="font-weight-normal text-light-grey">Sort by:</div>
+                </div>
+                <div class="divider-light"></div>
+            </div>
+        </div>
+        <div class="row no-gutters">
+            <aside class="col-3">
+                {% comment %}
+                {{ filters.checkboxSection('Licenses', ['Creative commons 0', 'Sampling +', 'Attribution', 'Non-commercial']) }}
+                {{ filters.checkboxSection('Type', ['aiff', 'wav', 'mp3', 'FLAC']) }}
+                {{ filters.checkboxSection('Sample rate', ['11025', '22050', '44100', '48000', '96000']) }}
+                {{ filters.checkboxSection('Bit depth', ['16', '24', '32', '8']) }}
+                {{ filters.checkboxSection('Bitrate', ['1378', '1379', '1411', '1500', '2250']) }}
+                {{ filters.checkboxSection('Channels', ['2', '1', '6']) }}
+                {{ filters.checkboxSection('Search only in ', ['Tags', 'File names', 'Descriptions', 'Sound ids', 'User names']) }}
+                {% endcomment %}
+            </aside>
+            <main class="col-8 offset-1">
+                <div class="v-spacing-3 v-spacing-top-1">
+                    {% comment %}{{ activeFilters.list(['Creative commons 0', 'mp3'])}}{% endcomment %}
+                </div>
+                <div class="v-spacing-6">
+                    {% comment %}{{ sound.results(20) }}{% endcomment %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+{% endblock %}

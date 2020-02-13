@@ -1,4 +1,4 @@
-.. _resources_apiv1:
+﻿.. _resources_apiv1:
 
 APIv1 Resources
 <<<<<<<<<<<<<<<
@@ -160,10 +160,10 @@ The response of the search resource contains an array of sounds and each sound i
 represented with a number of pre-defined fields (see :ref:`sound-search-response` for more information).
 Sometimes we only need specific information about sounds such as their id, their tagline or
 their name, but the array of sounds that is returned contains many more properties useless for us (thus we are using
-a lot of badwidth that we could save).
+a lot of bandwidth that we could save).
 
 In these cases, parameter ``fields`` allows to define the exact list of fields that we want to obtain for each sound.
-Fields are specified as a list of properties (choosen from any of those listed in :ref:`sound-get-response`) separated by commas.
+Fields are specified as a list of properties (chosen from any of those listed in :ref:`sound-get-response`) separated by commas.
 For example, if we perform a search and we only want to get sound ids and duration, we can use fields parameter as ``fields=id,duration``.
 
 This parameter can be used in any resource that returns an array of sounds.
@@ -175,7 +175,7 @@ This parameter can be used in any resource that returns an array of sounds.
 
 This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries
 in the sounds list. With g=1, if search results contain more than one sound that belongs to the same pack,
-only one sound for each distinct pack is returned (sounds with no packs are returned aswell). However, the
+only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the
 returned sound will feature two extra properties to access these other sounds omitted from the results list:
 ``n_results_from_the_same_pack``: indicates how many other results belong to the same pack (and have not been returned)
 ``results_from_the_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned)
@@ -360,21 +360,21 @@ Several descriptors can be defined in the target concatenating them with blank s
   t=.lowlevel.pitch.mean:220 .lowlevel.pitch_salience.mean:1.0
   t=.sfx.tristimulus.mean:0.8,0.3,0.0
 
-Notice that when using a target without a filter, the api will ALLWAYS return sounds (even if they are really distant).
+Notice that when using a target without a filter, the api will ALWAYS return sounds (even if they are really distant).
 Actually, content-based search using a target and no filter can be considered as a way of similarity search by manually specifying the descriptors to use. The whole database is *sorted* according to the specified target.
 
 
 **f for filter**
 
 Filters are defined with a similar syntax as in the normal query filters. In this case, also non numerical descriptors can be used.
-Content-based search filters also allow AND/OR operators and pharentheses to specify complex conditions.
+Content-based search filters also allow AND/OR operators and parentheses to specify complex conditions.
 
 To only return sounds that have a particular descriptor value it must be indicated as::
 
   descriptor_name:value
 
 Notice that defining an exact value for a filter is only recommended for non numerical descriptors, as for numerical ones it might be hard to find an EXACT match (it is better to define a very small range).
-String descriptors must be sorrounded by double quotes ("). Note that character # must be replaced by the string "sharp" as in urls # character has another meaning (see the example).
+String descriptors must be surrounded by double quotes ("). Note that character # must be replaced by the string "sharp" as in urls # character has another meaning (see the example).
 
 To indicate filter ranges the syntax is the same as in the normal search::
 
@@ -405,7 +405,7 @@ Here you have some examples of defining filters::
 
 Sound content-based search response
 '''''''''''''''''''''''''''''''''''
-The response is the same as the :ref:`sound-search-response`. Sounds are sorted by similarity to the gived target (if given). If no target is specified, sounds are sorted by id (ascendent order).
+The response is the same as the :ref:`sound-search-response`. Sounds are sorted by similarity to the given target (if given). If no target is specified, sounds are sorted by id (ascendent order).
 
 
 
@@ -586,7 +586,7 @@ sounds_per_page     number  no	      Number of sounds to return in each page (be
 
 **latitude and longitude parameters**
 
-Geotags are represented as points defined by a latitude and a longitude parameters. Displying a world map as a rectangle, latitude is the x axis and ranges from -90 to 90, while longitude is the y axis and ranges from -180 to 180.
+Geotags are represented as points defined by a latitude and a longitude parameters. Displaying a world map as a rectangle, latitude is the x axis and ranges from -90 to 90, while longitude is the y axis and ranges from -180 to 180.
 
 "Sound Geotags resource" allows to define a rectangular space inside the "world map" rectangle and returns a list of all the sounds that have been geotagged inside the defined space.
 
@@ -1129,7 +1129,7 @@ Response
 
 **Properties**
 
-The response is a dictionary. The array has two keys: 'categories' (which returns an array of categories whhere each is a dictionary with 'name', 'url' and 'sounds' properties) and 'num_results' indicating the total number of categories.
+The response is a dictionary. The array has two keys: 'categories' (which returns an array of categories where each is a dictionary with 'name', 'url' and 'sounds' properties) and 'num_results' indicating the total number of categories.
 
 ===========  ======  ===================================================
 Name         Type    Description

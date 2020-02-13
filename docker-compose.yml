@@ -1,0 +1,140 @@
+version: "3.7"
+
+volumes:
+    pgdata:
+    m2home:
+    solrdata:
+    fswebhome:
+
+services:
+    db:
+        image: postgres:12.1
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        env_file:
+            - environment
+        volumes:
+            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
+        ports:
+            - 5432:5432
+        environment:
+            - POSTGRES_USER=freesound
+            - POSTGRES_DB=freesound
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+
+    web:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+            - fswebhome:/home/fsweb
+        ports:
+            - 8000:8000
+        env_file:
+            - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+        depends_on:
+            - db
+ 
+    search:
+        build:
+            context: ./docker/search
+            dockerfile: Dockerfile.search
+        init: true
+        command: mvn -Dsolr.solr.home=/code/solr.home jetty:run-war
+        volumes:
+            - solrdata:/var/lib/solr
+            - m2home:/root/.m2
+            - ./utils/search/solr4.5.1/solr.home:/code/solr.home
+        ports:
+            - 8080:8080
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+         
+    tagrecommendation:
+        build:
+            context: ./tagrecommendation
+            dockerfile: ../docker/Dockerfile.tagrecommendation
+        init: true
+        command: python tagrecommendation_server.py
+        volumes:
+            - ./tagrecommendation:/code
+            - ./freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
+        ports:
+            - 8010:8010
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+    
+    similarity:
+        build:
+            context: ./similarity
+            dockerfile: ../docker/Dockerfile.similarity
+        init: true
+        command: python similarity_server.py
+        volumes:
+            - ./similarity:/code
+            - ./freesound-data/similarity_index:/freesound-data/similarity_index
+            - ./freesound-data/analysis:/freesound-data/analysis
+        ports:
+            - 8008:8008
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+
+    gearmand:
+        image: artefactual/gearmand
+
+    worker_processing:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        command: python manage.py gm_worker_processing --queue process_sound
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+        env_file:
+            - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+        depends_on:
+            - db
+            - gearmand
+    
+    worker_analysis:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        command: python manage.py gm_worker_processing --queue analyze_sound
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+        env_file:
+            - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+        depends_on:
+            - db
+            - gearmand
+
+    worker_async_tasks:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        command: python manage.py gm_worker_async_tasks
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+        env_file:
+            - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+        depends_on:
+            - db
+            - gearmand

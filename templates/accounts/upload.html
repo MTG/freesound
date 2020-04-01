@@ -371,7 +371,7 @@ Hint 1: you can upload multiple files at once
 
     var trimSize = function trimSize(queue, currentFile) {
       var total_size = queue.reduce((acc, curr) => acc + curr.size, 0);
-      if (total_size + currentFile.size < 1024 * 1024) {
+      if (total_size + currentFile.size < 10737418240) {
         return queue.concat(currentFile);
       } else {
         return queue;

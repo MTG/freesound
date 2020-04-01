@@ -369,6 +369,15 @@ Hint 1: you can upload multiple files at once
       }
     };
 
+    var trimSize = function trimSize(queue, currentFile) {
+      var total_size = queue.reduce((acc, curr) => acc + curr.size, 0);
+      if (total_size + currentFile.size < 1024 * 1024) {
+        return queue.concat(currentFile);
+      } else {
+        return queue;
+      }
+    };
+
     // add new (or 'dropped') files to the list of files to upload, avoiding duplicates
     var onFileInputChange = function onFileInputChange(event) {
       event.preventDefault();
@@ -378,7 +387,13 @@ Hint 1: you can upload multiple files at once
         soundsQueue.push(receivedFiles[i]);
       }
       soundsQueue = soundsQueue.reduce(removeDuplicates, []);
+      var num = soundsQueue.length;
+      soundsQueue = soundsQueue.reduce(trimSize, []);
+      num -= soundsQueue.length;
       showListOfSounds();
+      if (num > 0) {
+        alert("1 Gb exceeded. " + num + " file(s) have been discarded.");
+      }
     };
 
     var addErrorListElement = function addErrorListElement() {

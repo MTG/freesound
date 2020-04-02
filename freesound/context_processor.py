@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import datetime
+
 from django.conf import settings
 from tickets.views import new_sound_tickets_count
 from messages.models import Message
@@ -37,6 +39,13 @@ def context_extra(request):
         num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
         num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
 
+    # Determine if anniversary special css and js content should be loaded
+    # Animations will only be shown during the day of the anniversary
+    # Special logo will be shown during 2 weeks after the anniversary
+    load_anniversary_content = \
+        datetime.datetime(2020, 4, 5, 0, 0) <= datetime.datetime.today() <= datetime.datetime(2020, 4, 20) or \
+        request.GET.get('anniversary', '0') == '1'
+
     return {
         'media_url': settings.MEDIA_URL,
         'request': request,
@@ -45,4 +54,5 @@ def context_extra(request):
         'num_pending_sounds': num_pending_sounds,
         'num_messages': num_messages,
         'recaptcha_public_key': settings.RECAPTCHA_PUBLIC_KEY,
+        'load_anniversary_content': load_anniversary_content
     }

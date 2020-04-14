@@ -985,6 +985,8 @@ def upload(request, no_flash=False):
         'successes': successes,
         'errors': errors,
         'no_flash': no_flash,
+        'max_file_size': settings.UPLOAD_MAX_FILE_SIZE_COMBINED,
+        'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024)))
     }
     return render(request, 'accounts/upload.html', tvars)
 

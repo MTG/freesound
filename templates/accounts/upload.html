@@ -388,6 +388,9 @@ Hint 1: you can upload multiple files at once
       } else {
         file_size.style.background = "red";
       }
+      file_size.style.color = "white";
+      file_size.innerText = Math.round(maxUploadSize/1024/1024 * (1 - value/100)) + " MB remaining";
+
       var file_size_bar = document.getElementById('size-table');
       file_size_bar.style.visibility = (value > 50 ? "visible" : "hidden" );
     }
@@ -418,7 +421,7 @@ Hint 1: you can upload multiple files at once
       showListOfSounds();
       var percent_size = soundsQueue.reduce((acc, curr) => acc + curr.size, 0) * 100 / maxUploadSize;
       setSizeBarValue(percent_size);
-      resetForm(num > 0 ? "1 Gb exceeded. " + num + " file(s) discarded." : " ");
+      resetForm(num > 0 ? "Upload limit of {{ max_file_size_in_MB }} MB exceeded. " + num + " file(s) discarded." : " ");
     };
 
     var addErrorListElement = function addErrorListElement() {
@@ -545,7 +548,7 @@ Hint 1: you can upload multiple files at once
     fileInput.onchange = onFileInputChange;
     fileInput.style.display = 'none';
     progressContainer.style.display = 'none';
-    var maxUploadSize = 10737418240;
+    var maxUploadSize = {{ max_file_size }};
 
     // drag and drop
     document.addEventListener('dragenter', onDrag);

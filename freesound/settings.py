@@ -274,7 +274,7 @@ NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 # Freesound data paths and urls
 
 # Base data path. Note that further data subdirectories are defined after the local_settings import
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/'))
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
 
 # Base data URL. Note that further data sub-urls are defined after the local_settings import
 # You can overwrite this to point to production data ("https://freesound.org/data/")

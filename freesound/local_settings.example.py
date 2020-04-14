@@ -5,6 +5,8 @@ import os
 DEBUG = True
 DISPLAY_DEBUG_TOOLBAR = True
 
+# Data path of the mounted data volume in docker
+DATA_PATH = '/freesound-data/'
 
 # Use email file backend
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'

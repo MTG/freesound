@@ -421,7 +421,7 @@ Hint 1: you can upload multiple files at once
       showListOfSounds();
       var percent_size = soundsQueue.reduce((acc, curr) => acc + curr.size, 0) * 100 / maxUploadSize;
       setSizeBarValue(percent_size);
-      resetForm(num > 0 ? "Upload limit of {{ max_file_size_in_MB }} MB exceeded. " + num + " file(s) discarded." : " ");
+      resetForm(num > 0 ? "Upload limit of {{ max_file_size_in_MB }} MB exceeded. " + num + " file" + (num > 1 ? "s" : "") + " discarded." : " ");
     };
 
     var addErrorListElement = function addErrorListElement() {

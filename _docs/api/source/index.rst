@@ -1,4 +1,4 @@
-Freesound API documentation
+﻿Freesound API documentation
 ===========================
 
 Welcome to the Freesound API docs!
@@ -16,7 +16,7 @@ If you have any questions, don't hesitate to post them in our
 mailing list http://groups.google.com/group/freesound-api.
 
 
-Contents of the docummentation
+Contents of the documentation
 ------------------------------
 
 

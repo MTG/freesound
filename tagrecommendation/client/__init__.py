@@ -18,11 +18,11 @@
 #     See AUTHORS file.
 #
 
-from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_ADDRESS, TAGRECOMMENDATION_PORT
+from django.conf import settings
 import json
 import urllib2
 
-_BASE_URL                     = 'http://%s:%i/tagrecommendation/' % (TAGRECOMMENDATION_ADDRESS, TAGRECOMMENDATION_PORT)
+_BASE_URL                     = 'http://%s:%i/tagrecommendation/' % (settings.TAGRECOMMENDATION_ADDRESS, settings.TAGRECOMMENDATION_PORT)
 _URL_RECOMMEND_TAGS           = 'recommend_tags/'
 _URL_LAST_INDEXED_ID          = 'last_indexed_id/'
 _URL_ADD_TO_INDEX             = 'add_to_index/'

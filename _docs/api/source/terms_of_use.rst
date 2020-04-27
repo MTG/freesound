@@ -1,4 +1,4 @@
-.. _terms_of_use:
+﻿.. _terms_of_use:
 
 Terms of use
 >>>>>>>>>>>>
@@ -18,6 +18,6 @@ As general rules, please take into account the following points:
 
 
 
-   **Do not abuse server badwidth**. Make reasoable use of the API and respect request limits. Do not register multiple
+   **Do not abuse server bandwidth**. Make reasonable use of the API and respect request limits. Do not register multiple
    API keys to circumvent request limitations. If your usage of the Freesound API requires more permissive limits,
    please contact mtg *at* upf.edu.

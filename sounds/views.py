@@ -221,6 +221,7 @@ def front_page(request):
         'random_sound': random_sound,
         'top_donor': top_donor,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
+        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beash whoosh only
     }
     return render(request, 'front.html', tvars)
 

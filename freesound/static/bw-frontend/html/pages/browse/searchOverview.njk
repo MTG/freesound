@@ -1,9 +1,13 @@
+{% import '../../atoms/select.njk' as selects %}
 <div>
   <div class="divider-light"></div>
-  <div class="padding-3 v-padding-2 between font-weight-bold">
+  <div class="padding-3 v-padding-2 between middle font-weight-bold">
     <div>240 sounds</div>
     <div>Sounds</div>
-    <div class="font-weight-normal text-light-grey">Sort by:</div>
+    <div class="browse__search-overview-sorter">
+      <span class="font-weight-normal text-light-grey">Sort by:</span>
+      {{ selects.select(['Relevance', 'Upload date'], 'sort-by') }}
+    </div>
   </div>
   <div class="divider-light"></div>
 </div>

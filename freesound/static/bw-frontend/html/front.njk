@@ -13,8 +13,10 @@
         <p class="bw-front__subheader">In a collaborative database crafted by our community</p>
       </header>
       <div class="bw-front__hero-container--search">
-        <div class="input-wrapper">
-          <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." />
+        <div class="typeahead-wrapper">
+          <div class="input-wrapper">
+            <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" data-typeahead="true" />
+          </div>
         </div>
       </div>
     </div>
@@ -24,7 +26,7 @@
           <section class="border-grey-light">
             <div class="bw-carousel-container">
               <div class="bw-carousel-wrapper">
-                <div class="bw-carousel">
+                <div class="bw-carousel with-dots dots-distance-3">
                   <div class="padding-5">
                     <h2 class="text-center v-spacing-2">Maintenance downtime</h2>
                     <p class="text-grey text-center">

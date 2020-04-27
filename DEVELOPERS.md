@@ -46,16 +46,14 @@ Returns:
 """
 ```
 
-
-
 ## Making changes
 Prefer to create a pull request for all changes. This allows us to keep a record of the changes 
 that were made, and allow feedback if necessary
 
-
 *Merging and deployment process (for admins only)*
 When PRs are merged, we add the [merged] label to the ticket that it solves. This allows us to make a list of 
 changes for release notes or other documentation. Once the release has been made we finally close the tickets.
+
 
 ## Specific notes
 
@@ -77,3 +75,53 @@ Currently, we only use the following custom permissions:
 * `tickets.can_moderate` (in `Ticket` model, used to allow sound moderation)
 * `forum.can_moderate_forum` (in `Post` model, used to allow forum moderation)
 * `sounds.can_describe_in_bulk` (in `BulkUploadProgress` model, used to allow bulk upload for users who don't meet the other common requirements)
+
+### About Django database migrations
+
+We should aim to minimise the amount of downtime due to database migrations. This means that instead of doing complex data migration in a migration file, we should consider doing a basic migration, copying data in a management command, and then using the data. This may require that we do multiple releases to get all data populated and the site using this data.
+
+For tables that have lots of rows, **adding a column** with a default value takes a long time. Adding this column as nullable is much faster. We can create a second migration to make the column not null once it is populated.
+
+
+### Considerations when updating Django version
+
+#### Preparation
+
+- Make sure that there are no outstanding deprecation warnings for the version of django that we are upgrading to.
+
+      docker-compose run --rm web python -Wd manage.py test
+
+Check for warnings of the form `RemovedInDjango110Warning` (TODO: Make tests fail if a warning occurs)
+
+- Check each item in the Django release notes to see if it affects code in Freesound. In the final pull request, list each item and if affects us, and a link to the commit if a change was made.
+
+- For the 'remember password' form we had copied django code and modified it to accept an email or a username, changes in django code could break this part. Check if there are changes that could imply a modification on this form.
+
+- Check if `django.contrib.auth.forms.PasswordResetForm` method's code has changed with respect to the previous version. If it has changed see how this should be ported to our custom version of the form in `accounts.forms.FsPasswordResetForm`.
+
+#### Upgrade
+
+If the upgrade requires a database migration for django models, indicate this in the pull request. Include an estimate of the time required to perform this migration by first running the migration on fs-test
+
+#### Validation
+
+After doing all the changes follow this list as a guideline to check if things are working fine:
+
+- Upload new sound
+- Moderate sound
+- post comment on sound
+- Download sound
+- follow user
+- search and filter sounds
+- create new post on forum 
+- search post on forum
+- send message to user 
+- check that cross-site embeds work
+- ...
+- Check that CORS headers are working, by using a javascript app
+
+### New developer onboarding (for admins)
+
+* Add to Github team
+* Add to Slack channel
+* Give access to Sentry/Graylog

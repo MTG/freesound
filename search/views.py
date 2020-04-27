@@ -27,6 +27,7 @@ from collections import defaultdict, Counter
 import re
 from django.conf import settings
 from django.shortcuts import render, redirect, reverse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 
@@ -378,3 +379,20 @@ def __add_date_range(filter_query, date_from, date_to):
     date_from = date_from + "T00:00:00Z" if date_from != "" else "*"
     date_to = date_to + "T00:00:00Z]" if date_to != "" else "*]"
     return filter_query + date_from + " TO " + date_to
+
+
+def query_suggestions(request):
+    # TODO: implement this. We can use Solr's SpellCheckComponent see https://github.com/MTG/freesound/issues/510
+    # query suggestions can be enable and disabled via settings.ENABLE_QUERY_SUGGESTIONS
+    suggestions = []
+    search_query = request.GET.get('q', None)
+    if search_query is not None:
+        for count, suggestion in enumerate([
+            'wind',
+            'explosion',
+            'music',
+            'rain',
+            'swoosh'
+        ]):
+            suggestions.append({'id': count, 'label': '<p>{0}</p>'.format(suggestion), 'value': suggestion})
+    return JsonResponse({'suggestions': suggestions})

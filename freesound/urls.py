@@ -103,10 +103,12 @@ urlpatterns = [
         name="remix-group"),
 
     url(r'^contact/', support.views.contact, name="contact"),
+
     url(r'^search/$', search.views.search, name='sounds-search'),
     url(r'^clustering_facet/$', search.views.clustering_facet, name='clustering-facet'),
     url(r'^clustering_graph_visualisation/$', search.views.cluster_visualisation, name='clustering-graph-visualisation'),
     url(r'^clustered_graph/$', search.views.clustered_graph, name='clustered-graph-json'),
+    url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
 
     url(r'', include('ratings.urls')),
     url(r'^comments/', include('comments.urls')),
@@ -134,13 +136,7 @@ urlpatterns = [
     url(r'^apiv2/', include('apiv2.urls')),
 
     # tag recommendation
-    url(r'^tagrecommendation/instructions/$', tagrec.new_tagrecommendation_interface_instructions, name="tagrecommendation-instructions"),
     url(r'^tagrecommendation/recommendtags/$', tagrec.get_recommended_tags_view, name="recommend-tags"),
-    url(r'^tagrecommendation/savelog/$', tagrec.log_recommendation_info_view, name="log-recommendation-info"),
-    # Urls for new tag recommendation interface experiment
-    url(r'^tagrecommendation/get_recommendation/$', tagrec.get_recommended_tags_view_new, name="get-recommend-tags-new"),
-    url(r'^tagrecommendation/get_recommended_categories/$', tagrec.get_recommended_categories_view, name="get-recommended-categories"),
-    url(r'^tagrecommendation/get_categories/$', tagrec.get_all_categories_view, name="get-all-categories"),
 
     # 500 view
     url(r'^crash_me/$',

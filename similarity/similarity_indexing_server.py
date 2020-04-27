@@ -79,6 +79,7 @@ class SimilarityServer(resource.Resource):
         # Then clear the memory
         return json.dumps(self.gaia.clear_index_memory())
 
+
 if __name__ == '__main__':
     # Set up logging
     logger = logging.getLogger('similarity')

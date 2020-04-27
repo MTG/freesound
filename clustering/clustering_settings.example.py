@@ -1,5 +1,5 @@
 # Directory where the Gaia dataset index files are located.
-INDEX_DIR = '/home/xavierfav/Documents/dev/search-result-clustering/'
+INDEX_DIR = '/freesound-data/clustering_index/'
 
 # Configuration of the features used for clustering or evaluation.
 # We define here for each features the Gaia dataset index file, the descriptor name within the dataset 

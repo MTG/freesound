@@ -1,0 +1,28 @@
+FROM freesound:2020-02
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+                       libqt4-dev \
+                       libyaml-dev \
+                       swig \
+    && rm -rf /var/lib/apt/lists/*
+
+# Gaia - https://github.com/MTG/gaia
+RUN git clone https://github.com/MTG/gaia.git /tmp/gaia \
+    && cd /tmp/gaia \
+    && git checkout v2.4.5 \
+    && ./waf configure --with-python-bindings \
+    && ./waf \
+    && ./waf install \
+    && cd / && rm -r /tmp/gaia
+
+RUN mkdir /code
+RUN mkdir /gaia_index
+WORKDIR /code
+
+COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
+COPY --chown=fsweb:fsweb requirements_clustering.txt /code/requirements_clustering.txt
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements_clustering.txt
+
+COPY --chown=fsweb:fsweb . /code

@@ -56,7 +56,7 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     """
     query_params, _, _ = search_prepare_parameters(request)
 
-    cache_key = 'cluster-results-{search_query}-{filter_query}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
+    cache_key = 'cluster-results-{search_query}-{filter_query_facets}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
                 '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params)
 
     cache_key += '-{}'.format(features)

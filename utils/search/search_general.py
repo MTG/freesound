@@ -226,6 +226,7 @@ def search_prepare_parameters(request):
     query_params = {
         'search_query': search_query,
         'filter_query': filter_query,
+        'filter_query_facets': remove_non_facet_filters(filter_query)[0],
         'sort': sort,
         'current_page': current_page,
         'sounds_per_page': settings.SOUNDS_PER_PAGE,
@@ -255,6 +256,7 @@ def search_prepare_parameters(request):
 
 def search_prepare_query(search_query,
                          filter_query,
+                         filter_query_facets,
                          sort,
                          current_page,
                          sounds_per_page,
@@ -318,18 +320,27 @@ def search_prepare_query(search_query,
     filter_query = search_process_filter(filter_query)
 
     # Process filter for clustering.
+    # TODO: update comment
     # When applying a cluster facet filter, the sounds in the clusters already have been filtered by other 
     # present filter. So there is no need to keep in filter_query all the other filters.
     # When a cluster filter is applied and the user applies another facet filter, it simply removes the cluster
     # filter and re-computes the clustering for the new filters (this logic is done with the facet 
     # remove_url links).
     if in_ids:
-        filter_query = ''
-        if len(in_ids) == 1:
-            filter_query += 'id:{}'.format(in_ids[0])
+        filter_query, has_filter = remove_non_facet_filters(filter_query)
+        if has_filter:
+            if len(in_ids) == 1:
+                filter_query += 'AND id:{}'.format(in_ids[0])
+            else:
+                filter_query += 'AND (id:'
+                filter_query += ' OR id:'.join(in_ids)
+                filter_query += ')'
         else:
-            filter_query += 'id:'
-            filter_query += ' OR id:'.join(in_ids)
+            if len(in_ids) == 1:
+                filter_query += 'id:{}'.format(in_ids[0])
+            else:
+                filter_query += 'id:'
+                filter_query += ' OR id:'.join(in_ids)
 
     # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
@@ -361,6 +372,41 @@ def search_prepare_query(search_query,
             group_num_groups=True,
             group_cache_percent=0)
     return query
+
+
+def remove_non_facet_filters(filter_query):
+    """Process query filter string to keep only facet filters
+
+    Useful for being able to combine classic facet filters and clustering.
+
+    Args:
+        filter_query (str): query filter string.
+    
+    Returns: 
+        filter_query_processed (str): query filter string with only facet filters.
+        has_filter (bool): boolean indicating if there exist facet filters in the processed string.
+    """
+    facet_filter_strings = (
+        "samplerate", 
+        "grouping_pack", 
+        "username", 
+        "tag", 
+        "bitrate", 
+        "bitdepth", 
+        "type", 
+        "channels", 
+        "license",
+    )
+    # Bad logic here because missing spaces in query filter would produce bug
+    # We assume that filter strings are separated by space and that the filter value is between ""
+    filters_split = filter_query.split('" ')
+    filters_split_processed = [filter_string for filter_string in filters_split 
+                               if filter_string.split(":")[0].replace(' ', '') in facet_filter_strings]
+
+    filter_query_processed = '" '.join(filters_split_processed)
+    has_filter = len(filters_split_processed) > 0
+
+    return filter_query_processed, has_filter
 
 
 def perform_solr_query(q, current_page):

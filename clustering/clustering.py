@@ -17,6 +17,7 @@ if settings.IS_CELERY_WORKER:
     from networkx.readwrite import json_graph
     import community as com
     from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
+    import faiss
 
 logger = logging.getLogger('clustering')
 
@@ -248,6 +249,21 @@ class ClusteringEngine():
             except ValueError:  # node does not exist in Gaia dataset
                 graph.remove_node(sound_id)
 
+        # sound_features, sound_ids_out = self.gaia.return_features(sound_ids_list)
+        # # sound_features = np.array(sound_features).astype('float32')
+        # # index = faiss.IndexFlatL2(sound_features.shape[-1])
+        # # index.add(sound_features)
+        # # D, I = index.search(sound_features, k)
+
+        # D, I = self.search_knn(sound_features, sound_features, k+1)
+
+        # for sound_id, nearest_neighbors, distances in zip(sound_ids_list, I, D):
+        #     try:
+        #         graph.add_edges_from([(sound_id, sound_ids_out[i]) for i, d in zip(nearest_neighbors[1:], distances[1:]) 
+        #                               if d < clust_settings.MAX_NEIGHBORS_DISTANCE])
+        #     except ValueError:  # node does not exist in Gaia dataset
+        #         graph.remove_node(sound_id)
+
         # Remove isolated nodes
         graph.remove_nodes_from(list(nx.isolates(graph)))
 
@@ -444,3 +460,23 @@ class ClusteringEngine():
         logger.info('Request k nearest neighbors of point {}'.format(sound_id))
         results = self.gaia.search_nearest_neighbors(sound_id, int(k))
         return json.dumps(results)
+
+    def search_knn(self, xq, xb, k): 
+        """ wrapper around the faiss knn functions without index """
+        nq, d = xq.shape
+        nb, d2 = xb.shape
+        assert d == d2
+        
+        I = np.empty((nq, k), dtype='int64')
+        D = np.empty((nq, k), dtype='float32')
+        
+        heaps = faiss.float_maxheap_array_t()
+        heaps.k = k
+        heaps.nh = nq
+        heaps.val = faiss.swig_ptr(D)
+        heaps.ids = faiss.swig_ptr(I)
+        faiss.knn_L2sqr(
+            faiss.swig_ptr(xq), faiss.swig_ptr(xb), 
+            d, nq, nb, heaps
+        )
+        return D, I 

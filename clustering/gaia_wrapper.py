@@ -4,6 +4,8 @@ import sys
 import time
 import yaml
 from django.conf import settings
+import numpy as np
+import json
 
 from gaia2 import DataSet, View, DistanceFunctionFactory
 
@@ -46,6 +48,10 @@ class GaiaWrapperClustering:
         setattr(self, '{}_dataset'.format(features), gaia_dataset)
         setattr(self, '{}_view'.format(features), gaia_view)
         setattr(self, '{}_metric'.format(features), gaia_metric)
+
+        ds_name = 'FS_AS_embeddings_mean_max_min_nrg_normalized'
+        self.features = np.load(os.path.join(clust_settings.INDEX_DIR, ds_name + '.npy'))
+        self.id2idx = json.load(open(os.path.join(clust_settings.INDEX_DIR, ds_name + '_idx.json')))
 
     def __load_datasets(self):
         """Loads all the Gaia datasets corresponding to the features that are configured in the clustering settings.
@@ -114,3 +120,24 @@ class GaiaWrapperClustering:
                 logger.info(e)
                 reference_features.append(None)
         return reference_features
+
+    def return_features(self, sound_ids):
+        existing_id = set(self.id2idx.keys())
+        sound_ids_out = [sound_id for sound_id in sound_ids if sound_id in existing_id]
+        indexes = [self.id2idx[sound_id] for sound_id in sound_ids_out]
+        features = self.features[indexes]
+
+        return features, sound_ids_out
+
+        # features = []
+        # sound_ids_out = []
+        # gaia_dataset = getattr(self, '{}_dataset'.format(clust_settings.DEFAULT_FEATURES))
+        # gaia_descriptor_names = clust_settings.AVAILABLE_FEATURES[clust_settings.DEFAULT_FEATURES]['GAIA_DESCRIPTOR_NAMES']
+        # for sound_id in sound_ids:
+        #     try:
+        #         features.append(list(gaia_dataset.point(sound_id).value(gaia_descriptor_names)))
+        #         sound_ids_out.append(sound_id)
+        #     except Exception as e:
+        #         # Gaia raises only broad exceptions. Here it would correspond to a sound that is not found in the dataset
+        #         logger.info(e)
+        # return np.array(features).astype('float32'), sound_ids_out

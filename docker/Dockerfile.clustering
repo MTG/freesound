@@ -4,6 +4,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
                        libqt4-dev \
                        libyaml-dev \
+                       libblas-dev \
+                       liblapack-dev \
                        swig \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,5 +26,15 @@ COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
 COPY --chown=fsweb:fsweb requirements_clustering.txt /code/requirements_clustering.txt
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r requirements_clustering.txt
+
+RUN git clone https://github.com/facebookresearch/faiss.git /tmp/faiss \
+    && cd /tmp/faiss \
+    && git checkout v1.5.3 \
+    && ./configure --without-cuda \
+    && sed -i "s|-I/usr/local/include/python2.7 |-I/usr/include/python2.7 |g" makefile.inc \
+    && make \
+    && make -C python \
+    && make -C python install
+    && cd / && rm -r /tmp/faiss
 
 COPY --chown=fsweb:fsweb . /code

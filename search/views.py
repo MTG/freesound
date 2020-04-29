@@ -38,7 +38,7 @@ from utils.search.search_general import search_prepare_sort, search_process_filt
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-from clustering.interface import cluster_sound_results
+from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
 from clustering.clustering_settings import DEFAULT_FEATURES
 
 logger = logging.getLogger("search")
@@ -181,6 +181,15 @@ def clustering_facet(request):
         return JsonResponse({'status': 'failed'}, safe=False)
     else:
         return JsonResponse({'status': 'pending'}, safe=False)
+
+    # check if facet filters are present in the search query
+    # if yes, filter sounds from clusters
+    query_params, _, _ = search_prepare_parameters(request)
+    if query_params['filter_query_non_facets'].replace(' ', ''):
+        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        # print(sound_ids_filtered)
+        results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered] 
+                   for cluster in results]
 
     num_sounds_per_cluster = [len(cluster) for cluster in results]
     classes = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}

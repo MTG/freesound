@@ -56,8 +56,9 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     """
     query_params, _, _ = search_prepare_parameters(request)
 
-    cache_key = 'cluster-results-{search_query}-{filter_query_facets}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
-                '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params)
+    cache_key = 'cluster-results-{search_query}-{filter_query_non_facets}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
+                '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params) \
+                .replace(' ', '')
 
     cache_key += '-{}'.format(features)
 
@@ -78,6 +79,7 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
 
     else:
         # if not in cache, query solr and perform clustering
+        # TODO: remove facet filters here
         sound_ids = get_sound_ids_from_solr_query(query_params)
 
         # launch clustering with celery async task

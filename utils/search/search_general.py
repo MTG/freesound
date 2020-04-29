@@ -249,6 +249,7 @@ def search_prepare_parameters(request):
         'sort_unformatted': sort_unformatted,
         'advanced': advanced,
         'sort_options': sort_options,
+        'cluster_id': cluster_id,
     }
 
     return query_params, advanced_search_params_dict, extra_vars

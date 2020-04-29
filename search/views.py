@@ -74,6 +74,7 @@ def search(request):
         'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
         'current_page': query_params['current_page'],
         'url_query_params_string': url_query_params_string,
+        'cluster_id': extra_vars['cluster_id'],
     }
     
     tvars.update(advanced_search_params_dict)
@@ -185,9 +186,8 @@ def clustering_facet(request):
     # check if facet filters are present in the search query
     # if yes, filter sounds from clusters
     query_params, _, _ = search_prepare_parameters(request)
-    if query_params['filter_query_non_facets']:
+    if query_params['filter_query']:
         sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
-        # print(sound_ids_filtered)
         results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered] 
                    for cluster in results]
 

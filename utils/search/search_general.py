@@ -228,7 +228,6 @@ def search_prepare_parameters(request):
     query_params = {
         'search_query': search_query,
         'filter_query': filter_query,
-        'filter_query_non_facets': remove_facet_filters(filter_query),
         'sort': sort,
         'current_page': current_page,
         'sounds_per_page': settings.SOUNDS_PER_PAGE,
@@ -252,6 +251,7 @@ def search_prepare_parameters(request):
         'advanced': advanced,
         'sort_options': sort_options,
         'cluster_id': cluster_id,
+        'filter_query_non_facets': remove_facet_filters(filter_query),
     }
 
     return query_params, advanced_search_params_dict, extra_vars
@@ -259,7 +259,6 @@ def search_prepare_parameters(request):
 
 def search_prepare_query(search_query,
                          filter_query,
-                         filter_query_non_facets,
                          sort,
                          current_page,
                          sounds_per_page,

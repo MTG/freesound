@@ -212,7 +212,7 @@ class SearchUtilsTest(TestCase):
         self.assertEqual(query.params['rows'], settings.SOUNDS_PER_PAGE)
 
     def test_search_prepare_query_cluster_filter(self):
-        # we test that a cluster filter removes all other filters and correctly adds filters by id.
+        # we test that a cluster filter correctly combines existing filters and a filter by id.
         query_params = {
             'search_query': u'cat',
             'filter_query': u'duration:[1 TO 10] is_geotagged:1',
@@ -223,5 +223,5 @@ class SearchUtilsTest(TestCase):
         }
 
         query = search_prepare_query(**query_params)
-        self.assertEqual(query.params['fq'], "id:1 OR id:2 OR id:3")
+        self.assertEqual(query.params['fq'], "duration:[1 TO 10] is_geotagged:1 AND (id:1 OR id:2 OR id:3)")
         

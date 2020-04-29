@@ -185,7 +185,7 @@ def clustering_facet(request):
     # check if facet filters are present in the search query
     # if yes, filter sounds from clusters
     query_params, _, _ = search_prepare_parameters(request)
-    if query_params['filter_query_non_facets'].replace(' ', ''):
+    if query_params['filter_query_non_facets']:
         sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
         # print(sound_ids_filtered)
         results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered] 

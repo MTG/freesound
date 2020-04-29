@@ -226,7 +226,7 @@ def search_prepare_parameters(request):
     query_params = {
         'search_query': search_query,
         'filter_query': filter_query,
-        'filter_query_non_facets': remove_facet_filters(filter_query)[0],
+        'filter_query_non_facets': remove_facet_filters(filter_query),
         'sort': sort,
         'current_page': current_page,
         'sounds_per_page': settings.SOUNDS_PER_PAGE,
@@ -320,19 +320,15 @@ def search_prepare_query(search_query,
     filter_query = search_process_filter(filter_query)
 
     # Process filter for clustering.
-    # TODO: update comment
-    # When applying a cluster facet filter, the sounds in the clusters already have been filtered by other 
-    # present filter. So there is no need to keep in filter_query all the other filters.
-    # When a cluster filter is applied and the user applies another facet filter, it simply removes the cluster
-    # filter and re-computes the clustering for the new filters (this logic is done with the facet 
-    # remove_url links).
+    # When applying clustering facet, a in_ids argument is passed. We check if fliters exsit and in this case 
+    # add a AND rule with the ids in order to combine facet and cluster facets. If no filter exist, we just 
+    # add the filter by id.
     if in_ids:
-        filter_query, has_filter = remove_facet_filters(filter_query)
-        if has_filter:
+        if filter_query:
             if len(in_ids) == 1:
-                filter_query += 'AND id:{}'.format(in_ids[0])
+                filter_query += ' AND id:{}'.format(in_ids[0])
             else:
-                filter_query += 'AND (id:'
+                filter_query += ' AND (id:'
                 filter_query += ' OR id:'.join(in_ids)
                 filter_query += ')'
         else:
@@ -397,17 +393,15 @@ def remove_facet_filters(filter_query):
         "channels", 
         "license",
     )
-    # Bad logic here because missing spaces in query filter would produce bug
-    # We assume that filter strings are separated by space and that the filter value is between ""
-    filters_split = re.split('(" |] )', filter_query)
-    filters_split_processed = [filter_string for filter_string in filters_split 
-                               if filter_string.split(":")[0].replace(' ', '') not in facet_filter_strings]
 
-    # we join the strings and remove '" ' char that can stay at the end
-    filter_query_processed = ''.join(filters_split_processed).strip('" ')
-    has_filter = len(filters_split_processed) > 0
+    filters_split = re.findall(r'[\w-]+:\"[^\"]+', filter_query)
+    for filter_string in filters_split:
+        if filter_string.split(":")[0].replace(' ', '') in facet_filter_strings:
+            filter_query = filter_query.replace(filter_string, '')
 
-    return filter_query_processed, has_filter
+    filter_query = filter_query.strip('" ').lstrip('" ')
+
+    return filter_query
 
 
 def perform_solr_query(q, current_page):

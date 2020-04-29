@@ -1152,8 +1152,8 @@ def email_reset_complete(request, uidb36=None, token=None):
     # Remove temporal mail change information from the DB
     ResetEmailRequest.objects.get(user=user).delete()
 
-    # Clear saved email bounces for old email
-    EmailBounce.objects.filter(user=user).delete()
+    # NOTE: no need to clear existing EmailBounce objects associated to this user here because it is done in
+    # a User deletion pre_save hook if we detect that email has changed
 
     # Send email to the old address notifying about the change
     tvars = {'old_email': old_email, 'user': user}

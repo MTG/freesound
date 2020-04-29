@@ -207,6 +207,7 @@ def clustering_facet(request):
     # count 3 most occuring tags
     # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict 
     cluster_most_occuring_tags = [' '.join(zip(*Counter(cluster_tags[cluster_id]).most_common(3))[0]) 
+                                  if len(cluster_tags[cluster_id])>0 else ''
                                   for cluster_id in range(len(results))]
 
     return render(request, 'search/clustering_facet.html', {

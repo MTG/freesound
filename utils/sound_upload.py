@@ -66,10 +66,31 @@ def _remove_user_uploads_folder_if_empty(user):
     remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
 
 
-def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exists=False):
+def create_sound(user,
+                 sound_fields,
+                 apiv2_client=None,
+                 bulk_upload_progress=None,
+                 process=True,
+                 remove_exists=False):
     """
-    This function is used by the upload handler to create a sound object with
-    the information provided through sound_fields parameter.
+    This function is used to create sound objects uploaded via the sound describe form, the API or the bulk describe
+    feature.
+
+    Args:
+        user (User): user that will appear as the uploader of the sound (author)
+        sound_fields (dict): dictionary with data to populate the different fields of the sound object. Check example
+            usages of create_sound for more information about what are these fields and their expected format
+        apiv2_client (ApiV2Client): ApiV2Client object corresponding to the API account that triggered the creation
+            of that sound object (if not provided, will be set to None)
+        bulk_upload_progress (BulkUploadProgress): BulkUploadProgress object corresponding to the bulk upload progress
+            that triggered the creation of this sound object (if not provided, will be set to None)
+        process (bool): whether to trigger processing and analysis of the sound object after being created
+            (defaults to True)
+        remove_exists (bool): if the sound we're trying to create an object for already exists (according to
+            md5 check), delete it (defaults to False)
+
+    Returns:
+        Sound: returns the created Sound object
     """
 
     # Import models using apps.get_model (to avoid circular dependencies)
@@ -180,8 +201,9 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
     if 'is_explicit' in sound_fields:
         sound.is_explicit = sound_fields['is_explicit']
 
-    # 6.5 set uploaded apiv2 client
+    # 6.5 set uploaded apiv2 client or bulk progress object (if any)
     sound.uploaded_with_apiv2_client = apiv2_client
+    sound.uploaded_with_bulk_upload_progress = bulk_upload_progress
 
     # 7 save!
     sound.save()
@@ -508,6 +530,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
                         'is_explicit': line_cleaned['is_explicit'],
                     },
                     process=False,
+                    bulk_upload_progress=bulk_upload_progress_object,
                     remove_exists=delete_already_existing,
             )
             if bulk_upload_progress_object:

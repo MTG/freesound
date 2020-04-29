@@ -54,7 +54,9 @@ class SearchUtilsTest(TestCase):
             'advanced': '',
             'sort_unformatted': None,
             'filter_query_link_more_when_grouping_packs': '',
-            'sort_options': SEARCH_SORT_OPTIONS_WEB
+            'sort_options': SEARCH_SORT_OPTIONS_WEB,
+            'cluster_id': '',
+            'filter_query_non_facets': '',
         }
 
         self.assertDictEqual(query_params, expected_default_query_params)
@@ -86,7 +88,9 @@ class SearchUtilsTest(TestCase):
             'advanced': u'1',
             'sort_unformatted': u'duration desc',
             'filter_query_link_more_when_grouping_packs': u'duration:[1+TO+10]+is_geotagged:1',
-            'sort_options': SEARCH_SORT_OPTIONS_WEB
+            'sort_options': SEARCH_SORT_OPTIONS_WEB,
+            'cluster_id': '',
+            'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
         }
 
         expected_advanced_search_params_dict = {

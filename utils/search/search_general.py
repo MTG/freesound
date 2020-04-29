@@ -120,6 +120,7 @@ def split_filter_query(filter_query, cluster_id):
                     filter = {
                         'name': filter_display,
                         'remove_url': filter_query.replace(filter_str, ''),
+                        'cluster_id': cluster_id,
                     }
                     filter_query_split.append(filter)
 
@@ -128,6 +129,7 @@ def split_filter_query(filter_query, cluster_id):
         filter_query_split.append({
             'name': "Cluster #" + cluster_id,
             'remove_url': filter_query,
+            'cluster_id': '',
         })
 
     return filter_query_split
@@ -150,7 +152,7 @@ def search_prepare_parameters(request):
         query, the advanced search params to be logged and some extra parameters needed in the search view. 
     """
     search_query = request.GET.get("q", "")
-    filter_query = request.GET.get("f", "")
+    filter_query = request.GET.get("f", "").strip().lstrip()
     cluster_id = request.GET.get('cluster_id', "")
 
     try:

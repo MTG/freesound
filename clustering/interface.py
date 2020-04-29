@@ -26,10 +26,14 @@ def get_sound_ids_from_solr_query(query_params):
     """
     current_page = 1
 
-    # We set include_facets to False in order to reduce the amount of data that Solr will return
+    # We set include_facets to False in order to reduce the amount of data that Solr will return.
+    # We change filter_query to filter_query_non_facets in order to ensure that the clustering is always
+    # done on the non faceted filtered results. Without that, people directly requesting a facet filtered
+    # page would have a clustering performed on filtered results.
     query_params.update({
         'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING,
-        'include_facets': False
+        'include_facets': False,
+        'filter_query': query_params['filter_query_non_facets'],
     })
     query = search_prepare_query(**query_params)
     _, _, _, _, docs = perform_solr_query(query, current_page)
@@ -79,7 +83,6 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
 
     else:
         # if not in cache, query solr and perform clustering
-        # TODO: remove facet filters here
         sound_ids = get_sound_ids_from_solr_query(query_params)
 
         # launch clustering with celery async task

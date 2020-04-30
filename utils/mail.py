@@ -33,7 +33,7 @@ def transform_unique_email(email):
     """
     To avoid duplicated emails, in migration accounts.0009_sameuser we automatically change existing
     duplicated user emails by the contents returned in this function. This is reused for further
-    checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup. 
+    checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup.
     """
     return "dupemail+%s@freesound.org" % (email.replace("@", "%"), )
 
@@ -93,6 +93,11 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
 
     if email_to:
         email_to = _ensure_list(email_to)
+        if not user_to:
+            # If no user_to was provided, we know the email address but we don't know the corresponding users. email_to
+            # is supposed to be a list of (username, email  address) tuples. We make this list of tuples setting
+            # usernames to '-'
+            email_to = [('-', email) for email in email_to]
 
     if settings.ALLOWED_EMAILS:  # for testing purposes, so we don't accidentally send emails to users
         email_to = [(username, email) for username, email in email_to if email in settings.ALLOWED_EMAILS]
@@ -122,7 +127,12 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
 
         return True
 
-    except Exception:
+    except Exception as e:
+        emails_logger.error('Error in send_mail (%s)' % json.dumps({
+            'subject': subject,
+            'email_to': str(email_to),
+            'error': str(e)
+        }))
         return False
 
 

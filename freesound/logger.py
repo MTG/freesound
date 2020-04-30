@@ -3,11 +3,8 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-            'format': '[%(asctime)s] # %(levelname)s    # %(message)s'
-        },
-        'worker': {
             'format': '[%(asctime)s] # %(levelname)s    # [%(process)d] %(message)s'
-        },
+        }
     },
     'filters': {
         'api_filter': {

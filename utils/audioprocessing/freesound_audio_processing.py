@@ -31,7 +31,7 @@ from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 
-logger = logging.getLogger("processing")
+logger = logging.getLogger("console")
 
 
 class FreesoundAudioProcessorBase(object):

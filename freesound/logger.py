@@ -66,12 +66,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'processing': {
-            'handlers': ['stdout'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'gearman_worker_processing': {
+        'workers': {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,

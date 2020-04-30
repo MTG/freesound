@@ -110,7 +110,7 @@ class TagRecommendationServer(resource.Resource):
             result = {'error': False, 'result': {'tags': recommended_tags, 'community': com_name}}
 
         except Exception as e:
-            logger.info('Errors occurred while recommending tags to %s' % input_tags)
+            logger.error('Errors occurred while recommending tags to %s' % input_tags)
             result = {'error': True, 'result': str(e)}
 
         return json.dumps(result)

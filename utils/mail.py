@@ -18,11 +18,15 @@
 #     See AUTHORS file.
 #
 
+import logging
+import json
+
 from django.conf import settings
+from django.core.mail import get_connection
 from django.core.mail.message import EmailMessage
 from django.template.loader import render_to_string
-from django.core.mail import get_connection
-from django.core.exceptions import ObjectDoesNotExist
+
+emails_logger = logging.getLogger('emails')
 
 
 def transform_unique_email(email):
@@ -78,9 +82,10 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
             email_type_enabled = user.profile.email_type_enabled(email_type_preference_check) \
                 if email_type_preference_check is not None else True
 
-            # Check if user's email is valid for delivery and add the correct email address to the list of email_to
+            # Check if user's email is valid for delivery and add a tuple with (username, correct email  address)
+            # to the list of email_to
             if user.profile.email_is_valid() and email_type_enabled:
-                email_to.append(user.profile.get_email_for_delivery())
+                email_to.append((user.username, user.profile.get_email_for_delivery()))
 
         # If all users have invalid emails or failed preference check, send no emails
         if len(email_to) == 0:
@@ -90,11 +95,11 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         email_to = _ensure_list(email_to)
 
     if settings.ALLOWED_EMAILS:  # for testing purposes, so we don't accidentally send emails to users
-        email_to = [email for email in email_to if email in settings.ALLOWED_EMAILS]
+        email_to = [(username, email) for username, email in email_to if email in settings.ALLOWED_EMAILS]
 
     try:
         emails = tuple(((settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email])
-                        for email in email_to))
+                        for _, email in email_to))
 
         # Replicating send_mass_mail functionality and adding reply-to header if requires
         connection = get_connection(username=None, password=None, fail_silently=False)
@@ -105,6 +110,16 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
                     for subject, message, sender, recipient in emails]
 
         connection.send_messages(messages)
+
+        # Log emails being sent
+        for username, email in email_to:
+            emails_logger.info('Email sent (%s)' % json.dumps({
+                'subject': subject,
+                'email_from': email_from,
+                'email_to': email,
+                'email_to_username': username,
+            }))
+
         return True
 
     except Exception:

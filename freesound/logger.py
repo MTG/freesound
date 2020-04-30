@@ -49,6 +49,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'emails': {
+            'handlers': ['stdout'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'web': {
             'handlers': ['stdout'],
             'level': 'INFO',

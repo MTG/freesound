@@ -40,7 +40,8 @@ from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user
     remove_uploaded_file_from_mirror_locations
 from utils.text import slugify, remove_control_chars
 
-console_logger = logging.getLogger("console")
+console_logger = logging.getLogger('console')
+sounds_logger = logging.getLogger('sounds')
 
 
 # Classes to handle specific errors messages on calling method
@@ -230,6 +231,19 @@ def create_sound(user,
                 sound.pack.process()
         except ServerUnavailable:
             pass
+
+    # Log
+    if sound.uploaded_with_apiv2_client is not None:
+        upload_source = 'api'
+    elif sound.uploaded_with_bulk_upload_progress is not None:
+        upload_source = 'bulk'
+    else:
+        upload_source = 'web'
+    sounds_logger.info('Created Sound object (%s)' % json.dumps({
+        'sound_id': sound.id,
+        'username': sound.user.username,
+        'upload_source': upload_source,
+    }))
 
     return sound
 

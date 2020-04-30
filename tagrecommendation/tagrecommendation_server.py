@@ -101,7 +101,7 @@ class TagRecommendationServer(resource.Resource):
     def recommend_tags(self, input_tags, max_number_of_tags=None):
 
         try:
-            logger.debug('Getting recommendation for input tags %s' % input_tags)
+            logger.info('Getting recommendation for input tags %s' % input_tags)
             input_tags = input_tags[0].split(",")
             if max_number_of_tags:
                 max_number_of_tags = int(max_number_of_tags[0])
@@ -110,7 +110,7 @@ class TagRecommendationServer(resource.Resource):
             result = {'error': False, 'result': {'tags': recommended_tags, 'community': com_name}}
 
         except Exception as e:
-            logger.debug('Errors occurred while recommending tags to %s' % input_tags)
+            logger.info('Errors occurred while recommending tags to %s' % input_tags)
             result = {'error': True, 'result': str(e)}
 
         return json.dumps(result)

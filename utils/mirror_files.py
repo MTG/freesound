@@ -6,13 +6,13 @@ import errno
 from utils.filesystem import remove_directory_if_empty
 
 
-logger = logging.getLogger('web')
+web_logger = logging.getLogger('web')
 
 
 def copy_files(source_destination_tuples):
     for source_path, destination_path in source_destination_tuples:
         if settings.LOG_START_AND_END_COPYING_FILES:
-            logger.error('Started copying file %s to %s' % (source_path, destination_path))
+            web_logger.error('Started copying file %s to %s' % (source_path, destination_path))
         try:
             path = os.path.dirname(destination_path)
             os.makedirs(path)
@@ -24,10 +24,10 @@ def copy_files(source_destination_tuples):
         try:
             shutil.copy2(source_path, destination_path)
             if settings.LOG_START_AND_END_COPYING_FILES:
-                logger.error('Finished copying file %s to %s' % (source_path, destination_path))
+                web_logger.error('Finished copying file %s to %s' % (source_path, destination_path))
         except IOError as e:
             # File does not exist, no permissions, etc.
-            logger.error('Failed copying %s (%s)' % (source_path, str(e)))
+            web_logger.error('Failed copying %s (%s)' % (source_path, str(e)))
 
 
 def copy_files_to_mirror_locations(object, source_location_keys, source_base_path, destination_base_paths):
@@ -72,7 +72,7 @@ def remove_uploaded_file_from_mirror_locations(source_file_path):
                 os.remove(destination_path)
             except OSError as e:
                 # File does not exist, no permissions, etc.
-                logger.error('Failed deleting %s (%s)' % (destination_path, str(e)))
+                web_logger.error('Failed deleting %s (%s)' % (destination_path, str(e)))
 
 
 def remove_empty_user_directory_from_mirror_locations(user_uploads_path):

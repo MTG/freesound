@@ -418,7 +418,7 @@ def handle_uploaded_image(profile, f):
     try:
         os.mkdir(os.path.dirname(profile.locations("avatar.L.path")))
     except Exception as e:
-        upload_logger.info("\tfailed creating directory with error: %s" % str(e))
+        upload_logger.error("\tfailed creating directory with error: %s" % str(e))
         pass
 
     ext = os.path.splitext(os.path.basename(f.name))[1]
@@ -662,7 +662,7 @@ def describe_sounds(request):
                 msg = e.message
                 messages.add_message(request, messages.WARNING, msg)
             except utils.sound_upload.CantMoveException as e:
-                upload_logger.info(e.message, e)
+                upload_logger.error(e.message, e)
 
         # Remove the files we just described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
@@ -906,7 +906,7 @@ def handle_uploaded_file(user_id, f):
     try:
         os.mkdir(directory)
     except:
-        upload_logger.info("\tfailed creating directory, probably already exist")
+        upload_logger.error("\tfailed creating directory, probably already exist")
         pass
     path = os.path.join(directory, os.path.basename(f.name))
     try:

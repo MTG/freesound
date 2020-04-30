@@ -85,8 +85,8 @@ class Command(LoggingBaseCommand):
                 try:
                     data = yaml.load(open(sound.locations('analysis.statistics.path')), Loader=yaml.cyaml.CLoader)
                 except:
-                    console_logger.info('Sound with id %i was not indexed (no yaml file found when checking for '
-                                        'extractor version)' % sound.id)
+                    console_logger.error('Sound with id %i was not indexed (no yaml file found when checking for '
+                                         'extractor version)' % sound.id)
                     continue
 
                 if data:

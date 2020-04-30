@@ -20,20 +20,23 @@
 #     See AUTHORS file.
 #
 
+import logging
+
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.db.models import F
+from django.db.models.signals import post_delete, pre_save, post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import smart_unicode
+
+import accounts
 from general.models import OrderedModel
-from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
-from django.dispatch import receiver
 from utils.cache import invalidate_template_cache
 from utils.search.search_forum import delete_post_from_solr, send_posts_to_solr
-import accounts
-import logging
 
-logger = logging.getLogger('web')
+web_logger = logging.getLogger('web')
+
 
 class Forum(OrderedModel):
 
@@ -286,12 +289,12 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
             # when a user is deleted through the admin interface. We don't need
             # to update the thread, but it would be nice to get to the forum object
             # somehow and update that one....
-            logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
+            web_logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
         except accounts.models.Profile.DoesNotExist:
             # When a user is deleted using the admin, is possible that his posts are deleted after the profile has been
             # deleted. In that case we shouldn't update the value of num_posts because the profile doesn't exists
             # anymore, here it's safe to ignore the exception since we are deleting all the objects.
-            logger.info('Tried setting last posts for thread and forum, but the profile has already been deleted?')
+            web_logger.info('Tried setting last posts for thread and forum, but the profile has already been deleted?')
     invalidate_template_cache('latest_posts')
 
 

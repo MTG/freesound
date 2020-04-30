@@ -84,7 +84,7 @@ class TagRecommendationServer(resource.Resource):
             self.index_stats['biggest_id_in_index'] = max([int(key) for key in self.index.keys()])
             self.index_stats['n_sounds_in_index'] = len(self.index.keys())
         except Exception as e:
-            logger.info("Index file not present. Listening for indexing data from appservers.")
+            logger.error("Index file not present. Listening for indexing data from appservers.")
             self.index_stats['biggest_id_in_index'] = 0
             self.index_stats['n_sounds_in_index'] = 0
             self.index = dict()

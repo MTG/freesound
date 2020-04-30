@@ -31,7 +31,7 @@ from search.views import search_prepare_sort, search_prepare_query
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrException
 from utils.text import remove_control_chars
 
-logger = logging.getLogger("search")
+search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
 
 
@@ -92,7 +92,7 @@ def add_sounds_to_solr(sounds):
     solr = Solr(settings.SOLR_URL)
     documents = [convert_to_solr_document(s) for s in sounds]
     console_logger.info("Adding %d sounds to solr index" % len(documents))
-    logger.info("Adding %d sounds to solr index" % len(documents))
+    search_logger.info("Adding %d sounds to solr index" % len(documents))
     solr.add(documents)
 
 
@@ -131,7 +131,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=Fal
 
 
 def get_all_sound_ids_from_solr(limit=False):
-    logger.info("getting all sound ids from solr.")
+    search_logger.info("getting all sound ids from solr.")
     if not limit:
         limit = 99999999999999
     solr = Solr(settings.SOLR_URL)
@@ -181,11 +181,11 @@ def get_random_sound_from_solr():
 
 
 def delete_sound_from_solr(sound_id):
-    logger.info("deleting sound with id %d" % sound_id)
+    search_logger.info("deleting sound with id %d" % sound_id)
     try:
         Solr(settings.SOLR_URL).delete_by_id(sound_id)
     except (SolrException, socket.error) as e:
-        logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
+        search_logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
 
 
 def delete_sounds_from_solr(sound_ids):
@@ -193,11 +193,14 @@ def delete_sounds_from_solr(sound_ids):
     for count, i in enumerate(range(0, len(sound_ids), solr_max_boolean_clause)):
         range_ids = sound_ids[i:i+solr_max_boolean_clause]
         try:
-            logger.info("deleting %i sounds from solr [%i of %i, %i sounds]" %
-                        (len(sound_ids), count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
-                         len(range_ids)))
+            search_logger.info(
+                "deleting %i sounds from solr [%i of %i, %i sounds]" %
+                (len(sound_ids),
+                 count + 1,
+                 int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
+                 len(range_ids)))
             sound_ids_query = ' OR '.join(['id:{0}'.format(sid) for sid in range_ids])
             Solr(settings.SOLR_URL).delete_by_query(sound_ids_query)
         except (SolrException, socket.error) as e:
-            logger.error('could not delete solr sounds chunk %i of %i' %
-                         (count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause))))
+            search_logger.error('could not delete solr sounds chunk %i of %i' %
+                                (count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause))))

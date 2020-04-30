@@ -507,8 +507,8 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
         try:
             bulk_upload_progress_object = BulkUploadProgress.objects.get(id=bulkupload_progress_id)
         except BulkUploadProgress.DoesNotExist:
-            console_logger.info('BulkUploadProgress object with id %i can\'t be found, wont store progress information.'
-                                % bulkupload_progress_id)
+            console_logger.error('BulkUploadProgress object with id %i can\'t be found, wont store progress '
+                                 'information.' % bulkupload_progress_id)
 
     # Start the actual process of uploading files
     lines_ok = [line for line in lines_validated if not line['line_errors']]

@@ -34,7 +34,7 @@ LOGGING = {
             'level': 'ERROR',   # only catches 5xx not 4xx messages
             'propagate': True,
         },
-        'audio': {
+        'sounds': {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,
@@ -59,7 +59,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'upload': {
+        'file_upload': {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,

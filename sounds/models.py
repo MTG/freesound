@@ -63,7 +63,7 @@ import zlib
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
-audio_logger = logging.getLogger('audio')
+sounds_logger = logging.getLogger('sounds')
 sentry_logger = logging.getLogger('sentry')
 
 
@@ -1080,7 +1080,7 @@ class Sound(SocialModel):
                 'skip_previews': skip_previews,
                 'skip_displays': skip_displays
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
-            audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
+            sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
 
     def analyze(self, force=False, high_priority=False):
         """
@@ -1094,7 +1094,7 @@ class Sound(SocialModel):
             gm_client.submit_job("analyze_sound", json.dumps({
                 'sound_id': self.id
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
-            audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
+            sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
@@ -1177,9 +1177,9 @@ class SoundOfTheDay(models.Model):
             True if the email was sent
             False if it was not sent
         """
-        audio_logger.info("Notifying user of random sound of the day")
+        sounds_logger.info("Notifying user of random sound of the day")
         if self.email_sent:
-            audio_logger.info("Email was already sent")
+            sounds_logger.info("Email was already sent")
             return False
 
         send_mail_template(
@@ -1189,7 +1189,7 @@ class SoundOfTheDay(models.Model):
         self.email_sent = True
         self.save()
 
-        audio_logger.info("Finished sending mail to user %s of random sound of the day %s" %
+        sounds_logger.info("Finished sending mail to user %s of random sound of the day %s" %
                           (self.sound.user, self.sound))
 
         return True

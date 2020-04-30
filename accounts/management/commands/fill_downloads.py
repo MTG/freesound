@@ -19,10 +19,11 @@
 #
 
 import logging
+
 from django.core.management.base import BaseCommand
 from django.db import connection
 
-logger = logging.getLogger("console")
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
@@ -31,7 +32,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # This command will copy number of all the Downloads for each user
-        logger.info('Copy number of Downloads started')
+        console_logger.info('Copy number of Downloads started')
 
         sql = """
         WITH sq as (select user_id, count(*) as num_downloads from sounds_download group by user_id)
@@ -53,4 +54,4 @@ class Command(BaseCommand):
         with connection.cursor() as c:
             c.execute(sql)
 
-        logger.info('Copy number of Downloads finished')
+        console_logger.info('Copy number of Downloads finished')

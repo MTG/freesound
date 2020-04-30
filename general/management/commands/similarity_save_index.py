@@ -18,12 +18,8 @@
 #     See AUTHORS file.
 #
 
-import logging
-
 from similarity.client import Similarity
 from utils.management_commands import LoggingBaseCommand
-
-logger = logging.getLogger("web")
 
 
 class Command(LoggingBaseCommand):
@@ -40,7 +36,6 @@ class Command(LoggingBaseCommand):
 
     def handle(self, *args, **options):
         self.log_start()
-        logger.info('Saving current similarity index')
         if options['indexing_server']:
             Similarity.save_indexing_server()
         else:

@@ -47,4 +47,4 @@ class Command(LoggingBaseCommand):
             for i in range(number_sounds):
                 td = datetime.timedelta(days=i+1)
                 SoundOfTheDay.objects.create_sound_for_date(datetime.date.today() + td)
-        self.log_end({'n_random_sounds_created': len(sounds_to_create)})
+        self.log_end({'n_random_sounds_created': sounds_to_create})

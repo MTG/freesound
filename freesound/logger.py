@@ -70,6 +70,11 @@ LOGGING = {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,
-        },    
+        },
+        'commands': {
+            'handlers': ['stdout'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }

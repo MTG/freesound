@@ -56,13 +56,13 @@ class Command(BaseCommand):
     def task_whitelist_user(self, gearman_worker, gearman_job):
         tickets = json.loads(gearman_job.data)
         workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({'n_tickets': len(tickets)}))
-        starttime = time.time()
+        start_time = time.time()
         count_done = 0
         for ticket_id in tickets:
             ticket = Ticket.objects.get(id=ticket_id)
             whitelist_user = ticket.sender
             if not whitelist_user.profile.is_whitelisted:
-                local_starttime = time.time()
+                local_start_time = time.time()
                 whitelist_user.profile.is_whitelisted = True
                 whitelist_user.profile.save()
                 pending_tickets = Ticket.objects.filter(sender=whitelist_user)\
@@ -81,12 +81,12 @@ class Command(BaseCommand):
                 workers_logger.info("Whitelisted user (%s)" % json.dumps(
                     {'user_id': whitelist_user.id,
                      'username': whitelist_user.username,
-                     'work_time': time.time() - local_starttime}))
+                     'work_time': time.time() - local_start_time}))
 
             count_done = count_done + 1
 
         workers_logger.info("Finished whitelisting users from tickets (%s)" % json.dumps(
-            {'n_tickets': len(tickets), 'work_time': time.time() - starttime}))
+            {'n_tickets': len(tickets), 'work_time': time.time() - start_time}))
         return 'true' if len(tickets) == count_done else 'false'
 
     def task_delete_user(self, gearman_worker, gearman_job):
@@ -94,7 +94,7 @@ class Command(BaseCommand):
         user = User.objects.get(id=data['user_id'])
         workers_logger.info("Start deleting user (%s)" % json.dumps(
             {'user_id': user.id, 'username': user.username, 'delete_type': data['action']}))
-        starttime = time.time()
+        start_time = time.time()
         try:
             if data['action'] in [FULL_DELETE_USER_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
                                   DELETE_USER_DELETE_SOUNDS_ACTION_NAME]:
@@ -118,7 +118,7 @@ class Command(BaseCommand):
 
                 workers_logger.info("Finished deleting user (%s)" % json.dumps(
                     {'user_id': user.id, 'username': user.username, 'delete_type': data['action'],
-                     'work_time': time.time() - starttime}))
+                     'work_time': time.time() - start_time}))
                 return 'true'
 
         except Exception as e:
@@ -126,7 +126,7 @@ class Command(BaseCommand):
             # TODO: catching more specific exceptions would be desirable
             workers_logger.error("Unexpected error while deleting user (%s)" % json.dumps(
                 {'user_id': user.id, 'username': user.username, 'delete_type': data['action'], 'error': str(e),
-                 'work_time': time.time() - starttime}))
+                 'work_time': time.time() - start_time}))
 
         return 'false'
 
@@ -134,25 +134,25 @@ class Command(BaseCommand):
         bulk_upload_progress_object_id = int(gearman_job.data)
         workers_logger.info("Starting validation of BulkUploadProgress (%s)" % json.dumps(
             {'bulk_upload_progress_id': bulk_upload_progress_object_id}))
-        starttime = time.time()
+        start_time = time.time()
         try:
             bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
             bulk.validate_csv_file()
             workers_logger.info("Finished validation of BulkUploadProgress (%s)" % json.dumps(
-                {'bulk_upload_progress_id': bulk_upload_progress_object_id, 'work_time': time.time() - starttime}))
+                {'bulk_upload_progress_id': bulk_upload_progress_object_id, 'work_time': time.time() - start_time}))
             return 'true'
         except BulkUploadProgress.DoesNotExist as e:
             workers_logger.error("Error validating of BulkUploadProgress (%s)" % json.dumps(
                 {'bulk_upload_progress_id': bulk_upload_progress_object_id,
                  'error': str(e),
-                 'work_time': time.time() - starttime}))
+                 'work_time': time.time() - start_time}))
         return 'false'
 
     def task_bulk_describe(self, gearman_worker, gearman_job):
         bulk_upload_progress_object_id = int(gearman_job.data)
         workers_logger.info("Starting describing sounds of BulkUploadProgress (%s)" % json.dumps(
             {'bulk_upload_progress_id': bulk_upload_progress_object_id}))
-        starttime = time.time()
+        start_time = time.time()
         try:
             bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
             bulk.describe_sounds()
@@ -160,11 +160,11 @@ class Command(BaseCommand):
             bulk.progress_type = 'F'  # Set to finished when one
             bulk.save()
             workers_logger.info("Finished describing sounds of BulkUploadProgress (%s)" % json.dumps(
-                {'bulk_upload_progress_id': bulk_upload_progress_object_id, 'work_time': time.time() - starttime}))
+                {'bulk_upload_progress_id': bulk_upload_progress_object_id, 'work_time': time.time() - start_time}))
             return 'true'
         except BulkUploadProgress.DoesNotExist as e:
             workers_logger.error("Error describing sounds of BulkUploadProgress (%s)" % json.dumps(
                 {'bulk_upload_progress_id': bulk_upload_progress_object_id,
                  'error': str(e),
-                 'work_time': time.time() - starttime}))
+                 'work_time': time.time() - start_time}))
         return 'false'

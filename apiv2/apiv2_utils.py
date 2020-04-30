@@ -52,7 +52,7 @@ from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
-logger_error = logging.getLogger("api_errors")
+error_logger = logging.getLogger("api_errors")
 
 
 ##########################################

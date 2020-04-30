@@ -17,19 +17,23 @@
 # Authors:
 #     See AUTHORS file.
 #
-from utils.mail import send_mail
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from utils.mail import render_mail_template
-from accounts.models import Profile, EmailPreferenceType
 import datetime
-from follow import follow_utils
-from django.contrib.auth.models import User
+import json
 import logging
-logger = logging.getLogger("web")
+
+from django.conf import settings
+from django.contrib.auth.models import User
+
+from accounts.models import Profile, EmailPreferenceType
+from follow import follow_utils
+from utils.mail import render_mail_template
+from utils.mail import send_mail
+from utils.management_commands import LoggingBaseCommand
+
+commands_logger = logging.getLogger("commands")
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     """
     This command should be run periodically several times a day, and it will only send emails to users that "require it"
     """
@@ -39,6 +43,7 @@ class Command(BaseCommand):
     # See: http://stackoverflow.com/questions/30244288/django-management-command-cannot-see-arguments
 
     def handle(self, *args, **options):
+        self.log_start()
 
         date_today_minus_notification_timedelta = datetime.datetime.now() - settings.NOTIFICATION_TIMEDELTA_PERIOD
 
@@ -51,8 +56,6 @@ class Command(BaseCommand):
         users_enabled_notifications = Profile.objects.filter(user_id__in=user_ids).exclude(
             last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by(
             "-last_attempt_of_sending_stream_email")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
-
-        logger.info("Sending stream updates notification for %i potential users" % len(users_enabled_notifications))
 
         n_emails_sent = 0
         for profile in users_enabled_notifications:
@@ -101,8 +104,10 @@ class Command(BaseCommand):
             except Exception as e:
                 # Do not send the email and do not update the last email sent field in the profile
                 profile.save()  # Save last_attempt_of_sending_stream_email
-                logger.info("An error occurred sending notification stream email to %s (%s)"
-                            % (profile.get_email_for_delivery(), str(e)))
+                commands_logger.error("Unexpected error while sending stream notification email (%s)" % json.dumps(
+                    {'email_to': profile.get_email_for_delivery(),
+                     'username': profile.user.username,
+                     'error': str(e)}))
                 continue
             n_emails_sent += 1
 
@@ -110,4 +115,4 @@ class Command(BaseCommand):
             profile.last_stream_email_sent = datetime.datetime.now()
             profile.save()
 
-        logger.info("Sent stream updates notification to %i users (others had no updates)" % n_emails_sent)
+        self.log_start({'n_users_notified': n_emails_sent})

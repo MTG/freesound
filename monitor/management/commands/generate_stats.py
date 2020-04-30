@@ -18,28 +18,27 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import BaseCommand
-from django.core.cache import cache
+import datetime
+
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.db import connection
 from django.db.models import Count, Sum
-from tags.models import Tag, TaggedItem
-import datetime
-import sounds.views
+
+import comments.models
 import donations.views
 import forum.models
 import ratings.models
-import comments.models
-import logging
+import sounds.views
+from tags.models import Tag, TaggedItem
+from utils.management_commands import LoggingBaseCommand
 
-logger = logging.getLogger("web")
 
-
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = "Compute stats to display on monitor section."
 
     def handle(self, **options):
-        logger.info("Started computing stats")
+        self.log_start()
 
         time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
@@ -192,6 +191,6 @@ class Command(BaseCommand):
             "posts": posts,
             "threads": threads,
         }
-        logger.info("Finished computing stats")
 
         cache.set('totals_stats', totals_stats, 60*60*24)
+        self.log_end()

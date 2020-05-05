@@ -66,15 +66,16 @@ class Command(LoggingBaseCommand):
         in_solr_not_in_fs = list(set(solr_ids).intersection(set(set(solr_ids).difference(fs_mp))))
         in_fs_not_in_solr = list(set(fs_mp).intersection(set(set(fs_mp).difference(solr_ids))))
 
-        message = "\nNumber of sounds per index:\n--------------------------"
-        message += "Solr index\t\t%i" % len(solr_ids)
-        message += "Gaia index\t\t%i" % len(gaia_ids)
-        message += "Freesound\t\t%i  (moderated and processed)" % len(fs_mp)
-        message += "Freesound\t\t%i  (moderated, processed and analyzed)" % len(fs_mpa)
-        message += "\n\n***************\nSOLR INDEX\n***************\n"
-        message += "Sounds in solr but not in fs:\t%i" % len(in_solr_not_in_fs)
-        message += "Sounds in fs but not in solr:\t%i" % len(in_fs_not_in_solr)
-        console_logger.info(message)
+        messages = []
+        messages.append("\nNumber of sounds per index:\n--------------------------")
+        messages.append("Solr index\t\t%i" % len(solr_ids))
+        messages.append("Gaia index\t\t%i" % len(gaia_ids))
+        messages.append("Freesound\t\t%i  (moderated and processed)" % len(fs_mp))
+        messages.append("Freesound\t\t%i  (moderated, processed and analyzed)" % len(fs_mpa))
+        messages.append("\n\n***************\nSOLR INDEX\n***************\n")
+        messages.append("Sounds in solr but not in fs:\t%i" % len(in_solr_not_in_fs))
+        messages.append("Sounds in fs but not in solr:\t%i" % len(in_fs_not_in_solr))
+        console_logger.info('\n'.join(messages))
 
         if not options['no-changes']:
             # Mark fs sounds to go processing
@@ -89,11 +90,13 @@ class Command(LoggingBaseCommand):
 
         in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mpa))))
         in_fs_not_in_gaia = list(set(fs_mpa).intersection(set(set(fs_mpa).difference(gaia_ids))))
-        message = "\n***************\nGAIA INDEX\n***************\n"
-        message += "Sounds in gaia but not in fs:\t%i" % len(in_gaia_not_in_fs)
-        message += "Sounds in fs but not in gaia:\t%i  (only considering sounds correctly analyzed)" \
-                   % len(in_fs_not_in_gaia)
-        console_logger.info(message)
+
+        messages = []
+        messages.append("\n***************\nGAIA INDEX\n***************\n")
+        messages.append("Sounds in gaia but not in fs:\t%i" % len(in_gaia_not_in_fs))
+        messages.append("Sounds in fs but not in gaia:\t%i  (only considering sounds correctly analyzed)" \
+                   % len(in_fs_not_in_gaia))
+        console_logger.info('\n'.join(messages))
 
         if not options['no-changes']:
             # Mark fs sounds to go processing

@@ -27,7 +27,7 @@ from rest_framework.exceptions import APIException
 
 import apiv2_utils
 
-api_errors_logger = logging.getLogger("api_errors")
+errors_logger = logging.getLogger("api_errors")
 
 
 class NotFoundException(APIException):
@@ -36,7 +36,7 @@ class NotFoundException(APIException):
 
     def __init__(self, msg="Not found", resource=None):
         summary_message = '%i Not found' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
@@ -47,7 +47,7 @@ class InvalidUrlException(APIException):
 
     def __init__(self, msg="Invalid url", request=None):
         summary_message = '%i Invalid url' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, request=request))
         self.detail = msg
 
@@ -58,7 +58,7 @@ class BadRequestException(APIException):
 
     def __init__(self, msg="Bad request", resource=None):
         summary_message = '%i Bad request' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
@@ -69,7 +69,7 @@ class ConflictException(APIException):
 
     def __init__(self, msg="Conflict", resource=None):
         summary_message = '%i Conflict' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
@@ -80,7 +80,7 @@ class UnauthorizedException(APIException):
 
     def __init__(self, msg="Not authorized", resource=None):
         summary_message = '%i Not authorized' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
@@ -91,7 +91,7 @@ class RequiresHttpsException(APIException):
 
     def __init__(self, msg="This resource requires a secure connection (https)", request=None):
         summary_message = '%i Requires Https' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, request=request))
         self.detail = msg
 
@@ -102,7 +102,7 @@ class ServerErrorException(APIException):
 
     def __init__(self, msg="Server error", resource=None):
         summary_message = '%i Server error' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
@@ -113,7 +113,7 @@ class OtherException(APIException):
 
     def __init__(self, msg="Bad request", status=status.HTTP_400_BAD_REQUEST, resource=None):
         summary_message = '%i Other exception' % status
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': status}, resource=resource))
         self.detail = msg
         self.status_code = status
@@ -125,6 +125,6 @@ class Throttled(APIException):
 
     def __init__(self, msg="Request was throttled", request=None):
         summary_message = '%i Throttled' % self.status_code
-        api_errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, request=request))
         self.detail = msg

@@ -284,7 +284,7 @@ class UserDelete(TestCase):
         # Test user's option to delete user account including the sounds
 
         user = self.create_user_and_content(is_index_dirty=False)
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
         self.client.post(reverse('accounts-delete'),
@@ -303,7 +303,7 @@ class UserDelete(TestCase):
         # Test user's option to delete user account but preserving the sounds
 
         user = self.create_user_and_content(is_index_dirty=False)
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
         self.client.post(reverse('accounts-delete'),
@@ -323,7 +323,7 @@ class UserDelete(TestCase):
 
         # This should try to delete the account but with a wrong password
         user = self.create_user_and_content(is_index_dirty=False)
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
         self.client.post(reverse('accounts-delete'),
@@ -581,7 +581,7 @@ class EmailResetTestCase(TestCase):
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
         user.set_password('12345')
         user.save()
-        a = self.client.login(username=user.username, password='12345')
+        self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
             'email': u'new_email@freesound.org',
             'password': '12345',
@@ -595,7 +595,7 @@ class EmailResetTestCase(TestCase):
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
         user.set_password('12345')
         user.save()
-        a = self.client.login(username=user.username, password='12345')
+        self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
             'email': u'new_email@freesound.org',
             'password': '12345',
@@ -609,7 +609,7 @@ class EmailResetTestCase(TestCase):
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
         user.set_password('12345')
         user.save()
-        a = self.client.login(username=user.username, password='12345')
+        self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
             'email': long_mail,
             'password': '12345',

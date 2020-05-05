@@ -116,18 +116,18 @@ class Command(BaseCommand):
             result = FreesoundAudioAnalyzer(sound_id=sound_id).analyze()
             if result:
                 workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
-                    {'sound_id': sound_id, 'result': 'success', 'work_time': time.time() - start_time}))
+                    {'sound_id': sound_id, 'result': 'success', 'work_time': round(time.time() - start_time)}))
             else:
                 workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
-                    {'sound_id': sound_id, 'result': 'failure', 'work_time': time.time() - start_time}))
+                    {'sound_id': sound_id, 'result': 'failure', 'work_time': round(time.time() - start_time)}))
 
         except WorkerException as e:
             workers_logger.error("WorkerException while analyzing sound (%s)" % json.dumps(
-                {'sound_id': sound_id, 'error': str(e), 'work_time': time.time() - start_time}))
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         except Exception as e:
             workers_logger.error("Unexpected error while analyzing sound (%s)" % json.dumps(
-                {'sound_id': sound_id, 'error': str(e), 'work_time': time.time() - start_time}))
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         cancel_timeout_alarm()
         return ''  # Gearman requires return value to be a string
@@ -147,18 +147,18 @@ class Command(BaseCommand):
                 .process(skip_displays=skip_displays, skip_previews=skip_previews)
             if result:
                 workers_logger .info("Finished processing of sound (%s)" % json.dumps(
-                    {'sound_id': sound_id, 'result': 'success', 'work_time': time.time() - start_time}))
+                    {'sound_id': sound_id, 'result': 'success', 'work_time': round(time.time() - start_time)}))
             else:
                 workers_logger.info("Finished processing of sound (%s)" % json.dumps(
-                    {'sound_id': sound_id, 'result': 'failure', 'work_time': time.time() - start_time}))
+                    {'sound_id': sound_id, 'result': 'failure', 'work_time': round(time.time() - start_time)}))
 
         except WorkerException as e:
             workers_logger.error("WorkerException while processing sound (%s)" % json.dumps(
-                {'sound_id': sound_id, 'error': str(e), 'work_time': time.time() - start_time}))
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         except Exception as e:
             workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
-                {'sound_id': sound_id, 'error': str(e), 'work_time': time.time() - start_time}))
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         cancel_timeout_alarm()
         return ''  # Gearman requires return value to be a string

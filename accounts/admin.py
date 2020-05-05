@@ -125,7 +125,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     def has_delete_permission(self, request, obj=None):
         # Disable the "Delete" button in the user detail page
-        # We want to disable that button in favour of the custom asyncronous delete change actions
+        # We want to disable that button in favour of the custom asynchronous delete change actions
         return False
 
     def get_actions(self, request):

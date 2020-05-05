@@ -416,11 +416,11 @@ class Profile(SocialModel):
         trace of when was the user deleted and what was the reason. The original User object will be preserved but all
         the personal data will be anonymized, and the user will be flagged as having been deleted.
 
-        When deleting a user, it's sounds and packs can either be deleted or preserved (see function args description
+        When deleting a user, its sounds and packs can either be deleted or preserved (see function args description
         below). Other related content (ratings, comments, posts) will be preserved (but appear under a "deleted user"
         account).
 
-        Optionally, a user can be fully deleted from DB including all of its packs, sounds and other relaed content.
+        Optionally, a user can be fully deleted from DB including all of its packs, sounds and other related content.
         Even in this case a DeletedUser object will be created to keep a record.
 
         Args:

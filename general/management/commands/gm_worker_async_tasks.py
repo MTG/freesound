@@ -168,5 +168,5 @@ class Command(BaseCommand):
             workers_logger.error("Error describing sounds of BulkUploadProgress (%s)" % json.dumps(
                 {'bulk_upload_progress_id': bulk_upload_progress_object_id,
                  'error': str(e),
-                 'work_time': round(time.time() - start_time})))
+                 'work_time': round(time.time() - start_time)}))
         return 'false'

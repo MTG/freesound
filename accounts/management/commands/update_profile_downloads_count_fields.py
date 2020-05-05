@@ -20,19 +20,19 @@
 
 import logging
 
-from django.core.management.base import BaseCommand
 from django.db import connection
+
+from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
 
-    help = 'Copy number of Downloads to profiles'
+    help = 'Update Profile num_sound_downloads and num_pack_downloads fields for all users'
 
     def handle(self, *args, **options):
-        # This command will copy number of all the Downloads for each user
-        console_logger.info('Copy number of Downloads started')
+        self.log_start()
 
         sql = """
         WITH sq as (select user_id, count(*) as num_downloads from sounds_download group by user_id)
@@ -54,4 +54,4 @@ class Command(BaseCommand):
         with connection.cursor() as c:
             c.execute(sql)
 
-        console_logger.info('Copy number of Downloads finished')
+        self.log_start()

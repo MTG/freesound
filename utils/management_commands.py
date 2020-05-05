@@ -31,6 +31,20 @@ commands_logger = logging.getLogger('commands')
 
 
 class LoggingBaseCommand(BaseCommand):
+    """
+    Custom base class for Django management commands which facilitates logging when the command is executed. Logging
+    is formatted in a specific way that allows our logging server (graylog) to parse and understand the data and
+    be able to make show plots and statistics.
+
+    This base class should be used instead of django.core.management.base.BaseCommand whenever there's an interest
+    for logging the start time and end time of a management command, including the time it took to execute and
+    (possibly) some extra metadata.
+
+    Management command using this base class are expected to call self.log_start() and self.log_end() at the beginning
+    and end of the self.handle() function respectively. Optionally, a `data` dictionary can be passed to both
+    self.log_start() and self.log_end() so that the data will be also sent (and parsed) in the logging server. This
+    data dictionary must be JSON serializable.
+    """
 
     start_time = None
     command_name = None
@@ -50,7 +64,6 @@ class LoggingBaseCommand(BaseCommand):
         commands_logger.info('Started management command ({0})'.format(json.dumps(data)))
 
     def log_end(self, data=None):
-        command_name = os.path.basename(__file__)
         if data is None:
             data = {}
         if self.start_time:

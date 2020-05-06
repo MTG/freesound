@@ -287,8 +287,12 @@ class UserDelete(TestCase):
         self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
-        self.client.post(reverse('accounts-delete'),
-                         {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
+        resp = self.client.post(
+            reverse('accounts-delete'),
+            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
+
+        # Assert user is redirected to front page
+        self.assertRedirects(resp, reverse('front-page'))
 
         # Check user is marked as anonymized
         self.assertTrue(User.objects.get(id=user.id).profile.is_anonymized_user)
@@ -306,8 +310,12 @@ class UserDelete(TestCase):
         self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
-        self.client.post(reverse('accounts-delete'),
-                         {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
+        resp = self.client.post(
+            reverse('accounts-delete'),
+            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
+
+        # Assert user is redirected to front page
+        self.assertRedirects(resp, reverse('front-page'))
 
         # Check user is marked as anonymized
         self.assertTrue(User.objects.get(id=user.id).profile.is_anonymized_user)
@@ -326,8 +334,12 @@ class UserDelete(TestCase):
         self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
         encr_link = form.initial['encrypted_link']
-        self.client.post(reverse('accounts-delete'),
-                         {'encrypted_link': encr_link, 'password': 'wrong_pass', 'delete_sounds': 'delete_sounds'})
+        resp = self.client.post(
+            reverse('accounts-delete'),
+            {'encrypted_link': encr_link, 'password': 'wrong_pass', 'delete_sounds': 'delete_sounds'})
+
+        # Check user is reported incorrect password
+        self.assertIn('Incorrect password', resp.content)
 
         # Check user is not marked as anonymized
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, False)

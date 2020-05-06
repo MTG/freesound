@@ -93,11 +93,11 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].source, 'p')
 
     def test_non_annon_donation_with_name_stripe(self):
-        donations.models.DonationCampaign.objects.create(\
-                goal=200, date_start=datetime.datetime.now(), id=1)
-        self.user = User.objects.create_user(\
-                username='fsuser', email='j@test.com', password='top', id='46280')
-        self.client.login(username='fsuser', password='top')
+        donations.models.DonationCampaign.objects.create(
+            goal=200, date_start=datetime.datetime.now(), id=1)
+        self.user = User.objects.create_user(
+            username='fsuser', email='j@test.com', password='top', id='46280')
+        self.client.force_login(self.user)
         # custom ={u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}
         custom = "eyJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MSwgIm5hbWUiOiAidGVzdCJ9"
         params = {"data": {"object" :{"id": "txn123",
@@ -124,11 +124,11 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].amount*100, 1510)
 
     def test_non_annon_donation_stripe(self):
-        donations.models.DonationCampaign.objects.create(\
-                goal=200, date_start=datetime.datetime.now(), id=1)
-        self.user = User.objects.create_user(\
-                username='fsuser', email='j@test.com', password='top', id='46280')
-        self.client.login(username='fsuser', password='top')
+        donations.models.DonationCampaign.objects.create(
+            goal=200, date_start=datetime.datetime.now(), id=1)
+        self.user = User.objects.create_user(
+            username='fsuser', email='j@test.com', password='top', id='46280')
+        self.client.force_login(self.user)
         # custom = {u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}
         custom = "eyJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MX0="
         params = {"data": {"object" :{"id": "txn123",

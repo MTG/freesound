@@ -283,7 +283,7 @@ class PackNumSoundsTestCase(TestCase):
         sound.change_moderation_state("OK")
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 1)  # Check pack has all sounds
 
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
         resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
             'submit': [u'submit'],
             'pack-new_pack': [u'new pack name'],
@@ -306,7 +306,7 @@ class PackNumSoundsTestCase(TestCase):
         sound_ids_pack1 = [s.id for s in pack1.sounds.all()]
         sound_ids_pack2 = [s.id for s in pack2.sounds.all()]
         sound_ids_pack2.append(sound_ids_pack1.pop())
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
             'submit': [u'submit'],
             'pack_sounds': u','.join([str(sid) for sid in sound_ids_pack2]),
@@ -346,7 +346,7 @@ class SoundViewsTestCase(TestCase):
         sound_id = sound.id
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # Try delete with incorrect encrypted sound id link (should not delete sound)
         encrypted_link = encrypt(u"%d\t%f" % (1234, time.time()))
@@ -393,7 +393,7 @@ class SoundViewsTestCase(TestCase):
         sound_id = sound.id
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # Get url of the sound
         url = reverse('sound', args=[sound.user.username, sound_id])
@@ -448,7 +448,7 @@ class SoundPackDownloadTestCase(TestCase):
             reverse('login'), reverse('sound', args=[self.sound.user.username, self.sound.id])))
 
             # Check download works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
             resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(resp.status_code, 200)
 
@@ -484,7 +484,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.sound.user.save()
 
             # Check download works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
             resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]))
             # Check if response is 301
             self.assertEqual(resp.status_code, 301)
@@ -505,7 +505,7 @@ class SoundPackDownloadTestCase(TestCase):
             reverse('login'), reverse('pack', args=[self.sound.user.username, self.pack.id])))
 
             # Check donwload works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
             resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(resp.status_code, 200)
 
@@ -545,7 +545,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.pack.user.save()
 
             # Check donwload works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
 
             # First check that the response is a 301
             resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]))
@@ -586,13 +586,13 @@ class SoundSignatureTestCase(TestCase):
         self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (creator of the sound)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (non-creator of the sound)
-        self.client.login(username='testuservisitor', password='testpassword')
+        self.client.force_login(self.user_visitor)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
@@ -615,13 +615,13 @@ class SoundSignatureTestCase(TestCase):
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (creator of the sound)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (non-creator of the sound)
-        self.client.login(username='testuservisitor', password='testpassword')
+        self.client.force_login(self.user_visitor)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
@@ -677,7 +677,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Test as an authenticated user, although it doesn't matter in this case because cache templates are the same
         # for both logged in and anonymous user.
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         resp = self._get_sound_view()
         self.assertEqual(resp.status_code, 200)
@@ -711,7 +711,7 @@ class SoundTemplateCacheTests(TestCase):
     def test_add_remove_comment(self):
         cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         # Check the initial state (0 comments)
         resp = self._get_sound_from_home()
@@ -747,7 +747,7 @@ class SoundTemplateCacheTests(TestCase):
         cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         resp = self._get_sound_from_home()
         self.assertInHTML('0 downloads', resp.content)
@@ -775,7 +775,7 @@ class SoundTemplateCacheTests(TestCase):
 
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         # Initial check
         self.assertEqual(self.sound.similarity_state, 'PE')
@@ -806,7 +806,7 @@ class SoundTemplateCacheTests(TestCase):
     def _test_add_remove_pack(self, cache_keys, check_present):
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.pack)
         self.assertFalse(check_present())
@@ -854,7 +854,7 @@ class SoundTemplateCacheTests(TestCase):
     def _test_add_remove_geotag(self, cache_keys, check_present):
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.geotag)
         self.assertFalse(check_present())
@@ -903,7 +903,7 @@ class SoundTemplateCacheTests(TestCase):
     def _test_change_license(self, cache_keys, new_license, check_present):
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertNotEqual(self.sound.license, new_license)
         self.assertFalse(check_present())
@@ -939,7 +939,7 @@ class SoundTemplateCacheTests(TestCase):
         another_sound = sounds[0]
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertEqual(self.sound.remix_group.count(), 0)
         self.assertFalse(check_present())
@@ -986,7 +986,7 @@ class SoundTemplateCacheTests(TestCase):
 
     def _test_state_change(self, cache_keys, change_state, check_present):
         """@:param check_present - function that checks presence of indication of not 'OK' state"""
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self._assertCacheAbsent(cache_keys)
         self.assertTrue(check_present())

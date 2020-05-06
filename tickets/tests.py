@@ -97,7 +97,7 @@ class TicketTests(TestCase):
         self.test_user = User.objects.get(username='test_user')
         self.test_moderator = User.objects.get(username='test_moderator')
         self.sound = self._create_test_sound(self.test_user)
-        self.client.login(username=self.test_moderator.username, password='123456')
+        self.client.force_login(self.test_moderator)
 
     def _create_assigned_ticket(self):
         """Creates ticket that is already assigned to the moderator"""

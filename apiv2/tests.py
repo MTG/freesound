@@ -43,7 +43,7 @@ class TestAPiViews(TestCase):
             sound.change_moderation_state("OK")
 
         # Login so api returns session login based responses
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on pack instance
         resp = self.client.get(reverse('apiv2-pack-instance', kwargs={'pk': packs[0].id}))
@@ -64,7 +64,7 @@ class TestAPiViews(TestCase):
         client = ApiV2Client.objects.create(user=user, description='',
                                             name='', url='', redirect_uri='https://freesound.org')
         # Login so api returns session login based responses
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on Oauth2 authorize
         resp = self.client.post(reverse('oauth2_provider:authorize'),
@@ -86,7 +86,7 @@ class TestAPiViews(TestCase):
         resp = self.client.get(reverse('api-login'), secure=True)
         self.assertEqual(resp.status_code, 200)
 
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on keys page
         resp = self.client.get(reverse('apiv2-apply'), secure=True)

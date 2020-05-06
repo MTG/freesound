@@ -76,6 +76,41 @@ Currently, we only use the following custom permissions:
 * `forum.can_moderate_forum` (in `Post` model, used to allow forum moderation)
 * `sounds.can_describe_in_bulk` (in `BulkUploadProgress` model, used to allow bulk upload for users who don't meet the other common requirements)
 
+
+### URLs that include a username
+
+There are many URLs in Freesound which include usernames in the path. For example, the sound page has an URL like
+`freesound.org/people/<username>/sounds/<sound_id>`. This is because we want to give strong presence of usernames
+in URLs to reinforce the attribution concept present in Creative Commons licenses.
+When a URL includes a username we try match it with a `User` object in our database. For this we have to take into
+account a number of things:
+
+* Whether there is indeed a `User` object with that `username` property in the DB
+* In case a user object exists, is the user marked as having been deleted? (check `user.profile.is_anonymized_user`) 
+* In case there's no `User` object with such username, is there any `OldUsername` object which maps the username in the
+  URL with a `User` object in DB?
+  
+To deal with these checks, we use the `utils.username.raise_404_if_user_is_deleted` and 
+`utils.username.redirect_if_old_username_or_404` decorators in view functions. The first one will try to find a user
+object (checking for old usernames as well) and if it can't find it or the user is marked as deleted, it will raise
+HTTP 404 error. The second one will try to find a user object (also considering old usernames) and do an HTTP redirect
+with an updated username if user was found in the old usernames table.
+
+In general, we should use `utils.username.redirect_if_old_username_or_404` in **all public views** that have username
+in the URL path. For login-required views (using `@login_required` decorator) we are not supposed to use that decorator
+because most of them won't include username in the URL and also there should be no links pointing to these URLs with
+old usernames. In addition, **if these public views should should not be reachable in case users have been anonymized**,
+then we should also use `utils.username.raise_404_if_user_is_deleted`. When using both in combination, it is important
+to use them in that order:
+
+```
+@redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
+def view_function(request, username, ...):
+    ...
+```
+
+
 ### About Django database migrations
 
 We should aim to minimise the amount of downtime due to database migrations. This means that instead of doing complex data migration in a migration file, we should consider doing a basic migration, copying data in a management command, and then using the data. This may require that we do multiple releases to get all data populated and the site using this data.

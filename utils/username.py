@@ -50,8 +50,8 @@ def get_user_or_404(username):
 def redirect_if_old_username_or_404(func):
     """
     This is a decorator to return redirects when accessing a URL with the username in the pattern and that usernames
-    corresonds to an old username. We re-build the URL with the current username of that user and return a redirect.
-    Note that we don't use this decorator in views with @login_redirect because we don't want to apply redirects to
+    corresponds to an old username. We re-build the URL with the current username of that user and return a redirect.
+    Note that we don't use this decorator in views with @login_required because we don't want to apply redirects to
     internal URL that require users being logged in. This is because there should not be public links pointing to
     internal URLs.
     """

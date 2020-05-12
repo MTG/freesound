@@ -287,9 +287,13 @@ class UserGDPRDeletionRequestAdmin(admin.ModelAdmin):
     deleted_user_link.short_description = 'Deleted user object'
 
 
+class DeletedUserAdmin(admin.ModelAdmin):
+    readonly_fields = ['user']
+
+
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
 admin.site.register(EmailPreferenceType)
 admin.site.register(OldUsername, OldUsernameAdmin)
-admin.site.register(DeletedUser)
+admin.site.register(DeletedUser, DeletedUserAdmin)
 admin.site.register(UserGDPRDeletionRequest, UserGDPRDeletionRequestAdmin)

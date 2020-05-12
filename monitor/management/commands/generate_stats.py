@@ -79,13 +79,12 @@ class Command(BaseCommand):
 
         cache.set("downloads_stats", downloads_stats, 60 * 60 * 24)
 
-        # Compute stats relatad with users:
+        # Compute stats related with users:
         new_users = User.objects.filter(date_joined__gt=time_span)\
             .extra(select={'day': 'date(date_joined)'})\
             .values('day', 'is_active').order_by().annotate(Count('id'))
 
         cache.set("users_stats", {"new_users": list(new_users)}, 60 * 60 * 24)
-
 
         time_span = datetime.datetime.now()-datetime.timedelta(days=365)
 

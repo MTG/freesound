@@ -106,7 +106,7 @@ class Command(LoggingBaseCommand):
 
             try:
                 if options['indexing_server']:
-                    result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
+                    result = Similarity.add_to_indexing_server(sound.id, sound.locations('analysis.statistics.path'))
                 else:
                     result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
                     sound.set_similarity_state('OK')

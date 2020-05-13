@@ -26,7 +26,7 @@ from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
 
-logger = logging.getLogger("console")
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
@@ -45,8 +45,8 @@ class Command(BaseCommand):
             if not os.path.exists(sound.locations('path')):
                 missing_sound_ids += [sound.id]
 
-        logger.info('Found {0} sounds with missing audio files'.format(len(missing_sound_ids)))
+        console_logger.info('Found {0} sounds with missing audio files'.format(len(missing_sound_ids)))
 
         if missing_sound_ids and options['outfile'] is not None:
             json.dump(missing_sound_ids, open(options['outfile'], 'w'))
-            logger.info('List of sound IDs with missing files saved in "{0}"'.format(options['outfile']))
+            console_logger.info('List of sound IDs with missing files saved in "{0}"'.format(options['outfile']))

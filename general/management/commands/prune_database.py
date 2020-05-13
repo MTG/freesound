@@ -20,7 +20,6 @@
 
 from __future__ import print_function
 
-import datetime
 import logging
 import random
 
@@ -35,8 +34,7 @@ import ratings
 import sounds
 import tickets
 
-
-logger = logging.getLogger('console')
+console_logger = logging.getLogger('console')
 
 
 def chunks(l, n):
@@ -87,8 +85,8 @@ class Command(BaseCommand):
         post_save.disconnect(tickets.models.create_ticket_message, sender=tickets.models.TicketComment)
 
     def delete_some_users(self, userids):
-        logger.info('  Deleting {} users'.format(len(userids)))
-        logger.info('   - downloads')
+        console_logger.info('  Deleting {} users'.format(len(userids)))
+        console_logger.info('   - downloads')
         # Do a bulk delete because it's faster than django deleting download rows individually for each user
         # TODO: This could be faster by making new download tables for only
         # the users that we are going to keep, and then remove the orignal
@@ -97,27 +95,27 @@ class Command(BaseCommand):
             cursor.execute("delete from sounds_download where user_id in %s", [tuple(userids)])
             cursor.execute("delete from sounds_packdownloadsound where pack_download_id in (select id from sounds_packdownload where user_id in %s)", [tuple(userids)])
             cursor.execute("delete from sounds_packdownload where user_id in %s", [tuple(userids)])
-        logger.info('   - done, user objects')
+        console_logger.info('   - done, user objects')
         # This will delete some other related data, but it's not as slow as deleting downloads.
         # so we let django do it
         User.objects.filter(id__in=userids).delete()
-        logger.info('   - done')
+        console_logger.info('   - done')
 
     def delete_sound_uploaders(self, pkeep):
         """Delete some percentage of users who have uploaded sounds
            Arguments:
               pkeep: the percentage of uploaders to keep
         """
-        logger.info('Deleting some uploaders')
+        console_logger.info('Deleting some uploaders')
         userids = User.objects.values_list('id', flat=True).filter(profile__num_sounds__gt=0)
         numusers = len(userids)
-        logger.info('Number of uploaders: {}'.format(numusers))
+        console_logger.info('Number of uploaders: {}'.format(numusers))
         percentage_remove = 1.0 - (pkeep / 100.0)
         randusers = sorted(random.sample(userids, int(numusers*percentage_remove)))
         ch = [c for c in chunks(randusers, 100)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            logger.info(' {}/{}'.format(i, tot))
+            console_logger.info(' {}/{}'.format(i, tot))
             self.delete_some_users(c)
 
     def delete_downloaders(self, numkeep):
@@ -125,18 +123,18 @@ class Command(BaseCommand):
            Arguments:
                numkeep: the number of users to keep (all others are removed)
         """
-        logger.info('Deleting some downloaders')
+        console_logger.info('Deleting some downloaders')
         userids = User.objects.values_list('id', flat=True).filter(profile__num_sounds=0)
         userids = list(userids)
         numusers = len(userids)
-        logger.info('Number of downloaders: {}'.format(numusers))
+        console_logger.info('Number of downloaders: {}'.format(numusers))
         random.shuffle(userids)
         # Keep `numkeep` users, and delete the rest
         randusers = sorted(userids[numkeep:])
         ch = [c for c in chunks(randusers, 100000)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            logger.info(' {}/{}'.format(i, tot))
+            console_logger.info(' {}/{}'.format(i, tot))
             self.delete_some_users(c)
 
     def handle(self,  *args, **options):

@@ -308,7 +308,7 @@ class DonationTest(TestCase):
         donations.models.Donation.objects.filter(pk=donation.pk).update(created=old_donation_date)
 
         # Run command for sending donation emails
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that user_a has been sent a reminder email and user_b has not been sent any email
         self.user_a.profile.refresh_from_db()
@@ -335,7 +335,7 @@ class DonationTest(TestCase):
         sounds.models.PackDownload.objects.create(user=self.user_b, pack=pack)
 
         # Now run the command for sending donation emails again
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
@@ -355,7 +355,7 @@ class DonationTest(TestCase):
             sounds.models.Download.objects.create(user=self.user_c, sound=sound, license=License.objects.first())
 
         # Run the command for sending donation emails again
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
@@ -374,7 +374,7 @@ class DonationTest(TestCase):
         donation_settings.save()
 
         # Run the command for sending donation emails again
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
@@ -414,7 +414,7 @@ class DonationTest(TestCase):
 
         # Now that time has passed (bigger than minimum_days_since_last_donation_email), we check again if
         # emails are sent
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that user_a has not received any new email (no new downloads)
         self.user_a.profile.refresh_from_db()
@@ -435,7 +435,7 @@ class DonationTest(TestCase):
             sounds.models.Download.objects.create(user=self.user_c, sound=sound, license=License.objects.first())
 
         # Run command again
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that user_a has received new email
         self.user_a.profile.refresh_from_db()
@@ -460,7 +460,7 @@ class DonationTest(TestCase):
             sounds.models.Download.objects.create(user=self.user_a, sound=sound, license=License.objects.first())
 
         # Run command again
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that now user_a does not receive an email beacuse he donated recently
         self.user_a.profile.refresh_from_db()
@@ -516,7 +516,7 @@ class DonationTest(TestCase):
         UserEmailSetting.objects.create(user=self.user_b, email_type=email_pref)
 
         # Run command for sending donation emails
-        call_command('donations_mails')
+        call_command('send_donation_request_emails')
 
         # Check that both user_a and user_b have not received any email because their preferences are set to none
         self.user_a.profile.refresh_from_db()

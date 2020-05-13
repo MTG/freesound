@@ -63,7 +63,7 @@ import zlib
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
-audio_logger = logging.getLogger('audio')
+sounds_logger = logging.getLogger('sounds')
 sentry_logger = logging.getLogger('sentry')
 
 
@@ -78,6 +78,195 @@ class License(OrderedModel):
 
     def __unicode__(self):
         return self.name
+
+
+class BulkUploadProgress(models.Model):
+    """Store progress status for a Bulk Describe process."""
+
+    user = models.ForeignKey(User)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+    CSV_CHOICES = (
+        ("N", 'Not yet validated'),  # linked CSV file has not yet been validated
+        ("F", 'Finished description'),   # All sounds have been described/created (but some might still be in
+                                         # processing/moderation stage)
+        ("S", 'Sounds being described and processed'),  # Description (and processing) process has started
+        ("V", 'Finished validation'),  # CSV file has been validated (might have errors)
+        ("C", 'Closed'),  # Process has finished and has been closes
+    )
+    progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
+    csv_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+    original_csv_filename = models.CharField(max_length=255)
+    validation_output = JSONField(null=True)
+    sounds_valid = models.PositiveIntegerField(null=False, default=0)
+    description_output = JSONField(null=True)
+
+    def get_bulk_upload_basic_data_for_log(self):
+        return {
+            'bulk_upload_id': self.id,
+            'user_id': self.user_id,
+            'username': self.user.username,
+            'original_csv_filename': self.original_csv_filename,
+            'csv_path': self.csv_path
+        }
+
+    def get_csv_lines(self):
+        """
+        Read lines form CSV file and return a tuple with the header and a list of dictionaries.
+        """
+        return get_csv_lines(self.csv_path)
+
+    def validate_csv_file(self):
+        """
+        Validate CSV file and store output in self.validation_output.
+        """
+        header, lines = self.get_csv_lines()
+        bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
+        try:
+            lines_validated, global_errors = validate_input_csv_file(
+                csv_header=header,
+                csv_lines=lines,
+                sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
+                username=self.user.username)
+        except Exception:
+            # This is a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
+            # updated with a global error. Otherwise it will appear to the user that the object is permanently being
+            # validated. After we update the object with the "unexpected error" message, we log the exception and
+            # continue with excecution
+            lines_validated = []
+            global_errors = ['An unexpected error occurred while validating your data file']
+
+            sentry_logger.error('Error validating data file', exc_info=True, extra=bulk_upload_basic_data)
+
+        self.validation_output = {
+            'lines_ok': [line for line in lines_validated if not line['line_errors']],
+            'lines_with_errors': [line for line in lines_validated if line['line_errors']],
+            'global_errors': global_errors,
+        }
+        self.progress_type = 'V'  # Set progress to 'validated'
+        self.save()
+
+        # Log information about the process
+        bulk_upload_basic_data.update({
+            'n_lines_ok': len(self.validation_output['lines_ok']),
+            'n_lines_with_errors': len(self.validation_output['lines_with_errors']),
+            'n_global_errors': len(self.validation_output['global_errors']),
+        })
+        web_logger.info('Validated data file for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
+
+    def describe_sounds(self):
+        """
+        Start the actual description of the sounds and add them to Freesound.
+        """
+        bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
+        web_logger.info('Started creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
+        bulk_describe_from_csv(
+            self.csv_path,
+            delete_already_existing=False,
+            force_import=True,
+            sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
+            username=self.user.username,
+            bulkupload_progress_id=self.id)
+        web_logger.info('Finished creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
+
+    def store_progress_for_line(self, line_no, message):
+        """
+        Store the description progress of individual lines.
+        """
+        if self.description_output is None:
+            self.description_output = {}
+        self.description_output[line_no] = message
+        self.save()
+
+    def get_description_progress_info(self):
+        """
+        Get information about the progress of the description process and the status of the sounds that have already
+        been successfully described so that it can be shown to users.
+        """
+        sound_ids_described_ok = []
+        sound_errors = []
+        if self.description_output is not None:
+            for line_no, value in self.description_output.items():
+                if type(value) == int:
+                    # Sound id, meaning a file for which a Sound object was successfully created
+                    sound_ids_described_ok.append(value)
+                else:
+                    # If not sound ID, then it means there were errors with these sounds
+                    sound_errors.append((line_no, value))
+        n_sounds_described_ok = len(sound_ids_described_ok)
+        n_sounds_error = len(sound_errors)
+        n_lines_validated_ok = len(self.validation_output['lines_ok']) if self.validation_output is not None else 0
+        n_sounds_remaining_to_describe = n_lines_validated_ok - n_sounds_described_ok - n_sounds_error
+
+        n_sounds_published = Sound.objects.filter(
+            id__in=sound_ids_described_ok, processing_state="OK", moderation_state="OK").count()
+        n_sounds_moderation = Sound.objects.filter(
+            id__in=sound_ids_described_ok, processing_state="OK").exclude(moderation_state="OK").count()
+        n_sounds_currently_processing = Sound.objects.filter(
+            id__in=sound_ids_described_ok, processing_state="PE", processing_ongoing_state="PR").count()
+        n_sounds_pending_processing = Sound.objects.filter(
+            id__in=sound_ids_described_ok, processing_state="PE").exclude(processing_ongoing_state="PR").count()
+        n_sounds_failed_processing = Sound.objects.filter(
+            id__in=sound_ids_described_ok, processing_state="FA").count()
+
+        # The remaining sounds that have been described ok but do not appear in any of the sets above are sounds with
+        # an unknown state. This could happen if sounds get deleted (e.g. as part of the moderation process or because
+        # a sound fails processing and the user deletes it).
+        n_sounds_unknown = n_sounds_described_ok - (n_sounds_published +
+                                                    n_sounds_moderation +
+                                                    n_sounds_currently_processing +
+                                                    n_sounds_pending_processing +
+                                                    n_sounds_failed_processing)
+        progress = 0
+        if self.description_output is not None:
+            progress = 100.0 * (n_sounds_published +
+                                n_sounds_moderation +
+                                n_sounds_failed_processing +
+                                n_sounds_error +
+                                n_sounds_unknown) / \
+                       (n_sounds_described_ok +
+                        n_sounds_error +
+                        n_sounds_remaining_to_describe)
+            progress = int(progress)
+            # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
+            # number of sounds that should have been described and processed. Sounds that fail processing or description
+            # are also counted as "done" as their status won't change.
+            # After the 'describe_sounds' method finishes, progress should always be 100.
+
+        return {
+            'n_sounds_remaining_to_describe': n_sounds_remaining_to_describe,
+            'n_sounds_described_ok': n_sounds_described_ok,
+            'sound_errors': sound_errors,
+            'n_sounds_error': n_sounds_error,
+            'n_sounds_published': n_sounds_published,
+            'n_sounds_moderation': n_sounds_moderation,
+            'n_sounds_pending_processing': n_sounds_pending_processing,
+            'n_sounds_currently_processing': n_sounds_currently_processing,
+            'n_sounds_processing': n_sounds_pending_processing + n_sounds_currently_processing,
+            'n_sounds_failed_processing': n_sounds_failed_processing,
+            'n_sounds_unknown': n_sounds_unknown,
+            'progress_percentage': progress,
+        }
+
+    def has_global_validation_errors(self):
+        """
+        Returns True if the validation finished with global errors
+        """
+        if self.validation_output is not None:
+            return len(self.validation_output['global_errors']) > 0
+        return False
+
+    def has_line_validation_errors(self):
+        """
+        Returns True if some errors were found in line validation
+        """
+        if self.validation_output is not None:
+            return len(self.validation_output['lines_with_errors']) > 0
+        return False
+
+    class Meta:
+        permissions = (
+            ("can_describe_in_bulk", "Can use the Bulk Describe feature."),
+        )
 
 
 class SoundManager(models.Manager):
@@ -326,9 +515,11 @@ class Sound(SocialModel):
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
-    # uploaded with apiv2 client id (None if the sound was not uploaded using the api)
-    uploaded_with_apiv2_client = models.ForeignKey(ApiV2Client, null=True, blank=True, default=None,
-                                                   on_delete=models.SET_NULL)
+    # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
+    uploaded_with_apiv2_client = models.ForeignKey(
+        ApiV2Client, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    uploaded_with_bulk_upload_progress = models.ForeignKey(
+        BulkUploadProgress, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # file properties
     SOUND_TYPE_CHOICES = (
@@ -769,8 +960,8 @@ class Sound(SocialModel):
             try:
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
             except OSError:
-                web_logger.info('WARNING changing owner of sound %i: Could not rename file %s because '
-                                'it does not exist.\n' % (self.id, path))
+                web_logger.error('WARNING changing owner of sound %i: Could not rename file %s because '
+                                 'it does not exist.\n' % (self.id, path))
 
         # Deal with pack
         # If sound is in pack, replicate pack in new user.
@@ -889,7 +1080,7 @@ class Sound(SocialModel):
                 'skip_previews': skip_previews,
                 'skip_displays': skip_displays
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
-            audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
+            sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
 
     def analyze(self, force=False, high_priority=False):
         """
@@ -903,7 +1094,7 @@ class Sound(SocialModel):
             gm_client.submit_job("analyze_sound", json.dumps({
                 'sound_id': self.id
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
-            audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
+            sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
@@ -986,9 +1177,9 @@ class SoundOfTheDay(models.Model):
             True if the email was sent
             False if it was not sent
         """
-        audio_logger.info("Notifying user of random sound of the day")
+        sounds_logger.info("Notifying user of random sound of the day")
         if self.email_sent:
-            audio_logger.info("Email was already sent")
+            sounds_logger.info("Email was already sent")
             return False
 
         send_mail_template(
@@ -998,7 +1189,7 @@ class SoundOfTheDay(models.Model):
         self.email_sent = True
         self.save()
 
-        audio_logger.info("Finished sending mail to user %s of random sound of the day %s" %
+        sounds_logger.info("Finished sending mail to user %s of random sound of the day %s" %
                           (self.sound.user, self.sound))
 
         return True
@@ -1327,192 +1518,3 @@ class SoundAnalysis(models.Model):
 
     class Meta:
         unique_together = (("sound", "extractor"),)
-
-
-class BulkUploadProgress(models.Model):
-    """Store progress status for a Bulk Describe process."""
-
-    user = models.ForeignKey(User)
-    created = models.DateTimeField(db_index=True, auto_now_add=True)
-    CSV_CHOICES = (
-        ("N", 'Not yet validated'),  # linked CSV file has not yet been validated
-        ("F", 'Finished description'),   # All sounds have been described/created (but some might still be in
-                                         # processing/moderation stage)
-        ("S", 'Sounds being described and processed'),  # Description (and processing) process has started
-        ("V", 'Finished validation'),  # CSV file has been validated (might have errors)
-        ("C", 'Closed'),  # Process has finished and has been closes
-    )
-    progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
-    csv_path = models.CharField(max_length=512, null=True, blank=True, default=None)
-    original_csv_filename = models.CharField(max_length=255)
-    validation_output = JSONField(null=True)
-    sounds_valid = models.PositiveIntegerField(null=False, default=0)
-    description_output = JSONField(null=True)
-
-    def get_bulk_upload_basic_data_for_log(self):
-        return {
-            'bulk_upload_id': self.id,
-            'user_id': self.user_id,
-            'username': self.user.username,
-            'original_csv_filename': self.original_csv_filename,
-            'csv_path': self.csv_path
-        }
-
-    def get_csv_lines(self):
-        """
-        Read lines form CSV file and return a tuple with the header and a list of dictionaries.
-        """
-        return get_csv_lines(self.csv_path)
-
-    def validate_csv_file(self):
-        """
-        Validate CSV file and store output in self.validation_output.
-        """
-        header, lines = self.get_csv_lines()
-        bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
-        try:
-            lines_validated, global_errors = validate_input_csv_file(
-                csv_header=header,
-                csv_lines=lines,
-                sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
-                username=self.user.username)
-        except Exception:
-            # This is a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
-            # updated with a global error. Otherwise it will appear to the user that the object is permanently being
-            # validated. After we update the object with the "unexpected error" message, we log the exception and
-            # continue with excecution
-            lines_validated = []
-            global_errors = ['An unexpected error occurred while validating your data file']
-
-            sentry_logger.error('Error validating data file', exc_info=True, extra=bulk_upload_basic_data)
-
-        self.validation_output = {
-            'lines_ok': [line for line in lines_validated if not line['line_errors']],
-            'lines_with_errors': [line for line in lines_validated if line['line_errors']],
-            'global_errors': global_errors,
-        }
-        self.progress_type = 'V'  # Set progress to 'validated'
-        self.save()
-
-        # Log information about the process
-        bulk_upload_basic_data.update({
-            'n_lines_ok': len(self.validation_output['lines_ok']),
-            'n_lines_with_errors': len(self.validation_output['lines_with_errors']),
-            'n_global_errors': len(self.validation_output['global_errors']),
-        })
-        web_logger.info('Validated data file for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
-
-    def describe_sounds(self):
-        """
-        Start the actual description of the sounds and add them to Freesound.
-        """
-        bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
-        web_logger.info('Started creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
-        bulk_describe_from_csv(
-            self.csv_path,
-            delete_already_existing=False,
-            force_import=True,
-            sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
-            username=self.user.username,
-            bulkupload_progress_id=self.id)
-        web_logger.info('Finished creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
-
-    def store_progress_for_line(self, line_no, message):
-        """
-        Store the description progress of individual lines.
-        """
-        if self.description_output is None:
-            self.description_output = {}
-        self.description_output[line_no] = message
-        self.save()
-
-    def get_description_progress_info(self):
-        """
-        Get information about the progress of the description process and the status of the sounds that have already
-        been successfully described so that it can be shown to users.
-        """
-        sound_ids_described_ok = []
-        sound_errors = []
-        if self.description_output is not None:
-            for line_no, value in self.description_output.items():
-                if type(value) == int:
-                    # Sound id, meaning a file for which a Sound object was successfully created
-                    sound_ids_described_ok.append(value)
-                else:
-                    # If not sound ID, then it means there were errors with these sounds
-                    sound_errors.append((line_no, value))
-        n_sounds_described_ok = len(sound_ids_described_ok)
-        n_sounds_error = len(sound_errors)
-        n_lines_validated_ok = len(self.validation_output['lines_ok']) if self.validation_output is not None else 0
-        n_sounds_remaining_to_describe = n_lines_validated_ok - n_sounds_described_ok - n_sounds_error
-
-        n_sounds_published = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="OK", moderation_state="OK").count()
-        n_sounds_moderation = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="OK").exclude(moderation_state="OK").count()
-        n_sounds_currently_processing = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="PE", processing_ongoing_state="PR").count()
-        n_sounds_pending_processing = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="PE").exclude(processing_ongoing_state="PR").count()
-        n_sounds_failed_processing = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="FA").count()
-
-        # The remaining sounds that have been described ok but do not appear in any of the sets above are sounds with
-        # an unknown state. This could happen if sounds get deleted (e.g. as part of the moderation process or because
-        # a sound fails processing and the user deletes it).
-        n_sounds_unknown = n_sounds_described_ok - (n_sounds_published +
-                                                    n_sounds_moderation +
-                                                    n_sounds_currently_processing +
-                                                    n_sounds_pending_processing +
-                                                    n_sounds_failed_processing)
-        progress = 0
-        if self.description_output is not None:
-            progress = 100.0 * (n_sounds_published +
-                                n_sounds_moderation +
-                                n_sounds_failed_processing +
-                                n_sounds_error +
-                                n_sounds_unknown) / \
-                       (n_sounds_described_ok +
-                        n_sounds_error +
-                        n_sounds_remaining_to_describe)
-            progress = int(progress)
-            # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
-            # number of sounds that should have been described and processed. Sounds that fail processing or description
-            # are also counted as "done" as their status won't change.
-            # After the 'describe_sounds' method finishes, progress should always be 100.
-
-        return {
-            'n_sounds_remaining_to_describe': n_sounds_remaining_to_describe,
-            'n_sounds_described_ok': n_sounds_described_ok,
-            'sound_errors': sound_errors,
-            'n_sounds_error': n_sounds_error,
-            'n_sounds_published': n_sounds_published,
-            'n_sounds_moderation': n_sounds_moderation,
-            'n_sounds_pending_processing': n_sounds_pending_processing,
-            'n_sounds_currently_processing': n_sounds_currently_processing,
-            'n_sounds_processing': n_sounds_pending_processing + n_sounds_currently_processing,
-            'n_sounds_failed_processing': n_sounds_failed_processing,
-            'n_sounds_unknown': n_sounds_unknown,
-            'progress_percentage': progress,
-        }
-
-    def has_global_validation_errors(self):
-        """
-        Returns True if the validation finished with global errors
-        """
-        if self.validation_output is not None:
-            return len(self.validation_output['global_errors']) > 0
-        return False
-
-    def has_line_validation_errors(self):
-        """
-        Returns True if some errors were found in line validation
-        """
-        if self.validation_output is not None:
-            return len(self.validation_output['lines_with_errors']) > 0
-        return False
-
-    class Meta:
-        permissions = (
-            ("can_describe_in_bulk", "Can use the Bulk Describe feature."),
-        )

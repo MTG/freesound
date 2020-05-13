@@ -4,10 +4,7 @@ LOGGING = {
     'formatters': {
         'standard': {
             'format': '[%(asctime)s] # %(levelname)s    # %(message)s'
-        },
-        'worker': {
-            'format': '[%(asctime)s] # %(levelname)s    # [%(process)d] %(message)s'
-        },
+        }
     },
     'filters': {
         'api_filter': {
@@ -34,7 +31,7 @@ LOGGING = {
             'level': 'ERROR',   # only catches 5xx not 4xx messages
             'propagate': True,
         },
-        'audio': {
+        'sounds': {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,
@@ -49,6 +46,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'emails': {
+            'handlers': ['stdout'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'web': {
             'handlers': ['stdout'],
             'level': 'INFO',
@@ -59,20 +61,20 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'upload': {
+        'file_upload': {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,
         },
-        'processing': {
+        'workers': {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,
         },
-        'gearman_worker_processing': {
+        'commands': {
             'handlers': ['stdout'],
             'level': 'INFO',
             'propagate': False,
-        },    
+        },
     },
 }

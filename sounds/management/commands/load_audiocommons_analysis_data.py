@@ -18,15 +18,17 @@
 #     See AUTHORS file.
 #
 
-import os
 import json
 import logging
 import math
-from django.core.management.base import BaseCommand
+import os
+
 from django.conf import settings
+from django.core.management.base import BaseCommand
+
 from sounds.models import Sound, SoundAnalysis
 
-logger = logging.getLogger("console")
+console_logger = logging.getLogger("console")
 
 
 def value_is_valid(value):
@@ -58,7 +60,7 @@ class Command(BaseCommand):
         n_analyses_loaded = 0
         n_does_not_exist = 0
         for root, dirnames, filenames in os.walk(options['analysis_basedir']):
-            logger.info("Loading analyses from folder %s" % root)
+            console_logger.info("Loading analyses from folder %s" % root)
             for filename in filenames:
                 if filename.endswith('json'):
                     filepath = os.path.join(root, filename)
@@ -83,6 +85,7 @@ class Command(BaseCommand):
                         n_does_not_exist += 1
                         pass
 
-        logger.info("Created or updated %i SoundAnalysis objects" % n_analyses_loaded)
+        console_logger.info("Created or updated %i SoundAnalysis objects" % n_analyses_loaded)
         if n_does_not_exist:
-            logger.info("Failed to create %i SoundAnalysis objects for sounds that do not exist" % n_does_not_exist)
+            console_logger.info("Failed to create %i SoundAnalysis objects for sounds that do not exist"
+                                % n_does_not_exist)

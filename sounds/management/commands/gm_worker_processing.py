@@ -23,7 +23,7 @@ import logging
 import os
 import signal
 import sys
-import tempfile
+import time
 
 import gearman
 from django.conf import settings
@@ -31,10 +31,8 @@ from django.core.management.base import BaseCommand
 
 from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
-from utils.filesystem import remove_directory
 
-logger = logging.getLogger("processing")
-logger_error = logging.getLogger("processing_errors")
+workers_logger = logging.getLogger("workers")
 
 
 class WorkerException(Exception):
@@ -68,11 +66,6 @@ def cancel_timeout_alarm():
     signal.alarm(0)
 
 
-def log_error(message):
-    logger.error(message)
-    logger_error.info(message)
-
-
 def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
                         min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
     """
@@ -101,41 +94,40 @@ class Command(BaseCommand):
             help='Register this function (default: process_sound)')
 
     def handle(self, *args, **options):
-        logger.info('Starting worker')
         task_name = 'task_%s' % options['queue']
-        logger.info('Task: %s' % task_name)
         if task_name not in dir(self):
-            logger.info("Wow.. That's crazy! Maybe try an existing queue?")
             sys.exit(1)
 
         task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
-        logger.info('Initializing gm_worker')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        logger.info('Registering task %s, function %s' % (task_name, task_func))
         gm_worker.register_task(options['queue'], task_func)
-        logger.info('Starting work')
+        workers_logger.info('Started worker with tasks: %s' % task_name)
         gm_worker.work()
-        logger.info('Ended work')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
         set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
 
-        logger.info("---- Starting analysis of sound with id %s ----" % sound_id)
+        workers_logger.info("Starting analysis of sound (%s)" % json.dumps({'sound_id': sound_id}))
+        start_time = time.time()
         try:
             check_if_free_space()
             result = FreesoundAudioAnalyzer(sound_id=sound_id).analyze()
             if result:
-                logger.info("Successfully analyzed sound %s" % sound_id)
+                workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
+                    {'sound_id': sound_id, 'result': 'success', 'work_time': round(time.time() - start_time)}))
             else:
-                log_error("Failed analyizing sound %s" % sound_id)
+                workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
+                    {'sound_id': sound_id, 'result': 'failure', 'work_time': round(time.time() - start_time)}))
 
         except WorkerException as e:
-            log_error('%s' % e)
+            workers_logger.error("WorkerException while analyzing sound (%s)" % json.dumps(
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         except Exception as e:
-            log_error('Unexpected error while analyzing sound %s' % e)
+            workers_logger.error("Unexpected error while analyzing sound (%s)" % json.dumps(
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         cancel_timeout_alarm()
         return ''  # Gearman requires return value to be a string
@@ -147,21 +139,26 @@ class Command(BaseCommand):
         skip_displays = job_data.get('skip_displays', False)
         set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
 
-        logger.info("---- Starting processing of sound with id %s ----" % sound_id)
+        workers_logger.info("Starting processing of sound (%s)" % json.dumps({'sound_id': sound_id}))
+        start_time = time.time()
         try:
             check_if_free_space()
             result = FreesoundAudioProcessor(sound_id=sound_id)\
                 .process(skip_displays=skip_displays, skip_previews=skip_previews)
             if result:
-                logger.info("Successfully processed sound %s" % sound_id)
+                workers_logger .info("Finished processing of sound (%s)" % json.dumps(
+                    {'sound_id': sound_id, 'result': 'success', 'work_time': round(time.time() - start_time)}))
             else:
-                log_error("Failed processing sound %s" % sound_id)
+                workers_logger.info("Finished processing of sound (%s)" % json.dumps(
+                    {'sound_id': sound_id, 'result': 'failure', 'work_time': round(time.time() - start_time)}))
 
         except WorkerException as e:
-            log_error(str(e))
+            workers_logger.error("WorkerException while processing sound (%s)" % json.dumps(
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         except Exception as e:
-            log_error('Unexpected error while processing sound %s' % e)
+            workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
+                {'sound_id': sound_id, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
         cancel_timeout_alarm()
         return ''  # Gearman requires return value to be a string

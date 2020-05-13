@@ -24,8 +24,8 @@ import logging
 import json
 from utils.aws import get_ses_stats, AwsCredentialsNotConfigured, EndpointConnectionError
 
-logger_console = logging.getLogger('console')
-logger_web = logging.getLogger('web')
+console_logger = logging.getLogger('console')
+commands_logger = logging.getLogger('commands')
 
 
 class Command(BaseCommand):
@@ -51,13 +51,14 @@ class Command(BaseCommand):
             sample_size = options['sample_size'] or settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
             n_points = options['n_datapoints'] or settings.AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS
         except AttributeError:
-            logger_console.error('AWS SES config variables not configured')
+            console_logger.error('AWS SES config variables not configured')
             return
 
         try:
             stats = get_ses_stats(sample_size, n_points)
         except (AwsCredentialsNotConfigured, EndpointConnectionError) as e:
-            logger_console.error(e.message)
+            console_logger.error(e.message)
             return
 
-        logger_web.info('Reporting AWS email stats ({})'.format(json.dumps(stats)))
+        commands_logger.info('Reporting AWS email stats ({})'.format(json.dumps(stats)))
+        console_logger.info('Reporting AWS email stats ({})'.format(json.dumps(stats)))

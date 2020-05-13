@@ -215,7 +215,7 @@ class SoundOfTheDayTestCase(TestCase):
         SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
         SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 21))
 
-        call_command("create_random_sound")
+        call_command("create_random_sounds")
 
         sound_of_days = SoundOfTheDay.objects.count()
         self.assertEqual(sound_of_days, 6)

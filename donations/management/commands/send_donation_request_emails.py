@@ -18,25 +18,27 @@
 #     See AUTHORS file.
 #
 
+import datetime
+import json
+import logging
+
 from django.contrib.auth.models import User
 from django.db.models import Count
-from django.core.management.base import BaseCommand
+
+from donations.models import Donation
 from donations.models import DonationsEmailSettings
 from sounds.models import Download, PackDownload
-from donations.models import Donation
 from utils.mail import send_mail_template
-import datetime
-import logging
-import json
+from utils.management_commands import LoggingBaseCommand
 
-logger = logging.getLogger("web")
+commands_logger = logging.getLogger("commands")
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = 'Send donation emails'
 
     def handle(self, **options):
-        logger.info("Sending donation emails")
+        self.log_start()
 
         donation_settings, _ = DonationsEmailSettings.objects.get_or_create()
 
@@ -84,12 +86,12 @@ class Command(BaseCommand):
                 user.profile.last_donation_email_sent = datetime.datetime.now()
                 user.profile.donations_reminder_email_sent = True
                 user.profile.save()
-                logger.info("Sent donation email (%s)" %
-                            json.dumps({'user_id': user.id, 'donation_email_type': 'reminder'}))
+                commands_logger.info("Sent donation email (%s)" %
+                                     json.dumps({'user_id': user.id, 'donation_email_type': 'reminder'}))
             else:
-                logger.info("Didn't send donation email due to email address being invalid or donation"
-                            "emails preference disabled (%s)" %
-                            json.dumps({'user_id': user.id, 'donation_email_type': 'reminder'}))
+                commands_logger.info("Didn't send donation email due to email address being invalid or donation"
+                                     "emails preference disabled (%s)" %
+                                     json.dumps({'user_id': user.id, 'donation_email_type': 'reminder'}))
 
         # 2) Send email to users that download a lot of sounds without donating
         # potential_users -> All users that:
@@ -149,11 +151,11 @@ class Command(BaseCommand):
                     if email_sent_successfully:
                         user.profile.last_donation_email_sent = datetime.datetime.now()
                         user.profile.save()
-                        logger.info("Sent donation email (%s)" %
-                                    json.dumps({'user_id': user.id, 'donation_email_type': 'request'}))
+                        commands_logger.info("Sent donation email (%s)" %
+                                             json.dumps({'user_id': user.id, 'donation_email_type': 'request'}))
                     else:
-                        logger.info("Didn't send donation email due to email address being invalid or donation"
-                                    "emails preference disabled (%s)" %
-                                    json.dumps({'user_id': user.id, 'donation_email_type': 'request'}))
+                        commands_logger.info("Didn't send donation email due to email address being invalid or donation"
+                                             "emails preference disabled (%s)" %
+                                             json.dumps({'user_id': user.id, 'donation_email_type': 'request'}))
 
-        logger.info("Finished sending donation emails")
+        self.log_end()

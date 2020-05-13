@@ -35,7 +35,7 @@ from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 
-logger = logging.getLogger("search")
+search_logger = logging.getLogger("search")
 
 
 def search_prepare_sort(sort, options):
@@ -249,7 +249,7 @@ def search(request):
 
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
-    logger.info(u'Search (%s)' % json.dumps({
+    search_logger.info(u'Search (%s)' % json.dumps({
         'ip': get_client_ip(request),
         'query': search_query,
         'filter': filter_query,
@@ -312,10 +312,10 @@ def search(request):
         })
 
     except SolrException as e:
-        logger.warning('Search error: query: %s error %s' % (query, e))
+        search_logger.warning('Search error: query: %s error %s' % (query, e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
-        logger.error('Could probably not connect to Solr - %s' % e)
+        search_logger.error('Could probably not connect to Solr - %s' % e)
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     if request.GET.get("ajax", "") != "1":
@@ -413,11 +413,11 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SolrException as e:
-            logger.warning("search error: query: %s error %s" % (query, e))
+            search_logger.warning("search error: query: %s error %s" % (query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            logger.error("Could probably not connect to Solr - %s" % e)
+            search_logger.error("Could probably not connect to Solr - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 

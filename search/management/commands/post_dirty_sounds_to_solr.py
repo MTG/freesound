@@ -20,17 +20,14 @@
 
 import logging
 
-from django.core.management.base import BaseCommand
-
 from sounds.models import Sound
+from utils.management_commands import LoggingBaseCommand
 from utils.search.search_general import add_all_sounds_to_solr, delete_sound_from_solr, check_if_sound_exists_in_solr
-from utils.search.solr import SolrException
 
-logger = logging.getLogger("web")
 console_logger = logging.getLogger("console")
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = 'Add all sounds with is_index_dirty flag True to Solr index'
 
     def add_arguments(self, parser):
@@ -43,18 +40,19 @@ class Command(BaseCommand):
                  ' before (re-)indexing.')
 
     def handle(self, *args, **options):
+        self.log_start()
 
         # Index all those which are processed and moderated ok that has is_index_dirty
         sounds_to_index = Sound.objects.filter(processing_state="OK", moderation_state="OK", is_index_dirty=True)
         num_sounds = sounds_to_index.count()
-        logger.info("Starting posting dirty sounds to solr. %i sounds to be added/updated to the solr index"
-                    % num_sounds)
+        console_logger.info("Starting posting dirty sounds to solr. %i sounds to be added/updated to the solr index"
+                            % num_sounds)
 
         num_correctly_indexed_sounds = add_all_sounds_to_solr(
             sounds_to_index, mark_index_clean=True, delete_if_existing=options['delete-if-existing'])
 
-        logger.info("Finished posting dirty sounds to solr. %i sounds have been added/updated"
-                    % num_correctly_indexed_sounds)
+        console_logger.info("Finished posting dirty sounds to solr. %i sounds have been added/updated"
+                            % num_correctly_indexed_sounds)
 
         # Remove all those which are not processed or moderated ok and that are still in solr (should not happen)
         sounds_dirty_to_remove = \
@@ -69,4 +67,6 @@ class Command(BaseCommand):
                 n_deleted_sounds += 1
                 sound.is_index_dirty = False
                 sound.save()
-        logger.info("Deleted %i sounds from solr index." % n_deleted_sounds)
+        console_logger.info("Deleted %i sounds from solr index." % n_deleted_sounds)
+
+        self.log_end({'n_sounds_added': num_correctly_indexed_sounds, 'n_sounds_deleted': n_deleted_sounds})

@@ -18,12 +18,14 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
-from accounts.models import EmailBounce
 import logging
 
-logger = logging.getLogger('console')
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
+from accounts.models import EmailBounce
+
+console_logger = logging.getLogger('console')
 
 
 class Command(BaseCommand):
@@ -47,10 +49,10 @@ class Command(BaseCommand):
         if not options['fast']:
             for user in users:
                 if user.profile.has_content():
-                    logger.error('User {} is not expected to have content, aborting!')
+                    console_logger.error('User {} is not expected to have content, aborting!')
                     return
 
         total, details = users.delete()
 
         deleted_users = details.get('auth.User', 0)
-        logger.info('Deleted {} users'.format(deleted_users))
+        console_logger.info('Deleted {} users'.format(deleted_users))

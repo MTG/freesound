@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import logging
 import os
 import shutil
 
@@ -29,8 +28,6 @@ from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProce
 from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_analysis_to_mirror_locations
-
-logger = logging.getLogger("processing")
 
 
 class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):

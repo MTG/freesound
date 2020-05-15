@@ -44,6 +44,31 @@ def _ensure_list(item):
     return item
 
 
+def unify_subject(subject):
+    """
+    This function takes an email subject and strips the "variable" parts of it so that all emails of the same type
+    will have the same "unified subject". E.g., if a subject is "Topic reply notification - forum topic name",
+    this function will return "Topic reply notification". This is useful for logging purposes as it allows to easily
+    count types of email we send and compute other statistics.
+
+    Args:
+        subject (str): raw email string
+
+    Returns:
+        str: email subject with only the "common" parts (unified subject)
+    """
+    if 'Topic reply notification - ' in subject:
+        return 'Topic reply notification'
+    elif 'Spam/offensive report for user' in subject:
+        return 'Spam/offensive report for user'
+    elif 'Sound flag: ' in subject:
+        return 'Sound flag'
+    elif '[support]' in subject:
+        return 'Support'
+    else:
+        return subject
+
+
 def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None, reply_to=None,
               email_type_preference_check=None):
     """Sends email with a lot of defaults.
@@ -120,6 +145,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         for username, email in email_to:
             emails_logger.info('Email sent (%s)' % json.dumps({
                 'subject': subject,
+                'subject_unified': unify_subject(subject),
                 'email_from': email_from,
                 'email_to': email,
                 'email_to_username': username,
@@ -130,6 +156,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     except Exception as e:
         emails_logger.error('Error in send_mail (%s)' % json.dumps({
             'subject': subject,
+            'subject_unified': unify_subject(subject),
             'email_to': str(email_to),
             'error': str(e)
         }))
@@ -139,8 +166,9 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
 def send_mail_template(subject, template, context, user_to=None, email_to=None, email_from=None, reply_to=None,
                        email_type_preference_check=None):
     context["settings"] = settings
-    return send_mail(subject, render_to_string(template, context), user_to, email_to, email_from, reply_to,
-                     email_type_preference_check)
+    return send_mail(subject, render_to_string(template, context), user_to=user_to, email_to=email_to,
+                     email_from=email_from, reply_to=reply_to,
+                     email_type_preference_check=email_type_preference_check)
 
 
 def send_mail_template_to_support(subject, template, context, email_from=None, reply_to=None):

@@ -51,7 +51,7 @@ class LoggingBaseCommand(BaseCommand):
 
     def find_command_name(self):
         for count, arg in enumerate(sys.argv):
-            if arg == 'manage.py':
+            if 'manage.py' in arg:
                 return sys.argv[count + 1]
         return None
 

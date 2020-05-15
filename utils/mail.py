@@ -44,33 +44,8 @@ def _ensure_list(item):
     return item
 
 
-def unify_subject(subject):
-    """
-    This function takes an email subject and strips the "variable" parts of it so that all emails of the same type
-    will have the same "unified subject". E.g., if a subject is "Topic reply notification - forum topic name",
-    this function will return "Topic reply notification". This is useful for logging purposes as it allows to easily
-    count types of email we send and compute other statistics.
-
-    Args:
-        subject (str): raw email string
-
-    Returns:
-        str: email subject with only the "common" parts (unified subject)
-    """
-    if 'Topic reply notification - ' in subject:
-        return 'Topic reply notification'
-    elif 'Spam/offensive report for user' in subject:
-        return 'Spam/offensive report for user'
-    elif 'Sound flag: ' in subject:
-        return 'Sound flag'
-    elif '[support]' in subject:
-        return 'Support'
-    else:
-        return subject
-
-
 def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None, reply_to=None,
-              email_type_preference_check=None):
+              email_type_preference_check=None, extra_subject=''):
     """Sends email with a lot of defaults.
 
     The function will check if user's email is valid based on bounce info. The function will also check email
@@ -88,6 +63,9 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         reply_to (str): cemail string that will be added as a "Reply-To" header to all mails being sent.
         email_type_preference_check (str): name of EmailPreferenceType that users should have enabled for the email to
             be sent. If set to None, no checks will be carried out.
+        extra_subject (str): extra contents for the email subject which will be appended to the 'subject' param above
+            and separated by a dash (this should be used to separate parts of the subject which are not common for a
+            given type of email, e.g. to pass the "topic name" in a "topic reply notification" email).
 
     Returns:
         (bool): True if all emails were sent successfully, False otherwise.
@@ -126,8 +104,12 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     if settings.ALLOWED_EMAILS:  # for testing purposes, so we don't accidentally send emails to users
         email_to = [(username, email) for username, email in email_to if email in settings.ALLOWED_EMAILS]
 
+    full_subject = u'{0} {1}'.format(settings.EMAIL_SUBJECT_PREFIX, subject)
+    if extra_subject:
+        full_subject += u' - {0}'.format(extra_subject)
+
     try:
-        emails = tuple(((settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email])
+        emails = tuple(((full_subject, email_body, email_from, [email])
                         for _, email in email_to))
 
         # Replicating send_mass_mail functionality and adding reply-to header if requires
@@ -135,6 +117,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         headers = None
         if reply_to:
             headers = {'Reply-To': reply_to}
+
         messages = [EmailMessage(subject, message, sender, recipient, headers=headers)
                     for subject, message, sender, recipient in emails]
 
@@ -144,7 +127,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         for username, email in email_to:
             emails_logger.info('Email sent (%s)' % json.dumps({
                 'subject': subject,
-                'subject_unified': unify_subject(subject),
+                'full_subject': full_subject,
                 'email_from': email_from,
                 'email_to': email,
                 'email_to_username': username,
@@ -155,7 +138,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     except Exception as e:
         emails_logger.error('Error in send_mail (%s)' % json.dumps({
             'subject': subject,
-            'subject_unified': unify_subject(subject),
+            'full_subject': full_subject,
             'email_to': str(email_to),
             'error': str(e)
         }))
@@ -163,18 +146,19 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
 
 
 def send_mail_template(subject, template, context, user_to=None, email_to=None, email_from=None, reply_to=None,
-                       email_type_preference_check=None):
+                       email_type_preference_check=None, extra_subject=''):
     context["settings"] = settings
     return send_mail(subject, render_to_string(template, context), user_to=user_to, email_to=email_to,
-                     email_from=email_from, reply_to=reply_to,
-                     email_type_preference_check=email_type_preference_check)
+                     email_from=email_from, reply_to=reply_to, email_type_preference_check=email_type_preference_check,
+                     extra_subject=extra_subject)
 
 
-def send_mail_template_to_support(subject, template, context, email_from=None, reply_to=None):
+def send_mail_template_to_support(subject, template, context, email_from=None, reply_to=None, extra_subject=''):
     email_to = []
     for email in settings.SUPPORT:
         email_to.append(email[1])
-    return send_mail_template(subject, template, context, email_to=email_to, email_from=email_from, reply_to=reply_to)
+    return send_mail_template(subject, template, context, email_to=email_to, email_from=email_from, reply_to=reply_to,
+                              extra_subject=extra_subject)
 
 
 def render_mail_template(template, context):

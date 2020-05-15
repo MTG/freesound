@@ -22,7 +22,7 @@ import json
 from textwrap import wrap
 
 from BeautifulSoup import BeautifulSoup
-from collections import Counter
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -146,7 +146,7 @@ def new_message(request, username=None, message_id=None):
                     tvars = {'user_to': user_to,
                              'user_from': user_from}
 
-                    send_mail_template(u'You have a private message.', 'messages/email_new_message.txt', tvars,
+                    send_mail_template(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE, 'messages/email_new_message.txt', tvars,
                                        user_to=user_to, email_type_preference_check="private_message")
                 except:
                     # if the email sending fails, ignore...

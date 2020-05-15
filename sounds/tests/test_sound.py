@@ -68,7 +68,7 @@ class CommentSoundsTestCase(TestCase):
 
         # Check email was sent notifying about comment
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, u'[freesound] You have a new comment.')
+        self.assertEqual(mail.outbox[0].subject, u'[freesound] You have a new comment')
 
         # Now update preferences of sound.user to disable comment notification emails
         # We create an email preference object for the email type (which will mean user does not want new comment

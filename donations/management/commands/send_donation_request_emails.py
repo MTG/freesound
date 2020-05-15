@@ -22,6 +22,7 @@ import datetime
 import json
 import logging
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Count
 
@@ -79,7 +80,7 @@ class Command(LoggingBaseCommand):
 
         for user in users_to_notify.all():
             email_sent_successfully = send_mail_template(
-                u'Thanks for contributing to Freesound',
+                settings.EMAIL_SUBJECT_DONATION_REMINDER,
                 'donations/email_donation_reminder.txt', {'user': user},
                 user_to=user, email_type_preference_check='donation_request')
             if email_sent_successfully:
@@ -143,7 +144,7 @@ class Command(LoggingBaseCommand):
 
                 if send_email:
                     email_sent_successfully = send_mail_template(
-                        u'Have you considered making a donation?',
+                        settings.EMAIL_SUBJECT_DONATION_REQUEST,
                         'donations/email_donation_request.txt', {
                             'user': user,
                             }, user_to=user, email_type_preference_check='donation_request')

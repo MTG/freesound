@@ -58,7 +58,7 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
     if created:
         email_to = None if user is not None else email
         send_mail_template(
-                u'Thanks for your donation!',
+                settings.EMAIL_SUBJECT_DONATION_THANK_YOU,
                 'donations/email_donation.txt', {
                     'user': user,
                     'amount': amount,

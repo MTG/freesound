@@ -141,7 +141,7 @@ class MiscTicketTests(TicketTests):
                 'user_to': ticket.sender,
                 }
         send_mail_mock.assert_called_once_with(
-                u'A freesound moderator handled your upload.',
+                u'A Freesound moderator handled your upload',
                 tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
                 local_vars,
                 user_to=ticket.sender)

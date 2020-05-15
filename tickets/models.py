@@ -20,8 +20,8 @@
 #     See AUTHORS file.
 #
 
+from django.conf import settings
 from django.contrib.auth.models import User, Group
-from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.db import models
@@ -29,6 +29,7 @@ from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
 import uuid
 from utils.mail import send_mail_template
+
 
 class Queue(models.Model):
     name            = models.CharField(max_length=128)
@@ -81,7 +82,7 @@ class Ticket(models.Model):
             if self.assignee:
                 tvars = {'ticket': self,
                          'user_to': self.assignee}
-                send_mail_template(u'A freesound moderator handled your upload.',
+                send_mail_template(settings.EMAIL_SUBJECT_MODERATION_HANDLED,
                                    notification_type,
                                    tvars,
                                    user_to=self.assignee)
@@ -90,7 +91,7 @@ class Ticket(models.Model):
             if self.sender:
                 tvars = {'ticket': self,
                          'user_to': self.sender}
-                send_mail_template(u'A freesound moderator handled your upload.',
+                send_mail_template(settings.EMAIL_SUBJECT_MODERATION_HANDLED,
                                    notification_type,
                                    tvars,
                                    user_to=self.sender)

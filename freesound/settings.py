@@ -168,7 +168,6 @@ PASSWORD_HASHERS = [
 # Email settings
 
 SERVER_EMAIL = 'noreply@freesound.org'
-EMAIL_SUBJECT_PREFIX = '[freesound] '
 DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
@@ -189,6 +188,24 @@ AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period
 # If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
 ALLOWED_EMAILS = []
 
+# Email subjects
+EMAIL_SUBJECT_PREFIX = u'[freesound]'
+EMAIL_SUBJECT_ACTIVATION_LINK = u'Your activation link'
+EMAIL_SUBJECT_USERNAME_REMINDER = u'Username reminder'
+EMAIL_SUBJECT_EMAIL_CHANGED = u'Email address changed'
+EMAIL_SUBJECT_USER_SPAM_REPORT = u'Spam/offensive report for user'
+EMAIL_SUBJECT_DONATION_THANK_YOU = u'Thanks for your donation!'
+EMAIL_SUBJECT_DONATION_REMINDER = u'Thanks for contributing to Freesound'
+EMAIL_SUBJECT_DONATION_REQUEST = u'Have you considered making a donation?'
+EMAIL_SUBJECT_STREAM_EMAILS = u'New sounds from users and tags you are following'
+EMAIL_SUBJECT_TOPIC_REPLY = u'Topic reply notification'
+EMAIL_SUBJECT_PRIVATE_MESSAGE = u'You have a private message'
+EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = u'Sound added as remix source'
+EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = u'One of your sounds has been chosen as random sound of the day!'
+EMAIL_SUBJECT_NEW_COMMENT = u'You have a new comment'
+EMAIL_SUBJECT_SOUND_FLAG = u'Sound flag'
+EMAIL_SUBJECT_SUPPORT_EMAIL = u'[support]'
+EMAIL_SUBJECT_MODERATION_HANDLED = u'A Freesound moderator handled your upload'
 
 # -------------------------------------------------------------------------------
 # Media paths, URLS and static settings

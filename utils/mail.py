@@ -92,7 +92,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     Returns:
         (bool): True if all emails were sent successfully, False otherwise.
     """
-    assert not user_to and not email_to, "One of parameters user_to and email_to should be set, but not both"
+    assert bool(user_to) != bool(email_to), "One of parameters user_to and email_to should be set, but not both"
 
     if email_from is None:
         email_from = settings.DEFAULT_FROM_EMAIL

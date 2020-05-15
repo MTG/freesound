@@ -81,7 +81,8 @@ class ReportSpamOffensive(TestCase):
 
         # Now check that after the new flags an email was sent
         self.assertEqual(len(mail.outbox), 1)  # Notification email sent
-        self.assertTrue("[freesound] Spam/offensive report for user" in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[0].subject and
+                        settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue("has been reported" in mail.outbox[0].body)
 
         # Continue flagging object until it reaches blocked state
@@ -99,7 +100,8 @@ class ReportSpamOffensive(TestCase):
 
         # Now check that an extra mail was now sent (the email notifying user is blocked)
         self.assertEqual(len(mail.outbox), 2)  # New notification email sent
-        self.assertTrue("[freesound] Spam/offensive report for user" in mail.outbox[1].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[1].subject and
+                        settings.EMAIL_SUBJECT_PREFIX in mail.outbox[1].subject)
         self.assertTrue("has been blocked" in mail.outbox[1].body)
 
         # Flag the object again and check that no new notification emails are sent
@@ -182,9 +184,11 @@ class ReportSpamOffensive(TestCase):
 
             if i == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION - 1:  # Last iteration
                 self.assertEqual(len(mail.outbox), 1)  # New notification email sent
-                self.assertTrue("[freesound] Spam/offensive report for user" in mail.outbox[0].subject)
+                self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[0].subject and
+                                settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
                 self.assertTrue("has been reported" in mail.outbox[0].body)
             elif i == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING - 1:
                 self.assertEqual(len(mail.outbox), 2)  # New notification email sent
-                self.assertTrue("[freesound] Spam/offensive report for user" in mail.outbox[1].subject)
+                self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[1].subject and
+                                settings.EMAIL_SUBJECT_PREFIX in mail.outbox[1].subject)
                 self.assertTrue("has been blocked" in mail.outbox[1].body)

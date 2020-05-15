@@ -21,6 +21,7 @@
 import hashlib
 
 import mock
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -141,7 +142,7 @@ class MiscTicketTests(TicketTests):
                 'user_to': ticket.sender,
                 }
         send_mail_mock.assert_called_once_with(
-                u'A Freesound moderator handled your upload',
+                settings.EMAIL_SUBJECT_MODERATION_HANDLED,
                 tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
                 local_vars,
                 user_to=ticket.sender)

@@ -224,7 +224,7 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 # -------------------------------------------------------------------------------
 # Freesound miscelaneous settings
 
-SUPPORT = (('Support', 'admin@example.org'), )
+SUPPORT = ()
 
 IFRAME_PLAYER_SIZE = {
         'large': [920, 245],

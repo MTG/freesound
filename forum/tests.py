@@ -576,8 +576,8 @@ class ForumPageResponses(TestCase):
         # Both users are subscribed but the email is not sent to the user that is sending the post
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], self.user.email)
-        self.assertTrue(settings.EMAIL_SUBJECT_TOPIC_REPLY in mail.outbox[0].subject and
-                        settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_TOPIC_REPLY in mail.outbox[0].subject)
 
     def test_emails_not_sent_for_subscription_to_thread_if_preference_disabled(self):
         forum = Forum.objects.first()

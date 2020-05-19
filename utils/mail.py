@@ -127,7 +127,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         for username, email in email_to:
             emails_logger.info('Email sent (%s)' % json.dumps({
                 'subject': subject,
-                'full_subject': full_subject,
+                'extra_subject': extra_subject,
                 'email_from': email_from,
                 'email_to': email,
                 'email_to_username': username,
@@ -138,7 +138,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     except Exception as e:
         emails_logger.error('Error in send_mail (%s)' % json.dumps({
             'subject': subject,
-            'full_subject': full_subject,
+            'extra_subject': extra_subject,
             'email_to': str(email_to),
             'error': str(e)
         }))

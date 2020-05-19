@@ -69,7 +69,7 @@ class Command(LoggingBaseCommand):
 
         limit = int(options['limit'])
         freesound_extractor_version = options['freesound_extractor_version']
-        console_logger.info(limit, freesound_extractor_version)
+        console_logger.info("limit: %s, version: %s", limit, freesound_extractor_version)
 
         if options['force']:
             to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK').order_by('id')[:limit]

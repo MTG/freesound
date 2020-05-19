@@ -1183,7 +1183,7 @@ class SoundOfTheDay(models.Model):
             return False
 
         send_mail_template(
-            u'One of your sounds has been chosen as random sound of the day!', 'sounds/email_random_sound.txt',
+            settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN, 'sounds/email_random_sound.txt',
             {'sound': self.sound, 'user': self.sound.user},
             user_to=self.sound.user, email_type_preference_check="random_sound")
         self.email_sent = True

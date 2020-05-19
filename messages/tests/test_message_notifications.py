@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -47,7 +47,8 @@ class MessageReceivedEmailNotification(TestCase):
         })
         self.assertRedirects(resp, reverse('messages'))
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "[freesound] You have a private message.")
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE in mail.outbox[0].subject)
 
     @override_settings(RECAPTCHA_PUBLIC_KEY='')
     def test_message_email_preference_disabled(self):

@@ -237,7 +237,7 @@ def send_activation(user):
         'username': username,
         'hash': uid_hash
     }
-    send_mail_template(u'Your activation link.', 'accounts/email_activation.txt', tvars, user_to=user)
+    send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
 
 
 def resend_activation(request):
@@ -267,7 +267,7 @@ def username_reminder(request):
 
             try:
                 user = User.objects.get(email__iexact=email)
-                send_mail_template(u'Username reminder.', 'accounts/email_username_reminder.txt',
+                send_mail_template(settings.EMAIL_SUBJECT_USERNAME_REMINDER, 'accounts/email_username_reminder.txt',
                                    {'user': user}, user_to=user)
             except User.DoesNotExist:
                 pass
@@ -1105,7 +1105,7 @@ def email_reset(request):
                     'user': user,
                     'token': default_token_generator.make_token(user),
                 }
-                send_mail_template(u'Email address changed',
+                send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                                    'accounts/email_reset_email.txt', tvars,
                                    email_to=email)
 
@@ -1155,7 +1155,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     # Send email to the old address notifying about the change
     tvars = {'old_email': old_email, 'user': user}
-    send_mail_template(u'Email address changed',
+    send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 
     return render(request, 'accounts/email_reset_complete.html', tvars)
@@ -1232,8 +1232,8 @@ def flag_user(request, username):
                      'objects_data': objects_data,
                      'user_url': user_url,
                      'clear_url': clear_url}
-            send_mail_template_to_support(u'Spam/offensive report for user ' + flagged_user.username, template_to_use,
-                                          tvars)
+            send_mail_template_to_support(
+                settings.EMAIL_SUBJECT_USER_SPAM_REPORT, template_to_use, tvars, extra_subject=flagged_user.username)
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')

@@ -71,8 +71,7 @@ class Command(LoggingBaseCommand):
             week_first_day_str = week_first_day.strftime("%d %b").lstrip("0")
             week_last_day_str = week_last_day.strftime("%d %b").lstrip("0")
 
-            subject_str = u'new sounds from users and tags you are following ('
-            subject_str += unicode(week_first_day_str) + u' - ' + unicode(week_last_day_str) + u')'
+            extra_email_subject = unicode(week_first_day_str) + u' to ' + unicode(week_last_day_str)
 
             # Set date range from which to get upload notifications
             time_lapse = follow_utils.build_time_lapse(week_first_day, week_last_day)
@@ -100,7 +99,8 @@ class Command(LoggingBaseCommand):
 
             # Send email
             try:
-                send_mail(subject_str, text_content, user_to=user)
+                send_mail(settings.EMAIL_SUBJECT_STREAM_EMAILS, text_content,
+                          extra_subject=extra_email_subject, user_to=user)
             except Exception as e:
                 # Do not send the email and do not update the last email sent field in the profile
                 profile.save()  # Save last_attempt_of_sending_stream_email

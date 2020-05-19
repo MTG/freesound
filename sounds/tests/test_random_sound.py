@@ -21,6 +21,7 @@
 import datetime
 
 import mock
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.cache import cache
@@ -227,7 +228,8 @@ class SoundOfTheDayTestCase(TestCase):
         sotd.notify_by_email()
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "[freesound] One of your sounds has been chosen as random sound of the day!")
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN in mail.outbox[0].subject)
 
         # If we notify again, we don't send another email
         sotd.notify_by_email()

@@ -262,7 +262,7 @@ def sound(request, username, sound_id):
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
-                    send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
+                    send_mail_template(settings.EMAIL_SUBJECT_NEW_COMMENT, 'sounds/email_new_comment.txt',
                                        {'sound': sound, 'user': request.user, 'comment': comment_text},
                                        user_to=sound.user, email_type_preference_check="new_comment")
 
@@ -798,9 +798,9 @@ def flag(request, username, sound_id):
             else:
                 user_email = flag_form.cleaned_data["email"]
 
-            send_mail_template_to_support(u"Sound flag: %s - %s" % (sound.user.username, sound.original_filename),
-                                          "sounds/email_flag.txt", {"flag": flag}, reply_to=user_email)
-
+            send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "sounds/email_flag.txt", {"flag": flag},
+                                          extra_subject="%s - %s" % (sound.user.username, sound.original_filename),
+                                          reply_to=user_email)
             return redirect(sound)
     else:
         initial = {}

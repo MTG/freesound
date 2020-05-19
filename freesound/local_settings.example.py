@@ -5,6 +5,9 @@ import os
 DEBUG = True
 DISPLAY_DEBUG_TOOLBAR = True
 
+# Set support param so contact form does not fail
+SUPPORT = (('Name Surname', 'support@freesound.org'),)
+
 # Data path of the mounted data volume in docker
 DATA_PATH = '/freesound-data/'
 

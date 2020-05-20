@@ -206,7 +206,7 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 
 
 # -------------------------------------------------------------------------------
-# Freesound miscelaneous settings
+# Freesound miscellaneous settings
 
 SUPPORT = ()
 
@@ -263,7 +263,7 @@ CRC_BUFFER_SIZE = 4096
 # Maximum combined file size for uploading files. This is set in nginx configuration
 UPLOAD_MAX_FILE_SIZE_COMBINED = 1024 * 1024 * 1024  # 1 GB
 
-# Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
+# Minimum number of sounds that a user has to upload before enabling bulk upload feature for that user
 BULK_UPLOAD_MIN_SOUNDS = 40
 
 # Turn this option on to log every time a user downloads a pack or sound
@@ -614,7 +614,7 @@ if SENTRY_DSN:
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure
-# direcotries are created if not existing
+# directories are created if not existing
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")

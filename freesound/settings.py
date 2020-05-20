@@ -662,6 +662,9 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
     DEBUG_TOOLBAR_CONFIG = {
         'INTERCEPT_REDIRECTS': False,
+        # This normally checks the running host with the request url, but this doesn't
+        # work in docker. Unconditionally show the toolbar when DEBUG is True
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG
     }
 
 # -------------------------------------------------------------------------------

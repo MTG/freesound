@@ -5,6 +5,8 @@ import datetime
 import re
 import logging.config
 import dj_database_url
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # -------------------------------------------------------------------------------
 # Miscellaneous Django settings
@@ -68,7 +70,6 @@ INSTALLED_APPS = [
     'utils',
     'donations',
     'monitor',
-    'raven.contrib.django.raven_compat',
     'django_object_actions',
     'silk',
 ]
@@ -388,7 +389,7 @@ TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 
 # -------------------------------------------------------------------------------
 # Sentry settings
-RAVEN_CONFIG = {}
+SENTRY_DSN = None
 
 
 # -------------------------------------------------------------------------------
@@ -595,6 +596,17 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
 from local_settings import *
+
+
+# -------------------------------------------------------------------------------
+# Sentry
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        send_default_pii=True
+    )
 
 
 # -------------------------------------------------------------------------------

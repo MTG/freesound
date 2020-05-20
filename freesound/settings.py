@@ -15,7 +15,8 @@ DISPLAY_DEBUG_TOOLBAR = False
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
 
 default_url = 'postgres://postgres@db/postgres'
-DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=default_url)}
+DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=default_url),
+             'ro_replica': dj_database_url.config('DJANGO_RO_REPLICA_DATABASE_URL', default=default_url)}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -85,7 +86,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 # This was the default serializer in django 1.6. Now we keep using it because
-# we saw some erros when running tests, in the future we should change to the
+# we saw some errors when running tests, in the future we should change to the
 # new one.
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
@@ -271,6 +272,11 @@ LOG_DOWNLOADS = False
 # Followers notifications
 MAX_EMAILS_PER_COMMAND_RUN = 1000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
+# Database replicas
+# In order to reduce load on the primary database, we can use a replica for some queries that we
+# know take a lot of resources. Configure the 'ro_replica' database and turn on this flag
+USE_REPLICA_FOR_READS = True
 
 
 # -------------------------------------------------------------------------------

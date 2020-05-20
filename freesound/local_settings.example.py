@@ -5,6 +5,9 @@ import os
 DEBUG = True
 DISPLAY_DEBUG_TOOLBAR = True
 
+# Use a database replica when reading some large tables
+USE_REPLICA_FOR_READS = True
+
 # Data path of the mounted data volume in docker
 DATA_PATH = '/freesound-data/'
 

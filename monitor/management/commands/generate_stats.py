@@ -20,16 +20,17 @@
 
 import datetime
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.db import connection
+from django.db import connections
 from django.db.models import Count, Sum
 
 import comments.models
-import donations.views
+import donations.models
 import forum.models
 import ratings.models
-import sounds.views
+import sounds.models
 from tags.models import Tag, TaggedItem
 from utils.management_commands import LoggingBaseCommand
 
@@ -38,18 +39,30 @@ class Command(LoggingBaseCommand):
     help = "Compute stats to display on monitor section."
 
     def handle(self, **options):
+        database = 'default'
         self.log_start()
 
         time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
-        # Compute stats relatad with sounds:
+        sound_objects = sounds.models.Sound.objects
+        download_objects = sounds.models.Download.objects
+        packdownload_objects = sounds.models.PackDownload.objects
+        pg_connection = connections[database]
 
-        new_sounds_mod = sounds.models.Sound.objects\
+        if settings.USE_REPLICA_FOR_READS:
+            database = 'ro_replica'
+            sound_objects = sound_objects.using(database)
+            download_objects = download_objects.using(database)
+            packdownload_objects = packdownload_objects.using(database)
+            pg_connection = connections[database]
+
+        # Compute stats related with sounds:
+        new_sounds_mod = sound_objects\
                 .filter(created__gt=time_span, moderation_date__isnull=False)\
                 .extra(select={'day': 'date(moderation_date)'}).values('day')\
                 .order_by().annotate(Count('id'))
 
-        new_sounds = sounds.models.Sound.objects\
+        new_sounds = sound_objects\
                 .filter(created__gt=time_span, processing_date__isnull=False)\
                 .extra(select={'day': 'date(processing_date)'}).values('day')\
                 .order_by().annotate(Count('id'))
@@ -61,12 +74,12 @@ class Command(LoggingBaseCommand):
         cache.set("sounds_stats", sounds_stats, 60 * 60 * 24)
 
         # Compute stats related with downloads:
-        new_downloads_sound = sounds.models.Download.objects\
+        new_downloads_sound = download_objects\
             .filter(created__gt=time_span)\
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Count('id'))
 
-        new_downloads_pack = sounds.models.PackDownload.objects\
+        new_downloads_pack = packdownload_objects\
             .filter(created__gt=time_span)\
             .extra({'day': 'date("sounds_packdownload".created)'}).values('day').order_by()\
             .annotate(id__count=Sum('pack__num_sounds'))
@@ -88,11 +101,11 @@ class Command(LoggingBaseCommand):
         time_span = datetime.datetime.now()-datetime.timedelta(days=365)
 
         active_users = {
-            'sounds': {'obj': sounds.models.Sound.objects, 'attr': 'user_id'},
+            'sounds': {'obj': sound_objects, 'attr': 'user_id'},
             'comments': {'obj': comments.models.Comment.objects, 'attr': 'user_id'},
             'posts': {'obj': forum.models.Post.objects, 'attr': 'author_id'},
-            'sound_downloads': {'obj': sounds.models.Download.objects, 'attr': 'user_id'},
-            'pack_downloads': {'obj': sounds.models.PackDownload.objects, 'attr': 'user_id'},
+            'sound_downloads': {'obj': download_objects, 'attr': 'user_id'},
+            'pack_downloads': {'obj': packdownload_objects, 'attr': 'user_id'},
             'rate': {'obj': ratings.models.SoundRating.objects, 'attr': 'user_id'},
         }
         for i in active_users.keys():
@@ -129,8 +142,8 @@ class Command(LoggingBaseCommand):
                 .annotate(num=Count('tag_id'))\
                 .values('num', 'tag__name').order_by('-num')[:300]
 
-        with connection.cursor() as cursor:
-            cursor.execute(\
+        with pg_connection.cursor() as cursor:
+            cursor.execute(
                     """SELECT count(*) as num_c, t.name, ti.tag_id as id FROM
                     tags_taggeditem ti, tags_tag t, sounds_download d
                     WHERE d.sound_id = ti.object_id AND t.id = ti.tag_id
@@ -159,12 +172,12 @@ class Command(LoggingBaseCommand):
         sum_donations_month = donations.models.Donation.objects\
             .filter(created__gt=time_span).aggregate(Sum('amount'))['amount__sum']
 
-        num_sounds = sounds.models.Sound.objects.filter(processing_state="OK",
+        num_sounds = sound_objects.filter(processing_state="OK",
             moderation_state="OK").count()
         packs = sounds.models.Pack.objects.all().count()
 
-        downloads_sounds = sounds.models.Download.objects.count()
-        downloads_packs = sounds.models.PackDownload.objects.all().count()
+        downloads_sounds = download_objects.count()
+        downloads_packs = packdownload_objects.all().count()
         downloads = downloads_sounds + downloads_packs
         num_comments = comments.models.Comment.objects.all().count()
         num_ratings = ratings.models.SoundRating.objects.all().count()

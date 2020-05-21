@@ -5,6 +5,8 @@ import datetime
 import re
 import logging.config
 import dj_database_url
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # -------------------------------------------------------------------------------
 # Miscellaneous Django settings
@@ -68,7 +70,6 @@ INSTALLED_APPS = [
     'utils',
     'donations',
     'monitor',
-    'raven.contrib.django.raven_compat',
     'django_object_actions',
     'silk',
 ]
@@ -222,7 +223,7 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 
 
 # -------------------------------------------------------------------------------
-# Freesound miscelaneous settings
+# Freesound miscellaneous settings
 
 SUPPORT = ()
 
@@ -279,7 +280,7 @@ CRC_BUFFER_SIZE = 4096
 # Maximum combined file size for uploading files. This is set in nginx configuration
 UPLOAD_MAX_FILE_SIZE_COMBINED = 1024 * 1024 * 1024  # 1 GB
 
-# Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
+# Minimum number of sounds that a user has to upload before enabling bulk upload feature for that user
 BULK_UPLOAD_MIN_SOUNDS = 40
 
 # Turn this option on to log every time a user downloads a pack or sound
@@ -405,7 +406,7 @@ TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 
 # -------------------------------------------------------------------------------
 # Sentry settings
-RAVEN_CONFIG = {}
+SENTRY_DSN = None
 
 
 # -------------------------------------------------------------------------------
@@ -615,11 +616,22 @@ from local_settings import *
 
 
 # -------------------------------------------------------------------------------
+# Sentry
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        send_default_pii=True
+    )
+
+
+# -------------------------------------------------------------------------------
 # Extra Freesound settings
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure
-# direcotries are created if not existing
+# directories are created if not existing
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
@@ -667,6 +679,9 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
     DEBUG_TOOLBAR_CONFIG = {
         'INTERCEPT_REDIRECTS': False,
+        # This normally checks the running host with the request url, but this doesn't
+        # work in docker. Unconditionally show the toolbar when DEBUG is True
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG
     }
 
 # -------------------------------------------------------------------------------

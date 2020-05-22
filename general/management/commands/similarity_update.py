@@ -119,4 +119,4 @@ class Command(LoggingBaseCommand):
                 console_logger.error('Unexpected error while trying to add sound (id: %i, %i of %i): \n\t%s'
                                      % (sound.id, count+1, N, str(e)))
 
-        self.log_start({'n_sounds_added': to_be_added.count()})
+        self.log_end({'n_sounds_added': to_be_added.count()})

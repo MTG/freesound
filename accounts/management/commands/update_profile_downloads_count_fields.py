@@ -54,4 +54,4 @@ class Command(LoggingBaseCommand):
         with connection.cursor() as c:
             c.execute(sql)
 
-        self.log_start()
+        self.log_end()

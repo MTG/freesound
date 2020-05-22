@@ -115,4 +115,4 @@ class Command(LoggingBaseCommand):
             profile.last_stream_email_sent = datetime.datetime.now()
             profile.save()
 
-        self.log_start({'n_users_notified': n_emails_sent})
+        self.log_end({'n_users_notified': n_emails_sent})

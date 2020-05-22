@@ -621,6 +621,7 @@ from local_settings import *
 if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
+        default_integrations=False,
         integrations=[DjangoIntegration()],
         send_default_pii=True
     )

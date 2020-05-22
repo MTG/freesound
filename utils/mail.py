@@ -118,8 +118,8 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         if reply_to:
             headers = {'Reply-To': reply_to}
 
-        messages = [EmailMessage(subject, message, sender, recipient, headers=headers)
-                    for subject, message, sender, recipient in emails]
+        messages = [EmailMessage(email_subject, message, sender, recipient, headers=headers)
+                    for email_subject, message, sender, recipient in emails]
 
         connection.send_messages(messages)
 

@@ -31,6 +31,7 @@ from utils.mail import send_mail
 from utils.management_commands import LoggingBaseCommand
 
 commands_logger = logging.getLogger("commands")
+console_logger = logging.getLogger('console')
 
 
 class Command(LoggingBaseCommand):
@@ -82,16 +83,15 @@ class Command(LoggingBaseCommand):
                 users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
             except Exception as e:
                 # If error occur do not send the email
-                print "could not get new sounds data for", username.encode('utf-8')
+                console_logger.info("could not get new sounds data for {0}".format(username))
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
             if not users_sounds and not tags_sounds:
-                print "no news sounds for", username.encode('utf-8')
+                console_logger.info("no news sounds for {0}".format(username))
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
-            text_content = render_mail_template('follow/email_stream.txt', locals())
             tvars = {'username': username,
                      'users_sounds': users_sounds,
                      'tags_sounds': tags_sounds}

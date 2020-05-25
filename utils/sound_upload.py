@@ -35,7 +35,7 @@ from gearman.errors import ServerUnavailable
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_template_cache
-from utils.filesystem import md5file, remove_directory_if_empty
+from utils.filesystem import md5file, remove_directory_if_empty, create_directories
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
 from utils.text import slugify, remove_control_chars
@@ -60,7 +60,7 @@ class CantMoveException(Exception):
 def _remove_user_uploads_folder_if_empty(user):
     """
     Check if the user uploads folder is empty and removes it.
-    Removes user uploads folder in the "local" disk and in mirrored disks too. 
+    Removes user uploads folder in the "local" disk and in mirrored disks too.
     """
     user_uploads_dir = user.profile.locations()['uploads_dir']
     remove_directory_if_empty(user_uploads_dir)
@@ -141,10 +141,7 @@ def create_sound(user,
     sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
     new_original_path = sound.locations("path")
     if sound.original_path != new_original_path:
-        try:
-            os.makedirs(os.path.dirname(new_original_path))
-        except OSError:
-            pass
+        create_directories(os.path.dirname(new_original_path), exist_ok=True)
         try:
             shutil.move(sound.original_path, new_original_path)
 
@@ -521,8 +518,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
         # Move sounds to the user upload directory (if sounds are not already there)
         user_uploads_directory = user.profile.locations()['uploads_dir']
-        if not os.path.exists(user_uploads_directory):
-            os.mkdir(user_uploads_directory)
+        create_directories(user_uploads_directory, exist_ok=True)
         src_path = os.path.join(sounds_base_dir, line_cleaned['audio_filename'])
         dest_path = os.path.join(user_uploads_directory, os.path.basename(line_cleaned['audio_filename']))
         if src_path != dest_path:

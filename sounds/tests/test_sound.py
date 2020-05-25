@@ -769,7 +769,7 @@ class SoundTemplateCacheTests(TestCase):
         self.assertInHTML('1 download', resp.content)
 
     # Similarity link (cached in display and view)
-    @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
+    @mock.patch('general.management.commands.similarity_update.similarity_client.add', return_value='Dummy response')
     def _test_similarity_update(self, cache_keys, check_present, similarity_add):
         # Default analysis_state is 'PE', but for similarity update it should be 'OK', otherwise sound gets ignored
         self.sound.analysis_state = 'OK'

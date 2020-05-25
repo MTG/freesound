@@ -22,7 +22,7 @@ import logging
 
 import yaml
 
-from similarity.client import Similarity
+from similarity.client import indexing_similarity_client, similarity_client
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
 
@@ -106,9 +106,9 @@ class Command(LoggingBaseCommand):
 
             try:
                 if options['indexing_server']:
-                    result = Similarity.add_to_indexing_server(sound.id, sound.locations('analysis.statistics.path'))
+                    result = indexing_similarity_client.add(sound.id, sound.locations('analysis.statistics.path'))
                 else:
-                    result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
+                    result = similarity_client.add(sound.id, sound.locations('analysis.statistics.path'))
                     sound.set_similarity_state('OK')
                     sound.invalidate_template_caches()
                 console_logger.info("%s (%i of %i)" % (result, count+1, N))

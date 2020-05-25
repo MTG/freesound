@@ -19,18 +19,19 @@
 #
 
 import requests
+from django.conf import settings
 
-_URL_ADD_POINT                = 'add_point/'
-_URL_DELETE_POINT             = 'delete_point/'
-_URL_GET_DESCRIPTOR_NAMES     = 'get_descriptor_names/'
-_URL_GET_ALL_SOUND_IDS        = 'get_all_point_names/'
-_URL_CONTAINS_POINT           = 'contains/'
-_URL_NNSEARCH                 = 'nnsearch/'
-_URL_API_SEARCH               = 'api_search/'
-_URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
-_URL_SAVE                     = 'save/'
-_URL_RELOAD_GAIA_WRAPPER      = 'reload_gaia_wrapper/'
-_URL_CLEAR_MEMORY             = 'clear_memory/'
+_URL_ADD_POINT = 'add_point/'
+_URL_DELETE_POINT = 'delete_point/'
+_URL_GET_DESCRIPTOR_NAMES = 'get_descriptor_names/'
+_URL_GET_ALL_SOUND_IDS = 'get_all_point_names/'
+_URL_CONTAINS_POINT = 'contains/'
+_URL_NNSEARCH = 'nnsearch/'
+_URL_API_SEARCH = 'api_search/'
+_URL_SOUNDS_DESCRIPTORS = 'get_sounds_descriptors/'
+_URL_SAVE = 'save/'
+_URL_RELOAD_GAIA_WRAPPER = 'reload_gaia_wrapper/'
+_URL_CLEAR_MEMORY = 'clear_memory/'
 
 
 class SimilarityException(Exception):
@@ -42,6 +43,7 @@ class SimilarityException(Exception):
 
 
 def _get_url_as_json(url, data=None, timeout=None):
+    # TODO: (requests): If no timeout is specified explicitly, requests do not time out.
     kwargs = dict()
     if data is not None:
         kwargs['data'] = data
@@ -66,7 +68,6 @@ class Similarity(object):
 
     def __init__(self, host):
         self.base_url = 'http://%s/similarity/' % host
-        self.base_indexing_server_url = 'http://%s/similarity/' % host
 
     def search(self, sound_id, num_results = None, preset = None, offset = None):
         url = self.base_url + _URL_NNSEARCH + '?' + 'sound_id=' + str(sound_id)
@@ -78,7 +79,8 @@ class Similarity(object):
             url += '&offset=' + str(offset)
         return _result_or_exception(_get_url_as_json(url))
 
-    def api_search(self, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None, in_ids=None):
+    def api_search(self, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None,
+                   num_results=None, offset=None, file=None, in_ids=None):
         url = self.base_url + _URL_API_SEARCH + '?'
         if target_type:
             url += '&target_type=' + str(target_type)
@@ -106,10 +108,6 @@ class Similarity(object):
         url = self.base_url + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id) + '&location=' + str(yaml_path)
         return _result_or_exception(_get_url_as_json(url))
 
-    def add_to_indexing_server(self, sound_id, yaml_path):
-        url = self.base_indexing_server_url + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id) + '&location=' + str(yaml_path)
-        return _result_or_exception(_get_url_as_json(url))
-
     def get_all_sound_ids(self):
         url = self.base_url + _URL_GET_ALL_SOUND_IDS
         return _result_or_exception(_get_url_as_json(url))
@@ -122,32 +120,15 @@ class Similarity(object):
         url = self.base_url + _URL_DELETE_POINT + '?' + 'sound_id=' + str(sound_id)
         return _result_or_exception(_get_url_as_json(url))
 
-    def contains(self, sound_id):
-        url = self.base_url + _URL_CONTAINS_POINT + '?' + 'sound_id=' + str(sound_id)
-        return _result_or_exception(_get_url_as_json(url))
-
-    def save(self, filename = None):
+    def save(self, filename=None):
         url = self.base_url + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
         return _result_or_exception(_get_url_as_json(url, timeout=60 * 5))
 
-    def save_indexing_server(self, filename = None):
-        url = self.base_indexing_server_url + _URL_SAVE
-        if filename:
-            url += '?' + 'filename=' + str(filename)
-        return _result_or_exception(_get_url_as_json(url))
-
-    def clear_indexing_server_memory(self):
-        url = self.base_indexing_server_url + _URL_CLEAR_MEMORY
-        return _result_or_exception(_get_url_as_json(url))
-
-    def reload_indexing_server_gaia_wrapper(self):
-        url = self.base_indexing_server_url + _URL_RELOAD_GAIA_WRAPPER
-        return _result_or_exception(_get_url_as_json(url))
-
     def get_sounds_descriptors(self, sound_ids, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
-        url = self.base_url + _URL_SOUNDS_DESCRIPTORS + '?' + 'sound_ids=' + ','.join([str(sound_id) for sound_id in sound_ids])
+        url = self.base_url + _URL_SOUNDS_DESCRIPTORS + '?' + 'sound_ids=' + ','.join(
+            [str(sound_id) for sound_id in sound_ids])
         if descriptor_names:
             url += '&descriptor_names=' + ','.join(descriptor_names)
         if normalization:
@@ -156,3 +137,7 @@ class Similarity(object):
             url += '&only_leaf_descriptors=1'
 
         return _result_or_exception(_get_url_as_json(url))
+
+
+similarity_client = Similarity(settings.SIMILARITY_ADDRESS)
+indexing_similarity_client = Similarity(settings.INDEXING_SIMILARITY_ADDRESS)

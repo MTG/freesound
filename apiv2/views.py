@@ -62,7 +62,7 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
 from geotags.models import GeoTag
 from ratings.models import SoundRating
-from similarity.client import Similarity
+from similarity.client import similarity_client
 from sounds.models import Sound, Pack, License
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
@@ -1201,7 +1201,7 @@ class AvailableAudioDescriptors(GenericAPIView):
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('available_audio_descriptors'))
         try:
-            descriptor_names = Similarity.get_descriptor_names()
+            descriptor_names = similarity_client.get_descriptor_names()
             del descriptor_names['all']
             for key, value in descriptor_names.items():
                 descriptor_names[key] = [item[1:] for item in value]  # remove initial dot from descriptor names

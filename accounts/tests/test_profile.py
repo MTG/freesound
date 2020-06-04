@@ -25,11 +25,13 @@ import mock
 from dateutil.parser import parse as parse_date
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
+from django.contrib.auth.tokens import default_token_generator
 from django.core.cache import cache
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.http import int_to_base36
 
 import accounts.models
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
@@ -308,6 +310,48 @@ class EmailBounceTest(TestCase):
         encoded_email = u'user@xn--eb-tbv.de'
         decoded_email = u'user@\u2211eb.de'
         self.assertEqual(decoded_email, decode_idna_email(encoded_email))
+
+    def test_email_email_bounce_removed_when_resetting_email(self):
+        """when a user resets her email, related EmailBounce objects should be removed"""
+        user = User.objects.create_user('user', email='user@freesound.org', password='12345')
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+
+        # User fills in email reset form
+        self.client.force_login(user)
+        resp = self.client.post(reverse('accounts-email-reset'), {
+            'email': u'new_email@freesound.org',
+            'password': '12345',
+        })
+        self.assertRedirects(resp, reverse('accounts-email-reset-done'))
+
+        # User goes to link to complete email reset (which is sent by email)
+        uid = int_to_base36(user.id)
+        token = default_token_generator.make_token(user)
+        self.client.get(reverse('accounts-email-reset-complete', args=[uid, token]))
+
+        # Now asses no EmailBounce still exist
+        self.assertEqual(EmailBounce.objects.filter(user=user).count(), 0)
+
+    def test_email_email_bounce_removed_when_resetting_email_via_admin(self):
+        """when an admin resets user's email, related EmailBounce objects should be removed as well"""
+        user = User.objects.create_user('user', email='user@freesound.org')
+        EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
+
+        # Admin changes user's email address via admin page
+        admin_user = User.objects.create_user('admin_user', email='admin_user@freesound.org',
+                                              is_staff=True, is_superuser=True)
+        self.client.force_login(admin_user)
+        resp = self.client.post(reverse('admin:auth_user_change', args=[user.id]), data={
+            'username': user.username,
+            'email': u'new_email@freesound.org',
+            'date_joined_0': "2015-10-06",
+            'date_joined_1': "16:42:00"
+        })
+        user.refresh_from_db()
+        self.assertEqual(user.email, u'new_email@freesound.org')
+
+        # Now asses no EmailBounce still exist
+        self.assertEqual(EmailBounce.objects.filter(user=user).count(), 0)
 
 
 class ProfileEmailIsValid(TestCase):

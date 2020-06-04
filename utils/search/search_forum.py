@@ -25,7 +25,7 @@ import forum.models
 from solr import Solr, SolrException
 from utils.text import remove_control_chars
 
-logger = logging.getLogger("search")
+search_logger = logging.getLogger("search")
 
 
 def convert_to_solr_document(post):
@@ -51,20 +51,20 @@ def convert_to_solr_document(post):
 
 
 def send_posts_to_solr(posts):
-    logger.info("adding forum posts to solr index")
-    logger.info("creating XML")
+    search_logger.info("adding forum posts to solr index")
+    search_logger.info("creating XML")
     documents = [convert_to_solr_document(p) for p in posts]
 
     try:
-        logger.info("posting to Solr")
+        search_logger.info("posting to Solr")
         solr = Solr(settings.SOLR_FORUM_URL)
 
         solr.add(documents)
 
         solr.commit()
     except SolrException as e:
-        logger.error("failed to add posts to solr index, reason: %s" % str(e))
-    logger.info("done")
+        search_logger.error("failed to add posts to solr index, reason: %s" % str(e))
+    search_logger.info("done")
 
 
 def add_post_to_solr(post_id):
@@ -72,7 +72,7 @@ def add_post_to_solr(post_id):
     Arguments:
         post_id (int): ID of a post object"""
 
-    logger.info("adding single forum post to solr index")
+    search_logger.info("adding single forum post to solr index")
     post = forum.models.Post.objects.select_related("thread", "author", "thread__author", "thread__forum").get(id=post_id)
     send_posts_to_solr([post])
 
@@ -91,10 +91,10 @@ def add_all_posts_to_solr(slice_size=4000):
 
 
 def delete_post_from_solr(post_id):
-    logger.info("deleting post with id %d" % post_id)
+    search_logger.info("deleting post with id %d" % post_id)
     try:
         solr = Solr(settings.SOLR_FORUM_URL)
         solr.delete_by_id(post_id)
         solr.commit()
     except SolrException as e:
-        logger.error('could not delete post with id %s (%s).' % (post_id, e))
+        search_logger.error('could not delete post with id %s (%s).' % (post_id, e))

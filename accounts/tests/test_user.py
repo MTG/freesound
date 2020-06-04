@@ -20,6 +20,7 @@
 
 import mock
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -95,7 +96,8 @@ class UserRegistrationAndActivation(TestCase):
         self.assertIn('Registration done, activate your account', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # An email was sent!
-        self.assertEqual(mail.outbox[0].subject, "[freesound] Your activation link.")
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         # Try register again with same username
         resp = self.client.post(reverse('accounts-register'), data={
@@ -491,7 +493,8 @@ class ReSendActivationTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
-        self.assertEqual(mail.outbox[0].subject, u'[freesound] Your activation link.')
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         resp = self.client.post(reverse('accounts-resend-activation'), {
             'user': u'new_email@freesound.org',
@@ -509,7 +512,8 @@ class ReSendActivationTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
-        self.assertEqual(mail.outbox[0].subject, u'[freesound] Your activation link.')
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         resp = self.client.post(reverse('accounts-resend-activation'), {
             'user': u'testuser_does_not_exist',
@@ -538,7 +542,8 @@ class UsernameReminderTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
-        self.assertEqual(mail.outbox[0].subject, u'[freesound] Username reminder.')
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_USERNAME_REMINDER in mail.outbox[0].subject)
 
         resp = self.client.post(reverse('accounts-username-reminder'), {
             'user': u'new_email@freesound.org',

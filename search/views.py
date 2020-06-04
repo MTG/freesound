@@ -41,7 +41,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
 from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
 from clustering.clustering_settings import DEFAULT_FEATURES
 
-logger = logging.getLogger("search")
+search_logger = logging.getLogger("search")
 
 
 def search(request):
@@ -79,7 +79,7 @@ def search(request):
     
     tvars.update(advanced_search_params_dict)
 
-    logger.info(u'Search (%s)' % json.dumps({
+    search_logger.info(u'Search (%s)' % json.dumps({
         'ip': get_client_ip(request),
         'query': query_params['search_query'],
         'filter': query_params['filter_query'],
@@ -117,10 +117,10 @@ def search(request):
         })
 
     except SolrException as e:
-        logger.warning('Search error: query: %s error %s' % (query, e))
+        search_logger.warning('Search error: query: %s error %s' % (query, e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
-        logger.error('Could probably not connect to Solr - %s' % e)
+        search_logger.error('Could probably not connect to Solr - %s' % e)
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     # enables AJAX clustering call & html clustering facets rendering
@@ -335,11 +335,11 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SolrException as e:
-            logger.warning("search error: query: %s error %s" % (query, e))
+            search_logger.warning("search error: query: %s error %s" % (query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            logger.error("Could probably not connect to Solr - %s" % e)
+            search_logger.error("Could probably not connect to Solr - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 

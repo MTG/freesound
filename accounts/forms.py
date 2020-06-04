@@ -43,7 +43,7 @@ from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
 import logging
 
-logger = logging.getLogger('web')
+web_logger = logging.getLogger('web')
 
 
 def validate_file_extension(audiofiles):
@@ -176,7 +176,7 @@ class RegistrationForm(forms.Form):
         email1 = self.cleaned_data["email1"]
         try:
             get_user_by_email(email1)
-            logger.info('User trying to register with an already existing email')
+            web_logger.info('User trying to register with an already existing email')
             raise forms.ValidationError("A user using that email address already exists.")
         except User.DoesNotExist:
             pass

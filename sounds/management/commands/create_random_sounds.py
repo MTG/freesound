@@ -19,20 +19,19 @@
 #
 
 import datetime
-import logging
-from django.core.management.base import BaseCommand
+
 from django.conf import settings
+
 from sounds.models import SoundOfTheDay
+from utils.management_commands import LoggingBaseCommand
 
-logger = logging.getLogger("console")
 
-
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
 
     help = 'Add new SoundOfTheDay objects'
 
     def handle(self, *args, **options):
-        logger.info('Create new RandomSound task')
+        self.log_start()
 
         # First make sure there is a sound for today
         today = datetime.date.today()
@@ -45,9 +44,7 @@ class Command(BaseCommand):
         already_created = SoundOfTheDay.objects.filter(date_display__gt=datetime.date.today()).count()
         sounds_to_create = number_sounds - already_created
         if sounds_to_create > 0:
-            logger.info("Creating %d new Random Sounds" % sounds_to_create)
             for i in range(number_sounds):
                 td = datetime.timedelta(days=i+1)
                 SoundOfTheDay.objects.create_sound_for_date(datetime.date.today() + td)
-                logger.info('Created new Random Sound')
-        logger.info('Create new RandomSound task ended')
+        self.log_end({'n_random_sounds_created': sounds_to_create})

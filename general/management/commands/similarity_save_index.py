@@ -18,29 +18,26 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import BaseCommand
 from similarity.client import Similarity
-from optparse import make_option
-import logging
-logger = logging.getLogger("web")
+from utils.management_commands import LoggingBaseCommand
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     args = ''
     help = 'Save current similarity index'
+
     def add_arguments(self, parser):
         parser.add_argument(
-            '-i','--indexing_server',
+            '-i', '--indexing_server',
             action='store_true',
             dest='indexing_server',
             default=False,
             help='Save the index of the indexing server instead of the index of the main similarity server')
 
     def handle(self, *args, **options):
-        logger.info('Saving current similarity index')
-
+        self.log_start()
         if options['indexing_server']:
             Similarity.save_indexing_server()
         else:
             Similarity.save()
-
+        self.log_end()

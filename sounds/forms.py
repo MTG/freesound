@@ -132,7 +132,7 @@ class RemixForm(forms.Form):
             self.sound.sources.add(source)
             try:
                 send_mail_template(
-                    u'Sound added as remix source', 'sounds/email_remix_update.txt',
+                    settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'sounds/email_remix_update.txt',
                     {'source': source, 'action': 'added', 'remix': self.sound},
                     user_to=source.user, email_type_preference_check='new_remix'
                 )

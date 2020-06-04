@@ -31,7 +31,6 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.utils.functional import cached_property
 from django.db import connection
-from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -39,7 +38,7 @@ from django_object_actions import DjangoObjectActions
 from django.contrib.auth.forms import UserChangeForm
 from django.forms import ValidationError
 
-from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername
+from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, EmailBounce
 
 
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -241,16 +240,25 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     change_actions = ('full_delete', 'delete_include_sounds', 'delete_preserve_sounds', )
 
+admin.site.unregister(User)
+admin.site.register(User, FreesoundUserAdmin)
+
 
 class OldUsernameAdmin(admin.ModelAdmin):
     search_fields = ('=username', )
     raw_id_fields = ('user', )
     list_display = ('user', 'username')
 
+admin.site.register(OldUsername, OldUsernameAdmin)
 
-admin.site.unregister(User)
-admin.site.register(User, FreesoundUserAdmin)
+
+class EmailBounceAdmin(admin.ModelAdmin):
+    search_fields = ('=user__username',)
+    list_display = ('user', )
+
+admin.site.register(EmailBounce, EmailBounceAdmin)
+
 
 admin.site.register(EmailPreferenceType)
 
-admin.site.register(OldUsername, OldUsernameAdmin)
+

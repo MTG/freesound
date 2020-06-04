@@ -24,17 +24,17 @@ import pprint
 from collections import defaultdict
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
 from django.db.models import Count, Avg, Value
 from django.db.models.functions import Coalesce
 
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, PackDownload
+from sounds.models import Sound, Pack
+from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = "This command checks if 'count' properties of Profiles, Sounds and Packs and in sync with the actual " \
            "number of existing objects (e.g. if pack.num_sounds equals pack.sounds.all().count(). If the number" \
            "does not match, it updates the corresponding object (unless the option -n is provided)"
@@ -55,6 +55,7 @@ class Command(BaseCommand):
                  '(to save time).')
 
     def handle(self,  *args, **options):
+        self.log_start()
 
         def report_progress(message, total, count):
             if count % 10000 == 0:
@@ -237,3 +238,5 @@ class Command(BaseCommand):
         console_logger.info("Number of mismatched counts: ")
         console_logger.info('\n' + pprint.pformat(mismatches_report))
         console_logger.info('\n' + pprint.pformat(mismatches_object_ids))
+
+        self.log_end(mismatches_report)

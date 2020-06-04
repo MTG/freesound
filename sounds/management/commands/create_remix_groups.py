@@ -19,13 +19,17 @@
 #
 
 from __future__ import division
+
+import json
+import logging
+
 from django.core.management.base import BaseCommand
 from django.db import connection
 from networkx import nx
+
 from sounds.models import Sound, RemixGroup
-import json
-import logging
-logger = logging.getLogger("web")
+
+web_logger = logging.getLogger("web")
 
 
 class Command(BaseCommand):
@@ -33,7 +37,7 @@ class Command(BaseCommand):
     help = 'Create the groups used for rendering the global remix page'
 
     def handle(self, *args, **options):
-        logger.info("Starting to create remix grooups")
+        web_logger.info("Starting to create remix grooups")
 
         # 1) Get all the sounds that have remixes
         cursor = connection.cursor()
@@ -71,7 +75,7 @@ class Command(BaseCommand):
             _create_and_save_remixgroup(sg, RemixGroup())
             n_groups_created += 1
 
-        logger.info("Finished createing remix grooups (%i groups created)" % n_groups_created)
+        web_logger.info("Finished createing remix grooups (%i groups created)" % n_groups_created)
 
 
 def _create_nodes(dg):

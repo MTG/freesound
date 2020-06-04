@@ -1,0 +1,60 @@
+.node {
+    stroke: rgb(255, 255, 255);
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
+
+.link {
+    stroke: rgb(99, 99, 99);
+    opacity: 0.1;
+    /* stroke-width: 1px; */
+}
+
+#h1 {
+    font-size: 20px;
+    margin: 10px 0;
+    font-weight: normal;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h2 {
+    font-size: 18px;
+    margin: 5px 0;
+    font-weight: normal;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h3 {
+    font-size: 10px;
+    margin: 5px 0;
+    font-weight: normal;
+    font-family: "Times New Roman", Times, serif;
+}
+
+header {
+    padding: 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#chart {
+    /* background-color: rgba(128, 128, 128, 0.1); */
+    width: 100%;
+    height: 600px;
+    top: 0;
+    left: 0;
+    position: absolute;
+}
+
+#chart-container {
+    background-color: rgba(128, 128, 128, 0.1);
+    width: 100%;
+    height: 600px;
+    position: relative;
+}
+
+svg {
+    height: 100%;
+    width: 100%;
+}

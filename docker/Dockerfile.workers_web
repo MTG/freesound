@@ -67,9 +67,5 @@ COPY --from=stereofy /code/stereofy /usr/local/bin
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r /code/requirements.txt
 
-# To avoid installation problems, scikits.audiolab needs to be installed after the other packages in requirements.txt
-# have been installed. We might want to replace this package in the future to avoid this "hack".
-RUN pip install --no-cache-dir scikits.audiolab==0.11.0
-
 # Copy source code
 COPY --chown=fsweb:fsweb . /code

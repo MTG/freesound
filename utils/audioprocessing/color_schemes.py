@@ -30,10 +30,10 @@ COLOR_SCHEMES = {
     FREESOUND2_COLOR_SCHEME: {
         'wave_colors': [
             (0, 0, 0),  # Background color
-            (50, 0, 200),  # Low spectral cetroid
+            (50, 0, 200),  # Low spectral centroid
             (0, 220, 80),
             (255, 224, 0),
-            (255, 70, 0),  # High spectral cetroid
+            (255, 70, 0),  # High spectral centroid
         ],
         'spec_colors': [
             (0, 0, 0),  # Background color
@@ -48,10 +48,10 @@ COLOR_SCHEMES = {
     BEASTWHOOSH_COLOR_SCHEME: {
         'wave_colors': [
             (255, 255, 255),  # Background color
-            (29, 159, 181),  # 1D9FB5, Low spectral cetroid
+            (29, 159, 181),  # 1D9FB5, Low spectral centroid
             (28, 174, 72),  # 1CAE48
             (255, 158, 53),  # FF9E35
-            (255, 53, 70),  # FF3546, High spectral cetroid
+            (255, 53, 70),  # FF3546, High spectral centroid
         ],
         'spec_colors': [
             (0, 0, 0),  # Background color/Low spectral energy

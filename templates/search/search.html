@@ -106,11 +106,18 @@
             request_clustering();
         {% endif %}
 
+        graph = undefined;
+        graphLoaded = false;
+
         $('#show-clustering-graph-button').click(function () {
             // request clustered graph
-            $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string | safe}}", {
-                }).then(res => JSON.parse(res)).then(graph => {activateGraph(graph);});
+            // $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string | safe}}", {
+            //     }).then(res => JSON.parse(res)).then(graph => {activateGraph(graph);});
             $("#clustering-graph").slideToggle();
+            if (graph !== undefined && graphLoaded === false) {
+                activateGraph(graph);
+                graphLoaded = true;
+            }
         })
 
     });
@@ -252,6 +259,16 @@
                         $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
                     } else {
                         $('#clusters-div').replaceWith(data);
+                        // request clustered graph
+                        // set graph as a global variable
+                        $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string | safe}}", {
+                            }).then(res => JSON.parse(res)).then(data => {
+                                graph = data;
+                                if ($("#clustering-graph").is(":visible")) {
+                                    activateGraph(graph);
+                                    graphLoaded = true;
+                                }
+                            });
                     }
         });
     }

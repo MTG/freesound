@@ -1,20 +1,10 @@
-.node {
-    stroke: rgb(255, 255, 255);
-    stroke-width: 1.5px;
-    cursor: pointer;
-}
-
-.link {
-    stroke: rgb(99, 99, 99);
-    opacity: 0.1;
-    /* stroke-width: 1px; */
-}
-
 #h1 {
     font-size: 20px;
     margin: 10px 0;
     font-weight: normal;
     font-family: "Times New Roman", Times, serif;
+    position: relative;
+    z-index: 10;
 }
 
 #h2 {
@@ -22,6 +12,8 @@
     margin: 5px 0;
     font-weight: normal;
     font-family: "Times New Roman", Times, serif;
+    position: relative;
+    z-index: 10;
 }
 
 #h3 {
@@ -29,17 +21,11 @@
     margin: 5px 0;
     font-weight: normal;
     font-family: "Times New Roman", Times, serif;
-}
-
-header {
-    padding: 20px;
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
+    z-index: 10;
 }
 
 #chart {
-    /* background-color: rgba(128, 128, 128, 0.1); */
     width: 100%;
     height: 600px;
     top: 0;
@@ -54,7 +40,8 @@ header {
     position: relative;
 }
 
-svg {
-    height: 100%;
-    width: 100%;
+#graph {
+    position: absolute;
+    top: 0;
+    left: 0;
 }

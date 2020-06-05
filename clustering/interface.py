@@ -28,6 +28,7 @@ def get_sound_ids_from_solr_query(query_params):
 
     # We set include_facets to False in order to reduce the amount of data that Solr will return.
     query_params.update({
+        'current_page': 1,
         'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING,
         'include_facets': False,
     })

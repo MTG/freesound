@@ -44,8 +44,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
 import utils.sound_upload
-from accounts.forms import RegistrationForm
-from accounts.views import handle_uploaded_file, send_activation
+from accounts.views import handle_uploaded_file
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
     UnauthorizedException, ServerErrorException, OtherException, APIException
@@ -1526,19 +1525,3 @@ def permission_granted(request):
 
     return render(request, template,
         {'code': code, 'app_name': app_name, 'logout_next': logout_next})
-
-
-def minimal_registration(request):
-    """View for registration using minimal template"""
-
-    if request.method == "POST":
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            send_activation(user)
-            return render(request, 'api/minimal_registration_done.html')
-    else:
-        form = RegistrationForm()
-
-    tvars = {'form': form}
-    return render(request, 'api/minimal_registration.html', tvars)

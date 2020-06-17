@@ -6,6 +6,7 @@
 {% load util %}
 {% load static %}
 
+{% if clustering_on %}
 {% block extra_headers %}
     <link rel="stylesheet" type="text/css" href="{{media_url}}css/graph-clustering.css"/>
     <script type="text/javascript" src="{{media_url}}js/webAudioApiForDesigners.js"></script>
@@ -15,6 +16,7 @@
     <script src="//unpkg.com/d3-force"></script>
     <script src="{{media_url}}js/d3-graph-clustering.js" type="text/javascript"></script>
 {% endblock %}
+{% endif %}
 
 {% block title %}sound search{% endblock title %}
 

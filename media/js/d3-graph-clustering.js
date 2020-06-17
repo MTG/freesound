@@ -153,5 +153,8 @@ function activateGraph (graph) {
         });
         })
         .zoom(1)
-        .graphData(data);
+        .graphData(data)
+        .enableNodeDrag(false)
+        .warmupTicks(300)
+        .cooldownTicks(0);
 }

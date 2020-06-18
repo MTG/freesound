@@ -3,8 +3,7 @@ import os
 import shutil
 import logging
 import errno
-from utils.filesystem import remove_directory_if_empty
-
+from utils.filesystem import remove_directory_if_empty, create_directories
 
 web_logger = logging.getLogger('web')
 
@@ -13,14 +12,7 @@ def copy_files(source_destination_tuples):
     for source_path, destination_path in source_destination_tuples:
         if settings.LOG_START_AND_END_COPYING_FILES:
             web_logger.error('Started copying file %s to %s' % (source_path, destination_path))
-        try:
-            path = os.path.dirname(destination_path)
-            os.makedirs(path)
-        except OSError as e:  # I.e. path already exists
-            if e.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
+        create_directories(os.path.dirname(destination_path), exist_ok=True)
         try:
             shutil.copy2(source_path, destination_path)
             if settings.LOG_START_AND_END_COPYING_FILES:

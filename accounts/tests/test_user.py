@@ -54,7 +54,8 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u''],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('You must accept the terms of use', resp.content)
@@ -66,7 +67,8 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'exampleemail.com']
+            u'email1': [u'exampleemail.com'],
+            u'email2': [u'exampleemail.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('Enter a valid email', resp.content)
@@ -78,10 +80,24 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [''],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('This field is required', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
+        # Try registration with different email addresses
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': [''],
+            u'password1': [u'123456'],
+            u'accepted_tos': [u'on'],
+            u'email1': [u'example@email.com'],
+            u'email2': [u'exampl@email.net']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('Please confirm that your email address is the same', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
@@ -90,7 +106,8 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('Registration done, activate your account', resp.content)
@@ -104,10 +121,11 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('A user with that username already exists', resp.content)
+        self.assertIn('You cannot use this username to create an account', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
@@ -116,10 +134,11 @@ class UserRegistrationAndActivation(TestCase):
             u'username': ['a_different_username'],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('A user using that email address already exists', resp.content)
+        self.assertIn('You cannot use this email address to create an account', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 

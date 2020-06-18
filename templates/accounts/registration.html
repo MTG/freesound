@@ -57,6 +57,11 @@
             {{ form.email1.label_tag }}{{ form.email1 }}
             <span class="helptext">{{ form.email1.help_text }}</span>
         </p>
+        {{ form.email2.errors }}
+        <p>
+            {{ form.email2.label_tag }}{{ form.email2 }}
+            <span class="helptext">{{ form.email2.help_text }}</span>
+        </p>
         {{ form.password1.errors }}
         <p>
             {{ form.password1.label_tag }}{{ form.password1 }}

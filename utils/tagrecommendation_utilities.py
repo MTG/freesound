@@ -18,19 +18,21 @@
 #     See AUTHORS file.
 #
 
-import urllib2
-import logging, traceback
-from django.conf import settings
-from tagrecommendation.client import TagRecommendation
-from django.core.cache import cache
-from django.shortcuts import render
-from django.http import HttpResponse
-from hashlib import md5
 import json
-from utils.tags import clean_and_split_tags
+import logging
+import traceback
+import urllib2
+from hashlib import md5
 from math import ceil
 
-logger = logging.getLogger('web')
+from django.conf import settings
+from django.core.cache import cache
+from django.http import HttpResponse
+
+from tagrecommendation.client import TagRecommendation
+from utils.tags import clean_and_split_tags
+
+web_logger = logging.getLogger('web')
 
 
 def get_recommended_tags(input_tags, max_number_of_tags=30):
@@ -64,8 +66,8 @@ def get_recommended_tags_view(request):
                     tags, community = get_recommended_tags(input_tags)
                     return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
                 except urllib2.URLError as e:
-                    logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
-                         (e, traceback.format_exc()))
+                    web_logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
+                                     (e, traceback.format_exc()))
                     return HttpResponseUnavailabileError()
 
     return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')

@@ -18,23 +18,25 @@
 #     See AUTHORS file.
 #
 
+import json
 import logging
+import time
 
-from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.cache import cache
 
 from sounds.models import Download, Pack
+from utils.management_commands import LoggingBaseCommand
 
-logger = logging.getLogger("web")
+commands_logger = logging.getLogger("commands")
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = "Create caches needed for front page"
 
     def handle(self, **options):
-        logger.info("Updating front page caches")
+        self.log_start()
 
         cache_time = 24 * 60 * 60  # 1 day cache time
         # NOTE: The specfic cache time not important as long as bigger than the frequency with which we run
@@ -71,3 +73,5 @@ class Command(BaseCommand):
         cache.set("trending_pack_ids", trending_pack_ids, cache_time)
 
         # TODO: decide what we consider to be a trending pack, for now we just take the last 9 that were updated
+
+        self.log_end()

@@ -59,7 +59,7 @@ from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, 
     UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
     username_taken_by_other_user
-from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce, DeletedUser
+from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser
 from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
@@ -70,7 +70,7 @@ from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUpload
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.encryption import create_hash
-from utils.filesystem import generate_tree, remove_directory_if_empty
+from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.images import extract_square
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import copy_avatar_to_mirror_locations, \
@@ -80,8 +80,8 @@ from utils.onlineusers import get_online_users
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
-audio_logger = logging.getLogger('audio')
-logger = logging.getLogger("upload")
+sounds_logger = logging.getLogger('sounds')
+upload_logger = logging.getLogger('file_upload')
 
 
 @login_required
@@ -237,7 +237,7 @@ def send_activation(user):
         'username': username,
         'hash': uid_hash
     }
-    send_mail_template(u'Your activation link.', 'accounts/email_activation.txt', tvars, user_to=user)
+    send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
 
 
 def resend_activation(request):
@@ -267,7 +267,7 @@ def username_reminder(request):
 
             try:
                 user = User.objects.get(email__iexact=email)
-                send_mail_template(u'Username reminder.', 'accounts/email_username_reminder.txt',
+                send_mail_template(settings.EMAIL_SUBJECT_USERNAME_REMINDER, 'accounts/email_username_reminder.txt',
                                    {'user': user}, user_to=user)
             except User.DoesNotExist:
                 pass
@@ -414,48 +414,44 @@ def edit(request):
 
 @transaction.atomic()
 def handle_uploaded_image(profile, f):
-    logger.info("\thandling profile image upload")
-    try:
-        os.mkdir(os.path.dirname(profile.locations("avatar.L.path")))
-    except Exception as e:
-        logger.info("\tfailed creating directory with error: %s" % str(e))
-        pass
+    upload_logger.info("\thandling profile image upload")
+    create_directories(os.path.dirname(profile.locations("avatar.L.path")), exist_ok=True)
 
     ext = os.path.splitext(os.path.basename(f.name))[1]
     tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))
     try:
-        logger.info("\topening file: %s", tmp_image_path)
+        upload_logger.info("\topening file: %s", tmp_image_path)
         destination = open(tmp_image_path, 'wb')
         for chunk in f.chunks():
             destination.write(chunk)
         destination.close()
-        logger.info("\tfile upload done")
+        upload_logger.info("\tfile upload done")
     except Exception as e:
-        logger.error("\tfailed writing file error: %s", str(e))
+        upload_logger.error("\tfailed writing file error: %s", str(e))
 
-    logger.info("\tcreating thumbnails")
+    upload_logger.info("\tcreating thumbnails")
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
     try:
         extract_square(tmp_image_path, path_s, 32)
-        logger.info("\tcreated small thumbnail")
+        upload_logger.info("\tcreated small thumbnail")
         profile.has_avatar = True
         profile.save()
     except Exception as e:
-        logger.error("\tfailed creating small thumbnails: " + str(e))
+        upload_logger.error("\tfailed creating small thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_m, 40)
-        logger.info("\tcreated medium thumbnail")
+        upload_logger.info("\tcreated medium thumbnail")
     except Exception as e:
-        logger.error("\tfailed creating medium thumbnails: " + str(e))
+        upload_logger.error("\tfailed creating medium thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_l, 70)
-        logger.info("\tcreated large thumbnail")
+        upload_logger.info("\tcreated large thumbnail")
     except Exception as e:
-        logger.error("\tfailed creating large thumbnails: " + str(e))
+        upload_logger.error("\tfailed creating large thumbnails: " + str(e))
 
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
@@ -471,10 +467,7 @@ def describe(request):
         csv_form = BulkDescribeForm(request.POST, request.FILES, prefix='bulk')
         if csv_form.is_valid():
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
-            try:
-                os.mkdir(directory)
-            except:
-                pass
+            create_directories(directory, exist_ok=True)
 
             extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
             path = os.path.join(directory, str(uuid.uuid4()) + '.%s' % extension)
@@ -500,7 +493,7 @@ def describe(request):
                         remove_uploaded_file_from_mirror_locations(files[f].full_path)
                     except OSError as e:
                         if e.errno == errno.ENOENT:
-                            logger.error("Failed to remove file %s", str(e))
+                            upload_logger.error("Failed to remove file %s", str(e))
                         else:
                             raise
 
@@ -662,7 +655,7 @@ def describe_sounds(request):
                 msg = e.message
                 messages.add_message(request, messages.WARNING, msg)
             except utils.sound_upload.CantMoveException as e:
-                logger.info(e.message, e)
+                upload_logger.error(e.message, e)
 
         # Remove the files we just described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
@@ -676,7 +669,7 @@ def describe_sounds(request):
             for s in sounds_to_process:
                 s.process_and_analyze(high_priority=True)
         except Exception as e:
-            audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
+            sounds_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
         for p in dirty_packs:
             p.process()
 
@@ -904,22 +897,18 @@ def account(request, username):
 def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
     directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
-    logger.info("\thandling file upload")
-    try:
-        os.mkdir(directory)
-    except:
-        logger.info("\tfailed creating directory, probably already exist")
-        pass
+    upload_logger.info("\thandling file upload")
+    create_directories(directory, exist_ok=True)
     path = os.path.join(directory, os.path.basename(f.name))
     try:
-        logger.info("\topening file: %s", path)
+        upload_logger.info("\topening file: %s", path)
         destination = open(path.encode("utf-8"), 'wb')
         for chunk in f.chunks():
             destination.write(chunk)
-        logger.info("file upload done")
+        upload_logger.info("file upload done")
         copy_uploaded_file_to_mirror_locations(path)
     except Exception as e:
-        logger.warning("failed writing file error: %s", str(e))
+        upload_logger.warning("failed writing file error: %s", str(e))
         return False
     return True
 
@@ -930,35 +919,35 @@ def upload_file(request):
     POST variables. This is weird but... as far as we know it's not too bad as we only need
     the user login """
 
-    logger.info("start uploading file")
+    upload_logger.info("start uploading file")
     engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])  # get the current session engine
     session_data = engine.SessionStore(request.POST.get('sessionid', ''))
     try:
         user_id = session_data['_auth_user_id']
-        logger.info("\tuser id %s", str(user_id))
+        upload_logger.info("\tuser id %s", str(user_id))
     except KeyError:
-        logger.warning("failed to get user id from session")
+        upload_logger.warning("failed to get user id from session")
         return HttpResponseBadRequest("You're not logged in. Log in and try again.")
     try:
         request.user = User.objects.get(id=user_id)
-        logger.info("\tfound user: %s", request.user.username)
+        upload_logger.info("\tfound user: %s", request.user.username)
     except User.DoesNotExist:
-        logger.warning("user with this id does not exist")
+        upload_logger.warning("user with this id does not exist")
         return HttpResponseBadRequest("user with this ID does not exist.")
 
     if request.method == 'POST':
         form = FlashUploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            logger.info("\tform data is valid")
+            upload_logger.info("\tform data is valid")
             if handle_uploaded_file(user_id, request.FILES["file"]):
                 return HttpResponse("File uploaded OK")
             else:
                 return HttpResponseServerError("Error in file upload")
         else:
-            logger.warning("form data is invalid: %s", str(form.errors))
+            upload_logger.warning("form data is invalid: %s", str(form.errors))
             return HttpResponseBadRequest("Form is not valid.")
     else:
-        logger.warning("no data in post")
+        upload_logger.warning("no data in post")
         return HttpResponseBadRequest("No POST data in request")
 
 
@@ -985,6 +974,8 @@ def upload(request, no_flash=False):
         'successes': successes,
         'errors': errors,
         'no_flash': no_flash,
+        'max_file_size': settings.UPLOAD_MAX_FILE_SIZE_COMBINED,
+        'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024)))
     }
     return render(request, 'accounts/upload.html', tvars)
 
@@ -1106,7 +1097,7 @@ def email_reset(request):
                     'user': user,
                     'token': default_token_generator.make_token(user),
                 }
-                send_mail_template(u'Email address changed',
+                send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                                    'accounts/email_reset_email.txt', tvars,
                                    email_to=email)
 
@@ -1151,12 +1142,12 @@ def email_reset_complete(request, uidb36=None, token=None):
     # Remove temporal mail change information from the DB
     ResetEmailRequest.objects.get(user=user).delete()
 
-    # Clear saved email bounces for old email
-    EmailBounce.objects.filter(user=user).delete()
+    # NOTE: no need to clear existing EmailBounce objects associated to this user here because it is done in
+    # a User deletion pre_save hook if we detect that email has changed
 
     # Send email to the old address notifying about the change
     tvars = {'old_email': old_email, 'user': user}
-    send_mail_template(u'Email address changed',
+    send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 
     return render(request, 'accounts/email_reset_complete.html', tvars)
@@ -1233,8 +1224,8 @@ def flag_user(request, username):
                      'objects_data': objects_data,
                      'user_url': user_url,
                      'clear_url': clear_url}
-            send_mail_template_to_support(u'Spam/offensive report for user ' + flagged_user.username, template_to_use,
-                                          tvars)
+            send_mail_template_to_support(
+                settings.EMAIL_SUBJECT_USER_SPAM_REPORT, template_to_use, tvars, extra_subject=flagged_user.username)
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')

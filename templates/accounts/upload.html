@@ -369,6 +369,43 @@ Hint 1: you can upload multiple files at once
       }
     };
 
+    var trimSize = function trimSize(queue, currentFile) {
+      var total_size = queue.reduce((acc, curr) => acc + curr.size, 0);
+      if (total_size + currentFile.size < maxUploadSize) {
+        return queue.concat(currentFile);
+      } else {
+        return queue;
+      }
+    };
+
+    var setSizeBarValue = function setSizeBarValue(value) {
+      var file_size = document.getElementById('file-size');
+      file_size.style.width = value + "%";
+      if (value >= 0 && value <= 70) {
+        file_size.style.background = "green";
+      } else if (value > 70 && value <= 90) {
+        file_size.style.background = "orange";
+      } else {
+        file_size.style.background = "red";
+      }
+      file_size.style.color = "white";
+      file_size.innerText = Math.round(maxUploadSize/1024/1024 * (1 - value/100)) + " MB remaining";
+
+      var file_size_bar = document.getElementById('size-table');
+      file_size_bar.style.visibility = (value > 50 ? "visible" : "hidden" );
+    }
+
+    var addSizeBarElement = function addSizeBarElement() {
+      var form = fileList.parentNode;
+      sizeTable = document.createElement('table');
+      sizeTable.id = "size-table";
+      sizeTable.style.width = "100%";
+      sizeTable.style.visibility = "hidden";
+      sizeTable.innerHTML = '<td width=0%; id="file-size"; style="background: lightgray" /><td style="background: lightgray" />';
+      form.insertBefore(sizeTable, addFilesButton);
+      return errorList;
+    };
+
     // add new (or 'dropped') files to the list of files to upload, avoiding duplicates
     var onFileInputChange = function onFileInputChange(event) {
       event.preventDefault();
@@ -378,7 +415,13 @@ Hint 1: you can upload multiple files at once
         soundsQueue.push(receivedFiles[i]);
       }
       soundsQueue = soundsQueue.reduce(removeDuplicates, []);
+      var num = soundsQueue.length;
+      soundsQueue = soundsQueue.reduce(trimSize, []);
+      num -= soundsQueue.length;
       showListOfSounds();
+      var percent_size = soundsQueue.reduce((acc, curr) => acc + curr.size, 0) * 100 / maxUploadSize;
+      setSizeBarValue(percent_size);
+      resetForm(num > 0 ? "Upload limit of {{ max_file_size_in_MB }} MB exceeded. " + num + " file" + (num > 1 ? "s" : "") + " discarded." : " ");
     };
 
     var addErrorListElement = function addErrorListElement() {
@@ -500,10 +543,12 @@ Hint 1: you can upload multiple files at once
     var dropArea = document.getElementById('drop-area');
     var abortButton = document.getElementById('abort');
     var errorList = document.getElementsByClassName('errorlist')[0] || addErrorListElement();
+    var sizeBar = document.getElementsByClassName('sizebar')[0] || addSizeBarElement();
     addFilesButton.onclick = function onclick() { fileInput.click(); };
     fileInput.onchange = onFileInputChange;
     fileInput.style.display = 'none';
     progressContainer.style.display = 'none';
+    var maxUploadSize = {{ max_file_size }};
 
     // drag and drop
     document.addEventListener('dragenter', onDrag);

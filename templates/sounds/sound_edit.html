@@ -10,7 +10,7 @@
 {% maps_js_scripts %}
 <script type="text/javascript">
 
-    var doLog = true;
+    var doLogTagRecommendation = false;
     var typingTimer;
     var addingTagTimer;
     var doneAddingTagInterval = 0;  //time in ms
@@ -64,19 +64,8 @@
     function log(activity,textarea_id){
         var timestamp = new Date().getTime();
         var logline = timestamp + "#editing#" + randomDescriptionSessionId + "#" + "{{ sound.user.id }},{{ sound.id }}" + "#" + textarea_id + "#" + activity;
-
-        if (doLog){
-            $.ajax({
-                type: 'POST',
-                url: '/tagrecommendation/savelog/',
-                contentType:"application/x-www-form-urlencoded",
-                data: {
-                    log: logline
-                },
-                success: function(data) {
-                    // Do nothing
-                }
-            });
+        if (doLogTagRecommendation) {
+            console.log(logline);
         }
     }
 

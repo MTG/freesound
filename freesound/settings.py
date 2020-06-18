@@ -5,6 +5,8 @@ import datetime
 import re
 import logging.config
 import dj_database_url
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # -------------------------------------------------------------------------------
 # Miscellaneous Django settings
@@ -68,7 +70,6 @@ INSTALLED_APPS = [
     'utils',
     'donations',
     'monitor',
-    'raven.contrib.django.raven_compat',
     'django_object_actions',
     'silk',
 ]
@@ -168,7 +169,6 @@ PASSWORD_HASHERS = [
 # Email settings
 
 SERVER_EMAIL = 'noreply@freesound.org'
-EMAIL_SUBJECT_PREFIX = '[freesound] '
 DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
@@ -189,6 +189,24 @@ AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period
 # If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
 ALLOWED_EMAILS = []
 
+# Email subjects
+EMAIL_SUBJECT_PREFIX = u'[freesound]'
+EMAIL_SUBJECT_ACTIVATION_LINK = u'Your activation link'
+EMAIL_SUBJECT_USERNAME_REMINDER = u'Username reminder'
+EMAIL_SUBJECT_EMAIL_CHANGED = u'Email address changed'
+EMAIL_SUBJECT_USER_SPAM_REPORT = u'Spam/offensive report for user'
+EMAIL_SUBJECT_DONATION_THANK_YOU = u'Thanks for your donation!'
+EMAIL_SUBJECT_DONATION_REMINDER = u'Thanks for contributing to Freesound'
+EMAIL_SUBJECT_DONATION_REQUEST = u'Have you considered making a donation?'
+EMAIL_SUBJECT_STREAM_EMAILS = u'New sounds from users and tags you are following'
+EMAIL_SUBJECT_TOPIC_REPLY = u'Topic reply notification'
+EMAIL_SUBJECT_PRIVATE_MESSAGE = u'You have a private message'
+EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = u'Sound added as remix source'
+EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = u'One of your sounds has been chosen as random sound of the day!'
+EMAIL_SUBJECT_NEW_COMMENT = u'You have a new comment'
+EMAIL_SUBJECT_SOUND_FLAG = u'Sound flag'
+EMAIL_SUBJECT_SUPPORT_EMAIL = u'[support]'
+EMAIL_SUBJECT_MODERATION_HANDLED = u'A Freesound moderator handled your upload'
 
 # -------------------------------------------------------------------------------
 # Media paths, URLS and static settings
@@ -205,7 +223,7 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 
 
 # -------------------------------------------------------------------------------
-# Freesound miscelaneous settings
+# Freesound miscellaneous settings
 
 SUPPORT = ()
 
@@ -259,14 +277,17 @@ MIN_NUMBER_RATINGS = 3
 # Buffer size for CRC computation
 CRC_BUFFER_SIZE = 4096
 
-# Mininum number of sounds that a user has to upload before enabling bulk upload feature for that user
+# Maximum combined file size for uploading files. This is set in nginx configuration
+UPLOAD_MAX_FILE_SIZE_COMBINED = 1024 * 1024 * 1024  # 1 GB
+
+# Minimum number of sounds that a user has to upload before enabling bulk upload feature for that user
 BULK_UPLOAD_MIN_SOUNDS = 40
 
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
 
 # Followers notifications
-MAX_EMAILS_PER_COMMAND_RUN = 1000
+MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
 
@@ -274,7 +295,7 @@ NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 # Freesound data paths and urls
 
 # Base data path. Note that further data subdirectories are defined after the local_settings import
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/'))
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
 
 # Base data URL. Note that further data sub-urls are defined after the local_settings import
 # You can overwrite this to point to production data ("https://freesound.org/data/")
@@ -385,7 +406,7 @@ TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 
 # -------------------------------------------------------------------------------
 # Sentry settings
-RAVEN_CONFIG = {}
+SENTRY_DSN = None
 
 
 # -------------------------------------------------------------------------------
@@ -595,11 +616,23 @@ from local_settings import *
 
 
 # -------------------------------------------------------------------------------
+# Sentry
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        default_integrations=False,
+        integrations=[DjangoIntegration()],
+        send_default_pii=True
+    )
+
+
+# -------------------------------------------------------------------------------
 # Extra Freesound settings
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure
-# direcotries are created if not existing
+# directories are created if not existing
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
@@ -647,6 +680,9 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
     DEBUG_TOOLBAR_CONFIG = {
         'INTERCEPT_REDIRECTS': False,
+        # This normally checks the running host with the request url, but this doesn't
+        # work in docker. Unconditionally show the toolbar when DEBUG is True
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG
     }
 
 # -------------------------------------------------------------------------------

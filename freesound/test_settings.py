@@ -31,3 +31,17 @@ SOLR_FORUM_URL = "http://fakehost:8080/forum/"  # Avoid making accidental reques
 SIMILARITY_ADDRESS = 'fakehost' # Avoid making accidental requests to "real" similarity server if running
 TAGRECOMMENDATION_ADDRESS = 'fakehost'  # Avoid making accidental requests to "real" tag rec server if running
 GEARMAN_JOB_SERVERS = ["fakehost:4730"]  # Avoid making accidental requests to "real" workers if running
+
+# Disable debug toolbar (it will have been enabled because when importing settings and checking local_settings, the
+# DISPLAY_DEBUG_TOOLBAR is most probably True, so we undo this change here)
+try:
+    MIDDLEWARE.remove('debug_toolbar.middleware.DebugToolbarMiddleware')
+except ValueError:
+    # DebugToolbarMiddleware was not enabled
+    pass
+
+try:
+    INSTALLED_APPS.remove('debug_toolbar')
+except ValueError:
+    # debug_toolbar app was not installed
+    pass

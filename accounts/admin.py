@@ -39,14 +39,14 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django_object_actions import DjangoObjectActions
 
-from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserGDPRDeletionRequest
+from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserGDPRDeletionRequest, EmailBounce
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
 DELETE_USER_DELETE_SOUNDS_ACTION_NAME = 'delete_user_delete_sounds'
 DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
-logger = logging.getLogger("web")
+web_logger = logging.getLogger("web")
 
 
 class ProfileAdmin(admin.ModelAdmin):
@@ -138,8 +138,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                            DELETE_USER_KEEP_SOUNDS_ACTION_NAME))
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                                DELETE_USER_KEEP_SOUNDS_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                     json.dumps({'user_id': obj.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME}),
@@ -161,8 +161,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_include_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                            DELETE_USER_DELETE_SOUNDS_ACTION_NAME))
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                                DELETE_USER_DELETE_SOUNDS_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps({'user_id': obj.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME}),
@@ -191,8 +191,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_spammer(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                            DELETE_SPAMMER_USER_ACTION_NAME))
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                                DELETE_SPAMMER_USER_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps({'user_id': obj.id, 'action': DELETE_SPAMMER_USER_ACTION_NAME}),
@@ -220,8 +220,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def full_delete(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                            FULL_DELETE_USER_ACTION_NAME))
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
+                                                                                FULL_DELETE_USER_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps({'user_id': obj.id, 'action': FULL_DELETE_USER_ACTION_NAME}),
@@ -291,9 +291,16 @@ class DeletedUserAdmin(admin.ModelAdmin):
     readonly_fields = ['user']
 
 
+class EmailBounceAdmin(admin.ModelAdmin):
+    search_fields = ('=user__username',)
+    list_display = ('user', )
+
+
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
+admin.site.register(EmailBounce, EmailBounceAdmin)
 admin.site.register(EmailPreferenceType)
 admin.site.register(OldUsername, OldUsernameAdmin)
 admin.site.register(DeletedUser, DeletedUserAdmin)
 admin.site.register(UserGDPRDeletionRequest, UserGDPRDeletionRequestAdmin)
+

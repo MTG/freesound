@@ -23,6 +23,9 @@ import logging
 import os
 
 import gearman
+import time
+
+import gearman
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -33,49 +36,44 @@ from accounts.models import DeletedUser
 from sounds.models import BulkUploadProgress
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
+from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
+    DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+from sounds.models import BulkUploadProgress
+from tickets import TICKET_STATUS_CLOSED
+from tickets.models import Ticket
 
-logger = logging.getLogger("console")
-logger_async_tasks = logging.getLogger('async_tasks')
+workers_logger = logging.getLogger('workers')
 
 
 class Command(BaseCommand):
     help = 'Run the async tasks worker'
 
-    def write_stdout(self, msg):
-        logger.info("[%d] %s" % (os.getpid(),msg))
-        self.stdout.write(msg)
-        self.stdout.flush()
-
     def handle(self, *args, **options):
-        # N.B. don't take out the print statements as they're
-        # very very very very very very very very very very
-        # helpful in debugging supervisor+worker+gearman
-        self.write_stdout('Initializing gm_worker\n')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-
-        # Read all methods of the class and if it starts with 'task_' then
-        # register as a task on gearman
+        registered_tasks = []
         for task_name in dir(self):
             if task_name.startswith('task_'):
                 task_name = str(task_name)
                 t_name = task_name.replace('task_', '');
-                self.write_stdout('Task: %s\n' % t_name)
                 task_func = lambda i: (lambda x, y: getattr(Command, i)(self, x, y))
                 gm_worker.register_task(t_name, task_func(task_name))
+                registered_tasks.append(t_name)
 
-        self.write_stdout('Starting work\n')
+        workers_logger.info('Started worker with tasks: %s' % ', '.join(registered_tasks))
         gm_worker.work()
-        self.write_stdout('Ended work\n')
 
     def task_whitelist_user(self, gearman_worker, gearman_job):
+        task_name = 'whitelist_user'
         tickets = json.loads(gearman_job.data)
-        self.write_stdout("Whitelisting users from tickets %i tickets)" % len(tickets))
-
+        workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({
+            'task_name': task_name, 'n_tickets': len(tickets)}))
+        start_time = time.time()
         count_done = 0
         for ticket_id in tickets:
             ticket = Ticket.objects.get(id=ticket_id)
             whitelist_user = ticket.sender
             if not whitelist_user.profile.is_whitelisted:
+                local_start_time = time.time()
                 whitelist_user.profile.is_whitelisted = True
                 whitelist_user.profile.save()
                 pending_tickets = Ticket.objects.filter(sender=whitelist_user)\
@@ -91,104 +89,108 @@ class Command(BaseCommand):
                     pending_ticket.status = TICKET_STATUS_CLOSED
                     pending_ticket.save()
 
-                message = "Whitelisted user: %s" % whitelist_user.username
-                self.write_stdout(message)
-                logger_async_tasks.info(message)
+                workers_logger.info("Whitelisted user (%s)" % json.dumps(
+                    {'user_id': whitelist_user.id,
+                     'username': whitelist_user.username,
+                     'work_time': round(time.time() - local_start_time)}))
 
             count_done = count_done + 1
-            self.write_stdout("Finished processing one ticket, %d remaining" % (len(tickets)-count_done))
+
+        workers_logger.info("Finished whitelisting users from tickets (%s)" % json.dumps(
+            {'task_name': task_name, 'n_tickets': len(tickets), 'work_time': round(time.time() - start_time)}))
         return 'true' if len(tickets) == count_done else 'false'
 
     def task_delete_user(self, gearman_worker, gearman_job):
-        self.write_stdout("Started delete_user task ")
-        self.write_stdout("Data received: %s" % gearman_job.data)
         data = json.loads(gearman_job.data)
         user = User.objects.get(id=data['user_id'])
-
+        workers_logger.info("Start deleting user (%s)" % json.dumps(
+            {'task_name': data['action'], 'user_id': user.id, 'username': user.username}))
+        start_time = time.time()
         try:
-            if data['action'] == DELETE_USER_KEEP_SOUNDS_ACTION_NAME:
-                # This will anonymize the user and will keep the sounds publicly availabe under a "deleted user"
-                # account. A DeletedUser object will be created, but no DeletedSound objects will be created as sound
-                # will be still available. Extra user content (posts, comments, etc) will be preserved but shown as
-                # being authored by a "deleted user".
+            if data['action'] in [FULL_DELETE_USER_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
+                                  DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_SPAMMER_USER_ACTION_NAME]:
 
-                user.profile.delete_user(deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN)
-                message = "Async delete user: %d (keep sounds)" % data['user_id']
-                self.write_stdout(message)
-                logger_async_tasks.info(message)
-                return 'true'
+                if data['action'] == DELETE_USER_KEEP_SOUNDS_ACTION_NAME:
+                    # This will anonymize the user and will keep the sounds publicly availabe under a "deleted user"
+                    # account. A DeletedUser object will be created, but no DeletedSound objects will be created as sound
+                    # will be still available. Extra user content (posts, comments, etc) will be preserved but shown as
+                    # being authored by a "deleted user".
+                    user.profile.delete_user(deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN)
 
-            elif data['action'] == DELETE_USER_DELETE_SOUNDS_ACTION_NAME:
-                # This will anonymize the user and remove the sounds. A DeletedUser object will be created
-                # as well as DeletedSound objects for each deleted sound, but sounds will no longer be
-                # publicly available. Extra user content (posts, comments, etc) will be preserved but shown as
-                # being authored by a "deleted user".
+                elif data['action'] == DELETE_USER_DELETE_SOUNDS_ACTION_NAME:
+                    # This will anonymize the user and remove the sounds. A DeletedUser object will be created
+                    # as well as DeletedSound objects for each deleted sound, but sounds will no longer be
+                    # publicly available. Extra user content (posts, comments, etc) will be preserved but shown as
+                    # being authored by a "deleted user".
+                    user.profile.delete_user(remove_sounds=True,
+                                             deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN)
 
-                user.profile.delete_user(remove_sounds=True,
-                                         deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN)
-                message = "Async delete user: %d (include sounds)" % data['user_id']
-                self.write_stdout(message)
-                logger_async_tasks.info(message)
-                return 'true'
+                elif data['action'] == DELETE_SPAMMER_USER_ACTION_NAME:
+                    # This will completely remove the user object and all of its related data (including sounds)
+                    # from the database. A DeletedUser object will be creaetd to keep a record of a user having been
+                    # deleted.
+                    user.profile.delete_user(delete_user_object_from_db=True,
+                                             deletion_reason=DeletedUser.DELETION_REASON_SPAMMER)
 
-            if data['action'] == DELETE_SPAMMER_USER_ACTION_NAME:
-                # This will completely remove the user object and all of its related data (including sounds)
-                # from the database. A DeletedUser object will be creaetd to keep a record of a user having been
-                # deleted.
+                elif data['action'] == FULL_DELETE_USER_ACTION_NAME:
+                    # This will fully delete the user and the sounds from the database.
+                    # WARNING: This functions creates no DeletedSound nor DeletedUser objects and leaves
+                    # absolutely no trace about the user.
+                    user.delete()
 
-                user.profile.delete_user(delete_user_object_from_db=True,
-                                         deletion_reason=DeletedUser.DELETION_REASON_SPAMMER)
-                message = "Async delete user: %d (spammer)" % data['user_id']
-                self.write_stdout(message)
-                logger_async_tasks.info(message)
-                return 'true'
-
-            if data['action'] == FULL_DELETE_USER_ACTION_NAME:
-                # This will fully delete the user and the sounds from the database.
-                # WARNING: This functions creates no DeletedSound nor DeletedUser objects and leaves
-                # absolutely no trace about the user.
-
-                user.delete()
-                message = "Async delete user: %d (full delete)" % data['user_id']
-                self.write_stdout(message)
-                logger_async_tasks.info(message)
+                workers_logger.info("Finished deleting user (%s)" % json.dumps(
+                    {'task_name': data['action'], 'user_id': user.id, 'username': user.username,
+                     'work_time': round(time.time() - start_time)}))
                 return 'true'
 
         except Exception as e:
             # This exception is broad but we catch it so that we can log that an error happened.
             # TODO: catching more specific exceptions would be desirable
-            message = "Error in async delete user: %d (%s)" % (data['user_id'], str(e))
-            self.write_stdout(message)
-            logger_async_tasks.info(message)
+            workers_logger.error("Unexpected error while deleting user (%s)" % json.dumps(
+                {'task_name': data['action'], 'user_id': user.id, 'username': user.username, 'error': str(e),
+                 'work_time': round(time.time() - start_time)}))
 
         return 'false'
 
     def task_validate_bulk_describe_csv(self, gearman_worker, gearman_job):
+        task_name = 'validate_bulk_describe_csv'
         bulk_upload_progress_object_id = int(gearman_job.data)
-        self.write_stdout("Starting to validate BulkUploadProgress with id: %s" % bulk_upload_progress_object_id)
+        workers_logger.info("Starting validation of BulkUploadProgress (%s)" % json.dumps(
+            {'task_name': task_name, 'bulk_upload_progress_id': bulk_upload_progress_object_id}))
+        start_time = time.time()
         try:
             bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
             bulk.validate_csv_file()
+            workers_logger.info("Finished validation of BulkUploadProgress (%s)" % json.dumps(
+                {'task_name': task_name, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
+                 'work_time': round(time.time() - start_time)}))
             return 'true'
         except BulkUploadProgress.DoesNotExist as e:
-            message = "Error in async validate BulkUploadProgress object with id %s (%s)" % \
-                      (bulk_upload_progress_object_id, str(e))
-            self.write_stdout(message)
+            workers_logger.error("Error validating of BulkUploadProgress (%s)" % json.dumps(
+                {'task_name': task_name, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
+                 'error': str(e),
+                 'work_time': round(time.time() - start_time)}))
         return 'false'
 
     def task_bulk_describe(self, gearman_worker, gearman_job):
+        task_name = 'bulk_describe'
         bulk_upload_progress_object_id = int(gearman_job.data)
-        self.write_stdout("Starting to describe sounds for BulkUploadProgress with id: %s"
-                          % bulk_upload_progress_object_id)
+        workers_logger.info("Starting describing sounds of BulkUploadProgress (%s)" % json.dumps(
+            {'task_name': task_name, 'bulk_upload_progress_id': bulk_upload_progress_object_id}))
+        start_time = time.time()
         try:
             bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
             bulk.describe_sounds()
             bulk.refresh_from_db()  # Refresh from db as describe_sounds() method will change fields of bulk
             bulk.progress_type = 'F'  # Set to finished when one
             bulk.save()
+            workers_logger.info("Finished describing sounds of BulkUploadProgress (%s)" % json.dumps(
+                {'task_name': task_name, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
+                 'work_time': round(time.time() - start_time)}))
             return 'true'
         except BulkUploadProgress.DoesNotExist as e:
-            message = "Error in async describe sounds for BulkUploadProgress object with id %s (%s)" % \
-                      (bulk_upload_progress_object_id, str(e))
-            self.write_stdout(message)
+            workers_logger.error("Error describing sounds of BulkUploadProgress (%s)" % json.dumps(
+                {'task_name': task_name, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
+                 'error': str(e),
+                 'work_time': round(time.time() - start_time)}))
         return 'false'

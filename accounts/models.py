@@ -594,10 +594,19 @@ post_save.connect(create_user_profile, sender=User)
 
 def presave_user(sender, instance, **kwargs):
     try:
-        old_username = User.objects.get(pk=instance.id).username
+        old_user_object = User.objects.get(pk=instance.id)
+
+        # Check if username has changed and, if so, create a OldUsername object (if does not exist)
+        old_username = old_user_object.username
         if old_username.lower() != instance.username.lower():
             # We use .get_or_create below to avoid having 2 OldUsername objects with the same user/username pair
             OldUsername.objects.get_or_create(user=instance, username=old_username)
+
+        # Check if email has change and, if so, remove existing EmailBounce objects associated to the user (if any)
+        old_email = old_user_object.email
+        if old_email != instance.email:
+            EmailBounce.objects.filter(user=instance).delete()
+
     except User.DoesNotExist:
         pass
 

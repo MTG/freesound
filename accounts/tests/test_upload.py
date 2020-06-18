@@ -30,7 +30,7 @@ from django.urls import reverse
 
 from sounds.models import License, Sound, Pack, BulkUploadProgress
 from tags.models import Tag
-from utils.filesystem import File
+from utils.filesystem import File, create_directories
 from utils.test_helpers import create_test_files, override_uploads_path_with_temp_directory, \
     override_csv_path_with_temp_directory
 
@@ -66,7 +66,7 @@ class UserUploadAndDescribeSounds(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        os.mkdir(user_upload_path)
+        create_directories(user_upload_path)
         create_test_files(filenames, user_upload_path)
 
         # Check that files are displayed in the template
@@ -112,7 +112,7 @@ class UserUploadAndDescribeSounds(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        os.mkdir(user_upload_path)
+        create_directories(user_upload_path)
         create_test_files(filenames, user_upload_path)
 
         # Set license and pack data in session

@@ -31,7 +31,7 @@ from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 
-logger = logging.getLogger("processing")
+console_logger = logging.getLogger("console")
 
 
 class FreesoundAudioProcessorBase(object):
@@ -47,11 +47,11 @@ class FreesoundAudioProcessorBase(object):
         self.sound = self.get_sound_object(sound_id)
 
     def log_info(self, message):
-        logger.info("%i - %s" % (self.sound.id, message))
+        console_logger.info("%i - %s" % (self.sound.id, message))
         self.work_log += message + '\n'
 
     def log_error(self, message):
-        logger.error("%i %s" % (self.sound.id, message))
+        console_logger.error("%i %s" % (self.sound.id, message))
         self.work_log += message + '\n'
 
     def set_failure(self, message, error=None):

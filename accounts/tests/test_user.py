@@ -20,6 +20,7 @@
 
 import mock
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -53,7 +54,8 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u''],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('You must accept the terms of use', resp.content)
@@ -65,7 +67,8 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'exampleemail.com']
+            u'email1': [u'exampleemail.com'],
+            u'email2': [u'exampleemail.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('Enter a valid email', resp.content)
@@ -77,10 +80,24 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [''],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('This field is required', resp.content)
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
+        # Try registration with different email addresses
+        resp = self.client.post(reverse('accounts-register'), data={
+            u'username': [''],
+            u'password1': [u'123456'],
+            u'accepted_tos': [u'on'],
+            u'email1': [u'example@email.com'],
+            u'email2': [u'exampl@email.net']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('Please confirm that your email address is the same', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
@@ -89,23 +106,26 @@ class UserRegistrationAndActivation(TestCase):
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
         self.assertIn('Registration done, activate your account', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # An email was sent!
-        self.assertEqual(mail.outbox[0].subject, "[freesound] Your activation link.")
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         # Try register again with same username
         resp = self.client.post(reverse('accounts-register'), data={
             u'username': [username],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('A user with that username already exists', resp.content)
+        self.assertIn('You cannot use this username to create an account', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
@@ -114,10 +134,11 @@ class UserRegistrationAndActivation(TestCase):
             u'username': ['a_different_username'],
             u'password1': [u'123456'],
             u'accepted_tos': [u'on'],
-            u'email1': [u'example@email.com']
+            u'email1': [u'example@email.com'],
+            u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('A user using that email address already exists', resp.content)
+        self.assertIn('You cannot use this email address to create an account', resp.content)
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
@@ -641,7 +662,8 @@ class ReSendActivationTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
-        self.assertEqual(mail.outbox[0].subject, u'[freesound] Your activation link.')
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         resp = self.client.post(reverse('accounts-resend-activation'), {
             'user': u'new_email@freesound.org',
@@ -659,7 +681,8 @@ class ReSendActivationTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
-        self.assertEqual(mail.outbox[0].subject, u'[freesound] Your activation link.')
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         resp = self.client.post(reverse('accounts-resend-activation'), {
             'user': u'testuser_does_not_exist',
@@ -688,7 +711,8 @@ class UsernameReminderTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
-        self.assertEqual(mail.outbox[0].subject, u'[freesound] Username reminder.')
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_USERNAME_REMINDER in mail.outbox[0].subject)
 
         resp = self.client.post(reverse('accounts-username-reminder'), {
             'user': u'new_email@freesound.org',

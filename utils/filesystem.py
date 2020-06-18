@@ -66,7 +66,7 @@ def generate_tree(path):
             counter += 1
             files[file_object.id] = file_object
             parent.children.append(file_object)
-            
+
     return lookups[path], files
 
 
@@ -110,20 +110,6 @@ def create_directories(path, exist_ok=True):
     except OSError as exc:
         # Ignore exception if directory already existing
         if exist_ok and exc.errno != errno.EEXIST:
-            raise
-
-
-def remove_directory(path):
-    """
-    Removes the directory at the specified path and all of its contents (including files and other direcotries).
-    No exception is raised if no direcotry exists at the given path.
-    :param str path: path of the direcotry to delete
-    """
-    try:
-        shutil.rmtree(path)
-    except OSError as e:
-        # Ignore exception if directory does not exist
-        if e.errno != errno.ENOENT:
             raise
 
 

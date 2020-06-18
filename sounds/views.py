@@ -64,8 +64,7 @@ from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
 
-logger = logging.getLogger('web')
-downloads_logger = logging.getLogger('downloads')
+web_logger = logging.getLogger('web')
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -263,7 +262,7 @@ def sound(request, username, sound_id):
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
-                    send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
+                    send_mail_template(settings.EMAIL_SUBJECT_NEW_COMMENT, 'sounds/email_new_comment.txt',
                                        {'sound': sound, 'user': request.user, 'comment': comment_text},
                                        user_to=sound.user, email_type_preference_check="new_comment")
 
@@ -314,7 +313,7 @@ def after_download_modal(request):
         modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
 
         if should_suggest_donation(request.user, len(modal_shown_timestamps)):
-            logger.info('Showing after download donate modal (%s)' % json.dumps({'user_id': request.user.id}))
+            web_logger.info('Showing after download donate modal (%s)' % json.dumps({'user_id': request.user.id}))
             modal_shown_timestamps.append(time.time())
             cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps,
                       60 * 60 * 24)  # 24 lifetime cache
@@ -575,7 +574,7 @@ def pack_delete(request, username, pack_id):
         if pack_id != pack.id:
             raise PermissionDenied
         if abs(time.time() - link_generated_time) < 10:
-            logger.info("User %s requested to delete pack %s" % (request.user.username, pack_id))
+            web_logger.info("User %s requested to delete pack %s" % (request.user.username, pack_id))
             pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
@@ -750,7 +749,7 @@ def delete(request, username, sound_id):
             form = DeleteSoundForm(sound_id=sound_id)
         else:
 
-            logger.info("User %s requested to delete sound %s" % (request.user.username,sound_id))
+            web_logger.info("User %s requested to delete sound %s" % (request.user.username,sound_id))
             try:
                 ticket = sound.ticket
                 tc = TicketComment(sender=request.user,
@@ -799,9 +798,9 @@ def flag(request, username, sound_id):
             else:
                 user_email = flag_form.cleaned_data["email"]
 
-            send_mail_template_to_support(u"Sound flag: %s - %s" % (sound.user.username, sound.original_filename),
-                                          "sounds/email_flag.txt", {"flag": flag}, reply_to=user_email)
-
+            send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "sounds/email_flag.txt", {"flag": flag},
+                                          extra_subject="%s - %s" % (sound.user.username, sound.original_filename),
+                                          reply_to=user_email)
             return redirect(sound)
     else:
         initial = {}

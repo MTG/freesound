@@ -1,6 +1,7 @@
 #h1 {
+    padding: 3px;
     font-size: 20px;
-    margin: 10px 0;
+    margin: 5px 0;
     font-weight: normal;
     font-family: "Times New Roman", Times, serif;
     position: relative;
@@ -8,8 +9,9 @@
 }
 
 #h2 {
+    padding: 3px;
     font-size: 18px;
-    margin: 5px 0;
+    margin: 2px 0;
     font-weight: normal;
     font-family: "Times New Roman", Times, serif;
     position: relative;
@@ -17,8 +19,9 @@
 }
 
 #h3 {
+    padding: 3px;
     font-size: 10px;
-    margin: 5px 0;
+    margin: 2px 0;
     font-weight: normal;
     font-family: "Times New Roman", Times, serif;
     position: relative;
@@ -44,4 +47,14 @@
     position: absolute;
     top: 0;
     left: 0;
+}
+
+#player-container {
+    background-color: rgba(128, 128, 128, 0.2);
+    width: 200px;
+    height: 80px;
+    position: relative;
+    top: 5px;
+    float: right;
+    right: 5px;
 }

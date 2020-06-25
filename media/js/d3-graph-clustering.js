@@ -6,26 +6,32 @@ function activateGraph (graph) {
     var elem = document.getElementById('graph');
 
     // Audio
-    var context = initializeNewWebAudioContext();
-    var playingSound; // keep track of playing sound to stop it
+    var wavesurfer = WaveSurfer.create({
+        container: '#waveform',
+        backend: 'MediaElement',
+        height: 80,
+        width: 200
+    });
 
     function playSound(d) {
-        // load and play sound
-        context.loadSound(d.url, '0');
-        playingSound = context.playSound('0');
+        try {
+            wavesurfer.load(d.url);
+            wavesurfer.on('ready', function () {
+                wavesurfer.play();
+            });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     function stopSound() {
-        // stop playing sound
-        if (playingSound) {
-            playingSound.pause();
-        }
+        wavesurfer.unAll()
+        wavesurfer.pause();
     }
 
     function onNodeHover(node) {
         if (node) {
             elem.style.cursor = 'pointer';
-            stopSound();
             playSound(node);
         } else {
             elem.style.cursor = null;

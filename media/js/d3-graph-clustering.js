@@ -89,6 +89,25 @@ function activateGraph (graph) {
         $("#h3").html('');
     }
 
+    function drawBigNode(node, ctx) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, NODE_R * 1.4, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, NODE_R * 1.2, 0, 2 * Math.PI, false);
+        ctx.fillStyle = node.color
+        ctx.fill();
+    }
+
+    function drawSmallNode(node, ctx) {
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, NODE_R * 1.2, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+    }
+
     var width = elem.parentElement.getBoundingClientRect().width;
     var height = elem.parentElement.getBoundingClientRect().height;
 
@@ -98,11 +117,7 @@ function activateGraph (graph) {
         .height(height)
         .nodeRelSize(NODE_R)
         .nodeCanvasObject((node, ctx) => {
-            // add ring just for highlighted nodes
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, NODE_R * 1.2, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'white';
-            ctx.fill();
+            drawSmallNode();
         })
         .nodeLabel(node => `${node.name}: ${node.tags}`)
         .nodeAutoColorBy('group')
@@ -115,31 +130,13 @@ function activateGraph (graph) {
         .linkWidth(link => highlightLinks.has(link) ? 3 : 1)
         .nodeCanvasObjectMode(node => 'before')
         .nodeCanvasObject((node, ctx) => {
-            ctx.globalAlpha = 1;
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, NODE_R * 1.2, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'white';
-            ctx.fill();
+            drawSmallNode(node, ctx);
             if (hoverNode === node) {
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, NODE_R * 1.4, 0, 2 * Math.PI, false);
-                ctx.fillStyle = 'white';
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, NODE_R * 1.2, 0, 2 * Math.PI, false);
-                ctx.fillStyle = node.color
-                ctx.fill();
+                drawBigNode(node, ctx);
             }
             if (highlightNodes.size > 0) {
                 if (highlightNodes.has(node)) {
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, NODE_R * 1.4, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = 'white';
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, NODE_R * 1.2, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = node.color
-                    ctx.fill();
+                    drawBigNode(node, ctx);
                 } else {
                     ctx.globalAlpha = 0.5;
                 }

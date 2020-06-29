@@ -109,22 +109,14 @@
         // Ajax request clustering
         {% if clustering_on %}
             request_clustering();
+
+            graph = undefined;
+            graphLoaded = false;
+
+            $('#show-clustering-graph-button').click(function () {
+                showGraph();
+            });
         {% endif %}
-
-        graph = undefined;
-        graphLoaded = false;
-
-        $('#show-clustering-graph-button').click(function () {
-            // request clustered graph
-            // $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string | safe}}", {
-            //     }).then(res => JSON.parse(res)).then(graph => {activateGraph(graph);});
-            $("#clustering-graph").slideToggle();
-            if (graph !== undefined && graphLoaded === false) {
-                activateGraph(graph);
-                graphLoaded = true;
-            }
-        })
-
     });
 
     function addAdvancedSearchOptionsFilters()
@@ -249,6 +241,15 @@
         $("#filter_query").val(cleaned);
     }
 
+    // toggle and show graph
+    function showGraph() {
+        $("#clustering-graph").slideToggle();
+        if (graph !== undefined && graphLoaded === false) {
+            activateGraph(graph);
+            graphLoaded = true;
+        }
+    }
+
     // function for requesting clustering
     function request_clustering()
     {
@@ -264,6 +265,12 @@
                         $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
                     } else {
                         $('#clusters-div').replaceWith(data);
+
+                        $('.cluster-link-button').click(function () {
+                            var cluster_id = $(this).attr('cluster-id');
+                            // showCluster(cluster_id);
+                        });
+
                         // request clustered graph
                         // set graph as a global variable
                         $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string | safe}}", {

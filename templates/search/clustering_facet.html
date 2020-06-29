@@ -1,8 +1,12 @@
 <ul>
     {% for cluster_id, num_results, tags in cluster_id_num_results %}
-        <li class="facet_item">
+        <li class="facet_item clustering-facet">
             <a href="{% url 'sounds-search' %}?{{url_query_params_string | safe}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
-            </a> ({{tags}}, {{num_results}})
+            </a> ({{num_results}}) 
+            <span><img class="cluster-link-button" cluster-id="{{cluster_id}}" 
+                src="{{media_url}}images/fugue-icons/icons/external.png" width="16" height="16" alt="listen" title=""
+            /></span>
+            <div>{{tags}}</div>
         </li>
     {% endfor %}
 </ul>

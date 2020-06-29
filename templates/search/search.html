@@ -112,6 +112,7 @@
 
             graph = undefined;
             graphLoaded = false;
+            showCluster = undefined;
 
             $('#show-clustering-graph-button').click(function () {
                 showGraph();
@@ -267,9 +268,14 @@
                         $('#clusters-div').replaceWith(data);
 
                         $('.cluster-link-button').click(function () {
-                            var cluster_id = $(this).attr('cluster-id');
-                            // showCluster(cluster_id);
-                        });
+                            $("#clustering-graph").slideDown();
+                            var clusterId = $(this).attr('cluster-id');
+                            showCluster = clusterId;
+                            if (graph !== undefined && graphLoaded === false) {
+                                activateGraph(graph, clusterId);
+                                graphLoaded = true;
+                            }
+                        });                        
 
                         // request clustered graph
                         // set graph as a global variable
@@ -277,8 +283,13 @@
                             }).then(res => JSON.parse(res)).then(data => {
                                 graph = data;
                                 if ($("#clustering-graph").is(":visible")) {
-                                    activateGraph(graph);
-                                    graphLoaded = true;
+                                    if (showCluster !== undefined) {
+                                        activateGraph(graph, showCluster);
+                                        graphLoaded = true;
+                                    } else {
+                                        activateGraph(graph);
+                                        graphLoaded = true;
+                                    }
                                 }
                             });
                     }

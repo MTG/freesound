@@ -141,13 +141,13 @@ function activateGraph (graph, clusterId=undefined) {
         })
         .nodeLabel(node => `${node.name}: ${node.tags}`)
         .nodeAutoColorBy('group')
-        .linkColor(() => 'rgba(0,0,0,0.2)')
+        .linkColor(link => highlightLinks.has(link) ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)')
+        .linkWidth(link => highlightLinks.has(link) ? 3 : 1)
         .onBackgroundClick(() => onclick())
         .onNodeHover(node => onNodeHover(node))
         .onNodeClick(node => {
             connectedNodes(node);
         })
-        .linkWidth(link => highlightLinks.has(link) ? 3 : 1)
         .nodeCanvasObjectMode(node => 'before')
         .nodeCanvasObject((node, ctx) => {
             drawSmallNode(node, ctx);

@@ -311,9 +311,6 @@
 
         {% if clustering_on %}
             <h3>clusters 
-                <a href="{% url 'clustering-graph-visualisation' %}?{{ url_query_params_string | safe }}">
-                    <img src='{{media_url}}images/eye-open.png' width="30px"/>
-                </a>
                 <button id="show-clustering-graph-button">
                     show
                 </button>

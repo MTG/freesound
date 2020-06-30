@@ -179,7 +179,8 @@ function activateGraph (graph, clusterId=undefined) {
         .graphData(data)
         .enableNodeDrag(false)
         .warmupTicks(300)
-        .cooldownTicks(0);
+        .cooldownTicks(0)
+        .onEngineStop(() => $('#graph-loader').hide());
 
     if (clusterId !== undefined) {
         onClickClusterFacet(clusterId);

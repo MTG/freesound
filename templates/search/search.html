@@ -66,6 +66,7 @@
             </div>
         </div>
         <div id="graph"></div>
+        <div id="graph-loader" class="clustering-loader"></div>
     </div>
 
 </div>
@@ -268,8 +269,12 @@
                         }, 500);
                     } else if (data.status === 'failed') {
                         // clustering failed
-                        $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
+                        // $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
+                        $('#cluster-fail-icon').show();
                     } else {
+                        $('#facet-loader').hide();
+                        $('#show-clustering-graph-button').show();
+
                         $('#clusters-div').replaceWith(data);
 
                         $('.cluster-link-button').click(function () {
@@ -311,12 +316,14 @@
 
         {% if clustering_on %}
             <h3>clusters 
-                <button id="show-clustering-graph-button">
+                <div id="facet-loader" class="clustering-loader"></div>
+                <img style="display: none;" id="cluster-fail-icon" src="{{media_url}}images/fugue-icons/icons/cross.png" alt=""/>
+                <button style="display: none;" id="show-clustering-graph-button">
                     show
                 </button>
             </h3>
-            <div id='clusters-div'>...
-                <br><br>
+            <div id='clusters-div'>
+                <br>
             </div>
         {% endif %}
 

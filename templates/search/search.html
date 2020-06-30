@@ -243,8 +243,13 @@
     }
 
     // toggle and show graph
+    function updateShowGraphButton() {
+        var buttonText = $("#clustering-graph").is(":visible")? "hide" : "show";
+        $('#show-clustering-graph-button').html(buttonText);
+    }
+
     function showGraph() {
-        $("#clustering-graph").slideToggle();
+        $("#clustering-graph").slideToggle(updateShowGraphButton);
         if (graph !== undefined && graphLoaded === false) {
             activateGraph(graph);
             graphLoaded = true;
@@ -268,7 +273,7 @@
                         $('#clusters-div').replaceWith(data);
 
                         $('.cluster-link-button').click(function () {
-                            $("#clustering-graph").slideDown();
+                            $("#clustering-graph").slideDown(updateShowGraphButton);
                             var clusterId = $(this).attr('cluster-id');
                             showCluster = clusterId;
                             if (graph !== undefined && graphLoaded === false) {

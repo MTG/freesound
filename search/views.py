@@ -225,12 +225,12 @@ def clustered_graph(request):
 
     # check if facet filters are present in the search query
     # if yes, filter nodes and links from the graph
-    nodes = graph['nodes']
-    links = graph['links']
-    graph['nodes'] = []
-    graph['links'] = []
     query_params, _, _ = search_prepare_parameters(request)
     if query_params['filter_query']:
+        nodes = graph['nodes']
+        links = graph['links']
+        graph['nodes'] = []
+        graph['links'] = []
         sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
         for node in nodes:
             if int(node['id']) in sound_ids_filtered:

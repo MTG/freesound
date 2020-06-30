@@ -223,6 +223,22 @@ def clustered_graph(request):
     result = cluster_sound_results(request, features=DEFAULT_FEATURES)
     graph = result['graph']
 
+    # check if facet filters are present in the search query
+    # if yes, filter nodes and links from the graph
+    nodes = graph['nodes']
+    links = graph['links']
+    graph['nodes'] = []
+    graph['links'] = []
+    query_params, _, _ = search_prepare_parameters(request)
+    if query_params['filter_query']:
+        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        for node in nodes:
+            if int(node['id']) in sound_ids_filtered:
+                graph['nodes'].append(node)
+        for link in links:
+            if int(link['source']) in sound_ids_filtered and int(link['target']) in sound_ids_filtered:
+                graph['links'].append(link)
+
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
 
     sound_metadata = {s.id:(s.locations()['preview']['LQ']['ogg']['url'],

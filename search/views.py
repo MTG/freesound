@@ -175,7 +175,7 @@ def clustering_facet(request):
     if result['finished']:
         if result['result'] is not None:
             results = result['result']
-            num_clusters = len(results) + 1
+            num_clusters = len(results)
         else:
              return JsonResponse({'status': 'failed'}, safe=False)
     elif result['error']:
@@ -210,10 +210,25 @@ def clustering_facet(request):
                                   if len(cluster_tags[cluster_id])>0 else ''
                                   for cluster_id in range(len(results))]
 
+    # extract sound examples for each cluster
+    graph = result['graph']
+    node_id_centrality_per_cluster = defaultdict(list)
+    sound_urls = {sound.id: sound.locations()['preview']['LQ']['ogg']['url'] for sound in sound_instances}
+    for node in graph['nodes']:
+        node_id_centrality_per_cluster[node['group']].append(
+            (node['id'], node['group_centrality'], sound_urls[int(node['id'])])
+        )
+    sorted_node_id_centrality_per_cluster = {
+        k: sorted(v, key=lambda x: x[1], reverse=True) 
+            for k, v in node_id_centrality_per_cluster.iteritems()
+    }
+    sound_url_examples_per_cluster = [[s[2] for s in sorted_node_id_centrality_per_cluster[k][:7]] for k in range(num_clusters)]
+
     return render(request, 'search/clustering_facet.html', {
             'results': classes,
             'url_query_params_string': url_query_params_string,
-            'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster, cluster_most_occuring_tags),
+            'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster, 
+                                          cluster_most_occuring_tags, sound_url_examples_per_cluster),
     })
 
 

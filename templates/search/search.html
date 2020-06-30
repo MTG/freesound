@@ -257,6 +257,46 @@
         }
     }
 
+    // play cluster examples on mouseover & click
+    mouse_on_cluster_facet_preview = false;
+    function enableAudioClusterExamples() {
+        function playAudio(el, index) {
+            var audioPlayers = el.children('audio');
+            var cluster_idx = $('.clustering-facet').index($(el));
+            var index = (typeof index == 'number') ? index: parseInt(Math.random()*audioPlayers.length);
+            var audio = audioPlayers[index];
+            audio.play();
+            audio.onended = function() {
+                index = (index + 1) % audioPlayers.length;
+                // this condition ensures that we don't trigger more plays when not previewing the right cluster.
+                // otherwise it could happen that stopAllAudio() would not stop the recursive loop.
+                if (mouse_on_cluster_facet_preview == cluster_idx) {
+                    playAudio(el, index)
+                }
+            }
+        };
+
+        function stopAllAudio() {
+            $('audio').each(function (i, el) {el.pause();});
+        };
+        
+        $(".cluster-audio-examples")
+            .mouseenter(function() {
+                var cluster_idx = $('.clustering-facet').index($(this).parents('.clustering-facet'));
+                mouse_on_cluster_facet_preview = cluster_idx;
+                stopAllAudio();
+                playAudio($(this).parent().parent(), false);
+            })
+            .mouseleave(function() {
+                mouse_on_cluster_facet_preview = false;
+                stopAllAudio();
+            })
+            .click(function() {
+                stopAllAudio();
+                playAudio($(this).parent().parent(), false);
+            });
+    }
+
     // function for requesting clustering
     function request_clustering()
     {
@@ -269,13 +309,14 @@
                         }, 500);
                     } else if (data.status === 'failed') {
                         // clustering failed
-                        // $('#clusters-div').replaceWith(""); // TODO: remove clusters facet container
+                        $('#facet-loader').hide();
                         $('#cluster-fail-icon').show();
                     } else {
                         $('#facet-loader').hide();
                         $('#show-clustering-graph-button').show();
 
                         $('#clusters-div').replaceWith(data);
+                        enableAudioClusterExamples();
 
                         $('.cluster-link-button').click(function () {
                             $("#clustering-graph").slideDown(updateShowGraphButton);

@@ -6,6 +6,7 @@
     font-family: "Times New Roman", Times, serif;
     position: relative;
     z-index: 10;
+    pointer-events: none;
 }
 
 #h2 {
@@ -16,6 +17,7 @@
     font-family: "Times New Roman", Times, serif;
     position: relative;
     z-index: 10;
+    pointer-events: none;
 }
 
 #h3 {
@@ -26,6 +28,17 @@
     font-family: "Times New Roman", Times, serif;
     position: relative;
     z-index: 10;
+    pointer-events: none;
+}
+
+#clustering-graph {
+    overflow: hidden;
+    width: 70%;
+    margin: auto;
+}
+
+#clustering-graph .modal-header {
+    margin-bottom: 0px;
 }
 
 #chart {

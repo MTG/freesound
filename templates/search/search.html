@@ -54,21 +54,25 @@
 
 </p>
 
-<div id="clustering-graph" style="display: none;">
-    <h3>Clustering Visualisation</h3>
-    <div id="chart-container">
-        <div id="h1">Sound file name</div>
-        <div id="h2">Click on a node to display info</div>
-        <div id="h3"></div>
-        <div id="chart">
-            <div id="player-container">
-                <div id="waveform"></div>
-            </div>
+<div id="clustering-graph-modal" class="modal" style="display: none;">
+    <div id="clustering-graph" class="modal-content">
+        <div class="modal-header">
+            Clustering Visualisation
+            <span id="close-modal-button" class="close-modal">×</span>
         </div>
-        <div id="graph"></div>
-        <div id="graph-loader" class="clustering-loader"></div>
+        <div id="chart-container" class="modal-body">
+            <div id="h1">Sound file name</div>
+            <div id="h2">Click on a node to display info</div>
+            <div id="h3"></div>
+            <div id="chart" >
+                <div id="player-container">
+                    <div id="waveform"></div>
+                </div>
+            </div>
+            <div id="graph"></div>
+            <div id="graph-loader" class="clustering-loader"></div>
+        </div>
     </div>
-
 </div>
 
 <script type="text/javascript">
@@ -246,15 +250,19 @@
     // toggle and show graph
     function updateShowGraphButton() {
         var buttonText = $("#clustering-graph").is(":visible")? "hide" : "show";
-        $('#show-clustering-graph-button').html(buttonText);
+        $("#show-clustering-graph-button").html(buttonText);
     }
 
     function showGraph() {
-        $("#clustering-graph").slideToggle(updateShowGraphButton);
+        $("#clustering-graph-modal").show();
         if (graph !== undefined && graphLoaded === false) {
             activateGraph(graph);
             graphLoaded = true;
         }
+    }
+
+    function closeGraphModal() {
+        $("#clustering-graph-modal").hide();
     }
 
     // play cluster examples on mouseover & click
@@ -319,21 +327,25 @@
                         enableAudioClusterExamples();
 
                         $('.cluster-link-button').click(function () {
-                            $("#clustering-graph").slideDown(updateShowGraphButton);
+                            $("#clustering-graph-modal").show();
                             var clusterId = $(this).attr('cluster-id');
                             showCluster = clusterId;
                             if (graph !== undefined && graphLoaded === false) {
                                 activateGraph(graph, clusterId);
                                 graphLoaded = true;
                             }
-                        });                        
+                        });
+
+                        $('#close-modal-button').click(function () {
+                            closeGraphModal();
+                        })
 
                         // request clustered graph
                         // set graph as a global variable
                         $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string | safe}}", {
                             }).then(res => JSON.parse(res)).then(data => {
                                 graph = data;
-                                if ($("#clustering-graph").is(":visible")) {
+                                if ($("#clustering-graph-modal").is(":visible")) {
                                     if (showCluster !== undefined) {
                                         activateGraph(graph, showCluster);
                                         graphLoaded = true;

@@ -9,6 +9,18 @@
     pointer-events: none;
 }
 
+#cluster-labels {
+    float: right;
+    margin-right: 20px;
+    z-index: 10;
+    position: relative;
+    pointer-events: none;
+}
+
+#cluster-labels span{
+    pointer-events: auto;  
+}
+
 #h2 {
     padding: 3px;
     font-size: 18px;
@@ -29,7 +41,7 @@
 
 #clustering-graph {
     overflow: hidden;
-    width: 70%;
+    width: 80%;
     margin: auto;
 }
 

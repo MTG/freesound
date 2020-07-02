@@ -62,6 +62,7 @@
         <div id="chart-container" class="modal-body">
             <div id="h1">Selected sounds (ctrl + click)</div>
             <div id="h2"></div>
+            <div id="cluster-labels"></div>
             <div id="graph"></div>
             <div id="graph-loader" class="clustering-loader"></div>
         </div>
@@ -315,7 +316,7 @@
                     } else {
                         $('#facet-loader').hide();
                         $('#show-clustering-graph-button').show();
-
+                        $('#cluster-labels').html(data);
                         $('#clusters-div').replaceWith(data);
                         enableAudioClusterExamples();
 

@@ -41,14 +41,6 @@
     margin-bottom: 0px;
 }
 
-#chart {
-    width: 100%;
-    height: 600px;
-    top: 0;
-    left: 0;
-    position: absolute;
-}
-
 #chart-container {
     background-color: rgba(128, 128, 128, 0.1);
     width: 100%;
@@ -60,16 +52,6 @@
     position: absolute;
     top: 0;
     left: 0;
-}
-
-#player-container {
-    background-color: rgba(128, 128, 128, 0.2);
-    width: 200px;
-    height: 80px;
-    position: relative;
-    top: 5px;
-    float: right;
-    right: 5px;
 }
 
 .clustering-facet{

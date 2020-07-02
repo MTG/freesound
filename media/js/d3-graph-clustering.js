@@ -6,27 +6,34 @@ function activateGraph (graph, clusterId=undefined) {
     var elem = document.getElementById('graph');
 
     // Audio
-    var wavesurfer = WaveSurfer.create({
-        container: '#waveform',
-        backend: 'MediaElement',
-        height: 80,
-        width: 200
-    });
+    var audioPlayers = {};
+    
+    function play_sound_from_url(sound_id, url) {
+        if (audioPlayers[sound_id] === undefined) {
+            var player = new Audio()
+            player.src = url;
+            player.autoplay = true;
+            audioPlayers[sound_id] = player;
+        } else {
+            audioPlayers[sound_id].play();
+        }
+        
+    }
 
     function playSound(d) {
         try {
-            wavesurfer.load(d.url);
-            wavesurfer.on('ready', function () {
-                wavesurfer.play();
-            });
+            play_sound_from_url(d.id, d.url);
         } catch (error) {
             console.log(error);
         }
     }
 
     function stopSound() {
-        wavesurfer.unAll()
-        wavesurfer.pause();
+        Object.keys(audioPlayers).forEach(function(key) {
+            var player = audioPlayers[key]
+            player.pause();
+            player.currentTime = 0;
+        });
     }
 
     function onNodeHover(node) {

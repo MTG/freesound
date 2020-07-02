@@ -1,14 +1,25 @@
+from django.conf import settings
 from django.core.cache import cache
 from celery.decorators import task
+from celery import Task
 import logging
 
+from clustering import ClusteringEngine
 from clustering_settings import CLUSTERING_CACHE_TIME, CLUSTERING_PENDING_CACHE_TIME
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 logger = logging.getLogger('clustering')
 
 
-@task(name="cluster_sounds")
+class ClusteringTask(Task):
+    """ Task Class used  for defining the clustering engine only required in celery workers    
+    """
+    def __init__(self):
+        if settings.IS_CELERY_WORKER:
+            self.engine = ClusteringEngine()
+            
+
+@task(name="cluster_sounds", base=ClusteringTask)
 def cluster_sounds(cache_key_hashed, sound_ids, features):
     """ Triggers the clustering of the sounds given as argument with the specified features.
 
@@ -20,16 +31,12 @@ def cluster_sounds(cache_key_hashed, sound_ids, features):
         sound_ids (List[int]): list containing the ids of the sound to cluster.
         features (str): name of the features used for clustering the sounds (defined in the clustering settings file).
     """
-    # This ensures that the engine is imported after it is re-assigned in __init__.py
-    # There should be a better way to do it to avoid multiple imports that can decrease performance
-    from . import engine
-
     # store pending state in cache
     cache.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_PENDING_CACHE_TIME)
 
     try:
         # perform clustering
-        result = engine.cluster_points(cache_key_hashed, features, sound_ids)
+        result = cluster_sounds.engine.cluster_points(cache_key_hashed, features, sound_ids)
 
         # store result in cache
         cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)

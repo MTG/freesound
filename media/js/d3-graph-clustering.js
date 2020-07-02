@@ -88,29 +88,59 @@ function activateGraph (graph, clusterId=undefined) {
     const highlightLinks = new Set();
     let hoverNode = null;
 
-    function connectedNodes(node) {
-        highlightNodes.clear();
-        highlightLinks.clear();
-        if (node) {
-            highlightNodes.add(node);
-            node.neighbors.forEach(neighbor => highlightNodes.add(neighbor));
-            node.links.forEach(link => highlightLinks.add(link));
+    function onNodeClick(node) {
+        if (cntrlIsPressed) {
+            addSoundToBookmark(node);
+        } else {
+            highlightNodes.clear();
+            highlightLinks.clear();
+            if (node) {
+                highlightNodes.add(node);
+                node.neighbors.forEach(neighbor => highlightNodes.add(neighbor));
+                node.links.forEach(link => highlightLinks.add(link));
+            }
+            hoverNode = node || null;
+            elem.style.cursor = node ? '-webkit-grab' : null;
         }
-        hoverNode = node || null;
-        elem.style.cursor = node ? '-webkit-grab' : null;
+    }
 
-        // show sound info
-        $("#h1").html(node.name + '   centrality: ' + node.group_centrality);
-        $("#h2").html(node.tags);
-        $("#h3").html('<a href="' + node.sound_page_url + '">' + node.sound_page_url + '</a>');
+    // remeber if ctrl key is pressed
+    var cntrlIsPressed = false;
+    bookmarkedSounds = [];
+
+    $(document).keydown(function(event) {
+        if (event.which == "17")
+            cntrlIsPressed = true;
+    });
+    
+    $(document).keyup(function(event) {
+        if (event.which == "17")
+            cntrlIsPressed = false;
+    });
+
+    function addSoundToBookmark(node) {
+        if (!bookmarkedSounds.includes(node.id)) {
+            var link_id = "bookmark-s-" + node.id;
+            $("#h2").append('<div id="bookmark-s-' + node.id +'"><a target="_blank" href="' 
+                + node.sound_page_url + '">' + node.name 
+                + '</a><span class="close-bookmark"> ×</span><div>');
+            bookmarkedSounds.push(node.id);
+            $('#'+link_id).children('.close-bookmark').click(() => {deleteBookmark(node.id)})
+        }
+    }
+
+    function deleteBookmark(sound_id) {
+        $('#bookmark-s-'+sound_id).remove();
+        for (var i = bookmarkedSounds.length - 1; i >= 0; i--) {
+            if (bookmarkedSounds[i] === sound_id) {
+                bookmarkedSounds.splice(i, 1);
+            }
+        }
     }
 
     function onclick() {
         highlightNodes.clear();
         highlightLinks.clear();
-        $("#h1").html('Sound file name');
-        $("#h2").html('Click on a node to display info');
-        $("#h3").html('');
     }
 
     function onClickClusterFacet(clusterId) {
@@ -162,7 +192,7 @@ function activateGraph (graph, clusterId=undefined) {
         .onBackgroundClick(() => onclick())
         .onNodeHover(node => onNodeHover(node))
         .onNodeClick(node => {
-            connectedNodes(node);
+            onNodeClick(node);
         })
         .nodeCanvasObjectMode(node => 'before')
         .nodeCanvasObject((node, ctx) => {

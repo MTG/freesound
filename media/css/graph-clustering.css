@@ -17,18 +17,14 @@
     font-family: "Times New Roman", Times, serif;
     position: relative;
     z-index: 10;
-    pointer-events: none;
 }
 
-#h3 {
-    padding: 3px;
-    font-size: 10px;
-    margin: 2px 0;
-    font-weight: normal;
-    font-family: "Times New Roman", Times, serif;
-    position: relative;
-    z-index: 10;
-    pointer-events: none;
+.close-bookmark {
+    font-weight: bold;
+    font-size: 13px;
+    font-family: Verdana, sans-serif;
+    color: #AB4646;
+    cursor: pointer; 
 }
 
 #clustering-graph {

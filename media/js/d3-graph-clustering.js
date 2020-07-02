@@ -60,6 +60,15 @@ function activateGraph (graph, clusterId=undefined) {
         }
     });
 
+    function imageLabel(node) {
+        var html_label = '<div>'
+        html_label += node.name + '<br>'
+        html_label += node.tags + '<br>'
+        html_label += '<img src="' + node.image_url + '"></img>'
+        html_label += '</div>'
+        return html_label
+    }
+
     // cross-link node objects
     data.links.forEach(link => {
         const a = nodeById.get(link.source);
@@ -146,7 +155,7 @@ function activateGraph (graph, clusterId=undefined) {
         .nodeCanvasObject((node, ctx) => {
             drawSmallNode(node, ctx);
         })
-        .nodeLabel(node => `${node.name}: ${node.tags}`)
+        .nodeLabel(node => imageLabel(node))
         .nodeAutoColorBy('group')
         .linkColor(link => highlightLinks.has(link) ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)')
         .linkWidth(link => highlightLinks.has(link) ? 3 : 1)

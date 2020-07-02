@@ -258,13 +258,15 @@ def clustered_graph(request):
     sound_metadata = {s.id:(s.locations()['preview']['LQ']['ogg']['url'],
                             s.original_filename,
                             ' '.join(s.tag_array),
-                            s.get_absolute_url()) for s in results}
+                            s.get_absolute_url(),
+                            s.locations()['display']['wave']['M']['url']) for s in results}
 
     for node in graph['nodes']:
         node['url'] = sound_metadata[int(node['id'])][0]
         node['name'] = sound_metadata[int(node['id'])][1]
         node['tags'] = sound_metadata[int(node['id'])][2]
         node['sound_page_url'] = sound_metadata[int(node['id'])][3]
+        node['image_url'] = sound_metadata[int(node['id'])][4]
 
     return JsonResponse(json.dumps(graph), safe=False)
 

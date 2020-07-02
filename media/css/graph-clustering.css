@@ -29,6 +29,7 @@
     font-family: "Times New Roman", Times, serif;
     position: relative;
     z-index: 10;
+    float: left;
 }
 
 .close-bookmark {

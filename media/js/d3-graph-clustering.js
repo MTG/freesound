@@ -1,5 +1,28 @@
+var COLOR_GROUP = [
+    '#D2B48C',
+    '#BC8F8F',
+    '#F4A460',
+    '#DAA520',
+    '#B8860B',
+    '#CD853F',
+    '#D2691E',
+    '#808000',
+    '#8B4513',
+    '#A0522D',
+    '#A52A2A',
+    '#800000',
+    '#FFF8DC'
+];
+
+function cluster2color (group_id, num_clusters) {
+    return COLOR_GROUP[parseInt(group_id*COLOR_GROUP.length/num_clusters)%COLOR_GROUP.length]
+}
+
+
 function activateGraph (graph, clusterId=undefined) {
     var data = JSON.parse(graph);
+
+    var num_clusters = Math.max(...data.nodes.map(node => node.group))+1;
 
     const NODE_R = 15;
 
@@ -187,6 +210,7 @@ function activateGraph (graph, clusterId=undefined) {
         })
         .nodeLabel(node => imageLabel(node))
         .nodeAutoColorBy('group')
+        .nodeColor(node => cluster2color(node.group, num_clusters))
         .linkColor(link => highlightLinks.has(link) ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)')
         .linkWidth(link => highlightLinks.has(link) ? 3 : 1)
         .onBackgroundClick(() => onclick())

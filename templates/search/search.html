@@ -318,6 +318,16 @@
                         $('#show-clustering-graph-button').show();
                         $('#cluster-labels').html(data);
                         $('#clusters-div').replaceWith(data);
+                        // add cluster colors
+                        var num_clusters = Math.max(
+                            ...Array.from($('.clustering-facet').map(
+                                (e, l)=>parseInt($(l).attr('cluster-id')))
+                            )
+                        ) + 1;
+                        $('#cluster-labels').find('.clustering-facet').each((i, l) => {
+                            $(l).find('a').css("color", cluster2color($(l).attr('cluster-id'), num_clusters));
+                            $(l).find('a').css('font-weight', 'bold');
+                        });
                         enableAudioClusterExamples();
 
                         $('.cluster-link-button').click(function () {

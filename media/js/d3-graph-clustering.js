@@ -63,7 +63,9 @@ function activateGraph (graph, clusterId=undefined) {
         if (node) {
             elem.style.cursor = 'pointer';
             playSound(node);
+            $("#cluster-labels .clustering-facet[cluster-id="+ node.group +"]").addClass("label-over");
         } else {
+            $("#cluster-labels .clustering-facet").removeClass("label-over");
             elem.style.cursor = null;
             stopSound();
         }

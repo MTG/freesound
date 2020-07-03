@@ -17,8 +17,18 @@
     pointer-events: none;
 }
 
-#cluster-labels span{
+#cluster-labels span {
     pointer-events: auto;  
+}
+
+#cluster-labels li {
+    margin-bottom: 5px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.label-over {
+    background-color: rgba(218, 91, 32, 0.1);
 }
 
 #h2 {

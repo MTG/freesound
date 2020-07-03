@@ -87,10 +87,10 @@ function activateGraph (graph, clusterId=undefined) {
     });
 
     function imageLabel(node) {
-        var html_label = '<div>'
-        html_label += node.name + '<br>'
-        html_label += node.tags + '<br>'
-        html_label += '<img src="' + node.image_url + '"></img>'
+        var html_label = '<div class="graph-node-card">'
+        html_label += '<div class="graph-node-card-header">' + node.name + '</div>'
+        html_label += '<div class="graph-node-card-content">' + node.tags + '</div>'
+        html_label += '<div class="graph-node-card-image"><span class="clustering-loader"></span><img src="' + node.image_url + '"></img></div>'
         html_label += '</div>'
         return html_label
     }

@@ -300,16 +300,23 @@
             });
     }
 
+    var clustering_trial_number = 0;
     // function for requesting clustering
     function request_clustering()
     {
         $.get({% url 'clustering-facet' %} + '?{{ url_query_params_string | safe }}', 
                 {}, 
                 function( data ) {
+                    clustering_trial_number += 1;
                     if (data.status === 'pending') {
-                        setTimeout(() => {
-                            request_clustering();
-                        }, 500);
+                        if (clustering_trial_number < 1000) {
+                            setTimeout(() => {
+                                request_clustering();
+                            }, 500);
+                        } else {
+                            $('#facet-loader').hide();
+                            $('#cluster-fail-icon').show();
+                        }
                     } else if (data.status === 'failed') {
                         // clustering failed
                         $('#facet-loader').hide();

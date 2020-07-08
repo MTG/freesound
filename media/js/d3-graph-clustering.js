@@ -19,6 +19,36 @@ function cluster2color (group_id, num_clusters) {
 }
 
 
+// Audio
+var audioPlayers = {};
+
+function play_sound_from_url(sound_id, url, onEnd) {
+    if (audioPlayers[sound_id] === undefined) {
+        var player = new Audio()
+        player.src = url;
+        player.autoplay = true;
+        audioPlayers[sound_id] = player;
+    } else {
+        audioPlayers[sound_id].play();
+    }
+
+    // used for sequentially playing cluster examples
+    if (onEnd !== undefined) {
+        audioPlayers[sound_id].onended = function() {
+            onEnd();
+        }
+    }
+}
+
+function stopSound() {
+    Object.keys(audioPlayers).forEach(function(key) {
+        var player = audioPlayers[key]
+        player.pause();
+        player.currentTime = 0;
+    });
+}
+
+
 function activateGraph (graph, clusterId=undefined) {
     var data = JSON.parse(graph);
 
@@ -28,35 +58,12 @@ function activateGraph (graph, clusterId=undefined) {
 
     var elem = document.getElementById('graph');
 
-    // Audio
-    var audioPlayers = {};
-    
-    function play_sound_from_url(sound_id, url) {
-        if (audioPlayers[sound_id] === undefined) {
-            var player = new Audio()
-            player.src = url;
-            player.autoplay = true;
-            audioPlayers[sound_id] = player;
-        } else {
-            audioPlayers[sound_id].play();
-        }
-        
-    }
-
     function playSound(d) {
         try {
             play_sound_from_url(d.id, d.url);
         } catch (error) {
             console.log(error);
         }
-    }
-
-    function stopSound() {
-        Object.keys(audioPlayers).forEach(function(key) {
-            var player = audioPlayers[key]
-            player.pause();
-            player.currentTime = 0;
-        });
     }
 
     function onNodeHover(node) {

@@ -263,19 +263,20 @@
     mouse_on_cluster_facet_preview = false;
     function enableAudioClusterExamples() {
         function playAudio(el, index) {
-            var audioPlayers = el.children('audio');
+            var dummySpanClusterExamples = el.children('.dummy-span-cluster-examples');
             var cluster_idx = $('.clustering-facet').index($(el));
-            var index = (typeof index == 'number') ? index: parseInt(Math.random()*audioPlayers.length);
-            var audio = audioPlayers[index];
-            audio.play();
-            audio.onended = function() {
-                index = (index + 1) % audioPlayers.length;
+            var index = (typeof index == 'number') ? index: parseInt(Math.random()*dummySpanClusterExamples.length);
+            var selectedExample = dummySpanClusterExamples.eq(index);
+            var soundId = selectedExample.attr("sound-id");
+            var soundUrl = selectedExample.attr("sound-url");
+            play_sound_from_url(soundId, soundUrl, function () {
+                index = (index + 1) % dummySpanClusterExamples.length;
                 // this condition ensures that we don't trigger more plays when not previewing the right cluster.
                 // otherwise it could happen that stopAllAudio() would not stop the recursive loop.
                 if (mouse_on_cluster_facet_preview == cluster_idx) {
                     playAudio(el, index)
                 }
-            }
+            });
         };
 
         function stopAllAudio() {
@@ -286,15 +287,15 @@
             .mouseenter(function() {
                 var cluster_idx = $('.clustering-facet').index($(this).parents('.clustering-facet'));
                 mouse_on_cluster_facet_preview = cluster_idx;
-                stopAllAudio();
+                stopSound();
                 playAudio($(this).parent().parent(), false);
             })
             .mouseleave(function() {
                 mouse_on_cluster_facet_preview = false;
-                stopAllAudio();
+                stopSound();
             })
             .click(function() {
-                stopAllAudio();
+                stopSound();
                 playAudio($(this).parent().parent(), false);
             });
     }

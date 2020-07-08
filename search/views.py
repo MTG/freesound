@@ -219,7 +219,7 @@ def clustering_facet(request):
             if sound.id in sound_ids_examples
     }
     sound_url_examples_per_cluster = [
-        [sound_urls[sound_id] for sound_id in cluster_sound_ids] 
+        [(sound_id, sound_urls[sound_id]) for sound_id in cluster_sound_ids] 
             for cluster_sound_ids in sound_ids_examples_per_cluster
     ]
 

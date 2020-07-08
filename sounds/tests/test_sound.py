@@ -42,6 +42,7 @@ from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalys
 from sounds.models import Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
 from utils.encryption import encrypt
+from utils.filesystem import create_directories
 from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 
 
@@ -1038,7 +1039,7 @@ class SoundAnalysisModel(TestCase):
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
         analysis_filename = '%i_testextractor_out.json'
         sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
-        os.mkdir(sound_analysis_folder)
+        create_directories(sound_analysis_folder)
         json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
         sa2 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor2", analysis_filename=analysis_filename)
         self.assertEqual(sound.analyses.all().count(), 2)

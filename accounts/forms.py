@@ -153,6 +153,7 @@ class RegistrationForm(forms.Form):
 
     email1 = forms.EmailField(label="Email", help_text="We will send you a confirmation/activation email, so make "
                                                        "sure this is correct!.", max_length=254)
+    email2 = forms.EmailField(label="Email confirmation", help_text="Confirm your email address", max_length=254)
     password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
         label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
@@ -170,14 +171,20 @@ class RegistrationForm(forms.Form):
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
                 return username
-        raise forms.ValidationError("A user with that username already exists.")
+        raise forms.ValidationError("You cannot use this username to create an account.")
+
+    def clean_email2(self):
+        email1 = self.cleaned_data.get("email1", "")
+        email2 = self.cleaned_data["email2"]
+        if email1 != email2:
+            raise forms.ValidationError("Please confirm that your email address is the same in both fields.")
 
     def clean_email1(self):
         email1 = self.cleaned_data["email1"]
         try:
             get_user_by_email(email1)
-            web_logger.info('User trying to register with an already existing email')
-            raise forms.ValidationError("A user using that email address already exists.")
+            web_logger.info('User trying to register with an already existing email (%s)', email1)
+            raise forms.ValidationError("You cannot use this email address to create an account.")
         except User.DoesNotExist:
             pass
         return email1

@@ -35,6 +35,7 @@ from sounds.models import Sound, Pack, License, Download
 from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
 from utils.audioprocessing.processing import AudioProcessingException
+from utils.filesystem import create_directories
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, create_sound, \
     NoAudioException, AlreadyExistsException
 from utils.tags import clean_and_split_tags
@@ -69,7 +70,7 @@ class UtilsTest(TestCase):
         filenames = ['file1.wav', 'file2.wav']
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        os.mkdir(user_upload_path)
+        create_directories(user_upload_path)
         create_test_files(filenames, user_upload_path)
         shutil.copyfile(user_upload_path + filenames[0], user_upload_path + "copy.wav")
         license = License.objects.all()[0]
@@ -271,12 +272,12 @@ class BulkDescribeUtils(TestCase):
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        os.mkdir(user_upload_path)
+        create_directories(user_upload_path)
         create_test_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
-        os.mkdir(csv_file_base_path)
+        create_directories(csv_file_base_path)
 
         # Test CSV with all lines and metadata ok
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
@@ -389,7 +390,6 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue('username' in lines_validated[0]['line_errors'])  # User does not exist
         self.assertTrue('columns' in lines_validated[1]['line_errors'])  # Invalid number of columns
 
-
     @override_uploads_path_with_temp_directory
     @override_csv_path_with_temp_directory
     def test_bulk_describe_from_csv(self):
@@ -397,12 +397,12 @@ class BulkDescribeUtils(TestCase):
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        os.mkdir(user_upload_path)
+        create_directories(user_upload_path)
         create_test_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
-        os.mkdir(csv_file_base_path)
+        create_directories(csv_file_base_path)
 
         # Create Test CSV with some lines ok and some wrong lines
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [

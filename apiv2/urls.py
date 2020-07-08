@@ -103,9 +103,6 @@ urlpatterns = [
                              'authentication_form': FsAuthenticationForm}, name="api-login"),
     url(r'^logout/$', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
 
-    # Minimal registration page
-    url(r'^registration/$', views.minimal_registration, name="apiv2-registration"),
-
     #########
     # OTHER #
     #########

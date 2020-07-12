@@ -715,7 +715,7 @@ def attribution(request):
         if style == "csv":
             return ",".join([download_type, filename, username, license]) + "\n"
         elif style == "txt":
-            return "%s: %s by %s | License: %s" % (download_type[0].upper(), filename, username, license) + "\n"
+            return "%s: %s by %s | License: %s" % (download_type, filename, username, license) + "\n"
         else:
             return ""
 
@@ -733,21 +733,28 @@ def attribution(request):
     # item['sound_id'] instead of item ['pack_id']. See the template of this view for an example of this.
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
+    # NOTES:
+    # 1. If this strategy is approved, the import could be moved to module level.
+    # 2. If there's a more suitable temporary directory for the file being created, it could be specified in the
+    # mkstemp call (dir=...)
+    # 3. There's a mktemp call in handle_uploaded_image (and a few others here and there), it's deprecated since
+    # Python 2.3; it could be replaced by mkstemp, maybe during the future move to Python 3?
     download = request.GET.get("dl", "")
     if download in ["csv", "txt"]:
+        from utils.nginxsendfile import sendfile  # [1]
         content = {"csv": "csv", "txt": "plain"}
         response = HttpResponse(content_type='text/%s' % content[download])
         response['Content-Disposition'] = 'attachment; filename="attribution.%s"' % download
-        output = []
+        fd, fname = tempfile.mkstemp(suffix="." + download, prefix="attribution_")  # [2] [3]
+        destination = open(fname, 'w')
         if download == "csv":
-            output.append('Download Type,File Name,User,License\n')
+            destination.write('Sound or Pack,File Name,User,License\n')
         for row in qs:
-            output.append(render_line(download, row["download_type"], row["sound__original_filename"],
-                                      row["sound__user__username"],
-                                      row["license__name"] or row["sound__license__name"]))
-        response.writelines(output)
-        response.close()
-        return response
+            destination.write(render_line(download, row["download_type"][0].upper(), row["sound__original_filename"],
+                                          row["sound__user__username"],
+                                          row["license__name"] or row["sound__license__name"]))
+        destination.close()
+        return sendfile(fname, "attribution.%s" % download)
     else:
         tvars = {'format': request.GET.get("format", "regular")}
         tvars.update(paginate(request, qs, 40))

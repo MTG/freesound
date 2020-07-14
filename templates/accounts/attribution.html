@@ -12,7 +12,7 @@
 <p>
 	This is the list of files you have downloaded. When you use freesound samples (under the "attribution" or "attribution non-commercial license"), you have to <a href="{% url "wiki-page" "faq" %}#how-do-i-creditattribute">credit the original creator of the sound</a> in your work. This list makes it a little bit easier to do so. "S" means sound, "P" means pack.<br/>
 	There are 3 flavors of this list: <a href="?format=regular">regular</a>, <a href="?format=html">html</a> or <a href="?format=plaintext">plain text</a>.
-    <br/>You can also download the complete list as <a href="?dl=csv">csv</a> or <a href="?dl=txt">plain text</a>.
+    <br/>You can also download the complete list as <a href="{% url "accounts-download-attribution" %}?dl=csv">csv</a> or <a href="{% url "accounts-download-attribution" %}?dl=txt">plain text</a>.
 </p>
 
 <div class="attribution_objects">

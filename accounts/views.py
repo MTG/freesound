@@ -711,14 +711,6 @@ def describe_sounds(request):
 @login_required
 def attribution(request):
 
-    def render_line(style, download_type, filename, username, license):
-        if style == "csv":
-            return ",".join([download_type, filename, username, license]) + "\n"
-        elif style == "txt":
-            return "%s: %s by %s | License: %s" % (download_type, filename, username, license) + "\n"
-        else:
-            return ""
-
     qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
                 'license__name', 'sound__license__name', 'created').filter(user=request.user)
@@ -733,32 +725,43 @@ def attribution(request):
     # item['sound_id'] instead of item ['pack_id']. See the template of this view for an example of this.
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
-    # NOTES:
-    # 1. If this strategy is approved, the import could be moved to module level.
-    # 2. If there's a more suitable temporary directory for the file being created, it could be specified in the
-    # mkstemp call (dir=...)
-    # 3. There's a mktemp call in handle_uploaded_image (and a few others here and there), it's deprecated since
-    # Python 2.3; it could be replaced by mkstemp, maybe during the future move to Python 3?
+    tvars = {'format': request.GET.get("format", "regular")}
+    tvars.update(paginate(request, qs, 40))
+    return render(request, 'accounts/attribution.html', tvars)
+
+
+@login_required
+def download_attribution(request):
+
+    content = {"csv": {"style": "csv", "pattern": "%s,%s,%s,%s\n"},
+               "txt": {"style": "plain", "pattern": "%s: %s by %s | License: %s\n"}}
+
+    qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
+        .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
+                'license__name', 'sound__license__name', 'created').filter(user=request.user)
+    qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
+        .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
+                'pack__name', 'created').filter(user=request.user)
+    # NOTE: see the above view, attribution.
+    qs = qs_sounds.union(qs_packs).order_by('-created')
+
     download = request.GET.get("dl", "")
     if download in ["csv", "txt"]:
-        from utils.nginxsendfile import sendfile  # [1]
-        content = {"csv": "csv", "txt": "plain"}
-        response = HttpResponse(content_type='text/%s' % content[download])
+        response = HttpResponse(content_type='text/%s' % content[download]["style"])
         response['Content-Disposition'] = 'attachment; filename="attribution.%s"' % download
-        fd, fname = tempfile.mkstemp(suffix="." + download, prefix="attribution_")  # [2] [3]
-        destination = open(fname, 'w')
+        output = []
         if download == "csv":
-            destination.write('Sound or Pack,File Name,User,License\n')
+            output.append('Download Type,File Name,User,License\n')
         for row in qs:
-            destination.write(render_line(download, row["download_type"][0].upper(), row["sound__original_filename"],
-                                          row["sound__user__username"],
-                                          row["license__name"] or row["sound__license__name"]))
-        destination.close()
-        return sendfile(fname, "attribution.%s" % download)
+            output.append(content[download]["pattern"] % (row["download_type"][0].upper(),
+                                                          row["sound__original_filename"],
+                                                          row["sound__user__username"],
+                                                          row["license__name"] or row["sound__license__name"]))
+        response.writelines(output)
+        response.close()
+        return response
     else:
-        tvars = {'format': request.GET.get("format", "regular")}
-        tvars.update(paginate(request, qs, 40))
-        return render(request, 'accounts/attribution.html', tvars)
+        return HttpResponseRedirect(reverse('accounts-attribution'))
 
 
 @redirect_if_old_username_or_404

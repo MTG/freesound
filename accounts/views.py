@@ -710,18 +710,17 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-
     qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
                 'license__name', 'sound__license__name', 'created').filter(user=request.user)
     qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
         .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
                 'pack__name', 'created').filter(user=request.user)
-    # NOTE: in the query above we duplicate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
+    # NOTE: in the query above we duplciate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
     # a requirement for doing QuerySet.union below. Also as a result of using QuerySet.union, the names of the columns
     # (keys in each dictionary element) are unified and taken from the main query set. This means that after the union,
     # queryset entries corresponding to PackDownload will have corresponding field names from entries corresponding to
-    # Download. Therefore to access the pack_id (which is the second value in the list), you'll need to do
+    # Download. Therefre to access the pack_id (which is the second value in the list), you'll need to do
     # item['sound_id'] instead of item ['pack_id']. See the template of this view for an example of this.
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
@@ -732,7 +731,6 @@ def attribution(request):
 
 @login_required
 def download_attribution(request):
-
     content = {"csv": {"style": "csv", "pattern": "%s,%s,%s,%s\n"},
                "txt": {"style": "plain", "pattern": "%s: %s by %s | License: %s\n"}}
 

@@ -55,6 +55,16 @@ RUN apt-get update \
 		libpng-dev \
 	&& rm -rf /var/lib/apt/lists/*	
 
+# Install node and npm to build frontend static files (we use nvm to install correct node/npm versions)
+RUN mkdir /nvm
+ENV NVM_DIR /nvm
+ENV NODE_VERSION v14.5.0
+RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+RUN /bin/bash -c "source $NVM_DIR/nvm.sh && nvm install $NODE_VERSION && nvm use --delete-prefix $NODE_VERSION"
+ENV NODE_PATH $NVM_DIR/versions/node/$NODE_VERSION/lib/node_modules
+ENV PATH      $NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
+
+# Make some folders to add code and data
 RUN mkdir /code
 RUN mkdir /freesound-data
 WORKDIR /code
@@ -66,6 +76,10 @@ COPY --from=stereofy /code/stereofy /usr/local/bin
 # Install python dependencies
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r /code/requirements.txt
+
+# Install node dependencies
+#COPY --chown=fsweb:fsweb package.json /code/package.json
+#RUN npm install
 
 # Copy source code
 COPY --chown=fsweb:fsweb . /code

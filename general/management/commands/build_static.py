@@ -36,6 +36,11 @@ class Command(BaseCommand):
         This management command will use NPM to build static files and while set a number of Django settings as
         environment variables so that these can be used in code.
         """
+        # Install node dependencies
+        console_logger.info('Installing node dependencies\n')
+        os.system('npm install')
+
+        # Build static files with some variables being passed from Django
         variables = {
             'QUERY_SUGGESTIONS_URL': reverse('query-suggestions')
         }

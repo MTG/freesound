@@ -40,8 +40,8 @@ RUN make clean && make
 
 FROM freesound:2020-02
 
-# Install specific dependencies needed for processing
-RUN apt-get update \ 
+# Install specific dependencies needed for processing and for building static files
+RUN wget -q -O - https://deb.nodesource.com/setup_14.x | bash - && apt-get update \
 	&& apt-get install -y --no-install-recommends \ 
 		sndfile-programs \
 		libsndfile1-dev \
@@ -53,16 +53,8 @@ RUN apt-get update \
 		libjpeg-dev \
 		zlib1g-dev \
 		libpng-dev \
-	&& rm -rf /var/lib/apt/lists/*	
-
-# Install node and npm to build frontend static files (we use nvm to install correct node/npm versions)
-RUN mkdir /nvm
-ENV NVM_DIR /nvm
-ENV NODE_VERSION v11.9.0
-RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
-RUN /bin/bash -c "source $NVM_DIR/nvm.sh && nvm install $NODE_VERSION && nvm use --delete-prefix $NODE_VERSION"
-ENV NODE_PATH $NVM_DIR/versions/node/$NODE_VERSION/lib/node_modules
-ENV PATH      $NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
+		nodejs \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Make some folders to add code and data
 RUN mkdir /code

@@ -763,7 +763,6 @@ def download_attribution(request):
                              row['sound__original_filename'], row['sound__user__username'],
                              row['license__name'] or row['sound__license__name']))
         response.writelines(output.getvalue())
-        response.close()
         return response
     else:
         return HttpResponseRedirect(reverse('accounts-attribution'))

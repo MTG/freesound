@@ -115,8 +115,8 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         # response content as expected
         self.assertEqual(resp.content, 'Download Type,File Name,User,License\r\n'
-                         + 'P,Test pack 0,testuser,Test pack 0\r\n'
-                         + 'S,Test sound 0,testuser,Sampling+\r\n')
+                         + 'P,%s,%s,%s\r\n' % (self.pack, self.user.username, self.pack)
+                         + 'S,%s,%s,%s\r\n' % (self.sound.original_filename, self.user.username, self.sound.license))
 
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)
@@ -124,8 +124,9 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=txt')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertEqual(resp.content, 'P: Test pack 0 by testuser | License: Test pack 0\n'
-                         + 'S: Test sound 0 by testuser | License: Sampling+\n')
+        self.assertEqual(resp.content, 'P: %s by %s | License: %s\n' % (self.pack, self.user.username, self.pack)
+                         + 'S: %s by %s | License: %s\n'
+                         % (self.sound.original_filename, self.user.username, self.sound.license))
 
     @mock.patch('gearman.GearmanClient.submit_job')
     def test_sounds_response_ok(self, submit_job):

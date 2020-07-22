@@ -54,9 +54,9 @@ class last_action(object):
         self.view_func = view_func
         self.__name__ = view_func.__name__
         self.__doc__ = view_func.__doc__
-    
+
     def __call__(self, request, *args, **kwargs):
-        
+
         if not request.user.is_authenticated:
             return self.view_func(request, *args, **kwargs)
 
@@ -64,9 +64,9 @@ class last_action(object):
         date_format = "%Y-%m-%d %H:%M:%S:%f"
         date2string = lambda date: date.strftime(date_format)
         string2date = lambda date_string: datetime.strptime(date_string, date_format)
-        
+
         key = "forum-last-visited"
-        
+
         now = datetime.now()
         now_as_string = date2string(now)
 
@@ -171,7 +171,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     else:
         post = None
         quote = ""
-    
+
     latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum')\
                        .order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
@@ -406,19 +406,22 @@ def moderate_posts(request):
         if mod_form.is_valid():
             action = mod_form.cleaned_data.get("action")
             post_id = mod_form.cleaned_data.get("post")
-            post = Post.objects.get(id=post_id)
-            if action == "Approve":
-                post.moderation_state = "OK"
-                post.save()
-            elif action == "Delete User":
-                try:
-                    post.author.delete()
-                    messages.add_message(request, messages.INFO, 'The user has been successfully deleted.')
-                except User.DoesNotExist:
-                    messages.add_message(request, messages.INFO, 'The user has already been deleted.')
-            elif action == "Delete Post":
-                post.delete()
-                messages.add_message(request, messages.INFO, 'The post has been successfully deleted.')
+            try:
+                post = Post.objects.get(id=post_id)
+                if action == "Approve":
+                    post.moderation_state = "OK"
+                    post.save()
+                elif action == "Delete User":
+                    try:
+                        post.author.delete()
+                        messages.add_message(request, messages.INFO, 'The user has been successfully deleted.')
+                    except User.DoesNotExist:
+                        messages.add_message(request, messages.INFO, 'The user has already been deleted.')
+                elif action == "Delete Post":
+                    post.delete()
+                    messages.add_message(request, messages.INFO, 'The post has been successfully deleted.')
+            except Post.DoesNotExist:
+                messages.add_message(request, messages.INFO, 'This post no longer exists. It may have already been deleted.')
 
     pending_posts = Post.objects.filter(moderation_state='NM')
     post_list = []

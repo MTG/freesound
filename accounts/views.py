@@ -25,6 +25,8 @@ import logging
 import os
 import tempfile
 import uuid
+import cStringIO
+import csv
 
 import gearman
 from django.conf import settings
@@ -727,6 +729,43 @@ def attribution(request):
     tvars = {'format': request.GET.get("format", "regular")}
     tvars.update(paginate(request, qs, 40))
     return render(request, 'accounts/attribution.html', tvars)
+
+
+@login_required
+def download_attribution(request):
+    content = {'csv': 'csv', 'txt': 'plain'}
+
+    qs_sounds = Download.objects.annotate(download_type=Value('sound', CharField()))\
+        .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
+                'license__name', 'sound__license__name', 'created').filter(user=request.user)
+    qs_packs = PackDownload.objects.annotate(download_type=Value('pack', CharField()))\
+        .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
+                'pack__name', 'created').filter(user=request.user)
+    # NOTE: see the above view, attribution.
+    qs = qs_sounds.union(qs_packs).order_by('-created')
+
+    download = request.GET.get('dl', '')
+    if download in ['csv', 'txt']:
+        now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = '%s_%s_attribution.%s' % (request.user, now, download)
+        response = HttpResponse(content_type='text/%s' % content[download])
+        response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+        output = cStringIO.StringIO()
+        if download == 'csv':
+            output.write('Download Type,File Name,User,License\r\n')
+            csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            for row in qs:
+                csv_writer.writerow([row['download_type'][0].upper(), row['sound__original_filename'],
+                                    row['sound__user__username'], row['license__name'] or row['sound__license__name']])
+        elif download == 'txt':
+            for row in qs:
+                output.write("%s: %s by %s | License: %s\n" % (row['download_type'][0].upper(),
+                             row['sound__original_filename'], row['sound__user__username'],
+                             row['license__name'] or row['sound__license__name']))
+        response.writelines(output.getvalue())
+        return response
+    else:
+        return HttpResponseRedirect(reverse('accounts-attribution'))
 
 
 @redirect_if_old_username_or_404

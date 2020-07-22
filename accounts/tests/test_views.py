@@ -26,7 +26,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import OldUsername
-from sounds.models import SoundOfTheDay
+from sounds.models import SoundOfTheDay, Download, PackDownload
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -35,15 +35,19 @@ class SimpleUserTest(TestCase):
     fixtures = ['licenses']
 
     def setUp(self):
-        user, _, sounds = create_user_and_sounds()
+        user, packs, sounds = create_user_and_sounds(num_packs=1)
         self.user = user
         self.sound = sounds[0]
+        self.pack = packs[0]
         self.sound.moderation_state = "OK"
         self.sound.processing_state = "OK"
         self.sound.analysis_state = "OK"
         self.sound.similarity_state = "OK"
         self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
+        Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,
+                                created=self.sound.created)
+        PackDownload.objects.create(user=self.user, pack=self.pack, created=self.pack.created)
 
     def test_account_response_ok(self):
         # 200 response on account access
@@ -103,6 +107,26 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('user-following-tags', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
+
+    def test_download_attribution_csv(self):
+        self.client.force_login(self.user)
+        # 200 response on download attribution as csv
+        resp = self.client.get(reverse('accounts-download-attribution') + '?dl=csv')
+        self.assertEqual(resp.status_code, 200)
+        # response content as expected
+        self.assertEqual(resp.content, 'Download Type,File Name,User,License\r\n'
+                         + 'P,%s,%s,%s\r\n' % (self.pack, self.user.username, self.pack)
+                         + 'S,%s,%s,%s\r\n' % (self.sound.original_filename, self.user.username, self.sound.license))
+
+    def test_download_attribution_txt(self):
+        self.client.force_login(self.user)
+        # 200 response on download attribution as txt
+        resp = self.client.get(reverse('accounts-download-attribution') + '?dl=txt')
+        self.assertEqual(resp.status_code, 200)
+        # response content as expected
+        self.assertEqual(resp.content, 'P: %s by %s | License: %s\n' % (self.pack, self.user.username, self.pack)
+                         + 'S: %s by %s | License: %s\n'
+                         % (self.sound.original_filename, self.user.username, self.sound.license))
 
     @mock.patch('gearman.GearmanClient.submit_job')
     def test_sounds_response_ok(self, submit_job):

@@ -25,6 +25,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.shortcuts import render
 from django.urls import reverse
+from requests.exceptions import HTTPError
 from zenpy import Zenpy
 from zenpy.lib import api_objects as zendesk_api
 from zenpy.lib.exception import APIException as ZendeskAPIException
@@ -91,7 +92,7 @@ def send_to_zendesk(request_email, subject, message, user=None):
     )
     try:
         zenpy.tickets.create(ticket)
-    except ZendeskAPIException as e:
+    except (ZendeskAPIException, HTTPError) as e:
         web_logger.info('Error creating Zendesk ticket: {}'.format(str(e)))
 
 

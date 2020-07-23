@@ -25,6 +25,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.db import IntegrityError
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -756,7 +757,8 @@ class ChangeUsernameTest(TestCase):
 
     def test_change_username_case_insensitiveness(self):
         """Test that changing the username for a new version of the username with different capitalization does not
-        create a new OldUsername object.
+        create a new OldUsername object. The username change is valid (e.g. userA > UserA), but it should not create
+        OldUsername entry because usernames should be treated as case insensitive.
         """
         # Create user and login
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
@@ -765,7 +767,17 @@ class ChangeUsernameTest(TestCase):
         # Rename "userA" to "UserA", should not create OldUsername object
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'UserA']})
         self.assertRedirects(resp, reverse('accounts-home'))
-        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 0)
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'UserA')  # Username capitalization was changed ...
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)  # ... but not OldUsername was created
+
+    def test_oldusername_username_unique_case_insensitiveness(self):
+        """Test that OldUsername.username is case insensitive at the DB level, and that we can't create objects
+        with different "capitalizations" of username property"""
+        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        OldUsername.objects.create(user=userA, username='newUserAUsername')
+        with self.assertRaises(IntegrityError):
+            OldUsername.objects.create(user=userA, username='NewUserAUsername')
 
 
 class UsernameValidatorTest(TestCase):

@@ -28,7 +28,7 @@ from django.urls import reverse
 from requests.exceptions import HTTPError
 from zenpy import Zenpy
 from zenpy.lib import api_objects as zendesk_api
-from zenpy.lib.exception import APIException as ZendeskAPIException
+from zenpy.lib.exception import APIException as ZendeskAPIException, ZenpyException
 
 from comments.models import Comment
 from support.forms import ContactForm
@@ -92,7 +92,7 @@ def send_to_zendesk(request_email, subject, message, user=None):
     )
     try:
         zenpy.tickets.create(ticket)
-    except (ZendeskAPIException, HTTPError) as e:
+    except (ZendeskAPIException, HTTPError, ZenpyException) as e:
         web_logger.info('Error creating Zendesk ticket: {}'.format(str(e)))
 
 

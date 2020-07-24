@@ -151,6 +151,15 @@ class AdminUserForm(UserChangeForm):
         raise ValidationError("This username is already taken or has been in used in the past by this or some other "
                               "user.")
 
+    def clean_email(self):
+        # Check that email is not being used by another user (case insensitive)
+        email = self.cleaned_data["email"]
+        try:
+            User.objects.exclude(pk=self.instance.id).get(email__iexact=email)
+        except User.DoesNotExist:
+            return email
+        raise ValidationError("This email is already being used by another user.")
+
 
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     search_fields = ('=username', '=email')

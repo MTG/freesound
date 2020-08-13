@@ -1,22 +1,24 @@
-import os, sys
-from time import time
+import json
 import logging
+import os
+import sys
 from django.conf import settings
+from time import time
 
 import clustering_settings as clust_settings
 
 # The following packages are only needed if the running process is configured to be a Celery worker. 
 # We avoid importing them in appservers to avoid having to install unneeded dependencies.
 if settings.IS_CELERY_WORKER:
-    from gaia_wrapper import GaiaWrapperClustering
+    import community as com
     import numpy as np
-    from sklearn import metrics
-    from sklearn.feature_selection import mutual_info_classif
-    import json
     import networkx as nx
     from networkx.readwrite import json_graph
-    import community as com
     from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
+    from sklearn import metrics
+    from sklearn.feature_selection import mutual_info_classif
+
+    from gaia_wrapper import GaiaWrapperClustering
 
 logger = logging.getLogger('clustering')
 

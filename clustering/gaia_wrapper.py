@@ -3,8 +3,8 @@ import os
 import sys
 import time
 import yaml
-from django.conf import settings
 
+from django.conf import settings
 from gaia2 import DataSet, View, DistanceFunctionFactory
 
 import clustering_settings as clust_settings
@@ -95,7 +95,7 @@ class GaiaWrapperClustering:
         """Returns the reference features for the given sounds that are used for evaluating the clustering performance.
 
         The reference features defined in the clustering settings file.
-        They tipically consists of features derived from the sounds' tags.
+        They typically consists of features derived from the sounds' tags.
 
         Args:
             sound_ids (List[str]): list containing the ids of the sounds we want the features.

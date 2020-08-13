@@ -24,8 +24,6 @@ def get_sound_ids_from_solr_query(query_params):
     Returns
         List[int]: list containing the ids of the retrieved sounds.
     """
-    current_page = 1
-
     # We set include_facets to False in order to reduce the amount of data that Solr will return.
     query_params.update({
         'current_page': 1,
@@ -33,7 +31,7 @@ def get_sound_ids_from_solr_query(query_params):
         'include_facets': False,
     })
     query = search_prepare_query(**query_params)
-    _, _, _, _, docs = perform_solr_query(query, current_page)
+    _, _, _, _, docs = perform_solr_query(query, query_params['current_page'])
 
     resultids = [d.get("id") for d in docs]
     return resultids

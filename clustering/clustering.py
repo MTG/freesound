@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from django.conf import settings
+import six
 from time import time
 
 import clustering_settings as clust_settings
@@ -57,11 +58,11 @@ class ClusteringEngine():
             Tuple(List[List[Float]], List[Int]): 2-element tuple containing a list of evaluation features 
                 and list of classes (clusters) idx.
         """
-        sound_ids_list, clusters = zip(*classes.items())
+        sound_ids_list, clusters = classes.keys(), classes.values()
         reference_features = self.gaia.return_sound_reference_features(sound_ids_list)
 
         # Remove sounds that are not in the gaia reference dataset
-        idx_to_remove = set([idx for idx, feature in enumerate(reference_features) if feature == None])
+        idx_to_remove = set([idx for idx, feature in enumerate(reference_features) if feature is None])
         reference_features_filtered = [f for idx, f in enumerate(reference_features) if idx not in idx_to_remove]
         clusters_filtered = [c for idx, c in enumerate(clusters) if idx not in idx_to_remove]
 
@@ -221,7 +222,11 @@ class ClusteringEngine():
                 'calinski_harabaz_score': ci,
                 'communities': communities
             }
-            json.dump(result, open('{}/{}.json'.format(clust_settings.SAVE_RESULTS_FOLDER, query_params[0]), 'w'))
+            with open(os.path.join(
+                clust_settings.SAVE_RESULTS_FOLDER, 
+                '{}.json'.format(query_params)
+            ), 'w') as f:
+                json.dump(result, f)
 
     def create_knn_graph(self, sound_ids_list, features=clust_settings.DEFAULT_FEATURES):
         """Creates a K-Nearest Neighbors Graph representation of the given sounds.
@@ -244,9 +249,7 @@ class ClusteringEngine():
         for sound_id in sound_ids_list:
             try:
                 nearest_neighbors = self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list, features=features)
-                # edges += [(sound_id, i[0]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE]
                 graph.add_edges_from([(sound_id, i[0]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE])
-                # graph.add_weighted_edges_from([(sound_id, i[0], 1/i[1]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE])
             except ValueError:  # node does not exist in Gaia dataset
                 graph.remove_node(sound_id)
 
@@ -282,11 +285,13 @@ class ClusteringEngine():
 
         # keep only k most weighted edges
         k = int(np.ceil(np.log2(len(graph.nodes))))
+        # we iterate through the node ids and get all its corresponding edges using graph[node]
+        # there seem to be no way to get node_id & edges in the for loop.
         for node in graph.nodes:
-            ordered_neighbors = sorted(list(graph[node].iteritems()), key=lambda x: x[1]['weight'], reverse=True)
+            ordered_neighbors = sorted(list(six.iteritems(graph[node])), key=lambda x: x[1]['weight'], reverse=True)
             try:
-                neighbors_to_remove = zip(*ordered_neighbors[k:])[0]
-                graph.remove_edges_from(zip([node]*len(neighbors_to_remove), neighbors_to_remove))
+                neighbors_to_remove = [neighbor_distance[0] for neighbor_distance in ordered_neighbors[k:]]
+                graph.remove_edges_from([(node, neighbor) for neighbor in neighbors_to_remove])
             except IndexError:
                 pass
 
@@ -312,7 +317,7 @@ class ClusteringEngine():
         # Community detection in the graph
         classes = com.best_partition(graph)
         num_communities = max(classes.values()) + 1
-        communities = [[key for key, value in classes.iteritems() if value==i] for i in range(num_communities)]
+        communities = [[key for key, value in six.iteritems(classes) if value == i] for i in range(num_communities)]
 
         # overall quality (modularity of the partition)
         modularity = com.modularity(classes, graph)
@@ -336,7 +341,6 @@ class ClusteringEngine():
         """ 
         communities = [list(community) for community in k_clique_communities(graph, k)]
         # communities = [list(community) for community in greedy_modularity_communities(graph)]
-        greedy_modularity_communities
         num_communities = len(communities)
         classes = {sound_id: cluster_id for cluster_id, cluster in enumerate(communities) for sound_id in cluster}
 

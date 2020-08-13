@@ -5,6 +5,7 @@ RUN apt-get update \
                        libqt4-dev \
                        libyaml-dev \
                        swig \
+                       libsndfile1-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Gaia - https://github.com/MTG/gaia

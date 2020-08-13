@@ -256,8 +256,8 @@ class SearchResultClustering(TestCase):
         # check cluster's content
         # 2 sounds per clusters
         # 3 most used tags in the cluster 'tag1 tag2 tag3'
-        # context variable cluster_id_num_results: [(<cluster_id>, <num_sounds>, <tags>, <ids_preview_urls>), ...]
-        self.assertEqual(resp.context['cluster_id_num_results'], [
+        # context variable cluster_id_num_results_tags_sound_examples: [(<cluster_id>, <num_sounds>, <tags>, <ids_preview_urls>), ...]
+        self.assertEqual(resp.context['cluster_id_num_results_tags_sound_examples'], [
             (0, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[:2]), 
             (1, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[2:])
         ])

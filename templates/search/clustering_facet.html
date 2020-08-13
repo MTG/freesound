@@ -1,5 +1,5 @@
 <ul>
-    {% for cluster_id, num_results, tags, sound_examples in cluster_id_num_results %}
+    {% for cluster_id, num_results, tags, sound_examples in cluster_id_num_results_tags_sound_examples %}
         <li class="facet_item clustering-facet" cluster-id={{cluster_id}}>
             {% for sound_id, sound_url in sound_examples %}
                 <span class="dummy-span-cluster-examples" id="c{{cluster_id}}-{{forloop.counter0}}" 

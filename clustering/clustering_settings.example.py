@@ -43,3 +43,9 @@ SAVE_RESULTS_FOLDER = None
 
 # Limit of distance when creating Nearest Neighbors graph
 MAX_NEIGHBORS_DISTANCE = 20
+
+# Number of sound examples extracted per cluster for cluster facet sound preview
+NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET = 7
+
+# Number of most common tags extracted per cluster for clustering facet name
+NUM_TAGS_SHOWN_PER_CLUSTER_FACET = 3

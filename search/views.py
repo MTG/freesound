@@ -39,7 +39,8 @@ from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
-from clustering.clustering_settings import DEFAULT_FEATURES
+from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
+    NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 
 search_logger = logging.getLogger("search")
 
@@ -206,12 +207,21 @@ def clustering_facet(request):
 
     # count 3 most occuring tags
     # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict 
-    cluster_most_occuring_tags = [' '.join(zip(*Counter(cluster_tags[cluster_id]).most_common(3))[0]) 
-                                  if len(cluster_tags[cluster_id])>0 else ''
-                                  for cluster_id in range(len(results))]
+    cluster_most_occuring_tags = [
+        [tag for tag, _ in Counter(cluster_tags[cluster_id]).most_common(NUM_TAGS_SHOWN_PER_CLUSTER_FACET)]
+        if cluster_tags[cluster_id] else []
+        for cluster_id in range(len(results))
+    ]
+    most_occuring_tags_formatted = [
+        ' '.join(most_occuring_tags) 
+        for most_occuring_tags in cluster_most_occuring_tags
+    ]
 
     # extract sound examples for each cluster
-    sound_ids_examples_per_cluster = [map(int, cluster_sound_ids[:7]) for cluster_sound_ids in results]
+    sound_ids_examples_per_cluster = [
+        map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET]) 
+        for cluster_sound_ids in results
+    ]
     sound_ids_examples = [item for sublist in sound_ids_examples_per_cluster for item in sublist]
     sound_urls = {
         sound.id: sound.locations()['preview']['LQ']['ogg']['url'] 
@@ -226,8 +236,12 @@ def clustering_facet(request):
     return render(request, 'search/clustering_facet.html', {
             'results': classes,
             'url_query_params_string': url_query_params_string,
-            'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster, 
-                                          cluster_most_occuring_tags, sound_url_examples_per_cluster),
+            'cluster_id_num_results_tags_sound_examples': zip(
+                range(num_clusters), 
+                num_sounds_per_cluster, 
+                most_occuring_tags_formatted, 
+                sound_url_examples_per_cluster
+            ),
     })
 
 

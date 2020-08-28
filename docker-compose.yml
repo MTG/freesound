@@ -72,12 +72,12 @@ services:
     
     similarity:
         build:
-            context: ./similarity
-            dockerfile: ../docker/Dockerfile.similarity
+            context: ./
+            dockerfile: ./docker/Dockerfile.similarity
         init: true
         command: python similarity_server.py
         volumes:
-            - ./similarity:/code
+            - .:/code
             - ./freesound-data/similarity_index:/freesound-data/similarity_index
             - ./freesound-data/analysis:/freesound-data/analysis
         ports:

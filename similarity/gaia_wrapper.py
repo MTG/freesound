@@ -28,6 +28,11 @@ from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point, Vari
 from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, \
     get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
 import similarity_settings as sim_settings
+
+# The import lines below allow importing 'create_directories' function from a module which is in the
+# parent directory of the similarity server code
+import sys
+sys.path.append('..')
 from utils.filesystem import create_directories
 
 logger = logging.getLogger('similarity')

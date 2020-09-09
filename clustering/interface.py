@@ -24,15 +24,14 @@ def get_sound_ids_from_solr_query(query_params):
     Returns
         List[int]: list containing the ids of the retrieved sounds.
     """
-    current_page = 1
-
-    # We set include_facets to False in order to reduce the amount of data that Solr will return
+    # We set include_facets to False in order to reduce the amount of data that Solr will return.
     query_params.update({
+        'current_page': 1,
         'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING,
-        'include_facets': False
+        'include_facets': False,
     })
     query = search_prepare_query(**query_params)
-    _, _, _, _, docs = perform_solr_query(query, current_page)
+    _, _, _, _, docs = perform_solr_query(query, query_params['current_page'])
 
     resultids = [d.get("id") for d in docs]
     return resultids
@@ -54,10 +53,15 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
         Dict: contains either the state of the clustering ('pending' or 'failed') or the resulting clustering classes 
             and the graph in node-link format suitable for JSON serialization.
     """
-    query_params, _, _ = search_prepare_parameters(request)
+    query_params, _, extra_vars = search_prepare_parameters(request)
+    # We change filter_query to filter_query_non_facets in order to ensure that the clustering is always
+    # done on the non faceted filtered results. Without that, people directly requesting a facet filtered
+    # page would have a clustering performed on filtered results.
+    query_params['filter_query'] = extra_vars['filter_query_non_facets']
 
     cache_key = 'cluster-results-{search_query}-{filter_query}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
-                '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params)
+                '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params) \
+                .replace(' ', '')
 
     cache_key += '-{}'.format(features)
 

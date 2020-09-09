@@ -38,10 +38,11 @@ from utils.search.search_general import search_prepare_sort, search_process_filt
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-from clustering.interface import cluster_sound_results
-from clustering.clustering_settings import DEFAULT_FEATURES
+from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
+from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
+    NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 
-logger = logging.getLogger("search")
+search_logger = logging.getLogger("search")
 
 
 def search(request):
@@ -74,11 +75,12 @@ def search(request):
         'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
         'current_page': query_params['current_page'],
         'url_query_params_string': url_query_params_string,
+        'cluster_id': extra_vars['cluster_id'],
     }
     
     tvars.update(advanced_search_params_dict)
 
-    logger.info(u'Search (%s)' % json.dumps({
+    search_logger.info(u'Search (%s)' % json.dumps({
         'ip': get_client_ip(request),
         'query': query_params['search_query'],
         'filter': query_params['filter_query'],
@@ -116,10 +118,10 @@ def search(request):
         })
 
     except SolrException as e:
-        logger.warning('Search error: query: %s error %s' % (query, e))
+        search_logger.warning('Search error: query: %s error %s' % (query, e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
-        logger.error('Could probably not connect to Solr - %s' % e)
+        search_logger.error('Could probably not connect to Solr - %s' % e)
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     # enables AJAX clustering call & html clustering facets rendering
@@ -174,13 +176,21 @@ def clustering_facet(request):
     if result['finished']:
         if result['result'] is not None:
             results = result['result']
-            num_clusters = len(results) + 1
+            num_clusters = len(results)
         else:
              return JsonResponse({'status': 'failed'}, safe=False)
     elif result['error']:
         return JsonResponse({'status': 'failed'}, safe=False)
     else:
         return JsonResponse({'status': 'pending'}, safe=False)
+
+    # check if facet filters are present in the search query
+    # if yes, filter sounds from clusters
+    query_params, _, _ = search_prepare_parameters(request)
+    if query_params['filter_query']:
+        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered] 
+                   for cluster in results]
 
     num_sounds_per_cluster = [len(cluster) for cluster in results]
     classes = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}
@@ -197,20 +207,41 @@ def clustering_facet(request):
 
     # count 3 most occuring tags
     # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict 
-    cluster_most_occuring_tags = [' '.join(zip(*Counter(cluster_tags[cluster_id]).most_common(3))[0]) 
-                                  for cluster_id in range(len(results))]
+    cluster_most_occuring_tags = [
+        [tag for tag, _ in Counter(cluster_tags[cluster_id]).most_common(NUM_TAGS_SHOWN_PER_CLUSTER_FACET)]
+        if cluster_tags[cluster_id] else []
+        for cluster_id in range(len(results))
+    ]
+    most_occuring_tags_formatted = [
+        ' '.join(most_occuring_tags) 
+        for most_occuring_tags in cluster_most_occuring_tags
+    ]
+
+    # extract sound examples for each cluster
+    sound_ids_examples_per_cluster = [
+        map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET]) 
+        for cluster_sound_ids in results
+    ]
+    sound_ids_examples = [item for sublist in sound_ids_examples_per_cluster for item in sublist]
+    sound_urls = {
+        sound.id: sound.locations()['preview']['LQ']['ogg']['url'] 
+            for sound in sound_instances 
+            if sound.id in sound_ids_examples
+    }
+    sound_url_examples_per_cluster = [
+        [(sound_id, sound_urls[sound_id]) for sound_id in cluster_sound_ids] 
+            for cluster_sound_ids in sound_ids_examples_per_cluster
+    ]
 
     return render(request, 'search/clustering_facet.html', {
             'results': classes,
             'url_query_params_string': url_query_params_string,
-            'cluster_id_num_results': zip(range(num_clusters), num_sounds_per_cluster, cluster_most_occuring_tags),
-    })
-
-
-def cluster_visualisation(request):
-    url_query_params_string = request.META['QUERY_STRING']
-    return render(request, 'search/clustering_graph_visualisation.html', {
-            'url_query_params_string': url_query_params_string,
+            'cluster_id_num_results_tags_sound_examples': zip(
+                range(num_clusters), 
+                num_sounds_per_cluster, 
+                most_occuring_tags_formatted, 
+                sound_url_examples_per_cluster
+            ),
     })
 
 
@@ -220,18 +251,36 @@ def clustered_graph(request):
     result = cluster_sound_results(request, features=DEFAULT_FEATURES)
     graph = result['graph']
 
+    # check if facet filters are present in the search query
+    # if yes, filter nodes and links from the graph
+    query_params, _, _ = search_prepare_parameters(request)
+    if query_params['filter_query']:
+        nodes = graph['nodes']
+        links = graph['links']
+        graph['nodes'] = []
+        graph['links'] = []
+        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        for node in nodes:
+            if int(node['id']) in sound_ids_filtered:
+                graph['nodes'].append(node)
+        for link in links:
+            if int(link['source']) in sound_ids_filtered and int(link['target']) in sound_ids_filtered:
+                graph['links'].append(link)
+
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
 
     sound_metadata = {s.id:(s.locations()['preview']['LQ']['ogg']['url'],
                             s.original_filename,
                             ' '.join(s.tag_array),
-                            s.get_absolute_url()) for s in results}
+                            s.get_absolute_url(),
+                            s.locations()['display']['wave']['M']['url']) for s in results}
 
     for node in graph['nodes']:
         node['url'] = sound_metadata[int(node['id'])][0]
         node['name'] = sound_metadata[int(node['id'])][1]
         node['tags'] = sound_metadata[int(node['id'])][2]
         node['sound_page_url'] = sound_metadata[int(node['id'])][3]
+        node['image_url'] = sound_metadata[int(node['id'])][4]
 
     return JsonResponse(json.dumps(graph), safe=False)
 
@@ -325,11 +374,11 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SolrException as e:
-            logger.warning("search error: query: %s error %s" % (query, e))
+            search_logger.warning("search error: query: %s error %s" % (query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            logger.error("Could probably not connect to Solr - %s" % e)
+            search_logger.error("Could probably not connect to Solr - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 

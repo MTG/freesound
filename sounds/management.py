@@ -24,6 +24,8 @@ from django.db.models.signals import post_syncdb
 from django.dispatch import receiver
 from django.conf import settings
 
+from utils.filesystem import create_directories
+
 
 @receiver(post_syncdb)
 def create_locations(sender, **kwargs):
@@ -35,11 +37,6 @@ def create_locations(sender, **kwargs):
                    settings.DISPLAYS_PATH,
                    settings.FILE_UPLOAD_TEMP_DIR]:
         if not os.path.isdir(folder):
-            try:
-                os.mkdir(folder)
-                print ("Successfullly created the folder: '%s'" % folder)
-            except Exception as e:
-                print ("Problem creating this folder: '%s', %s"
-                    % (folder, e))
+            create_directories(folder, exist_ok=True)
         else:
             print ("Folder: '%s' already exists" % folder)

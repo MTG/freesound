@@ -1,8 +1,18 @@
 <ul>
-    {% for cluster_id, num_results, tags in cluster_id_num_results %}
-        <li class="facet_item">
+    {% for cluster_id, num_results, tags, sound_examples in cluster_id_num_results_tags_sound_examples %}
+        <li class="facet_item clustering-facet" cluster-id={{cluster_id}}>
+            {% for sound_id, sound_url in sound_examples %}
+                <span class="dummy-span-cluster-examples" id="c{{cluster_id}}-{{forloop.counter0}}" 
+                    sound-id="{{sound_id}}" sound-url="{{sound_url}}"></span>
+            {% endfor %}
             <a href="{% url 'sounds-search' %}?{{url_query_params_string | safe}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
-            </a> ({{tags}}, {{num_results}})
+            </a> ({{num_results}}) 
+            <span>
+            &nbsp;<img class="cluster-audio-examples" src="{{media_url}}images/fugue-icons/icons/headphone.png" width="16" height="16" alt="listen" title="click to skip" />
+            &nbsp;<img class="cluster-link-button" cluster-id="{{cluster_id}}" 
+                src="{{media_url}}images/fugue-icons/icons/external.png" width="16" height="16" alt="listen" title=""
+            /></span>
+            <div>{{tags}}</div>
         </li>
     {% endfor %}
 </ul>

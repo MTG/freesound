@@ -26,12 +26,12 @@ from urlparse import parse_qs
 from django.conf import settings
 from django.contrib.auth.models import User
 from donations.models import Donation, DonationCampaign
-from django.core.management.base import BaseCommand
+from utils.management_commands import LoggingBaseCommand
 
-logger = logging.getLogger("web")
+commands_logger = logging.getLogger('commands')
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = 'Synchronize Paypal donations'
 
     def add_arguments(self, parser):
@@ -43,8 +43,9 @@ class Command(BaseCommand):
             help='Use this option to get the donations older than 1 day.')
 
     def handle(self, **options):
+        self.log_start()
+
         days = options['days']
-        logger.info("Synchronizing donations from paypal")
         n_donations_created = 0
 
         td = datetime.timedelta(days=days)
@@ -57,7 +58,7 @@ class Command(BaseCommand):
             'STARTDATE': start,
             'ENDDATE': start + one_day,
             'VERSION': 94,
-            'USER' : settings.PAYPAL_USERNAME,
+            'USER': settings.PAYPAL_USERNAME,
             'PWD': settings.PAYPAL_PASSWORD,
             'SIGNATURE': settings.PAYPAL_SIGNATURE
         }
@@ -102,9 +103,10 @@ class Command(BaseCommand):
                             donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
                             if 'user' in donation_data:
                                 donation_data['user'] = donation_data['user'].username  # Only log username in graylog
-                            logger.info('Recevied donation (%s)' % json.dumps(donation_data))
+                            commands_logger.info('Created donation object (%s)' % json.dumps(donation_data))
 
             start = start + one_day
             params['STARTDATE'] = start
             params['ENDDATE'] = start + one_day
-        logger.info("Synchronizing donations from paypal ended (%i objects created)" % n_donations_created)
+
+        self.log_end({'n_donation_objects_created': n_donations_created})

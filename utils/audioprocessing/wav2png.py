@@ -20,72 +20,70 @@
 #     See AUTHORS file.
 #
 
-from processing import create_wave_images, AudioProcessingException
+from __future__ import print_function, absolute_import
+
+import argparse
+
+from utils.audioprocessing.processing import create_wave_images, AudioProcessingException
+
 import optparse
 import sys
 
-parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")
-parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string",
-                  help="output waveform image (default input filename + _w.png)")
-parser.add_option("-s", "--specout", action="store", dest="output_filename_s", type="string",
-                  help="output spectrogram image (default input filename + _s.jpg)")
-parser.add_option("-w", "--width", action="store", dest="image_width", type="int",
-                  help="image width in pixels (default %default)")
-parser.add_option("-h", "--height", action="store", dest="image_height", type="int",
-                  help="image height in pixels (default %default)")
-parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int",
-                  help="fft size, power of 2 for increased performance (default %default)")
-parser.add_option("-c", "--color_scheme", action="store", dest="color_scheme", type="string",
-                  help="name of the color scheme to use (one of: 'Freesound2' (default), 'FreesoundBeastWhoosh', "
-                       "'Cyberpunk', 'Rainforest')")
-parser.add_option("-p", "--profile", action="store_true", dest="profile",
-                  help="run profiler and output profiling information")
 
-parser.set_defaults(output_filename_w=None, output_filename_s=None, image_width=500, image_height=171, fft_size=2048)
-
-(options, args) = parser.parse_args()
-
-if len(args) == 0:
-    parser.print_help()
-    parser.error("not enough arguments")
-   
-    if len(args) > 1 and (options.output_filename_w != None or options.output_filename_s != None):
-        parser.error("when processing multiple files you can't define the output filename!")
+def progress_callback(position, width):
+    percentage = (position*100)/width
+    if position % (width / 10) == 0:
+        sys.stdout.write(str(percentage) + "% ")
+        sys.stdout.flush()
 
 
-def progress_callback(percentage):
-    sys.stdout.write(str(percentage) + "% ")
-    sys.stdout.flush()
-   
+def main(args):
+    # process all files so the user can use wildcards like *.wav
+    for input_file in args.files:
 
-# process all files so the user can use wildcards like *.wav
-for input_file in args:
-    
-    output_file_w = options.output_filename_w or input_file + "_w.png"
-    output_file_s = options.output_filename_s or input_file + "_s.jpg"
-    
-    args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size,
-            progress_callback, options.color_scheme)
+        output_file_w = input_file + "_w.png"
+        output_file_s = input_file + "_s.jpg"
 
-    print "processing file %s:\n\t" % input_file,
+        this_args = (input_file, output_file_w, output_file_s, args.width, args.height, args.fft_size,
+                     progress_callback, args.color_scheme)
 
-    if not options.profile:
-        try:
-            create_wave_images(*args)
-        except AudioProcessingException as e:
-            print "Error running wav2png: ", e
-    else:
-        from hotshot import stats
-        import hotshot
+        print("processing file %s:\n\t" % input_file, end="")
 
-        prof = hotshot.Profile("stats")
-        prof.runcall(create_wave_images, *args)
-        prof.close()
-        
-        print "\n---------- profiling information ----------\n"
-        s = stats.load("stats")
-        s.strip_dirs()
-        s.sort_stats("time")
-        s.print_stats(30)
-    
-    print
+        if not args.profile:
+            try:
+                create_wave_images(*this_args)
+            except AudioProcessingException as e:
+                print("Error running wav2png: %s" % e)
+        else:
+            from hotshot import stats
+            import hotshot
+
+            prof = hotshot.Profile("stats")
+            prof.runcall(create_wave_images, *this_args)
+            prof.close()
+
+            print("\n---------- profiling information ----------\n")
+            s = stats.load("stats")
+            s.strip_dirs()
+            s.sort_stats("time")
+            s.print_stats(30)
+        print("")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("files", help="files to process", nargs="+")
+    parser.add_argument("-w", "--width", type=int, default=500, dest="width",
+                        help="image width in pixels")
+    parser.add_argument("-H", "--height", type=int, default=171, dest="height",
+                        help="image height in pixels")
+    parser.add_argument("-f", "--fft", type=int, default=2048, dest="fft_size",
+                        help="fft size, power of 2 for increased performance")
+    parser.add_argument("-c", "--color_scheme", type=str, default='Freesound2', dest="color_scheme",
+                        help="name of the color scheme to use (one of: 'Freesound2' (default), 'FreesoundBeastWhoosh', "
+                             "'Cyberpunk', 'Rainforest')")
+    parser.add_argument("-p", "--profile", action="store_true",
+                        help="run profiler and output profiling information")
+
+    args = parser.parse_args()
+    main(args)

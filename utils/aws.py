@@ -22,9 +22,6 @@ from django.conf import settings
 
 from boto3 import client
 from botocore.exceptions import EndpointConnectionError
-import logging
-
-logger_console = logging.getLogger('console')
 
 
 class AwsCredentialsNotConfigured(Exception):

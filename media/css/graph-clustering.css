@@ -1,0 +1,149 @@
+#h1 {
+    padding: 3px;
+    font-size: 20px;
+    margin: 5px 0;
+    font-weight: normal;
+    font-family: "Times New Roman", Times, serif;
+    position: relative;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.graph-node-card {
+    overflow-wrap: break-word;
+    width: 220px;
+    text-align: center;
+    border-style: solid;
+    border-color: rgba(37, 37, 37, 0.3);
+    background-color: rgba(82, 82, 82, 0.4);
+    font-family: Verdana, sans-serif;
+}
+
+.graph-node-card-header {
+    background-color: rgba(156, 156, 156, 0.4);
+    border-radius: 2px;
+    padding: 3px;
+    font-size: 16;
+    max-height: 40px;
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+
+.graph-node-card-content {
+    background-color: rgba(116, 116, 116, 0.4);
+    border-radius: 2px;
+    padding: 3px;
+    max-height: 75px;
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    font-size: 14;
+}
+
+.graph-node-card-image {
+    border-radius: 2px;
+    padding: 10px;
+    height: 70px;
+}
+
+.graph-node-card-image img {
+    position: relative;
+    z-index: 100;
+}
+
+.graph-node-card .clustering-loader {
+    position: absolute;
+    margin-top: 26px;
+}
+
+#cluster-labels {
+    float: right;
+    margin-right: 20px;
+    z-index: 10;
+    position: relative;
+    pointer-events: none;
+}
+
+#cluster-labels span {
+    pointer-events: auto;  
+}
+
+#cluster-labels li {
+    margin-bottom: 5px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.label-over {
+    background-color: rgba(218, 91, 32, 0.1);
+}
+
+#h2 {
+    padding: 3px;
+    font-size: 18px;
+    margin: 2px 0;
+    font-weight: normal;
+    font-family: "Times New Roman", Times, serif;
+    position: relative;
+    z-index: 10;
+    float: left;
+}
+
+.close-bookmark {
+    font-weight: bold;
+    font-size: 13px;
+    font-family: Verdana, sans-serif;
+    color: #AB4646;
+    cursor: pointer; 
+}
+
+#clustering-graph {
+    overflow: hidden;
+    width: 80%;
+    margin: auto;
+}
+
+#clustering-graph .modal-header {
+    margin-bottom: 0px;
+}
+
+#chart-container {
+    background-color: rgba(128, 128, 128, 0.1);
+    width: 100%;
+    height: 600px;
+    position: relative;
+}
+
+#graph {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.clustering-facet{
+    margin: 5px;
+}
+
+.clustering-loader {
+    border: 4px solid #f3f3f3; /* Light grey */
+    border-top: 4px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    animation: spin 2s linear infinite;
+    display: inline-block;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+#graph-loader {
+    border: 8px solid #ffffff; /* white */
+    border-top: 8px solid #3498db; /* Blue */
+    width: 24px;
+    height: 24px;
+    position: relative;
+    left: 48%;
+    top: 40%;
+  }

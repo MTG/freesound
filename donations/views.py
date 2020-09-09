@@ -1,24 +1,25 @@
-import json
 import base64
-import requests
-import urlparse
+import json
 import logging
+import urlparse
+
+import requests
 import stripe
-from requests.adapters import HTTPAdapter
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.contrib import messages
-from django.conf import settings
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
-from django.contrib.sites.models import Site
-from django.contrib.auth.models import User
-from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
-from models import Donation, DonationCampaign
+from django.views.generic import ListView
+
 from forms import DonateForm
+from models import Donation, DonationCampaign
 from utils.mail import send_mail_template
 
-logger = logging.getLogger('web')
+web_logger = logging.getLogger('web')
 
 
 def _save_donation(encoded_data, email, amount, currency, transaction_id, source):
@@ -57,7 +58,7 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
     if created:
         email_to = None if user is not None else email
         send_mail_template(
-                u'Thanks for your donation!',
+                settings.EMAIL_SUBJECT_DONATION_THANK_YOU,
                 'donations/email_donation.txt', {
                     'user': user,
                     'amount': amount,
@@ -70,7 +71,7 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
         del log_data['user']  # Don't want to serialize user
         del log_data['campaign']  # Don't want to serialize campaign
         log_data['amount_float'] = float(log_data['amount'])
-        logger.info('Recevied donation (%s)' % json.dumps(log_data))
+        web_logger.info('Recevied donation (%s)' % json.dumps(log_data))
     return True
 
 
@@ -143,7 +144,7 @@ def donation_complete_paypal(request):
         try:
             req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
         except requests.exceptions.Timeout:
-            logger.error("Can't verify donations information with paypal")
+            web_logger.error("Can't verify donations information with paypal")
             return HttpResponse("FAIL")
 
         if req.text == 'VERIFIED':

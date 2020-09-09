@@ -78,9 +78,6 @@ class TestAPiViews(TestCase):
 
     def test_basic_user_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
-        # 200 response on register page
-        resp = self.client.get(reverse('apiv2-registration'), secure=True)
-        self.assertEqual(resp.status_code, 200)
 
         # 200 response on login page
         resp = self.client.get(reverse('api-login'), secure=True)

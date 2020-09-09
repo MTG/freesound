@@ -106,7 +106,6 @@ urlpatterns = [
 
     url(r'^search/$', search.views.search, name='sounds-search'),
     url(r'^clustering_facet/$', search.views.clustering_facet, name='clustering-facet'),
-    url(r'^clustering_graph_visualisation/$', search.views.cluster_visualisation, name='clustering-graph-visualisation'),
     url(r'^clustered_graph/$', search.views.clustered_graph, name='clustered-graph-json'),
     url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
 

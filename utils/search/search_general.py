@@ -35,7 +35,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrExce
 from utils.text import remove_control_chars
 from utils.logging_filters import get_client_ip
 
-logger = logging.getLogger("search")
+search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
 
 
@@ -120,6 +120,7 @@ def split_filter_query(filter_query, cluster_id):
                     filter = {
                         'name': filter_display,
                         'remove_url': filter_query.replace(filter_str, ''),
+                        'cluster_id': cluster_id,
                     }
                     filter_query_split.append(filter)
 
@@ -128,6 +129,7 @@ def split_filter_query(filter_query, cluster_id):
         filter_query_split.append({
             'name': "Cluster #" + cluster_id,
             'remove_url': filter_query,
+            'cluster_id': '',
         })
 
     return filter_query_split
@@ -150,7 +152,7 @@ def search_prepare_parameters(request):
         query, the advanced search params to be logged and some extra parameters needed in the search view. 
     """
     search_query = request.GET.get("q", "")
-    filter_query = request.GET.get("f", "")
+    filter_query = request.GET.get("f", "").strip().lstrip()
     cluster_id = request.GET.get('cluster_id', "")
 
     try:
@@ -248,6 +250,8 @@ def search_prepare_parameters(request):
         'sort_unformatted': sort_unformatted,
         'advanced': advanced,
         'sort_options': sort_options,
+        'cluster_id': cluster_id,
+        'filter_query_non_facets': remove_facet_filters(filter_query),
     }
 
     return query_params, advanced_search_params_dict, extra_vars
@@ -318,18 +322,23 @@ def search_prepare_query(search_query,
     filter_query = search_process_filter(filter_query)
 
     # Process filter for clustering.
-    # When applying a cluster facet filter, the sounds in the clusters already have been filtered by other 
-    # present filter. So there is no need to keep in filter_query all the other filters.
-    # When a cluster filter is applied and the user applies another facet filter, it simply removes the cluster
-    # filter and re-computes the clustering for the new filters (this logic is done with the facet 
-    # remove_url links).
+    # When applying clustering facet, a in_ids argument is passed. We check if fliters exsit and in this case 
+    # add a AND rule with the ids in order to combine facet and cluster facets. If no filter exist, we just 
+    # add the filter by id.
     if in_ids:
-        filter_query = ''
-        if len(in_ids) == 1:
-            filter_query += 'id:{}'.format(in_ids[0])
+        if filter_query:
+            if len(in_ids) == 1:
+                filter_query += ' AND id:{}'.format(in_ids[0])
+            else:
+                filter_query += ' AND (id:'
+                filter_query += ' OR id:'.join(in_ids)
+                filter_query += ')'
         else:
-            filter_query += 'id:'
-            filter_query += ' OR id:'.join(in_ids)
+            if len(in_ids) == 1:
+                filter_query += 'id:{}'.format(in_ids[0])
+            else:
+                filter_query += 'id:'
+                filter_query += ' OR id:'.join(in_ids)
 
     # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
@@ -361,6 +370,40 @@ def search_prepare_query(search_query,
             group_num_groups=True,
             group_cache_percent=0)
     return query
+
+
+def remove_facet_filters(filter_query):
+    """Process query filter string to keep only non facet filters
+
+    Useful for being able to combine classic facet filters and clustering.
+
+    Args:
+        filter_query (str): query filter string.
+    
+    Returns: 
+        filter_query_processed (str): query filter string with only non facet filters.
+        has_filter (bool): boolean indicating if there exist facet filters in the processed string.
+    """
+    facet_filter_strings = (
+        "samplerate", 
+        "grouping_pack", 
+        "username", 
+        "tag", 
+        "bitrate", 
+        "bitdepth", 
+        "type", 
+        "channels", 
+        "license",
+    )
+
+    filters_split = re.findall(r'[\w-]+:\"[^\"]+', filter_query)
+    for filter_string in filters_split:
+        if filter_string.split(":")[0].replace(' ', '') in facet_filter_strings:
+            filter_query = filter_query.replace(filter_string, '')
+
+    filter_query = filter_query.strip('" ').lstrip('" ')
+
+    return filter_query
 
 
 def perform_solr_query(q, current_page):
@@ -432,7 +475,7 @@ def add_sounds_to_solr(sounds):
     solr = Solr(settings.SOLR_URL)
     documents = [convert_to_solr_document(s) for s in sounds]
     console_logger.info("Adding %d sounds to solr index" % len(documents))
-    logger.info("Adding %d sounds to solr index" % len(documents))
+    search_logger.info("Adding %d sounds to solr index" % len(documents))
     solr.add(documents)
 
 
@@ -471,7 +514,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=Fal
 
 
 def get_all_sound_ids_from_solr(limit=False):
-    logger.info("getting all sound ids from solr.")
+    search_logger.info("getting all sound ids from solr.")
     if not limit:
         limit = 99999999999999
     solr = Solr(settings.SOLR_URL)
@@ -521,11 +564,11 @@ def get_random_sound_from_solr():
 
 
 def delete_sound_from_solr(sound_id):
-    logger.info("deleting sound with id %d" % sound_id)
+    search_logger.info("deleting sound with id %d" % sound_id)
     try:
         Solr(settings.SOLR_URL).delete_by_id(sound_id)
     except (SolrException, socket.error) as e:
-        logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
+        search_logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
 
 
 def delete_sounds_from_solr(sound_ids):
@@ -533,11 +576,14 @@ def delete_sounds_from_solr(sound_ids):
     for count, i in enumerate(range(0, len(sound_ids), solr_max_boolean_clause)):
         range_ids = sound_ids[i:i+solr_max_boolean_clause]
         try:
-            logger.info("deleting %i sounds from solr [%i of %i, %i sounds]" %
-                        (len(sound_ids), count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
-                         len(range_ids)))
+            search_logger.info(
+                "deleting %i sounds from solr [%i of %i, %i sounds]" %
+                (len(sound_ids),
+                 count + 1,
+                 int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
+                 len(range_ids)))
             sound_ids_query = ' OR '.join(['id:{0}'.format(sid) for sid in range_ids])
             Solr(settings.SOLR_URL).delete_by_query(sound_ids_query)
         except (SolrException, socket.error) as e:
-            logger.error('could not delete solr sounds chunk %i of %i' %
-                         (count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause))))
+            search_logger.error('could not delete solr sounds chunk %i of %i' %
+                                (count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause))))

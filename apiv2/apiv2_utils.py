@@ -46,12 +46,13 @@ from apiv2.exceptions import RequiresHttpsException, UnauthorizedException, Serv
 from examples import examples
 from search.views import search_prepare_query
 from similarity.client import SimilarityException
+from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
-logger_error = logging.getLogger("api_errors")
+error_logger = logging.getLogger("api_errors")
 
 
 ##########################################
@@ -74,7 +75,7 @@ class FsClientIdGenerator(BaseHashGenerator):
 def get_view_description(cls, html=False):
     description = ''
     if getattr(cls, 'get_description', None):
-        cache_key = cls.get_view_name()
+        cache_key = create_hash(cls.get_view_name(), add_secret=False, limit=32)
         cached_description = cache.get(cache_key)
         if not cached_description:
             description = cls.get_description()

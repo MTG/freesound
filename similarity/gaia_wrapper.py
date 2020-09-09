@@ -28,6 +28,7 @@ from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point, Vari
 from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, \
     get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
 import similarity_settings as sim_settings
+from utils.filesystem import create_directories
 
 logger = logging.getLogger('similarity')
 
@@ -63,8 +64,7 @@ class GaiaWrapper:
         therefore this function does not prepare or normalize loaded datasets.
         """
 
-        if not os.path.exists(sim_settings.INDEX_DIR):
-            os.makedirs(sim_settings.INDEX_DIR)
+        create_directories(sim_settings.INDEX_DIR, exist_ok=True)
 
         # load original dataset
         if os.path.exists(self.original_dataset_path):
@@ -514,8 +514,8 @@ class GaiaWrapper:
                     target_file_parsing_type = 'mapPoint'
 
                 except Exception as e:
-                    logger.info('Unable to create gaia point from uploaded file (%s). '
-                                'Trying adding descriptors one by one.' % e)
+                    logger.error('Unable to create gaia point from uploaded file (%s). '
+                                 'Trying adding descriptors one by one.' % e)
 
                     # If does not work load descriptors one by one
                     try:
@@ -556,8 +556,8 @@ class GaiaWrapper:
                         target_file_parsing_type = 'walkDict'
 
                     except Exception as e:
-                        logger.info('Unable to create gaia point from uploaded file and adding descriptors one by '
-                                    'one (%s)' % e)
+                        logger.error('Unable to create gaia point from uploaded file and adding descriptors one by '
+                                     'one (%s)' % e)
                         return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the '
                                                          'file does not have the required layout. Are you using the '
                                                          'correct version of Essentia\'s Freesound extractor?',

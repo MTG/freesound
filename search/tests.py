@@ -232,10 +232,15 @@ class SearchResultClustering(TestCase):
     fixtures = ['licenses']
 
     def setUp(self):
-        create_user_and_sounds(num_sounds=4, tags='tag1, tag2, tag3')
-        sound_ids = list(Sound.objects.values_list('id', flat=True))
+        _, _, sounds = create_user_and_sounds(num_sounds=4, tags='tag1, tag2, tag3')
+        sound_ids = []
+        sound_id_preview_urls = []
+        for sound in sounds:
+            sound_ids.append(str(sound.id))
+            sound_id_preview_urls.append((sound.id, sound.locations()['preview']['LQ']['ogg']['url']))
 
-        self.successful_clustering_results = return_successful_clustering_results(*map(str, sound_ids))
+        self.sound_id_preview_urls = sound_id_preview_urls
+        self.successful_clustering_results = return_successful_clustering_results(*sound_ids)
         self.pending_clustering_results = pending_clustering_results
         self.failed_clustering_results = failed_clustering_results
 
@@ -251,9 +256,11 @@ class SearchResultClustering(TestCase):
         # check cluster's content
         # 2 sounds per clusters
         # 3 most used tags in the cluster 'tag1 tag2 tag3'
-        # context variable cluster_id_num_results: [(<cluster_id>, <num_sounds>, <tags>), ...]
-        self.assertEqual(resp.context['cluster_id_num_results'], 
-            [(0, 2, u'tag1 tag2 tag3'), (1, 2, u'tag1 tag2 tag3')])
+        # context variable cluster_id_num_results_tags_sound_examples: [(<cluster_id>, <num_sounds>, <tags>, <ids_preview_urls>), ...]
+        self.assertEqual(resp.context['cluster_id_num_results_tags_sound_examples'], [
+            (0, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[:2]), 
+            (1, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[2:])
+        ])
 
     @mock.patch('search.views.cluster_sound_results')
     def test_pending_search_result_clustering_view(self, cluster_sound_results):

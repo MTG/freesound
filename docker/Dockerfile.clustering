@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir -r requirements_clustering.txt
 
 RUN git clone https://github.com/facebookresearch/faiss.git /tmp/faiss \
     && cd /tmp/faiss \
-    && git checkout v1.5.3 \
+    && git checkout v1.6.3 \
     && ./configure --without-cuda \
     && sed -i "s|-I/usr/local/include/python2.7 |-I/usr/include/python2.7 |g" makefile.inc \
     && make \

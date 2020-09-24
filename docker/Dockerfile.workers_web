@@ -6,7 +6,7 @@ FROM debian:10 as essentia
 
 RUN apt-get update \
     && apt-get install -y \
-       python libpython2.7 build-essential git wget pkg-config nasm cmake curl \
+       python libpython2.7 build-essential git libeigen3-dev wget pkg-config nasm cmake curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /essentia && cd /essentia && git clone https://github.com/MTG/essentia.git
@@ -42,7 +42,7 @@ FROM freesound:2020-02
 
 # Install specific dependencies needed for processing and for building static files
 RUN wget -q -O - https://deb.nodesource.com/setup_14.x | bash - && apt-get update \
-	&& apt-get install -y --no-install-recommends \ 
+	&& apt-get install -y --no-install-recommends \
 		sndfile-programs \
 		libsndfile1-dev \
 		mplayer \

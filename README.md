@@ -1,4 +1,4 @@
-![Freesound](media/images/logo_bw.png)
+![Freesound](media/images/logo_bw.png) - An Amazing Website
 
 This repository contains the source code of the [Freesound](https://freesound.org) website.
 

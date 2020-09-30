@@ -2,14 +2,14 @@
 
 This repository contains the source code of the [Freesound](https://freesound.org) website.
 
-Freesound is a project by the [Music Technology Group](http://www.mtg.upf.edu) (MTG), [Universitat Pompeu Fabra](http://upf.edu) (UPF).
+Freesound is a project by the [Music Technology Group](http://www.mtg.upf.edu) (MTG) and [Universitat Pompeu Fabra](http://upf.edu) (UPF).
 
 [![Build Status](https://travis-ci.org/MTG/freesound.svg?branch=master)](https://travis-ci.org/MTG/freesound)
 
 
 ## License
 
-All the source code in this repository is licensed under the GNU Affero General Public License v3. Some of the dependencies might have their own licenses. See the [_LICENSE](https://github.com/MTG/freesound/tree/master/_LICENSE) folder for more details.
+All the source code in this repository is licensed under the GNU Affero General Public License v3. Some of the dependencies might have their own licenses. For more details see the [_LICENSE](https://github.com/MTG/freesound/tree/master/_LICENSE) folder 
 
 
 ## Authors

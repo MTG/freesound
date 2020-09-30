@@ -6,7 +6,7 @@ Freesound is a project by the [Music Technology Group](http://www.mtg.upf.edu) (
 
 [![Build Status](https://travis-ci.org/MTG/freesound.svg?branch=master)](https://travis-ci.org/MTG/freesound)
 
-
+Freesound- a free sound website
 ## License
 
 All the source code in this repository is licensed under the GNU Affero General Public License v3. Some of the dependencies might have their own licenses. See the [_LICENSE](https://github.com/MTG/freesound/tree/master/_LICENSE) folder for more details.

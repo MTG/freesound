@@ -31,7 +31,7 @@ Below are instructions for setting up a local Freesound installation for develop
        git clone git@github.com:MTG/freesound.git
        cd freesound
 
-2. Create a directory named `freesound-data` inside the repository folder
+2. Create a directory name `freesound-data` inside the repository folder
 
        mkdir freesound-data
 
@@ -68,7 +68,7 @@ Below are instructions for setting up a local Freesound installation for develop
        docker-compose up -d db
        cat /path/to/freesound/development/db/dump.sql | docker-compose run --rm db psql -h db -U freesound  -d freesound
 
-10. Update database by running Django migrations
+10. Update Database by Running Django Migrations
 
         docker-compose run --rm web python manage.py migrate
 

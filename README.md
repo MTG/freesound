@@ -24,7 +24,7 @@ Freesound is composed of a number of different services which can be run and orc
 Below are instructions for setting up a local Freesound installation for development. It is assumed that you have a working Docker installation.
 
 
-### Setting up Freesound for development in 13 easy steps
+### Setting up Freesound for development in just 13 easy steps :-
 
 1. Clone source code repository
     

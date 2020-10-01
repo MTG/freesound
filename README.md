@@ -31,7 +31,7 @@ Below are instructions for setting up a local Freesound installation for develop
        git clone git@github.com:MTG/freesound.git
        cd freesound
 
-2. Create a directory named `freesound-data` inside the repository folder
+2. And then Create a directory named `freesound-data` inside the repository folder
 
        mkdir freesound-data
 
@@ -50,7 +50,7 @@ Below are instructions for setting up a local Freesound installation for develop
        cp freesound/local_settings.example.py freesound/local_settings.py
        echo FS_USER_ID_FROM_ENV=$(id -u) > .env
 
-6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `freesound/local_settings.py` file (check `settings.py` to know the config parameter names that you need to fill in):
+6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `freesound/local_settings.py` file (check `settings.py` to know the configuration parameter names that you need to fill in):
 
    * Mapbox
    * Recaptcha 

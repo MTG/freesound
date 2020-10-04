@@ -13,11 +13,14 @@ All the source code in this repository is licensed under the GNU Affero General 
 
 
 ## Authors
+## Writer
 
 For a list of authors please check out the [contributors](https://github.com/MTG/freesound/graphs/contributors) page.
 
 
 ## Development
+
+## Development Or Implementation
 
 Freesound is composed of a number of different services which can be run and orchestrated using Docker. The main service is provided by the `web` container which runs the Freesound Django application. Check out [this blog post](https://opensource.creativecommons.org/blog/entries/freesound-intro/) for some information about the Freesound technology stack. If you're going to do development on Freesound, please check the [DEVELOPERS](https://github.com/MTG/freesound/blob/master/DEVELOPERS.md) file for some guidelines.
 
@@ -25,6 +28,8 @@ Below are instructions for setting up a local Freesound installation for develop
 
 
 ### Setting up Freesound for development in 13 easy steps
+
+### 13 easy ways to Freesound SetUp
 
 1. Clone source code repository
     

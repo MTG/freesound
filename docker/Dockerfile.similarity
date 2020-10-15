@@ -19,9 +19,9 @@ RUN git clone https://github.com/MTG/gaia.git /tmp/gaia \
 RUN mkdir /code
 RUN mkdir /code/similarity
 RUN mkdir /gaia_index
-WORKDIR /code/similarity
+WORKDIR /code/
 
 COPY --chown=fsweb:fsweb similarity/requirements.txt /code/similarity/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r similarity/requirements.txt
 
 COPY --chown=fsweb:fsweb . /code

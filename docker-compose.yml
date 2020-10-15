@@ -75,7 +75,7 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.similarity
         init: true
-        command: python similarity_server.py
+        command: python -m similarity.similarity_server
         volumes:
             - .:/code
             - ./freesound-data/similarity_index:/freesound-data/similarity_index

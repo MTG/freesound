@@ -18,16 +18,23 @@
 #     See AUTHORS file.
 #
 
+import logging
+
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.urls import reverse
 from django.shortcuts import render
-from django.conf import settings
-from support.forms import ContactForm
-from utils.mail import send_mail_template_to_support
+from django.urls import reverse
+from requests.exceptions import HTTPError
 from zenpy import Zenpy
 from zenpy.lib import api_objects as zendesk_api
+from zenpy.lib.exception import APIException as ZendeskAPIException, ZenpyException
+
 from comments.models import Comment
+from support.forms import ContactForm
+from utils.mail import send_mail_template_to_support
+
+web_logger = logging.getLogger('web')
 
 
 def create_zendesk_ticket(request_email, subject, message, user=None):
@@ -83,7 +90,10 @@ def send_to_zendesk(request_email, subject, message, user=None):
         token=settings.ZENDESK_TOKEN,
         subdomain='freesound'
     )
-    zenpy.tickets.create(ticket)
+    try:
+        zenpy.tickets.create(ticket)
+    except (ZendeskAPIException, HTTPError, ZenpyException) as e:
+        web_logger.info('Error creating Zendesk ticket: {}'.format(str(e)))
 
 
 def send_email_to_support(request_email, subject, message, user=None):

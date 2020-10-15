@@ -10,7 +10,7 @@ RUN apt-get update \
 # Gaia - https://github.com/MTG/gaia
 RUN git clone https://github.com/MTG/gaia.git /tmp/gaia \
     && cd /tmp/gaia \
-    && git checkout v2.4.5 \3
+    && git checkout v2.4.5 \
     && ./waf configure --with-python-bindings \
     && ./waf \
     && ./waf install \

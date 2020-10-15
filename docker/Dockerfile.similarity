@@ -10,18 +10,17 @@ RUN apt-get update \
 # Gaia - https://github.com/MTG/gaia
 RUN git clone https://github.com/MTG/gaia.git /tmp/gaia \
     && cd /tmp/gaia \
-    && git checkout v2.4.5 \
+    && git checkout v2.4.5 \3
     && ./waf configure --with-python-bindings \
     && ./waf \
     && ./waf install \
     && cd / && rm -r /tmp/gaia
 
 RUN mkdir /code
-RUN mkdir /code/similarity
 RUN mkdir /gaia_index
-WORKDIR /code/
+WORKDIR /code
 
-COPY --chown=fsweb:fsweb similarity/requirements.txt /code/similarity/requirements.txt
-RUN pip install --no-cache-dir -r similarity/requirements.txt
+COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=fsweb:fsweb . /code

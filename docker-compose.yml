@@ -72,8 +72,8 @@ services:
     
     similarity:
         build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.similarity
+            context: ./similarity
+            dockerfile: ../docker/Dockerfile.similarity
         init: true
         command: python -m similarity.similarity_server
         volumes:

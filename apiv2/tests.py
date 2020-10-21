@@ -20,6 +20,7 @@
 from django.test import TestCase, SimpleTestCase, RequestFactory
 from django.urls import reverse
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 
@@ -363,3 +364,27 @@ class TestSoundSerializer(TestCase):
             dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]))
             serialized_sound = SoundSerializer(self.sound, context={'request': dummy_request}).data
             self.assertItemsEqual(serialized_sound.keys(), SoundSerializer.Meta.fields)
+
+
+class TestApiV2Client(TestCase):
+
+    def test_urls_length_validation(self):
+        """URLs are limited to a length of 200 characters at the DB level, test that passing a longer URL raised a
+        for validation error instead of a DB error.
+        """
+        user = User.objects.create_user("testuser")
+        self.client.force_login(user)
+        resp = self.client.post(reverse('apiv2-apply'), data={
+            'name': 'Name for the app',
+            'url': 'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
+            'redirect_uri': 'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
+            'description': 'test description',
+            'accepted_tos': '1',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('redirect_uri', resp.context['form'].errors)
+        self.assertIn('url', resp.context['form'].errors)

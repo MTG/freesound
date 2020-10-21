@@ -28,9 +28,9 @@ from exceptions import BadRequestException
 class ApiV2ClientForm(forms.Form):
     name = forms.CharField(label='Name*', max_length='60', widget=forms.TextInput(attrs={'style': 'width:500px',
                            'placeholder': 'The name of the application or project where the credential will be used'}))
-    url = forms.URLField(required=False, label='URL', widget=forms.TextInput(attrs={'style': 'width:500px',
+    url = forms.URLField(required=False, label='URL', max_length=200, widget=forms.TextInput(attrs={'style': 'width:500px',
                          'placeholder': 'URL of your application, project, institution or other related page'}))
-    redirect_uri = forms.URLField(required=False, label='Callback URL', widget=forms.TextInput(
+    redirect_uri = forms.URLField(required=False, label='Callback URL', max_length=200, widget=forms.TextInput(
         attrs={'style': 'width:500px', 'placeholder': 'OAuth2 callback URL (see note below)'}))
     description = forms.CharField(label='Description*', widget=forms.Textarea(
         attrs={'style': 'width:500px', 'placeholder': 'Tell us something about what you\'re planning to do with this '

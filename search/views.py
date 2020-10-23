@@ -54,7 +54,8 @@ def search(request):
     # get sound ids of the requested cluster when applying a clustering facet
     # the list of ids is used to create a Solr query with filter by ids in search_prepare_query()
     cluster_id = request.GET.get('cluster_id')
-    if cluster_id:
+
+    if settings.ENABLE_SEARCH_RESULTS_CLUSTERING and cluster_id:
         in_ids = _get_ids_in_cluster(request, cluster_id)
     else:
         in_ids = []

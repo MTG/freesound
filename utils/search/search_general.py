@@ -125,12 +125,13 @@ def split_filter_query(filter_query, cluster_id):
                     filter_query_split.append(filter)
 
     # add cluster filter information
-    if cluster_id and cluster_id.isdigit():
-        filter_query_split.append({
-            'name': "Cluster #" + cluster_id,
-            'remove_url': filter_query,
-            'cluster_id': '',
-        })
+    if settings.ENABLE_SEARCH_RESULTS_CLUSTERING:
+        if cluster_id and cluster_id.isdigit():
+            filter_query_split.append({
+                'name': "Cluster #" + cluster_id,
+                'remove_url': filter_query,
+                'cluster_id': '',
+            })
 
     return filter_query_split
 

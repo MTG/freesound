@@ -18,7 +18,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
@@ -157,6 +157,7 @@ class SearchUtilsTest(TestCase):
         self.assertIn(expected_filter_query_split[2]['remove_url'], 
                       filter_query_split[grouping_pack_facet_dict_idx]['remove_url'].replace('  ', ' '))
 
+    @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter
         # works correctly.

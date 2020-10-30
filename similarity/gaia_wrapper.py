@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import errno
 import logging
 import os
 import time
@@ -25,12 +26,27 @@ import time
 import yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point, VariableLength
 
+import similarity_settings as sim_settings
 from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, \
     get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
-import similarity_settings as sim_settings
-from utils.filesystem import create_directories
 
 logger = logging.getLogger('similarity')
+
+
+def create_directories(path, exist_ok=True):
+    """
+    Creates directory at the specified path, including all intermediate-level directories needed to contain it.
+    NOTE: after migrating to Python3, this util function can be entirely replaced by calling
+    "os.makedirs(path, exist_ok=True)".
+    :param str path: path of the direcotry to create
+    :param bool exist_ok: if set to True, exceptions won't be raised if the target direcotry already exists
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        # Ignore exception if directory already existing
+        if exist_ok and exc.errno != errno.EEXIST:
+            raise
 
 
 class GaiaWrapper:

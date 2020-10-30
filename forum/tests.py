@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -602,3 +602,79 @@ class ForumPageResponses(TestCase):
 
         # No emails sent
         self.assertEqual(len(mail.outbox), 0)
+
+class ForumModerationTestCase(TestCase):
+
+    fixtures = ["user_groups"]
+
+    def setUp(self):
+        self.forum_user = User.objects.create_user(username='testuser', email='email@example.com', password='12345')
+        self.regular_user = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        self.admin_user = User.objects.create_user(username='testuser3', email='email3@example.com', password='12345')
+        group = Group.objects.get(name="forum_moderators")
+        self.admin_user.groups.add(group)
+
+        _create_forums_threads_posts(self.forum_user, n_forums=1, n_threads=1, n_posts=1)
+        self.post = Post.objects.first()
+        self.post.moderation_state = "NA"
+        self.post.save()
+
+    def test_user_no_permissions(self):
+        """If the user doesn't have forum.can_moderate_forum permission, they're redirected to login screen"""
+        self.client.force_login(self.regular_user)
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete'], u'post': [u'1'],
+        })
+        self.assertEqual(resp.status_code, 302)
+
+    def test_approve_post(self):
+        """Approve a post"""
+
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Approve'], u'post': [str(self.post.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.moderation_state, "OK")
+
+    def test_delete_user(self):
+        """The user is spammy, delete it. The post will also be deleted"""
+        self.client.force_login(self.admin_user)
+
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete User'], u'post': [str(self.post.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        with self.assertRaises(Post.DoesNotExist):
+            self.post.refresh_from_db()
+        with self.assertRaises(User.DoesNotExist):
+            self.forum_user.refresh_from_db()
+
+        self.assertEqual(list(resp.context['messages'])[0].message, "The user has been successfully deleted.")
+
+    def test_delete_post(self):
+        """The post is spammy. Delete it, but keep the user"""
+        self.client.force_login(self.admin_user)
+
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete Post'], u'post': [str(self.post.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        with self.assertRaises(Post.DoesNotExist):
+            self.post.refresh_from_db()
+        self.forum_user.refresh_from_db()
+
+        self.assertEqual(list(resp.context['messages'])[0].message, "The post has been successfully deleted.")
+
+    def test_no_such_post(self):
+        group = Group.objects.get(name="forum_moderators")
+        self.admin_user.groups.add(group)
+        self.client.force_login(self.admin_user)
+
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete Post'], u'post': [str(self.post.id+1)],
+        })
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(list(resp.context['messages'])[0].message, "This post no longer exists. It may have already been deleted.")

@@ -51,22 +51,17 @@ web_logger = logging.getLogger("web")
 
 
 class ProfileAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user', 'geotag')
+    readonly_fields = ('user', )
+    raw_id_fields = ('geotag', )
     list_display = ('user', 'home_page', 'signature', 'is_whitelisted')
     ordering = ('id', )
     list_filter = ('is_whitelisted', )
     search_fields = ('=user__username', )
 
 
-admin.site.register(Profile, ProfileAdmin)
-
-
 class UserFlagAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user', 'reporting_user', 'content_type')
-    list_display = ('user', 'reporting_user', 'content_type')
-
-
-admin.site.register(UserFlag, UserFlagAdmin)
+    readonly_fields = ('reporting_user', 'content_type', 'object_id', 'user')
+    list_display = ('reporting_user', 'content_type', 'object_id', 'user')
 
 
 class LargeTablePaginator(Paginator):
@@ -104,6 +99,7 @@ class AdminUserForm(UserChangeForm):
 
 
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
+    readonly_fields = ('last_login', 'date_joined')
     search_fields = ('=username', '=email')
     actions = ()
     list_display = ('username', 'email')
@@ -247,8 +243,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
 
 class OldUsernameAdmin(admin.ModelAdmin):
+    readonly_fields = ('user', 'username')
     search_fields = ('=username', )
-    raw_id_fields = ('user', )
     list_display = ('user', 'username')
 
 
@@ -285,16 +281,19 @@ class UserGDPRDeletionRequestAdmin(admin.ModelAdmin):
 
 
 class DeletedUserAdmin(admin.ModelAdmin):
-    readonly_fields = ['user']
+    readonly_fields = ('user', 'username', 'email', 'date_joined', 'last_login', 'deletion_date', 'reason')
 
 
 class EmailBounceAdmin(admin.ModelAdmin):
     search_fields = ('=user__username',)
-    list_display = ('user', )
+    list_display = ('user', 'type', 'timestamp')
+    readonly_fields = ('user', 'type', 'timestamp')
 
 
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
+admin.site.register(Profile, ProfileAdmin)
+admin.site.register(UserFlag, UserFlagAdmin)
 admin.site.register(EmailBounce, EmailBounceAdmin)
 admin.site.register(EmailPreferenceType)
 admin.site.register(OldUsername, OldUsernameAdmin)

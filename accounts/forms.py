@@ -315,26 +315,28 @@ class ProfileForm(forms.ModelForm):
     def clean_username(self):
         username = self.cleaned_data["username"]
 
+        # NOTE: we also check for the "username" form field not being disabled because once the user has changed
+        # username the maximum number of times, the "username" field will be marked as disabled at form creation time.
+        # If the field is disabled, then the form's cleaned_data for that field will contain the initial contents
+        # of the field (i.e. the User username) regardless of whatever data form the HTML form is posted in the request.
+        if self.fields["username"].disabled:
+            return username
+
         # If user has accidentally cleared the field, treat it as unchanged
         if not username:
             username = self.request.user.username
 
-        # Check that:
-        #   1) It is not taken by another user
-        #   2) It was not used in the past by another (or the same) user
-        #   3) It has not been changed the maximum number of allowed times
-        # Only if the three conditions are met we allow to change the username
-        try:
-            User.objects.exclude(pk=self.request.user.id).get(username__iexact=username)
-        except User.DoesNotExist:
-            try:
-                OldUsername.objects.get(username__iexact=username)
-            except OldUsername.DoesNotExist:
-                if self.n_times_changed_username >= settings.USERNAME_CHANGE_MAX_TIMES:
-                    raise forms.ValidationError("Your username can't be changed any further. Please contact support "
-                                                "if you still need to change it.")
-                return username
-        raise forms.ValidationError("This username is already taken or has been in used in the past.")
+        # If username was not changed, consider it valid
+        if username.lower() == self.request.user.username.lower():
+            return username
+
+        # Check that username is not used by another user. Note that because when the maximum number of username
+        # changes is reached, the "username" field of the ProfileForm is disabled and its contents won't change.
+        # Therefore we will never reach this part of the clean_username function and there's no need to check for
+        # the number of times the username was previously changed
+        if not username_taken_by_other_user(username):
+            return username
+        raise forms.ValidationError("This username is already taken or has been in used in the past by another user.")
 
     def clean_about(self):
         about = self.cleaned_data['about']

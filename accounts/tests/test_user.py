@@ -776,42 +776,47 @@ class ChangeUsernameTest(TestCase):
         self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
-        # Now rename user for the first time
-        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewName']})
-        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
-        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
-
-        # Now rename user for the second time
-        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewName']})
-        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
-        self.assertEqual(OldUsername.objects.filter(username='userANewName', user=userA).count(), 1)
-        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
-
         # Try rename user with an existing username from another user
         userB = User.objects.create_user('userB', email='userB@freesound.org')
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [userB.username]})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
-        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+        self.assertEqual(userA.username, 'userA')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
+
+        # Now rename user for the first time
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewName']})
+        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewName')
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
         # Try rename user with a username that was already used by the same user in the past
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userA']})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(userA.username, 'userANewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
+
+        # Now rename user for the second time
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewName']})
+        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
-        # Try to rename for a third time to a valid username but can't rename anymore because exceeded maximum
+        # Try to rename for a third time to a valid username but it won't rename anymore because exceeded maximum
         # USERNAME_CHANGE_MAX_TIMES (which is set to 2 for this test)
+        # NOTE: when USERNAME_CHANGE_MAX_TIMES is reached, the form renders the "username" field as "disabled" and
+        # therefore the username can't be changed. Other than that the form behaves normally, therefore no
+        # form errors will be raised because the field is ignored
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewNewName']})
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home but...
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
-        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+        self.assertEqual(userA.username, 'userANewNewName')  # ...username has not changed...
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)  # ...and no new OldUsername objects created
 
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_admin(self):

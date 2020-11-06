@@ -125,19 +125,21 @@ class UserEditProfile(TestCase):
                 'profile-not_shown_in_online_users_list': True,
             })
 
-            user = User.objects.get(username="testuser%d" % i)
+            user.refresh_from_db()
             self.assertEqual(user.old_usernames.count(), i + 1)
 
-        # Now the form should fail when we try to change the username
-        resp = self.client.post("/home/edit/", {
+        # Now the "username" field in the form will be "disabled" because maximum number of username changes has been
+        # reached. Therefore, the contents of "profile-username" in the POST request should have no effect and username
+        # should not be changed any further
+        self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
             'profile-username': 'testuser-error',
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
             'profile-not_shown_in_online_users_list': True,
         })
-
-        self.assertNotEqual(resp.context['profile_form'].errors, None)
+        user.refresh_from_db()
+        self.assertEqual(user.old_usernames.count(), settings.USERNAME_CHANGE_MAX_TIMES)
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")

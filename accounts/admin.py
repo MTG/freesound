@@ -39,6 +39,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django_object_actions import DjangoObjectActions
 
+from accounts.forms import username_taken_by_other_user
 from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserGDPRDeletionRequest, EmailBounce
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
@@ -90,18 +91,14 @@ class AdminUserForm(UserChangeForm):
 
     def clean_username(self):
         username = self.cleaned_data["username"]
-        # Check that:
-        #   1) It is not taken by another user
-        #   2) It was not used in the past by another (or the same) user
+        # Check that username is not taken by another user (or was not used in the past by another user or by a user
+        # that was deleted).
         # NOTE: as opposed as in accounts.forms.ProfileForm, here we don't impose the limitation of changing the
         # username a maximum number of times.
-        try:
-            User.objects.exclude(pk=self.instance.id).get(username__iexact=username)
-        except User.DoesNotExist:
-            try:
-                OldUsername.objects.get(username__iexact=username)
-            except OldUsername.DoesNotExist:
-                return username
+        if username.lower() == self.instance.username.lower():
+            return username
+        if not username_taken_by_other_user(username):
+            return username
         raise ValidationError("This username is already taken or has been in used in the past by this or some other "
                               "user.")
 

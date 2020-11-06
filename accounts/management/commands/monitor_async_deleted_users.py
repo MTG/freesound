@@ -39,7 +39,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
 
         parser.add_argument(
-            '-n', '--n_days',
+            '-n', '--n-days',
             action='store',
             dest='days',
             default=15,
@@ -74,7 +74,7 @@ class Command(BaseCommand):
             try:
                 total_results, new_messages = get_messages_for_params(params)
             except requests.HTTPError as e:
-                logger.error('Can\'t access Graylog server. Error: ' + str(e))
+                logger.error(u"Can't access Graylog server. Error: {}".format(e))
                 break
 
             messages += new_messages
@@ -99,7 +99,7 @@ class Command(BaseCommand):
                 if Profile.objects.filter(user_id=user_id, is_anonymized_user=False).exists():
                     # If user object still exists with that id and is not anonymized, action was not properly taken
                     # Note that we use Profile objects as a proxy for User
-                    users_not_properly_deleted.append((user_id, 'User anonmymization (with sound deletion) was '
+                    users_not_properly_deleted.append((user_id, 'User anonymization (with sound deletion) was '
                                                                 'requested, but Profile object is not '
                                                                 'marked as such'))
 
@@ -107,7 +107,7 @@ class Command(BaseCommand):
                 if Profile.objects.filter(user_id=user_id, is_anonymized_user=False).exists():
                     # If user object still exists with that id and is not anonymized, action was not properly taken
                     # Note that we use Profile objects as a proxy for User
-                    users_not_properly_deleted.append((user_id, 'User anonmymization (preserving sounds) was '
+                    users_not_properly_deleted.append((user_id, 'User anonymization (preserving sounds) was '
                                                                 'requested, but Profile object is not '
                                                                 'marked as such'))
 

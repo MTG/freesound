@@ -195,7 +195,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                  json.dumps({'user_id': obj.id, 'action': DELETE_SPAMMER_USER_ACTION_NAME}),
                                  wait_until_complete=False, background=True)
             messages.add_message(request, messages.INFO,
-                                 'User \'%s\' will be deleted asynchronously including sounds and all of its related'
+                                 'User \'%s\' will be deleted asynchronously including sounds and all of its related '
                                  'content.' % username)
             return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
 

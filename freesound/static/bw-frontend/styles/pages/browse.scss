@@ -69,3 +69,9 @@
 .browse__search-overview-sorter {
   flex: 0;
 }
+
+.tag-container {
+  &:hover {
+    opacity: 1;
+  }
+}

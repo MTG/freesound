@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('username', models.CharField(max_length=150)),
                 ('email', models.CharField(max_length=200)),
                 ('deletion_date', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('type', models.CharField(choices=[(b'ss', b'Sound spammer'), (b'fs', b'Forum spammer'), (b'ad', b'Deleted by an admin'), (b'sd', b'Self deleted')], max_length=2)),
+                ('type', models.CharField(choices=[(b'ss', b'Sound spammer'), (b'fs', b'Forum spammer'), (b'ad', b'Deleted by an admin'), (b'sd', b'Self deleted')], default=b'ss', max_length=2)),
             ],
         ),
     ]

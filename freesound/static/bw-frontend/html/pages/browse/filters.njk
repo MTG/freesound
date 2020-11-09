@@ -1,4 +1,5 @@
 {% import '../../atoms/icons.njk' as icons %}
+{% import '../../atoms/tags.njk' as tags %}
 
 {% macro getFilterInputId(filterName) %}
   {{ filterName | replace(' ', '-') }}
@@ -12,7 +13,7 @@
       </div>
       <div class="bw-search__filter-name">
         {{ filterName }}
-        <div class="bw-search__filter-count">20</div>
+        <div class="bw-search__filter-count">(20)</div>
       </div>
     </label>
   </li>
@@ -35,4 +36,21 @@
   </ul>
   <div class="divider-light"></div>
 </div>
+{% endmacro %}
+
+{% macro tagsSection(sectionName, tagsAdded) %}
+  <div class="bw-search__filter-section">
+    <div class="bw-search__filter-section-name caps text-light-grey between">
+      <span>{{ sectionName }}</span>
+      <span class="bw-search__filter-section-collapse">
+        <button class="btn-neutral" title="Collapse section">
+          {{ icons.icon('bar') }}
+        </button>
+      </span>
+    </div>
+    <div class="bw-search__filter-tags-list">
+      {{ tags.tags(tagsAdded)}}
+    </div>
+    <div class="divider-light"></div>
+  </div>
 {% endmacro %}

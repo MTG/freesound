@@ -18,7 +18,9 @@
 #     See AUTHORS file.
 #
 
+import json
 import mock
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
@@ -29,6 +31,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 
+from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserGDPRDeletionRequest
 from comments.models import Comment
@@ -301,7 +304,8 @@ class UserDelete(TestCase):
         delete_sound_from_solr.assert_has_calls(calls, any_order=True)
         delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
 
-    def test_user_delete_include_sounds_using_web_form(self):
+    @mock.patch('gearman.GearmanClient.submit_job')
+    def test_user_delete_include_sounds_using_web_form(self, submit_job):
         # Test user's option to delete user account including the sounds
 
         user = self.create_user_and_content(is_index_dirty=False)
@@ -312,19 +316,20 @@ class UserDelete(TestCase):
             reverse('accounts-delete'),
             {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
 
+        # Test gearman job is triggered
+        data = json.dumps({'user_id': user.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
+                    'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
+        submit_job.assert_called_once_with("delete_user", data,
+                                           wait_until_complete=False, background=True)
+
         # Assert user is redirected to front page
         self.assertRedirects(resp, reverse('front-page'))
 
-        # Check user is marked as anonymized
-        self.assertTrue(User.objects.get(id=user.id).profile.is_anonymized_user)
+        # Check loaded page contains message about user deletion
+        self.assertIn(resp.content, 'Your user account will be deleted in a few moments')
 
-        # Check sounds have been deleted as well
-        self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
-
-        # Check DeletedUser object has been created for this user with the "self deleted" reason
-        self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, DeletedUser.DELETION_REASON_SELF_DELETED)
-
-    def test_user_delete_keep_sounds_using_web_form(self):
+    @mock.patch('gearman.GearmanClient.submit_job')
+    def test_user_delete_keep_sounds_using_web_form(self, submit_job):
         # Test user's option to delete user account but preserving the sounds
 
         user = self.create_user_and_content(is_index_dirty=False)
@@ -335,17 +340,17 @@ class UserDelete(TestCase):
             reverse('accounts-delete'),
             {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
 
+        # Test gearman job is triggered
+        data = json.dumps({'user_id': user.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
+                           'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
+        submit_job.assert_called_once_with("delete_user", data,
+                                           wait_until_complete=False, background=True)
+
         # Assert user is redirected to front page
         self.assertRedirects(resp, reverse('front-page'))
 
-        # Check user is marked as anonymized
-        self.assertTrue(User.objects.get(id=user.id).profile.is_anonymized_user)
-
-        # Check sounds have not been deleted
-        self.assertTrue(Sound.objects.filter(user__id=user.id).exists())
-
-        # Check DeletedUser object has been created for this user with the "self deleted" reason
-        self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, DeletedUser.DELETION_REASON_SELF_DELETED)
+        # Check loaded page contains message about user deletion
+        self.assertIn(resp.content, 'Your user account will be deleted in a few moments')
 
     def test_fail_user_delete_include_sounds_using_web_form(self):
         # Test delete user account form with wrong password does not delete

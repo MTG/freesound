@@ -54,6 +54,7 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
+from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import EmailResetForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, \
@@ -82,6 +83,7 @@ from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is
 
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
+web_logger = logging.getLogger('web')
 
 
 @login_required
@@ -1034,7 +1036,6 @@ def bulk_describe(request, bulk_id):
 @transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
-    error_message = None
     if request.method == 'POST':
         form = DeleteUserForm(request.POST, user_id=request.user.id)
         if not form.is_valid():
@@ -1042,9 +1043,23 @@ def delete(request):
         else:
             delete_sounds =\
                 form.cleaned_data['delete_sounds'] == 'delete_sounds'
-            request.user.profile.delete_user(remove_sounds=delete_sounds,
-                                             deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)
-            logout(request)
+
+            delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
+                else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(request.user.id, delete_action))
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                                 json.dumps({'user_id': request.user.id, 'action': delete_action,
+                                             'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED}),
+                                 wait_until_complete=False, background=True)
+            messages.add_message(request, messages.INFO,
+                                 'Your user account will be deleted in a few moments. Note that this process could '
+                                 'take up to an hour for users with many uploaded sounds.')
+
+            # NOTE: we used to do logout here because the user account was deleted synchronously. However now we don't
+            # do this as the user is deleted asynchronously and we want to show the message that the user will be
+            # deleted soon
             return HttpResponseRedirect(reverse("front-page"))
     else:
         form = DeleteUserForm(user_id=request.user.id)

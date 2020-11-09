@@ -135,7 +135,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                                                 DELETE_USER_KEEP_SOUNDS_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                    json.dumps({'user_id': obj.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME}),
+                    json.dumps({'user_id': obj.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
+                                'deletion_reason': DeletedUser.DELETION_REASON_DELETED_BY_ADMIN}),
                 wait_until_complete=False, background=True)
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously. Sounds, comments and other related '
@@ -158,7 +159,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                                                 DELETE_USER_DELETE_SOUNDS_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': obj.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME}),
+                                 json.dumps({'user_id': obj.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
+                                             'deletion_reason': DeletedUser.DELETION_REASON_DELETED_BY_ADMIN}),
                                  wait_until_complete=False, background=True)
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously. Sounds will be deleted as well. '
@@ -188,7 +190,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                                                 DELETE_SPAMMER_USER_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': obj.id, 'action': DELETE_SPAMMER_USER_ACTION_NAME}),
+                                 json.dumps({'user_id': obj.id, 'action': DELETE_SPAMMER_USER_ACTION_NAME,
+                                             'deletion_reason': DeletedUser.DELETION_REASON_SPAMMER}),
                                  wait_until_complete=False, background=True)
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously including sounds and all of its related '
@@ -207,7 +210,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
         return render(request, 'accounts/delete_confirmation.html', tvars)
 
-    delete_spammer.label = "Delete spammer"
+    delete_spammer.label = "Delete as spammer"
     delete_spammer.short_description = "Delete the user and the sounds, mark deleted user as spammer"
 
     def full_delete(self, request, obj):
@@ -217,7 +220,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                                                 FULL_DELETE_USER_ACTION_NAME))
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': obj.id, 'action': FULL_DELETE_USER_ACTION_NAME}),
+                                 json.dumps({'user_id': obj.id, 'action': FULL_DELETE_USER_ACTION_NAME,
+                                             'deletion_reason': DeletedUser.DELETION_REASON_DELETED_BY_ADMIN}),
                                  wait_until_complete=False, background=True)
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously including sounds and all of its related'

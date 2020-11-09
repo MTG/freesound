@@ -59,7 +59,8 @@
 
 .bw-search__input {
   font-size: 32px;
-  text-align: center;
+  line-height: 38px;
+  font-weight: bold;
 
   &::placeholder {
     color: $navy-light-grey;

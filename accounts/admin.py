@@ -239,7 +239,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     full_delete.label = "Full delete"
     full_delete.short_description = 'Completely delete user from db'
 
-    change_actions = ('delete_spammer', 'delete_include_sounds', 'delete_preserve_sounds',  'full_delete', )
+    # NOTE: in the line below we removed the 'full_delete' option as ideally we should never need to use it. In for
+    # some unexpected reason we happen to need it, we can call the .delete() method on a user object using the terminal.
+    # If we observe a real need for that, we can re-add the option to the admin.
+    change_actions = ('delete_spammer', 'delete_include_sounds', 'delete_preserve_sounds', )
 
 
 class OldUsernameAdmin(admin.ModelAdmin):

@@ -387,16 +387,14 @@ class EmailResetForm(forms.Form):
         return self.cleaned_data['password']
 
 
-DELETE_CHOICES = [('only_user',
-                   mark_safe(u'Delete only my user account information :)  '
-                             u'(see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a>'
-                             u' for more information)')),
-                  ('delete_sounds', u'Delete also my sounds and packs :(')]
+DELETE_CHOICES = [('only_user', u"No, keep my sounds and packs (under and anonymised username) so that other "
+                                u"Freesound users can still use them :)"),
+                  ('delete_sounds', u'Yes, delete my sounds and packs as well')]
 
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
-    delete_sounds = forms.ChoiceField(choices=DELETE_CHOICES, widget=forms.RadioSelect())
+    delete_sounds = forms.ChoiceField(label="Do you also want your sounds and packs to be deleted?",  choices=DELETE_CHOICES, widget=forms.RadioSelect())
     password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):

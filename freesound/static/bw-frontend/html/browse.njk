@@ -34,4 +34,7 @@
     </div>
   </div>
   {% include './molecules/footer.njk' %}
+  {% block extrabody %}
+    <script src="../src/pages/search.js"></script>
+  {% endblock %}
 {% endblock %}

@@ -2,6 +2,7 @@
 {% import './pages/browse/filters.njk' as filters %}
 {% import './pages/browse/activeFilters.njk' as activeFilters %}
 {% import './molecules/navbar.njk' as navbars %}
+{% import './molecules/pagination.njk' as pagination %}
 {% extends "base.njk" %}
 
 {% block content %}
@@ -30,6 +31,9 @@
         </div>
         <div class="v-spacing-6">
           {{ sound.results(20) }}
+        </div>
+        <div class="">
+          {{ pagination.pagination(20, 5) }}
         </div>
       </main>
     </div>

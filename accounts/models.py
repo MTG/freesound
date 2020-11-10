@@ -686,7 +686,7 @@ class UserGDPRDeletionRequest(models.Model):
     )
     status = models.CharField(max_length=2, choices=GDPR_DELETION_REQUEST_STATUSES, db_index=True, default='re')
     # Store history of state changes in a PG ArrayField of strings
-    status_history = ArrayField(models.CharField(max_length=200), blank=True, default=[])
+    status_history = ArrayField(models.CharField(max_length=200), blank=True, default=list)
 
 @receiver(pre_save, sender=UserGDPRDeletionRequest)
 def updated_status_history(sender, instance, **kwargs):

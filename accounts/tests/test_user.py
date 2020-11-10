@@ -385,6 +385,9 @@ class UserDelete(TestCase):
             user.profile.delete_user(deletion_reason=reason)
             self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, reason)
 
+
+class UserGDPRDeletionRequestTestCase(TestCase):
+
     def test_deleting_user_updates_existing_gdpr_deletion_request_objects(self):
         # Tests that when a user is deleted which had existing UserGDPRDeletionRequest objects assigned, these objects
         # get the status updated and the DeletedUser object is added to them
@@ -421,6 +424,40 @@ class UserDelete(TestCase):
         for deletion_request in UserGDPRDeletionRequest.objects.filter(username=username):
             self.assertEqual(deletion_request.status, 'de')
             self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
+
+    def test_user_gdpr_deletion_request_update_status_history(self):
+        # Test that when updating a UserGDPRDeletionRequest object and changing the status, the change gets recorded
+        # in the status_history field
+        username = "testusername"
+        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        deletion_request = UserGDPRDeletionRequest.objects.create(user=user, username=username, status="re")
+        self.assertEqual(deletion_request.status, "re")
+        self.assertEqual(len(deletion_request.status_history), 1)
+        self.assertTrue("re" in deletion_request.status_history[0])
+
+        # Change status: status history should be updated
+        deletion_request.status = "wa"
+        deletion_request.save()
+        self.assertEqual(deletion_request.status, "wa")
+        self.assertEqual(len(deletion_request.status_history), 2)
+        self.assertTrue("re" in deletion_request.status_history[0])
+        self.assertTrue("wa" in deletion_request.status_history[1])
+
+        # Now save again, but don't change status: status history should not be updated
+        deletion_request.save()
+        self.assertEqual(deletion_request.status, "wa")
+        self.assertEqual(len(deletion_request.status_history), 2)
+        self.assertTrue("re" in deletion_request.status_history[0])
+        self.assertTrue("wa" in deletion_request.status_history[1])
+
+        # Now change status again: status history should be updated
+        deletion_request.status = "de"
+        deletion_request.save()
+        self.assertEqual(deletion_request.status, "de")
+        self.assertEqual(len(deletion_request.status_history), 3)
+        self.assertTrue("re" in deletion_request.status_history[0])
+        self.assertTrue("wa" in deletion_request.status_history[1])
+        self.assertTrue("de" in deletion_request.status_history[2])
 
 
 class UserEmailsUniqueTestCase(TestCase):

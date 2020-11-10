@@ -261,8 +261,9 @@ class UserGDPRDeletionRequestAdmin(admin.ModelAdmin):
     list_display = ('email', 'username', 'user_link', 'deleted_user_link', 'status')
     list_filter = ('status', )
     fieldsets = (
-        (None, {'fields': ('email', 'status', 'user', 'username')}),
+        (None, {'fields': ('email', 'status', 'user', 'username', 'status_history')}),
     )
+    readonly_fields = ('status_history', )
 
     def get_queryset(self, request):
         # overrride 'get_queryset' to optimize query by using select_related on 'user' and 'deleted_user'

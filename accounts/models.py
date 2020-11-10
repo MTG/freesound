@@ -29,9 +29,11 @@ from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import smart_unicode
 from django.utils.timezone import now
@@ -683,3 +685,23 @@ class UserGDPRDeletionRequest(models.Model):
         ('de', 'User has been deleted')
     )
     status = models.CharField(max_length=2, choices=GDPR_DELETION_REQUEST_STATUSES, db_index=True, default='re')
+    # Store history of state changes in a PG ArrayField of strings
+    status_history = ArrayField(models.CharField(max_length=200), blank=True, default=[])
+
+@receiver(pre_save, sender=UserGDPRDeletionRequest)
+def updated_status_history(sender, instance, **kwargs):
+    should_update_status_history = False
+    try:
+        old_instance = UserGDPRDeletionRequest.objects.get(id=instance.id)
+        if old_instance.status != instance.status:
+            should_update_status_history = True
+
+    except UserGDPRDeletionRequest.DoesNotExist:
+        # Instance was just created, add status_history record as well
+        should_update_status_history = True
+
+    if should_update_status_history:
+        instance.status_history += ['{0}: {2} ({1})'.format(datetime.datetime.now(),
+                                                            instance.status,
+                                                            instance.get_status_display())]
+

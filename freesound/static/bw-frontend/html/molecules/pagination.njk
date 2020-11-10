@@ -12,8 +12,8 @@
         {% endif %}
       {% endif %}
     {% endfor %}
-    {% if pages > 8 %}
-      <li class="text-grey no-paddings">...</li>
+    {% if pages > 8 and currentPage + 4 < pages %}
+      {% if currentPage + 5 < pages %} <li class="text-grey no-paddings">...</li> {% endif %}
       <li>{{ pages }}</li>
     {% endif %}
     {% if currentPage < pages %} <li class="bw-pagination_circle bw-pagination_direction"> {{ icons.icon('arrow') }} </li> {% endif %} 

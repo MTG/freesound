@@ -7,8 +7,6 @@ TICKET_STATUS_CLOSED = 'closed'
 
 MODERATION_TEXTS = [
     ('Insufficient tags', "You have added insufficient tags, please add some more."),
-    ('Test Response', "This is a test response. "
-                      "second line of test"),
     ('Insufficient description', "The description is not good enough, please add some more details."),
     ('Foreign language', "Your current tags and description are not in English. Please complement them by adding at "
                          "least some tags and/or a short version of the description in English."),

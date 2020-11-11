@@ -82,7 +82,12 @@
 }
 
 .browse__search-overview-sorter {
-  flex: 0;
+  display: flex;
+  align-items: center;
+
+  > span {
+    width: max-content;
+  }
 }
 
 .tag-container {

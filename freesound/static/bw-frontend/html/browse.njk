@@ -39,7 +39,8 @@
     </div>
   </div>
   {% include './molecules/footer.njk' %}
-  {% block extrabody %}
-    <script src="../src/pages/search.js"></script>
-  {% endblock %}
+{% endblock %}
+{% block extrabody %}
+  <script src="../src/pages/search.js"></script>
+  <script src="../src/components/select.js"></script>
 {% endblock %}

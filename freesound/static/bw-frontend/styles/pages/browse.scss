@@ -40,6 +40,10 @@
 
   padding-top: $small-spacing;
   padding-bottom: $small-spacing;
+
+  .bw-search__filter-section-name > span {
+    font-size: 18px;
+  }
 }
 
 .bw-search__player-small {

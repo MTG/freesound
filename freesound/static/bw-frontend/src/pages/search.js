@@ -6,6 +6,8 @@ const removeSearchInputValueBrowse = document.getElementById('remove-content-sea
 const searchInputChange = event => {
   if (event.target.value.length) {
     removeSearchInputValueBrowse.style.opacity = 0.5;
+  } else {
+    removeSearchQuery();
   }
 };
 
@@ -14,5 +16,5 @@ const removeSearchQuery = () => {
   removeSearchInputValueBrowse.style.opacity = 0;
 };
 
-searchInputBrowse.addEventListener('change', searchInputChange);
+searchInputBrowse.addEventListener('input', searchInputChange);
 removeSearchInputValueBrowse.addEventListener('click', removeSearchQuery);

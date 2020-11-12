@@ -36,7 +36,7 @@ from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserGDPRDeletionRequest
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
-from sounds.models import License, Sound, Pack, DeletedSound
+from sounds.models import License, Sound, Pack, DeletedSound, Download, PackDownload
 from utils.mail import transform_unique_email
 
 
@@ -180,10 +180,12 @@ class UserDelete(TestCase):
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
             target_sound.add_comment(user, "Comment %i" % i)
-        # Create threads and posts
-        thread = Thread.objects.create(author=user, title="Test thread", forum=Forum.objects.create(name="Test forum"))
-        for i in range(0, 3):
-            Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
+        # Create threads and posts (use mock to avoid trying to index the posts to solr)
+        with mock.patch('forum.models.send_posts_to_solr'):
+            thread = Thread.objects.create(author=user, title="Test thread",
+                                           forum=Forum.objects.create(name="Test forum"))
+            for i in range(0, 3):
+                Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
         # Create sounds and packs
         pack = Pack.objects.create(user=user, name="Test pack")
         for i in range(0, 3):
@@ -384,6 +386,46 @@ class UserDelete(TestCase):
             user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
             user.profile.delete_user(deletion_reason=reason)
             self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, reason)
+
+    @mock.patch('sounds.models.delete_sound_from_gaia')
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('forum.models.delete_post_from_solr')
+    def test_delete_user_with_count_fields_out_of_sync(self, delete_post_from_solr, delete_sound_from_solr,
+                                                       delete_sound_from_gaia):
+        # Test that deleting a user work properly even when the profile count fields (num_sounds, num_posts,
+        # num_sound_downloads and num_pack_downloads) are out of sync. This is a potential issue because if the
+        # count fields are not right, deleting sound/download/post objects related to that user might trigger
+        # signals that would set the count field to values < 0 and would break the DB constraint imposed by these
+        # count fields being of type PositiveIntegerField. Here we test that the user delete method can handle
+        # these cases without raising errors.
+
+        # Create user, associated content and download objects
+        user = self.create_user_and_content()
+        for sound in Sound.objects.filter(user=user):
+            Download.objects.create(user=user, sound=sound, license_id=sound.license_id)
+        for pack in Pack.objects.filter(user=user):
+            PackDownload.objects.create(user=user, pack=pack)
+        user.profile.refresh_from_db()
+        user.profile.update_num_sounds()
+
+        # Make sure the count fields are in sync
+        self.assertEqual(user.profile.num_sound_downloads, Sound.objects.filter(user=user).count())
+        self.assertEqual(user.profile.num_pack_downloads, Pack.objects.filter(user=user).count())
+        self.assertEqual(user.profile.num_sounds, Sound.objects.filter(user=user).count())
+        self.assertEqual(user.profile.num_posts, Post.objects.filter(author=user).count())
+
+        # Decrease by one all count fields (make them be out of sync)
+        user.profile.num_sound_downloads = user.profile.num_sound_downloads - 1
+        user.profile.num_pack_downloads = user.profile.num_pack_downloads - 1
+        user.profile.num_sounds = user.profile.num_sounds - 1
+        user.profile.num_posts = user.profile.num_posts - 1
+        user.profile.save()
+
+        # Delete user including sounds (which will delete Download objects as well) and also deleting the User object
+        # from DB which will trigger deleting associated content like posts, etc.
+        # That should not fail even if the count fields are out of sync
+        user.profile.refresh_from_db()
+        user.profile.delete_user(remove_sounds=True, delete_user_object_from_db=True)
 
 
 class UserGDPRDeletionRequestTestCase(TestCase):

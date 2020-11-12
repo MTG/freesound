@@ -20,46 +20,45 @@
 #     See AUTHORS file.
 #
 
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import JSONField
-from django.template.loader import render_to_string
-from django.utils.encoding import smart_unicode
-from django.db import models, connection, transaction
-from django.db.models import F
-from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
-from django.dispatch import receiver
-from django.core.exceptions import ObjectDoesNotExist
-from django.urls import reverse
-from general.models import OrderedModel, SocialModel
-from geotags.models import GeoTag
-from tags.models import TaggedItem, Tag
-from utils.cache import invalidate_template_cache
-from utils.text import slugify
-from utils.locations import locations_decorator
-from utils.search.search_general import delete_sound_from_solr
-from utils.similarity_utilities import delete_sound_from_gaia
-from utils.mail import send_mail_template
-from utils.tags import clean_and_split_tags
-from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, \
-    EXPECTED_HEADER_NO_USERNAME
-from search.views import get_pack_tags
-from apiv2.models import ApiV2Client
-from tickets.models import Ticket, Queue, TicketComment
-from comments.models import Comment
-from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
-import accounts.models
-import os
-import logging
-import random
-import gearman
-import subprocess
 import datetime
 import json
+import logging
+import os
+import random
 import zlib
 
+import gearman
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import JSONField
+from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
+from django.db.models import F
+from django.db.models.functions import Greatest
+from django.db.models.signals import pre_delete, post_delete, post_save
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import smart_unicode
+
+import accounts.models
+from apiv2.models import ApiV2Client
+from comments.models import Comment
+from general.models import OrderedModel, SocialModel
+from geotags.models import GeoTag
+from search.views import get_pack_tags
+from tags.models import TaggedItem, Tag
+from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
+from tickets.models import Ticket, Queue, TicketComment
+from utils.cache import invalidate_template_cache
+from utils.locations import locations_decorator
+from utils.mail import send_mail_template
+from utils.search.search_general import delete_sound_from_solr
+from utils.similarity_utilities import delete_sound_from_gaia
+from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
+from utils.text import slugify
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -1263,6 +1262,10 @@ def on_delete_sound(sender, instance, **kwargs):
 def post_delete_sound(sender, instance, **kwargs):
     # after deleted sound update num_sound on profile and pack
     try:
+        # before updating the number of sounds here, we need to refresh the object from the DB because another signal
+        # triggered after a sound is deleted (the post_delete signal on Download object) also needs to modify the
+        # user profile and if we don't refresh here the changes by that other signal will be overwritten when saving
+        instance.user.profile.refresh_from_db()
         instance.user.profile.update_num_sounds()
     except ObjectDoesNotExist:
         # If this is triggered after user.delete() (instead of sound.delete() or user.profile.delete_user()),
@@ -1421,7 +1424,7 @@ def update_num_downloads_on_delete(**kwargs):
     if download.sound_id:
         Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_sound_downloads=F('num_sound_downloads') - 1)
+            num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=Download)
@@ -1451,7 +1454,7 @@ def update_num_downloads_on_delete_pack(**kwargs):
     download = kwargs['instance']
     Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
     accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-        num_pack_downloads=F('num_pack_downloads') - 1)
+        num_pack_downloads=Greatest(F('num_pack_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=PackDownload)

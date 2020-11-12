@@ -38,10 +38,10 @@ from accounts.management.commands.process_email_bounces import process_message, 
 from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Thread, Post
-from sounds.models import Pack
+from sounds.models import Pack, Download, PackDownload
 from tags.models import TaggedItem
 from utils.mail import send_mail
-from utils.test_helpers import override_avatars_path_with_temp_directory
+from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
 
 
 class ProfileGetUserTags(TestCase):
@@ -387,6 +387,7 @@ class ProfileEmailIsValid(TestCase):
 
 
 class ProfilePostInForumTest(TestCase):
+
     def setUp(self):
         self.user = User.objects.create_user("testuser", email='email@freesound.org')
         self.forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
@@ -528,3 +529,58 @@ class ProfileEnabledEmailTypes(TestCase):
             UserEmailSetting.objects.create(user=user, email_type=email_type)
             email_types = user.profile.get_enabled_email_types()
             self.assertEqual(len(email_types), count + 1)
+
+
+class ProfileTestDownloadCountFields(TestCase):
+
+    fixtures = ['licenses']
+
+    def setUp(self):
+        self.user, self.packs, self.sounds = create_user_and_sounds(num_sounds=3, num_packs=3,
+                                                     processing_state="OK", moderation_state="OK")
+
+    @mock.patch('sounds.models.delete_sound_from_gaia')
+    @mock.patch('sounds.models.delete_sound_from_solr')
+    def test_download_sound_count_field_is_updated(self, delete_sound_from_solr, delete_sound_from_gaia):
+        # Test downloading sounds increases the "num_sound_downloads" field
+        for i in range(0, len(self.sounds)):
+            Download.objects.create(user=self.user, sound=self.sounds[i], license_id=self.sounds[i].license_id)
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_sound_downloads, i + 1)
+
+        # Test deleting downloaded sounds decreases the "num_sound_downloads" field
+        # Delete 2 of the 3 downloaded sounds
+        for i in range(0, len(self.sounds) - 1):
+            self.sounds[i].delete()  # This should decrease "num_sound_downloads" field
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_sound_downloads, len(self.sounds) - 1 - i)
+
+        # Now test that if the "num_sound_downloads" field is out of sync and deleting a sound would set it to
+        # -1, we will set it to 0 instead to avoid DB check constraint error
+        self.user.profile.num_sound_downloads = 0  # Set num_sound_downloads out of sync (should be 1 instead of 0)
+        self.user.profile.save()
+        self.sounds[2].delete()  # Delete the remaining sound
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.num_sound_downloads, 0)
+
+    def test_download_pack_count_field_is_updated(self):
+        # Test downloading packs increases the "num_pack_downloads" field
+        for i in range(0, len(self.packs)):
+            PackDownload.objects.create(user=self.user, pack=self.packs[i])
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_pack_downloads, i + 1)
+
+        # Test deleting downloaded packs decreases the "num_pack_downloads" field
+        # Delete 2 of the 3 downloaded packs
+        for i in range(0, len(self.packs) - 1):
+            self.packs[i].delete()  # This should decrease "num_sound_downloads" field
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_pack_downloads, len(self.packs) - 1 - i)
+
+        # Now test that if the "num_pack_downloads" field is out of sync and deleting a pack would set it to
+        # -1, we will set it to 0 instead to avoid DB check constraint error
+        self.user.profile.num_pack_downloads = 0  # Set num_sound_downloads out of sync (should be 1 instead of 0)
+        self.user.profile.save()
+        self.packs[2].delete()  # Delete the remaining sound
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.num_pack_downloads, 0)

@@ -8,11 +8,7 @@ function createSelect() {
     selectDropdown,
     elementParentSpan;
 
-  console.log('select', select);
-
   for (var select_i = 0, len = select.length; select_i < len; select_i++) {
-    console.log('selects init');
-
     select[select_i].style.display = 'none';
     wrapElement(
       document.getElementById(select[select_i].id),

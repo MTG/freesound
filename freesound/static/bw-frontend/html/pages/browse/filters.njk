@@ -54,3 +54,24 @@
     <div class="divider-light"></div>
   </div>
 {% endmacro %}
+
+{% macro inputDuration(value) %}
+  <input type="time" value="{{ value }}" />
+{% endmacro %}
+
+{% macro durationSection(sectionName, min, max) %}
+  <div class="bw-search__filter-section">
+    <div class="bw-search__filter-section-name caps text-light-grey between">
+      <span>{{ sectionName }}</span>
+      <span class="bw-search__filter-section-collapse">
+        <button class="btn-neutral" title="Collapse section">
+          {{ icons.icon('bar') }}
+        </button>
+      </span>
+    </div>
+    <div class="bw-search__filter-tags-list">
+      {{ inputDuration(min)}} - {{ inputDuration(max)}} <span>seconds</span>
+    </div>
+    <div class="divider-light"></div>
+  </div>
+{% endmacro %}

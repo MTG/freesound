@@ -4,7 +4,7 @@
 }
 
 .bw-search__filter-tags-list {
-  margin-top: 23px;
+  margin: 23px 0;
 }
 
 .bw-search__filter-value {
@@ -80,6 +80,27 @@
   cursor: pointer;
   opacity: 0;
   width: 0;
+}
+
+.bw-search__filter-duration {
+  color: $navy-grey;
+  font-size: 14px;
+
+  > span {
+    margin-left: 12px;
+  }
+
+  .bw-search_input-duration {
+    padding: 16px 13px;
+    border: 1px solid $navy-light-grey;
+    border-radius: 5px;
+    color: $navy-light-grey;
+    font-size: 14px;
+
+    &::-webkit-calendar-picker-indicator {
+      display: none;
+    }
+  }
 }
 
 .browse__search-overview-sorter {

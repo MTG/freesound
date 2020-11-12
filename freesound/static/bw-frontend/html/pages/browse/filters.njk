@@ -56,7 +56,7 @@
 {% endmacro %}
 
 {% macro inputDuration(value) %}
-  <input type="time" value="{{ value }}" />
+  <input class="bw-search_input-duration" type="time" value="{{ value }}" />
 {% endmacro %}
 
 {% macro durationSection(sectionName, min, max) %}
@@ -69,7 +69,7 @@
         </button>
       </span>
     </div>
-    <div class="bw-search__filter-tags-list">
+    <div class="bw-search__filter-tags-list bw-search__filter-duration">
       {{ inputDuration(min)}} - {{ inputDuration(max)}} <span>seconds</span>
     </div>
     <div class="divider-light"></div>

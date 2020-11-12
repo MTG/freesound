@@ -451,8 +451,8 @@ class Profile(SocialModel):
                     last_login=self.user.last_login,
                     reason=deletion_reason)
 
-            # If UserGDPRDeletionRequest object(s) exist for that user, update their status and deleted_user property
-            UserGDPRDeletionRequest.objects.filter(user_id=self.user.id)\
+            # If UserDeletionRequest object(s) exist for that user, update their status and deleted_user property
+            UserDeletionRequest.objects.filter(user_id=self.user.id)\
                 .update(status="de", deleted_user=deleted_user_object)
 
             if delete_user_object_from_db:
@@ -656,34 +656,47 @@ class EmailBounce(models.Model):
         return cls.type_map.get(value, cls.UNDETERMINED)
 
 
-class UserGDPRDeletionRequest(models.Model):
+class UserDeletionRequest(models.Model):
     """
-    This model is used to store information about deletion requests received via email and to help comply with GDPR
+    This model is used to store information about the process of deleting Freesound user accounts.
+    This was designed to handle the case when a user requests to be deleted via email and we need to track the
+    whole process for GDPR compliance. However, it is also used for users who decide to delete their accounts
+    via the website form or for users deleted by Freesound admins. When a user requests to be deleted via email,
+    we should manually create a UserDeletionRequest object using the Freesound admin interface and manage it
+    from there. Once we actually call the delete function through the admin or through some other way, the status
+    of this object will be automatically changed to 'User has been deleted or anonymized', and a DeletedUser
+    object containing some information about the DeletedUser (for GDPR compliance) is also created and linked to this
+    UserDeletionRequest request object. The UserDeletionRequest objects can be used in a management command
+    to double check that users that should have been deleted/anonymized have in fact been deleted/anonymized.
+    We can do that by making sure that all UserDeletionRequest with status 'User has been deleted or anonymized'
+    have the UserDeletionRequest.user field set to null or pointing to a User object with
+    User.profile.is_anonymized_user=True.
     """
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='gdpr_deletion_requests')
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='deletion_requests')
     deleted_user = models.ForeignKey(DeletedUser, null=True, on_delete=models.SET_NULL)
     username = models.CharField(max_length=150, null=True, blank=True)
     email = models.CharField(max_length=200)
     date_request_received = models.DateTimeField(auto_now_add=True)
     GDPR_DELETION_REQUEST_STATUSES = (
-        ('re', 'Received'),
+        ('re', 'Received email deletion request'),
         ('wa', 'Waiting for user action'),
-        ('ca', 'Request cancelled'),
-        ('de', 'User has been deleted')
+        ('ca', 'Request was cancelled'),
+        ('de', 'User has been deleted or anonymized')
     )
     status = models.CharField(max_length=2, choices=GDPR_DELETION_REQUEST_STATUSES, db_index=True, default='re')
+    last_updated = models.DateTimeField(auto_now=True)
     # Store history of state changes in a PG ArrayField of strings
     status_history = ArrayField(models.CharField(max_length=200), blank=True, default=list)
 
-@receiver(pre_save, sender=UserGDPRDeletionRequest)
+@receiver(pre_save, sender=UserDeletionRequest)
 def updated_status_history(sender, instance, **kwargs):
     should_update_status_history = False
     try:
-        old_instance = UserGDPRDeletionRequest.objects.get(id=instance.id)
+        old_instance = UserDeletionRequest.objects.get(id=instance.id)
         if old_instance.status != instance.status:
             should_update_status_history = True
 
-    except UserGDPRDeletionRequest.DoesNotExist:
+    except UserDeletionRequest.DoesNotExist:
         # Instance was just created, add status_history record as well
         should_update_status_history = True
 

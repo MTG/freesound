@@ -33,7 +33,7 @@ from django.urls import reverse
 
 from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
-from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserGDPRDeletionRequest
+from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserDeletionRequest
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
 from sounds.models import License, Sound, Pack, DeletedSound, Download, PackDownload
@@ -428,18 +428,18 @@ class UserDelete(TestCase):
         user.profile.delete_user(remove_sounds=True, delete_user_object_from_db=True)
 
 
-class UserGDPRDeletionRequestTestCase(TestCase):
+class UserDeletionRequestTestCase(TestCase):
 
     def test_deleting_user_updates_existing_gdpr_deletion_request_objects(self):
-        # Tests that when a user is deleted which had existing UserGDPRDeletionRequest objects assigned, these objects
+        # Tests that when a user is deleted which had existing UserDeletionRequest objects assigned, these objects
         # get the status updated and the DeletedUser object is added to them
         username = "testuser"
 
         # Test when deleting a user but preserving the user object in DB (anonymizing)
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        UserGDPRDeletionRequest.objects.create(user=user, username=username)
+        UserDeletionRequest.objects.create(user=user, username=username)
         user.profile.delete_user()
-        deletion_request = UserGDPRDeletionRequest.objects.get(username=username)
+        deletion_request = UserDeletionRequest.objects.get(username=username)
         deleted_user = DeletedUser.objects.get(username=username)
         self.assertEqual(deletion_request.status, 'de')
         self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
@@ -448,9 +448,9 @@ class UserGDPRDeletionRequestTestCase(TestCase):
 
         # Test when deleting a user and also deleting the user object in DB
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        UserGDPRDeletionRequest.objects.create(user=user, username=username)
+        UserDeletionRequest.objects.create(user=user, username=username)
         user.profile.delete_user(delete_user_object_from_db=True)
-        deletion_request = UserGDPRDeletionRequest.objects.get(username=username)
+        deletion_request = UserDeletionRequest.objects.get(username=username)
         deleted_user = DeletedUser.objects.get(username=username)
         self.assertEqual(deletion_request.status, 'de')
         self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
@@ -459,20 +459,20 @@ class UserGDPRDeletionRequestTestCase(TestCase):
 
         # Test with multiple requests
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        UserGDPRDeletionRequest.objects.create(user=user, username=username)
-        UserGDPRDeletionRequest.objects.create(user=user, username=username)
+        UserDeletionRequest.objects.create(user=user, username=username)
+        UserDeletionRequest.objects.create(user=user, username=username)
         user.profile.delete_user()
         deleted_user = DeletedUser.objects.get(username=username)
-        for deletion_request in UserGDPRDeletionRequest.objects.filter(username=username):
+        for deletion_request in UserDeletionRequest.objects.filter(username=username):
             self.assertEqual(deletion_request.status, 'de')
             self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
 
     def test_user_gdpr_deletion_request_update_status_history(self):
-        # Test that when updating a UserGDPRDeletionRequest object and changing the status, the change gets recorded
+        # Test that when updating a UserDeletionRequest object and changing the status, the change gets recorded
         # in the status_history field
         username = "testusername"
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        deletion_request = UserGDPRDeletionRequest.objects.create(user=user, username=username, status="re")
+        deletion_request = UserDeletionRequest.objects.create(user=user, username=username, status="re")
         self.assertEqual(deletion_request.status, "re")
         self.assertEqual(len(deletion_request.status_history), 1)
         self.assertTrue("re" in deletion_request.status_history[0])

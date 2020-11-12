@@ -40,7 +40,7 @@ from django.utils.functional import cached_property
 from django_object_actions import DjangoObjectActions
 
 from accounts.forms import username_taken_by_other_user
-from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserGDPRDeletionRequest, EmailBounce
+from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserDeletionRequest, EmailBounce
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -255,7 +255,7 @@ class OldUsernameAdmin(admin.ModelAdmin):
     list_display = ('user', 'username')
 
 
-class UserGDPRDeletionRequestAdmin(admin.ModelAdmin):
+class UserDeletionRequestAdmin(admin.ModelAdmin):
     search_fields = ('=username', '=email')
     raw_id_fields = ('user', )
     list_display = ('email', 'username', 'user_link', 'deleted_user_link', 'status')
@@ -267,7 +267,7 @@ class UserGDPRDeletionRequestAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         # overrride 'get_queryset' to optimize query by using select_related on 'user' and 'deleted_user'
-        qs = super(UserGDPRDeletionRequestAdmin, self).get_queryset(request)
+        qs = super(UserDeletionRequestAdmin, self).get_queryset(request)
         qs = qs.select_related('user', 'deleted_user')
         return qs
 
@@ -306,5 +306,5 @@ admin.site.register(EmailBounce, EmailBounceAdmin)
 admin.site.register(EmailPreferenceType)
 admin.site.register(OldUsername, OldUsernameAdmin)
 admin.site.register(DeletedUser, DeletedUserAdmin)
-admin.site.register(UserGDPRDeletionRequest, UserGDPRDeletionRequestAdmin)
+admin.site.register(UserDeletionRequest, UserDeletionRequestAdmin)
 

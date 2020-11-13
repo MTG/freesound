@@ -1212,7 +1212,15 @@ def on_delete_sound(sender, instance, **kwargs):
         # Note: we do not store information about individual downloads and ratings, we only
         # store count and average (for ratings). We do not store at all information about bookmarks.
 
-        data = Sound.objects.filter(pk=instance.pk).values()[0]
+        try:
+            data = Sound.objects.filter(pk=instance.pk).values()[0]
+        except IndexError:
+            # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
+            # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
+            # this part of the code. If that happens, return form this function without creating the DeletedSound
+            # object nor doing any of the other steps as this will have been already carried out.
+            return
+
         pack = None
         if instance.pack:
             pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]

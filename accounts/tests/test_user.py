@@ -990,6 +990,40 @@ class ChangeUsernameTest(TestCase):
         self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 0)
 
 
+class ChangeEmailViaAdminTestCase(TestCase):
+
+    def test_change_email_form_admin(self):
+        User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
+        self.client.login(username='superuser', password='testpass')
+
+        # Create user and get admin change url
+        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        admin_change_url = reverse('admin:auth_user_change', args=[userA.id])
+
+
+        # Try to change email to some other (unused email)
+        new_email = 'aNewEmail@freesound.org'
+        post_data = {'username': userA.username,
+                     'email': new_email,
+                     'date_joined_0': "2015-10-06", 'date_joined_1': "16:42:00"}  # date_joined required
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
+        userA.refresh_from_db()
+        self.assertEqual(userA.email, new_email)
+
+        # Now create another user with a different email, and try to change userA email to the email of the new user
+        userB = User.objects.create_user('userB', email='userBA@freesound.org', password='testpass')
+        post_data = {'username': userA.username,
+                     'email': userB.email,
+                     'date_joined_0': "2015-10-06", 'date_joined_1': "16:42:00"}  # date_joined required
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in email field
+        self.assertIn('This email is already being used by another user', str(resp.context['adminform'].errors))
+        userA.refresh_from_db()
+        self.assertEqual(userA.email, new_email)  # Email has not been changed
+
+
 class UsernameValidatorTest(TestCase):
     """ Makes sure that username validation works as intended """
 

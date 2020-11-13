@@ -57,6 +57,7 @@ urlpatterns = [
     url(r'^delete/$', accounts.delete, name="accounts-delete"),
     url(r'^pending/$', accounts.pending, name="accounts-pending"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),
+    url(r'^download-attribution/$', accounts.download_attribution, name="accounts-download-attribution"),
     url(r'^stream/$', follow.stream, name='stream'),
 
     url(r'^upload/$', accounts.upload, name="accounts-upload", kwargs=dict(no_flash=True)),

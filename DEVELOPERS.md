@@ -117,6 +117,14 @@ We should aim to minimise the amount of downtime due to database migrations. Thi
 
 For tables that have lots of rows, **adding a column** with a default value takes a long time. Adding this column as nullable is much faster. We can create a second migration to make the column not null once it is populated.
 
+### Adding new fields to the user Profile model
+
+When adding new fields to the `accounts.Profile` model, we should make sure that we also take care of these new fields in the `accounts.Profile.delete_user` method (which anonymizes a user account).
+
+### Adding new fields to the user Sound model
+
+When adding new fields to the `sounds.Sound` mode, we should make sure that we handle this fields correctly when creating `DeletedSound` objects in the `sounds-models.on_delete_sound` function triggered by the `pre_delete` signal of the `Sound` model.
+
 
 ### Considerations when updating Django version
 

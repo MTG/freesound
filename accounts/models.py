@@ -566,10 +566,10 @@ class SameUser(models.Model):
         return transform_unique_email(self.orig_email)
 
     def main_user_changed_email(self):
-        return self.main_user.email != self.main_trans_email
+        return self.main_user.email.lower() != self.main_trans_email.lower()
 
     def secondary_user_changed_email(self):
-        return self.secondary_user.email != self.secondary_trans_email
+        return self.secondary_user.email.lower() != self.secondary_trans_email.lower()
 
 
 def create_user_profile(sender, instance, created, **kwargs):

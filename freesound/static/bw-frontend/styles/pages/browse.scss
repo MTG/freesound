@@ -96,6 +96,7 @@
     border-radius: 5px;
     color: $navy-light-grey;
     font-size: 14px;
+    max-width: 85px;
 
     &::-webkit-calendar-picker-indicator {
       display: none;

@@ -49,3 +49,4 @@ numpy==1.16.6
 django-silk==3.0.2
 dj-database-url==0.5.0
 pysndfile==1.4.3
+pytz==2020.1

@@ -24,6 +24,7 @@ import datetime
 import os
 import random
 
+import pytz
 from django.conf import settings
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth.models import User
@@ -713,7 +714,7 @@ def update_status_history(sender, instance, **kwargs):
         should_update_status_history = True
 
     if should_update_status_history:
-        instance.status_history += ['{0}: {1} ({2})'.format(datetime.datetime.now(),
+        instance.status_history += ['{0}: {1} ({2})'.format(pytz.utc.localize(datetime.datetime.utcnow()),
                                                             instance.get_status_display(),
                                                             instance.status)]
 

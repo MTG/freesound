@@ -131,13 +131,23 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                                DELETE_USER_KEEP_SOUNDS_ACTION_NAME))
+            delete_action = DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+            delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+
+            # Submit gearman job so user gets deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                    json.dumps({'user_id': obj.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
-                                'deletion_reason': DeletedUser.DELETION_REASON_DELETED_BY_ADMIN}),
+                    json.dumps({'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
                 wait_until_complete=False, background=True)
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user=request.user,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
+            # Show message to admin user
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously. Sounds, comments and other related '
                                  'user content will still be available but appear under anonymised account' % username)
@@ -155,13 +165,24 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_include_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                                DELETE_USER_DELETE_SOUNDS_ACTION_NAME))
+            delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME
+            delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+
+            # Submit gearman job so user gets deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': obj.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
-                                             'deletion_reason': DeletedUser.DELETION_REASON_DELETED_BY_ADMIN}),
+                                 json.dumps(
+                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
                                  wait_until_complete=False, background=True)
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user=request.user,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
+            # Show message to admin user
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously. Sounds will be deleted as well. '
                                  'Comments and other related user content will still be available but appear under '
@@ -186,13 +207,24 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_spammer(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                                DELETE_SPAMMER_USER_ACTION_NAME))
+            delete_action = DELETE_SPAMMER_USER_ACTION_NAME
+            delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+
+            # Submit gearman job so user gets deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': obj.id, 'action': DELETE_SPAMMER_USER_ACTION_NAME,
-                                             'deletion_reason': DeletedUser.DELETION_REASON_SPAMMER}),
+                                 json.dumps(
+                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
                                  wait_until_complete=False, background=True)
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user=request.user,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
+            # Show message to admin user
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously including sounds and all of its related '
                                  'content.' % username)
@@ -216,13 +248,24 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def full_delete(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id,
-                                                                                FULL_DELETE_USER_ACTION_NAME))
+            delete_action = FULL_DELETE_USER_ACTION_NAME
+            delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+
+            # Submit gearman job so user gets deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': obj.id, 'action': FULL_DELETE_USER_ACTION_NAME,
-                                             'deletion_reason': DeletedUser.DELETION_REASON_DELETED_BY_ADMIN}),
+                                 json.dumps(
+                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
                                  wait_until_complete=False, background=True)
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user=request.user,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
+            # Show message to admin user
             messages.add_message(request, messages.INFO,
                                  'User \'%s\' will be deleted asynchronously including sounds and all of its related'
                                  'content.' % username)
@@ -261,7 +304,7 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
     list_display = ('email', 'username', 'user_link', 'deleted_user_link', 'status')
     list_filter = ('status', )
     fieldsets = (
-        (None, {'fields': ('email', 'status', 'user', 'username', 'status_history')}),
+        (None, {'fields': ('email', 'status', 'last_updated', 'user', 'username', 'status_history')}),
     )
     readonly_fields = ('status_history', )
 

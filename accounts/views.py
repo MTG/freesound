@@ -60,7 +60,7 @@ from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, 
     UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
     username_taken_by_other_user
-from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser
+from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
 from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
@@ -1043,16 +1043,25 @@ def delete(request):
         else:
             delete_sounds =\
                 form.cleaned_data['delete_sounds'] == 'delete_sounds'
-
             delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
                 else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
-
+            delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
             web_logger.info('Requested async deletion of user {0} - {1}'.format(request.user.id, delete_action))
+
+            # Submit deletion job to gearman so the user is deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps({'user_id': request.user.id, 'action': delete_action,
-                                             'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED}),
+                                             'deletion_reason': delete_reason}),
                                  wait_until_complete=False, background=True)
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user=request.user,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
+            # Show a message to the user that the account will be deleted shortly
             messages.add_message(request, messages.INFO,
                                  'Your user account will be deleted in a few moments. Note that this process could '
                                  'take up to an hour for users with many uploaded sounds.')

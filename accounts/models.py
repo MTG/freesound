@@ -61,7 +61,7 @@ class ResetEmailRequest(models.Model):
 
 class DeletedUser(models.Model):
     """
-    This model is used to store basic information about users that have been deleted or anonymized.
+    This model is used to store basic information about users that have been deleted/anonymized.
     """
     user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
     username = models.CharField(max_length=150)
@@ -69,6 +69,7 @@ class DeletedUser(models.Model):
     date_joined = models.DateTimeField()
     last_login = models.DateTimeField(null=True)
     deletion_date = models.DateTimeField(auto_now_add=True)
+    sounds_were_also_deleted = models.BooleanField(default=False)
 
     DELETION_REASON_SPAMMER = 'sp'
     DELETION_REASON_DELETED_BY_ADMIN = 'ad'
@@ -78,7 +79,7 @@ class DeletedUser(models.Model):
         (DELETION_REASON_DELETED_BY_ADMIN, 'Deleted by an admin'),
         (DELETION_REASON_SELF_DELETED, 'Self deleted')
     )
-    reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)  # TODO: should we add db_index=True?
+    reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)
 
     def __unicode__(self):
         return 'Deleted user object for: {0}'.format(self.username)
@@ -449,9 +450,10 @@ class Profile(SocialModel):
                     email=self.user.email,
                     date_joined=self.user.date_joined,
                     last_login=self.user.last_login,
+                    sounds_were_also_deleted=remove_sounds,
                     reason=deletion_reason)
 
-            # If UserDeletionRequest object(s) exist for that user, update their status and deleted_user property
+            # If UserDeletionRequest object(s) exist for that user, update the status and set deleted_user property
             UserDeletionRequest.objects.filter(user_id=self.user.id)\
                 .update(status="de", deleted_user=deleted_user_object)
 
@@ -663,12 +665,12 @@ class UserDeletionRequest(models.Model):
     whole process for GDPR compliance. However, it is also used for users who decide to delete their accounts
     via the website form or for users deleted by Freesound admins. When a user requests to be deleted via email,
     we should manually create a UserDeletionRequest object using the Freesound admin interface and manage it
-    from there. Once we actually call the delete function through the admin or through some other way, the status
+    from there. Once we actually call the delete function through the admin or through some other method, the status
     of this object will be automatically changed to 'User has been deleted or anonymized', and a DeletedUser
     object containing some information about the DeletedUser (for GDPR compliance) is also created and linked to this
     UserDeletionRequest request object. The UserDeletionRequest objects can be used in a management command
     to double check that users that should have been deleted/anonymized have in fact been deleted/anonymized.
-    We can do that by making sure that all UserDeletionRequest with status 'User has been deleted or anonymized'
+    We can do that by making sure that all UserDeletionRequest with status 'Deletion action was triggered'
     have the UserDeletionRequest.user field set to null or pointing to a User object with
     User.profile.is_anonymized_user=True.
     """
@@ -676,17 +678,27 @@ class UserDeletionRequest(models.Model):
     deleted_user = models.ForeignKey(DeletedUser, null=True, on_delete=models.SET_NULL)
     username = models.CharField(max_length=150, null=True, blank=True)
     email = models.CharField(max_length=200)
-    date_request_received = models.DateTimeField(auto_now_add=True)
-    GDPR_DELETION_REQUEST_STATUSES = (
-        ('re', 'Received email deletion request'),
-        ('wa', 'Waiting for user action'),
-        ('ca', 'Request was cancelled'),
-        ('de', 'User has been deleted or anonymized')
+    DELETION_REQUEST_STATUS_RECEIVED_REQUEST = 're'
+    DELETION_REQUEST_STATUS_WAITING_FOR_USER = 'wa'
+    DELETION_REQUEST_STATUS_DELETION_CANCELLED = 'ca'
+    DELETION_REQUEST_STATUS_DELETION_TRIGGERED = 'tr'
+    DELETION_REQUEST_STATUS_USER_WAS_DELETED = 'de'
+    DELETION_REQUEST_STATUSES = (
+        (DELETION_REQUEST_STATUS_RECEIVED_REQUEST, 'Received email deletion request'),
+        (DELETION_REQUEST_STATUS_WAITING_FOR_USER, 'Waiting for user action'),
+        (DELETION_REQUEST_STATUS_DELETION_CANCELLED, 'Request was cancelled'),
+        (DELETION_REQUEST_STATUS_DELETION_TRIGGERED, 'Deletion action was triggered'),
+        (DELETION_REQUEST_STATUS_USER_WAS_DELETED, 'User has been deleted or anonymized')
     )
-    status = models.CharField(max_length=2, choices=GDPR_DELETION_REQUEST_STATUSES, db_index=True, default='re')
+    status = models.CharField(max_length=2, choices=DELETION_REQUEST_STATUSES, db_index=True, default='re')
     last_updated = models.DateTimeField(auto_now=True)
+
     # Store history of state changes in a PG ArrayField of strings
     status_history = ArrayField(models.CharField(max_length=200), blank=True, default=list)
+
+    # Store the deletion action and reason triggered for that user to facilitate re-triggering if need be
+    triggered_deletion_action = models.CharField(max_length=100)
+    triggered_deletion_reason = models.CharField(max_length=100)
 
 @receiver(pre_save, sender=UserDeletionRequest)
 def updated_status_history(sender, instance, **kwargs):
@@ -701,7 +713,7 @@ def updated_status_history(sender, instance, **kwargs):
         should_update_status_history = True
 
     if should_update_status_history:
-        instance.status_history += ['{0}: {2} ({1})'.format(datetime.datetime.now(),
-                                                            instance.status,
-                                                            instance.get_status_display())]
+        instance.status_history += ['{0}: {1} ({2})'.format(datetime.datetime.now(),
+                                                            instance.get_status_display(),
+                                                            instance.status)]
 

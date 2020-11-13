@@ -310,12 +310,12 @@ class OldUsernameAdmin(admin.ModelAdmin):
 class UserDeletionRequestAdmin(admin.ModelAdmin):
     search_fields = ('=username', '=email')
     raw_id_fields = ('user', )
-    list_display = ('email', 'username', 'user_link', 'deleted_user_link', 'status')
+    list_display = ('email', 'username', 'user_link', 'deleted_user_link', 'status', 'last_updated')
     list_filter = ('status', )
     fieldsets = (
-        (None, {'fields': ('email', 'status', 'last_updated', 'user', 'username', 'status_history')}),
+        (None, {'fields': ('email', 'status', 'user', 'username', 'status_history')}),
     )
-    readonly_fields = ('status_history', )
+    readonly_fields = ('status_history', 'username')
 
     def get_queryset(self, request):
         # overrride 'get_queryset' to optimize query by using select_related on 'user' and 'deleted_user'

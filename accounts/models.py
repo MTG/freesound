@@ -701,7 +701,7 @@ class UserDeletionRequest(models.Model):
     triggered_deletion_reason = models.CharField(max_length=100)
 
 @receiver(pre_save, sender=UserDeletionRequest)
-def updated_status_history(sender, instance, **kwargs):
+def update_status_history(sender, instance, **kwargs):
     should_update_status_history = False
     try:
         old_instance = UserDeletionRequest.objects.get(id=instance.id)
@@ -717,3 +717,8 @@ def updated_status_history(sender, instance, **kwargs):
                                                             instance.get_status_display(),
                                                             instance.status)]
 
+@receiver(pre_save, sender=UserDeletionRequest)
+def updated_status_history(sender, instance, **kwargs):
+    # Automatically update the username field if user object is set
+    if instance.user is not None and not instance.user.profile.is_anonymized_user:
+        instance.username = instance.user.username

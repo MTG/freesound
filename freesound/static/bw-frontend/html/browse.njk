@@ -15,7 +15,7 @@
       {% include './pages/browse/searchOverview.njk' %}
     </div>
     <div class="row no-gutters">
-      <aside class="col-3">
+      <aside class="col-sm-12 col-md-3">
         {{ filters.checkboxSection('Licenses', ['Creative commons 0', 'Sampling +', 'Attribution', 'Non-commercial']) }}
         {{ filters.checkboxSection('Type', ['aiff', 'wav', 'mp3', 'FLAC']) }}
         {{ filters.tagsSection('Related tags', ['Electronic', 'world', 'ambient', 'synth', 'analog', 'distortion', 'techno', 'dub', 'cc0', 'good', 'mic']) }}
@@ -26,7 +26,7 @@
         {{ filters.checkboxSection('Channels', ['2', '1', '6']) }}
         {{ filters.checkboxSection('Search only in ', ['Tags', 'File names', 'Descriptions', 'Sound ids', 'User names']) }}
       </aside>
-      <main class="col-8 offset-1">
+      <main class="col-sm-12 col-md-8 offset-md-1">
         <div class="v-spacing-3 v-spacing-top-1">
           {{ activeFilters.list(['Creative commons 0', 'mp3'])}}
         </div>

@@ -122,3 +122,11 @@
     opacity: 1;
   }
 }
+
+.bw_search_navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: $white;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.08);
+}

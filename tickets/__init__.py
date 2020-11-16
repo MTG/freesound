@@ -76,7 +76,7 @@ MODERATION_TEXTS = [
     ('Verify Details', "Hey there. Thanks for contributing to Freesound. "
                        " "
                        "Before we can moderate your upload, could you possibly update the description/tags? "
-                       "Any details such as how it was created, recording device, software used, date/location etc-
+                       "Any details such as how it was created, recording device, software used, date/location etc- "
                        "-are extremely useful.
                        " "
                        "If you can't find how to edit your sound, here's a little visual guide: "

@@ -77,7 +77,7 @@ MODERATION_TEXTS = [
                        " "
                        "Before we can moderate your upload, could you possibly update the description/tags? "
                        "Any details such as how it was created, recording device, software used, date/location etc- "
-                       "-are extremely useful.
+                       "-are extremely useful. "
                        " "
                        "If you can't find how to edit your sound, here's a little visual guide: "
                         hyperlink_format = '<a href="{https://i.imgur.com/s4w2ysv.jpg}">{Guide to editing your upload}</a>'

@@ -1,3 +1,5 @@
+{% import './molecules/modal.njk' as modals %}
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -21,6 +23,7 @@
     {% endblock %}
     </div>
     <script src="../src/index.js"></script>
+    {{ modals.login() }}
     {% block extrabody %}
     {% endblock %}
   </body>

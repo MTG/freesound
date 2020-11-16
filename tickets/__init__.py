@@ -95,7 +95,7 @@ MODERATION_TEXTS = [
                          " "
                          "Many thanks!"),
     ('Permission', "Hey there. Thanks for contributing to Freesound. "    
-                   "Please could you clarify for us that you have permission to upload the recording of the
+                   "Please could you clarify for us that you have permission to upload the recording of the "
                    "performer, singer or speaker to Freesound? "                
                    " "  
                    "It's important that you don't share things that you don't have permission to upload. "

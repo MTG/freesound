@@ -13,18 +13,44 @@
           <div class="modal-body">
             <h5>Log in to Freesound</h5>
             <form>
-              <input type="text" placeholder="Enter your email or username" />
-              <input type="password" placeholder="Enter your password" />
+              <input type="text" name="email" placeholder="Enter your email or username" />
+              <input type="password" name="password" placeholder="Enter your password" />
             </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-primary">Log in</button>
-            <a>Problems logging in?</a>
+            <a data-link="forgottenPassword">Problems logging in?</a>
           </div>
         </div>
       </div>
       <div class="modal-extra-info">
         <a>Don't have an account? Join now</a>
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro forgottenPassword() %}
+    <div class="modal" id="forgottenPassword" tabindex="-1" role="dialog" aria-labelledby="forgottenPasswordLabel" aria-hidden="true">
+    <div class="modal-wrapper">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="close" data-dismiss="modal" aria-label="Close">
+              {{ icons.icon('close') }}
+            </span>
+          </div>
+          <div class="modal-body">
+            <h5>Problems logging in?</h5>
+            <form>
+              <input type="text" name="email" placeholder="Enter your email or username" />
+            </form>
+          </div>
+          <div class="modal-footer link-left">
+            <button type="button" class="btn btn-primary">Send me that link</button>
+            <a data-link="loginModal">{{ icons.icon('chevron', 'bw-icon__chevron_left') }} Back to log in</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>

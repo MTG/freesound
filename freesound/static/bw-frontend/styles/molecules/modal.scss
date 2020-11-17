@@ -67,6 +67,10 @@
     }
   }
 
+  .link-left {
+    align-items: start;
+  }
+
   .modal-extra-info {
     position: absolute;
     top: calc(78vh - 3.5rem);

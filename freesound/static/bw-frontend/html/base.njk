@@ -17,15 +17,16 @@
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
+    {{ modals.login() }}
+    {{ modals.forgottenPassword() }}
+    {{ modals.register() }}
+    {{ modals.newPassword() }}
     <div class="notifications-wrapper"></div>
     <div class="bw-page">
     {% block content %}
     {% endblock %}
     </div>
     <script src="../src/index.js"></script>
-    {{ modals.login() }}
-    {{ modals.forgottenPassword() }}
-    {{ modals.register() }}
     {% block extrabody %}
     {% endblock %}
   </body>

@@ -71,7 +71,7 @@
             <form>
               <input type="text" name="username" placeholder="Username (30 characters maximum)" />
               <input type="text" name="email" placeholder="Email" />
-              <input type="text" name="password" placeholder="Create a password (10 characters minimum)" />
+              <input type="password" name="password" placeholder="Create a password (10 characters minimum)" />
             </form>
           </div>
           <div class="modal-footer link-left">
@@ -81,6 +81,32 @@
       </div>
       <div class="modal-extra-info">
         <a data-link="loginModal">Already have an account? Sign in here</a>
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro newPassword() %}
+  <div class="modal" id="newPasswordModal" tabindex="-1" role="dialog" aria-labelledby="newPasswordModalLabel" aria-hidden="true">
+    <div class="modal-wrapper">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="close" data-dismiss="modal" aria-label="Close">
+              {{ icons.icon('close') }}
+            </span>
+          </div>
+          <div class="modal-body">
+            <h5>Please, enter a new password</h5>
+            <form>
+              <input type="password" name="password" placeholder="New password" />
+              <input type="password" name="confirm" placeholder="Confirm your new password" />
+            </form>
+          </div>
+          <div class="modal-footer link-left">
+            <button type="button" class="btn btn-primary">Create new password</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

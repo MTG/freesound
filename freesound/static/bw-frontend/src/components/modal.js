@@ -3,8 +3,9 @@ const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 const handleModal = modalContainerId => {
   const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
   const modalLinks = [
-    document.querySelector('[data-link="forgottenPassword"]'),
-    document.querySelector('[data-link="loginModal"]'),
+    document.querySelectorAll('[data-link="forgottenPasswordModal"]'),
+    document.querySelectorAll('[data-link="loginModal"]'),
+    document.querySelectorAll('[data-link="registerModal"]'),
   ];
 
   const modalContainer = document.getElementById(modalContainerId);
@@ -20,10 +21,12 @@ const handleModal = modalContainerId => {
     dismiss.addEventListener('click', () => handleDismissModal());
   });
 
-  modalLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      handleDismissModal();
-      handleModal(link.dataset.link);
+  modalLinks.forEach(links => {
+    links.forEach(link => {
+      link.addEventListener('click', () => {
+        handleDismissModal();
+        handleModal(link.dataset.link);
+      });
     });
   });
 };

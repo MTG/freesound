@@ -19,19 +19,19 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-primary">Log in</button>
-            <a data-link="forgottenPassword">Problems logging in?</a>
+            <a data-link="forgottenPasswordModal">Problems logging in?</a>
           </div>
         </div>
       </div>
       <div class="modal-extra-info">
-        <a>Don't have an account? Join now</a>
+        <a data-link="registerModal">Don't have an account? Join now</a>
       </div>
     </div>
   </div>
 {% endmacro %}
 
 {% macro forgottenPassword() %}
-    <div class="modal" id="forgottenPassword" tabindex="-1" role="dialog" aria-labelledby="forgottenPasswordLabel" aria-hidden="true">
+  <div class="modal" id="forgottenPasswordModal" tabindex="-1" role="dialog" aria-labelledby="forgottenPasswordModalLabel" aria-hidden="true">
     <div class="modal-wrapper">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -51,6 +51,36 @@
             <a data-link="loginModal">{{ icons.icon('chevron', 'bw-icon__chevron_left') }} Back to log in</a>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro register() %}
+  <div class="modal" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-wrapper">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="close" data-dismiss="modal" aria-label="Close">
+              {{ icons.icon('close') }}
+            </span>
+          </div>
+          <div class="modal-body">
+            <h5>Join Freesound</h5>
+            <form>
+              <input type="text" name="username" placeholder="Username (30 characters maximum)" />
+              <input type="text" name="email" placeholder="Email" />
+              <input type="text" name="password" placeholder="Create a password (10 characters minimum)" />
+            </form>
+          </div>
+          <div class="modal-footer link-left">
+            <button type="button" class="btn btn-primary">Send me that link</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-extra-info">
+        <a data-link="loginModal">Already have an account? Sign in here</a>
       </div>
     </div>
   </div>

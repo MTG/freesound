@@ -2,8 +2,7 @@ const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
 const urlParams = new URLSearchParams(window.location.search);
 const newPasswordParam = urlParams.get('newPassword');
-
-console.log('newPass', newPasswordParam);
+const feedbackRegistrationParam = urlParams.get('feedbackRegistration');
 
 const handleModal = modalContainerId => {
   const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
@@ -14,7 +13,6 @@ const handleModal = modalContainerId => {
   ];
 
   const modalContainer = document.getElementById(modalContainerId);
-  console.log('container', modalContainer);
   modalContainer.classList.add('show');
   modalContainer.style.display = 'block';
 
@@ -43,4 +41,8 @@ modals.forEach(modal => {
 
 if (newPasswordParam) {
   handleModal('newPasswordModal');
+}
+
+if (feedbackRegistrationParam) {
+  handleModal('feedbackRegistration');
 }

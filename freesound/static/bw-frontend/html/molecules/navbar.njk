@@ -101,7 +101,7 @@
     {{ userDropDown() }}
   {% endif %}
   <li class="bw-nav__action">
-    <button class="btn-secondary" data-toggle="modal" data-target="#loginModal">
+    <button class="btn-secondary" data-toggle="modal" data-target="{% if loggedIn %}#donateModal{% else %}#loginModal{% endif %}">
       {% if loggedIn %}
         Donate
         {% else %}
@@ -110,7 +110,7 @@
     </button>
   </li>
   <li class="bw-nav__action">
-    <button class="btn-primary">
+    <button class="btn-primary" data-toggle="modal" data-target="#registerModal">
       {% if loggedIn %}
         Upload sound
         {% else %}

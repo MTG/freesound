@@ -1,0 +1,44 @@
+.bw-profile {
+  &__hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+    }
+  }
+
+  &__username {
+    color: $red;
+    font-size: 38px;
+  }
+
+  &__description {
+    font-size: 15px;
+    max-width: 568px;
+    text-align: center;
+  }
+
+  &__stats {
+    display: flex;
+    justify-content: space-around;
+    color: $navy-grey;
+    font-size: 15px;
+
+    div:after {
+      content: ' ';
+      background-color: $navy-grey;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      margin: 0 12px 3px;
+      display: inline-block;
+    }
+    div:last-child:after {
+      display: none;
+    }
+  }
+}

@@ -5,7 +5,26 @@
 {% block content %}
   {{ navbars.browseNavbar(true) }}
   <div class="container">
-  hola
+    <div class="row navbar-space-filler v-spacing-top-6 v-spacing-6 bw-profile__hero">
+      <div>
+        <img src="../public/avatar.jpg" />
+      </div>
+      <div class="bw-profile__username v-spacing-top-2">
+        <h1>Spidimateo</h1>
+      </div>
+      <div class="v-spacing-top-3">
+        <button class="btn-inverse">Follow</button>
+        <button class="btn-inverse h-spacing-left-2">Message</button>
+      </div>
+      <div class="bw-profile__description v-spacing-top-3">
+        Lorem ipsum! 😃 Dolor sit amet, consectetur adipiscing elit. Morbi a tortor non sapien pellentesque vulputate. Morbi accumsan sapien ut.
+      </div>
+      <div class="bw-profile__stats v-spacing-top-3">
+        <div>5 followers</div>
+        <div>17 following</div>
+        <div>23 tags following</div>
+      </div>
+    </div>
   </div>
   {% include './molecules/footer.njk' %}
 {% endblock %}

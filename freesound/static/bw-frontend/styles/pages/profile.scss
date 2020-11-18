@@ -24,7 +24,6 @@
 
   &__stats {
     display: flex;
-    justify-content: space-around;
     color: $navy-grey;
     font-size: 15px;
 
@@ -39,6 +38,31 @@
     }
     div:last-child:after {
       display: none;
+    }
+  }
+
+  &__taps_nav {
+    margin-top: 25px;
+    margin-bottom: 25px;
+
+    ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      width: 100%;
+      justify-content: center;
+
+      li {
+        margin: 0 12px;
+        font-size: 18px;
+        color: $navy-light-grey;
+        cursor: pointer;
+      }
+
+      .active {
+        color: $black;
+      }
     }
   }
 }

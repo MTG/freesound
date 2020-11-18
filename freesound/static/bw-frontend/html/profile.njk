@@ -25,6 +25,19 @@
         <div>23 tags following</div>
       </div>
     </div>
+    <div class="divider-light"></div>
+    <div class="row bw-profile__taps_nav">
+      <ol>
+        <li class="active" data-toggle="tap" data-target="#tapSounds">Sounds</li>
+        <li data-toggle="tap" data-target="#tapPacks">Packs</li>
+        <li data-toggle="tap" data-target="#tapDownloaded">Downloaded</li>
+      </ol>
+    </div>
+    <div class="divider-light"></div>
   </div>
   {% include './molecules/footer.njk' %}
 {% endblock %}
+
+  {% block extrabody %}
+    <script src="../src/pages/profile.js"></script>
+  {% endblock %}

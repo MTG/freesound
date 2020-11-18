@@ -1,0 +1,11 @@
+
+{% import './molecules/navbar.njk' as navbars %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+  <div class="container">
+  hola
+  </div>
+  {% include './molecules/footer.njk' %}
+{% endblock %}

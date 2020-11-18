@@ -65,4 +65,12 @@
       }
     }
   }
+
+  &__tap_container {
+    display: none;
+
+    &__active {
+      display: block;
+    }
+  }
 }

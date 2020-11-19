@@ -1,7 +1,7 @@
 const inquirer = require('inquirer');
 const shell = require('shelljs');
 
-const pages = ['front', 'browse', 'profile'];
+const pages = ['front', 'browse', 'profile', 'followers'];
 
 const outDir = 'freesound/static/bw-frontend/dist';
 

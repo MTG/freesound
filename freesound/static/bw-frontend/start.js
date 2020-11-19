@@ -9,7 +9,7 @@ const start = async () => {
       type: 'list',
       name: 'pagename',
       message: 'Which page would you like to open?',
-      choices: ['Front', 'Browse', 'Profile'],
+      choices: ['Front', 'Browse', 'Profile', 'Followers'],
       filter: val => val.toLowerCase(),
     },
   ]);

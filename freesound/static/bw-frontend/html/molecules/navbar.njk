@@ -154,3 +154,13 @@
     </div>
   </nav>
 {% endmacro %}
+
+{% macro followersNavbar(page) %}
+  <div class="bw-nav__followers v-spacing-top-5">
+    <ol>
+      <li class="{% if page == 'followers' %}active{% endif %}"><a href="">Followers</a></li>
+      <li class="{% if page == 'following' %}active{% endif %}"><a href="">Following</a></li>
+      <li class="{% if page == 'tags' %}active{% endif %}"><a href="">Tags following</a></li>
+    </ol>
+  </div>
+{% endmacro %}

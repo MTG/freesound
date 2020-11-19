@@ -73,4 +73,37 @@
       display: block;
     }
   }
+
+  &__section_stats {
+    padding-bottom: 32px;
+
+    ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      li {
+        margin-bottom: 16px;
+
+        span {
+          margin: 0 5px;
+          font-size: 21px;
+
+          &:nth-child(2) {
+            color: $navy-grey;
+          }
+
+          &:last-child {
+            color: $navy-light-grey;
+          }
+        }
+      }
+    }
+  }
+
+  &__sections {
+    h5 {
+      font-size: 26px;
+    }
+  }
 }

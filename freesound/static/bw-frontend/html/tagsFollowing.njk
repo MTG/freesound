@@ -1,0 +1,16 @@
+{% import './atoms/icons.njk' as icons %}
+{% import './molecules/navbar.njk' as navbar %}
+{% import './atoms/tags.njk' as tags %}
+{% extends "base.njk" %}
+
+{% block content %}
+  <div class="container bw-followers__main">
+    <div class="bw-followers__close v-spacing-top-4">
+      <a href="">{{ icons.icon('close') }}</a>
+    </div>
+    {{ navbar.followersNavbar('tags') }}
+    <div class="col-8 offset-2 v-spacing-top-6">
+      {{ tags.tags(['Electronic', 'world', 'ambient', 'synth', 'analog', 'distortion', 'techno', 'dub', 'cc0', 'good', 'mic'])}}
+    </div>
+  </div>
+{% endblock %}

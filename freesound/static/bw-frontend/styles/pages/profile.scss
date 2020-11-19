@@ -24,8 +24,11 @@
 
   &__stats {
     display: flex;
-    color: $navy-grey;
     font-size: 15px;
+
+    a {
+      color: $navy-grey;
+    }
 
     div:after {
       content: ' ';

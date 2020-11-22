@@ -53,7 +53,7 @@
                 ·  This sound is part of the pack <a href="">Dogs toy’s</a>
               </div>
             </div>
-            <div class="v-spacing-top-1">
+            <div class="v-spacing-top-1 collapsable-block" id="collapsable-sound">
               <div class="text-17">
                 Lorem ipsun dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut. Dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut eta amut best amon dul llarons et oultra um set nultra consectetur adipiscing.
                 Siusmod tempor incididunt ut. Dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut eta amut best amon dul llarons et.
@@ -94,6 +94,9 @@
                 </div>
               </div>
             </div>
+            <div id="collapsable-text" data-target="collapsable-sound" class="v-spacing-top-2 collapsable-text">
+              Show more
+            </div>
           </div>
         </div>
         <div class="col-3 offset-1">
@@ -102,4 +105,8 @@
       </div>
     </div>
   </div>
+  {% include './molecules/footer.njk' %}
 {% endblock %}
+  {% block extrabody %}
+    <script src="../src/components/collapsableBlock.js"></script>
+  {% endblock %}

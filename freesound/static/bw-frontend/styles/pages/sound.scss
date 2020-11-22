@@ -1,5 +1,19 @@
-.bw-sound-page__information {
-  h1 {
-    font-size: 36px;
+.bw-sound-page {
+  &__information {
+    h1 {
+      font-size: 36px;
+    }
+  }
+
+  &__user {
+    img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    p {
+      margin: 0;
+    }
   }
 }

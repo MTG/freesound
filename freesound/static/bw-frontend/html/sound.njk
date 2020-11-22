@@ -3,6 +3,7 @@
 {% import './molecules/navbar.njk' as navbars %}
 {% import './atoms/stars.njk' as stars %}
 {% import './atoms/icons.njk' as icons %}
+{% import './atoms/tags.njk' as tags %}
 {% extends "base.njk" %}
 
 {% block content %}
@@ -30,6 +31,69 @@
               </div>
             </div>
             <div class="middle v-spacing-top-2">{{ stars.stars(2.5) }} <span class="text-grey h-spacing-left-1">Overall rating (15)</span></div> <!-- TODO: check after merge browser page -->
+            <div class="middle bw-sound-page__user v-spacing-top-5">
+              <div>
+                <img src="../public/avatar.jpg" />
+              </div>
+              <div class="h-spacing-left-1">
+                <a href="">klankbeeld</a>
+                <p class="text-grey">February 18th, 2017</p>
+              </div>
+              <div class="h-spacing-left-3">
+                <button class="btn-inverse">Follow</button>
+              </div>
+            </div>
+            <div class="middle v-spacing-top-3">
+              <div>
+                <a href="">
+                  {{ icons.icon('pin') }} Barcelona
+                </a>
+              </div>
+              <div class="text-grey h-spacing-left-1">
+                ·  This sound is part of the pack <a href="">Dogs toy’s</a>
+              </div>
+            </div>
+            <div class="v-spacing-top-1">
+              <div class="text-17">
+                Lorem ipsun dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut. Dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut eta amut best amon dul llarons et oultra um set nultra consectetur adipiscing.
+                Siusmod tempor incididunt ut. Dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut eta amut best amon dul llarons et.
+              </div>
+              <div class="v-spacing-top-3">
+                <a href="" class="text-light-grey">
+                  {{ icons.icon('flag') }} Sound illegal or offensive? Flag it!
+                </a>
+              </div>
+              <div class="v-spacing-top-4">
+                {{ tags.tags(['Electronic', 'world', 'ambient', 'synth', 'analog', 'distortion', 'techno', 'dub', 'cc0', 'good', 'mic'])}}
+              </div>
+              <div class="divider-light v-spacing-top-4"></div>
+              <div class="v-spacing-top-4 row">
+                <div class="col-md-2 text-center text-17">
+                  <p class="text-grey no-margins">Type</p>
+                  <p class="no-margins">Wave.wave</p>
+                </div>
+                <div class="col-md-2 text-center text-17">
+                  <p class="text-grey no-margins">Duration</p>
+                  <p class="no-margins">00:10:141</p>
+                </div>
+                <div class="col-md-2 text-center text-17">
+                  <p class="text-grey no-margins">Fliesize</p>
+                  <p class="no-margins">7.4 MB</p>
+                </div>
+                <div class="col-md-2 text-center text-17">
+                  <p class="text-grey no-margins">Samplerate</p>
+                  <p class="no-margins">96000.0 Hz</p>
+                </div>
+                <div class="col-md-2 text-center text-17">
+                  <p class="text-grey no-margins">Bitdepth</p>
+                  <p class="no-margins">32 bit</p>
+                </div>
+                <div class="col-md-2 text-center text-17">
+                  <p class="text-grey no-margins">Channels</p>
+                  <p class="no-margins">Stereo</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="col-3 offset-1">

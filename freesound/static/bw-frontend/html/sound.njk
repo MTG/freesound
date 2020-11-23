@@ -1,6 +1,7 @@
 
 {% import './molecules/player.njk' as players %}
 {% import './molecules/navbar.njk' as navbars %}
+{% import './molecules/commentSection.njk' as comments %}
 {% import './atoms/stars.njk' as stars %}
 {% import './atoms/icons.njk' as icons %}
 {% import './atoms/tags.njk' as tags %}
@@ -97,6 +98,9 @@
             </div>
             <div id="collapsable-text" data-target="collapsable-sound" class="v-spacing-top-2 collapsable-text">
               Show more
+            </div>
+            <div class="v-spacing-top-6">
+              {{ comments.newSection() }}
             </div>
           </div>
         </div>

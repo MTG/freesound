@@ -1,0 +1,29 @@
+.bw-rating__container {
+  input {
+    display: none;
+  }
+
+  label {
+    padding: 0 4px;
+    float: right;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  input:not(:checked) ~ label:hover,
+  input:not(:checked) ~ label:hover ~ label {
+    span {
+      color: #fd4;
+    }
+  }
+  input:checked ~ label {
+    span {
+      color: #fd4;
+    }
+  }
+  input#rate-5:checked ~ label {
+    span {
+      color: #fe7;
+      text-shadow: 0 0 20px #952;
+    }
+  }
+}

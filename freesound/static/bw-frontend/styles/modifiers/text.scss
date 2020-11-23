@@ -22,8 +22,8 @@
   text-align: right;
 }
 
-.text-17 {
-  font-size: 17px;
+.text-opacity-050 {
+  opacity: 0.5;
 }
 
 .caps {
@@ -50,4 +50,10 @@
 
 .no-letter-spacing {
   letter-spacing: 0;
+}
+
+@for $i from 17 through 26 {
+  .text-#{$i} {
+    font-size: #{$i}px;
+  }
 }

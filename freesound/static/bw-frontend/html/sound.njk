@@ -4,6 +4,7 @@
 {% import './atoms/stars.njk' as stars %}
 {% import './atoms/icons.njk' as icons %}
 {% import './atoms/tags.njk' as tags %}
+{% import './pages/sound/sidebar.njk' as sidebar %}
 {% extends "base.njk" %}
 
 {% block content %}
@@ -100,7 +101,7 @@
           </div>
         </div>
         <div class="col-3 offset-1">
-          sidebar
+          {{ sidebar.sidebar(false) }}
         </div>
       </div>
     </div>

@@ -17,3 +17,17 @@
     }
   }
 }
+
+.bw-sound__sidebar {
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      span {
+        margin: 0 5px;
+      }
+    }
+  }
+}

@@ -11,7 +11,7 @@
 {% block content %}
   {{ navbars.browseNavbar(true) }}
   <div class="container">
-    <div class="navbar-space-filler v-spacing-3 v-spacing-top-5">
+    <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
       <div class="row no-gutters">
         <div class="col-8">
           {{ players.bigPlayer() }}
@@ -106,6 +106,26 @@
         </div>
         <div class="col-3 offset-1">
           {{ sidebar.sidebar(false) }}
+        </div>
+      </div>
+      <div class="v-spacing-top-7">
+        <h6 class="text-26 no-margins">Similar sounds</h6>
+        <div class="row v-spacing-top-4">
+          <div class="col-3">
+            {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
+          </div>
+          <div class="col-3">
+            {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
+          </div>
+          <div class="col-3">
+            {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+          </div>
+          <div class="col-3">
+            {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+          </div>
+        </div>
+        <div class="v-spacing-top-4 center">
+          <button class="v-spacing-top-1 btn-secondary">More similar sounds</button> 
         </div>
       </div>
     </div>

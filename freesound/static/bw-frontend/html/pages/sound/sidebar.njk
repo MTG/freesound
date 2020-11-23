@@ -16,16 +16,16 @@
       Curabitur suscipit luctus orci, et eleifend ante sagittis at. Sed sed tellus dapibus, blandit urna eget, tempus orci.
     </div>
     {% if privateSpace %} 
-
+      <button class="v-spacing-top-5 v-spacing-3 btn-secondary col-12">More similar sounds</button> 
     {% else %}
-      <div class="v-spacing-top-5">
+      <div class="v-spacing-top-5 v-spacing-5">
         <p class="text-center text-26 font-weight-bold">Your rating:</p>
         <div class="center">
           {{ stars.rating() }}
         </div>
       </div>
     {% endif %}
-    <div class="v-spacing-top-5 v-padding-bottom-7">
+    <div class="v-padding-bottom-7">
       <button class="btn-primary col-12">Download sound</button>
       <button class="btn-inverse col-12 v-spacing-top-3">Find similar sounds</button>
     </div>

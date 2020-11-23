@@ -1,0 +1,9 @@
+{% macro comment() %}
+  <div>hola</div>
+{% endmacro %}
+
+{% macro comments(count) %}
+  {% for i in range(count) -%}
+    {{ comment()}}
+  {%- endfor %}
+{% endmacro %}

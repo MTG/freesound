@@ -52,7 +52,7 @@
   letter-spacing: 0;
 }
 
-@for $i from 17 through 26 {
+@for $i from 17 through 30 {
   .text-#{$i} {
     font-size: #{$i}px;
   }

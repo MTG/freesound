@@ -21,6 +21,8 @@
 import datetime
 import logging
 
+from django.conf import settings
+
 from accounts.models import UserDeletionRequest
 from utils.management_commands import LoggingBaseCommand
 
@@ -41,7 +43,8 @@ class Command(LoggingBaseCommand):
         users_not_properly_deleted = []
         for user_deletion_request in UserDeletionRequest.objects.filter(
                 status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                last_updated__lt=datetime.datetime.now() - datetime.timedelta(hours=1)):
+                last_updated__lt=datetime.datetime.now()
+                                 - datetime.timedelta(hours=settings.CHECK_ASYNC_DELETED_USERS_HOURS_BACK)):
 
             if user_deletion_request.user is not None and not user_deletion_request.user.profile.is_anonymized_user:
                 # Deletion action for that user was triggered but user was not deleted

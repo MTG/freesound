@@ -261,6 +261,11 @@ ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
 # Maximum number of times changing the username is allowed
 USERNAME_CHANGE_MAX_TIMES = 3
 
+# Number of hours we give to the async delete workers for deleting a user
+# before considering that deletion failed and therefore reporting that there i
+# one user that should have been deleted and was not
+CHECK_ASYNC_DELETED_USERS_HOURS_BACK = 1
+
 # Anti-spam restrictions for posting comments, messages and in forums
 # Time since last post (in seconds) and maximum number of posts per day
 LAST_FORUM_POST_MINIMUM_TIME = 60 * 5

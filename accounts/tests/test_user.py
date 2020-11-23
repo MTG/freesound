@@ -19,16 +19,18 @@
 #
 
 import json
-import mock
 
+import mock
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.test.utils import patch_logger
 from django.urls import reverse
 
 from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
@@ -172,29 +174,29 @@ class UserRegistrationAndActivation(TestCase):
 class UserDelete(TestCase):
     fixtures = ['licenses', 'sounds']
 
-    def create_user_and_content(self, is_index_dirty=True):
-        user = User.objects.create_user("testuser", password="testpass")
-        OldUsername.objects.create(user=user, username="fake_old_username")
+    def create_user_and_content(self, username="testuser", is_index_dirty=True):
+        user = User.objects.create_user(username, password="testpass", email="{}@freesound.org".format(username))
+        OldUsername.objects.create(user=user, username="{}_old_username".format(username))
 
         # Create comments
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
-            target_sound.add_comment(user, "Comment %i" % i)
+            target_sound.add_comment(user, "{0} comment {1}".format(username, i))
         # Create threads and posts (use mock to avoid trying to index the posts to solr)
         with mock.patch('forum.models.send_posts_to_solr'):
-            thread = Thread.objects.create(author=user, title="Test thread",
-                                           forum=Forum.objects.create(name="Test forum"))
+            forum, _ = Forum.objects.get_or_create(name="Test forum")
+            thread = Thread.objects.create(author=user, title="Test thread by {}".format(username), forum=forum)
             for i in range(0, 3):
                 Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
         # Create sounds and packs
-        pack = Pack.objects.create(user=user, name="Test pack")
+        pack = Pack.objects.create(user=user, name="Test pack by {}".format(username))
         for i in range(0, 3):
             Sound.objects.create(user=user,
-                                 original_filename="Test sound %i" % i,
+                                 original_filename="Test sound {0} by {1}".format(i, username),
                                  pack=pack,
                                  is_index_dirty=is_index_dirty,
                                  license=License.objects.all()[0],
-                                 md5="fakemd5%i" % i,
+                                 md5="fake_unique_md5_{0}_{1}".format(i, username),
                                  moderation_state="OK",
                                  processing_state="OK")
         return user
@@ -434,6 +436,83 @@ class UserDelete(TestCase):
         # That should not fail even if the count fields are out of sync
         user.profile.refresh_from_db()
         user.profile.delete_user(remove_sounds=True, delete_user_object_from_db=True)
+
+    @override_settings(CHECK_ASYNC_DELETED_USERS_HOURS_BACK=0)
+    @mock.patch('gearman.GearmanClient.submit_job')
+    def test_check_async_deleted_users_command(self, submit_job):
+
+        def delete_user_using_web_view(user):
+            self.client.force_login(user)
+            form = DeleteUserForm(user_id=user.id)
+            encr_link = form.initial['encrypted_link']
+            resp = self.client.post(
+                reverse('accounts-delete'),
+                {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
+            self.assertRedirects(resp, reverse('front-page'))
+
+        def call_command_get_console_log_output(command):
+            # NOTE: we use patch_logger to get the contents written to "console" logger used by the management command.
+            # We do that so we can get the content of the logs and then test its contents. We do it this way because
+            # Python 2.7 does not have TestCase.assertLogs implemented. Once we switch to Python3 we can remove this
+            # function and simply use TestCase.assertLogs below.
+            with patch_logger('console', 'info') as cm:
+                call_command(command)
+                return '\n'.join(cm)
+
+        # Create 3 users for the tests below
+        user1 = self.create_user_and_content(username="testuser1")
+        user2 = self.create_user_and_content(username="testuser2")
+
+        # Run command, it should say that there are 0 users that should have been deleted
+        cmd_output = call_command_get_console_log_output("check_async_deleted_users")
+        self.assertEqual(UserDeletionRequest.objects.all().count(), 0)
+        self.assertIn('Found 0 users that should have been deleted and were not', cmd_output)
+
+        # Now delete user1 using the web form to trigger async download. submit_job function is mocked so the user
+        # will not be deleted in practice, but UserDeletionRequest object should have been created
+        delete_user_using_web_view(user1)
+        #  Check a UserDeletionRequest was created...
+        self.assertEqual(UserDeletionRequest.objects.all().count(), 1)
+        # ...but check also that user was not really deleted
+        user1.refresh_from_db()
+        self.assertEqual(user1.profile.is_anonymized_user, False)
+
+        # Run the command again, it should say that there is 1 user that should have been deleted
+        cmd_output = call_command_get_console_log_output("check_async_deleted_users")
+        self.assertIn('Found 1 users that should have been deleted and were not', cmd_output)
+
+        # Now delete user2 using the web form to trigger async download. submit_job function is mocked so the user
+        # will not be deleted in practice, but UserDeletionRequest object should have been created
+        delete_user_using_web_view(user2)
+        # Check a UserDeletionRequest was created
+        self.assertEqual(UserDeletionRequest.objects.all().count(), 2)
+
+        # Run the command again, it should say that there are 2 users that should have been deleted
+        cmd_output = call_command_get_console_log_output("check_async_deleted_users")
+        self.assertIn('Found 2 users that should have been deleted and were not', cmd_output)
+
+        # Do the actual deletion of the user as if the async task was triggered
+        # Check that user was deleted and UserDeletionRequest startus was also updated
+        user2.profile.delete_user()
+        user2.refresh_from_db()
+        self.assertEqual(user2.profile.is_anonymized_user, True)
+        self.assertEqual(UserDeletionRequest.objects.get(user=user2).status,
+                         UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
+
+        # Run the command again, it should say that there is 1 user that should have been deleted
+        cmd_output = call_command_get_console_log_output("check_async_deleted_users")
+        self.assertIn('Found 1 users that should have been deleted and were not', cmd_output)
+
+        # Now for user1, mark it as having been anonymized but without updating UserDeletionRequest status
+        user1.profile.is_anonymized_user = True
+        user1.profile.save()
+
+        # Run the command again, it should say that there are 0 user that should have been deleted, and it should
+        # have updated the UserDeletionRequest status for user 1
+        cmd_output = call_command_get_console_log_output("check_async_deleted_users")
+        self.assertIn('Found 0 users that should have been deleted and were not', cmd_output)
+        self.assertEqual(UserDeletionRequest.objects.get(user=user1).status,
+                         UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
 
 
 class UserDeletionRequestTestCase(TestCase):

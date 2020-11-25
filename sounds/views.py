@@ -177,6 +177,7 @@ def front_page(request):
     trending_sound_ids = cache.get("trending_sound_ids", None)
     trending_pack_ids = cache.get("trending_pack_ids", None)
     popular_searches = cache.get("popular_searches", None)
+    total_num_sounds = cache.get("total_num_sounds", 0)
     current_forum_threads = Thread.objects.filter(first_post__moderation_state="OK",
                                                   last_post__moderation_state="OK") \
                                           .order_by('-last_post__created') \
@@ -219,6 +220,7 @@ def front_page(request):
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,
         'top_donor': top_donor,
+        'total_num_sounds': total_num_sounds,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beash whoosh only
     }

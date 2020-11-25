@@ -8,6 +8,14 @@
 {% block content %}
 
     <div class="container">
+    {% if error_text %}
+        <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
+            <div class="v-spacing-6 v-spacing-top-4">
+                <p>{{ error_text }}</p>
+            </div>
+        </div>
+
+    {% else %}
         <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
             <div class="v-spacing-6 v-spacing-top-4">
                 <form method="get" action="/search/">
@@ -50,5 +58,6 @@
             </main>
         </div>
     </div>
+    {% endif %}
 
 {% endblock %}

@@ -1,13 +1,15 @@
 <nav class="bw-nav bw-nav--expanded">
     <div class="container bw-nav__container">
+        <form method="get" action="/search/">
         <div class="bw-nav__logo-search-container">
             <div class="bw-nav__logo">
                 <a href="/" class="no-hover"></a>
             </div>
             <div class="input-wrapper">
-                <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+                <input name="q" type="search" class="bw-nav__search" placeholder="Search sounds..." autocomplete="off" />
             </div>
         </div>
+        </form>
         <ul class="bw-nav__actions">
             {% include 'molecules/navbar_common_actions.html' %}
             {% include 'molecules/navbar_user_section.html' %}

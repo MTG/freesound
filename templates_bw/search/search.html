@@ -10,12 +10,13 @@
     <div class="container">
         <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
             <div class="v-spacing-6 v-spacing-top-4">
-                <div class="between middle">
-                    <div></div>
-                    <input type="text" placeholder="Start browsing here" class="bw-search__input" />
-                    {% bw_icon 'close' %}
-                </div>
-
+                <form method="get" action="/search/">
+                    <div class="between middle">
+                        <div></div>
+                        <input name="q" type="text" value="{{ search_query}}" placeholder="Start browsing here" class="bw-search__input"  autocomplete="off" />
+                        {% bw_icon 'close' %}
+                    </div>
+                </form>
             </div>
             <div>
                 <div class="divider-light"></div>

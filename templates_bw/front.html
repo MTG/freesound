@@ -16,11 +16,13 @@
         <p class="bw-front__subheader">In a collaborative collection of {{ total_num_sounds }} <a class="bw-link--grey" href="/help/faq/#licenses">free sounds</a></p>
       </header>
       <div class="bw-front__hero-container--search">
-        <div class="typeahead-wrapper">
-           <div class="input-wrapper">
-             <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true"{% endif %} />
-           </div>
-         </div>
+        <form method="get" action="/search/">
+            <div class="typeahead-wrapper">
+              <div class="input-wrapper">
+                <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" autocomplete="off"{% endif %} />
+              </div>
+            </div>
+        </form>
       </div>
     </div>
     <div class="row bw-front__content">

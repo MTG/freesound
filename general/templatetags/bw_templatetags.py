@@ -24,8 +24,8 @@ register = template.Library()
 
 
 @register.inclusion_tag('atoms/icons.html')
-def bw_icon(name):
+def bw_icon(name, class_name=''):
     """
     Displays a Beast Whoosh icon with the given name
     """
-    return {'name': name}
+    return {'name': name, 'class_name': class_name}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load bw_templatetags %}
+{% load paginator %}
 
 {% block title %}Search{% endblock %}
 
@@ -21,7 +22,7 @@
                 <form method="get" action="/search/">
                     <div class="between middle">
                         <div></div>
-                        <input name="q" type="text" value="{{ search_query}}" placeholder="Start browsing here" class="bw-search__input"  autocomplete="off" />
+                        <input name="q" type="text" value="{{search_query}}" placeholder="Start browsing here" class="bw-search__input"  autocomplete="off" />
                         {% bw_icon 'close' %}
                     </div>
                 </form>
@@ -29,7 +30,7 @@
             <div>
                 <div class="divider-light"></div>
                 <div class="padding-3 v-padding-2 between font-weight-bold">
-                    <div>240 sounds</div>
+                    <div>{{ non_grouped_number_of_results }} sounds</div>
                     <div>Sounds</div>
                     <div class="font-weight-normal text-light-grey">Sort by:</div>
                 </div>
@@ -54,6 +55,9 @@
                 </div>
                 <div class="v-spacing-6">
                     {% comment %}{{ sound.results(20) }}{% endcomment %}
+                </div>
+                <div class="">
+                    {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
                 </div>
             </main>
         </div>

@@ -1,33 +1,81 @@
 {% load cache %}
-{% load util %}
-{% load ratings %}
+{% load bw_templatetags %}
 
 {% if sound %}
 {% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size %}
-    <div
-        class="bw-player"
-        data-size="{% if player_size == 'small' or player_size == 'small_no_info' %}small{% elif player_size == 'big_no_info' %}big{% endif %}"
-        data-mp3="{{ sound.locations.preview.LQ.mp3.url }}"
-        data-ogg="{{ sound.locations.preview.LQ.ogg.url }}"
-        data-waveform="{{ sound.locations.display.wave_bw.M.url }}"
-        data-spectrum="{{ sound.locations.display.spectral_bw.M.url }}"
-        data-title="{{ sound.original_filename }}"
-        data-favorite="false">
-    </div>
     {% if player_size == 'small' %}
         {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
+        {% include "sounds/player.html" %}
         <h5 class="v-spacing-top-1">
             <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename }}</a>
         </h5>
         <a href="{% url 'account' sound_user %}">{{ sound_user }}</a>
         <p class="text-grey">{{ sound.description | truncatewords:10 }}</p>
+
+    {% elif player_size == 'big' %}
+        {% comment %}This is the default player shown in search results and in places where the sound takes
+        "full" width {% endcomment %}
+        <div class="row no-gutters no-wrap">
+            <div class="col-3">
+                {% include "sounds/player.html" %}
+                <div class="bw-player-big__controls"></div>
+            </div>
+            <div class="padding-left-3">
+                <div class="between">
+                    <div>
+                        <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}"><h5 class="v-spacing-top-1 ellipsis">{{ sound.original_filename }}</h5></a>
+                        {% comment %}
+                        <div class="middle">{{ stars.stars(2.5) }} <span class="text-grey h-spacing-left-1">Overall rating (15)</span></div>
+                        {% endcomment %}
+                    </div>
+                    <div class="text-grey">
+                        <button title="Find similar sounds" class="btn-neutral">
+                            {% bw_icon 'similar' %}
+                        </button>
+                        <span class="h-spacing-2"></span>
+                        <button title="Save as favorite" class="btn-neutral">
+                            {% bw_icon 'bookmark' %}
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-black">{{ sound.description | truncatewords:10 }}</p>
+                {% comment %}
+                {{ tags.tags(['Electronic', 'world', 'ambient', 'synth', 'analog', 'distortion', 'techno', 'dub', 'cc0', 'good', 'mic'])}}
+                {% endcomment %}
+            </div>
+        </div>
+        <div class="between v-spacing-top-2 v-spacing-3">
+            <div class="middle text-grey h-spacing-1">
+                <div class="avatar h-spacing-1">
+                    <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
+                </div>
+                <a href="{% url 'account' sound_user %}">{{ sound_user }}</a>
+                <span class="h-spacing-left-1 text-light-grey">{{ sound.created|date:"F jS, Y" }}</span>
+            </div>
+            <div class="middle text-light-grey bw_sound-info-extended">
+                <div><span class="bw-icon-pin"></span>
+                    <span class="h-spacing-left-1 h-spacing-3">Barcelona</span></div>
+                <div><span class="bw-icon-download"></span>
+                    <span class="h-spacing-left-1 h-spacing-3">{{ sound.num_downloads }}</span></div>
+                <div><span class="bw-icon-comments"></span>
+                    <span class="h-spacing-left-1 h-spacing-3">{{ sound.num_comments }}</span></div>
+                <div><span class="bw-icon-cc"></span>
+                    <span class="h-spacing-left-1">{{ license_name }}</span></div>
+            </div>
+        </div>
+
     {% elif player_size == 'big_no_info' %}
         {% comment %}This size includes a placeholder for the controls of the big player but shows no sound
         metadata{% endcomment %}
+        {% include "sounds/player.html" %}
         <div class="bw-player-big__controls"></div>
+
     {% elif player_size == 'small_no_info' %}
         {% comment %}This size will be used inside a pack carousel. For this size we only include the basic
         player and show no sound metadata{% endcomment %}
+        {% include "sounds/player.html" %}
+
     {% endif %}
 {% endcache %}
 {% endif %}

@@ -3,6 +3,7 @@
 {% load static %}
 {% load bw_templatetags %}
 {% load paginator %}
+{% load display_sound %}
 
 {% block title %}Search{% endblock %}
 
@@ -70,11 +71,31 @@
                 <div class="v-spacing-3 v-spacing-top-1">
                     {% comment %}{{ activeFilters.list(['Creative commons 0', 'mp3'])}}{% endcomment %}
                 </div>
-                <div class="v-spacing-6">
-                    {% comment %}{{ sound.results(20) }}{% endcomment %}
-                </div>
-                <div class="">
-                    {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
+                {% if paginator.count > 0 %}
+                    <div class="v-spacing-6">
+                    {% for result in docs %}
+                        <div class="bw-search__result">
+                            {% display_sound_big result.sound %}
+                            {% comment %}
+                            {% if result.more_from_pack %}
+                                <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>
+                            {% endif %}
+                            {% endcomment %}
+                            {% if not forloop.last %}
+                                <div class="divider-light"></div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    </div>
+                    <div class="">
+                        {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
+                    </div>
+                {% else %}
+                    <div class="v-spacing-6" style="text-align: center;">
+                        <h5>No results... &#128543</h5>
+                        <p class="text-grey v-spacing-2">Please try another query or change the filters</p>
+                    </div>
+                {% endif %}
                 </div>
             </main>
         </div>

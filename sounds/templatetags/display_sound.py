@@ -116,6 +116,11 @@ def display_sound(context, sound, player_size='small'):
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_big(context, sound):
+    return display_sound(context, sound, player_size='big')
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info(context, sound):
     return display_sound(context, sound, player_size='big_no_info')
 

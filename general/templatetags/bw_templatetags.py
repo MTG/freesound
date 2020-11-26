@@ -22,6 +22,8 @@ from django import template
 from django.conf import settings
 from django.urls import reverse
 
+from general.templatetags.paginator import show_paginator
+
 register = template.Library()
 
 
@@ -78,3 +80,9 @@ def bw_sound_stars(context):
             'is_authenticated': is_authenticated,
             'sound': sound,
             'stars_5': stars_5}
+
+
+@register.inclusion_tag('molecules/paginator.html', takes_context=True)
+def bw_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
+    return show_paginator(context, paginator, page, current_page, request,
+                          anchor=anchor, non_grouped_number_of_results=non_grouped_number_of_results )

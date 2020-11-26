@@ -2,7 +2,6 @@
 
 {% load static %}
 {% load bw_templatetags %}
-{% load paginator %}
 {% load display_sound %}
 
 {% block title %}Search{% endblock %}
@@ -88,7 +87,7 @@
                     {% endfor %}
                     </div>
                     <div class="">
-                        {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
+                        {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
                     </div>
                 {% else %}
                     <div class="v-spacing-6" style="text-align: center;">

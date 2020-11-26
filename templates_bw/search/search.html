@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+
+{% load static %}
 {% load bw_templatetags %}
 {% load paginator %}
 
@@ -22,23 +24,38 @@
                 <form method="get" action="/search/">
                     <div class="between middle">
                         <div></div>
-                        <input name="q" type="text" value="{{search_query}}" placeholder="Start browsing here" class="bw-search__input"  autocomplete="off" />
-                        {% bw_icon 'close' %}
+                        <input name="q" type="text" value="{{search_query}}" placeholder="Start browsing here" class="bw-search__input"  id="search-input-browse" autocomplete="off" />
+                        <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
+
                     </div>
                 </form>
             </div>
+
             <div>
                 <div class="divider-light"></div>
                 <div class="padding-3 v-padding-2 between font-weight-bold">
                     <div>{{ non_grouped_number_of_results }} sounds</div>
-                    <div>Sounds</div>
-                    <div class="font-weight-normal text-light-grey">Sort by:</div>
+                    <div class="bw_search-tab">
+                        {% comment %}Sounds{% endcomment %}
+                        {% comment %}This section will allow to choose between different search modes: sounds and packs.
+                        However, this is currently not implemented in the backend so we put nothing here as only
+                        the "sounds" option is supported.
+                        {% endcomment %}
+                    </div>
+                    <div class="browse__search-overview-sorter">
+                        <span class="font-weight-normal text-light-grey">Sort by:</span>
+                        <select name="s" id="sort-by" placeholder-text="{{ sort_options.0.0 }}">
+                            {% for option in sort_options %}
+                            <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
                 <div class="divider-light"></div>
             </div>
         </div>
         <div class="row no-gutters">
-            <aside class="col-3">
+            <aside class="col-sm-12 col-md-3">
                 {% comment %}
                 {{ filters.checkboxSection('Licenses', ['Creative commons 0', 'Sampling +', 'Attribution', 'Non-commercial']) }}
                 {{ filters.checkboxSection('Type', ['aiff', 'wav', 'mp3', 'FLAC']) }}
@@ -49,7 +66,7 @@
                 {{ filters.checkboxSection('Search only in ', ['Tags', 'File names', 'Descriptions', 'Sound ids', 'User names']) }}
                 {% endcomment %}
             </aside>
-            <main class="col-8 offset-1">
+            <main class="col-sm-12 col-md-8 offset-md-1">
                 <div class="v-spacing-3 v-spacing-top-1">
                     {% comment %}{{ activeFilters.list(['Creative commons 0', 'mp3'])}}{% endcomment %}
                 </div>
@@ -64,4 +81,9 @@
     </div>
     {% endif %}
 
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/search.735996ae.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/select.9252c69b.js' %}"></script>
 {% endblock %}

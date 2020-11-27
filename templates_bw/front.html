@@ -5,6 +5,7 @@
 {% load display_sound %}
 {% load display_pack %}
 {% load util %}
+{% load bw_templatetags %}
 
 {% block title %}Freesound{% endblock %}
 
@@ -65,10 +66,10 @@
                 {% for popular_searches_slice in popular_searches|chunks:4 %}
                 <div>
                   <div class="row no-margins">
-                    {% for search_term in popular_searches_slice %}
-                    <div class="col v-spacing-1">
-                      <a class="no-hover" href="{% url 'sounds-search' %}?q={{ search_term }}"><button class="btn-inverse border-grey-light text-center no-border-radius padding-4 no-text-wrap w-100 h-100 v-spacing-1 no-letter-spacing">{{ search_term }}</button></a>
-                    </div>
+                    {% for search_term, url in popular_searches_slice %}
+                        <div class="col v-spacing-1">
+                          {% bw_tag search_term 4 'w-100 h-100' url 1.0 %}
+                        </div>
                     {% endfor %}
                   </div>
                 </div>

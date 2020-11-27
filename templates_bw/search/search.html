@@ -2,6 +2,7 @@
 
 {% load static %}
 {% load util %}
+{% load search %}
 {% load bw_templatetags %}
 {% load display_sound %}
 
@@ -56,19 +57,51 @@
         </div>
         <div class="row no-gutters">
             <aside class="col-sm-12 col-md-3">
-                {% comment %}
-                {{ filters.checkboxSection('Licenses', ['Creative commons 0', 'Sampling +', 'Attribution', 'Non-commercial']) }}
-                {{ filters.checkboxSection('Type', ['aiff', 'wav', 'mp3', 'FLAC']) }}
-                {{ filters.checkboxSection('Sample rate', ['11025', '22050', '44100', '48000', '96000']) }}
-                {{ filters.checkboxSection('Bit depth', ['16', '24', '32', '8']) }}
-                {{ filters.checkboxSection('Bitrate', ['1378', '1379', '1411', '1500', '2250']) }}
-                {{ filters.checkboxSection('Channels', ['2', '1', '6']) }}
-                {{ filters.checkboxSection('Search only in ', ['Tags', 'File names', 'Descriptions', 'Sound ids', 'User names']) }}
-                {% endcomment %}
+                {% if facets.license and facets.license|length > 1 %}
+                    {% display_facet "license" facets.license "list" "Licesnes" %}
+                {% endif %}
+
+                {% if facets.type and facets.type|length > 1 %}
+                    {% display_facet "type" facets.type "list" "Type" %}
+                {% endif %}
+
+                {% if facets.tag and facets.tag|length > 1 %}
+                    {% display_facet "tag" facets.tag "cloud" "Related Tags" %}
+                {% endif %}
+
+                {% if facets.samplerate and facets.samplerate|length > 1 %}
+                    {% display_facet "samplerate" facets.samplerate "list" "Samplerate" %}
+                {% endif %}
+
+                {% if facets.bitdepth and facets.bitdepth|length > 1 %}
+                    {% display_facet "bitdepth" facets.bitdepth "list" "Bitdepth" %}
+                {% endif %}
+
+                {% if facets.bitrate and facets.bitrate|length > 1 %}
+                    {% display_facet "bitrate" facets.bitrate "list" "Bitrate" %}
+                {% endif %}
+
+                {% if facets.channels and facets.channels|length > 1 %}
+                    {% display_facet "channels" facets.channels "list" "Channels" %}
+                {% endif %}
+
+                {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
+                    {% display_facet "grouping_pack" facets.grouping_pack "list" "Packs"%}
+                {% endif %}
+
+                {% if facets.username and facets.username|length > 1 %}
+                    {% display_facet "username" facets.username "cloud" "Related users" %}
+                {% endif %}
             </aside>
             <main class="col-sm-12 col-md-8 offset-md-1">
                 <div class="v-spacing-3 v-spacing-top-1">
-                    {% comment %}{{ activeFilters.list(['Creative commons 0', 'mp3'])}}{% endcomment %}
+                    {% for filter in filter_query_split %}
+                        <a class="no-hover" href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
+                            <button class="btn-inverse bw-search__active-filters-button">
+                                {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
+                            </button>
+                        </a>
+                    {% endfor %}
                 </div>
                 {% if paginator.count > 0 %}
                     <div class="v-spacing-6">

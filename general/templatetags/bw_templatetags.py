@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import math
+
 from django import template
 from django.conf import settings
 from django.urls import reverse
@@ -36,12 +38,22 @@ def bw_icon(name, class_name=''):
 
 
 @register.inclusion_tag('atoms/tag.html')
-def bw_tag(tag_name, size=1, class_name=""):
+def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
     """
     Displays a Beast Whoosh tag with the given name
     """
-    url = reverse('tags', args=[tag_name])
-    return {'tag_name': tag_name, 'size': size, 'class_name': class_name, 'url': url}
+    if url is None:
+        url = reverse('tags', args=[tag_name])
+    if weight is None:
+        opacity_class = 'opacity-050'
+    else:
+        opacity_class = 'opacity-' + str(int(math.ceil(pow(weight, 0.6) * 10) * 10)).zfill(3)
+
+    return {'tag_name': tag_name,
+            'size': size,
+            'class_name': class_name,
+            'url': url,
+            'opacity_class': opacity_class}
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
 def bw_sound_stars(context):

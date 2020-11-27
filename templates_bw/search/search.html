@@ -34,7 +34,7 @@
             <div>
                 <div class="divider-light"></div>
                 <div class="padding-3 v-padding-2 between font-weight-bold">
-                    <div>{{ non_grouped_number_of_results }} sounds</div>
+                    <div>{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sounds</div>
                     <div class="bw_search-tab">
                         {% comment %}Sounds{% endcomment %}
                         {% comment %}This section will allow to choose between different search modes: sounds and packs.

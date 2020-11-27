@@ -28,7 +28,7 @@
                     </div>
                     <div class="text-grey">
                         {% if sound.similarity_state == 'OK' %}
-                            <a class="similar" rel="nofollow" href="{% url "sound-similar" sound_user sound.id %}">
+                            <a class="no-hover" rel="nofollow" href="{% url "sound-similar" sound_user sound.id %}">
                                 <button title="Find similar sounds" class="btn-neutral">
                                     {% bw_icon 'similar' %}
                                 </button>
@@ -37,9 +37,11 @@
                         {% endif %}
 
                         {% if is_authenticated %}
-                            <button title="Save as favorite" class="btn-neutral">
-                                {% bw_icon 'bookmark' %}
-                            </button>
+                            <a class="no-hover" rel="nofollow" href="#">
+                                <button title="Save as favorite" class="btn-neutral">
+                                    {% bw_icon 'bookmark' %}
+                                </button>
+                            </a>
                         {% endif %}
                     </div>
                 </div>

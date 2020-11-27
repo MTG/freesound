@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load static %}
+{% load util %}
 {% load bw_templatetags %}
 {% load display_sound %}
 
@@ -74,11 +75,11 @@
                     {% for result in docs %}
                         <div class="bw-search__result">
                             {% display_sound_middle result.sound %}
-                            {% comment %}
                             {% if result.more_from_pack %}
-                                <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>
+                                <p class="text-grey text-right v-spacing-top-negative-2">
+                                    {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }} from the same pack</a> "{{ result.pack_name|truncate_string:35 }}"
+                                </p>
                             {% endif %}
-                            {% endcomment %}
                             {% if not forloop.last %}
                                 <div class="divider-light"></div>
                             {% endif %}

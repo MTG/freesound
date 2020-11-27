@@ -20,7 +20,7 @@
             <div class="col-3">
                 {% include "sounds/player.html" %}
             </div>
-            <div class="padding-left-3">
+            <div class="padding-left-3 w-100">
                 <div class="between">
                     <div>
                         <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}" title="{{ sound.original_filename }}"><h5 class="v-spacing-top-1 ellipsis">{{ sound.original_filename|truncate_string:45 }}</h5></a>
@@ -81,7 +81,7 @@
                 <div class="avatar h-spacing-1">
                     <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
                 </div>
-                <a href="{% url 'account' sound_user %}">{{ sound_user }}</a>
+                <a href="{% url 'account' sound_user %}">{{ sound_user | truncate_string:15 }}</a>
                 <span class="h-spacing-left-1 text-light-grey">{{ sound.created|date:"F jS, Y" }}</span>
             </div>
             <div class="middle text-light-grey bw_sound-info-extended">

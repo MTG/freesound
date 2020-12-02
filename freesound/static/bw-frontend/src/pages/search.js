@@ -56,3 +56,223 @@ const checkShouldShowSearchInNavbar = throttle(() => {
 }, SCROLL_CHECK_TIMER)
 
 window.addEventListener('scroll', checkShouldShowSearchInNavbar)
+
+/*
+  ADVANCED SEARCH STUFF
+  The functions below correspond to the javascript bits for handling the advanced search options
+  The JS code is old and probably doing things in wrong ways (and more complex that it should)
+  This should be completely refactored, but to avoid changes in backend and for compatibility between
+  BeastWhoosh and Nightingale interfaces, we leave everything as is for now (just with small updates to
+  avoid using JQuery).
+*/
+
+var search_form_element = document.getElementById('search_form');
+var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
+var advanced_search_options_div = document.getElementById('advanced-search-options');
+var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
+var toggle_advanced_search_options_element = document.getElementById('toggle_advanced_search_options');
+var filter_query_element = document.getElementById('filter_query');
+var filter_duration_min_element = document.getElementById('filter_duration_min');
+var filter_duration_max_element = document.getElementById('filter_duration_max');
+var filter_is_geotagged_element = document.getElementById('filter_is_geotagged');
+var sort_by_element = document.getElementById('sort-by');
+var grouping_geotagged_element  = document.getElementById('grouping_geotagged');
+
+function updateToggleAdvancedSearchOptionsText()
+{
+  if (advanced_search_hidden_field.value === "1"){
+    toggle_advanced_search_options_element.innerHTML = 'Hide advanced search options';
+  } else {
+    toggle_advanced_search_options_element.innerHTML = 'Show advanced search options';
+  }
+}
+
+function showAdvancedSearchOptions()
+{
+  advanced_search_hidden_field.value = "1";
+  advanced_search_options_div.style.display = 'block';
+  updateToggleAdvancedSearchOptionsText();
+}
+
+function hideAdvancedSearchOptions()
+{
+  advanced_search_hidden_field.value = "0";
+  advanced_search_options_div.style.display = 'none';
+  updateToggleAdvancedSearchOptionsText();
+}
+
+function toggleAdvancedSearchOptions(){
+  if (advanced_search_hidden_field.value === "1"){
+    hideAdvancedSearchOptions();
+  } else {
+    showAdvancedSearchOptions();
+  }
+}
+
+toggle_advanced_search_options_element.addEventListener('click', toggleAdvancedSearchOptions);
+
+function set_hidden_grouping_value(){
+  var element = document.getElementById('grouping_geotagged');
+  var hiddenElement = document.getElementById('grouping_geotagged_hidden');
+  if (element.checked) {
+    hiddenElement.value = "1";
+  } else {
+    hiddenElement.value = "";
+  }
+}
+
+// Return the value of a filter given its name
+// If filter has a range, optional "range" parameter must be set to "min or "max"
+function getFilterValue(name, range)
+{
+  if (!range) { range = "min"}
+
+  var filter_query_element = document.getElementById('filter_query');
+  var value = filter_query_element.value;
+  var position_value = value.search(name) + (name + ":").length
+  if (value.search((name + ":")) !== -1)
+  {
+    if (value[position_value] === "[") // Is range (with spaces)
+    {
+      var aux_value = value.substring(position_value + 1)
+      var position_end = position_value + aux_value.search("]") + 2
+
+      var range_string = value.substring(position_value + 1, position_end -1) // Without [ ]
+      var parts = range_string.split(" ")
+      if (range === "min"){
+        return parts[0]
+      } else if (range === "max") {
+        return parts[2]
+      }
+    }
+    else if (value[position_value] === "\"") // Is string (with spaces)
+    {
+      aux_value = value.substring(position_value + 1)
+      position_end = position_value + aux_value.search("\"") + 2
+      return value.substring(position_value, position_end)
+
+    }
+    else // Is number or normal text (without spaces)
+    {
+      aux_value = value.substring(position_value + 1)
+      if (aux_value.search(" ") !== -1){
+        position_end = position_value + aux_value.search(" ") + 1
+      } else {
+        position_end = value.length
+      }
+      return value.substring(position_value, position_end)
+    }
+  } else {
+    return ""
+  }
+}
+
+// Remove a filter given the full tag ex: type:aiff, pack:"pack name"
+function removeFilter(tag)
+{
+  var filter_query_element = document.getElementById('filter_query');
+  var value = filter_query_element.value;
+  var cleaned = value.replace(tag + " ", "").replace(tag, "").trim();
+  filter_query_element.value = cleaned;
+}
+
+function onDocumentReady(){
+  // Fill advanced search fields that were passed through the f parameter
+  // Duration
+
+  if (getFilterValue("duration","min") === ""){
+    filter_duration_min_element.value = "0";
+  } else {
+    filter_duration_min_element.value = getFilterValue("duration","min");
+  }
+
+  if (getFilterValue("duration","max") === ""){
+    filter_duration_max_element.value = "*";
+  } else {
+    filter_duration_max_element.value = getFilterValue("duration","max");
+  }
+
+  // Geotagged
+  if (getFilterValue("is_geotagged") === "1"){
+    filter_is_geotagged_element.checked = true;
+  }
+
+  // Update the text of the button to toggle advanced search options panel
+  updateToggleAdvancedSearchOptionsText();
+}
+
+document.addEventListener('DOMContentLoaded', onDocumentReady);
+
+function addAdvancedSearchOptionsFilters()
+{
+  // Remove previously existing advanced options filters (will be replaced by current ones)
+  var existing_duration_filter = "duration:[" + getFilterValue("duration","min") + " TO " + getFilterValue("duration","max") + "]";
+  removeFilter(existing_duration_filter);
+  removeFilter("is_geotagged:1");
+
+  // if advanced options is activated add all updated filters
+  if (advanced_search_hidden_field.value === "1")
+  {
+    // Create and add new filter with all the advanced options
+    var filter = "";
+
+    // Duration filter
+    var duration_min = parseFloat(filter_duration_min_element.value);
+    var duration_max = parseFloat(filter_duration_max_element.value);
+
+    if ((duration_min >= 0.0) || (duration_max >= 0.0)) {
+      var duration_filter = "";
+      if ((duration_min >= 0.0) && (duration_max >= 0.0)) {  // Both min and max have been set
+        if (duration_max < duration_min) {
+          // interchange values if duration_min > duration_max
+          var duration_aux = duration_min;
+          duration_min = duration_max;
+          duration_max = duration_aux;
+        }
+        duration_filter = "duration:[" + duration_min + " TO " + duration_max + "]";
+      } else if (duration_min >= 0.0) {  // Only minimum has been set
+        duration_filter = "duration:[" + duration_min + " TO *]";
+      } else if (duration_max >= 0.0) {  // Only maximum has been set
+        duration_filter = "duration:[* TO " + duration_max + "]";
+      }
+      filter = filter + duration_filter;
+    }
+
+    // Is geotagged filter
+    if (filter_is_geotagged_element.checked){
+      if (filter !== ""){
+        filter = filter + " ";
+      }
+      filter = filter + "is_geotagged:1";
+    }
+
+    // Update general filter with the advanced options filter
+    var value = filter_query_element.value;
+    if (value !== ""){
+      filter_query_element.value = value + " " + filter;
+    } else {
+      filter_query_element.value = filter;
+    }
+  }
+}
+
+search_form_element.addEventListener('submit', function() {
+  addAdvancedSearchOptionsFilters();
+})
+
+sort_by_element.addEventListener('change', function() {
+  addAdvancedSearchOptionsFilters();
+  search_form_element.submit();
+})
+
+grouping_geotagged_element.addEventListener('change', function() {
+  set_hidden_grouping_value();
+})
+
+searchInputBrowse.addEventListener('keydown',  evt => {
+  const ENTER_KEY = 13
+  if(evt.keyCode === ENTER_KEY){
+     addAdvancedSearchOptionsFilters();
+     search_form_element.submit();
+  }
+})

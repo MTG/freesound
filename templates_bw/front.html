@@ -44,7 +44,7 @@
                 <div>
                   <div class="row no-margins">
                   {% for sound in sounds %}
-                    <div class="col">
+                    <div class="col-4">
                         {% display_sound sound.id %}
                     </div>
                   {% endfor %}
@@ -91,7 +91,7 @@
                 <div>
                   <div class="row no-margins">
                   {% for sound_id in sound_ids %}
-                    <div class="col">
+                    <div class="col-4">
                         {% display_sound_small sound_id %}
                     </div>
                   {% endfor %}
@@ -115,7 +115,7 @@
                 <div>
                   <div class="row no-margins">
                   {% for pack_id in pack_ids %}
-                    <div class="col">
+                    <div class="col-4">
                         {% display_pack pack_id %}
                     </div>
                   {% endfor %}

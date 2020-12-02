@@ -91,9 +91,14 @@ function createSelect() {
     }
   }
   function selectElement(id, valueToSelect) {
+    // Update underlying select element with new value
     var element = document.getElementById(id);
     element.value = valueToSelect;
-    element.onchange();
+
+    // Trigger change event manually (setting the value programatically does not trigger the event)
+    var event = document.createEvent("HTMLEvents");
+    event.initEvent("change", true, false);
+    element.dispatchEvent(event);
   }
   var buttonSelect = document.getElementsByClassName('select-dropdown__button');
   for (var i = 0, len = buttonSelect.length; i < len; i++) {

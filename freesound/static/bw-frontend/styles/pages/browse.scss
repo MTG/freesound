@@ -3,6 +3,10 @@
   padding-left: 0;
 }
 
+.bw-search__filter-tags-list {
+  margin: 23px 0;
+}
+
 .bw-search__filter-value {
   display: flex;
   justify-content: space-between;
@@ -17,7 +21,7 @@
 }
 
 .bw-search__filter-checkbox {
-  flex: 0 0 50px;
+  flex: 0 0 25px;
 }
 
 .bw-search__filter-name {
@@ -36,6 +40,19 @@
 
   padding-top: $small-spacing;
   padding-bottom: $small-spacing;
+
+  .bw-search__filter-section-name > span {
+    font-size: 18px;
+  }
+}
+
+.bw-search__advanced-search-filter-section {
+
+  padding-top: $small-spacing;
+
+  .bw-search__filter-section-name > span {
+    font-size: 18px;
+  }
 }
 
 .bw-search__player-small {
@@ -59,6 +76,9 @@
 
 .bw-search__input {
   font-size: 32px;
+  line-height: 38px;
+  font-weight: bold;
+  width: 300px;
   text-align: center;
 
   &::placeholder {
@@ -66,6 +86,61 @@
   }
 }
 
+.bw-search_remove-query {
+  cursor: pointer;
+  opacity: 0;
+  width: 0;
+}
+
+.bw-search__filter-duration {
+  color: $navy-grey;
+  font-size: 14px;
+
+  > span {
+    margin-left: 12px;
+  }
+
+  .bw-search_input-duration {
+    padding: 16px 13px;
+    border: 1px solid $navy-light-grey;
+    border-radius: 5px;
+    font-size: 14px;
+    max-width: 85px;
+
+    &::-webkit-calendar-picker-indicator {
+      display: none;
+    }
+  }
+}
+
 .browse__search-overview-sorter {
-  flex: 0;
+  display: flex;
+  align-items: center;
+
+  > span {
+    width: max-content;
+  }
+}
+
+.bw_search-tab {
+  font-size: 18px;
+}
+
+.tag-container {
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.bw_search_navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: $white;
+  box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.08);
+}
+
+.bw_sound-info-extended {
+  display: flex;
+  flex-wrap: wrap;
 }

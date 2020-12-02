@@ -3,10 +3,14 @@
 }
 
 .bw-icon-checkbox {
-  opacity: 0;
+  border: 2px solid $navy-light-grey;
+  width: 15px;
+  height: 15px;
+  display: inline-block;
   transition: opacity 0.2s ease-in-out;
 }
 
 .bw-checkbox:checked + .bw-checkbox-container .bw-icon-checkbox {
   opacity: 1;
+  border: none;
 }

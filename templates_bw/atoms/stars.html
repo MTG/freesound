@@ -1,0 +1,11 @@
+{% load bw_templatetags %}
+
+{% for star_type in stars_5 %}
+    {% if star_type == 'full' %}
+        {%  bw_icon 'star' 'text-red' %}
+    {% elif star_type == 'half' %}
+        {%  bw_icon 'half-star' 'text-red' %}
+    {% elif star_type == 'empty' %}
+        {%  bw_icon 'star' 'text-light-grey' %}
+    {% endif %}
+{% endfor %}

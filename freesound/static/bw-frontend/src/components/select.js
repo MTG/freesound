@@ -14,7 +14,7 @@ function createSelect() {
       document.getElementById(select[select_i].id),
       document.createElement('div'),
       select_i,
-      select[select_i].getAttribute('placeholder-text')
+      select[select_i].options[select[select_i].selectedIndex].text
     );
 
     for (var i = 0; i < select[select_i].options.length; i++) {
@@ -93,7 +93,7 @@ function createSelect() {
   function selectElement(id, valueToSelect) {
     var element = document.getElementById(id);
     element.value = valueToSelect;
-    element.setAttribute('selected', 'selected');
+    element.onchange();
   }
   var buttonSelect = document.getElementsByClassName('select-dropdown__button');
   for (var i = 0, len = buttonSelect.length; i < len; i++) {

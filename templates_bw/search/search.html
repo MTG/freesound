@@ -22,38 +22,40 @@
 
     {% else %}
         <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
-            <div class="v-spacing-6 v-spacing-top-4">
-                <form method="get" action="/search/">
+            <form method="get" action="/search/">
+
+                <div class="v-spacing-6 v-spacing-top-4">
                     <div class="between middle">
                         <div></div>
                         <input name="q" type="text" value="{{ search_query }}" placeholder="Start browsing here" class="bw-search__input"  id="search-input-browse" autocomplete="off" />
                         <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                     </div>
-                </form>
-            </div>
-
-            <div>
-                <div class="divider-light"></div>
-                <div class="padding-3 v-padding-2 between font-weight-bold">
-                    <div>{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sounds</div>
-                    <div class="bw_search-tab">
-                        {% comment %}Sounds{% endcomment %}
-                        {% comment %}This section will allow to choose between different search modes: sounds and packs.
-                        However, this is currently not implemented in the backend so we put nothing here as only
-                        the "sounds" option is supported.
-                        {% endcomment %}
-                    </div>
-                    <div class="browse__search-overview-sorter">
-                        <span class="font-weight-normal text-light-grey">Sort by:</span>
-                        <select name="s" id="sort-by" placeholder-text="{{ sort_options.0.0 }}">
-                            {% for option in sort_options %}
-                            <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
                 </div>
-                <div class="divider-light"></div>
-            </div>
+
+                <div>
+                    <div class="divider-light"></div>
+                    <div class="padding-3 v-padding-2 between font-weight-bold">
+                        <div>{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sounds</div>
+                        <div class="bw_search-tab">
+                            {% comment %}Sounds{% endcomment %}
+                            {% comment %}This section will allow to choose between different search modes: sounds and packs.
+                            However, this is currently not implemented in the backend so we put nothing here as only
+                            the "sounds" option is supported.
+                            {% endcomment %}
+                        </div>
+                        <div class="browse__search-overview-sorter">
+                            <span class="font-weight-normal text-light-grey">Sort by:</span>
+                            <select name="s" id="sort-by" onchange="submit();">
+                                {% for option in sort_options %}
+                                    <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="divider-light"></div>
+                </div>
+
+            </form>
         </div>
         <div class="row no-gutters">
             <aside class="col-sm-12 col-md-3">

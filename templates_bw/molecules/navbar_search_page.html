@@ -3,7 +3,7 @@
 element so that if there is a query defined, the input box will be pre-filled with that.{% endcomment %}
 <nav class="bw-nav bw-nav--expanded">
     <div class="container bw-nav__container">
-        <form method="get" action="/search/">
+        <form method="get" action="{% url "sounds-search" %}">
         <div class="bw-nav__logo-search-container">
             <div class="bw-nav__logo">
                 <a href="/" class="no-hover"></a>

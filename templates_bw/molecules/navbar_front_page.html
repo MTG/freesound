@@ -2,7 +2,7 @@
 version of the logo with text if the "bw-nav--expanded" is added to the navbar.{% endcomment %}
 <nav class="bw-nav bw-nav--expanded">
     <div class="container bw-nav__container">
-        <form method="get" action="/search/">
+        <form method="get" action="{% url "sounds-search" %}">
         <div class="bw-nav__logo-search-container">
             <div class="bw-nav__logo-with-text">
                 <a href="/" class="no-hover"></a>

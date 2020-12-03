@@ -71,7 +71,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_tag" value="1" {% if a_tag %}checked{% endif %}/>
+                                                    <input type="checkbox" class="bw-checkbox" on name="a_tag" {% if a_tag %}checked{% endif %}/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Tags</div>
                                             </label>
@@ -79,7 +79,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_filename" value="1" {% if a_filename %}checked{% endif %}/>
+                                                    <input type="checkbox" class="bw-checkbox" name="a_filename" {% if a_filename %}checked{% endif %}/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Sound name</div>
                                             </label>
@@ -87,7 +87,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_description" value="1" {% if a_description %}checked{% endif %}/>
+                                                    <input type="checkbox" class="bw-checkbox" name="a_description" {% if a_description %}checked{% endif %}/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Description</div>
                                             </label>
@@ -95,7 +95,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_packname" value="1" {% if a_packname %}checked{% endif %}/>
+                                                    <input type="checkbox" class="bw-checkbox" name="a_packname" {% if a_packname %}checked{% endif %}/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Pack name</div>
                                             </label>
@@ -103,7 +103,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_soundid" value="1" {% if a_soundid %}checked{% endif %}/>
+                                                    <input type="checkbox" class="bw-checkbox" name="a_soundid" {% if a_soundid %}checked{% endif %}/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Sound ID</div>
                                             </label>
@@ -111,7 +111,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_username" value="1" {% if a_username %}checked{% endif %}/>
+                                                    <input type="checkbox" class="bw-checkbox" name="a_username" {% if a_username %}checked{% endif %}/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Username</div>
                                             </label>
@@ -136,7 +136,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox" value="1"/>
+                                                    <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox"/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Only geotagged sounds</div>
                                             </label>

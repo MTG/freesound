@@ -40,18 +40,22 @@ searchInputBrowse.addEventListener('focus', updateSearchInput);
 searchInputBrowse.addEventListener('blur', updateSearchInput);
 window.addEventListener('load', function(){updateRemoveSearchInputButtonVisibility(searchInputBrowse)})
 
-// Navbar search input box behaviour (shouold only appear when searchInputBrowse is not visible)
-const SCROLL_CHECK_TIMER = 100 // min interval (in ms) between consecutive calls of scroll checking function
-const checkShouldShowSearchInNavbar = throttle(() => {
+// Navbar search input box behaviour (should only appear when searchInputBrowse is not visible)
+const searchFormIsVisible = () => {
   const heroRect = searchInputBrowse.getBoundingClientRect()
   // not all browsers support clientRect.height
   const heroSearchPosition = heroRect.height
     ? heroRect.y + heroRect.height
     : heroRect.y
-  const shouldShowSearchBar = heroSearchPosition < 80
-  const isShowingSearchBar = !navbar.classList.contains('bw-nav--expanded')
+  return heroSearchPosition >= 80;
+}
+
+const SCROLL_CHECK_TIMER = 100 // min interval (in ms) between consecutive calls of scroll checking function
+const checkShouldShowSearchInNavbar = throttle(() => {
+  const shouldShowSearchBar = !searchFormIsVisible();
+  const isShowingSearchBar = !navbar.classList.contains('bw-nav--expanded');
   if (shouldShowSearchBar !== isShowingSearchBar) {
-    navbar.classList.toggle('bw-nav--expanded')
+    navbar.classList.toggle('bw-nav--expanded');
   }
 }, SCROLL_CHECK_TIMER)
 
@@ -67,6 +71,7 @@ window.addEventListener('scroll', checkShouldShowSearchInNavbar)
 */
 
 var search_form_element = document.getElementById('search_form');
+var search_page_navbar_form = document.getElementById('search-page-navbar-form');
 var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
 var advanced_search_options_div = document.getElementById('advanced-search-options');
 var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
@@ -269,11 +274,14 @@ grouping_geotagged_element.addEventListener('change', function() {
   set_hidden_grouping_value();
 })
 
-searchInputBrowse.addEventListener('keydown',  evt => {
+document.body.addEventListener('keydown',  evt => {
   const ENTER_KEY = 13
   if(evt.keyCode === ENTER_KEY){
-     addAdvancedSearchOptionsFilters();
-     search_form_element.submit();
+    // If ENTER key is pressed and search form is visible, trigger form submission
+    if (searchFormIsVisible()){
+      addAdvancedSearchOptionsFilters();
+      search_form_element.submit();
+    }
   }
 })
 

@@ -1,15 +1,17 @@
 {% comment %}This is a custom version of the standard navbar which by default hides the input box (by adding the
 "bw-nav--expanded" class to the navbar from a start). This version also sets the "value" parameter of the input
-element so that if there is a query defined, the input box will be pre-filled with that.{% endcomment %}
+element so that if there is a query defined, the input box will be pre-filled with that. Furthermore, this version
+of the navbar has an ID defined for the form and input elements so we can intercept the submit event and do some
+actions to include advance search options (and other fields) before submission.{% endcomment %}
 <nav class="bw-nav bw-nav--expanded">
     <div class="container bw-nav__container">
-        <form method="get" action="{% url "sounds-search" %}">
+        <form id="search-page-navbar-form" method="get" action="{% url "sounds-search" %}">
         <div class="bw-nav__logo-search-container">
             <div class="bw-nav__logo">
                 <a href="/" class="no-hover"></a>
             </div>
             <div class="input-wrapper">
-                <input name="q" type="search" value="{{ search_query }}" class="bw-nav__search" placeholder="Search sounds..." autocomplete="off" />
+                <input id="search-input-browse-navbar" name="q" type="search" value="{{ search_query }}" class="bw-nav__search" placeholder="Search sounds..." autocomplete="off" />
             </div>
         </div>
         </form>

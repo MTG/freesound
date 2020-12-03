@@ -276,3 +276,17 @@ searchInputBrowse.addEventListener('keydown',  evt => {
      search_form_element.submit();
   }
 })
+
+search_page_navbar_form.addEventListener('submit', function(evt){
+  // Prevent default form submission
+  if (evt.preventDefault) evt.preventDefault();
+
+  // Copy input element contents to the main input element and do submission of the main form instead of the navbar one
+  const searchInputBrowseNavbar = document.getElementById('search-input-browse-navbar');
+  searchInputBrowse.value = searchInputBrowseNavbar.value;
+  addAdvancedSearchOptionsFilters();
+  search_form_element.submit();
+
+  // It is also needed to return false to prevent default form submission
+  return false;
+})

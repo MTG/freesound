@@ -23,10 +23,10 @@ import logging
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
 from utils.search.search_general import get_all_sound_ids_from_solr, delete_sounds_from_solr
-from utils.similarity_utilities import Similarity
+from similarity.client import similarity_client
+import sys
 
 console_logger = logging.getLogger('console')
-
 
 class Command(LoggingBaseCommand):
     help = "This command checks the status of the solr and gaia index compared to the fs database. Reports about " \
@@ -52,7 +52,7 @@ class Command(LoggingBaseCommand):
 
         # Get ell gaia ids
         console_logger.info("Getting gaia ids...")
-        gaia_ids = Similarity.get_all_sound_ids()
+        gaia_ids = similarity_client.get_all_sound_ids()
 
         console_logger.info("Getting freesound db data...")
         # Get all moderated and processed sound ids
@@ -114,7 +114,7 @@ class Command(LoggingBaseCommand):
                 N = len(in_gaia_not_in_fs)
                 for count, sid in enumerate(in_gaia_not_in_fs):
                     console_logger.info('\r\tDeleting sound %i of %i         ' % (count+1, N))
-                    Similarity.delete(sid)
+                    similarity_client.delete(sid)
 
         self.log_end({
             'n_sounds_in_db_moderated_processed': len(fs_mp),

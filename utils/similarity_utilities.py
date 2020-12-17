@@ -24,7 +24,6 @@ import traceback
 from django.conf import settings
 from django.core.cache import cache
 
-from similarity.client import Similarity
 from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILARITY_CACHE_TIME
 from utils.encryption import create_hash
 
@@ -53,7 +52,7 @@ def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS
 
     if not similar_sounds:
         try:
-            result = Similarity.search(sound.id, preset=preset, num_results=num_results, offset=offset)
+            result = similarity_client.search(sound.id, preset=preset, num_results=num_results, offset=offset)
             similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
             count = result['count']
         except Exception as e:
@@ -92,7 +91,7 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
 
     if not returned_sounds or target_file:
         if target_file:
-            # If there is a file attahced, set the file as the target
+            # If there is a file attached, set the file as the target
             target_type = 'file'
             target = None  # If target is given as a file, we set target to None (just in case)
         else:
@@ -102,7 +101,7 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
             else:
                 target_type = 'descriptor_values'
 
-        result = Similarity.api_search(
+        result = similarity_client.api_search(
             target_type=target_type,
             target=target,
             filter=filter,
@@ -138,7 +137,7 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
             # remove id form list so it is not included in similarity request
             not_cached_sound_ids.remove(id)
     try:
-        returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
+        returned_data = similarity_client.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
     except Exception as e:
         web_logger.error('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
                          (e, traceback.format_exc()))
@@ -157,7 +156,7 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
 def delete_sound_from_gaia(sound):
     web_logger.info("Deleting sound from gaia with id %d" % sound.id)
     try:
-        Similarity.delete(sound.id)
+        similarity_client.delete(sound.id)
     except Exception as e:
         web_logger.error("Could not delete sound from gaia with id %d (%s)" % (sound.id, str(e)))
 

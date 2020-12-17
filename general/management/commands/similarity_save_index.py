@@ -18,8 +18,10 @@
 #     See AUTHORS file.
 #
 
-from similarity.client import Similarity
 from utils.management_commands import LoggingBaseCommand
+from similarity.client import indexing_similarity_client, similarity_client
+import logging
+logger = logging.getLogger("web")
 
 
 class Command(LoggingBaseCommand):
@@ -37,7 +39,7 @@ class Command(LoggingBaseCommand):
     def handle(self, *args, **options):
         self.log_start()
         if options['indexing_server']:
-            Similarity.save_indexing_server()
+            indexing_similarity_client.save()
         else:
-            Similarity.save()
+            similarity_client.save()
         self.log_end()

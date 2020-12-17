@@ -394,9 +394,8 @@ DEFAULT_SEARCH_WEIGHTS = {
 
 # -------------------------------------------------------------------------------
 # Similarity client settings
-SIMILARITY_ADDRESS = 'similarity'
-SIMILARITY_PORT = 8008
-SIMILARITY_INDEXING_SERVER_PORT = 8009
+SIMILARITY_ADDRESS = 'similarity:8008'
+INDEXING_SIMILARITY_ADDRESS = 'similarity:8009'
 
 # -------------------------------------------------------------------------------
 # Tag recommendation client settings

@@ -49,11 +49,26 @@
 
         $("#select-all").click(function(){
             if (selectAllOnClick){
-                $("#select-all").html("select none");
+                $("#select-all").html("Select none");
             } else {
-                $("#select-all").html("select all");
+                $("#select-all").html("Select all");
             }
-            $('.ticket-check').attr('checked', selectAllOnClick);
+
+            var includeDeferred = document.getElementById("select_deferred_option").checked;
+            var table = document.getElementById("assigned-tickets-table");
+            for (var i = 0; i < table.rows.length; i++) {
+                var row = table.rows[i];
+                if (includeDeferred){
+                    // Act on all checkboxes
+                    row.getElementsByTagName('input')[0].checked = selectAllOnClick;
+                } else {
+                    // Only act on the checkboxes of tickets which are not deferred
+                    if (row.getAttribute("data-ticket-status") !== "deferred"){
+                        row.getElementsByTagName('input')[0].checked = selectAllOnClick
+                    }
+                }
+            }
+
             selectAllOnClick = !selectAllOnClick;
             updateSelectedTickets();
         });
@@ -65,15 +80,25 @@
                 var user_id = $("#row_" + ticket_id).data('sender-id');
                 selectedUserIds[user_id] = true;
             });
-            if (Object.keys(selectedUserIds).length == 1){
+            if (Object.keys(selectedUserIds).length === 1){
                 var target_user_id = Object.keys(selectedUserIds)[0];
-                $('.ticket-check').each(function () {
-                    var ticket_id = $(this).data('id');
-                    var t_user_id = $("#row_" + ticket_id).data('sender-id');
-                    if (t_user_id == target_user_id){
-                        $("#row_" + ticket_id).find('.ticket-check').attr('checked', true);
+                var includeDeferred = document.getElementById("select_deferred_option").checked;
+                var table = document.getElementById("assigned-tickets-table");
+                for (var i = 0; i < table.rows.length; i++) {
+                    var row = table.rows[i];
+                    var user_id = row.getAttribute("data-sender-id");
+                    if (user_id === target_user_id) {
+                        if (includeDeferred){
+                            // Act on all checkboxes
+                            row.getElementsByTagName('input')[0].checked = true;
+                        } else {
+                            // Only act on the checkboxes of tickets which are not deferred
+                            if (row.getAttribute("data-ticket-status") !== "deferred"){
+                                row.getElementsByTagName('input')[0].checked = true
+                            }
+                        }
                     }
-                });
+                }
             }
             updateSelectedTickets();
         });
@@ -202,8 +227,12 @@
                 <p>You've finished all the sounds in your queue.
                 <p>Back to <a href="{% url "tickets-moderation-home" %}">moderation home</a>
             {% else %}
-                <a id="select-all">select all</a>
-                <span id="select-all-same-user-wrapper">| <a id="select-all-same-user">select other sounds from same user</a></span>
+                <p style="margin-bottom:8px">
+                    <a id="select-all">Select all</a>
+                    <span id="select-all-same-user-wrapper">| <a id="select-all-same-user">Select other sounds from same user</a></span>
+                    <br>
+                    <label for="select_deferred_option" ><input type="checkbox" id="select_deferred_option"> Include deferred sounds when selecting</label>
+                </p>
             {% endif %}
             <div id="assigned-tickets-table-wrapper">
                 <table id="assigned-tickets-table">

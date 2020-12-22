@@ -3275,6 +3275,10 @@ ul.messages {
     background-color: #fff;
 }
 
+.ticket-row-highlighted td {
+    background-color: #ff7a28!important;
+}
+
 .mod-selected-row td {
     background-color: #ececec;
 }

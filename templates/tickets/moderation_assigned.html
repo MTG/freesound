@@ -209,11 +209,12 @@
                 <table id="assigned-tickets-table">
                 {% for ticket in page.object_list %}
                     {% if ticket.sound %}
-                        <tr id="row_{{ ticket.id }}" class="alternate-row-{% cycle 'odd' 'even' %}"
+                        <tr id="row_{{ ticket.id }}" class="alternate-row-{% cycle 'odd' 'even' %} {% if ticket.status == "deferred" %}ticket-row-highlighted{% endif %}"
                             data-sound-id="{{ ticket.sound.id  }}"
                             data-sound-url="{% url "sound-display" ticket.sound.user.username ticket.sound.id %}"
                             data-messages-url="{% url "tickets-ticket" ticket.key %}"
-                            data-sender-id="{{ticket.sender.id}}">
+                            data-sender-id="{{ticket.sender.id}}"
+                            data-ticket-status="{{ticket.status}}">
                           <td><input type="checkbox" class="ticket-check" data-id="{{ticket.id}}"/> </td>
                           <td><a href="#" class="ticket-select" data-id="{{ticket.id}}">{{ticket.sound.original_filename|truncate_string:20}}</a></td>
                             <td>{{ticket.sender.username | truncatechars:12}}</td>

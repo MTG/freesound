@@ -3203,6 +3203,26 @@ ul.messages {
     width: 75px;
 }
 
+.moderation-user-list-order {
+    list-style: none;
+    padding-left: 0px;
+}
+
+.moderation-user-list-order li {
+    display: inline;
+}
+
+.moderation-user-list-order li a {
+    border: 1px solid;
+    padding: 5px;
+}
+
+.moderation-user-list-order li a.selected {
+    border: 2px solid;
+    padding: 5px;
+    font-weight: bold;
+}
+
 #moderation_form textarea {
     height: 80px;
 }

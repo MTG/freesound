@@ -211,14 +211,11 @@ def _get_new_uploaders_by_ticket():
     users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
     users_dict = {u.id: u for u in users}
     new_sounds_users = []
-
     for t in tickets:
-        new_sounds_users.append((
-            users_dict[t['sender']],
-            t['total'],
-            (datetime.datetime.now() - t['older']).days
-        ))
-
+        new_sounds_users.append({"user": users_dict[t['sender']],
+                                 "username": users_dict[t['sender']].username,
+                                 "new_count": t['total'],
+                                 "time": (datetime.datetime.now() - t['older']).days})
     return new_sounds_users
 
 
@@ -268,8 +265,16 @@ def _get_sounds_in_moderators_queue_count(user):
 def moderation_home(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
-    new_sounds_users = _get_new_uploaders_by_ticket()
     unsure_tickets = _get_unsure_sound_tickets()
+    new_sounds_users = _get_new_uploaders_by_ticket()
+    order = request.GET.get("order", "")
+    if order == "username":
+        new_sounds_users = sorted(new_sounds_users, key=lambda x: x["username"])
+    elif order == "new_count":
+        new_sounds_users = sorted(new_sounds_users, key=lambda x: x["new_count"], reverse=True)
+    else:
+        # Default option, sort by number of days in queue
+        new_sounds_users = sorted(new_sounds_users, key=lambda x: x["time"], reverse=True)
 
     tardy_moderator_tickets = _get_tardy_moderator_tickets()
     tardy_user_tickets = _get_tardy_user_tickets()
@@ -277,6 +282,7 @@ def moderation_home(request):
     tardy_user_tickets_count = len(tardy_user_tickets)
 
     tvars = {"new_sounds_users": new_sounds_users,
+             "order": order,
              "unsure_tickets": unsure_tickets,
              "tardy_moderator_tickets": tardy_moderator_tickets[:5],
              "tardy_user_tickets": tardy_user_tickets[:5],

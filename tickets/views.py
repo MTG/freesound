@@ -500,7 +500,7 @@ def moderation_assigned(request, user_id):
         mod_sound_form = SoundModerationForm(initial={'action': 'Approve'})
         msg_form = ModerationMessageForm()
 
-    qs = Ticket.objects.select_related() \
+    qs = Ticket.objects.select_related('sound') \
                        .filter(assignee=user_id) \
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(sound=None) \
@@ -527,6 +527,7 @@ def moderation_assigned(request, user_id):
             "paginator": pagination_response['paginator'],
             "current_page": pagination_response['current_page'],
             "show_pagination": show_pagination,
+            "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,
             "mod_sound_form": mod_sound_form,
             "msg_form": msg_form,
             "selected": "queue"

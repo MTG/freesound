@@ -23,14 +23,13 @@
             $("#moderation-ticket-messages-" + i).load(messages_url+'messages/');
             $("#moderation-ticket-link-" + i).get(0).innerHTML =
                     '<p><a href="'+messages_url+'" target="_blank">open full ticket...</a><p>';
-            var N = 5;
+            var N = {{ max_selected_tickets_in_right_panel }};
             if (i == N - 1){
                 var n_remaining = ticket_ids.length - N;
                 $("#sounds_info").append('<br><p>' + n_remaining + ' more selected sounds...</p>');
                 break;
             }
         }
-
     }
 
     function highlight_row_only(row_id) {

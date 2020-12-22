@@ -185,9 +185,10 @@ def ticket(request, ticket_key):
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
 def new_sound_tickets_count():
-
-    return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
-            sound__processing_state='OK', status=TICKET_STATUS_NEW))
+    return len(Ticket.objects.filter(assignee=None,
+                                     sound__moderation_state='PE',
+                                     sound__processing_state='OK',
+                                     status=TICKET_STATUS_NEW))
 
 @login_required
 def sound_ticket_messages(request, ticket_key):
@@ -200,13 +201,13 @@ def sound_ticket_messages(request, ticket_key):
 
 def _get_new_uploaders_by_ticket():
 
-    tickets = Ticket.objects.filter(
-        sound__processing_state='OK',
-        sound__moderation_state='PE',
-        assignee=None,
-        status=TICKET_STATUS_NEW).values('sender')\
-                                 .annotate(total=Count('sender'), older=Min('created'))\
-                                 .order_by('older')
+    tickets = Ticket.objects.filter(assignee=None,
+                                    sound__processing_state='OK',
+                                    sound__moderation_state='PE',
+                                    status=TICKET_STATUS_NEW)\
+        .values('sender')\
+        .annotate(total=Count('sender'), older=Min('created'))\
+        .order_by('older')
 
     users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
     users_dict = {u.id: u for u in users}
@@ -321,6 +322,26 @@ def moderation_tardy_moderators_sounds(request):
     tvars.update(paginated)
 
     return render(request, 'tickets/moderation_tardy_moderators.html', tvars)
+
+
+@permission_required('tickets.can_moderate')
+def moderation_assign_all_new(request):
+    """
+    Assigns all new unassigned tickets to the current user logged in
+    """
+
+    tickets = Ticket.objects.filter(assignee=None,
+                                    sound__processing_state='OK',
+                                    sound__moderation_state='PE',
+                                    status=TICKET_STATUS_NEW)
+
+    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
+
+    msg = 'You have been assigned all new sounds ({}) from the queue.'.format(tickets.count())
+    messages.add_message(request, messages.INFO, msg)
+    invalidate_all_moderators_header_cache()
+
+    return redirect("tickets-moderation-home")
 
 
 @permission_required('tickets.can_moderate')

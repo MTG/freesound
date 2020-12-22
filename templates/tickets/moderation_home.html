@@ -35,6 +35,10 @@
                 </div>
             {% endfor %}
             <div style="clear: both;"></div>
+            <br>
+            <p>
+                <a href="{% url 'tickets-moderation-assign-all-new' %}" style="color:red;"><img src="{{media_url}}images/moderation_plus.png"/>Assign ALL new sounds to me</a>
+            </p>
         </div>
         <br>
     {% else %}

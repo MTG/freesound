@@ -37,6 +37,10 @@ urlpatterns = [
         views.moderation_tardy_moderators_sounds,
         name='tickets-moderation-tardy-moderators'),
 
+    url(r'^moderation/assign/new/$',
+        views.moderation_assign_all_new,
+        name='tickets-moderation-assign-all-new'),
+
     url(r'^moderation/assign/(?P<user_id>\d+)/new$',
         views.moderation_assign_user,
         name='tickets-moderation-assign-user-new'),

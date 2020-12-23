@@ -53,7 +53,6 @@
         soundPlayerLoadedCheck = setInterval(function(){
             var playerPlayButton = $("#sound_" + soundID + " a.toggle.play");
             if (playerPlayButton.length){
-                console.log(playerPlayButton);
                 clearInterval(soundPlayerLoadedCheck);
                 playerPlayButton[0].click();
             }
@@ -65,15 +64,15 @@
 
         {% if moderator_tickets_count %}
 
-            // Bind submit form event to add automplay and  include deferred options as query strings
+            // Bind submit form event to add autoplay and  include deferred options as query strings
             var moderationFormElement = $("#moderation-form").find('form')[0];
             $(moderationFormElement).submit(function(){
                 var includeDeferred = document.getElementById("select_deferred_option").checked;
                 var shouldAutoplay = document.getElementById("select_autoplay_option").checked;
-                var newFormAction = '.?';
-                if (includeDeferred){ newFormAction += 'include_d=on&' }
-                if (shouldAutoplay){ newFormAction += 'autoplay=on' }
-                moderationFormElement.action = newFormAction;
+                var queryParams = {}
+                queryParams['include_d'] = includeDeferred ? 'on': 'off';
+                queryParams['autoplay'] = shouldAutoplay ? 'on': 'off';
+                moderationFormElement.action = '?' + $.param( queryParams );
                 return true;
             })
 

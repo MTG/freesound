@@ -289,8 +289,7 @@ def moderation_home(request):
              "tardy_user_tickets": tardy_user_tickets[:5],
              "tardy_moderator_tickets_count": tardy_moderator_tickets_count,
              "tardy_user_tickets_count": tardy_user_tickets_count,
-             "moderator_tickets_count": sounds_in_moderators_queue_count,
-             "selected": "assigned"
+             "moderator_tickets_count": sounds_in_moderators_queue_count
             }
 
     return render(request, 'tickets/moderation_home.html', tvars)
@@ -414,6 +413,8 @@ def _whitelist_gearman(ticket_ids):
 def moderation_assigned(request, user_id):
 
     clear_forms = True
+    mod_sound_form = None
+    msg_form = None
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)
         msg_form = ModerationMessageForm(request.POST)
@@ -548,17 +549,18 @@ def moderation_assigned(request, user_id):
     show_pagination = moderator_tickets_count > settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
     tvars = {
-            "moderator_tickets_count": moderator_tickets_count,
-            "moderation_texts": MODERATION_TEXTS,
-            "page": pagination_response['page'],
-            "paginator": pagination_response['paginator'],
-            "current_page": pagination_response['current_page'],
-            "show_pagination": show_pagination,
-            "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,
-            "mod_sound_form": mod_sound_form,
-            "msg_form": msg_form,
-            "selected": "queue"
-            }
+        "moderator_tickets_count": moderator_tickets_count,
+        "moderation_texts": MODERATION_TEXTS,
+        "page": pagination_response['page'],
+        "paginator": pagination_response['paginator'],
+        "current_page": pagination_response['current_page'],
+        "show_pagination": show_pagination,
+        "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,
+        "mod_sound_form": mod_sound_form,
+        "msg_form": msg_form,
+        "default_autoplay": request.GET.get('autoplay', 'on') == 'on',
+        "default_include_deferred": request.GET.get('include_d', '') == 'on',
+    }
 
     return render(request, 'tickets/moderation_assigned.html', tvars)
 

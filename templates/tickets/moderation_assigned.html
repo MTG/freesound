@@ -12,16 +12,18 @@
         $("#sounds_info").html('');
         for (var i in ticket_ids){
             var ticket_id = ticket_ids[i];
-            var sound_url = $("#row_" + ticket_id).data('sound-url');
-            var messages_url = $("#row_" + ticket_id).data('messages-url');
+            var row = $("#row_" + ticket_id);
+            var sound_url = row.data('sound-url');
+            var sound_id = row.data('sound-id');
+            var messages_url = row.data('messages-url');
             $("#sounds_info").append(
-                '<div class="sample_player_small sound_list_moderation" id="sound_' + i + '"></div>' +
-                '<div id="moderation-ticket-messages-' + i + '"></div>' +
-                '<div class="ticket_link" id="moderation-ticket-link-' + i + '"></div>'
+                '<div class="sample_player_small sound_list_moderation" id="sound_' + sound_id + '"></div>' +
+                '<div id="moderation-ticket-messages-' + sound_id + '"></div>' +
+                '<div class="ticket_link" id="moderation-ticket-link-' + sound_id + '"></div>'
             );
-            $("#sound_" + i).load(sound_url, function() { makePlayer('.player') });
-            $("#moderation-ticket-messages-" + i).load(messages_url+'messages/');
-            $("#moderation-ticket-link-" + i).get(0).innerHTML =
+            $("#sound_" + sound_id).load(sound_url, function() { makePlayer('.player') });
+            $("#moderation-ticket-messages-" + sound_id).load(messages_url+'messages/');
+            $("#moderation-ticket-link-" + sound_id).get(0).innerHTML =
                     '<p><a href="'+messages_url+'" target="_blank">open full ticket...</a><p>';
             var N = {{ max_selected_tickets_in_right_panel }};
             if (i == N - 1){
@@ -41,99 +43,142 @@
         loadUrl = '{% url "tickets-user-annotations" 0 %}'.replace('0', ''+uploader_id);
         $('#user-annotations-section').load(loadUrl);
     };
+
+    // Function to play the sound corresponding to a selected ticket
+    var soundPlayerLoadedCheck;
+    function playSoundFromTicketList(soundID){
+        // Because when this function is called the sound player is still not loaded in the HTML, we use a setInterval
+        // function that will keep onchecking if the sound player has been loaded. Once player is loaded, this
+        // function will clear the interval and play the sound.
+        soundPlayerLoadedCheck = setInterval(function(){
+            var playerPlayButton = $("#sound_" + soundID + " a.toggle.play");
+            if (playerPlayButton.length){
+                console.log(playerPlayButton);
+                clearInterval(soundPlayerLoadedCheck);
+                playerPlayButton[0].click();
+            }
+        }, 100);
+    }
  
     var selectAllOnClick = true;
     $(document).ready(function() {
 
         {% if moderator_tickets_count %}
 
-        $("#select-all").click(function(){
-            if (selectAllOnClick){
-                $("#select-all").html("Select none");
-            } else {
-                $("#select-all").html("Select all");
-            }
+            // Bind submit form event to add automplay and  include deferred options as query strings
+            var moderationFormElement = $("#moderation-form").find('form')[0];
+            $(moderationFormElement).submit(function(){
+                var includeDeferred = document.getElementById("select_deferred_option").checked;
+                var shouldAutoplay = document.getElementById("select_autoplay_option").checked;
+                var newFormAction = '.?';
+                if (includeDeferred){ newFormAction += 'include_d=on&' }
+                if (shouldAutoplay){ newFormAction += 'autoplay=on' }
+                moderationFormElement.action = newFormAction;
+                return true;
+            })
 
-            var includeDeferred = document.getElementById("select_deferred_option").checked;
-            var table = document.getElementById("assigned-tickets-table");
-            for (var i = 0; i < table.rows.length; i++) {
-                var row = table.rows[i];
-                if (includeDeferred){
-                    // Act on all checkboxes
-                    row.getElementsByTagName('input')[0].checked = selectAllOnClick;
+            // Bind select all button function
+            $("#select-all").click(function(){
+                if (selectAllOnClick){
+                    $("#select-all").html("Select none");
                 } else {
-                    // Only act on the checkboxes of tickets which are not deferred
-                    if (row.getAttribute("data-ticket-status") !== "deferred"){
-                        row.getElementsByTagName('input')[0].checked = selectAllOnClick
-                    }
+                    $("#select-all").html("Select all");
                 }
-            }
 
-            selectAllOnClick = !selectAllOnClick;
-            updateSelectedTickets();
-        });
-
-        $("#select-all-same-user").click(function(){
-            var selectedUserIds = {};
-            $('.ticket-check:checked').each(function () {
-                var ticket_id = $(this).data('id');
-                var user_id = $("#row_" + ticket_id).data('sender-id');
-                selectedUserIds[user_id] = true;
-            });
-            if (Object.keys(selectedUserIds).length === 1){
-                var target_user_id = Object.keys(selectedUserIds)[0];
                 var includeDeferred = document.getElementById("select_deferred_option").checked;
                 var table = document.getElementById("assigned-tickets-table");
                 for (var i = 0; i < table.rows.length; i++) {
                     var row = table.rows[i];
-                    var user_id = row.getAttribute("data-sender-id");
-                    if (user_id === target_user_id) {
-                        if (includeDeferred){
-                            // Act on all checkboxes
-                            row.getElementsByTagName('input')[0].checked = true;
-                        } else {
-                            // Only act on the checkboxes of tickets which are not deferred
-                            if (row.getAttribute("data-ticket-status") !== "deferred"){
-                                row.getElementsByTagName('input')[0].checked = true
+                    if (includeDeferred){
+                        // Act on all checkboxes
+                        row.getElementsByTagName('input')[0].checked = selectAllOnClick;
+                    } else {
+                        // Only act on the checkboxes of tickets which are not deferred
+                        if (row.getAttribute("data-ticket-status") !== "deferred"){
+                            row.getElementsByTagName('input')[0].checked = selectAllOnClick
+                        }
+                    }
+                }
+
+                selectAllOnClick = !selectAllOnClick;
+                updateSelectedTickets();
+            });
+
+            // Bind select sounds form same user button function
+            $("#select-all-same-user").click(function(){
+                var selectedUserIds = {};
+                $('.ticket-check:checked').each(function () {
+                    var ticket_id = $(this).data('id');
+                    var user_id = $("#row_" + ticket_id).data('sender-id');
+                    selectedUserIds[user_id] = true;
+                });
+                if (Object.keys(selectedUserIds).length === 1){
+                    var target_user_id = Object.keys(selectedUserIds)[0];
+                    var includeDeferred = document.getElementById("select_deferred_option").checked;
+                    var table = document.getElementById("assigned-tickets-table");
+                    for (var i = 0; i < table.rows.length; i++) {
+                        var row = table.rows[i];
+                        var user_id = row.getAttribute("data-sender-id");
+                        if (user_id === target_user_id) {
+                            if (includeDeferred){
+                                // Act on all checkboxes
+                                row.getElementsByTagName('input')[0].checked = true;
+                            } else {
+                                // Only act on the checkboxes of tickets which are not deferred
+                                if (row.getAttribute("data-ticket-status") !== "deferred"){
+                                    row.getElementsByTagName('input')[0].checked = true
+                                }
                             }
                         }
                     }
                 }
+                updateSelectedTickets();
+            });
+
+            // Bind click on the checkbox of the ticket list
+            $(".ticket-check").change(function(evt){
+                stopAll(); // stop all sounds, defined in player.js
+                clearInterval(soundPlayerLoadedCheck); // In case it was active, to avoid having two running
+                var shouldAutoplay = document.getElementById("select_autoplay_option").checked;
+                if (shouldAutoplay && $(this).is(":checked")){
+                    var selectedSoundID = $(this).data('sound-id');
+                    playSoundFromTicketList(selectedSoundID);  // play the sound that was selected
+                }
+                updateSelectedTickets();
+                return false;
+            });
+
+            // Bind click on the ticket name of the ticket list
+            $(".ticket-select").click(function(){
+                stopAll(); // stop all sounds, defined in player.js
+                clearInterval(soundPlayerLoadedCheck); // In case it was active, to avoid having two running
+                var selectedSoundID = $(this).data('sound-id');
+                var selectedTicketID = $(this).data('id');
+                var shouldAutoplay = document.getElementById("select_autoplay_option").checked;
+                if (shouldAutoplay){
+                    playSoundFromTicketList(selectedSoundID);  // play the sound that was selected
+                }
+                $('.ticket-check').attr('checked', false);
+                var checked = $('#row_'+ selectedTicketID).find('.ticket-check');
+                checked.attr('checked', true);
+                updateSelectedTickets();
+                return false;
+            });
+
+            //Load initial selected values when page is loading
+            var selected = $('#id_ticket').get(0).value;
+            var selectedTickets = [];
+            if (selected == '') {
+              selectedTickets = ["{{page.object_list.0.id}}"];
+            }else{
+              selectedTickets = $('#id_ticket').get(0).value.split('|');
+            }
+            for (t in selectedTickets){
+              $('#row_'+ selectedTickets[t]).find('.ticket-check').attr("checked", true);
             }
             updateSelectedTickets();
-        });
-        
-        // Checkbox select or unselect event
-        $(".ticket-check").change(function(evt){
-            stopAll(); // stop all sounds, defined in player.js
-            updateSelectedTickets();
-            return false;
-        });
 
-        // Click on ticket at list
-        $(".ticket-select").click(function(){
-            stopAll(); // stop all sounds, defined in player.js
-            $('.ticket-check').attr('checked', false);
-            var checked = $('#row_'+$(this).data('id')).find('.ticket-check');
-            checked.attr('checked', true);
-            updateSelectedTickets();
-            return false;
-        }); 
-       
-        //Load initial selected values when page is loading
-        var selected = $('#id_ticket').get(0).value;
-        var selectedTickets = [];
-        if (selected == '') {
-          selectedTickets = ["{{page.object_list.0.id}}"];
-        }else{
-          selectedTickets = $('#id_ticket').get(0).value.split('|');
-        }
-        for (t in selectedTickets){
-          $('#row_'+ selectedTickets[t]).find('.ticket-check').attr("checked", true);
-        }
-        updateSelectedTickets();
-
-      {% endif %}
+        {% endif %}
 
         unsecureImageCheck($('#{{ msg_form.message.id_for_label }}'));
     });
@@ -231,7 +276,9 @@
                     <a id="select-all">Select all</a>
                     <span id="select-all-same-user-wrapper">| <a id="select-all-same-user">Select other sounds from same user</a></span>
                     <br>
-                    <label for="select_deferred_option" ><input type="checkbox" id="select_deferred_option"> Include deferred sounds when selecting</label>
+                    <label for="select_deferred_option" ><input type="checkbox" id="select_deferred_option" {% if default_include_deferred %}checked="checked"{% endif %}> Include deferred sounds when selecting</label>
+                    <br>
+                    <label for="select_autoplay_option" ><input type="checkbox" id="select_autoplay_option" {% if default_autoplay %}checked="checked"{% endif %}> Autoplay sounds when selecting</label> | <a href="javascript:void(0);" onclick="stopAll();">stop all sounds</a>
                 </p>
             {% endif %}
             <div id="assigned-tickets-table-wrapper">
@@ -239,13 +286,13 @@
                 {% for ticket in page.object_list %}
                     {% if ticket.sound %}
                         <tr id="row_{{ ticket.id }}" class="alternate-row-{% cycle 'odd' 'even' %} {% if ticket.status == "deferred" %}ticket-row-highlighted{% endif %}"
-                            data-sound-id="{{ ticket.sound.id  }}"
+                            data-sound-id="{{ ticket.sound.id }}"
                             data-sound-url="{% url "sound-display" ticket.sound.user.username ticket.sound.id %}"
                             data-messages-url="{% url "tickets-ticket" ticket.key %}"
                             data-sender-id="{{ticket.sender.id}}"
                             data-ticket-status="{{ticket.status}}">
-                          <td><input type="checkbox" class="ticket-check" data-id="{{ticket.id}}"/> </td>
-                          <td><a href="#" class="ticket-select" data-id="{{ticket.id}}">{{ticket.sound.original_filename|truncate_string:20}}</a></td>
+                          <td><input type="checkbox" class="ticket-check" data-id="{{ticket.id}}"  data-sound-id="{{ ticket.sound.id }}"/> </td>
+                          <td><a href="#" class="ticket-select" data-id="{{ticket.id}}" data-sound-id="{{ ticket.sound.id }}">{{ticket.sound.original_filename|truncate_string:20}}</a></td>
                             <td>{{ticket.sender.username | truncatechars:12}}</td>
                             <td>{{ticket.created|date:"d/m/Y" }}</td>
                             <td>{{ticket.status|capfirst}}</td>
@@ -270,18 +317,13 @@
                 <br>
                 <div id="moderation-form">
                     <form action="." method="post" class="disable-on-submit">{% csrf_token %}
-
-                           <div id="moderation-decision-form">
-                               {{ mod_sound_form.as_p }}
-                           </div>
-                            <div style="clear:both;">
-                           {% include 'tickets/moderation_options.html' %}
-
-                          <p>{{ msg_form.as_p }}
+                        <div id="moderation-decision-form">{{ mod_sound_form.as_p }}</div>
+                        <div style="clear:both;">
+                        {% include 'tickets/moderation_options.html' %}
+                        <p>{{ msg_form.as_p }}</p>
                         <br style="clear: both;">
-                           <input type="submit" value="send" id="submit-moderation"/>
-
-                       </form>
+                        <input type="submit" value="send" id="submit-moderation"/>
+                    </form>
                 </div>  
 
                 <div id="sounds_info"></div>

@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import datetime
+
 from django.db import models
 from django.contrib.auth.models import User
 from oauth2_provider.models import Application
@@ -89,6 +91,27 @@ class ApiV2Client(models.Model):
         # On delete, delete also oauth client
         self.oauth_client.delete()
         super(ApiV2Client, self).delete(*args, **kwargs)
+
+    def get_usage_history(self, n_days_back=30):
+        """Returns the total number of daily requests made per day for the current API client and the last N days.
+        Result is a list of tuples with the date and the count, sorted by date (older first).
+
+        Args:
+            n_days_back (int): number of days for which to get the requests count
+
+        Returns:
+            List[Tuple(datetime.Date, int)]
+        """
+        usage = []
+        now = datetime.datetime.now().date()
+        for i in range(0, n_days_back):
+            date_filter = now - datetime.timedelta(days=i)
+            try:
+                number_of_requests = self.usage.get(date=date_filter).number_of_requests
+            except APIClientDailyUsageHistory.DoesNotExist:
+                number_of_requests = 0
+            usage.append((date_filter, number_of_requests))
+        return sorted(usage, reverse=True)
     
     @property
     def client_id(self):
@@ -101,3 +124,13 @@ class ApiV2Client(models.Model):
     @property
     def version(self):
         return "V2"
+
+
+class APIClientDailyUsageHistory(models.Model):
+    apiv2_client = models.ForeignKey(ApiV2Client, related_name='usage')
+    number_of_requests = models.PositiveIntegerField(default=0)
+    date = models.DateField()
+
+    class Meta:
+        ordering = ("-date",)
+        unique_together = ('apiv2_client', 'date')

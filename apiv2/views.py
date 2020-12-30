@@ -22,6 +22,7 @@
 
 
 import datetime
+import json
 import logging
 import os
 from collections import OrderedDict
@@ -1419,12 +1420,13 @@ def monitor_api_credential(request, key):
             day_limit = limit_rates[1].split('/')[0]
         except IndexError:
             day_limit = 0
+        n_days = int(request.GET.get('n_days', 30))
         tvars = {
-                'client': client,
-                'limit': day_limit
-                }
-        messages.add_message(request, messages.INFO, "This functionality is still in beta state. The number of requests"
-                                                     " shown here might not be 100% accurate.")
+            'n_days': n_days,
+            'client': client,
+            'data': json.dumps([(str(date), count) for date, count in client.get_usage_history(n_days_back=n_days)]),
+            'limit': day_limit
+        }
         return render(request, 'api/monitor_api_credential.html', tvars)
     except ApiV2Client.DoesNotExist:
         raise Http404

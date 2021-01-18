@@ -57,3 +57,9 @@
     font-size: #{$i}px;
   }
 }
+
+@for $i from 14 through 30 {
+  .line-height-#{$i} {
+    line-height: #{$i}px;
+  }
+}

@@ -67,13 +67,13 @@
         <section class="v-spacing-6">
           <h3 class="v-spacing-4">For you</h3>
           <div class="row no-margins">
-            <div class="col">
+            <div class="col-4">
               {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
             </div>
-            <div class="col">
+            <div class="col-4">
               {{ players.smallPlayer('Bass Guitar Solo 01', 'Baltasarelrey', 'My amazing skills at bass') }}
             </div>
-            <div class="col">
+            <div class="col-4">
               {{ players.smallPlayer('Bass Guitar Solo 02', 'Baltasarelrey', 'Some more of my amazing skills at bass') }}
             </div>
           </div>
@@ -153,39 +153,39 @@
               <div class="bw-carousel v-padding-bottom-4">
                 <div>
                   <div class="row no-margins">
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
                     </div>
                   </div>
                 </div>
                 <div>
                   <div class="row no-margins">
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
                     </div>
                   </div>
                 </div>
                 <div>
                   <div class="row no-margins">
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Recording of an unusual tennis match') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
                     </div>
                   </div>
@@ -202,39 +202,39 @@
               <div class="bw-carousel v-padding-bottom-4">
                 <div>
                   <div class="row no-margins">
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('String music remixes', 5, 'john') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Ambient', 2, 'matthew__warrior') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Practicing guitar', 4, 'heavy_music') }}
                     </div>
                   </div>
                 </div>
                 <div>
                   <div class="row no-margins">
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Cheerful', 3, 'happy') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Drone', 2, 'industrial') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Acoustic stuff', 4, 'indie4life') }}
                     </div>
                   </div>
                 </div>
                 <div>
                   <div class="row no-margins">
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Drunk people at sonar', 5, 'giuband') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Noises of barceloneta', 7, 'giuband') }}
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                       {{ players.smallPack('Traffic in Gran Via', 4, 'bcn_andy') }}
                     </div>
                   </div>
@@ -313,7 +313,7 @@
   </div>
 
   {% include './molecules/footer.njk' %}
-  {% block extrabody %}
-    <script src="../src/pages/front.js"></script>
-  {% endblock %}
+{% endblock %}
+{% block extrabody %}
+  <script src="../src/pages/front.js"></script>
 {% endblock %}

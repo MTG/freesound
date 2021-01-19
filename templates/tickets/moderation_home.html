@@ -10,24 +10,35 @@
     
     {% if new_sounds_users %}
         <h3>Users with new sounds</h3>
-        <p><div class="moderation-user-list">
+        <p>
+            <ul class="moderation-user-list-order">Order by:
+            <li><a href="?order=" {% ifequal order "" %}class="selected"{% endifequal %}>days in queue</a></li>
+            <li><a href="?order=username" {% ifequal order "username" %}class="selected"{% endifequal %}>username</a></li>
+            <li><a href="?order=new_count" {% ifequal order "new_count" %}class="selected"{% endifequal %}>number of sounds</a></li>
+            </ul>
+        </p>
 
-            {% for user, new_count, time in new_sounds_users %}
+        <p><div class="moderation-user-list">
+            {% for item in new_sounds_users %}
                 <div class="moderation-user-list-user">
                     <div class="moderation-user-list-user-left">
-                    <img src="{{user.profile.locations.avatar.L.url}}"/>
+                    <img src="{{item.user.profile.locations.avatar.L.url}}"/>
                     </div>
                     <div class="moderation-user-list-user-right">
                         <p>
-                            <a href="{% url "account" user.username %}">{{ user.username }}</a>
-                            <br><a href="{% url "tickets-user-pending_sounds" user.username %}">{{ new_count }} new sound{{ new_count|pluralize }}</a>, {{ time }} day{{ time|pluralize }} in queue
-                            <br><a href="{% url 'tickets-moderation-assign-user-new' user.id %}">
+                            <a href="{% url "account" item.username %}">{{ item.username }}</a>
+                            <br><a href="{% url "tickets-user-pending_sounds" item.username %}">{{ item.new_count }} new sound{{ item.new_count|pluralize }}</a>, {{ item.time }} day{{ item.time|pluralize }} in queue
+                            <br><a href="{% url 'tickets-moderation-assign-user-new' item.user.id %}">
                             <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
                         </p>
                     </div>
                 </div>
             {% endfor %}
             <div style="clear: both;"></div>
+            <br>
+            <p>
+                <a href="{% url 'tickets-moderation-assign-all-new' %}" style="color:red;"><img src="{{media_url}}images/moderation_plus.png"/>Assign ALL new sounds to me</a>
+            </p>
         </div>
         <br>
     {% else %}

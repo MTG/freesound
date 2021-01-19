@@ -15,6 +15,10 @@
     margin-top: nth($spacing-values-list, $i);
   }
 
+  .v-spacing-top-negative-#{$i} {
+    margin-top: -#{nth($spacing-values-list, $i)};
+  }
+
   .spacing-#{$i} {
     margin-right: nth($spacing-values-list, $i);
     margin-bottom: nth($spacing-values-list, $i);
@@ -63,4 +67,8 @@
   margin-right: 0;
   margin-bottom: 0;
   margin-left: 0;
+}
+
+.no-paddings {
+  padding: 0 !important;
 }

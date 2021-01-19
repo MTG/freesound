@@ -20,6 +20,8 @@
 #     See AUTHORS file.
 #
 
+import os
+
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import TemplateView, RedirectView
@@ -161,8 +163,15 @@ from django.conf import settings
 from django.views.static import serve
 if settings.DEBUG:
     import debug_toolbar
+
+    def serve_source_map_files(request):
+        path = request.path
+        document_root = os.path.join(os.path.dirname(__file__), 'static', 'bw-frontend', 'dist')
+        return serve(request, path, document_root=document_root, show_indexes=False)
+
     urlpatterns += [
         url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
         url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
         url(r'^__debug__/', include(debug_toolbar.urls)),
+        url(r'^.*\.map$', serve_source_map_files),
     ]

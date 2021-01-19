@@ -54,6 +54,20 @@ $navbar-height-mobile: 64px;
     display: block;
     height: 100%;
   }
+}
+
+.bw-nav__logo-with-text {  /* this version of the logo can show "freesound" text if used with bw-nav--expanded class */
+  width: 60px;
+  height: 100%;
+  background-image: url('assets/logos/logo.svg');
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  a {
+    display: block;
+    height: 100%;
+  }
 
   .bw-nav--expanded & {
     @include md-and-above {

@@ -433,10 +433,10 @@ def __add_date_range(filter_query, date_from, date_to):
 
 def query_suggestions(request):
     # TODO: implement this. We can use Solr's SpellCheckComponent see https://github.com/MTG/freesound/issues/510
-    # query suggestions can be enable and disabled via settings.ENABLE_QUERY_SUGGESTIONS
+    # query suggestions can be enabled and disabled via settings.ENABLE_QUERY_SUGGESTIONS
     suggestions = []
     search_query = request.GET.get('q', None)
-    if search_query is not None:
+    if search_query is not None and len(search_query) > 1:
         for count, suggestion in enumerate([
             'wind',
             'explosion',

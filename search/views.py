@@ -194,17 +194,17 @@ def clustering_facet(request):
                    for cluster in results]
 
     num_sounds_per_cluster = [len(cluster) for cluster in results]
-    classes = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}
+    partition = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}
 
     # label clusters using most occuring tags
-    sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, classes.keys()))
+    sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, partition.keys()))
     sound_tags = {sound.id: sound.tag_array for sound in sound_instances}
     cluster_tags = defaultdict(list)
 
     # extract tags for each clusters and do not use query terms for labeling clusters
     query_terms = {t.lower() for t in request.GET.get('q', '').split(' ')}
     for sound_id, tags in sound_tags.iteritems():
-        cluster_tags[classes[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
+        cluster_tags[partition[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
 
     # count 3 most occuring tags
     # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict 
@@ -235,7 +235,7 @@ def clustering_facet(request):
     ]
 
     return render(request, 'search/clustering_facet.html', {
-            'results': classes,
+            'results': partition,
             'url_query_params_string': url_query_params_string,
             'cluster_id_num_results_tags_sound_examples': zip(
                 range(num_clusters), 

@@ -1809,3 +1809,10 @@ class SoundAnalysis(models.Model):
 
     class Meta:
         unique_together = (("sound", "extractor"),)
+
+
+class IssuedLicense(models.Model):
+    sound = models.ForeignKey(Sound)
+    user = models.ForeignKey(User)
+    paid_amount = models.IntegerField(null=True)
+    project_name = models.CharField(max_length=255, null=True)

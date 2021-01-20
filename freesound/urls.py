@@ -63,6 +63,7 @@ urlpatterns = [
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/delete/$', sounds.views.delete, name="sound-delete"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/downloaders/$', sounds.views.downloaders, name="sound-downloaders"),
+    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/get_license', sounds.views.get_license, name="get-license"),
     url(r'^people/(?P<username>[^//]+)/packs/$', sounds.views.packs_for_user, name="packs-for-user"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', sounds.views.pack, name="pack"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/edit/$', sounds.views.pack_edit, name="pack-edit"),

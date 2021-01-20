@@ -1171,3 +1171,48 @@ def pack_downloaders(request, username, pack_id):
     tvars = {"username": username, "pack": pack}
     tvars.update(paginator)
     return render(request, "sounds/pack_downloaders.html", tvars)
+
+
+@login_required
+def get_license(request, username, sound_id):
+    """
+    Allow user to get a license for any selected sound.
+    """
+    if request.method == "POST":
+        form = IssuedLicenseForm(request.POST)
+        # Get the logged in/current user
+        logged_user = request.user
+
+        if form.is_valid():
+
+            Sound_obj = Sound.objects.get(id=sound_id)
+            User_obj = User.objects.get(username=logged_user.username)
+            project_name = form.cleaned_data["project_name"]
+            paid_amount = form.cleaned_data["paid_amount"]
+
+            # The default querying is case-sensitive but the edge case is where
+            # the project names are exactly same, so use case-insensitive querying
+            if IssuedLicense.objects.filter(
+                project_name__iexact=project_name, sound_id=sound_id
+            ).exists():
+                messages.error(
+                    request, "The license was already purchased for this project."
+                )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER"))
+            else:
+                messages.info(request, "Your purchase is successful.")
+                IssuedLicense.objects.create(
+                    sound=Sound_obj,
+                    user=User_obj,
+                    paid_amount=paid_amount,
+                    project_name=project_name,
+                )
+            return HttpResponseRedirect(reverse("sound", args=[username, sound_id]))
+
+    else:
+        form = IssuedLicenseForm()
+        context = Sound.objects.filter(id=sound_id).values(
+            "description", "original_filename"
+        )[0]
+        context["form"] = form
+        return render(request, "sounds/license.html", context)

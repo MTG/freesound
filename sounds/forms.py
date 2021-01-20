@@ -359,3 +359,17 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
         # Overwrite clean method from 'GeotaggingForm' as we don't need to check for all fields present here because an
         # equivalent check is performed when parsing the geotag format "lat, lon, zoom".
         return self.cleaned_data
+
+
+class IssuedLicenseForm(forms.Form):
+    """
+    Form to be used for license purchasing page.
+    """
+    project_name = forms.CharField(
+        max_length=settings.MAX_PROJECT_CHAR_LENGTH, label="Name of the Project"
+    )
+    paid_amount = forms.IntegerField(
+        max_value=settings.MAX_LICENSE_AMOUNT,
+        min_value=settings.MIN_LICENSE_AMOUNT,
+        label="Amount I want to pay",
+    )

@@ -127,7 +127,7 @@ def search(request):
 
     # enables AJAX clustering call & html clustering facets rendering
     if settings.ENABLE_SEARCH_RESULTS_CLUSTERING:
-        tvars.update({'clustering_on': True})
+        tvars.update({'clustering_on': "true"})
 
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', tvars)

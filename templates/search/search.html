@@ -103,9 +103,11 @@
         		descriptions[j].innerHTML = descriptions[j].innerHTML.replace(re,"<b>"+term+"</b>");
         	}
         }
+        
+        const clustering_on = {{clustering_on}};
 
         // Ajax request clustering
-        {% if clustering_on %}
+        if (clustering_on) {
             request_clustering();
 
             graph = undefined;
@@ -115,7 +117,7 @@
             $('#show-clustering-graph-button').click(function () {
                 showGraph();
             });
-        {% endif %}
+        }
     });
 
     function addAdvancedSearchOptionsFilters()

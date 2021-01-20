@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %} Get a License {% endblock title %}
+
+{% block content %}
+
+<h1 style="color:rgb(184, 10, 10)">Sound</h1>
+<p>{{ original_filename}}</p>
+
+<h1 style="color:rgb(184, 10, 10)">Description</h1>
+<p>{{ description }}</p>
+
+<form action="" method="post">
+{% csrf_token %}
+<h1 style="color:rgb(184, 10, 10)">Purchase the license</h1>
+    <table frame="box">
+    {{ form }}
+    </table>
+    <input type="submit" value="Get the License" style="color:rgb(145, 107, 26); width:420px; font-size:20px;">
+</form> 
+
+{% endblock %}

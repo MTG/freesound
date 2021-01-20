@@ -24,7 +24,7 @@ from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from sounds.models import License, Flag, Pack, Sound
+from sounds.models import License, Flag, Pack, Sound, IssuedLicense
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
 from utils.forms import CaptchaWidget
@@ -34,67 +34,90 @@ import re
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
-    lat = forms.FloatField(min_value=-90, max_value=90, required=False,
-                           error_messages={
-                               'min_value': 'Latitude must be between -90 and 90.',
-                               'max_value': 'Latitude must be between -90 and 90.'
-                           })
-    lon = forms.FloatField(min_value=-180, max_value=180, required=False,
-                           error_messages={
-                               'min_value': 'Longitude must be between -180 and 180.',
-                               'max_value': 'Longitude must be between -180 and 180.'
-                           })
-    zoom = forms.IntegerField(min_value=11,
-                              error_messages={'min_value': "The zoom value sould be at least 11."},
-                              required=False)
+    lat = forms.FloatField(
+        min_value=-90,
+        max_value=90,
+        required=False,
+        error_messages={
+            "min_value": "Latitude must be between -90 and 90.",
+            "max_value": "Latitude must be between -90 and 90.",
+        },
+    )
+    lon = forms.FloatField(
+        min_value=-180,
+        max_value=180,
+        required=False,
+        error_messages={
+            "min_value": "Longitude must be between -180 and 180.",
+            "max_value": "Longitude must be between -180 and 180.",
+        },
+    )
+    zoom = forms.IntegerField(
+        min_value=11,
+        error_messages={"min_value": "The zoom value sould be at least 11."},
+        required=False,
+    )
 
     def clean(self):
         data = self.cleaned_data
 
-        if not data.get('remove_geotag'):
-            lat = data.get('lat', False)
-            lon = data.get('lon', False)
-            zoom = data.get('zoom', False)
+        if not data.get("remove_geotag"):
+            lat = data.get("lat", False)
+            lon = data.get("lon", False)
+            zoom = data.get("zoom", False)
 
             # second clause is to detect when no values were submitted.
             # otherwise doesn't work in the describe workflow
-            if (not (lat and lon and zoom)) and (not (not lat and not lon and not zoom)):
-                raise forms.ValidationError('There are missing fields or zoom level is not enough.')
+            if (not (lat and lon and zoom)) and (
+                not (not lat and not lon and not zoom)
+            ):
+                raise forms.ValidationError(
+                    "There are missing fields or zoom level is not enough."
+                )
 
         return data
 
 
 class SoundDescriptionForm(forms.Form):
-    name = forms.CharField(max_length=512, min_length=5,
-                           widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
+    name = forms.CharField(
+        max_length=512,
+        min_length=5,
+        widget=forms.TextInput(attrs={"size": 65, "class": "inputText"}),
+    )
     is_explicit = forms.BooleanField(required=False)
-    tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
-                    help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                              "For example: <i>field-recording</i> is a popular tag."
-                              "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
-    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
+    tags = TagField(
+        widget=forms.Textarea(attrs={"cols": 80, "rows": 3}),
+        help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
+        "For example: <i>field-recording</i> is a popular tag."
+        "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics",
+    )
+    description = HtmlCleaningCharField(
+        widget=forms.Textarea(attrs={"cols": 80, "rows": 10})
+    )
 
     def __init__(self, *args, **kwargs):
         explicit_disable = False
-        if 'explicit_disable' in kwargs:
-            explicit_disable = kwargs.get('explicit_disable')
-            del kwargs['explicit_disable']
+        if "explicit_disable" in kwargs:
+            explicit_disable = kwargs.get("explicit_disable")
+            del kwargs["explicit_disable"]
 
         super(SoundDescriptionForm, self).__init__(*args, **kwargs)
         # Disable is_explicit field if is already marked
-        self.initial['is_explicit'] = explicit_disable
-        self.fields['is_explicit'].disabled = explicit_disable
+        self.initial["is_explicit"] = explicit_disable
+        self.fields["is_explicit"].disabled = explicit_disable
 
 
 class RemixForm(forms.Form):
-    sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
+    sources = forms.CharField(
+        min_length=1, widget=forms.widgets.HiddenInput(), required=False
+    )
 
     def __init__(self, sound, *args, **kwargs):
         self.sound = sound
         super(RemixForm, self).__init__(*args, **kwargs)
 
     def clean_sources(self):
-        sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
+        sources = re.sub("[^0-9,]", "", self.cleaned_data["sources"])
         sources = re.sub(",+", ",", sources)
         sources = re.sub("^,+", "", sources)
         sources = re.sub(",+$", "", sources)
@@ -106,8 +129,10 @@ class RemixForm(forms.Form):
         return sources
 
     def save(self):
-        new_sources = self.cleaned_data['sources']
-        old_sources = set(source["id"] for source in self.sound.sources.all().values("id"))
+        new_sources = self.cleaned_data["sources"]
+        old_sources = set(
+            source["id"] for source in self.sound.sources.all().values("id")
+        )
         try:
             new_sources.remove(self.sound.id)  # stop the universe from collapsing :-D
         except KeyError:
@@ -122,7 +147,7 @@ class RemixForm(forms.Form):
                 pass
             except Exception as e:
                 # Report any other type of exception and fail silently
-                print ("Problem removing source from remix or sending mail: %s" % e)
+                print("Problem removing source from remix or sending mail: %s" % e)
 
         for sid in new_sources - old_sources:  # in new but not in old
             source = Sound.objects.get(id=sid)
@@ -132,13 +157,15 @@ class RemixForm(forms.Form):
             self.sound.sources.add(source)
             try:
                 send_mail_template(
-                    settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'sounds/email_remix_update.txt',
-                    {'source': source, 'action': 'added', 'remix': self.sound},
-                    user_to=source.user, email_type_preference_check='new_remix'
+                    settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX,
+                    "sounds/email_remix_update.txt",
+                    {"source": source, "action": "added", "remix": self.sound},
+                    user_to=source.user,
+                    email_type_preference_check="new_remix",
                 )
             except Exception as e:
                 # Report any exception but fail silently
-                print ("Problem sending mail about source added to remix: %s" % e)
+                print("Problem sending mail about source added to remix: %s" % e)
 
 
 class PackChoiceField(forms.ModelChoiceField):
@@ -147,23 +174,39 @@ class PackChoiceField(forms.ModelChoiceField):
 
 
 class PackForm(forms.Form):
-    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
-    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
-                               label="Or fill in the name of a new pack:", required=False, min_length=5)
+    pack = PackChoiceField(
+        label="Change pack or remove from pack:",
+        queryset=Pack.objects.none(),
+        required=False,
+    )
+    new_pack = forms.CharField(
+        widget=forms.TextInput(attrs={"size": 45}),
+        label="Or fill in the name of a new pack:",
+        required=False,
+        min_length=5,
+    )
 
     def __init__(self, pack_choices, *args, **kwargs):
         super(PackForm, self).__init__(*args, **kwargs)
-        self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        self.fields["pack"].queryset = pack_choices.extra(
+            select={"lower_name": "lower(name)"}
+        ).order_by("lower_name")
 
 
 class PackEditForm(ModelForm):
-    pack_sounds = forms.CharField(min_length=1,
-                                  widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
-                                  required=False)
-    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
+    pack_sounds = forms.CharField(
+        min_length=1,
+        widget=forms.widgets.HiddenInput(
+            attrs={"id": "pack_sounds", "name": "pack_sounds"}
+        ),
+        required=False,
+    )
+    description = HtmlCleaningCharField(
+        widget=forms.Textarea(attrs={"cols": 80, "rows": 10})
+    )
 
     def clean_pack_sounds(self):
-        pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])
+        pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data["pack_sounds"])
         pack_sounds = re.sub(",+", ",", pack_sounds)
         pack_sounds = re.sub("^,+", "", pack_sounds)
         pack_sounds = re.sub(",+$", "", pack_sounds)
@@ -177,7 +220,7 @@ class PackEditForm(ModelForm):
         pack = super(PackEditForm, self).save(commit=False)
         affected_packs = list()
         affected_packs.append(pack)
-        new_sounds = self.cleaned_data['pack_sounds']
+        new_sounds = self.cleaned_data["pack_sounds"]
         current_sounds = pack.sounds.all()
         for snd in current_sounds:
             if snd.id not in new_sounds:
@@ -199,39 +242,63 @@ class PackEditForm(ModelForm):
 
     class Meta:
         model = Pack
-        fields = ('name', 'description',)
+        fields = (
+            "name",
+            "description",
+        )
         widgets = {
-            'name': TextInput(),
-            'description': Textarea(attrs={'rows': 5, 'cols': 50}),
+            "name": TextInput(),
+            "description": Textarea(attrs={"rows": 5, "cols": 50}),
         }
 
 
 class LicenseForm(forms.Form):
-    license = forms.ModelChoiceField(queryset=License.objects.filter(is_public=True), required=True, empty_label=None)
+    license = forms.ModelChoiceField(
+        queryset=License.objects.filter(is_public=True), required=True, empty_label=None
+    )
 
     def clean_license(self):
-        if self.cleaned_data['license'].abbreviation == "samp+":
-            raise forms.ValidationError('We are in the process of slowly removing this license, '
-                                        'please choose another one.')
-        return self.cleaned_data['license']
+        if self.cleaned_data["license"].abbreviation == "samp+":
+            raise forms.ValidationError(
+                "We are in the process of slowly removing this license, "
+                "please choose another one."
+            )
+        return self.cleaned_data["license"]
 
 
 class NewLicenseForm(forms.Form):
-    license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
+    license_qs = License.objects.filter(
+        Q(name__startswith="Attribution") | Q(name__startswith="Creative")
+    )
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
 
     def __init__(self, *args, **kwargs):
         super(NewLicenseForm, self).__init__(*args, **kwargs)
-        valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
-        self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
-                                                                        % valid_licenses})
+        valid_licenses = ", ".join(
+            [
+                '"%s"' % name
+                for name in list(self.license_qs.values_list("name", flat=True))
+            ]
+        )
+        self.fields["license"].error_messages.update(
+            {"invalid_choice": "Invalid license. Should be one of %s" % valid_licenses}
+        )
 
 
 class FlagForm(forms.Form):
-    email = forms.EmailField(label="Your email", required=True, help_text="Required.",
-                             error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
-                                             ' email address appears to be invalid, please check if it\'s correct.'})
-    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
+    email = forms.EmailField(
+        label="Your email",
+        required=True,
+        help_text="Required.",
+        error_messages={
+            "required": "Required, please enter your email address.",
+            "invalid": "Your"
+            " email address appears to be invalid, please check if it's correct.",
+        },
+    )
+    reason_type = forms.ChoiceField(
+        choices=Flag.REASON_TYPE_CHOICES, required=True, label="Reason type"
+    )
     reason = forms.CharField(widget=forms.Textarea)
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
@@ -244,9 +311,9 @@ class FlagForm(forms.Form):
 
     def save(self):
         f = Flag()
-        f.reason_type = self.cleaned_data['reason_type']
-        f.reason = self.cleaned_data['reason']
-        f.email = self.cleaned_data['email']
+        f.reason_type = self.cleaned_data["reason_type"]
+        f.reason = self.cleaned_data["reason"]
+        f.email = self.cleaned_data["email"]
         return f
 
 
@@ -254,7 +321,7 @@ class DeleteSoundForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
 
     def clean_encrypted_link(self):
-        data = self.cleaned_data['encrypted_link']
+        data = self.cleaned_data["encrypted_link"]
         if not data:
             raise PermissionDenied
         sound_id, now = decrypt(data).split("\t")
@@ -267,11 +334,9 @@ class DeleteSoundForm(forms.Form):
         return data
 
     def __init__(self, *args, **kwargs):
-        self.sound_id = int(kwargs.pop('sound_id'))
+        self.sound_id = int(kwargs.pop("sound_id"))
         encrypted_link = encrypt(u"%d\t%f" % (self.sound_id, time.time()))
-        kwargs['initial'] = {
-                'encrypted_link': encrypted_link
-                }
+        kwargs["initial"] = {"encrypted_link": encrypted_link}
         super(DeleteSoundForm, self).__init__(*args, **kwargs)
 
 
@@ -283,11 +348,12 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
     to validate metadata fields passed to it (i.e. does not have save() method).
     The field "pack_name" is added manually because there is no logic that we want to replicate from PackForm.
     """
+
     pack_name = forms.CharField(min_length=5, required=False)
 
     def __init__(self, *args, **kwargs):
         super(SoundCSVDescriptionForm, self).__init__(*args, **kwargs)
-        self.fields['name'].required = False  # Make sound name not required
+        self.fields["name"].required = False  # Make sound name not required
 
     def clean(self):
         # Overwrite clean method from 'GeotaggingForm' as we don't need to check for all fields present here because an

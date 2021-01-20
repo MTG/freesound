@@ -24,104 +24,201 @@ from django.contrib import admin
 from django.db import models
 from django.template.defaultfilters import truncatechars
 from django.urls import reverse
-from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress
+from sounds.models import (
+    License,
+    Sound,
+    Pack,
+    Flag,
+    DeletedSound,
+    SoundOfTheDay,
+    BulkUploadProgress,
+    IssuedLicense,
+)
 
 
 class LicenseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
+    list_display = ("name", "deed_url", "legal_code_url", "change_order")
+
 
 admin.site.register(License, LicenseAdmin)
 
 
 class SoundAdmin(admin.ModelAdmin):
-    fieldsets = ((None, {'fields': ('user', )}),
-                 ('Filenames', {'fields': ('base_filename_slug',)}),
-                 ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'sources', 'pack')}),
-                 ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
-                                                 'filesize', 'channels', 'date_recorded')}),
-                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description', 'is_explicit')}),
-                 ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_log', 'analysis_state',
-                                            'similarity_state')}),
-                 )
-    raw_id_fields = ('user', 'pack', 'sources')
-    list_display = ('id', 'user', 'original_filename', 'license', 'created', 'moderation_state')
-    list_filter = ('moderation_state', 'license', 'processing_state')
-    ordering = ['id']
+    fieldsets = (
+        (None, {"fields": ("user",)}),
+        ("Filenames", {"fields": ("base_filename_slug",)}),
+        (
+            "User defined fields",
+            {
+                "fields": (
+                    "description",
+                    "license",
+                    "original_filename",
+                    "sources",
+                    "pack",
+                )
+            },
+        ),
+        (
+            "File properties",
+            {
+                "fields": (
+                    "md5",
+                    "type",
+                    "duration",
+                    "bitrate",
+                    "bitdepth",
+                    "samplerate",
+                    "filesize",
+                    "channels",
+                    "date_recorded",
+                )
+            },
+        ),
+        (
+            "Moderation",
+            {
+                "fields": (
+                    "moderation_state",
+                    "moderation_date",
+                    "has_bad_description",
+                    "is_explicit",
+                )
+            },
+        ),
+        (
+            "Processing",
+            {
+                "fields": (
+                    "processing_state",
+                    "processing_date",
+                    "processing_log",
+                    "analysis_state",
+                    "similarity_state",
+                )
+            },
+        ),
+    )
+    raw_id_fields = ("user", "pack", "sources")
+    list_display = (
+        "id",
+        "user",
+        "original_filename",
+        "license",
+        "created",
+        "moderation_state",
+    )
+    list_filter = ("moderation_state", "license", "processing_state")
+    ordering = ["id"]
+
+
 admin.site.register(Sound, SoundAdmin)
 
 
 class DeletedSoundAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('sound_id', 'user')
+    raw_id_fields = ("user",)
+    list_display = ("sound_id", "user")
+
+
 admin.site.register(DeletedSound, DeletedSoundAdmin)
 
 
 class PackAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('user', 'name', 'created')
+    raw_id_fields = ("user",)
+    list_display = ("user", "name", "created")
+
+
 admin.site.register(Pack, PackAdmin)
 
 
 class FlagAdmin(admin.ModelAdmin):
-    raw_id_fields = ('reporting_user', 'sound')
-    list_display = ('id', 'reporting_user_link', 'email_link', 'sound_link', 'sound_uploader_link', 'sound_is_explicit',
-                    'reason_type', 'reason_summary', )
-    list_filter = ('reason_type', 'sound__is_explicit')
+    raw_id_fields = ("reporting_user", "sound")
+    list_display = (
+        "id",
+        "reporting_user_link",
+        "email_link",
+        "sound_link",
+        "sound_uploader_link",
+        "sound_is_explicit",
+        "reason_type",
+        "reason_summary",
+    )
+    list_filter = ("reason_type", "sound__is_explicit")
 
     def get_queryset(self, request):
         # overrride 'get_queryset' to optimize query by using select_related on 'sound' and 'reporting_user'
         qs = super(FlagAdmin, self).get_queryset(request)
-        qs = qs.select_related('sound', 'reporting_user')
+        qs = qs.select_related("sound", "reporting_user")
         return qs
 
     def reporting_user_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(
-            reverse('account', args=[obj.reporting_user.username]), obj.reporting_user.username) \
-            if obj.reporting_user else '-'
+        return (
+            '<a href="{0}" target="_blank">{1}</a>'.format(
+                reverse("account", args=[obj.reporting_user.username]),
+                obj.reporting_user.username,
+            )
+            if obj.reporting_user
+            else "-"
+        )
+
     reporting_user_link.allow_tags = True
-    reporting_user_link.admin_order_field = 'reporting_user__username'
-    reporting_user_link.short_description = 'Reporting User'
+    reporting_user_link.admin_order_field = "reporting_user__username"
+    reporting_user_link.short_description = "Reporting User"
 
     def email_link(self, obj):
-        return '<a href="mailto:{0}" target="_blank">{1}</a>'.format(obj.email, obj.email) \
-            if obj.email else '-'
+        return (
+            '<a href="mailto:{0}" target="_blank">{1}</a>'.format(obj.email, obj.email)
+            if obj.email
+            else "-"
+        )
+
     email_link.allow_tags = True
-    email_link.admin_order_field = 'email'
-    email_link.short_description = 'Email'
+    email_link.admin_order_field = "email"
+    email_link.short_description = "Email"
 
     def sound_uploader_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('account', args=[obj.sound.user.username]),
-                                                              obj.sound.user.username)
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse("account", args=[obj.sound.user.username]), obj.sound.user.username
+        )
+
     sound_uploader_link.allow_tags = True
-    sound_uploader_link.admin_order_field = 'sound__user__username'
-    sound_uploader_link.short_description = 'Uploader'
+    sound_uploader_link.admin_order_field = "sound__user__username"
+    sound_uploader_link.short_description = "Uploader"
 
     def sound_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
-                                                              truncatechars(obj.sound.base_filename_slug, 50))
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse("short-sound-link", args=[obj.sound_id]),
+            truncatechars(obj.sound.base_filename_slug, 50),
+        )
+
     sound_link.allow_tags = True
-    sound_link.admin_order_field = 'sound__original_filename'
-    sound_link.short_description = 'Sound'
+    sound_link.admin_order_field = "sound__original_filename"
+    sound_link.short_description = "Sound"
 
     def reason_summary(self, obj):
-        reason_no_newlines = obj.reason.replace('\n', '|')
+        reason_no_newlines = obj.reason.replace("\n", "|")
         return truncatechars(reason_no_newlines, 100)
 
     def sound_is_explicit(self, obj):
         return obj.sound.is_explicit
-    sound_is_explicit.short_description = 'Is Explicit'
+
+    sound_is_explicit.short_description = "Is Explicit"
 
 
 admin.site.register(Flag, FlagAdmin)
 
 
 class SoundOfTheDayAdmin(admin.ModelAdmin):
-    raw_id_fields = ('sound',)
-    list_display = ('date_display', 'sound', 'email_sent')
+    raw_id_fields = ("sound",)
+    list_display = ("date_display", "sound", "email_sent")
+
+
 admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)
 
 
 class BulkUploadProgressAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('user', 'created', 'progress_type', 'sounds_valid')
+    raw_id_fields = ("user",)
+    list_display = ("user", "created", "progress_type", "sounds_valid")
+
+
 admin.site.register(BulkUploadProgress, BulkUploadProgressAdmin)

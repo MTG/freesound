@@ -169,7 +169,11 @@
         <div id="download_text"><a href="{% url 'sound-downloaders' sound.user.username sound.id %}">Downloaded<br /><b>{{sound.num_downloads}}</b> times</a></div>
         <br style="clear: both;">
     </div>
-
+    <div class="get_license">
+        <a href="{% url 'get-license' sound.user.username sound.id %}" >
+        <img style="position:relative; left:160px; width:140px;" src="{{media_url}}/images/license-button.png" alt="Get a License" />
+        </a>
+    </div>
     {% cache 3600 sound_footer_top sound.id display_random_link %}
 
 	<div id="sound_license">

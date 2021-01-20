@@ -291,6 +291,12 @@ LOG_DOWNLOADS = False
 MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
+#Minumum and maximum amount of licensing 
+MAX_LICENSE_AMOUNT = 100
+MIN_LICENSE_AMOUNT = 10
+
+#Max length for project name 
+MAX_PROJECT_CHAR_LENGTH = 100
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls

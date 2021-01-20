@@ -222,3 +222,11 @@ class BulkUploadProgressAdmin(admin.ModelAdmin):
 
 
 admin.site.register(BulkUploadProgress, BulkUploadProgressAdmin)
+
+
+class IssuedLicenseAdmin(admin.ModelAdmin):
+    fields = ("user", "sound", "paid_amount", "project_name")
+    raw_id_fields = ("user", "sound",)
+    list_display = ("user", "sound", "paid_amount", "project_name")
+
+admin.site.register(IssuedLicense, IssuedLicenseAdmin)

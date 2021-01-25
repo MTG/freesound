@@ -3,6 +3,6 @@
 		<input type="button" 
 			   class="moderation_text" 
 			   value="{{ label }}" 
-			   onclick="$('#id_message').get(0).value += '* {{text}}\n';"/>
+			   onclick="$('#id_message').get(0).value = '{{text|escapejs}}\n';"/>
 	{% endfor %}
 </div>

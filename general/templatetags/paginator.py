@@ -49,7 +49,8 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
     # although paginator objects are 0-based, we use 1-based paging
     page_numbers = [n for n in range(min_page_num, max_page_num) if n > 0 and n <= paginator.num_pages]
 
-    params = urllib.urlencode([(key, value.encode('utf-8')) for (key, value) in request.GET.items() if key.lower() != u"page"])
+    params = urllib.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
+                               if key.lower() != u"page"])
 
     if params == "":
         url = request.path + u"?page="

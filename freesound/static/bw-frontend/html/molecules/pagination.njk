@@ -1,0 +1,21 @@
+{% import '../atoms/icons.njk' as icons %}
+
+{% macro pagination(pages, currentPage) %}
+  <ul class="bw-pagination_container">
+    {% if currentPage > 1 %} <li class="bw-pagination_circle bw-pagination_direction"> {{ icons.icon('arrow-left', 'white') }} </li> {% endif %}
+    {% for i in range(0, pages) %}
+      {% if i + 1 >= (currentPage - 4) and i + 1 <= (currentPage + 4) %}
+        {% if currentPage == (i + 1) %}
+          <li class="bw-pagination_circle bw-pagination_selected">{{ i + 1 }}</li>
+        {% else %}
+          <li>{{ i + 1 }}</li>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {% if pages > 8 and currentPage + 4 < pages %}
+      {% if currentPage + 5 < pages %} <li class="text-grey no-paddings">...</li> {% endif %}
+      <li>{{ pages }}</li>
+    {% endif %}
+    {% if currentPage < pages %} <li class="bw-pagination_circle bw-pagination_direction"> {{ icons.icon('arrow') }} </li> {% endif %} 
+  </ul>
+{% endmacro %}

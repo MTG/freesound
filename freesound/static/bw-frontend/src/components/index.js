@@ -6,3 +6,5 @@ import './checkbox';
 import './carousel';
 import './propagation';
 import './modal';
+import './login';
+import './toast';

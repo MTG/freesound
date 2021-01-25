@@ -1,4 +1,5 @@
 {% import './molecules/modal.njk' as modals %}
+{% import './molecules/toast.njk' as toast %}
 
 <!doctype html>
 <html lang="en">
@@ -22,6 +23,7 @@
     {{ modals.register() }}
     {{ modals.newPassword() }}
     {{ modals.feedbackRegistration() }}
+    {{ toast.prepareds() }}
     <div class="notifications-wrapper"></div>
     <div class="bw-page">
     {% block content %}

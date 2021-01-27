@@ -18,21 +18,24 @@
 #     See AUTHORS file.
 #
 
-from tags.models import Tag, FS1Tag
+import logging
+
 from django.conf import settings
-from django.urls import reverse
 from django.http import Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render
-from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
-    SolrResponseInterpreterPaginator, SolrException, Solr
-import logging
-from follow import follow_utils
+from django.urls import reverse
+
 import sounds.models
+from follow import follow_utils
+from search.views import perform_solr_query
+from tags.models import Tag, FS1Tag
+from utils.search.solr import SolrQuery, SolrException, Solr
 
 search_logger = logging.getLogger("search")
 
 
 def tags(request, multiple_tags=None):
+
     if multiple_tags:
         multiple_tags = multiple_tags.split('/')
     else:
@@ -45,7 +48,6 @@ def tags(request, multiple_tags=None):
     except ValueError:
         current_page = 1
 
-    solr = Solr(settings.SOLR_URL)
     query = SolrQuery()
     if multiple_tags:
         query.set_query(" ".join("tag:\"" + tag + "\"" for tag in multiple_tags))
@@ -70,21 +72,14 @@ def tags(request, multiple_tags=None):
                             group_truncate=True)  # Sets how many results from the same group are taken into account for computing the facets
 
     page = None
-    num_results = 0
     tags = []
     error = False
     docs = {}
     non_grouped_number_of_results = 0
     paginator = None
     try:
-        results = SolrResponseInterpreter(solr.select(unicode(query)))
-        paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-        num_results = paginator.count
-        non_grouped_number_of_results = results.non_grouped_number_of_matches
-        page = paginator.page(current_page)
-        tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
-
-        docs = results.docs
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
+        tags = [dict(name=f[0], count=f[1]) for f in facets["tag"]]
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
@@ -95,9 +90,10 @@ def tags(request, multiple_tags=None):
 
     except SolrException as e:
         error = True
-        search_logger.error("SOLR ERROR - %s" % e)
-    except:
+        search_logger.warning('Search error: query: %s error %s' % (query, e))
+    except Exception as e:
         error = True
+        search_logger.error('Could probably not connect to Solr - %s' % e)
 
     slash_tag = "/".join(multiple_tags)
 
@@ -119,7 +115,6 @@ def tags(request, multiple_tags=None):
              'error': error,
              'tags': tags,
              'slash_tag': slash_tag,
-             'num_results': num_results,
              'non_grouped_number_of_results': non_grouped_number_of_results,
              'docs': docs,
              'paginator': paginator,

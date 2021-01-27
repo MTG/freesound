@@ -268,6 +268,7 @@ const createSetFavoriteButton = parentNode => {
  */
 const createPlayer = parentNode => {
   const playerSize = parentNode.dataset.size
+  const showBookmarkButton = parentNode.dataset.bookmark === 'true'
   const audioElement = createAudioElement(parentNode)
   const waveformImage = createWaveformImage(
     parentNode,
@@ -280,7 +281,9 @@ const createPlayer = parentNode => {
   parentNode.appendChild(waveformImage)
   parentNode.appendChild(audioElement)
   waveformImage.appendChild(controls)
-  waveformImage.appendChild(bookmarkButton)
+  if (showBookmarkButton){
+    waveformImage.appendChild(bookmarkButton)
+  }
 }
 
 const setupPlayers = () => {

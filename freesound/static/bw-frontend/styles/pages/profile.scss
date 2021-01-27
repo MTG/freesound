@@ -9,9 +9,15 @@
       height: 100px;
       border-radius: 50%;
     }
+
+    .btn-profile-adapt {
+      font-size: 14px;
+      color: $black;
+      font-weight: 500;
+    }
   }
 
-  &__username {
+  &__username h1 {
     color: $red;
     font-size: 38px;
   }
@@ -92,8 +98,9 @@
           margin: 0 5px;
           font-size: 21px;
 
-          &:nth-child(2) {
-            color: $navy-grey;
+          &:first-child {
+            font-size: 18px;
+            width: 18px;
           }
 
           &:last-child {

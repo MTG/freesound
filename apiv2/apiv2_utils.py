@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+import datetime
 import json
 import logging
 import urlparse
@@ -27,7 +28,7 @@ from urllib import unquote
 
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import resolve
 from django.utils.encoding import smart_text
@@ -53,6 +54,7 @@ from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
 error_logger = logging.getLogger("api_errors")
+cache_api_monitoring = caches["api_monitoring"]
 
 
 ##########################################
@@ -107,6 +109,24 @@ class FreesoundAPIViewMixin(object):
     def log_message(self, message):
         return log_message_helper(message, resource=self)
 
+    def store_monitor_usage(self):
+        """This function increases the counter of requests per API client that is stored in the cache.
+        This function is expected to be called everytime an API request is received, it generates a key for the
+        current daily count (composed of the current date and the API client id) and increases the count stored in
+        the cache by one.
+
+        A Django management command is expected to run periodically to take the information from the cache
+        and store it in the DB. The management command should run at least once a day, and it will consolidate
+        API usage counts for the last 2 days (see consolidate_api_usage_data.py for more info). The cache entries
+        set by this function expire in 72 hours so the management command has time to consolidate the results of the
+        previous days.
+        """
+        if self.client_id is not None:
+            now = datetime.datetime.now().date()
+            monitoring_key = '{0}-{1}-{2}_{3}'.format(now.year, now.month, now.day, self.client_id)
+            current_value = cache_api_monitoring.get(monitoring_key, 0)
+            cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
+
     def get_request_information(self, request):
         # Get request information and store it as class variable
         # This information is mainly useful for logging
@@ -151,6 +171,7 @@ class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     def initial(self, request, *args, **kwargs):
         super(GenericAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         """ This method is overriden to make a redirect when the user is using the interactive API browser and
@@ -171,6 +192,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         super(OauthRequiredAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
@@ -187,6 +209,7 @@ class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         super(DownloadAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
+        self.store_monitor_usage()
 
     # NOTE: don't override finalize_response here as we are returning a file and not the browseable api response.
     # There is no need to check for www/non-www host here.
@@ -200,6 +223,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewM
         super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
+        self.store_monitor_usage()
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
@@ -220,6 +244,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
     def initial(self, request, *args, **kwargs):
         super(ListAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
@@ -235,6 +260,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     def initial(self, request, *args, **kwargs):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response

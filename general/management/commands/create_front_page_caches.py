@@ -26,7 +26,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.cache import cache
 
-from sounds.models import Download, Pack
+from sounds.models import Download, Pack, Sound
 from utils.management_commands import LoggingBaseCommand
 
 commands_logger = logging.getLogger("commands")
@@ -39,7 +39,7 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         cache_time = 24 * 60 * 60  # 1 day cache time
-        # NOTE: The specfic cache time not important as long as bigger than the frequency with which we run
+        # NOTE: The specific cache time is not important as long as it is bigger than the frequency with which we run
         # create_front_page_caches management command
 
         # Generate cache for the blog news from blog's RSS feed
@@ -73,5 +73,9 @@ class Command(LoggingBaseCommand):
         cache.set("trending_pack_ids", trending_pack_ids, cache_time)
 
         # TODO: decide what we consider to be a trending pack, for now we just take the last 9 that were updated
+
+        # Add total number of sounds in Freesound to the cache
+        total_num_sounds = Sound.public.all().count()
+        cache.set("total_num_sounds", total_num_sounds, cache_time)
 
         self.log_end()

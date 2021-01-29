@@ -1,21 +1,75 @@
-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border: 0;
-  background: transparent;
-  padding-right: 20px;
-}
-
-.bw-select {
-  display: inline-block;
+.select-dropdown {
   position: relative;
-}
+  display: inline-block;
+  max-width: 100%;
+  margin: 0;
+  margin-right: 20px;
 
-.bw-select__chevron {
-  transform: rotate(180deg);
-  position: absolute;
-  right: 0;
-  pointer-events: none;
-  top: 4px;
+  &:last-child {
+    margin-right: 0px;
+  }
+
+  &__button {
+    background-color: $white;
+    cursor: pointer;
+    min-width: 115px;
+    text-align: left;
+
+    &:focus {
+      outline: none;
+    }
+
+    .bw-select__chevron {
+      transform: rotate(180deg);
+      position: absolute;
+      right: 0;
+      pointer-events: none;
+      top: 2px;
+      color: $navy-light-grey;
+    }
+  }
+
+  &__list {
+    position: absolute;
+    display: block;
+    left: 0;
+    right: 0;
+    top: -25px;
+    max-height: 300px;
+    overflow: auto;
+    margin: 0;
+    padding: 25px;
+    list-style-type: none;
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: top left;
+    transform: scale(1, 0);
+    transition: all ease-in-out 0.1s;
+    z-index: 2;
+    background: $white;
+    width: max-content;
+
+    &.active {
+      box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.08);
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1, 1);
+    }
+  }
+  &__list-item {
+    display: block;
+    list-style-type: none;
+    padding: 10px 0;
+    background: $white;
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: pointer;
+    text-align: left;
+    transition: all ease-in-out 0.3s;
+
+    &:hover {
+      color: $red;
+      transition: all ease-in-out 0.3s;
+    }
+  }
 }

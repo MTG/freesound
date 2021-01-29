@@ -1,0 +1,52 @@
+{% load bw_templatetags %}
+
+
+<div class="bw-search__filter-section">
+    <div class="bw-search__filter-section-name caps text-light-grey between">
+        <span>{{ title }}</span>
+        {% comment %}
+        <span class="bw-search__filter-section-collapse">
+            <button class="btn-neutral" title="Collapse section">{% bw_icon 'bar' %}</button>
+        </span>
+        {% endcomment %}
+    </div>
+    {% ifequal type "checkbox" %} {% comment %}This type of facet is no used so far{% endcomment %}
+        <ul class="bw-search__filter-value-list">
+            {% for f in facet %}
+                <li class="bw-search__filter-value v-padding-1">
+                    <label for="{{ f.id }}" class="between w-100">
+                        <div class="bw-search__filter-checkbox">
+                            <input type="checkbox" class="bw-checkbox" id="{{ f.id }}" onchange="">
+                        </div>
+                        <div class="bw-search__filter-name">
+                            {{ f.display_name }}
+                            <div class="bw-search__filter-count">({{ f.count }})</div>
+                        </div>
+                    </label>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endifequal %}
+    {% ifequal type "list" %}
+        <ul class="bw-search__filter-value-list">
+            {% for f in facet %}
+                <li class="bw-search__filter-value v-padding-1">
+                    <div class="bw-search__filter-name">
+                        <a href="{{ f.add_filter_url }}" class="bw-link--black">{{ f.display_name }}</a>
+                        <div class="bw-search__filter-count">({{ f.count }})</div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endifequal %}
+    {% ifequal type "cloud" %}
+        <div class="bw-search__filter-tags-list">
+            {% for f in facet %}
+                {% bw_tag f.display_name 1 '' f.add_filter_url f.weight %}
+            {% endfor %}
+        </div>
+        <div class="divider-light"></div>
+    {% endifequal %}
+    <div class="divider-light"></div>
+</div>
+

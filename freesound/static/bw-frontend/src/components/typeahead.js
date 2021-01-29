@@ -87,6 +87,7 @@ export const addTypeAheadFeatures = (
       const selectedOptionValue = suggestions[focusedOptionIndex].value
       input.value = selectedOptionValue
       input.blur()
+      input.form.submit()  // Submit the form so query is executed
     }
   })
 }

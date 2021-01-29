@@ -40,7 +40,8 @@ services:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
- 
+            - redis
+
     search:
         build:
             context: ./docker/search
@@ -84,6 +85,12 @@ services:
             - 8008:8008
         environment:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
+
+    redis:
+        image: redis:alpine
+        command: redis-server --port 6379
+        ports:
+            - 6379:6379
 
     gearmand:
         image: artefactual/gearmand

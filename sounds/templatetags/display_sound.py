@@ -21,6 +21,7 @@
 from __future__ import absolute_import
 
 from django import template
+from django.conf import settings
 
 from sounds.models import Sound
 
@@ -112,7 +113,18 @@ def display_sound(context, sound, player_size='small'):
                             (not request.user.is_authenticated or not request.user.profile.is_adult),
             'is_authenticated': request.user.is_authenticated(),
             'player_size': player_size,
+            'min_num_ratings': settings.MIN_NUMBER_RATINGS,
         }
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small(context, sound):
+    return display_sound(context, sound, player_size='small')
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_middle(context, sound):
+    return display_sound(context, sound, player_size='middle')
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)

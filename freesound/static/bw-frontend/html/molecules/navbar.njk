@@ -124,7 +124,7 @@
   <nav class="bw-nav bw-nav--expanded">
     <div class="container bw-nav__container">
       <div class="bw-nav__logo-search-container">
-        <div class="bw-nav__logo">
+        <div class="bw-nav__logo-with-text">
           <a href="" class="no-hover"></a>
         </div>
         <div class="input-wrapper">
@@ -140,11 +140,33 @@
 {% endmacro %}
 
 {% macro browseNavbar(loggedIn) %}
+  <nav class="bw-nav bw-nav--expanded">
+    <div class="container bw-nav__container">
+      <div class="bw-nav__logo-search-container">
+        <div class="bw-nav__logo">
+          <a href="" class="no-hover"></a>
+        </div>
+        <div class="input-wrapper">
+          <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
+        </div>
+      </div>
+      <ul class="bw-nav__actions">
+        {{ navbarCommonActions() }}
+        {{ userSection(loggedIn) }}
+      </ul>
+    </div>
+  </nav>
+{% endmacro %}
+
+{% macro defaultNavbar(loggedIn) %}
   <nav class="bw-nav">
     <div class="container bw-nav__container">
       <div class="bw-nav__logo-search-container">
         <div class="bw-nav__logo">
           <a href="" class="no-hover"></a>
+        </div>
+        <div class="input-wrapper">
+          <input type="search" class="bw-nav__search" placeholder="Search sounds..." />
         </div>
       </div>
       <ul class="bw-nav__actions">

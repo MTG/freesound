@@ -2,6 +2,7 @@
 {% import './pages/browse/filters.njk' as filters %}
 {% import './pages/browse/activeFilters.njk' as activeFilters %}
 {% import './molecules/navbar.njk' as navbars %}
+{% import './molecules/pagination.njk' as pagination %}
 {% extends "base.njk" %}
 
 {% block content %}
@@ -14,24 +15,33 @@
       {% include './pages/browse/searchOverview.njk' %}
     </div>
     <div class="row no-gutters">
-      <aside class="col-3">
+      <aside class="col-sm-12 col-md-3">
         {{ filters.checkboxSection('Licenses', ['Creative commons 0', 'Sampling +', 'Attribution', 'Non-commercial']) }}
         {{ filters.checkboxSection('Type', ['aiff', 'wav', 'mp3', 'FLAC']) }}
+        {{ filters.tagsSection('Related tags', ['Electronic', 'world', 'ambient', 'synth', 'analog', 'distortion', 'techno', 'dub', 'cc0', 'good', 'mic']) }}
+        {{ filters.durationSection('Duration', '00:00', '10:30') }}
         {{ filters.checkboxSection('Sample rate', ['11025', '22050', '44100', '48000', '96000']) }}
         {{ filters.checkboxSection('Bit depth', ['16', '24', '32', '8']) }}
         {{ filters.checkboxSection('Bitrate', ['1378', '1379', '1411', '1500', '2250']) }}
         {{ filters.checkboxSection('Channels', ['2', '1', '6']) }}
         {{ filters.checkboxSection('Search only in ', ['Tags', 'File names', 'Descriptions', 'Sound ids', 'User names']) }}
       </aside>
-      <main class="col-8 offset-1">
+      <main class="col-sm-12 col-md-8 offset-md-1">
         <div class="v-spacing-3 v-spacing-top-1">
           {{ activeFilters.list(['Creative commons 0', 'mp3'])}}
         </div>
         <div class="v-spacing-6">
           {{ sound.results(20) }}
         </div>
+        <div class="">
+          {{ pagination.pagination(20, 20) }}
+        </div>
       </main>
     </div>
   </div>
   {% include './molecules/footer.njk' %}
+{% endblock %}
+{% block extrabody %}
+  <script src="../src/pages/search.js"></script>
+  <script src="../src/components/select.js"></script>
 {% endblock %}

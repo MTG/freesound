@@ -153,26 +153,6 @@ def queries_stats_ajax(request):
         return HttpResponse(status=500)
 
 
-@login_required
-def api_usage_stats_ajax(request, client_id):
-    try:
-        auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
-        params = {
-            'query': 'api_client_id:%s' % (client_id),
-            'range': 14 * 60 * 60 * 24,
-            'filter': 'streams:%s' % settings.GRAYLOG_API_STREAM_ID,
-            'interval': 'day'
-        }
-        req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/histogram',
-                auth=auth, params=params)
-        req.raise_for_status()
-        return JsonResponse(req.json())
-    except requests.HTTPError:
-        return HttpResponse(status=500)
-    except ValueError:
-        return HttpResponse(status=500)
-
-
 def tags_stats_ajax(request):
     tags_stats = cache.get("tags_stats")
     return JsonResponse(tags_stats or {})

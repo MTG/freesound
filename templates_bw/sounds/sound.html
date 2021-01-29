@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load filter_img %}
+{% load paginator %}
+{% load util %}
+{% load ratings %}
+{% load cache %}
+{% load absurl %}
+{% load flag_user %}
+{% load sound_signature%}
+{% load display_sound %}
+{% load bw_templatetags %}
+
+{% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
+
+{% block head %}
+    {{ block.super }}
+    <meta property="og:title" content="{{ sound.original_filename }} by {{ sound.user.username }}" />
+    <meta property="og:type" content="song" />
+    <meta property="og:audio" content="https://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
+    <meta property="og:audio:artist" content="{{ sound.user.username }}" />
+    <meta property="og:audio:title" content="{{ sound.original_filename }}" />
+    <meta property="og:url" content="{% absurl 'sound' sound.user.username sound.id %}" />
+    <meta property="og:audio:type" content="application/mp3" />
+    <meta property="og:site_name" content="Freesound" />
+    <meta property="fb:admins" content="100002130282170" />
+    <meta name="twitter:card" content="player" />
+    <meta name="twitter:site" content="@freesound_dev" />
+    <meta name="twitter:title" content="{{ sound.original_filename }}" />
+    <meta name="twitter:description" content="{{sound.description}}" />
+    <meta name="twitter:image" content="{{sound.get_large_thumbnail_abs_url}}" />
+    <meta name="twitter:player" content="{% absurl 'embed-simple-sound-iframe' sound.id "full_size" %}" />
+    <meta name="twitter:player:width" content="{{ sizes.twitter_card.0 }}" />
+    <meta name="twitter:player:height" content="{{ sizes.twitter_card.1 }}" />
+    <meta name="twitter:player:stream" content="{{ sound.get_preview_abs_url }}" />
+    <meta name="twitter:player:stream:content_type" content="audio/mp4" />
+{% endblock head %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
+            <div class="row no-gutters">
+                <div class="col-8">
+                    {% display_sound_big_no_info sound %}
+                    {% comment %}{{ players.bigPlayer() }}{% endcomment %}
+                    <div class="bw-sound-page__information v-spacing-top-7">
+                        <div class="row middle">
+                            <div class="col-10">
+                                <h1>{{sound.original_filename}}</h1>
+                            </div>
+                            <div class="col-2 text-right">
+                                <div class="text-grey">
+                                    <button title="Find similar sounds" class="btn-neutral">
+                                        {% bw_icon 'similar' %}
+                                    </button>
+                                    <span class="h-spacing-2"></span>
+                                    <button title="Save as favorite" class="btn-neutral">
+                                        {% bw_icon 'bookmark' %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="middle v-spacing-top-2">{% bw_sound_stars %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+
+                        <!-- TODO: check after merge browser page -->
+                        <div class="middle bw-sound-page__user v-spacing-top-5">
+                            <div>
+                                <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
+                            </div>
+                            <div class="h-spacing-left-1">
+                                <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
+                                <p class="text-grey">{{ sound.created|date:"F jS, Y" }}</p>
+                            </div>
+                            <div class="h-spacing-left-3">
+                                <button class="btn-inverse">Follow</button>
+                            </div>
+                        </div>
+                        <div class="middle v-spacing-top-3">
+                            {% if sound.geotag_id %}
+                            <div>
+                                <a href="{% url 'sound-geotag' sound.user.username sound.id %}">
+                                    {% bw_icon 'pin' %} {{ sound.geotag.lat|floatformat:3 }}, {{ sound.geotag.lon|floatformat:3 }}
+                                </a>
+                                {% comment %}In the span above we should put the textual name of the place where the sound was recorded
+                                (if there is geotag). For now we'll put cooedinates{% endcomment %}
+                            {% endif %}
+                            {% if sound.pack_id %}
+                            <div class="text-grey h-spacing-left-1">
+                               {% if sound.geotag_id %} · {% endif %}This sound is part of the pack <a href="{% url 'pack' username sound.pack.id %}">{{ sound.pack.name}}</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="v-spacing-top-1 collapsable-block collapsable-block-close" id="collapsable-sound">
+                            <div class="text-17 line-height-30">
+                                {{ sound.description|replace_img|safe|linebreaks }}
+                                {% if sound.user.profile.sound_signature %}
+                                    <div class="v-spacing-top-3 text-grey">
+                                        <p>{{sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="v-spacing-top-3">
+                                <a href="{% url 'sound-flag' sound.user.username sound.id %}" title="flag this sound as ilegal, offensive or other..." class="text-light-grey">
+                                    {% bw_icon 'flag' %} Sound illegal or offensive? Flag it!
+                                </a>
+                            </div>
+                            <div class="v-spacing-top-4">
+                                {% for tag in sound_tags %}
+                                    {% bw_tag tag %}
+                                {% endfor %}
+                            </div>
+                            <div class="divider-light v-spacing-top-4"></div>
+                            <div class="v-spacing-top-4 row">
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Type</p>
+                                    <p class="no-margins">Wave.wave</p>
+                                </div>
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Duration</p>
+                                    <p class="no-margins">00:10:141</p>
+                                </div>
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Fliesize</p>
+                                    <p class="no-margins">7.4 MB</p>
+                                </div>
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Samplerate</p>
+                                    <p class="no-margins">96000.0 Hz</p>
+                                </div>
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Bitdepth</p>
+                                    <p class="no-margins">32 bit</p>
+                                </div>
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Channels</p>
+                                    <p class="no-margins">Stereo</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="collapsable-text" data-target="collapsable-sound"
+                             class="v-spacing-top-2 collapsable-text">
+                            Show more
+                        </div>
+                        <div class="v-spacing-top-6">
+                            {% comment %}{{ comments.newSection() }}{% endcomment %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-3 offset-1">
+                    {% comment %}{{ sidebar.sidebar(true) }}{% endcomment %}
+                </div>
+            </div>
+            {% comment %}
+            <div class="v-spacing-top-7">
+                <h6 class="text-26 no-margins">Similar sounds</h6>
+                <div class="row v-spacing-top-4">
+                    <div class="col-3">
+                        {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut.') }}
+                    </div>
+                    <div class="col-3">
+                        {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
+                    </div>
+                    <div class="col-3">
+                        {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+                    </div>
+                    <div class="col-3">
+                        {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+                    </div>
+                </div>
+                <div class="v-spacing-top-4 center">
+                    <button class="v-spacing-top-1 btn-secondary">More similar sounds</button>
+                </div>
+            </div>
+            {% endcomment %}
+        </div>
+    </div>
+{% endblock %}
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/collapsableBlock.10cf5767.js' %}"></script>
+{% endblock %}

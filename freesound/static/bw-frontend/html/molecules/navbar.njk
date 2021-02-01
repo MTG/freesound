@@ -176,3 +176,24 @@
     </div>
   </nav>
 {% endmacro %}
+
+
+{% macro editProfileNavbar(activePage) %}
+  <ul class="navbar-profile">
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'profile'%} active {% endif %}" href="#">Edit profile</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'password'%} active {% endif %}" href="#">Change password</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'notifications'%} active {% endif %}" href="#">E-mail notifications</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'api'%} active {% endif %}" href="#">Manage API keys</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'account'%} active {% endif %}" href="#">Close account</a>
+    </li>
+  </ul>
+{% endmacro %}

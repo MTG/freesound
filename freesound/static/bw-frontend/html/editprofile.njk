@@ -1,0 +1,23 @@
+{% import './molecules/navbar.njk' as navbars %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+  <div class="container">
+    <div class="row navbar-space-filler v-spacing-top-6 v-spacing-6 bw-profile__hero bw-edit-profile">
+      <aside class="col-3 offset-1">
+        {{ navbars.editProfileNavbar('profile') }}
+      </aside>
+      <div class="col-7 offset-1 bw-edit-profile__info">
+        <h1>Edit profile</h1>
+        <div>
+          <img src="../public/avatar.jpg" />
+        </div>
+        <div class="bw-edit-profile__username v-spacing-top-2">
+          <h1>Michimuc2</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+{% include './molecules/footer.njk' %}
+{% endblock %}

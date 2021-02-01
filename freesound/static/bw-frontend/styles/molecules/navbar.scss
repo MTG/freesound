@@ -56,7 +56,8 @@ $navbar-height-mobile: 64px;
   }
 }
 
-.bw-nav__logo-with-text {  /* this version of the logo can show "freesound" text if used with bw-nav--expanded class */
+.bw-nav__logo-with-text {
+  /* this version of the logo can show "freesound" text if used with bw-nav--expanded class */
   width: 60px;
   height: 100%;
   background-image: url('assets/logos/logo.svg');
@@ -151,5 +152,25 @@ $navbar-height-mobile: 64px;
 
   @include md-and-above {
     padding-top: $navbar-height;
+  }
+}
+
+.navbar-profile {
+  list-style: none;
+
+  .nav-item {
+    margin: 16px 0;
+
+    .nav-link {
+      color: $navy-grey;
+
+      &.active {
+        color: $black;
+      }
+
+      &:hover {
+        color: $black;
+      }
+    }
   }
 }

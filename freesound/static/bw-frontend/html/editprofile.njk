@@ -39,10 +39,15 @@
               Location
             </label>
             <input id="location" type="text" placeholder="Write your location here" />
-            <label for="about" class="text-grey">
-              About
-            </label>
-            <textarea id="about" type="text" placeholder="Write something about yourself"></textarea>
+            <div class="bw-edit-profile__textarea_block">
+              <label for="about-edit-profile-textarea" class="text-grey">
+                About
+              </label>
+              <textarea id="about-edit-profile-textarea" type="text" placeholder="Write something about yourself" maxlength="140"></textarea>
+              <div class="edit-profile-textarea-counter">
+                <span id="counter-number">0</span><span>/140</span>
+              </div>
+            </div>
             <button class="btn-primary w-100">Update profile</button>
           </form>
         </div>

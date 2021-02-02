@@ -81,6 +81,14 @@
     button {
       font-size: 17px;
     }
+
+    .checkboxNotification {
+      margin-bottom: 28px;
+
+      .bw-search__filter-name {
+        line-height: 20px;
+      }
+    }
   }
 
   &__textarea_block {

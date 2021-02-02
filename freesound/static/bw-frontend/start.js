@@ -15,6 +15,7 @@ const start = async () => {
         'EditProfile',
         'EditProfilePassword',
         'EditProfileNotifications',
+        'EditProfileCloseAccount',
       ],
       filter: val => val.toLowerCase(),
     },

@@ -1,0 +1,44 @@
+{% import './molecules/navbar.njk' as navbars %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+  <div class="container">
+    <div class="row navbar-space-filler v-spacing-top-6 v-spacing-6 bw-profile__hero bw-edit-profile">
+      <aside class="col-3 offset-1">
+        {{ navbars.editProfileNavbar('notifications') }}
+      </aside>
+      <div class="col-7 offset-1 bw-edit-profile__info">
+        <h1>Close account</h1>
+        <div class="v-spacing-top-7 w-100">
+          <p class="font-weight-bold text-center v-spacing-2">Warning: You can not be “undeleted”, not even by administrators.</p>
+          <p class="v-spacing-4 text-center">If you’re just looking to delete one or more of your sounds, <a href="">you can do it here</a>.</p>
+          <form class="bw-edit-profile__form w-100">
+            <label for="onesoundSelected" class="between checkboxNotification">
+              <div class="bw-search__filter-checkbox">
+                <input type="radio" class="bw-radio" name="deleteAccount" value="onlyAccount" />
+              </div>
+              <div class="bw-search__filter-name h-spacing-left-1">
+                Delete only my user account information
+              </div>
+            </label>
+            <label for="newprivatemessage" class="between checkboxNotification">
+              <div class="bw-search__filter-checkbox">
+                <input type="radio" class="bw-radio" name="deleteAccount" value="fullAccount" />
+              </div>
+              <div class="bw-search__filter-name h-spacing-left-1">
+                Delete my user account information, my sounds and my packs
+              </div>
+            </label>
+            <button class="btn-primary w-100 v-spacing-top-5">Update E-mail notifications</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% include './molecules/footer.njk' %}
+{% endblock %}
+
+{% block extrabody %}
+  <script src="../src/pages/editProfile.js"></script>
+{% endblock %}

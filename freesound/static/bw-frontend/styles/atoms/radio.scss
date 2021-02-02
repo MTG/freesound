@@ -1,0 +1,15 @@
+.bw-radio {
+  display: none;
+}
+
+.bw-icon-radio {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  transition: opacity 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.bw-radio:checked + .bw-radio-container .bw-icon-radio {
+  opacity: 1;
+}

@@ -243,6 +243,8 @@ def search_prepare_parameters(request):
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
+    filter_query_non_facets, has_facet_filter = remove_facet_filters(filter_query)
+
     # These variables are not used for querying the sound collection
     # We keep them separated in order to facilitate the distinction between variables used for performing
     # the Solr query and these extra ones needed for rendering the search template page
@@ -252,7 +254,8 @@ def search_prepare_parameters(request):
         'advanced': advanced,
         'sort_options': sort_options,
         'cluster_id': cluster_id,
-        'filter_query_non_facets': remove_facet_filters(filter_query),
+        'filter_query_non_facets': filter_query_non_facets,
+        'has_facet_filter': has_facet_filter,
     }
 
     return query_params, advanced_search_params_dict, extra_vars
@@ -376,14 +379,15 @@ def search_prepare_query(search_query,
 def remove_facet_filters(filter_query):
     """Process query filter string to keep only non facet filters
 
-    Useful for being able to combine classic facet filters and clustering.
+    Useful for being able to combine classic facet filters and clustering. Addtionaly, it returns
+    a boolean that indicates if a facet filter was present in the query.
 
     Args:
         filter_query (str): query filter string.
     
     Returns: 
         filter_query_processed (str): query filter string with only non facet filters.
-        has_filter (bool): boolean indicating if there exist facet filters in the processed string.
+        has_facet_filter (bool): boolean indicating if there exist facet filters in the processed string.
     """
     facet_filter_strings = (
         "samplerate", 
@@ -396,15 +400,17 @@ def remove_facet_filters(filter_query):
         "channels", 
         "license",
     )
+    has_facet_filter = False
 
     filters_split = re.findall(r'[\w-]+:\"[^\"]+', filter_query)
     for filter_string in filters_split:
         if filter_string.split(":")[0].replace(' ', '') in facet_filter_strings:
+            has_facet_filter = True
             filter_query = filter_query.replace(filter_string, '')
 
     filter_query = filter_query.strip('" ').lstrip('" ')
 
-    return filter_query
+    return filter_query, has_facet_filter
 
 
 def perform_solr_query(q, current_page):

@@ -29,21 +29,28 @@
   display: inline-block;
 }
 .bw-icon-half-star .path1:before {
-  content: '\e94c';
+  content: '\eaed';
   color: rgb(255, 53, 70);
 }
 .bw-icon-half-star .path2:before {
-  content: '\e94d';
+  content: '\eaee';
   margin-left: -1em;
   color: rgb(202, 202, 212);
 }
 .bw-icon-star-half-filled-red-alt:before {
-  content: '\e94a';
+  content: '\eaeb';
   color: #9696aa;
 }
 .bw-icon-star-half-filled-red:before {
-  content: '\e94b';
+  content: '\eaec';
   color: #cacad4;
+}
+.bw-radio:checked + .bw-radio-container .bw-icon-radio-unchecked:before {
+  content: '\ea54';
+}
+
+.bw-checkbox:checked + .bw-checkbox-container .bw-icon-checkbox:before {
+  content: '\ea52';
 }
 
 .bw-icon-home:before {
@@ -1066,11 +1073,6 @@
 .bw-icon-checkbox-unchecked:before {
   content: '\ea53';
 }
-
-.bw-radio:checked + .bw-radio-container .bw-icon-radio-unchecked:before {
-  content: '\ea54';
-}
-
 .bw-icon-radio-checked:before {
   content: '\ea54';
 }

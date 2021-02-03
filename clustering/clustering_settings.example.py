@@ -49,3 +49,6 @@ NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET = 7
 
 # Number of most common tags extracted per cluster for clustering facet name
 NUM_TAGS_SHOWN_PER_CLUSTER_FACET = 3
+
+# Number of maximum clusters to show to the user
+NUM_MAX_CLUSTERS = 8

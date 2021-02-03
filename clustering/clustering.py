@@ -403,9 +403,13 @@ class ClusteringEngine():
 
         ratio_intra_community_edges = self._ratio_intra_community_edges(graph, communities)
 
-        # Here we could add a step for discarding some clusters, for instance by doing:
-        # graph, partition, communities, ratio_intra_community_edges = self.remove_lowest_quality_cluster(
-        #         graph, partition, communities, ratio_intra_community_edges)
+        # Discard low quality cluster if there are more than NUM_MAX_CLUSTERS clusters
+        num_exceeding_clusters = num_communities - clust_settings.NUM_MAX_CLUSTERS
+        if num_exceeding_clusters > 0:
+            for _ in range(num_exceeding_clusters):
+                graph, partition, communities, ratio_intra_community_edges = self.remove_lowest_quality_cluster(
+                    graph, partition, communities, ratio_intra_community_edges
+                )
 
         node_community_centralities = self._point_centralities(graph, communities)
 

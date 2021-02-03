@@ -270,11 +270,18 @@ def clustered_graph(request):
 
     results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
 
-    sound_metadata = {s.id:(s.locations()['preview']['LQ']['ogg']['url'],
-                            s.original_filename,
-                            ' '.join(s.tag_array),
-                            reverse("sound", args=(s.user.username, s.id)),
-                            s.locations()['display']['wave']['M']['url']) for s in results}
+    sound_metadata = {}
+    for sound in results:
+        sound_locations = sound.locations()
+        sound_metadata.update(
+            {sound.id: (
+                sound_locations['preview']['LQ']['ogg']['url'],
+                sound.original_filename,
+                ' '.join(sound.tag_array),
+                reverse("sound", args=(sound.username, sound.id)),
+                sound_locations['display']['wave']['M']['url'],
+            )}
+        )
 
     for node in graph['nodes']:
         node['url'] = sound_metadata[int(node['id'])][0]

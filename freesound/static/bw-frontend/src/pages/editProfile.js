@@ -17,5 +17,10 @@ const textareaCounter = value => {
   document.getElementById('counter-number').innerText = value.length;
 };
 
-fileInputElement.addEventListener('change', e => readURL(e.target));
-textareaInputElement.addEventListener('keyup', e => textareaCounter(e.target.value));
+if (fileInputElement) {
+  fileInputElement.addEventListener('change', e => readURL(e.target));
+}
+
+if (textareaInputElement) {
+  textareaInputElement.addEventListener('keyup', e => textareaCounter(e.target.value));
+}

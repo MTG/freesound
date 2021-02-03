@@ -2,7 +2,7 @@
   display: none;
 }
 
-.bw-icon-radio {
+.bw-icon-radio-unchecked {
   width: 15px;
   height: 15px;
   display: inline-block;
@@ -10,6 +10,7 @@
   cursor: pointer;
 }
 
-.bw-radio:checked + .bw-radio-container .bw-icon-radio {
+.bw-radio:checked ~ span {
   opacity: 1;
+  color: $black;
 }

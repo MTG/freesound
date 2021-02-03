@@ -10,7 +10,7 @@ const addVisibleCheckbox = radioEl => {
   visibleRadioContainer.className = 'bw-radio-container';
   parent.insertBefore(visibleRadioContainer, insertBeforeElement);
   const RadioIcon = document.createElement('span');
-  RadioIcon.className = 'bw-icon-radio';
+  RadioIcon.className = 'bw-icon-radio-unchecked';
   visibleRadioContainer.append(RadioIcon);
 };
 

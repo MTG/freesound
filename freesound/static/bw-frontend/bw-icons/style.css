@@ -26,6 +26,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.bw-icon-star {
+  display: inline-block;
+}
+
 .bw-icon-half-star .path1:before {
   content: '\e94c';
   color: rgb(255, 53, 70);
@@ -53,6 +57,11 @@
 }
 
 .bw-icon-arrow:before {
+  content: '\e909';
+}
+.bw-icon-arrow-left:before {
+  transform: rotate(180deg);
+  display: inline-block;
   content: '\e909';
 }
 .bw-icon-atom:before {

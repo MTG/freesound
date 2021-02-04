@@ -75,7 +75,7 @@ def bw_sound_stars(context, use_request_user_rating=False):
     else:
         try:
             sound_rating = sound.ratings.get(user=request.user).rating
-        except SoundRating.DoesNotExist:
+        except (SoundRating.DoesNotExist, TypeError):
             sound_rating = 0
 
     # Pre process rating values to do less work in the template

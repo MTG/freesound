@@ -72,9 +72,15 @@
                                 <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
                                 <p class="text-grey">{{ sound.created|date:"F jS, Y" }}</p>
                             </div>
-                            <div class="h-spacing-left-3">
-                                <button class="btn-inverse">Follow</button>
-                            </div>
+                            {% if sound.user != request.user  %}
+                                <div class="h-spacing-left-3">
+                                    {% if is_following %}
+                                        <a href="{% url 'unfollow-user' sound.user.username %}?next={{ path }}"><button class="btn-secondary">Unfollow</button></a>
+                                    {% else %}
+                                        <a href="{% url 'follow-user' sound.user.username %}?next={{ path }}"><button class="btn-inverse">Follow</button></a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="middle v-spacing-top-3">
                             {% if sound.geotag_id %}

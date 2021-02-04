@@ -235,11 +235,11 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 SUPPORT = ()
 
 IFRAME_PLAYER_SIZE = {
-        'large': [920, 245],
-        'medium': [481, 86],
-        'small': [375, 30],
-        'twitter_card': [440, 132]
-    }
+    'large': [920, 245],
+    'medium': [481, 86],
+    'small': [375, 30],
+    'twitter_card': [440, 132]
+}
 
 FREESOUND_RSS = ''
 

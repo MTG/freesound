@@ -1,0 +1,13 @@
+.bw-forums {
+  &__input-search {
+    width: 160px;
+
+    &::placeholder {
+      color: $navy-light-grey;
+    }
+
+    &:before {
+      content: '\e907';
+    }
+  }
+}

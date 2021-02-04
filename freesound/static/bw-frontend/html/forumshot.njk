@@ -1,0 +1,25 @@
+{% import './molecules/navbar.njk' as navbars %}
+{% import './molecules/pagination.njk' as pagination %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+
+  <div class="container">
+    <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+      <h1>Freesound forums</h1>
+      <div class="divider-light v-spacing-top-4"></div>
+      <div class="row">
+        <div class="col-md-6">
+          {{ navbars.forumsHotNavbar('hot') }}
+        </div>
+        <div class="col-md-4 offset-md-2 between middle">
+          <input type="search" class="bw-forums__input-search" placeholder="Browse the forum..." /> <button class="btn-inverse btn-profile-adapt"><span class="text-18 padding-right-1">+</span> New thread</button>
+        </div>
+      </div>
+      <div class="divider-light"></div>
+    </div>
+  </div>
+
+  {% include './molecules/footer.njk' %}
+{% endblock %}

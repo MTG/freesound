@@ -1,0 +1,50 @@
+.bw-threads {
+  &__avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+  }
+
+  &__avatars-block {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  &__avatar-mini-container {
+    position: relative;
+    margin-left: 8px;
+    height: 32px;
+  }
+
+  &__avatar-mini {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
+
+  &__avatar-mini-cover {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #141424a6;
+    color: $white;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  p {
+    margin: 0;
+    color: $navy-grey;
+    font-size: 14px;
+  }
+
+  h6 {
+    margin: 0;
+    font-size: 18px;
+  }
+}

@@ -1096,6 +1096,21 @@ class Sound(SocialModel):
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
+    def analyze_new(self, force=False, high_priority=False, extractor="defaultExtractor"):
+        """
+        Trigger analysis of the sound if analysis_state is not "OK" or force=True. 'high_priority' argument can be
+        set to True to send the processing job with high priority to the gearman job server. Analysis code runs
+        Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
+        """
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        if force or self.analysis_state != "OK":
+            self.set_analysis_state("QU")
+            gm_client.submit_job("analyze_sound_new", json.dumps({
+                'sound_id': self.id,
+                'extractor': extractor
+            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
+            sounds_logger.info("Send sound with id %s to queue 'analyze' (NEW)" % self.id)
+
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
         delete_sound_from_gaia(self)
@@ -1503,6 +1518,7 @@ class SoundAnalysis(models.Model):
     sound = models.ForeignKey(Sound, related_name='analyses')
     created = models.DateTimeField(auto_now_add=True)
     extractor = models.CharField(db_index=True, max_length=255)
+    extractor_version = models.CharField(db_index=True, max_length=255)
     analysis_filename = models.CharField(max_length=255, null=True)
     analysis_data = JSONField(null=True)
 
@@ -1523,6 +1539,9 @@ class SoundAnalysis(models.Model):
             except IOError:
                 pass
         return None
+    
+    def __str__(self):
+        return str(self.id)
 
     class Meta:
         unique_together = (("sound", "extractor"),)

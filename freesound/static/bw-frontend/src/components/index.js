@@ -6,3 +6,4 @@ import './checkbox';
 import './carousel';
 import './propagation';
 import './rating';
+import './formDisableOnSubmit';

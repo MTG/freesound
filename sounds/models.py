@@ -33,6 +33,7 @@ from django.db.models.signals import pre_delete, post_delete, post_save, pre_sav
 from django.dispatch import receiver
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
+from django.utils.text import Truncator
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -72,9 +73,14 @@ class License(OrderedModel):
     name = models.CharField(max_length=512)
     abbreviation = models.CharField(max_length=8, db_index=True)
     summary = models.TextField()
+    short_summary = models.TextField(null=True)
     deed_url = models.URLField()
     legal_code_url = models.URLField()
     is_public = models.BooleanField(default=True)
+
+    def get_short_summary(self):
+        return self.short_summary if self.short_summary is not None else Truncator(self.summary)\
+            .words(20, html=True, truncate='...')
 
     def __unicode__(self):
         return self.name

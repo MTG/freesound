@@ -50,9 +50,11 @@
                             </div>
                             <div class="col-2 text-right">
                                 <div class="text-grey">
-                                    <button title="Find similar sounds" class="btn-neutral">
-                                        {% bw_icon 'similar' %}
-                                    </button>
+                                    {% if sound.similarity_state == 'OK' %}
+                                        <a class="no-hover" href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow">
+                                            <button title="Find similar sounds" class="btn-neutral">{% bw_icon 'similar' %}</button>
+                                        </a>
+                                    {% endif %}
                                     <span class="h-spacing-2"></span>
                                     <button title="Save as favorite" class="btn-neutral">
                                         {% bw_icon 'bookmark' %}
@@ -75,9 +77,9 @@
                             {% if sound.user != request.user  %}
                                 <div class="h-spacing-left-3">
                                     {% if is_following %}
-                                        <a href="{% url 'unfollow-user' sound.user.username %}?next={{ path }}"><button class="btn-secondary">Unfollow</button></a>
+                                        <a class="no-hover" href="{% url 'unfollow-user' sound.user.username %}?next={{ path }}"><button class="btn-secondary">Unfollow</button></a>
                                     {% else %}
-                                        <a href="{% url 'follow-user' sound.user.username %}?next={{ path }}"><button class="btn-inverse">Follow</button></a>
+                                        <a class="no-hover" href="{% url 'follow-user' sound.user.username %}?next={{ path }}"><button class="btn-inverse">Follow</button></a>
                                     {% endif %}
                                 </div>
                             {% endif %}
@@ -112,12 +114,12 @@
                         <div class="v-spacing-top-1">
                             <div class="text-17 line-height-30">
                                 {{ sound.description|replace_img|safe|linebreaks }}
-                                {% if sound.user.profile.sound_signature %}
-                                    <div class="v-spacing-top-3 text-grey">
-                                        <p>{{sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
-                                    </div>
-                                {% endif %}
                             </div>
+                            {% if sound.user.profile.sound_signature %}
+                                <div class="v-spacing-top-3 text-grey">
+                                    <p>{{sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+                                </div>
+                            {% endif %}
                             <div class="v-spacing-top-3">
                                 <a href="{% url 'sound-flag' sound.user.username sound.id %}" title="Flag this sound as ilegal, offensive or other..." class="text-light-grey">
                                     {% bw_icon 'flag' %} Sound illegal or offensive? Flag it!
@@ -239,7 +241,7 @@
                 <div class="col-3 offset-1">
                     <div class="bw-sound__sidebar">
                         {% if display_random_link %}
-                            <a href="{% url 'sounds-random' %}"><button class="btn-secondary col-12 v-spacing-3">Get another random sound!</button></a>
+                            <a class="no-hover" href="{% url 'sounds-random' %}"><button class="btn-secondary col-12 v-spacing-3">Get another random sound!</button></a>
                         {% endif %}
 
                         <div>
@@ -252,7 +254,7 @@
                             {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ sound.license.name }}</span>
                         </div>
                         <div class="text-grey {% if sound.user == request.user %}v-spacing-4{% endif %} v-spacing-top-1">
-                            {{ sound.license.summary|truncatewords_html:20|safe }}
+                            {{ sound.license.get_short_summary|safe }} <a href="{{ sound.license.deed_url }}" target="_blank" class="bw-link--black">More...</a>
                         </div>
 
                         {% if sound.user != request.user %}
@@ -268,9 +270,9 @@
 
                             {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
                                 {% if request.user.is_authenticated %}
-                                    <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');" title="Download sound"><button class="btn-primary col-12">Download sound</button></a>
+                                    <a class="no-hover" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');" title="Download sound"><button class="btn-primary col-12">Download sound</button></a>
                                 {% else %}
-                                    <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" title="Login to download"><button class="btn-primary col-12">Login to download</button></a>
+                                    <a class="no-hover" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" title="Login to download"><button class="btn-primary col-12">Login to download</button></a>
                                 {% endif %}
                             {% else %}
                                 <div class="v-spacing-top-3 text-center">Download unavailable, sound not yet processed or moderated</div>
@@ -278,7 +280,7 @@
 
                             {% if perms.sound.can_edit or sound.user == request.user %}
                                 {% if sound.processing_state == 'OK' %}
-                                    <a href="{% url 'sound-edit' sound.user.username sound.id %}"><button class="btn-secondary col-12 v-spacing-top-3" title="Edit sound">Edit sound</button></a>
+                                    <a class="no-hover" href="{% url 'sound-edit' sound.user.username sound.id %}"><button class="btn-secondary col-12 v-spacing-top-3" title="Edit sound">Edit sound</button></a>
                                 {% else %}
                                     <div class="v-spacing-top-3 text-grey text-center">Sound is processing, cannot edit</div>
                                 {% endif %}
@@ -286,7 +288,7 @@
 
                             {% comment %}
                             {% if sound.similarity_state == 'OK' %}
-                                <a href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow"><button class="btn-inverse col-12 v-spacing-top-3" title="Find similar sounds">Find similar sounds</button></a>
+                                <a class="no-hover" href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow"><button class="btn-inverse col-12 v-spacing-top-3" title="Find similar sounds">Find similar sounds</button></a>
                             {% endif %}
                             {% endcomment %}
 
@@ -295,12 +297,12 @@
                             {% endif %}
 
                             {% if request.user.is_staff %}
-                                <a href="{% url 'admin:sounds_sound_change' sound.id %}"><button class="btn-inverse col-12 v-spacing-top-3"  title="Edit sound in the admin">Edit in the admin</button></a>
+                                <a class="no-hover" href="{% url 'admin:sounds_sound_change' sound.id %}"><button class="btn-inverse col-12 v-spacing-top-3"  title="Edit sound in the admin">Edit in the admin</button></a>
                             {% endif %}
 
                             {% if perms.tickets.can_moderate or sound.user == request.user %}
                                 {% if sound.ticket %}
-                                    <a href="{% url 'tickets-ticket' sound.ticket.key %}"><button class="btn-inverse col-12 v-spacing-top-3"  title="Go to moderation ticket">Go to moderation ticket</button></a>
+                                    <a class="no-hover" href="{% url 'tickets-ticket' sound.ticket.key %}"><button class="btn-inverse col-12 v-spacing-top-3"  title="Go to moderation ticket">Go to moderation ticket</button></a>
                                 {% else %}
                                     <div class="v-spacing-top-3 text-grey text-center">No moderation ticket for this sound</div>
                                 {% endif %}

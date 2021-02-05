@@ -23,11 +23,18 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
   const progressBarIndicator = parentNode.getElementsByClassName(
     'bw-player__progress-bar-indicator'
   )[0]
-  progressIndicator.style.transform = `translateX(${-100 +
-    progressPercentage}%)`
+
+  if (progressIndicator) {
+    const progressIndicatorRightBorderSize = progressIndicator.offsetWidth - progressIndicator.clientWidth
+    const width = progressIndicator.parentElement.clientWidth - progressIndicatorRightBorderSize
+    progressIndicator.style.transform = `translateX(${-width + ((width *
+        progressPercentage) /
+        100)}px)`
+  }
+
   if (progressBarIndicator) {
-    const parentWidth = progressBarIndicator.parentElement.clientWidth
-    progressBarIndicator.style.transform = `translateX(${(parentWidth *
+    const width = progressBarIndicator.parentElement.clientWidth - progressBarIndicator.clientWidth
+    progressBarIndicator.style.transform = `translateX(${(width *
       progressPercentage) /
       100}px)`
   }

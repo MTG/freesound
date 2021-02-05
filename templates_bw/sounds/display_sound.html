@@ -7,7 +7,7 @@
     {% if player_size == 'small' %}
         {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
         {% include "sounds/player.html" %}
-        <h5 class="v-spacing-top-1">
+        <h5 class="v-spacing-top-1  overflow-hidden">
             <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename }}</a>
         </h5>
         <a href="{% url 'account' sound_user %}">{{ sound_user }}</a>

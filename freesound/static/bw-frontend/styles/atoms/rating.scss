@@ -4,26 +4,21 @@
   }
 
   label {
-    padding: 0 4px;
+    padding: 0 2px;
     float: right;
     transition: all 0.2s ease;
     cursor: pointer;
   }
-  input:not(:checked) ~ label:hover,
-  input:not(:checked) ~ label:hover ~ label {
+
+  input ~ label:hover,
+  input ~ label:hover ~ label {
     span {
-      color: #fd4;
+      color: $yellow-rating;
     }
   }
-  input:checked ~ label {
-    span {
-      color: #fd4;
-    }
-  }
-  input#rate-5:checked ~ label {
-    span {
-      color: #fe7;
-      text-shadow: 0 0 20px #952;
-    }
-  }
+}
+
+.bw-rating__star-no-editable {
+  padding: 0 2px;
+  float: right;
 }

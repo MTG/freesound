@@ -57,8 +57,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
             'opacity_class': opacity_class}
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
-def bw_sound_stars(context, use_request_user_rating=False):
-    sound = context['sound']
+def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=False, update_stars_color_on_save=False):
     if hasattr(sound, 'username'):
         sound_user = sound.username
     else:
@@ -97,8 +96,10 @@ def bw_sound_stars(context, use_request_user_rating=False):
     return {'sound_user': sound_user,
             'request_user': request_user,
             'is_authenticated': is_authenticated,
+            'allow_rating': is_authenticated and allow_rating,
             'sound': sound,
-            'stars_5': stars_5}
+            'update_stars_color_on_save': update_stars_color_on_save,
+            'stars_range': zip(stars_5, list(range(1, 6)))}
 
 
 @register.inclusion_tag('molecules/paginator.html', takes_context=True)

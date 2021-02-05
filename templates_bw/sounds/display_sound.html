@@ -24,7 +24,7 @@
                 <div class="between">
                     <div>
                         <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}" title="{{ sound.original_filename }}"><h5 class="v-spacing-top-1 ellipsis">{{ sound.original_filename|truncate_string:45 }}</h5></a>
-                        <div class="middle">{% bw_sound_stars %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                        <div class="middle">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
                     </div>
                     <div class="text-grey">
                         {% if sound.similarity_state == 'OK' %}

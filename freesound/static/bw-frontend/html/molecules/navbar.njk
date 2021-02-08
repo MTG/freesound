@@ -190,3 +190,17 @@
     </li>
   </ul>
 {% endmacro %}
+
+{% macro forumsListsThreads(currentList) %}
+  <ul class="navbar-forums-hot">
+    <li class="nav-item">
+      <a class="nav-link" href="#">Freesound Forums</a><span> > </span>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">Forums lists</a><span> > </span>
+    </li>
+    <li class="nav-item">
+      {{ currentList }}
+    </li>
+  </ul>
+{% endmacro %}

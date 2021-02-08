@@ -191,16 +191,16 @@
   </ul>
 {% endmacro %}
 
-{% macro forumsListsThreads(currentList) %}
-  <ul class="navbar-forums-hot">
-    <li class="nav-item">
-      <a class="nav-link" href="#">Freesound Forums</a><span> > </span>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#">Forums lists</a><span> > </span>
-    </li>
-    <li class="nav-item">
-      {{ currentList }}
-    </li>
+{% macro forumsListsThreads(breadcrumb) %}
+  <ul class="navbar-forums-hot navbar-breadcrumb">
+    {% for bread in breadcrumb %}
+      <li class="nav-item">
+        {% if bread.url != '' %}
+          <a class="nav-link" href="{{ bread.url }}">{{ bread.name }}</a>
+        {% else %}
+          {{ bread.name }}
+        {% endif %}
+      </li>
+    {%- endfor %}
   </ul>
 {% endmacro %}

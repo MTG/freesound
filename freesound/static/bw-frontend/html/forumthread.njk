@@ -1,0 +1,35 @@
+{% import './molecules/navbar.njk' as navbars %}
+{% import './molecules/pagination.njk' as pagination %}
+{% import './atoms/threads.njk' as thread %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+
+  <div class="container">
+    <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+      <div class="row">
+        <div class="col-md-7">
+          {{ navbars.forumsListsThreads([{name: 'Freesound Forums', url: '/'}, {name: 'Hot threads', url: '/'}, {name: 'Looking for a into-jingle for a youtube channel', url: ''}]) }}
+        </div>
+        <div class="col-md-4 offset-md-1 between middle">
+          <input type="search" class="bw-forums__input-search" placeholder="Browse the forum..." />
+        </div>
+      </div>
+      <div class="divider-light v-spacing-top-1 v-spacing-5"></div>
+      <div class="between middle">
+        <h1>Looking for a into-jingle for a youtube channel</h1>
+        <button class="btn-inverse btn-profile-adapt"><i class="text-18 padding-right-1 bw-icon-reply" ></i> Post reply</button>
+      </div>
+      <p class="text-grey v-spacing-7">Started March 21st, 2016  ·  230 replies  ·  <a href="">Latest reply</a> by <a href="">ScreamStudio</a> 1 minute ago</p>
+      <div class="v-spacing-top-4">
+        {{ thread.posts(10) }}
+      </div>
+      <div class="v-spacing-top-7">
+        {{ pagination.pagination(20, 1) }}
+      </div>
+    </div>
+  </div>
+
+  {% include './molecules/footer.njk' %}
+{% endblock %}

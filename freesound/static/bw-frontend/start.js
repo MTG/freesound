@@ -16,6 +16,7 @@ const start = async () => {
         'ForumMostCommented',
         'ForumLists',
         'ForumListsThread',
+        'ForumThread',
       ],
       filter: val => val.toLowerCase(),
     },

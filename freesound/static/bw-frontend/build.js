@@ -8,6 +8,7 @@ const pages = [
   'forummostcommented',
   'forumlists',
   'forumliststhread',
+  'forumthread',
 ];
 
 const outDir = 'freesound/static/bw-frontend/dist';

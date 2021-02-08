@@ -183,3 +183,20 @@ $navbar-height-mobile: 64px;
     }
   }
 }
+
+.navbar-breadcrumb {
+  .nav-item {
+    margin: 0;
+
+    &:after {
+      content: '>';
+      margin: 0 12px;
+    }
+
+    &:last-child {
+      &:after {
+        display: none;
+      }
+    }
+  }
+}

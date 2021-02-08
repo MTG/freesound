@@ -64,3 +64,39 @@
     {{ list()}}
   {%- endfor %}
 {% endmacro %} 
+
+{% macro post(quote) %}
+  <div class="bw-post">
+    <div class="row">
+      <div class="col-md-1"><img class="bw-post__avatar" src="../public/avatar.jpg" /></div>
+      <div class="col-md-2">
+        <h6><a href="">funnyenglish</a></h6>
+        <p class="text-grey no-margins">65 sounds</p>
+        <p class="text-grey no-margins">245 posts</p>
+      </div>
+      <div class="col-md-7">
+        <div class="between">
+          <span class="text-grey text-14">February 18th, 2017 </span>
+          <span class="text-grey text-14"><i class="bw-icon-quote-reverse"></i><i class="bw-icon-quote padding-right-2"></i> #1</span>
+        </div>
+        <div class="text-left text-black v-spacing-top-1">
+          {% if quote %}
+            <div class="v-spacing-2 v-spacing-top-2 bw-post__quote">
+              <p class="text-grey no-margins">Posted by <a href="">Unfa</a></p>
+              <div class="v-spacing-top-1">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi a tortor non sapien pellentesque vulputate. Morbi accumsan sapien ut tortor elementum tincidunt. In tincidunt quis magna sed scelerisque.</div>
+            </div>
+          {% endif %}
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi a tortor non sapien pellentesque vulputate. Morbi accumsan sapien ut tortor elementum tincidunt. In tincidunt quis magna sed auris at vehicula ornare, nibh nisi gravida metus, eget malesuada nisl ante non ipsum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.
+        </div>
+        <p class="text-grey text-13 bw-post__report v-spacing-top-1">Report spam</p>
+      </div>
+    </div>
+    <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+  </div>
+{% endmacro %}
+
+{% macro posts(count) %}
+  {% for i in range(count) -%}
+    {{ post(i == 3)}}
+  {%- endfor %}
+{% endmacro %}

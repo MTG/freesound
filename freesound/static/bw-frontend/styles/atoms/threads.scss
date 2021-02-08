@@ -64,3 +64,36 @@
     font-size: 18px;
   }
 }
+
+.bw-post {
+  &__avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+  }
+
+  &__report {
+    cursor: pointer;
+  }
+
+  h6 {
+    font-size: 16px;
+    margin: 0;
+  }
+
+  p {
+    font-size: 14px;
+  }
+
+  i {
+    font-size: 10px;
+    margin: 0 2px;
+  }
+
+  &__quote {
+    border-radius: 5px;
+    background-color: rgba(150, 150, 170, 0.1);
+    border: 1px solid rgba(150, 150, 170, 0.08);
+    padding: 24px;
+  }
+}

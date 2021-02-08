@@ -37,3 +37,30 @@
     {% endif %}
   {%- endfor %}
 {% endmacro %}
+
+{% macro list() %}
+  <div class="bw-threads">
+    <div class="row">
+      <div class="col-md-1"><img class="bw-threads__avatar" src="../public/avatar.jpg" /></div>
+      <div class="col-md-4">
+        <h6>Freesound Project</h6>
+        <p>1.243 threads · 49.390 replies</p>
+      </div>
+      <div class="col-md-4 offset-md-1">
+        <p class="bw-threads__last_thread">Problem here, do you know how to upload a</p>
+        <p class="text-left"><a href="">Latest reply</a> 20 minutes ago</p>
+      </div>
+      <div class="col-md-2 text-center">
+        <p><img class="bw-threads__mini_avatar" src="../public/avatar.jpg" /></p>
+        <p>by <a href="">Spenceomatic</a></p>
+      </div>
+    </div>
+    <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+  </div>
+{% endmacro %}
+
+{% macro lists(count) %}
+  {% for i in range(count) -%}
+    {{ list()}}
+  {%- endfor %}
+{% endmacro %} 

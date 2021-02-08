@@ -5,6 +5,12 @@
     border-radius: 50%;
   }
 
+  &__mini_avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
+
   &__avatars-block {
     display: flex;
     align-items: center;
@@ -35,6 +41,16 @@
     align-items: center;
     justify-content: center;
     font-weight: bold;
+  }
+
+  &__last_thread {
+    color: $black !important;
+    font-size: 16px !important;
+    font-weight: bold;
+    width: 330px;
+    white-space: nowrap;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
   }
 
   p {

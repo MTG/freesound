@@ -5,6 +5,7 @@
 
 {% block content %}
   {{ navbars.browseNavbar(true) }}
+  {% set isLogged = false %}
 
   <div class="container">
     <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
@@ -26,7 +27,11 @@
         {{ thread.posts(10) }}
       </div>
       <div class="v-spacing-top-4">
-        {{ thread.newPost() }}
+        {% if isLogged %}
+          {{ thread.newPost() }}
+        {% else %}
+          <p>Please <a href="">log in</a> to comment</p>
+        {% endif %}
       </div>
       <div class="v-spacing-top-7">
         {{ pagination.pagination(20, 1) }}

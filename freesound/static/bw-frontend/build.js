@@ -4,6 +4,7 @@ const shell = require('shelljs');
 const pages = [
   'front',
   'browse',
+  'sound',
   'forumshot',
   'forummostcommented',
   'forumlists',

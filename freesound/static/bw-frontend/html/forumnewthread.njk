@@ -1,0 +1,51 @@
+{% import './molecules/navbar.njk' as navbars %}
+{% import './molecules/pagination.njk' as pagination %}
+{% import './atoms/threads.njk' as thread %}
+{% import './atoms/select.njk' as selects %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+  <div class="container">
+    <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+      <div class="row">
+        <div class="col-md-7">
+          {{ navbars.forumsListsThreads([{name: 'Freesound Forums', url: '/'}, {name: 'New thread', url: ''}]) }}
+        </div>
+      </div>
+      <div class="divider-light v-spacing-top-1 v-spacing-5"></div>
+      <div class="v-spacing-top-5">
+          <form class="bw-new-thread__form w-100">
+            <div class="row">
+              <div class="col-md-7 offset-3">
+                  <label for="title" class="text-grey">
+                    Title
+                  </label>
+                  <input id="title" type="text" placeholder="Write your new thread title" />
+                  <label for="forum" class="text-grey">
+                    Forum
+                  </label>
+                  {{ selects.forumSelect(['Select a forum to publish your thread', 'Upload date', 'Upload modification'], 'forum') }}
+              </div>
+            </div>
+            <div class="bw-edit-profile__textarea_block">
+              <label for="about-edit-profile-textarea" class="text-grey">
+                message
+              </label>
+              <textarea id="about-edit-profile-textarea" type="text" placeholder="Write something about yourself" maxlength="140"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-7 offset-3">
+                <button class="btn-primary w-100">Update profile</button>
+              </div>
+            </div>
+          </form>
+      </div>
+    </div>
+  </div>
+
+  {% include './molecules/footer.njk' %}
+{% endblock %}
+{% block extrabody %}
+  <script src="../src/components/forumSelect.js"></script>
+{% endblock %}

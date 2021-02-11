@@ -96,4 +96,32 @@
     border: 1px solid rgba(150, 150, 170, 0.08);
     padding: 24px;
   }
+
+  &__textarea {
+    width: 100%;
+    //border: 1px solid $border-input-profile; TODO After edit page merged change
+    border: 1px solid #efeff2;
+    // background-color: $background-input-profile; TODO After edit page merged change
+    background-color: #f4f4f6;
+    padding: 10px 20px;
+    border-radius: 5px;
+
+    &::placeholder {
+      color: $navy-light-grey;
+    }
+
+    &:focus {
+      background-color: $white;
+      border: 1px solid $black;
+    }
+
+    min-height: 100px;
+    resize: none;
+
+    &:focus {
+      background-color: $white;
+      border: 1px solid $black;
+      outline: none;
+    }
+  }
 }

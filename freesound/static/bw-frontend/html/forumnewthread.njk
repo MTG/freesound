@@ -28,11 +28,23 @@
                   {{ selects.forumSelect(['Select a forum to publish your thread', 'Upload date', 'Upload modification'], 'forum') }}
               </div>
             </div>
-            <div class="bw-edit-profile__textarea_block">
-              <label for="about-edit-profile-textarea" class="text-grey">
-                message
-              </label>
-              <textarea id="about-edit-profile-textarea" type="text" placeholder="Write something about yourself" maxlength="140"></textarea>
+            <div class="bw-edit-profile__textarea_block v-spacing-top-5">
+              <div class="row">
+                <div class="col-md-1"><img class="bw-post__avatar v-spacing-top-5" src="../public/avatar.jpg" /></div>
+                <div class="col-md-2">
+                  <h6 class="text-16 no-margins padding-top-5"><a href="">funnyenglish</a></h6>
+                  <p class="text-grey no-margins">65 sounds</p>
+                  <p class="text-grey no-margins">245 posts</p>
+                </div>
+                <div class="col-md-9 row">
+                  <div class="col-md-12">
+                    <label for="about-new-thread-textarea" class="text-grey">
+                      message
+                    </label>
+                    <textarea id="about-new-thread-textarea" class="bw-post__textarea" placeholder="Write your repry here"></textarea>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="row">
               <div class="col-md-7 offset-3">

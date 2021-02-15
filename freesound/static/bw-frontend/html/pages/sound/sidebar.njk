@@ -40,3 +40,26 @@
     </div>
   </div>
 {% endmacro %}
+
+{% macro sidebarPack() %}
+  <div class="bw-sound__sidebar v-spacing-top-7">
+    <div>
+      <ol>
+        <li class="v-spacing-3">{{ icons.icon('download', 'text-grey text-opacity-050') }} <span class="text-21">247</span> <span class="text-grey text-17">downloads</span></li>
+        <li class="v-spacing-3">{{ icons.icon('comments', 'text-grey text-opacity-050') }} <span class="text-21">15</span> <span class="text-grey text-17">comments</span></li>
+      </ol>
+    </div>
+    <div class="v-spacing-top-5">
+      <button class="btn-primary col-12">Download pack</button>
+    </div>
+    <div class="v-spacing-top-7">
+      <ol class="center">
+        <li><a href=""><div class="cleanIcon">{{ icons.icon('facebook', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('twitter', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('link', 'text-30 text-grey') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('google-plus', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('embed-stroke', 'text-30') }}</div></a></li>
+      </ol>
+    </div>
+  </div>
+{% endmacro %}

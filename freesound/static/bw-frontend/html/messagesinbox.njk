@@ -1,9 +1,10 @@
 {% import './molecules/navbar.njk' as navbars %}
+{% import './atoms/message.njk' as message %}
 {% extends "base.njk" %}
 
 {% block content %}
   {{ navbars.browseNavbar(true) }}
-  <div class="container">
+  <div class="container bw-messages">
     <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
       <h1 class="text-32">Messages</h1>
       <div class="divider-light v-spacing-top-4"></div>
@@ -16,6 +17,17 @@
         </div>
       </div>
       <div class="divider-light"></div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="v-padding-3 text-light-grey relative">
+            <input type="search" class="bw-nav__search" placeholder="Browse messages..." />
+          </div>
+          <div>
+            {{ message.messages(20) }}
+          </div>
+        </div>
+        <div class="col-md-8">hola</div>
+      </div>
     </div>
   </div>
   {% include './molecules/footer.njk' %}

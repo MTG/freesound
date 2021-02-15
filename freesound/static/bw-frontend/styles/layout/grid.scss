@@ -11,6 +11,10 @@
   @include make-row();
 }
 
+.relative {
+  position: relative;
+}
+
 .end {
   display: flex;
   justify-content: flex-end;

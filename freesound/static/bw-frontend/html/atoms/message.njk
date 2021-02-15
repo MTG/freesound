@@ -1,0 +1,21 @@
+{% import './icons.njk' as icons %}
+
+{% macro message(active, unread) %}
+  <div class="bw-message__container v-padding-2 row">
+    <div class="col-md-2"><img class="bw-message__avatar" src="../public/avatar.jpg" /></div>
+    <div class="col-md-10 bw-message__info {% if active %} active {% endif %} {% if unread %} unread {% endif %}">
+      <div class="between">
+        <h6 class="no-margins text-16">Spidimateo</h6>
+        <div class="date">12:13</div>
+        <div class="icons"><a title="Mark as read">{{ icons.icon('check') }}</a><a title="Delete message">{{ icons.icon('trash') }}</a></div>
+      </div>
+      <p class="no-margins">Ipsum dolor sit amet, consectetur</p>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro messages(count) %}
+  {% for i in range(count) -%}
+    {{ message(i == 0, i % 3 == 0)}}
+  {%- endfor %}
+{% endmacro %}

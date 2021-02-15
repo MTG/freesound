@@ -1,0 +1,83 @@
+.bw-message {
+  &__container {
+    cursor: pointer;
+
+    &:hover {
+      h6 {
+        color: $red;
+      }
+
+      p {
+        color: $black;
+      }
+
+      .date {
+        display: none;
+      }
+
+      .icons {
+        display: block;
+
+        a {
+          color: $navy-light-grey;
+          position: relative;
+
+          &:hover {
+            color: $navy-grey;
+            text-decoration: none;
+          }
+
+          &:before {
+            display: none;
+          }
+
+          &[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -40px;
+            left: -50px;
+            width: max-content;
+            border-radius: 100px;
+            background-color: $black;
+            color: $white;
+            padding: 2px 18px;
+          }
+        }
+      }
+    }
+  }
+
+  &__avatar {
+    border-radius: 50%;
+    width: 49px;
+    height: 49px;
+  }
+
+  &__info {
+    padding-bottom: 20px;
+    border-bottom: 1px solid $navy-grey;
+    color: $navy-grey;
+
+    &.active {
+      h6 {
+        color: $red;
+      }
+
+      p {
+        color: $black;
+      }
+    }
+
+    &.unread {
+      color: $black;
+
+      .date {
+        color: $navy-grey;
+      }
+    }
+
+    .icons {
+      display: none;
+    }
+  }
+}

@@ -176,3 +176,17 @@
     </div>
   </nav>
 {% endmacro %}
+
+{% macro messagesNavbar(activePage) %}
+  <ul class="navbar-messages">
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'inbox'%} active {% endif %}" href="#">Inbox</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'sent'%} active {% endif %}" href="#">Sent</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'archived'%} active {% endif %}" href="#">Archived</a>
+    </li>
+  </ul>
+{% endmacro %}

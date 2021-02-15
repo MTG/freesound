@@ -11,6 +11,11 @@
   @include make-row();
 }
 
+.end {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .center {
   display: flex;
   justify-content: center;

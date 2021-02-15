@@ -1,0 +1,22 @@
+{% import './molecules/navbar.njk' as navbars %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+  <div class="container">
+    <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+      <h1 class="text-32">Messages</h1>
+      <div class="divider-light v-spacing-top-4"></div>
+      <div class="row">
+        <div class="col-md-7 end">
+          {{ navbars.messagesNavbar('inbox') }}
+        </div>
+        <div class="col-md-4 offset-md-1 middle end">
+          <button class="btn-inverse btn-profile-adapt text-15">New message</button>
+        </div>
+      </div>
+      <div class="divider-light"></div>
+    </div>
+  </div>
+  {% include './molecules/footer.njk' %}
+{% endblock %}

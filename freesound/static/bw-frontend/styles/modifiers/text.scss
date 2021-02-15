@@ -60,13 +60,13 @@
   letter-spacing: 0;
 }
 
-@for $i from 14 through 30 {
+@for $i from 14 through 40 {
   .text-#{$i} {
     font-size: #{$i}px;
   }
 }
 
-@for $i from 14 through 30 {
+@for $i from 14 through 40 {
   .line-height-#{$i} {
     line-height: #{$i}px;
   }

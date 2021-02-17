@@ -2,6 +2,16 @@
   &__container {
     cursor: pointer;
 
+    .bw-checkbox-container {
+      display: none;
+    }
+
+    .bw-checkbox:checked {
+      & + .bw-checkbox-container {
+        display: block !important;
+      }
+    }
+
     &:hover {
       h6 {
         color: $red;
@@ -9,6 +19,10 @@
 
       p {
         color: $black;
+      }
+
+      .bw-checkbox-container {
+        display: block;
       }
 
       .date {

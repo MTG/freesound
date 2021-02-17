@@ -1,9 +1,16 @@
 {% import './icons.njk' as icons %}
 
-{% macro message(active, unread) %}
+{% macro message(active, unread, id) %}
   <div class="bw-message__container v-padding-2 row">
+    <div class="col-md-1">
+      <label for="message{{id}}" class="checkbox">
+        <div class="bw-search__filter-checkbox v-spacing-top-2">
+          <input type="checkbox" class="bw-checkbox" id="message{{id}}" onchange="">
+        </div>
+      </label>
+    </div>
     <div class="col-md-2"><img class="bw-message__avatar" src="../public/avatar.jpg" /></div>
-    <div class="col-md-10 bw-message__info {% if active %} active {% endif %} {% if unread %} unread {% endif %}">
+    <div class="col-md-9 bw-message__info {% if active %} active {% endif %} {% if unread %} unread {% endif %}">
       <div class="between">
         <h6 class="no-margins text-16">Spidimateo</h6>
         <div class="date">12:13</div>
@@ -16,6 +23,6 @@
 
 {% macro messages(count) %}
   {% for i in range(count) -%}
-    {{ message(i == 0, i % 3 == 0)}}
+    {{ message(i == 0, i % 3 == 0, i)}}
   {%- endfor %}
 {% endmacro %}

@@ -9,15 +9,30 @@
       <h1 class="text-32">Messages</h1>
       <div class="divider-light v-spacing-top-4"></div>
       <div class="row">
-        <div class="col-md-4 middle">
-          <label for="selectAll" class="between w-100">
-            <div class="bw-search__filter-checkbox">
-              <input type="checkbox" class="bw-checkbox" id="selectAll" onchange="">
-            </div>
-            <div class="bw-search__filter-name text-grey text-16 line-height-21">
-              Select all
-            </div>
-          </label>
+        <div class="col-md-4 middle row">
+          <div class="col-md-5">
+            <label for="selectAll" class="between w-100 label-message-action">
+              <div class="bw-search__filter-checkbox">
+                <input type="checkbox" class="bw-checkbox" id="selectAll" onchange="">
+              </div>
+              <div class="bw-search__filter-name text-grey text-16 line-height-21">
+                Select all
+              </div>
+            </label>
+          </div>
+          <div class="col-md-5">
+            <label for="markasread" class="between w-100 label-message-action checked-action">
+              <div class="bw-search__filter-checkbox">
+                <input type="checkbox" class="bw-checkbox" id="markasread" onchange="">
+              </div>
+              <div class="bw-search__filter-name text-grey text-16 line-height-21">
+                Mark as read
+              </div>
+            </label>
+          </div>
+          <div class="col-md-2">
+            <a class="text-grey text-16 archive-action checked-action">Archive</a>
+          </div>
         </div>
         <div class="col-md-4 center">
           {{ navbars.messagesNavbar('inbox') }}

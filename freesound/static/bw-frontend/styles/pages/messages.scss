@@ -10,4 +10,32 @@
       color: $navy-light-grey;
     }
   }
+
+  .label-message-action {
+    cursor: pointer;
+
+    &:hover {
+      .bw-search__filter-name {
+        color: $black;
+      }
+    }
+  }
+
+  .archive-action {
+    cursor: pointer;
+    margin-top: -4px;
+    display: block;
+
+    &:hover {
+      color: $black;
+    }
+
+    &:before {
+      display: none;
+    }
+  }
+
+  .checked-action {
+    display: none;
+  }
 }

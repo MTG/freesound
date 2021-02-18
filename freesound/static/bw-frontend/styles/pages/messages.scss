@@ -38,4 +38,36 @@
   .checked-action {
     display: none;
   }
+
+  &__messages-list {
+    height: 60vh;
+    overflow: scroll;
+  }
+
+  &__detail-message-container {
+    background-color: $white;
+    border-bottom: 1px solid $navy-light-grey;
+    box-shadow: 0px 8px 4px -5px rgb(0 0 0 / 8%);
+    position: sticky;
+    top: 80px;
+  }
+
+  &__detail-messages-container {
+    height: 53vh;
+    overflow: scroll;
+  }
+
+  &__detail-write-message-container {
+    border-top: 1px solid $navy-light-grey;
+    box-shadow: 0 -8px 5px -5px rgb(0 0 0 / 8%);
+    z-index: 55;
+    align-items: center;
+
+    textarea {
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+    }
+  }
 }

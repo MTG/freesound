@@ -37,7 +37,7 @@
           position: relative;
 
           &:hover {
-            color: $navy-grey;
+            color: $black;
             text-decoration: none;
           }
 
@@ -67,6 +67,12 @@
     height: 49px;
   }
 
+  &__avatar-detail {
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+  }
+
   &__info {
     padding-bottom: 20px;
     border-bottom: 1px solid $navy-grey;
@@ -92,6 +98,15 @@
 
     .icons {
       display: none;
+    }
+  }
+
+  &__detail_container {
+    width: 100%;
+    border-bottom: 1px solid $navy-light-grey;
+
+    &:focus {
+      outline: none;
     }
   }
 }

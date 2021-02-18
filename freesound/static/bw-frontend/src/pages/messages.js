@@ -1,6 +1,9 @@
 const CheckboxGetAllElement = document.getElementById('selectAll');
 const messageCheckboxes = document.getElementsByClassName('message-checkbox');
 const checkboxesActions = document.getElementsByClassName('checked-action');
+const LastMessageElement = document.getElementById('message-last');
+
+LastMessageElement.focus();
 
 const handleAllCheckboxes = () => {
   const allCheckboxes = document.getElementsByClassName('message-checkbox');
@@ -11,7 +14,7 @@ const handleAllCheckboxes = () => {
   });
 };
 
-const handleMessageCheckboxes = checkboxElement => {
+const handleMessageCheckboxes = () => {
   let isAnyCheckboxChecked = false;
 
   messageCheckboxes.forEach(checkbox => {

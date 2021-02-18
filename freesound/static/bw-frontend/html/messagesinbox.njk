@@ -1,5 +1,6 @@
 {% import './molecules/navbar.njk' as navbars %}
 {% import './atoms/message.njk' as message %}
+{% import './atoms/icons.njk' as icons %}
 {% extends "base.njk" %}
 
 {% block content %}
@@ -47,11 +48,33 @@
           <div class="v-padding-3 text-light-grey relative">
             <input type="search" class="bw-nav__search" placeholder="Browse messages..." />
           </div>
-          <div>
+          <div class="bw-messages__messages-list">
             {{ message.messages(20) }}
           </div>
         </div>
-        <div class="col-md-8">hola</div>
+        <div class="col-md-8 row">
+          <div class="col-md-11 offset-md-1">
+            <div class="v-padding-3 row bw-messages__detail-message-container">
+              <div class="col-md-11 text-center">
+                <a href="" class="text-16 font-weight-bold">Spidimateo</a>
+              </div>
+              <div class="col-md-1">
+                <button class="text-light-grey btn-neutral">{{ icons.icon('trash') }}</button>
+              </div>
+            </div>
+            <div class="bw-messages__detail-messages-container">
+              {{ message.detailMessages(20) }}
+            </div>
+            <div class="bw-messages__detail-write-message-container row">
+              <div class="col-md-10">
+                <textarea class="v-spacing-top-4" placeholder="Write your message here..."></textarea>
+              </div>
+              <div class="col-md-2">
+                <button class="btn-inverse text-14">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

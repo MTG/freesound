@@ -95,7 +95,11 @@ def login(request, template_name, authentication_form):
     # Freesound-specific login view to check if a user has multiple accounts
     # with the same email address. We can switch back to the regular django view
     # once all accounts are adapted
-    response = LoginView.as_view(template_name=template_name, authentication_form=authentication_form)(request)
+
+    use_modal = request.GET.get('modal', None) is not None
+
+    response = LoginView.as_view(template_name=template_name if not use_modal else 'registration/login_modal.html',
+                                 authentication_form=authentication_form)(request)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
         # Now we check if the logged in user has shared email problems

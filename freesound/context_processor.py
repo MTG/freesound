@@ -21,6 +21,8 @@
 import datetime
 
 from django.conf import settings
+
+from accounts.forms import FsAuthenticationForm
 from tickets.views import new_sound_tickets_count
 from messages.models import Message
 
@@ -54,5 +56,7 @@ def context_extra(request):
         'num_pending_sounds': num_pending_sounds,
         'num_messages': num_messages,
         'recaptcha_public_key': settings.RECAPTCHA_PUBLIC_KEY,
-        'load_anniversary_content': load_anniversary_content
+        'load_anniversary_content': load_anniversary_content,
+        'login_form': FsAuthenticationForm() if not request.POST else FsAuthenticationForm(request.POST),  # Used for beast whoosh login modal only
+        'login_next': request.get_full_path(),  # Used for beast whoosh login modal only
     }

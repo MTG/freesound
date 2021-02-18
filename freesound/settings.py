@@ -109,6 +109,13 @@ USE_I18N = False
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'api_monitoring': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -228,11 +235,11 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 SUPPORT = ()
 
 IFRAME_PLAYER_SIZE = {
-        'large': [920, 245],
-        'medium': [481, 86],
-        'small': [375, 30],
-        'twitter_card': [440, 132]
-    }
+    'large': [920, 245],
+    'medium': [481, 86],
+    'small': [375, 30],
+    'twitter_card': [440, 132]
+}
 
 FREESOUND_RSS = ''
 

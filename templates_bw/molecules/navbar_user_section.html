@@ -28,9 +28,11 @@
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'access-tokens' %}">Manage API settings</a>
                 </li>
+                {% comment %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'donate' %}">Donate</a>
                 </li>
+                {% endcomment %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--grey" href="{% url 'logout' %}?next=/">Logout</a>
                 </li>

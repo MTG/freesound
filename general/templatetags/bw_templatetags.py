@@ -25,6 +25,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from general.templatetags.paginator import show_paginator
+from ratings.models import SoundRating
 
 register = template.Library()
 
@@ -56,8 +57,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
             'opacity_class': opacity_class}
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
-def bw_sound_stars(context):
-    sound = context['sound']
+def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=False, update_stars_color_on_save=False):
     if hasattr(sound, 'username'):
         sound_user = sound.username
     else:
@@ -66,15 +66,21 @@ def bw_sound_stars(context):
     request_user = request.user.username
     is_authenticated = request.user.is_authenticated
 
-    if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:
-        sound_avg_rating = sound.avg_rating
+    if not use_request_user_rating:
+        if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:
+            sound_rating = sound.avg_rating
+        else:
+            sound_rating = 0
     else:
-        sound_avg_rating = 0
+        try:
+            sound_rating = sound.ratings.get(user=request.user).rating
+        except (SoundRating.DoesNotExist, TypeError):
+            sound_rating = 0
 
     # Pre process rating values to do less work in the template
     stars_10 = []
     for i in range(0, 10):
-        if sound_avg_rating >= i + 1:
+        if sound_rating >= i + 1:
             stars_10.append(True)
         else:
             stars_10.append(False)
@@ -90,8 +96,10 @@ def bw_sound_stars(context):
     return {'sound_user': sound_user,
             'request_user': request_user,
             'is_authenticated': is_authenticated,
+            'allow_rating': is_authenticated and allow_rating,
             'sound': sound,
-            'stars_5': stars_5}
+            'update_stars_color_on_save': update_stars_color_on_save,
+            'stars_range': zip(stars_5, list(range(1, 6)))}
 
 
 @register.inclusion_tag('molecules/paginator.html', takes_context=True)

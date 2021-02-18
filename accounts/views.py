@@ -718,11 +718,11 @@ def attribution(request):
     qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
         .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
                 'pack__name', 'created').filter(user=request.user)
-    # NOTE: in the query above we duplciate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
+    # NOTE: in the query above we duplicate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
     # a requirement for doing QuerySet.union below. Also as a result of using QuerySet.union, the names of the columns
     # (keys in each dictionary element) are unified and taken from the main query set. This means that after the union,
     # queryset entries corresponding to PackDownload will have corresponding field names from entries corresponding to
-    # Download. Therefre to access the pack_id (which is the second value in the list), you'll need to do
+    # Download. Therefore to access the pack_id (which is the second value in the list), you'll need to do
     # item['sound_id'] instead of item ['pack_id']. See the template of this view for an example of this.
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
@@ -741,7 +741,8 @@ def download_attribution(request):
     qs_packs = PackDownload.objects.annotate(download_type=Value('pack', CharField()))\
         .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
                 'pack__name', 'created').filter(user=request.user)
-    # NOTE: see the above view, attribution.
+    # NOTE: see the above view, attribution. Note that we need to use .encode('utf-8') in some fields that can contain
+    # non-ascii characters even if these seem wrongly named due to the fact of using .union() in the QuerySet.
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
     download = request.GET.get('dl', '')
@@ -755,13 +756,15 @@ def download_attribution(request):
             output.write('Download Type,File Name,User,License\r\n')
             csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
-                csv_writer.writerow([row['download_type'][0].upper(), row['sound__original_filename'],
-                                    row['sound__user__username'], row['license__name'] or row['sound__license__name']])
+                csv_writer.writerow(
+                    [row['download_type'][0].upper(), row['sound__original_filename'].encode('utf-8'),
+                     row['sound__user__username'],
+                     row['license__name'].encode('utf-8') or row['sound__license__name'].encode('utf-8')])
         elif download == 'txt':
             for row in qs:
-                output.write("%s: %s by %s | License: %s\n" % (row['download_type'][0].upper(),
-                             row['sound__original_filename'], row['sound__user__username'],
-                             row['license__name'] or row['sound__license__name']))
+                output.write("{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
+                             row['sound__original_filename'].encode("utf-8"), row['sound__user__username'],
+                             row['license__name'].encode("utf-8") or row['sound__license__name'].encode("utf-8")))
         response.writelines(output.getvalue())
         return response
     else:

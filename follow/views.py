@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -93,6 +93,13 @@ def follow_user(request, username):
     user_from = request.user
     user_to = get_object_or_404(User, username=username)
     FollowingUserItem.objects.get_or_create(user_from=user_from, user_to=user_to)
+
+    # In BW we check if there's next parameter, and if there is we redirect to it
+    # This is to implement follow/unfollow without Javascript
+    redirect_to = request.GET.get('next', None)
+    if redirect_to is not None:
+        return HttpResponseRedirect(redirect_to)
+
     return HttpResponse()
 
 
@@ -105,6 +112,13 @@ def unfollow_user(request, username):
     except FollowingUserItem.DoesNotExist:
         # If the relation does not exist we're fine, should have never got to here...
         pass
+
+    # In BW we check if there's next parameter, and if there is we redirect to it
+    # This is to implement follow/unfollow without Javascript
+    redirect_to = request.GET.get('next', None)
+    if redirect_to is not None:
+        return HttpResponseRedirect(redirect_to)
+
     return HttpResponse()
 
 

@@ -5,6 +5,8 @@ import './player';
 import './checkbox';
 import './carousel';
 import './propagation';
+import './rating';
+import './formDisableOnSubmit';
 import './modal';
 import './login';
 import './toast';

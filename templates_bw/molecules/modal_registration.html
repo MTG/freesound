@@ -11,12 +11,12 @@
                 </div>
                 <div class="modal-body">
                     <h5>Join Freesound</h5>
-                    <form method="post" action="{% url 'accounts-register' %}">{% csrf_token %}
+                    <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}">{% csrf_token %}
                         {{ registration_form }}
-                        <span class="help-block"> {{ registration_form.recaptcha_response.errors }} </span>
-                        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-                        <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
-                        <input type="hidden" name="next" value="{{ current_path }}" />
+                        {{ registration_form.recaptcha_response.errors }}
+                        <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+                        <div class="g-recaptcha" id="recaptchaWidget" data-sitekey={{ recaptcha_public_key }}></div>
+
                         <button type="submit" class="btn btn-primary v-spacing-top-3">Join</button>
                     </form>
                 </div>

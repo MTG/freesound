@@ -218,13 +218,16 @@ def registration(request):
             user = form.save()
             send_activation(user)
             if using_beastwhoosh(request):
-                next_param = request.POST.get('next', None)
+                next_param = request.GET.get('next', None)
                 if next_param is not None:
                     return redirect(next_param + '?feedbackRegistration=1')
                 else:
                     return redirect(reverse('front-page') + '?feedbackRegistration=1')
             else:
                 return render(request, 'accounts/registration_done.html')
+        else:
+            if using_beastwhoosh(request) and request.GET.get('in_modal', False):
+                return render(request, 'molecules/modal_registration.html', {'registration_form': form})
     else:
         form = form_class()
 

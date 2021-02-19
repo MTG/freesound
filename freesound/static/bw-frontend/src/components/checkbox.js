@@ -1,5 +1,3 @@
-const checkboxes = [...document.getElementsByClassName('bw-checkbox')];
-
 const addVisibleCheckbox = (checkboxEl) => {
   const parent = checkboxEl.parentNode
   const actualCheckboxIndex = [...parent.children].findIndex(el => [...el.classList].includes('bw-checkbox'))
@@ -12,4 +10,11 @@ const addVisibleCheckbox = (checkboxEl) => {
   visibleCheckboxContainer.append(checkboxIcon)
 }
 
-checkboxes.forEach(addVisibleCheckbox)
+const addCheckboxVisibleElements = () => {
+  const checkboxes = [...document.getElementsByClassName('bw-checkbox')];
+  checkboxes.forEach(addVisibleCheckbox)
+};
+
+addCheckboxVisibleElements();
+
+export default addCheckboxVisibleElements;

@@ -1,4 +1,4 @@
-import navbar from "./navbar";
+import customRegistrationSubmit from "../pages/loginAndRegistration";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
@@ -24,6 +24,20 @@ const handleModal = modalContainerId => {
   const modalContainer = document.getElementById(modalContainerId);
   modalContainer.classList.add('show');
   modalContainer.style.display = 'block';
+
+  const registerModalForm = document.getElementById("registerModalForm");
+  if (registerModalForm !== undefined){
+
+     var captchaWidgetId = grecaptcha.render( 'recaptchaWidget', {
+      'sitekey' : '6Lduqx0TAAAAAG1HDusG3DKY22pkAEHxy5KxlZ4Y',  // required
+      'theme' : 'light',  // optional
+    });
+
+
+    registerModalForm.onsubmit = (event) => {
+      customRegistrationSubmit(event);
+    }
+  }
 
   modalDismiss.forEach(dismiss => {
     dismiss.addEventListener('click', () => handleDismissModal(modalContainerId));

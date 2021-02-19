@@ -1,0 +1,43 @@
+.bw-autocomplete {
+  &__container {
+    width: 100%;
+    position: relative;
+    display: inline-block;
+
+    i {
+      display: none;
+    }
+
+    .autocomplete-items {
+      max-height: 400px;
+      overflow: scroll;
+      position: absolute;
+      z-index: 99;
+      top: 60px;
+      left: 0;
+      right: 0;
+      box-shadow: 0px 2px 4px rgb(0 0 0 / 8%);
+
+      div {
+        padding: 10px;
+        cursor: pointer;
+        background-color: $white;
+
+        &:hover {
+          background-color: $navy-light-grey;
+        }
+      }
+
+      .autocomplete-active {
+        background-color: $navy-light-grey;
+      }
+    }
+  }
+  &__search {
+    margin-left: 10px !important;
+
+    &::placeholder {
+      color: $navy-light-grey;
+    }
+  }
+}

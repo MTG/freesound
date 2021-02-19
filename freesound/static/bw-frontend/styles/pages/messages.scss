@@ -50,6 +50,7 @@
     box-shadow: 0px 8px 4px -5px rgb(0 0 0 / 8%);
     position: sticky;
     top: 80px;
+    z-index: 55;
   }
 
   &__detail-messages-container {

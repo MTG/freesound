@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 padding-bottom-2 v-spacing-top-5">
+            <div class="login-page-form">
+                <h5>Log in to Freesound</h5>
+                <div class="row no-gutters">
+                    <div class="v-spacing-5 v-spacing-top-5 col-lg-4 ">
+                        <form method="post" action=".">{% csrf_token %}
+                            {{ form }}
+                            <input type="hidden" name="next" value="{{ next }}" />
+                            <button type="submit" class="btn btn-primary">Log in</button>
+                        </form>
+                    </div>
+                </div>
+                <div>
+                    <a class="bw-link--grey cursor-pointer" data-link="forgottenPasswordModal">Problems logging in?</a>
+                </div>
+                <div class="v-spacing-top-2">
+                    <a class="bw-link--grey cursor-pointer" data-link="registerModal">Don't have an account? Join now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/loginAndRegistration.6554cfde.js' %}"></script>
+{% endblock %}

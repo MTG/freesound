@@ -1,0 +1,29 @@
+{% load bw_templatetags %}
+
+<div class="modal" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-wrapper">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content v-padding-bottom-5">
+                <div class="modal-header">
+                    <span class="close" data-dismiss="modal" aria-label="Close">
+                      {% bw_icon 'close' %}
+                    </span>
+                </div>
+                <div class="modal-body">
+                    <h5>Join Freesound</h5>
+                    <form method="post" action="{% url 'accounts-register' %}">{% csrf_token %}
+                        {{ registration_form }}
+                        <span class="help-block"> {{ registration_form.recaptcha_response.errors }} </span>
+                        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                        <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
+                        <input type="hidden" name="next" value="{{ current_path }}" />
+                        <button type="submit" class="btn btn-primary v-spacing-top-3">Join</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal-extra-info">
+            <a data-link="loginModal">Already have an account? Sign in here</a>
+        </div>
+    </div>
+</div>

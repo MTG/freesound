@@ -30,6 +30,7 @@
     {% endblock %}
     </div>
     <script src="../src/index.js"></script>
+    <script src="../src/pages/loginAndRegistration.js"></script><!-- this is added here to trigger compilation of pages/loginAndRegistration.js, but is really only used in the Django login page. Ideally, the npm build command should build all *.js files in /pages so that we don't have to link them in nj templates -->
     {% block extrabody %}
     {% endblock %}
   </body>

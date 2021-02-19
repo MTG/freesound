@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 padding-bottom-2 v-spacing-top-5">
+            <div class="login-page-form">
+                <h5>Join Freesound</h5>
+                <div class="row no-gutters">
+                    <div class="v-spacing-5 v-spacing-top-5 col-lg-4 ">
+                        <form method="post" action=".">{% csrf_token %}
+                            {{ form }}
+                            <span class="help-block"> {{ registration_form.recaptcha_response.errors }} </span>
+                            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                            <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
+                            <button type="submit" class="btn btn-primary  v-spacing-top-3">Join</button>
+                        </form>
+                    </div>
+                </div>
+                <div>
+                    <a class="bw-link--grey cursor-pointer" data-link="forgottenPasswordModal">Problems logging in?</a>
+                </div>
+                <div class="v-spacing-top-2">
+                    <a class="bw-link--grey cursor-pointer" data-link="loginModal">Already have an account? Sign in here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/loginAndRegistration.6554cfde.js' %}"></script>
+{% endblock %}

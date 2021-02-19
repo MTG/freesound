@@ -8,5 +8,5 @@ import './propagation';
 import './rating';
 import './formDisableOnSubmit';
 import './modal';
-import './login';
+import './loginModals';
 import './toast';

@@ -46,7 +46,7 @@ from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
@@ -58,7 +58,7 @@ import tickets.views as TicketViews
 import utils.sound_upload
 from accounts.forms import EmailResetForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
-    UsernameReminderForm, \
+    UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField
 from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce
 from bookmarks.models import Bookmark
@@ -70,6 +70,7 @@ from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, Geotagg
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.images import extract_square
@@ -95,7 +96,12 @@ def login(request, template_name, authentication_form):
     # Freesound-specific login view to check if a user has multiple accounts
     # with the same email address. We can switch back to the regular django view
     # once all accounts are adapted
-    response = LoginView.as_view(template_name=template_name, authentication_form=authentication_form)(request)
+    # NOTE: in the function below we need to make the template depend on the front-end because LoginView will not
+    # use our custom "render" function which would select the template for the chosen front-end automatically
+    # Also, we set the authentication form depending on front-end as there are small modifications.
+    response = LoginView.as_view(
+        template_name=template_name if not using_beastwhoosh(request) else 'accounts/login.html',
+        authentication_form=authentication_form if not using_beastwhoosh(request) else BwFsAuthenticationForm)(request)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
         # Now we check if the logged in user has shared email problems
@@ -204,14 +210,23 @@ def tos_acceptance(request):
 
 @transaction.atomic()
 def registration(request):
+    form_class = RegistrationForm if not using_beastwhoosh(request) else BwRegistrationForm
+
     if request.method == 'POST':
-        form = RegistrationForm(request.POST)
+        form = form_class(request.POST)
         if form.is_valid():
             user = form.save()
             send_activation(user)
-            return render(request, 'accounts/registration_done.html')
+            if using_beastwhoosh(request):
+                next_param = request.POST.get('next', None)
+                if next_param is not None:
+                    return redirect(next_param + '?feedbackRegistration=1')
+                else:
+                    return redirect(reverse('front-page') + '?feedbackRegistration=1')
+            else:
+                return render(request, 'accounts/registration_done.html')
     else:
-        form = RegistrationForm()
+        form = form_class()
 
     return render(request, 'accounts/registration.html', {'form': form})
 

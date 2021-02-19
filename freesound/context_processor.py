@@ -22,7 +22,7 @@ import datetime
 
 from django.conf import settings
 
-from accounts.forms import FsAuthenticationForm
+from accounts.forms import BwFsAuthenticationForm, BwRegistrationForm
 from tickets.views import new_sound_tickets_count
 from messages.models import Message
 
@@ -48,6 +48,7 @@ def context_extra(request):
         datetime.datetime(2020, 4, 5, 0, 0) <= datetime.datetime.today() <= datetime.datetime(2020, 4, 20) or \
         request.GET.get('anniversary', '0') == '1'
 
+
     return {
         'media_url': settings.MEDIA_URL,
         'request': request,
@@ -57,6 +58,7 @@ def context_extra(request):
         'num_messages': num_messages,
         'recaptcha_public_key': settings.RECAPTCHA_PUBLIC_KEY,
         'load_anniversary_content': load_anniversary_content,
-        'login_form': FsAuthenticationForm() if not request.POST else FsAuthenticationForm(request.POST),  # Used for beast whoosh login modal only
-        'login_next': request.get_full_path(),  # Used for beast whoosh login modal only
+        'current_path': request.get_full_path(),  # Used for beast whoosh login modal only
+        'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
+        'registration_form': BwRegistrationForm(), # User for beast whoosh login modal only
     }

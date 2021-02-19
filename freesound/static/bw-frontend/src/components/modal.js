@@ -1,8 +1,17 @@
+import navbar from "./navbar";
+
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
 const urlParams = new URLSearchParams(window.location.search);
 const newPasswordParam = urlParams.get('newPassword');
+const registrationParam = urlParams.get('registration');
 const feedbackRegistrationParam = urlParams.get('feedbackRegistration');
+
+const handleDismissModal = modalContainerId => {
+  const modalContainer = document.getElementById(modalContainerId);
+  modalContainer.classList.remove('show');
+  modalContainer.style.display = 'none';
+};
 
 const handleModal = modalContainerId => {
   const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
@@ -16,19 +25,14 @@ const handleModal = modalContainerId => {
   modalContainer.classList.add('show');
   modalContainer.style.display = 'block';
 
-  const handleDismissModal = () => {
-    modalContainer.classList.remove('show');
-    modalContainer.style.display = 'none';
-  };
-
   modalDismiss.forEach(dismiss => {
-    dismiss.addEventListener('click', () => handleDismissModal());
+    dismiss.addEventListener('click', () => handleDismissModal(modalContainerId));
   });
 
   modalLinks.forEach(links => {
     links.forEach(link => {
       link.addEventListener('click', () => {
-        handleDismissModal();
+        handleDismissModal(modalContainerId);
         handleModal(link.dataset.link);
       });
     });
@@ -43,6 +47,12 @@ if (newPasswordParam) {
   handleModal('newPasswordModal');
 }
 
+if (registrationParam)  {
+  handleModal('registerModal');
+}
+
 if (feedbackRegistrationParam) {
   handleModal('feedbackRegistration');
 }
+
+export {handleDismissModal, handleModal};

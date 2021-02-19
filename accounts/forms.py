@@ -219,6 +219,28 @@ class RegistrationForm(forms.Form):
         return user
 
 
+class BwRegistrationForm(RegistrationForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwRegistrationForm, self).__init__(*args, **kwargs)
+
+        # Customize some placeholders and classes, remove labels and help texts
+        self.fields['username'].label = False
+        self.fields['username'].help_text = False
+        self.fields['username'].widget.attrs['placeholder'] = 'Username (30 characters maximum)'
+        self.fields['email1'].label = False
+        self.fields['email1'].help_text = False
+        self.fields['email1'].widget.attrs['placeholder'] = 'Email'
+        self.fields['email2'].label = False
+        self.fields['email2'].help_text = False
+        self.fields['email2'].widget.attrs['placeholder'] = 'Email confirmation'
+        self.fields['password1'].label = False
+        self.fields['password1'].help_text = False
+        self.fields['password1'].widget.attrs['placeholder'] = 'Password'
+        self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
+
+
+
 class ReactivationForm(forms.Form):
     user = forms.CharField(label="The username or email you signed up with", max_length=254)
 
@@ -234,6 +256,18 @@ class FsAuthenticationForm(AuthenticationForm):
                              "Note that passwords are case-sensitive.",
         })
         self.fields['username'].label = 'Username or email'
+
+
+class BwFsAuthenticationForm(FsAuthenticationForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwFsAuthenticationForm, self).__init__(*args, **kwargs)
+
+        # Customize form placeholders and remove labels
+        self.fields['username'].label = False
+        self.fields['username'].widget.attrs['placeholder'] = 'Enter your email or username'
+        self.fields['password'].label = False
+        self.fields['password'].widget.attrs['placeholder'] = 'Enter your password'
 
 
 class UsernameReminderForm(forms.Form):

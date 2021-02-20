@@ -220,9 +220,9 @@ def registration(request):
             if using_beastwhoosh(request):
                 next_param = request.GET.get('next', None)
                 if next_param is not None:
-                    return redirect(next_param + '?feedbackRegistration=1')
+                    return JsonResponse({'redirectURL': next_param + '?feedbackRegistration=1'})
                 else:
-                    return redirect(reverse('front-page') + '?feedbackRegistration=1')
+                    return JsonResponse({'redirectURL': reverse('front-page') + '?feedbackRegistration=1'})
             else:
                 return render(request, 'accounts/registration_done.html')
         else:

@@ -81,14 +81,25 @@ const customRegistrationSubmit = (event) => {
     // Handle the events
     req.onload = function() {
         if (req.status >= 200 && req.status < 400) {
-            handleDismissModal('registerModal');
-            registerModalElement.remove();
 
-            document.getElementById('newPasswordModal').insertAdjacentHTML('afterend', req.responseText);
+            if (req.responseText.indexOf('registerModalForm') === -1){
+                // Registration was successful, go to redirect url
+                console.log(req.responseText, JSON.parse(req.responseText))
+                const data = JSON.parse(req.responseText);
+                window.location.href = data.redirectURL;
+            }  else {
 
-            handleModal('registerModal');
-            // TODO: re-run checkbox init code
-            addCheckboxVisibleElements();
+                // Received modal
+                handleDismissModal('registerModal');
+                registerModalElement.remove();
+
+                document.getElementById('newPasswordModal').insertAdjacentHTML('afterend', req.responseText);
+
+                handleModal('registerModal');
+                // TODO: re-run checkbox init code
+                addCheckboxVisibleElements();
+            }
+
         }
     };
     req.onerror = function() {

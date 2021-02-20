@@ -28,10 +28,16 @@ const handleModal = modalContainerId => {
   const registerModalForm = document.getElementById("registerModalForm");
   if (registerModalForm !== undefined){
 
-     var captchaWidgetId = grecaptcha.render( 'recaptchaWidget', {
-      'sitekey' : '6Lduqx0TAAAAAG1HDusG3DKY22pkAEHxy5KxlZ4Y',  // required
-      'theme' : 'light',  // optional
-    });
+    try {
+      var captchaWidgetId = grecaptcha.render( 'recaptchaWidget', {
+        'sitekey' : '6Lduqx0TAAAAAG1HDusG3DKY22pkAEHxy5KxlZ4Y',  // required
+        'theme' : 'light',  // optional
+      });
+    } catch (error) {
+      console.log("Can't set grecaptcha: ", error)
+    }
+
+
 
 
     registerModalForm.onsubmit = (event) => {

@@ -19,6 +19,9 @@ Official
 
 3rd Party
 
+* Common Lisp
+  https://github.com/ntrocado/freesound (by Nuno Trocado)
+
 * Max/MSP
   https://github.com/albincorreya/Freesound_Max-MSP_Modules (by Albin Correya)
 

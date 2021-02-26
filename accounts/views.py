@@ -218,15 +218,22 @@ def registration(request):
             user = form.save()
             send_activation(user)
             if using_beastwhoosh(request):
+                # When using beastwoosh, if the form is valid we will return a JSON response with the URL where
+                # the user should be redirected (a URL which will include the "Almost done" message). The browser
+                # will then take this URL and redirect the user.
                 next_param = request.GET.get('next', None)
                 if next_param is not None:
                     return JsonResponse({'redirectURL': next_param + '?feedbackRegistration=1'})
                 else:
                     return JsonResponse({'redirectURL': reverse('front-page') + '?feedbackRegistration=1'})
             else:
+                # If not using beastwhoosh, we render the "registration done" page
                 return render(request, 'accounts/registration_done.html')
         else:
             if using_beastwhoosh(request) and request.GET.get('in_modal', False):
+                # When using beastwoosh, if the form is NOT valid we return the Django rendered HTML version of the
+                # registration modal (which includes the form and error messages) so the browser can show the updated
+                # modal contents to the user
                 return render(request, 'molecules/modal_registration.html', {'registration_form': form})
     else:
         form = form_class()

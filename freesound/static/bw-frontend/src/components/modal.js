@@ -1,4 +1,6 @@
 import customRegistrationSubmit from "../pages/loginAndRegistration";
+import initRecaptchaWidgets from "./recaptcha"
+import addCheckboxVisibleElements from "../components/checkbox";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
@@ -25,21 +27,17 @@ const handleModal = modalContainerId => {
   modalContainer.classList.add('show');
   modalContainer.style.display = 'block';
 
-  const registerModalForm = document.getElementById("registerModalForm");
-  if (registerModalForm !== undefined){
+  // In case the modal we are activating contains the use registration form, carry out some special init actions
+  const registerModalForm = modalContainer.querySelector("#registerModalForm");
+  if (registerModalForm !== null){
 
-    try {
-      var captchaWidgetId = grecaptcha.render( 'recaptchaWidget', {
-        'sitekey' : '6Lduqx0TAAAAAG1HDusG3DKY22pkAEHxy5KxlZ4Y',  // required
-        'theme' : 'light',  // optional
-      });
-    } catch (error) {
-      console.log("Can't set grecaptcha: ", error)
-    }
+    // Initialize all recaptcha widgets (registration form contains one)
+    initRecaptchaWidgets();
 
+    // Initialize checkboxes (registration form contains checkboxes)
+    addCheckboxVisibleElements();
 
-
-
+    // Assign custom onsubmit method which will submit the form via AJAX and reload form in modal if error occur
     registerModalForm.onsubmit = (event) => {
       customRegistrationSubmit(event);
     }

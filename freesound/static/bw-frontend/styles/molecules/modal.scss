@@ -6,6 +6,7 @@
 
 .modal {
   background-color: #{$black}EE;
+  overflow: scroll;
 
   .modal-header {
     border: 0;

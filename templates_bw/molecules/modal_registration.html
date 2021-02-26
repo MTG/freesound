@@ -11,7 +11,7 @@
                 </div>
                 <div class="modal-body">
                     <h5>Join Freesound</h5>
-                    <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}">{% csrf_token %}
+                    <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}" data-check-username-url="{% url 'check_username' %}">{% csrf_token %}
                         {{ registration_form }}
                         {{ registration_form.recaptcha_response.errors }}
                         <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>

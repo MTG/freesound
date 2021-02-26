@@ -1,6 +1,4 @@
-import customRegistrationSubmit from "../pages/loginAndRegistration";
-import initRecaptchaWidgets from "./recaptcha"
-import addCheckboxVisibleElements from "../components/checkbox";
+import initRegistrationForm from "../pages/loginAndRegistration";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
@@ -30,17 +28,7 @@ const handleModal = modalContainerId => {
   // In case the modal we are activating contains the use registration form, carry out some special init actions
   const registerModalForm = modalContainer.querySelector("#registerModalForm");
   if (registerModalForm !== null){
-
-    // Initialize all recaptcha widgets (registration form contains one)
-    initRecaptchaWidgets();
-
-    // Initialize checkboxes (registration form contains checkboxes)
-    addCheckboxVisibleElements();
-
-    // Assign custom onsubmit method which will submit the form via AJAX and reload form in modal if error occur
-    registerModalForm.onsubmit = (event) => {
-      customRegistrationSubmit(event);
-    }
+    initRegistrationForm(registerModalForm);
   }
 
   modalDismiss.forEach(dismiss => {

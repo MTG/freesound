@@ -2,6 +2,8 @@ import './page-polyfills';
 import {handleDismissModal, handleModal} from '../components/modal';
 import {showToast} from '../components/toast';
 import serialize from '../utils/formSerializer'
+import initRecaptchaWidgets from "../components/recaptcha";
+import addCheckboxVisibleElements from "../components/checkbox";
 
 
 const modalLinks = [
@@ -24,16 +26,13 @@ const customRegistrationSubmit = (event) => {
 
     const registerModalForm = document.getElementById("registerModalForm");
     const registerModalElement = document.getElementById("registerModal");
-
     const params = serialize(registerModalForm);
 
     // Create new Ajax request to submit registration form contents
     const req = new XMLHttpRequest();
     req.open('POST', registerModalForm.action, true);
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-
-    // Handle the events
-    req.onload = function() {
+    req.onload = () => {
         if (req.status >= 200 && req.status < 400) {
             if (req.responseText.indexOf('registerModalForm') === -1){
                 // Registration was successful, we should have received the redirect URL where we should redirect the
@@ -56,7 +55,7 @@ const customRegistrationSubmit = (event) => {
             }
         }
     };
-    req.onerror = function() {
+    req.onerror = () => {
         // Unexpected errors happened while processing request: close modal and show error in toast
         handleDismissModal('registerModal');
         showToast('Some errors occurred while processing the form. Please try again later.')
@@ -70,4 +69,49 @@ const customRegistrationSubmit = (event) => {
     return false;
 };
 
-export default customRegistrationSubmit;
+const checkUsernameAvailability = (username, baseURL, callback) => {
+    const req = new XMLHttpRequest();
+    req.open('GET', baseURL  + '?username=' + username, true);
+    req.onload = () => {
+        if (req.status >= 200 && req.status < 400) {
+            const data = JSON.parse(req.responseText);
+            callback(data.result);
+        }
+    };
+    req.send();
+};
+
+const initRegistrationForm = (registrationForm) => {
+    // Initialize all recaptcha widgets (registration form contains one)
+    initRecaptchaWidgets();
+
+    // Initialize checkboxes (registration form contains checkboxes)
+    addCheckboxVisibleElements();
+
+    // Add event handler to check username availability on focusout
+    const usernameInputElement = registrationForm.querySelector('input[name="username"]');
+    usernameInputElement.addEventListener("focusout", () => {
+        checkUsernameAvailability(usernameInputElement.value, registrationForm.dataset.checkUsernameUrl, (isAvailable) => {
+            const previousElementIsErrorlist = usernameInputElement.previousElementSibling.classList.contains('errorlist');
+            if (isAvailable === true){
+                // Check if there is an "invalid username" message shown and remove it if username is now valid
+                if (previousElementIsErrorlist){
+                    usernameInputElement.previousElementSibling.remove();
+                }
+            } else {
+                // Check if there is an "invalid username" message shown, and add one if it is not there
+                if (!previousElementIsErrorlist) {
+                    usernameInputElement.insertAdjacentHTML('beforebegin', '<ul class="errorlist"><li>You cannot use this username to create an account</li></ul>')
+                }
+            }
+        });
+    });
+
+    // Assign custom onsubmit method which will submit the form via AJAX and reload form in modal if error occur
+    registrationForm.onsubmit = (event) => {
+        customRegistrationSubmit(event);
+    }
+};
+
+
+export default initRegistrationForm;

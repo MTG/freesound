@@ -159,7 +159,7 @@ class RegistrationForm(forms.Form):
         label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
                         'Freesound website'),
         required=True,
-        error_messages={'required': 'You must accept the terms of use in order to register to Freesound.'}
+        error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
 
     def clean_username(self):
@@ -171,20 +171,20 @@ class RegistrationForm(forms.Form):
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
                 return username
-        raise forms.ValidationError("You cannot use this username to create an account.")
+        raise forms.ValidationError("You cannot use this username to create an account")
 
     def clean_email2(self):
         email1 = self.cleaned_data.get("email1", "")
         email2 = self.cleaned_data["email2"]
         if email1 != email2:
-            raise forms.ValidationError("Please confirm that your email address is the same in both fields.")
+            raise forms.ValidationError("Please confirm that your email address is the same in both fields")
 
     def clean_email1(self):
         email1 = self.cleaned_data["email1"]
         try:
             get_user_by_email(email1)
             web_logger.info('User trying to register with an already existing email (%s)', email1)
-            raise forms.ValidationError("You cannot use this email address to create an account.")
+            raise forms.ValidationError("You cannot use this email address to create an account")
         except User.DoesNotExist:
             pass
         return email1

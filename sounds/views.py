@@ -226,7 +226,8 @@ def front_page(request):
         'top_donor': top_donor,
         'total_num_sounds': total_num_sounds,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
-        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beash whoosh only
+        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
+        'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
     }
     return render(request, 'front.html', tvars)
 

@@ -33,6 +33,51 @@ from sounds.models import Sound, SoundAnalysis
 
 workers_logger = logging.getLogger("workers")
 
+class WorkerException(Exception):
+    """
+    Exception raised by the worker if:
+    i) the analysis/processing function takes longer than the timeout specified in settings.WORKER_TIMEOUT
+    ii) the check for free disk space  before running the analysis/processing function fails
+    """
+    pass
+
+
+def set_timeout_alarm(time, msg):
+    """
+    Sets a timeout alarm which raises a WorkerException after a number of seconds.
+    :param float time: seconds until WorkerException is raised
+    :param str msg: message to add to WorkerException when raised
+    :raises WorkerException: when timeout is reached
+    """
+
+    def alarm_handler(signum, frame):
+        raise WorkerException(msg)
+
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(time)
+
+
+def cancel_timeout_alarm():
+    """
+    Cancels an exsting timeout alarm (or does nothing if no alarm was set).
+    """
+    signal.alarm(0)
+
+
+def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
+                        min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
+    """
+    Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
+    volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
+    :param str directory: path of the directory whose volume will be checked for free space
+    :param float min_disk_space_percentage: free disk space percentage to check against
+    :raises WorkerException: if available percentage of free space is below the threshold
+    """
+    stats = os.statvfs(directory)
+    percentage_free = stats.f_bfree * 1.0 / stats.f_blocks
+    if percentage_free < min_disk_space_percentage:
+        raise WorkerException("Disk is running out of space, "
+                              "aborting task as there might not be enough space for temp files")
 
 class Command(BaseCommand):
     help = 'Run the sound analysis worker v2'
@@ -62,15 +107,37 @@ class Command(BaseCommand):
         sound_id = job_data['sound_id']
         extractor = job_data.get('extractor', False)
 
-        workers_logger.info("Starting fake analysis of sound (%s)" % json.dumps(
+        workers_logger.info("Starting analysis (v2) of sound (%s)" % json.dumps(
             {'task_name': task_name, 'sound_id': sound_id, 'extractor':extractor}))
 
-        sound = Sound.objects.get(id=sound_id)
-        fake_analysis_data = json.dumps({'loudness':40, 'spectral_centroid':1500})
-        SoundAnalysis.objects.get_or_create(sound=sound, extractor=extractor,
+        try:
+            check_if_free_space()
+            sound = Sound.objects.get(id=sound_id)
+            result = json.dumps({'loudness':40, 'spectral_centroid':1500})
+            # Handle analysis failure commented for the future
+            # if result:
+            SoundAnalysis.objects.get_or_create(sound=sound, extractor=extractor,
                                             extractor_version="hello",
-                                            analysis_data=fake_analysis_data)
+                                            analysis_data=result)
+            workers_logger.info("Analysis finished (%s)" % json.dumps(
+                 {'task_name': task_name, 'sound_id': sound_id, 'extractor':extractor}))
+            # else:
+            #     workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
+            #         {'task_name': task_name, 'sound_id': sound_id, 'result': 'failure',
+            #          'work_time': round(time.time() - start_time)}))
 
-        workers_logger.info("Analysis finished (%s)" % json.dumps(
-            {'task_name': task_name, 'sound_id': sound_id, 'extractor':extractor}))
+        except Sound.DoesNotExist:
+            workers_logger.error("Failed to analyze a sound that does not exist (%s)"% json.dumps(
+                {'task_name': task_name, 'sound_id': sound_id, 'error': str(e)}))
+        except WorkerException as e:
+            workers_logger.error("WorkerException while analyzing sound (%s)" % json.dumps(
+                {'task_name': task_name, 'sound_id': sound_id, 'error': str(e),
+                 'work_time': round(time.time() - start_time)}))
+
+        except Exception as e:
+            workers_logger.error("Unexpected error while analyzing sound (%s)" % json.dumps(
+                {'task_name': task_name, 'sound_id': sound_id, 'error': str(e),
+                 'work_time': round(time.time() - start_time)}))
+
+        cancel_timeout_alarm()
         return ''  # Gearman requires return value to be a string

@@ -35,15 +35,15 @@ workers_logger = logging.getLogger("workers")
 
 
 class Command(BaseCommand):
-    help = 'Run the sound new analysis worker'
+    help = 'Run the sound analysis worker v2'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--queue',
             action='store',
             dest='queue',
-            default='analyze_sound_new',
-            help='Register this function (default: analyze_sound_new)')
+            default='analyze_sound_v2',
+            help='Register this function (default: analyze_sound_v2)')
 
     def handle(self, *args, **options):
         task_name = 'task_%s' % options['queue']
@@ -56,8 +56,8 @@ class Command(BaseCommand):
         workers_logger.info('Started worker with tasks: %s' % task_name)
         gm_worker.work()
 
-    def task_analyze_sound_new(self, gearman_worker, gearman_job):
-        task_name = 'analyze_sound_new'
+    def task_analyze_sound_v2(self, gearman_worker, gearman_job):
+        task_name = 'analyze_sound_v2'
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
         extractor = job_data.get('extractor', False)

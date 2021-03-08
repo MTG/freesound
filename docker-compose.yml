@@ -129,12 +129,12 @@ services:
             - db
             - gearmand
 
-    worker_analysis_new:
+    worker_analysis_v2:
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
         init: true
-        command: python manage.py gm_worker_analysis --queue analyze_sound_new
+        command: python manage.py gm_worker_analysis --queue analyze_sound_v2
         volumes:
             - .:/code
             - ./freesound-data/:/freesound-data

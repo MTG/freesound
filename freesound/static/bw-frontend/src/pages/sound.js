@@ -1,4 +1,5 @@
 import './page-polyfills';
+import {showToast} from '../components/toast';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -15,9 +16,7 @@ const copyShareUrlToClipboard = () => {
     shareLinkInputElement.select();
     shareLinkInputElement.setSelectionRange(0, 99999);
     document.execCommand("copy");
-    // TODO: show notification that the URL was coppied
-    // const message = 'Sound URL copied in the clipboard'
-
+    showToast('Sound URL copied in the clipboard');
     document.getSelection().removeAllRanges();
 }
 

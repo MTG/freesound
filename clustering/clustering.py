@@ -18,6 +18,7 @@ if settings.IS_CELERY_WORKER:
     from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
     from sklearn import metrics
     from sklearn.feature_selection import mutual_info_classif
+    from sklearn.neighbors import kneighbors_graph
 
     from gaia_wrapper import GaiaWrapperClustering
 
@@ -246,12 +247,20 @@ class ClusteringEngine():
         # neighbors for small collections, while limiting it for larger collections, which ensures low-computational complexity.
         k = int(np.ceil(np.log2(len(sound_ids_list))))
 
-        for sound_id in sound_ids_list:
-            try:
-                nearest_neighbors = self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list, features=features)
-                graph.add_edges_from([(sound_id, i[0]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE])
-            except ValueError:  # node does not exist in Gaia dataset
-                graph.remove_node(sound_id)
+        # for sound_id in sound_ids_list:
+        #     try:
+        #         nearest_neighbors = self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list, features=features)
+        #         graph.add_edges_from([(sound_id, i[0]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE])
+        #     except ValueError:  # node does not exist in Gaia dataset
+        #         graph.remove_node(sound_id)
+
+        sound_features, sound_ids_out = self.gaia.return_features(sound_ids_list)
+        A = kneighbors_graph(sound_features, k)
+        for idx_from, (idx_to, distance) in enumerate(zip(A.indices, A.data)):
+            idx_from = int(idx_from / k)
+            if distance < clust_settings.MAX_NEIGHBORS_DISTANCE:
+                graph.add_edge(sound_ids_out[idx_from], sound_ids_out[idx_to])
+
 
         # Remove isolated nodes
         graph.remove_nodes_from(list(nx.isolates(graph)))

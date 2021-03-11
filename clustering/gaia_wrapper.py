@@ -3,14 +3,36 @@ import os
 import sys
 import time
 import yaml
+import json
 
 from django.conf import settings
 from gaia2 import DataSet, View, DistanceFunctionFactory
+import numpy as np
+import redis
 
 import clustering_settings as clust_settings
 
 
 logger = logging.getLogger('clustering')
+
+
+class RedisStore(object):
+    def __init__(self):
+        self.r = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+
+    def set_feature(self, sound_id, feature):
+        self.r.set(str(sound_id), json.dumps(feature))
+
+    def get_feature(self, sound_id):
+        feature = self.r.get(str(sound_id))
+        if feature:
+            return json.loads(feature)
+
+    def set_features(self, d):
+        self.r.mset({k: json.dumps(v) for k, v in d.iteritems()})
+
+    def get_features(self, sound_ids):
+        return self.r.mget(sound_ids)
 
 
 class GaiaWrapperClustering:
@@ -23,6 +45,9 @@ class GaiaWrapperClustering:
     def __init__(self):
         self.index_path = clust_settings.INDEX_DIR
         self.__load_datasets()
+        self.redis = RedisStore()
+        self.AS_features = json.load(open(os.path.join(clust_settings.INDEX_DIR, 'AS_features_max_nrg.json'), 'r'))
+        self.redis.set_features(self.AS_features)
 
     def __get_dataset_path(self, ds_name):
         return os.path.join(clust_settings.INDEX_DIR, ds_name + '.db')
@@ -114,3 +139,48 @@ class GaiaWrapperClustering:
                 logger.info(e)
                 reference_features.append(None)
         return reference_features
+
+    def return_features(self, sound_ids):
+        # existing_id = set(self.id2idx.keys())
+        # sound_ids_out = [sound_id for sound_id in sound_ids if sound_id in existing_id]
+        # indexes = [self.id2idx[sound_id] for sound_id in sound_ids_out]
+        # features = self.features[indexes]
+
+        # return features, sound_ids_out
+
+
+        # features = []
+        # sound_ids_out = []
+        # gaia_dataset = getattr(self, '{}_dataset'.format(clust_settings.DEFAULT_FEATURES))
+        # gaia_descriptor_names = clust_settings.AVAILABLE_FEATURES[clust_settings.DEFAULT_FEATURES]['GAIA_DESCRIPTOR_NAMES']
+        # for sound_id in sound_ids:
+        #     try:
+        #         features.append(list(gaia_dataset.point(sound_id).value(gaia_descriptor_names)))
+        #         sound_ids_out.append(sound_id)
+        #     except Exception as e:
+        #         # Gaia raises only broad exceptions. Here it would correspond to a sound that is not found in the dataset
+        #         logger.info(e)
+        # return np.array(features).astype('float32'), sound_ids_out
+
+
+        features = []
+        sound_ids_out = []
+        output = self.redis.get_features(sound_ids)
+        for sound_id, feature in zip(sound_ids, output):
+            if feature:
+                features.append(json.loads(feature))
+                sound_ids_out.append(sound_id)
+            
+        return np.array(features).astype('float32'), sound_ids_out
+
+
+        # features = []
+        # sound_ids_out = []
+        # for sound_id in sound_ids:
+        #     try:
+        #         features.append(self.AS_features[sound_id])
+        #         sound_ids_out.append(sound_id)
+        #     except:
+        #         pass
+
+        # return np.array(features).astype('float32'), sound_ids_out

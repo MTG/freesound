@@ -1,4 +1,4 @@
-import initRegistrationForm from "../pages/loginAndRegistration";
+import {initRegistrationForm, initProblemsLoggingInForm} from "../pages/loginAndRegistration";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
@@ -6,6 +6,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const newPasswordParam = urlParams.get('newPassword');
 const registrationParam = urlParams.get('registration');
 const feedbackRegistrationParam = urlParams.get('feedbackRegistration');
+const problemsLoggingInParam = urlParams.get('loginProblems');
 
 const handleDismissModal = modalContainerId => {
   const modalContainer = document.getElementById(modalContainerId);
@@ -25,10 +26,14 @@ const handleModal = modalContainerId => {
   modalContainer.classList.add('show');
   modalContainer.style.display = 'block';
 
-  // In case the modal we are activating contains the use registration form, carry out some special init actions
+  // In case the modal we are activating contains some specific forms, carry out some special init actions
   const registerModalForm = modalContainer.querySelector("#registerModalForm");
   if (registerModalForm !== null){
     initRegistrationForm(registerModalForm);
+  }
+  const problemsLoggingInForm = modalContainer.querySelector("#problemsLoggingInModalForm");
+  if (problemsLoggingInForm !== null){
+    initProblemsLoggingInForm(problemsLoggingInForm);
   }
 
   modalDismiss.forEach(dismiss => {
@@ -59,6 +64,10 @@ if (registrationParam)  {
 
 if (feedbackRegistrationParam) {
   handleModal('feedbackRegistration');
+}
+
+if (problemsLoggingInParam) {
+  handleModal('forgottenPasswordModal');
 }
 
 export {handleDismissModal, handleModal};

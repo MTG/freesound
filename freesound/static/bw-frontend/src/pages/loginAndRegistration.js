@@ -81,6 +81,32 @@ const checkUsernameAvailability = (username, baseURL, callback) => {
     req.send();
 };
 
+const customProblemsLoggingInSubmit = (event) => {
+    const problemsLoggingInForm = document.getElementById("problemsLoggingInModalForm");
+    const params = serialize(problemsLoggingInForm);
+
+    // Create new Ajax request to submit registration form contents
+    const req = new XMLHttpRequest();
+    req.open('POST', problemsLoggingInForm.action, true);
+    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+    req.onload = () => {
+        if (req.status >= 200 && req.status < 400) {
+            showToast('Check your email, we\'ve sent you a link');
+        }
+    };
+    req.onerror = () => {
+        // Unexpected errors happened while processing request: show error in toast
+        showToast('Some errors occurred while processing the form. Please try again later.')
+    };
+
+    // Send the form
+    req.send(params);
+
+    // Stop propagation of submit event
+    event.preventDefault();
+    return false;
+};
+
 const initRegistrationForm = (registrationForm) => {
     // Initialize all recaptcha widgets (registration form contains one)
     initRecaptchaWidgets();
@@ -113,5 +139,12 @@ const initRegistrationForm = (registrationForm) => {
     }
 };
 
+const initProblemsLoggingInForm = (problemsLoggingInForm) => {
+    // Assign custom onsubmit method which will submit the form via AJAX and show notification
+    problemsLoggingInForm.onsubmit = (event) => {
+        customProblemsLoggingInSubmit(event);
+    }
+};
 
-export default initRegistrationForm;
+
+export {initRegistrationForm, initProblemsLoggingInForm};

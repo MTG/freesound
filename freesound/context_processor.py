@@ -22,7 +22,7 @@ import datetime
 
 from django.conf import settings
 
-from accounts.forms import BwFsAuthenticationForm, BwRegistrationForm
+from accounts.forms import BwFsAuthenticationForm, BwRegistrationForm, BwProblemsLoggingInForm
 from tickets.views import new_sound_tickets_count
 from messages.models import Message
 
@@ -60,5 +60,6 @@ def context_extra(request):
         'load_anniversary_content': load_anniversary_content,
         'next_path': request.GET.get('next', request.get_full_path()),  # Used for beast whoosh login modal only
         'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
-        'registration_form': BwRegistrationForm(), # User for beast whoosh login modal only
+        'registration_form': BwRegistrationForm(), # Used for beast whoosh login modal only
+        'problems_logging_in_form': BwProblemsLoggingInForm(),  # Used for beast whoosh login modal only
     }

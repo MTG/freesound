@@ -30,9 +30,7 @@ from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from django.template import loader
 from django.urls import reverse
-from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from multiupload.fields import MultiFileField
@@ -240,9 +238,16 @@ class BwRegistrationForm(RegistrationForm):
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
 
 
-
 class ReactivationForm(forms.Form):
     user = forms.CharField(label="The username or email you signed up with", max_length=254)
+
+
+class BwProblemsLoggingInForm(forms.Form):
+    username_or_email = forms.CharField(label="", help_text="", max_length=254)
+
+    def __init__(self, *args, **kwargs):
+        super(BwProblemsLoggingInForm, self).__init__(*args, **kwargs)
+        self.fields['username_or_email'].widget.attrs['placeholder'] = 'Your email or username'
 
 
 class FsAuthenticationForm(AuthenticationForm):
@@ -452,15 +457,15 @@ class EmailSettingsForm(forms.Form):
 class FsPasswordResetForm(forms.Form):
     """
     This form is a modification of django's PasswordResetForm. The only difference is that here we allow the user
-    to enter an email or a username (insetad of only a username) to send the reset password email.
+    to enter an email or a username (instead of only a username) to send the reset password email.
     Methods `send_email` and `save` are very similar to the original methods from
     `django.contrib.auth.forms.PasswordResetForm`. We could not inherit from the original form because we don't want
     the old `username` field to be present. When migrating to a new version of django (current is 1.11) we should check
     for updates in this code in case we also have to apply them.
     """
-    email_or_username = forms.CharField(label="Email or Username", max_length=254)
+    username_or_email = forms.CharField(label="Email or Username", max_length=254)
 
-    def get_users(self, email_or_username):
+    def get_users(self, username_or_email):
         """Given an email, return matching user(s) who should receive a reset.
 
             This subclass will let all active users reset their password.
@@ -470,10 +475,10 @@ class FsPasswordResetForm(forms.Form):
         """
         UserModel = get_user_model()
         active_users = UserModel._default_manager.filter(Q(**{
-                '%s__iexact' % UserModel.get_email_field_name(): email_or_username,
+                '%s__iexact' % UserModel.get_email_field_name(): username_or_email,
                 'is_active': True,
             }) | Q(**{
-                'username__iexact': email_or_username,
+                'username__iexact': username_or_email,
                 'is_active': True,
             })
         )
@@ -489,8 +494,8 @@ class FsPasswordResetForm(forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
-        email_or_username = self.cleaned_data["email_or_username"]
-        for user in self.get_users(email_or_username):
+        username_or_email = self.cleaned_data["username_or_email"]
+        for user in self.get_users(username_or_email):
             if not domain_override:
                 current_site = get_current_site(request)
                 site_name = current_site.name

@@ -37,7 +37,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -56,10 +56,11 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
+    BwProblemsLoggingInForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce
 from bookmarks.models import Bookmark
 from comments.models import Comment
@@ -70,7 +71,7 @@ from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, Geotagg
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.images import extract_square
@@ -115,6 +116,20 @@ def login(request, template_name, authentication_form):
         else:
             return response
 
+    return response
+
+
+def password_reset_confirm(request, uidb64, token):
+    response = PasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html' if not using_beastwhoosh(request)
+        else 'accounts/password_reset_confirm.html')(request, uidb64=uidb64, token=token)
+    return response
+
+
+def password_reset_complete(request):
+    response = PasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html' if not using_beastwhoosh(request)
+        else 'accounts/password_reset_complete.html')(request)
     return response
 
 
@@ -267,6 +282,7 @@ def send_activation(user):
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
 
 
+@redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
 def resend_activation(request):
     if request.method == 'POST':
         form = ReactivationForm(request.POST)
@@ -286,6 +302,7 @@ def resend_activation(request):
     return render(request, 'accounts/resend_activation.html', {'form': form})
 
 
+@redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
 def username_reminder(request):
     if request.method == 'POST':
         form = UsernameReminderForm(request.POST)
@@ -1215,6 +1232,43 @@ def email_reset_complete(request, uidb36=None, token=None):
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 
     return render(request, 'accounts/email_reset_complete.html', tvars)
+
+
+
+def problems_logging_in(request):
+    """This view gets a User object from BwProblemsLoggingInForm form contents and then either sends email instructions
+    to re-activate the user (if the user is not active) or sends instructions to re-set the password (if the user
+    is active).
+    """
+    if request.method == 'POST':
+        form = BwProblemsLoggingInForm(request.POST)
+        if form.is_valid():
+            username_or_email = form.cleaned_data['username_or_email']
+            try:
+                user = User.objects.get((Q(email__iexact=username_or_email)\
+                         | Q(username__iexact=username_or_email)))
+                if not user.is_active:
+                    # If user is not activated, send instructions to re-activate the user
+                    send_activation(user)
+                else:
+                    # If user is activated, send instructions to re-set the password (act as if the pre-BW password
+                    # reset view was called)
+                    # NOTE: we pass the same request.POST as we did to the BwProblemsLoggingInForm. We can do that
+                    # because both forms have the same fields.
+                    pwd_reset_form = FsPasswordResetForm(request.POST)
+                    if pwd_reset_form.is_valid():
+                        pwd_reset_form.save(
+                            subject_template_name='registration/password_reset_subject.txt',
+                            email_template_name='registration/password_reset_email.html',
+                            use_https=request.is_secure(),
+                            request=request
+                        )
+            except User.DoesNotExist:
+                pass
+
+    # The view returns the same empty response regardless of whether an email was sent or not. This is to avoid
+    # giving login credentials information to potential attackers.
+    return JsonResponse({})
 
 
 @login_required

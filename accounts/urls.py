@@ -37,7 +37,8 @@ from utils.frontend_handling import redirect_if_beastwhoosh, redirect_if_beastwh
 # 3. Django runs through each URL pattern, in order, and stops at the first one that matches the requested URL.
 urlpatterns = [
     url(r'^login/$', login_redirect(accounts.login), {'template_name': 'registration/login.html',
-                                       'authentication_form': FsAuthenticationForm}, name="accounts-login"),
+                                       'authentication_form': FsAuthenticationForm}, name="login"),
+    url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
     url(r'^cleanup/$', accounts.multi_email_cleanup, name="accounts-multi-email-cleanup"),
     url(r'^password_reset/$',
         login_redirect(
@@ -46,7 +47,11 @@ urlpatterns = [
                 redirect_url_name='front-page',
                 query_string='loginProblems=1')),
         name='password_reset'),
-    url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
+    url(r'^password_reset/done/$',
+        redirect_if_beastwhoosh_inline(
+            auth_views.PasswordResetDoneView.as_view(),
+            redirect_url_name='front-page'),
+        name='password_reset_done'),
     url(r'^password_change/$', auth_views.PasswordChangeView.as_view(), name='password_change'),
     url(r'^password_change/done/$', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',

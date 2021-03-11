@@ -1359,7 +1359,7 @@ def clear_flags_user(request, username):
         tvars = {'num': num, 'username': username}
         return render(request, 'accounts/flags_cleared.html', tvars)
     else:
-        return HttpResponseRedirect(reverse('accounts-login'))
+        return HttpResponseRedirect(reverse('login'))
 
 
 @login_required

@@ -6,7 +6,7 @@
 {% block section_content %}
 {% if all_ok %}
     <h1>Activation succeeded...</h1>
-    <p>You have been activated. Please <a href="{% url "accounts-login" %}">log in</a> to continue.
+    <p>You have been activated. Please <a href="{% url "login" %}">log in</a> to continue.
 {% else %}
     <h1>Activation failed...</h1>
     {% if user_does_not_exist %}

@@ -1,0 +1,20 @@
+.toast {
+  background: red;
+  z-index: 99999;
+  display: none;
+  position: absolute;
+  padding: 14px 0;
+  width: 328px;
+  border-radius: 5px 5px 0 0;
+  background-color: $black;
+  color: $white;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 18px;
+  text-align: center;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  margin: auto;
+}

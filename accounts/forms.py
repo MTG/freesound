@@ -22,7 +22,7 @@
 import time
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
@@ -30,9 +30,7 @@ from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from django.template import loader
 from django.urls import reverse
-from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from multiupload.fields import MultiFileField
@@ -159,7 +157,7 @@ class RegistrationForm(forms.Form):
         label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
                         'Freesound website'),
         required=True,
-        error_messages={'required': 'You must accept the terms of use in order to register to Freesound.'}
+        error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
 
     def clean_username(self):
@@ -171,20 +169,20 @@ class RegistrationForm(forms.Form):
                 OldUsername.objects.get(username__iexact=username)
             except OldUsername.DoesNotExist:
                 return username
-        raise forms.ValidationError("You cannot use this username to create an account.")
+        raise forms.ValidationError("You cannot use this username to create an account")
 
     def clean_email2(self):
         email1 = self.cleaned_data.get("email1", "")
         email2 = self.cleaned_data["email2"]
         if email1 != email2:
-            raise forms.ValidationError("Please confirm that your email address is the same in both fields.")
+            raise forms.ValidationError("Please confirm that your email address is the same in both fields")
 
     def clean_email1(self):
         email1 = self.cleaned_data["email1"]
         try:
             get_user_by_email(email1)
             web_logger.info('User trying to register with an already existing email (%s)', email1)
-            raise forms.ValidationError("You cannot use this email address to create an account.")
+            raise forms.ValidationError("You cannot use this email address to create an account")
         except User.DoesNotExist:
             pass
         return email1
@@ -219,8 +217,37 @@ class RegistrationForm(forms.Form):
         return user
 
 
+class BwRegistrationForm(RegistrationForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwRegistrationForm, self).__init__(*args, **kwargs)
+
+        # Customize some placeholders and classes, remove labels and help texts
+        self.fields['username'].label = False
+        self.fields['username'].help_text = False
+        self.fields['username'].widget.attrs['placeholder'] = 'Username (30 characters maximum)'
+        self.fields['email1'].label = False
+        self.fields['email1'].help_text = False
+        self.fields['email1'].widget.attrs['placeholder'] = 'Email'
+        self.fields['email2'].label = False
+        self.fields['email2'].help_text = False
+        self.fields['email2'].widget.attrs['placeholder'] = 'Email confirmation'
+        self.fields['password1'].label = False
+        self.fields['password1'].help_text = False
+        self.fields['password1'].widget.attrs['placeholder'] = 'Password'
+        self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
+
+
 class ReactivationForm(forms.Form):
     user = forms.CharField(label="The username or email you signed up with", max_length=254)
+
+
+class BwProblemsLoggingInForm(forms.Form):
+    username_or_email = forms.CharField(label="", help_text="", max_length=254)
+
+    def __init__(self, *args, **kwargs):
+        super(BwProblemsLoggingInForm, self).__init__(*args, **kwargs)
+        self.fields['username_or_email'].widget.attrs['placeholder'] = 'Your email or username'
 
 
 class FsAuthenticationForm(AuthenticationForm):
@@ -234,6 +261,18 @@ class FsAuthenticationForm(AuthenticationForm):
                              "Note that passwords are case-sensitive.",
         })
         self.fields['username'].label = 'Username or email'
+
+
+class BwFsAuthenticationForm(FsAuthenticationForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwFsAuthenticationForm, self).__init__(*args, **kwargs)
+
+        # Customize form placeholders and remove labels
+        self.fields['username'].label = False
+        self.fields['username'].widget.attrs['placeholder'] = 'Enter your email or username'
+        self.fields['password'].label = False
+        self.fields['password'].widget.attrs['placeholder'] = 'Enter your password'
 
 
 class UsernameReminderForm(forms.Form):
@@ -418,15 +457,15 @@ class EmailSettingsForm(forms.Form):
 class FsPasswordResetForm(forms.Form):
     """
     This form is a modification of django's PasswordResetForm. The only difference is that here we allow the user
-    to enter an email or a username (insetad of only a username) to send the reset password email.
+    to enter an email or a username (instead of only a username) to send the reset password email.
     Methods `send_email` and `save` are very similar to the original methods from
     `django.contrib.auth.forms.PasswordResetForm`. We could not inherit from the original form because we don't want
     the old `username` field to be present. When migrating to a new version of django (current is 1.11) we should check
     for updates in this code in case we also have to apply them.
     """
-    email_or_username = forms.CharField(label="Email or Username", max_length=254)
+    username_or_email = forms.CharField(label="Email or Username", max_length=254)
 
-    def get_users(self, email_or_username):
+    def get_users(self, username_or_email):
         """Given an email, return matching user(s) who should receive a reset.
 
             This subclass will let all active users reset their password.
@@ -436,10 +475,10 @@ class FsPasswordResetForm(forms.Form):
         """
         UserModel = get_user_model()
         active_users = UserModel._default_manager.filter(Q(**{
-                '%s__iexact' % UserModel.get_email_field_name(): email_or_username,
+                '%s__iexact' % UserModel.get_email_field_name(): username_or_email,
                 'is_active': True,
             }) | Q(**{
-                'username__iexact': email_or_username,
+                'username__iexact': username_or_email,
                 'is_active': True,
             })
         )
@@ -455,8 +494,8 @@ class FsPasswordResetForm(forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
-        email_or_username = self.cleaned_data["email_or_username"]
-        for user in self.get_users(email_or_username):
+        username_or_email = self.cleaned_data["username_or_email"]
+        for user in self.get_users(username_or_email):
             if not domain_override:
                 current_site = get_current_site(request)
                 site_name = current_site.name
@@ -479,3 +518,17 @@ class FsPasswordResetForm(forms.Form):
                 subject_template_name, email_template_name, context, from_email,
                 user.email, html_email_template_name=html_email_template_name,
             )
+
+
+class BwSetPasswordForm(SetPasswordForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwSetPasswordForm, self).__init__(*args, **kwargs)
+
+        # Customize some placeholders and classes, remove labels and help texts
+        self.fields['new_password1'].label = False
+        self.fields['new_password1'].help_text = False
+        self.fields['new_password1'].widget.attrs['placeholder'] = 'New password'
+        self.fields['new_password2'].label = False
+        self.fields['new_password2'].help_text = False
+        self.fields['new_password2'].widget.attrs['placeholder'] = 'New password confirmation'

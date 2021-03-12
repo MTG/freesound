@@ -7,3 +7,7 @@ import './carousel';
 import './propagation';
 import './rating';
 import './formDisableOnSubmit';
+import './modal';
+import './loginModals';
+import './toast';
+import './recaptcha';

@@ -60,7 +60,7 @@
                 </form>
             </div>
             {% else %}
-            <p>Please <a href="{% url "accounts-login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add messages</center>
+            <p>Please <a href="{% url "login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add messages</center>
             {% endif %}
 
         </div> <!-- /#ticket-left -->

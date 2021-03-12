@@ -22,7 +22,7 @@
 import time
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
@@ -518,3 +518,17 @@ class FsPasswordResetForm(forms.Form):
                 subject_template_name, email_template_name, context, from_email,
                 user.email, html_email_template_name=html_email_template_name,
             )
+
+
+class BwSetPasswordForm(SetPasswordForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwSetPasswordForm, self).__init__(*args, **kwargs)
+
+        # Customize some placeholders and classes, remove labels and help texts
+        self.fields['new_password1'].label = False
+        self.fields['new_password1'].help_text = False
+        self.fields['new_password1'].widget.attrs['placeholder'] = 'New password'
+        self.fields['new_password2'].label = False
+        self.fields['new_password2'].help_text = False
+        self.fields['new_password2'].widget.attrs['placeholder'] = 'New password confirmation'

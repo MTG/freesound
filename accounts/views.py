@@ -34,6 +34,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
@@ -56,7 +57,7 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm, FsPasswordResetForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
@@ -119,15 +120,37 @@ def login(request, template_name, authentication_form):
     return response
 
 
+class FsPasswordResetConfirmView(PasswordResetConfirmView):
+
+    def get_context_data(self, **kwargs):
+        context = super(FsPasswordResetConfirmView, self).get_context_data(**kwargs)
+        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+        # instead of staying in PasswordResetCompleteView (the current path).
+        context['next_path'] = reverse('accounts-home')
+        return context
+
+
 def password_reset_confirm(request, uidb64, token):
-    response = PasswordResetConfirmView.as_view(
+    response = FsPasswordResetConfirmView.as_view(
         template_name='registration/password_reset_confirm.html' if not using_beastwhoosh(request)
-        else 'accounts/password_reset_confirm.html')(request, uidb64=uidb64, token=token)
+            else 'accounts/password_reset_confirm.html',
+        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm
+    )(request, uidb64=uidb64, token=token)
     return response
 
 
+class FsPasswordResetCompleteView(PasswordResetCompleteView):
+
+    def get_context_data(self, **kwargs):
+        context = super(FsPasswordResetCompleteView, self).get_context_data(**kwargs)
+        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+        # instead of staying in PasswordResetCompleteView (the current path).
+        context['next_path'] = reverse('accounts-home')
+        return context
+
+
 def password_reset_complete(request):
-    response = PasswordResetCompleteView.as_view(
+    response = FsPasswordResetCompleteView.as_view(
         template_name='registration/password_reset_complete.html' if not using_beastwhoosh(request)
         else 'accounts/password_reset_complete.html')(request)
     return response
@@ -262,18 +285,23 @@ def registration(request):
 
 
 def activate_user(request, username, uid_hash):
+    # NOTE: in these views we overwrite "next_path" variable from the context processor so we make sure that if the
+    # login modal is used the user will be redirected to the front-page instead of that same page
+
     try:
         user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
-        return render(request, 'accounts/activate.html', {'user_does_not_exist': True})
+        return render(request, 'accounts/activate.html', {'user_does_not_exist': True,
+                                                          'next_path': reverse('accounts-home')})
 
     new_hash = create_hash(user.id)
     if new_hash != uid_hash:
-        return render(request, 'accounts/activate.html', {'decode_error': True})
+        return render(request, 'accounts/activate.html', {'decode_error': True,
+                                                          'next_path': reverse('accounts-home')})
 
     user.is_active = True
     user.save()
-    return render(request, 'accounts/activate.html', {'all_ok': True})
+    return render(request, 'accounts/activate.html', {'all_ok': True, 'next_path': reverse('accounts-home')})
 
 
 def send_activation(user):

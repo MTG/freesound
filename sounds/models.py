@@ -1526,8 +1526,8 @@ class SoundAnalysis(models.Model):
     """
     sound = models.ForeignKey(Sound, related_name='analyses')
     created = models.DateTimeField(auto_now_add=True)
-    extractor = models.CharField(db_index=True, max_length=255)
-    extractor_version = models.CharField(db_index=True, max_length=255)
+    analyzer = models.CharField(db_index=True, max_length=255)
+    analyzer_version = models.CharField(db_index=True, max_length=255)
     analysis_filename = models.CharField(max_length=255, null=True)
     analysis_data = JSONField(null=True)
 
@@ -1553,4 +1553,4 @@ class SoundAnalysis(models.Model):
         return str(self.id)
 
     class Meta:
-        unique_together = (("sound", "extractor"),)
+        unique_together = (("sound", "analyzer", "analyzer_version"))

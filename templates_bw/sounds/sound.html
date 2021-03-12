@@ -189,7 +189,7 @@
                             {% else %}
                                 {% if not request.user.is_authenticated and page.object_list %}
                                     <div class="v-spacing-top-4">
-                                        Please <a href="{% url 'accounts-login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                        Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
                                     </div>
                                 {% endif %}
                             {% endif %}
@@ -229,7 +229,7 @@
                                     <div class="text-grey">This sound has not been commented on yet, be the first to comment!</div>
                                     {% if not request.user.is_authenticated %}
                                         <div class="v-spacing-top-1">
-                                            Please <a href="{% url 'accounts-login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                            Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
                                         </div>
                                     {% endif %}
                                 {% endif %}

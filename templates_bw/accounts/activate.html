@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block title %}Activation succeeded{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 padding-bottom-2 v-spacing-top-5">
+            <h5>Activation succeeded</h5>
+            <p>Your account has been activated. You may go ahead and log in now.</p>
+            <button class="btn btn-primary" data-toggle="modal" data-target="#loginModal">Log in</button>
+        </div>
+    </div>
+{% endblock %}

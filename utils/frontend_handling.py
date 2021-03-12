@@ -18,11 +18,14 @@
 #     See AUTHORS file.
 #
 
+from functools import wraps
+
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render as django_render
 from django.template import TemplateDoesNotExist
 from django.urls import reverse
+from django.utils.decorators import available_attrs
 
 
 def selected_frontend(request):
@@ -109,7 +112,7 @@ def defer_if_beastwhoosh(redirect_to_view):
     return decorator
 
 
-def redirect_if_beastwhoosh(redirect_url_name, kwarg_keys=None, query_string=''):
+def redirect_if_beastwhoosh(redirect_url_name='front-page', kwarg_keys=None, query_string=''):
     """
     Util decorator to be used in view which, when using Beast Whoosh frontend, should return an HTTP redirect to
     a new URL. A typical use case for this is two views whose functionality has been merged into a single one, or
@@ -150,10 +153,37 @@ def redirect_if_beastwhoosh(redirect_url_name, kwarg_keys=None, query_string='')
             if not using_beastwhoosh(request):
                 return view_func(request, *args, **kwargs)
             else:
-                new_args = [kwargs[key] for key in kwarg_keys]
+                if kwarg_keys is not None:
+                    new_args = [kwargs[key] for key in kwarg_keys]
+                else:
+                    new_args = []
                 url = reverse(redirect_url_name, args=new_args)
                 if query_string:
                     url += '?%s' % query_string
                 return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator
+
+
+def redirect_if_beastwhoosh_inline(function=None, redirect_url_name='front-page', kwarg_keys=None, query_string=''):
+    """
+    Works the same as redirect_if_beastwhoosh but can be used inline in urls.py url<>view definitions:
+
+    > redirect_if_beastwhoosh_inline(PasswordResetView.as_view(form_class=FsPasswordResetForm))
+    """
+    def decorator(view_func):
+        @wraps(view_func, assigned=available_attrs(view_func))
+        def _wrapped_view(request, *args, **kwargs):
+            if not using_beastwhoosh(request):
+                return view_func(request, *args, **kwargs)
+            else:
+                if kwarg_keys is not None:
+                    new_args = [kwargs[key] for key in kwarg_keys]
+                else:
+                    new_args = []
+                url = reverse(redirect_url_name, args=new_args)
+                if query_string:
+                    url += '?%s' % query_string
+                return HttpResponseRedirect(url)
+        return _wrapped_view
+    return decorator(function)

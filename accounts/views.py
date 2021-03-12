@@ -253,7 +253,12 @@ def registration(request):
     else:
         form = form_class()
 
-    return render(request, 'accounts/registration.html', {'form': form})
+    if using_beastwhoosh(request):
+        # In beastwhoosh we don't have a dedicated registration page, redirect to front-page and auto-open the
+        # registration modal
+        return HttpResponseRedirect('{}?registration=1'.format(reverse('front-page')))
+    else:
+        return render(request, 'accounts/registration.html', {'form': form})
 
 
 def activate_user(request, username, uid_hash):

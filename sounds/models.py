@@ -1553,4 +1553,4 @@ class SoundAnalysis(models.Model):
         return str(self.id)
 
     class Meta:
-        unique_together = (("sound", "analyzer", "analyzer_version"))
+        unique_together = (("sound", "analyzer", "analyzer_version")) # one sounds.SoundAnalysis object per sound<>analyzer<>version combination

@@ -144,7 +144,7 @@
         </fieldset>
     </form>
     {% else %}
-    <center><p>Please <a href="{% url 'accounts-login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment</center>
+    <center><p>Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment</center>
     {% endif %}
 </div> <!-- single_sample_content -->
 

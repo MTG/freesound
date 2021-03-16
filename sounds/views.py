@@ -226,7 +226,8 @@ def front_page(request):
         'top_donor': top_donor,
         'total_num_sounds': total_num_sounds,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
-        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beash whoosh only
+        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
+        'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
     }
     return render(request, 'front.html', tvars)
 
@@ -294,6 +295,8 @@ def sound(request, username, sound_id):
         'is_following': is_following,
         'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS,
+        'path': request.build_absolute_uri()  # used as "next" parameter for follow/unfollow user links in BW
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)
@@ -333,7 +336,7 @@ def after_download_modal(request):
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
                                                     reverse("sound", args=[username, sound_id])))
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -360,7 +363,7 @@ def sound_download(request, username, sound_id):
 @transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():

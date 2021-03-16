@@ -1,0 +1,20 @@
+{% load bw_templatetags %}
+
+<div class="modal" id="feedbackRegistration" tabindex="-1" role="dialog" aria-labelledby="feedbackRegistrationLabel" aria-hidden="true">
+    <div class="modal-wrapper">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+            <span class="close" data-dismiss="modal" aria-label="Close">
+              {% bw_icon 'close' %}
+            </span>
+                </div>
+                <div class="modal-body">
+                    <h5>Almost there!</h5>
+                    <p class="main-text">We've sent a verification link by email</p>
+                    <p class="secondary-text">Didn't receive the email? Check your Spam folder, it may have been caught by a filter. If you still don't see it, you can <a>resend the verification email</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

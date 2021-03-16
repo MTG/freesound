@@ -432,7 +432,7 @@ class PasswordReset(TestCase):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"email_or_username": "testuser@freesound.org"})
+        self.client.post(reverse("password_reset"), {"username_or_email": "testuser@freesound.org"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
@@ -442,7 +442,7 @@ class PasswordReset(TestCase):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"email_or_username": "testuser"})
+        self.client.post(reverse("password_reset"), {"username_or_email": "testuser"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
@@ -453,7 +453,7 @@ class PasswordReset(TestCase):
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
         long_mail = ('1' * 255) + '@freesound.org'
-        resp = self.client.post(reverse("password_reset"), {"email_or_username": long_mail})
+        resp = self.client.post(reverse("password_reset"), {"username_or_email": long_mail})
 
         self.assertNotEqual(resp.context['form'].errors, None)
 

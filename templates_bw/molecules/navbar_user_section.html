@@ -28,9 +28,11 @@
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'access-tokens' %}">Manage API settings</a>
                 </li>
+                {% comment %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'donate' %}">Donate</a>
                 </li>
+                {% endcomment %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--grey" href="{% url 'logout' %}?next=/">Logout</a>
                 </li>
@@ -45,9 +47,9 @@
     {% endcache %}
 {% else %}
     <li class="bw-nav__action">
-        <a class="bw-link--black" href="{% url 'login' %}">Log in</a>
+        <button class="btn-secondary" data-toggle="modal" data-target="#loginModal">Log in</button>
     </li>
     <li class="bw-nav__action">
-        <a class="no-hover" href="{% url 'accounts-register' %}"><button class="btn-primary">Join</button></a>
+        <button class="btn-primary" data-toggle="modal" data-target="#registerModal">Join</button>
     </li>
 {% endif %}

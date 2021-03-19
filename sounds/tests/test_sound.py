@@ -1031,7 +1031,7 @@ class SoundAnalysisModel(TestCase):
         analysis_data = {'descriptor1': 0.56, 'descirptor2': 1.45, 'descriptor3': 'label'}
 
         # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
-        sa = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor1", analysis_data=analysis_data)
+        sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data)
         self.assertEqual(sound.analyses.all().count(), 1)
         self.assertEqual(sa.get_analysis().keys(), analysis_data.keys())
         self.assertEqual(sa.get_analysis()['descriptor1'], 0.56)
@@ -1041,13 +1041,13 @@ class SoundAnalysisModel(TestCase):
         sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
         create_directories(sound_analysis_folder)
         json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
-        sa2 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor2", analysis_filename=analysis_filename)
+        sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_filename=analysis_filename)
         self.assertEqual(sound.analyses.all().count(), 2)
         self.assertEqual(sa2.get_analysis().keys(), analysis_data.keys())
         self.assertEqual(sa2.get_analysis()['descriptor1'], 0.56)
 
         # Create an analysis object which references a non-existing file. Check that get_analysis returns None.
-        sa3 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor3",
+        sa3 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor3",
                                            analysis_filename='non_existing_file.json')
         self.assertEqual(sound.analyses.all().count(), 3)
         self.assertEqual(sa3.get_analysis(), None)

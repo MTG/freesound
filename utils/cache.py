@@ -29,3 +29,7 @@ def get_template_cache_key(fragment_name, *variables):
 def invalidate_template_cache(fragment_name, *variables):
     cache_key = get_template_cache_key(fragment_name, *variables)
     cache.delete(cache_key)
+
+def invalidate_user_template_caches(user_id):
+    invalidate_template_cache('user_header', user_id)
+    invalidate_template_cache('bw_user_header', user_id)

@@ -70,7 +70,7 @@ from forum.models import Post
 from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.encryption import create_hash
@@ -453,8 +453,7 @@ def edit(request):
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
-            invalidate_template_cache('user_header', request.user.id)
-
+            invalidate_user_template_caches(request.user.id)
             profile.save()
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
@@ -720,9 +719,9 @@ def describe_sounds(request):
                         'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
 
                     # Invalidate affected caches in user header
-                    invalidate_template_cache("user_header", request.user.id)
+                    invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
-                        invalidate_template_cache("user_header", moderator.id)
+                        invalidate_user_template_caches(moderator.id)
 
             except utils.sound_upload.NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound

@@ -429,7 +429,10 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
+          geotags_geotag.lat as geotag_lat,
+          geotags_geotag.lon as geotag_lon,
           sounds_remixgroup_sounds.id as remixgroup_id,
+          accounts_profile.has_avatar as user_has_avatar,
           ac_analsyis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
@@ -440,8 +443,10 @@ class SoundManager(models.Manager):
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
+          LEFT JOIN accounts_profile ON accounts_profile.user_id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
                                                          AND ac_analsyis.extractor = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds

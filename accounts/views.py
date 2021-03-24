@@ -510,6 +510,7 @@ def handle_uploaded_image(profile, f):
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
+    path_xl = profile.locations("avatar.XL.path")
     try:
         extract_square(tmp_image_path, path_s, 32)
         upload_logger.info("\tcreated small thumbnail")
@@ -529,6 +530,12 @@ def handle_uploaded_image(profile, f):
         upload_logger.info("\tcreated large thumbnail")
     except Exception as e:
         upload_logger.error("\tfailed creating large thumbnails: " + str(e))
+
+    try:
+        extract_square(tmp_image_path, path_xl, 100)
+        upload_logger.info("\tcreated extra-large thumbnail")
+    except Exception as e:
+        upload_logger.error("\tfailed creating extra-large thumbnails: " + str(e))
 
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)

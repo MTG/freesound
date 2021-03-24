@@ -444,6 +444,19 @@ class Profile(SocialModel):
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
 
+    def get_average_rating(self):
+        # TODO: don't compute this realtime, store it in DB
+        ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
+        if ratings:
+            return 1.0*sum(ratings)/len(ratings)/2
+        else:
+            return 0
+
+    @property
+    def num_packs(self):
+        # TODO: store this as an account field instead of computing it live
+        return Pack.objects.filter(user_id=self.user_id).count()
+
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
 

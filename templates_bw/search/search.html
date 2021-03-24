@@ -204,8 +204,10 @@
                             {% display_facet "channels" facets.channels "list" "Channels" %}
                         {% endif %}
 
-                        {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
-                            {% display_facet "grouping_pack" facets.grouping_pack "list" "Packs"%}
+                        {% if not only_sounds_with_pack %}
+                            {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
+                                {% display_facet "grouping_pack" facets.grouping_pack "list" "Packs"%}
+                            {% endif %}
                         {% endif %}
 
                         {% if facets.username and facets.username|length > 1 %}
@@ -230,11 +232,14 @@
                                         {% display_sound_middle result.sound %}
                                         {% if result.more_from_pack %}
                                             <p class="text-grey text-right v-spacing-top-negative-2">
-                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }} from the same pack</a> "{{ result.pack_name|truncate_string:35 }}"
+                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.more_from_pack}} more result{{ result.more_from_pack|pluralize }} from the same pack</a> {{ result.pack_name|truncate_string:35 }}
                                             </p>
                                         {% endif %}
                                     {% else %}
-                                        {% display_pack result.pack_id %}
+                                        {% display_pack_big result.pack_id %}
+                                        <p class="text-grey text-right v-spacing-top-negative-2">
+                                            {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.more_from_pack|add:1}} result{{ result.more_from_pack|add:1|pluralize }} from that pack</a>
+                                        </p>
                                     {% endif %}
                                     {% if not forloop.last %}
                                         <div class="divider-light"></div>

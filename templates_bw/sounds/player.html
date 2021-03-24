@@ -1,6 +1,10 @@
+
+
+
+
 <div
     class="bw-player"
-    data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' %}small{% elif player_size == 'big_no_info' %}big{% endif %}"
+    data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' %}small{% elif player_size == 'big_no_info' %}big{% elif player_size == 'minimal' %}minimal{% endif %}"
     data-bookmark="{% if player_size == 'small' %}true{% else %}false{% endif %}"
     data-mp3="{{ sound.locations.preview.LQ.mp3.url }}"
     data-ogg="{{ sound.locations.preview.LQ.ogg.url }}"

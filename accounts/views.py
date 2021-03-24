@@ -974,7 +974,7 @@ def account(request, username):
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                                .order_by("-last_updated")[0:10]
+                                .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
     following, followers, following_tags, following_count, followers_count, following_tags_count = \
         follow_utils.get_vars_for_account_view(user)
     follow_user_url = reverse('follow-user', args=[username])

@@ -5,6 +5,7 @@
 {% load search %}
 {% load bw_templatetags %}
 {% load display_sound %}
+{% load display_pack %}
 
 {% block title %}Search{% endblock %}
 
@@ -36,7 +37,11 @@
                     <div>
                         <div class="divider-light"></div>
                         <div class="padding-3 v-padding-2 between font-weight-bold">
-                            <div class="col-4">{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sounds</div>
+                            {% if not only_sounds_with_pack %}
+                                <div class="col-4">{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}</div>
+                            {% else %}
+                                <div class="col-4">{{ paginator.count }} pack{{ paginator.count|pluralize }}</div>
+                            {% endif %}
                             {% comment %}
                                 <div class="bw_search-tab">Sounds</div>
                             {% endcomment %}
@@ -150,6 +155,15 @@
                                                 <div class="bw-search__filter-name">Group sounds by pack</div>
                                             </label>
                                         </li>
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input id="only_sounds_with_pack" type="checkbox" class="bw-checkbox" {% if only_sounds_with_pack == "1" %}checked{% endif %}/>
+                                                    <input id="only_sounds_with_pack_hidden" type="hidden" name="only_p" {% ifequal only_sounds_with_pack "1" %}value="1"{% else %}value=""{% endifequal %} />
+                                                </div>
+                                                <div class="bw-search__filter-name">Display results as packs</div>
+                                            </label>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -212,11 +226,15 @@
                         <div class="v-spacing-6">
                             {% for result in docs %}
                                 <div class="bw-search__result">
-                                    {% display_sound_middle result.sound %}
-                                    {% if result.more_from_pack %}
-                                        <p class="text-grey text-right v-spacing-top-negative-2">
-                                            {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }} from the same pack</a> "{{ result.pack_name|truncate_string:35 }}"
-                                        </p>
+                                    {% if not only_sounds_with_pack %}
+                                        {% display_sound_middle result.sound %}
+                                        {% if result.more_from_pack %}
+                                            <p class="text-grey text-right v-spacing-top-negative-2">
+                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }} from the same pack</a> "{{ result.pack_name|truncate_string:35 }}"
+                                            </p>
+                                        {% endif %}
+                                    {% else %}
+                                        {% display_pack result.pack_id %}
                                     {% endif %}
                                     {% if not forloop.last %}
                                         <div class="divider-light"></div>

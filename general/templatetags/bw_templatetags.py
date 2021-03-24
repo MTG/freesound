@@ -110,3 +110,9 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
 def bw_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
     return show_paginator(context, paginator, page, current_page, request,
                           anchor=anchor, non_grouped_number_of_results=non_grouped_number_of_results )
+
+
+@register.inclusion_tag('molecules/maps_js_scripts.html', takes_context=True)
+def bw_maps_js_scripts(context):
+    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'media_url': settings.MEDIA_URL}

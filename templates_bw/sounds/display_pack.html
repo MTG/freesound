@@ -1,10 +1,11 @@
 {% load cache %}
+{% load util %}
 {% load display_sound %}
 
 {% if pack %}
 {% cache 3600 bw_display_pack pack.0.id %}
 {% with pack.0 as pack %}
-    <div>
+    <div class="v-spacing-5">
         <div class="bw-carousel-container">
             <div class="bw-carousel-wrapper">
                 <div class="bw-carousel with-dots dots-distance-1">
@@ -19,12 +20,14 @@
                 </div>
             </div>
         </div>
-        <h5 class="v-spacing-top-1">
-            <a href="{% url "pack" pack.user.username pack.id %}" class="bw-link--black">
-                {{ pack.name }}
-            </a>
+        <h5 class="v-spacing-top-1 overflow-hidden">
+            <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name|truncate_string:45 }}</a>
         </h5>
-        <p>{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }} by <a href="{% url "account" pack.user.username %}">{{ pack.user.username }}</a></p>
+        <a href="{% url "account" pack.user.username %}">{{ pack.user.username|truncate_string:15 }}</a> <span class="text-grey">({{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }})</span>
+        {% if pack.description %}
+            <p class="text-grey">{{ pack.description|striptags|safe|truncatewords:10 }}</p>
+        {% endif %}
+
     </div>
 {% endwith %}
 {% endcache %}

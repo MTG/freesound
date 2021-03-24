@@ -201,29 +201,33 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
   imageContainer.className = 'bw-player__img-container'
   if (playerSize === 'big') {
     imageContainer.classList.add('bw-player__img-container--big')
+  } else if (playerSize === 'minimal') {
+    imageContainer.classList.add('bw-player__img-container--minimal')
   }
-  const { waveform, title } = parentNode.dataset
-  const playerImage = document.createElement('img')
-  playerImage.className = 'bw-player__img'
-  playerImage.src = waveform
-  playerImage.alt = title
-  const progressIndicator = createProgressIndicator(parentNode, audioElement)
-  imageContainer.appendChild(playerImage)
-  imageContainer.appendChild(progressIndicator)
-  audioElement.addEventListener('loadedmetadata', () => {
-    const progressStatus = createProgressStatus(audioElement, playerSize)
-    imageContainer.appendChild(progressStatus)
-  })
-  imageContainer.addEventListener('click', evt => {
-    const clickPosition = evt.layerX
-    const width = evt.target.clientWidth
-    const positionRatio = clickPosition / width
-    const time = audioElement.duration * positionRatio
-    audioElement.currentTime = time
-    if (audioElement.paused) {
-      audioElement.play()
-    }
-  })
+  if (playerSize !== 'minimal') {
+    const {waveform, title} = parentNode.dataset
+    const playerImage = document.createElement('img')
+    playerImage.className = 'bw-player__img'
+    playerImage.src = waveform
+    playerImage.alt = title
+    const progressIndicator = createProgressIndicator(parentNode, audioElement)
+    imageContainer.appendChild(playerImage)
+    imageContainer.appendChild(progressIndicator)
+    audioElement.addEventListener('loadedmetadata', () => {
+      const progressStatus = createProgressStatus(audioElement, playerSize)
+      imageContainer.appendChild(progressStatus)
+    })
+    imageContainer.addEventListener('click', evt => {
+      const clickPosition = evt.layerX
+      const width = evt.target.clientWidth
+      const positionRatio = clickPosition / width
+      const time = audioElement.duration * positionRatio
+      audioElement.currentTime = time
+      if (audioElement.paused) {
+        audioElement.play()
+      }
+    })
+  }
   return imageContainer
 }
 
@@ -239,6 +243,8 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   playerControls.className = 'bw-player__controls stop-propagation'
   if (playerSize === 'big') {
     playerControls.classList.add('bw-player__controls--big')
+  } else if (playerSize === 'minimal') {
+    playerControls.classList.add('bw-player__controls--minimal')
   }
   const playButton = createPlayButton(audioElement, playerSize)
   const stopButton = createStopButton(audioElement, parentNode)
@@ -304,9 +310,4 @@ const createPlayer = parentNode => {
   }
 }
 
-const setupPlayers = () => {
-  const players = [...document.getElementsByClassName('bw-player')]
-  players.forEach(createPlayer)
-}
-
-setupPlayers()
+export {createPlayer};

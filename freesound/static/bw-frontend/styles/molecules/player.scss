@@ -6,6 +6,11 @@
   &.bw-player__img-container--big {
     height: 330px;
   }
+
+  &.bw-player__img-container--minimal {
+    height: 20px;
+    width: 43px;
+  }
 }
 
 .bw-player__img {
@@ -79,6 +84,10 @@
     .bw-player__play-btn {
       font-size: 36px;
     }
+  }
+
+  &.bw-player__controls--minimal {
+    opacity: 1;
   }
 }
 

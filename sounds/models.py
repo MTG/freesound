@@ -1119,8 +1119,10 @@ class Sound(SocialModel):
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
                 for bw_player_size in ['small', 'middle', 'big_no_info', 'small_no_info']:
-                    invalidate_template_cache(
-                        "bw_display_sound", self.id, is_authenticated, is_explicit, bw_player_size)
+                    for bw_request_user_is_author in [True, False]:
+                        invalidate_template_cache(
+                            "bw_display_sound",
+                            self.id, is_authenticated, is_explicit, bw_player_size, bw_request_user_is_author)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

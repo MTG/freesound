@@ -473,6 +473,7 @@ def edit(request):
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True
                 profile.save()
+            invalidate_user_template_caches(request.user.id)
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")

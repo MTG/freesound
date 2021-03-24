@@ -57,7 +57,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
             'opacity_class': opacity_class}
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
-def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=False, update_stars_color_on_save=False):
+def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=False, update_stars_color_on_save=False):
     if hasattr(sound, 'username'):
         sound_user = sound.username
     else:
@@ -65,6 +65,10 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
     request = context['request']
     request_user = request.user.username
     is_authenticated = request.user.is_authenticated
+
+    if allow_rating is None:
+        # If allow_rating is None (default), allow rating only if the request user is not the author of the sound
+        allow_rating = request.user.id != sound.user_id
 
     if not use_request_user_rating:
         if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:

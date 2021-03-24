@@ -3,14 +3,14 @@
 {% load bw_templatetags %}
 
 {% if sound %}
-{% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size %}
+{% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size request_user_is_author %}
     {% if player_size == 'small' %}
         {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
         {% include "sounds/player.html" %}
         <h5 class="v-spacing-top-1  overflow-hidden">
             <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename }}</a>
         </h5>
-        <a href="{% url 'account' sound_user %}">{{ sound_user }}</a>
+        <a href="{% url 'account' sound_user %}">{{ sound_user|truncate_string:15 }}</a>
         <p class="text-grey">{{ sound.description|striptags|safe|truncatewords:10 }}</p>
 
     {% elif player_size == 'middle' %}
@@ -81,7 +81,7 @@
         <div class="between v-spacing-top-2 v-spacing-3">
             <div class="middle text-grey h-spacing-1">
                 <div class="avatar h-spacing-1">
-                    <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
+                    <img src="{{ user_profile_locations.avatar.S.url }}" />
                 </div>
                 <a href="{% url 'account' sound_user %}">{{ sound_user | truncate_string:15 }}</a>
                 <span class="h-spacing-left-1 text-light-grey">{{ sound.created|date:"F jS, Y" }}</span>
@@ -89,7 +89,7 @@
             <div class="middle text-light-grey bw_sound-info-extended">
                 {% if sound.geotag_id %}
                 <div><span class="bw-icon-pin"></span>
-                    <span class="h-spacing-left-1 h-spacing-3">{{ sound.geotag.lat|floatformat:3 }}, {{ sound.geotag.lon|floatformat:3 }}</span></div>
+                    <span class="h-spacing-left-1 h-spacing-3">{{ sound.geotag_lat|floatformat:3 }}, {{ sound.geotag_lon|floatformat:3 }}</span></div>
                     {% comment %}In the span above we should put the textual name of the place where the sound was recorded
                     (if there is geotag). For now we'll put cooedinates{% endcomment %}
                 {% endif %}
@@ -111,6 +111,10 @@
     {% elif player_size == 'small_no_info' %}
         {% comment %}This size will be used inside a pack carousel. For this size we only include the basic
         player and show no sound metadata{% endcomment %}
+        {% include "sounds/player.html" %}
+
+    {% elif player_size == 'minimal' %}
+        {% comment %}This size is used in map info windows and only includes a play/stop and loop button{% endcomment %}
         {% include "sounds/player.html" %}
 
     {% endif %}

@@ -358,6 +358,12 @@ def username_reminder(request):
 
 @login_required
 def home(request):
+    if using_beastwhoosh(request):
+        # In BW we don't have a "home" so we redirect to the account page. All the "extra" features provides in NG
+        # home page with respect to account page are either provided in the navbar user menus or will be provided in
+        # the "manage sounds" page
+        return HttpResponseRedirect(reverse('account', args=[request.user.username]))
+
     user = request.user
 
     # Tagcloud
@@ -995,7 +1001,7 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
-        'home': False,
+        'home': request.user == user,
         'user': user,
         'tags': tags,
         'latest_sounds': latest_sounds,

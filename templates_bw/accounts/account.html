@@ -8,7 +8,7 @@
 {% load tags %}
 {% load util %}
 
-{% block title %}{% if home %}home{% else %}{{ user.username }}{% endif %}{% endblock %}
+{% block title %}{{ user.username }}{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -22,15 +22,15 @@
             <div class="v-spacing-top-3">
                 {% if home %}
                     <button class="btn-inverse btn-profile-adapt">Manage uploads</button>
-                    <button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Edit profile</button>
+                    <a class="no-hover" href="{% url 'accounts-edit' %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Edit profile</button></a>
                 {% else %}
                     {% if not user.profile.is_deleted_user %}
                         {% if show_unfollow_button %}
                             <a class="no-hover" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
                         {% else %}
-                            <a class="no-hover" href="{% url 'follow-user' user.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
+                            <a class="no-hover" href="{% url 'follow-user' user.username %}?next={{ next_path }}"><button class="btn-inverse btn-profile-adapt">Follow</button></a>
                         {% endif %}
-                        <a class="no-hover" href="{% url "messages-new" user.username %}"><button class="btn-inverse h-spacing-left-2">Message</button></a>
+                        <a class="no-hover" href="{% url "messages-new" user.username %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Message</button></a>
                     {% endif %}
                 {% endif %}
             </div>

@@ -9,6 +9,7 @@
 {% load flag_user %}
 {% load sound_signature%}
 {% load display_sound %}
+{% load display_user %}
 {% load bw_templatetags %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
@@ -198,15 +199,7 @@
                                     {% for comment in page.object_list %}
                                         <div>
                                             <div style="display: flex; justify-content: space-between;">
-                                                <div class="middle bw-sound-page__user v-spacing-top-1">
-                                                    <div class="avatar h-spacing-1">
-                                                        <img src="{{ comment.user.profile.locations.avatar.S.url }}" />
-                                                    </div>
-                                                    <div class="h-spacing-left-1">
-                                                        <a href="{% url 'account' comment.user.username %}">{{ comment.user.username | truncate_string:15 }}</a>
-                                                        <p class="text-grey">{{ comment.created|timesince }} ago</p>
-                                                    </div>
-                                                </div>
+                                                {% display_user_comment comment.user comment.created %}
                                                 <div class="text-right v-spacing-top-1">
                                                     {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
                                                     {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}

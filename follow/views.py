@@ -31,39 +31,61 @@ from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from socket import error as socket_error
+
+from utils.frontend_handling import using_beastwhoosh
 from utils.username import redirect_if_old_username_or_404
 
 
 @redirect_if_old_username_or_404
 def following_users(request, username):
+    """List of users that are being followed by user with "username"
+    """
     user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
     following = follow_utils.get_users_following(user)
 
-    tvars = {'user': user,
-             'following': following,
-             'is_owner': is_owner}
-    return render(request, 'follow/following_users.html', tvars)
+    tvars = {
+        'user': user,
+        'following': following,
+        'is_owner': is_owner,
+        'page': 'following' # Used in BW
+    }
+
+    if using_beastwhoosh(request):
+        return render(request, 'accounts/follow_modal.html', tvars)
+    else:
+        return render(request, 'follow/following_users.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def followers(request, username):
+    """List of users that are following user with "username"
+    """
     user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
     followers = follow_utils.get_users_followers(user)
 
-    tvars = {'user': user,
-             'followers': followers,
-             'is_owner': is_owner}
-    return render(request, 'follow/followers.html', tvars)
+    tvars = {
+        'user': user,
+        'followers': followers,
+        'is_owner': is_owner,
+        'page': 'followers' # Used in BW
+    }
+
+    if using_beastwhoosh(request):
+        return render(request, 'accounts/follow_modal.html', tvars)
+    else:
+        return render(request, 'follow/followers.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def following_tags(request, username):
+    """List of tags that are being followed by user with "username"
+    """
     user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
@@ -77,14 +99,21 @@ def following_tags(request, username):
     for i in range(len(space_tags)):
         following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
 
-    tvars = {'user': user,
-             'following': following,
-             'following_tags': following_tags,
-             'slash_tags': slash_tags,
-             'split_tags': split_tags,
-             'space_tags': space_tags,
-             'is_owner': is_owner}
-    return render(request, 'follow/following_tags.html', tvars)
+    tvars = {
+        'user': user,
+        'following': following,
+        'following_tags': following_tags,
+        'slash_tags': slash_tags,
+        'split_tags': split_tags,
+        'space_tags': space_tags,
+        'is_owner': is_owner,
+        'page': 'tags' # Used in BW
+    }
+
+    if using_beastwhoosh(request):
+        return render(request, 'accounts/follow_modal.html', tvars)
+    else:
+        return render(request, 'follow/following_tags.html', tvars)
 
 
 @login_required
@@ -127,6 +156,13 @@ def follow_tags(request, slash_tags):
     user = request.user
     space_tags = slash_tags.replace("/", " ")
     FollowingQueryItem.objects.get_or_create(user=user, query=space_tags)
+
+    # In BW we check if there's next parameter, and if there is we redirect to it
+    # This is to implement follow/unfollow without Javascript
+    redirect_to = request.GET.get('next', None)
+    if redirect_to is not None:
+        return HttpResponseRedirect(redirect_to)
+
     return HttpResponse()
 
 
@@ -139,6 +175,13 @@ def unfollow_tags(request, slash_tags):
     except FollowingQueryItem.DoesNotExist:
         # If the relation does not exist we're fine, should have never got to here...
         pass
+
+    # In BW we check if there's next parameter, and if there is we redirect to it
+    # This is to implement follow/unfollow without Javascript
+    redirect_to = request.GET.get('next', None)
+    if redirect_to is not None:
+        return HttpResponseRedirect(redirect_to)
+
     return HttpResponse()
 
 

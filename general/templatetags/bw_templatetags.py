@@ -24,6 +24,7 @@ from django import template
 from django.conf import settings
 from django.urls import reverse
 
+from follow.follow_utils import is_user_following_tag
 from general.templatetags.paginator import show_paginator
 from ratings.models import SoundRating
 
@@ -116,3 +117,11 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
 def bw_maps_js_scripts(context):
     return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'media_url': settings.MEDIA_URL}
+
+
+@register.filter
+def user_following_tags(user, tags_slash):
+    if user.is_authenticated():
+        return is_user_following_tag(user, tags_slash)
+    else:
+        return False

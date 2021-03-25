@@ -2,9 +2,9 @@
   background: red;
   z-index: 99999;
   display: none;
-  position: absolute;
-  padding: 14px 0;
-  width: 328px;
+  position: fixed;
+  padding: 14px 14px;
+  width: 70%;
   border-radius: 5px 5px 0 0;
   background-color: $black;
   color: $white;
@@ -17,4 +17,13 @@
   right: 0;
   left: 0;
   margin: auto;
+
+  li {
+      list-style-type: none;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+  }
 }

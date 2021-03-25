@@ -55,7 +55,7 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
@@ -104,6 +104,7 @@ def get_sound_of_the_day_id():
     return random_sound
 
 
+@redirect_if_beastwhoosh('sounds-search', query_string='s=created+desc&g=1')
 def sounds(request):
     latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
@@ -159,6 +160,7 @@ def random(request):
         reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
+@redirect_if_beastwhoosh('sounds-search', query_string='s=created+desc&g=1&only_p=1')
 def packs(request):
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:

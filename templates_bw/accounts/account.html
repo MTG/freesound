@@ -25,8 +25,12 @@
                     <button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Edit profile</button>
                 {% else %}
                     {% if not user.profile.is_deleted_user %}
-                        <button class="btn-inverse btn-profile-adapt">Follow</button>
-                        <a class="no-hover" href="{% url "messages-new" user.username %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Message</button></a>
+                        {% if show_unfollow_button %}
+                            <a class="no-hover" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
+                        {% else %}
+                            <a class="no-hover" href="{% url 'follow-user' user.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
+                        {% endif %}
+                        <a class="no-hover" href="{% url "messages-new" user.username %}"><button class="btn-inverse h-spacing-left-2">Message</button></a>
                     {% endif %}
                 {% endif %}
             </div>
@@ -35,14 +39,11 @@
                     {% if user.profile.about and show_about %}
                         {{ user.profile.about|replace_img|safe|linebreaksbr }}
                     {% endif %}
-
-
                     {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
                         <div class="v-spacing-top-3">
                             <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a>
                         </div>
                     {% endif %}
-
                 </div>
                 <div class="bw-profile__stats v-spacing-top-3">
                     <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>

@@ -297,8 +297,7 @@ def sound(request, username, sound_id):
         'is_following': is_following,
         'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
-        'min_num_ratings': settings.MIN_NUMBER_RATINGS,
-        'path': request.build_absolute_uri()  # used as "next" parameter for follow/unfollow user links in BW
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)

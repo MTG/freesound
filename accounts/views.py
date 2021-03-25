@@ -1001,7 +1001,7 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
-        'home': request.user == user,
+        'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
         'tags': tags,
         'latest_sounds': latest_sounds,

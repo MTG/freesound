@@ -7,6 +7,7 @@
 {% load bw_templatetags %}
 {% load tags %}
 {% load util %}
+{% load cache %}
 
 {% block title %}{{ user.username }}{% endblock %}
 
@@ -111,13 +112,17 @@
                 </div>
             </div>
             <aside class="col-3 offset-1 bw-profile__sections">
+                {% cache 43200 bw_user_profile_stats user.id %}
                 <section class="bw-profile__section_stats v-spacing-top-7">
                     <ol>
                         <li>
                             {% bw_icon 'wave' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_sounds }}</span> <span>sounds</span>
                         </li>
                         <li>
-                            {% bw_icon 'list-bullets' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_packs }}</span> <span>packs</span>
+                            {% bw_icon 'playlist' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_packs }}</span> <span>packs</span>
+                        </li>
+                        <li>
+                            {% bw_icon 'play' 'text-light-grey' %} <span class="text-black">{{ user.profile.get_total_uploaded_sounds_length|duration_hours }}</span> <span>hours of audio</span>
                         </li>
                         <li>
                             {% bw_icon 'star' 'text-light-grey' %} <span class="text-black">{{ user.profile.get_average_rating|floatformat:1 }}</span> <span>average rating</span>
@@ -130,6 +135,7 @@
                         </li>
                     </ol>
                 </section>
+                {% endcache %}
 
                 {% if tags %}
                     <div class="divider-light"></div>

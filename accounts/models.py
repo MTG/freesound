@@ -452,6 +452,11 @@ class Profile(SocialModel):
         else:
             return 0
 
+    def get_total_uploaded_sounds_length(self):
+        # TODO: don't compute this realtime, store it in DB
+        durations = list(Sound.objects.filter(user=self.user).values_list('duration', flat=True))
+        return sum(durations)
+
     @property
     def num_packs(self):
         # TODO: store this as an account field instead of computing it live

@@ -200,10 +200,10 @@
                                             <div style="display: flex; justify-content: space-between;">
                                                 <div class="middle bw-sound-page__user v-spacing-top-1">
                                                     <div class="avatar h-spacing-1">
-                                                        <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
+                                                        <img src="{{ comment.user.profile.locations.avatar.S.url }}" />
                                                     </div>
                                                     <div class="h-spacing-left-1">
-                                                        <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
+                                                        <a href="{% url 'account' comment.user.username %}">{{ comment.user.username | truncate_string:15 }}</a>
                                                         <p class="text-grey">{{ comment.created|timesince }} ago</p>
                                                     </div>
                                                 </div>
@@ -221,7 +221,7 @@
                                         </div>
                                     {% endfor %}
 
-                                    <div class="">
+                                    <div>
                                         {% bw_paginator paginator page current_page request "comments" %}
                                     </div>
 

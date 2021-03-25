@@ -6,12 +6,18 @@
 {% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size request_user_is_author %}
     {% if player_size == 'small' %}
         {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
-        {% include "sounds/player.html" %}
-        <h5 class="v-spacing-top-1  overflow-hidden">
-            <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename }}</a>
-        </h5>
-        <a href="{% url 'account' sound_user %}">{{ sound_user|truncate_string:15 }}</a>
-        <p class="text-grey">{{ sound.description|striptags|safe|truncatewords:10 }}</p>
+        <div class="v-spacing-3 overfow-hidden">
+            {% include "sounds/player.html" %}
+            <h5 class="v-spacing-top-1">
+                <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename|truncate_string:20 }}</a>
+            </h5>
+            <div class="v-spacing-top-1">
+                <a href="{% url 'account' sound_user %}">{{ sound_user|truncate_string:15 }}</a>
+            </div>
+            <div class="v-spacing-top-1 text-grey">
+                {{ sound.description|striptags|safe|truncatewords:10 }}
+            </div>
+        </div>
 
     {% elif player_size == 'middle' %}
         {% comment %}This is the default player shown in search results and in places where the sound takes

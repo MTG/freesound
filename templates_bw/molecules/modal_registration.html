@@ -1,28 +1,21 @@
-{% load bw_templatetags %}
+{% extends "molecules/modal_base.html" %}
 
-<div class="modal" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
-    <div class="modal-wrapper">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content v-padding-bottom-5">
-                <div class="modal-header">
-                    <span class="close" data-dismiss="modal" aria-label="Close">
-                      {% bw_icon 'close' %}
-                    </span>
-                </div>
-                <div class="modal-body">
-                    <h5>Join Freesound</h5>
-                    <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}" data-check-username-url="{% url 'check_username' %}">{% csrf_token %}
-                        {{ registration_form }}
-                        {{ registration_form.recaptcha_response.errors }}
-                        <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
-                        <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
-                        <button type="submit" class="btn btn-primary v-spacing-top-3">Join</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <div class="modal-extra-info">
-            <a data-link="loginModal">Already have an account? Sign in here</a>
-        </div>
+{% block id %}registerModal{% endblock %}
+{% block aria-labelledby %}registerModalLabel{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h5>Join Freesound</h5>
+        <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}" data-check-username-url="{% url 'check_username' %}">{% csrf_token %}
+            {{ registration_form }}
+            {{ registration_form.recaptcha_response.errors }}
+            <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+            <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
+            <button type="submit" class="btn btn-primary v-spacing-top-3">Join</button>
+        </form>
     </div>
-</div>
+{% endblock %}
+
+{% block extra %}
+    <a data-link="loginModal">Already have an account? Sign in here</a>
+{% endblock %}

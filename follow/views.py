@@ -24,6 +24,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.urls import reverse
+
 from follow import follow_utils
 from follow.models import FollowingUserItem
 from follow.models import FollowingQueryItem
@@ -40,21 +42,29 @@ from utils.username import redirect_if_old_username_or_404
 def following_users(request, username):
     """List of users that are being followed by user with "username"
     """
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?following=1')
+
     user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
     following = follow_utils.get_users_following(user)
 
+    # NOTE: 'next_path' tvar below is used in BW for follow/unfollow buttons. We overwrite default value of next_path
+    # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
+    # body content URL
+
     tvars = {
         'user': user,
         'following': following,
         'is_owner': is_owner,
+        'next_path': reverse('account', args=[username]) + '?following=1',  # Used in BW
         'page': 'following' # Used in BW
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal.html', tvars)
+        return render(request, 'accounts/follow_modal_body.html', tvars)
     else:
         return render(request, 'follow/following_users.html', tvars)
 
@@ -63,21 +73,29 @@ def following_users(request, username):
 def followers(request, username):
     """List of users that are following user with "username"
     """
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?followers=1')
+
     user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
     followers = follow_utils.get_users_followers(user)
 
+    # NOTE: 'next_path' tvar below is used in BW for follow/unfollow buttons. We overwrite default value of next_path
+    # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
+    # body content URL
+
     tvars = {
         'user': user,
         'followers': followers,
         'is_owner': is_owner,
+        'next_path': reverse('account', args=[username]) + '?followers=1', # Used in BW,
         'page': 'followers' # Used in BW
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal.html', tvars)
+        return render(request, 'accounts/follow_modal_body.html', tvars)
     else:
         return render(request, 'follow/followers.html', tvars)
 
@@ -86,6 +104,9 @@ def followers(request, username):
 def following_tags(request, username):
     """List of tags that are being followed by user with "username"
     """
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?following_tags=1')
+
     user = request.parameter_user
     is_owner = False
     if request.user.is_authenticated:
@@ -99,6 +120,10 @@ def following_tags(request, username):
     for i in range(len(space_tags)):
         following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
 
+    # NOTE: 'next_path' tvar below is used in BW for follow/unfollow buttons. We overwrite default value of next_path
+    # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
+    # body content URL
+
     tvars = {
         'user': user,
         'following': following,
@@ -107,11 +132,12 @@ def following_tags(request, username):
         'split_tags': split_tags,
         'space_tags': space_tags,
         'is_owner': is_owner,
+        'next_path': reverse('account', args=[username]) + '?following_tags=1', # Used in BW
         'page': 'tags' # Used in BW
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal.html', tvars)
+        return render(request, 'accounts/follow_modal_body.html', tvars)
     else:
         return render(request, 'follow/following_tags.html', tvars)
 

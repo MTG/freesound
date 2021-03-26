@@ -1,30 +1,25 @@
+{% extends "molecules/modal_base.html" %}
+
 {% load bw_templatetags %}
 
-<div class="modal" id="forgottenPasswordModal" tabindex="-1" role="dialog" aria-labelledby="forgottenPasswordModalLabel" aria-hidden="true">
-    <div class="modal-wrapper">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-            <span class="close" data-dismiss="modal" aria-label="Close">
-              {% bw_icon 'close' %}
-            </span>
-                </div>
-                <div class="modal-body">
-                    <h5>Problems logging in?</h5>
-                    <div class="text-grey v-spacing-top-negative-1 v-spacing-4">
-                        Enter your email or username below and we'll send you a link to help you login into your account.
-                    </div>
+{% block id %}forgottenPasswordModal{% endblock %}
+{% block aria-labelledby %}forgottenPasswordModalLabel{% endblock %}
 
-                    <form id="problemsLoggingInModalForm" method="post" action="{% url 'problems-logging-in' %}">{% csrf_token %}
-                        {{ problems_logging_in_form }}
-                        <button id="recovery-account" type="submit" class="btn btn-primary">Send me that link</button>
-                    </form>
-
-                </div>
-                <div class="modal-footer link-left  v-spacing-top-3">
-                    <a data-link="loginModal">{% bw_icon 'chevron' 'bw-icon__chevron_left' %} Back to log in</a>
-                </div>
-            </div>
+{% block body %}
+    <div class="text-center">
+        <h5>Problems logging in?</h5>
+        <div class="text-grey v-spacing-top-negative-1 v-spacing-4">
+            Enter your email or username below and we'll send you a link to help you login into your account.
         </div>
+        <form id="problemsLoggingInModalForm" method="post" action="{% url 'problems-logging-in' %}">{% csrf_token %}
+            {{ problems_logging_in_form }}
+            <button id="recovery-account" type="submit" class="btn btn-primary">Send me that link</button>
+        </form>
     </div>
-</div>
+{% endblock %}
+
+{% block footer %}
+    <div class="v-spacing-top-3">
+        <a data-link="loginModal">{% bw_icon 'chevron' 'bw-icon__chevron_left' %} Back to log in</a>
+    </div>
+{% endblock %}

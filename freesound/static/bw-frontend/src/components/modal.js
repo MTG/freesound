@@ -1,4 +1,5 @@
 import {initRegistrationForm, initProblemsLoggingInForm} from "../pages/loginAndRegistration";
+import {showToast} from "./toast";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
@@ -70,4 +71,35 @@ if (problemsLoggingInParam) {
   handleModal('forgottenPasswordModal');
 }
 
-export {handleDismissModal, handleModal};
+const handleGenericModal = fetchContentUrl => {
+  const req = new XMLHttpRequest();
+  req.open('GET', fetchContentUrl, true);
+  req.onload = () => {
+    if (req.status >= 200 && req.status < 400) {
+
+        // Make modal visible and replace contents with those from response
+        const modalContainerId = 'genericModal';
+
+        const modalContainer = document.getElementById(modalContainerId);
+        modalContainer.classList.add('show');
+        modalContainer.style.display = 'block';
+
+        const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
+        modalDismiss.forEach(dismiss => {
+          dismiss.addEventListener('click', () => handleDismissModal(modalContainerId));
+        });
+
+        modalContainer.getElementsByClassName('modal-body')[0].innerHTML = req.responseText;
+    }
+  };
+  req.onerror = () => {
+    // Unexpected errors happened while processing request: close modal and show error in toast
+    showToast('Some errors occurred while loading requested content.')
+  };
+
+  // Send the form
+  req.send();
+};
+
+
+export {handleDismissModal, handleModal, handleGenericModal};

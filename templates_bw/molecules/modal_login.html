@@ -1,29 +1,25 @@
-{% load bw_templatetags %}
+{% extends "molecules/modal_base.html" %}
 
-<div class="modal" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-wrapper">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-            <span class="close" data-dismiss="modal" aria-label="Close">
-                {% bw_icon 'close' %}
-            </span>
-                </div>
-                <div class="modal-body">
-                    <h5>Log in to Freesound</h5>
-                    <form method="post" action="{% url 'login' %}">{% csrf_token %}
-                        {{ login_form }}
-                        <input type="hidden" name="next" value="{{ next_path }}" />
-                        <button type="submit" class="btn btn-primary">Log in</button>
-                    </form>
-                </div>
-                <div class="modal-footer v-spacing-top-3">
-                    <a data-link="forgottenPasswordModal">Problems logging in?</a>
-                </div>
-            </div>
-        </div>
-        <div class="modal-extra-info">
-            <a data-link="registerModal">Don't have an account? Join now</a>
-        </div>
+{% block id %}loginModal{% endblock %}
+{% block aria-labelledby %}loginModalLabel{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h5>Log in to Freesound</h5>
+        <form method="post" action="{% url 'login' %}">{% csrf_token %}
+            {{ login_form }}
+            <input type="hidden" name="next" value="{{ next_path }}" />
+            <button type="submit" class="btn btn-primary">Log in</button>
+        </form>
     </div>
-</div>
+{% endblock %}
+
+{% block footer %}
+    <div class="v-spacing-top-3">
+        <a data-link="forgottenPasswordModal">Problems logging in?</a>
+    </div>
+{% endblock %}
+
+{% block extra %}
+    <a data-link="registerModal">Don't have an account? Join now</a>
+{% endblock %}

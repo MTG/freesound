@@ -68,60 +68,68 @@
                             <div class="v-padding-2 between">
                                 <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" %}1{% else %}0{% endif %}" />
 
-                                <div class="col-4 bw-search__advanced-search-filter-section">
+                                <div class="col-5 bw-search__advanced-search-filter-section">
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Search in</span>
                                     </div>
-                                    <ul class="bw-search__filter-value-list">
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" on name="a_tag" {% if a_tag %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Tags</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_filename" {% if a_filename %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Sound name</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_description" {% if a_description %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Description</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_packname" {% if a_packname %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Pack name</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_soundid" {% if a_soundid %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Sound ID</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_username" {% if a_username %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Username</div>
-                                            </label>
-                                        </li>
-                                    </ul>
+                                    <div class="row no-gutters">
+                                        <div class="col-5">
+                                            <ul class="bw-search__filter-value-list">
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" on name="a_tag" {% if a_tag %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Tags</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_filename" {% if a_filename %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Sound name</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_description" {% if a_description %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Description</div>
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-5">
+                                            <ul class="bw-search__filter-value-list">
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_packname" {% if a_packname %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Pack name</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_soundid" {% if a_soundid %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Sound ID</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_username" {% if a_username %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Username</div>
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="col-4 bw-search__advanced-search-filter-section">
@@ -133,7 +141,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-4 bw-search__advanced-search-filter-section">
+                                <div class="col-3 bw-search__advanced-search-filter-section">
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Other</span>
                                     </div>

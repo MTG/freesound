@@ -72,7 +72,6 @@ window.addEventListener('scroll', checkShouldShowSearchInNavbar)
 
 var search_form_element = document.getElementById('search_form');
 var search_page_navbar_form = document.getElementById('search-page-navbar-form');
-var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
 var advanced_search_options_div = document.getElementById('advanced-search-options');
 var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
 var toggle_advanced_search_options_element = document.getElementById('toggle_advanced_search_options');

@@ -64,7 +64,7 @@
                             </div>
                         </div>
                         <div class="divider-light"></div>
-                        <div id="advanced-search-options" {% if not advanced == "1" %}style="display:none"{% endif %}>
+                        <div id="advanced-search-options" class="{% if not advanced == "1" %}display-none{% endif %}">
                             <div class="v-padding-2 between">
                                 <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" %}1{% else %}0{% endif %}" />
 

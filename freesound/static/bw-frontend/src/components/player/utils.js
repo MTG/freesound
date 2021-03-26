@@ -32,3 +32,11 @@ export const formatAudioDuration = duration => {
     seconds
   )}:${formatMilliseconds(milliseconds)}`
 }
+
+
+export const stopAllPlayers = () => {
+  const players = [...document.getElementsByClassName('bw-player')]
+  players.forEach(player => {
+    player.getElementsByTagName('audio').forEach(audioElement=>{audioElement.pause()});
+  });
+}

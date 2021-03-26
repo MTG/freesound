@@ -1,31 +1,86 @@
 {% load cache %}
+{% load util %}
 {% load display_sound %}
+{% load bw_templatetags %}
 
 {% if pack %}
-{% cache 3600 bw_display_pack pack.0.id %}
+{% cache 3600 bw_display_pack pack.0.id size %}
 {% with pack.0 as pack %}
-    <div>
-        <div class="bw-carousel-container">
-            <div class="bw-carousel-wrapper">
-                <div class="bw-carousel with-dots dots-distance-1">
-                {% comment %}get random sounds to show here so if cached we won't run this query{% endcomment %}
-                {% with pack.get_random_sounds_from_pack as sounds %}
-                    {% for sound in sounds %}
-                        <div>
-                            {% display_sound_small_no_info sound %}
-                        </div>
-                    {% endfor %}
-                {% endwith %}
+    {% if size == 'small' %}
+        <div class="v-spacing-3 overfow-hidden">
+            <div class="bw-carousel-container">
+                <div class="bw-carousel-wrapper">
+                    <div class="bw-carousel with-dots dots-distance-1">
+                    {% comment %}get random sounds to show here so if cached we won't run this query{% endcomment %}
+                    {% with pack.get_random_sounds_from_pack as sounds %}
+                        {% for sound in sounds %}
+                            <div>
+                                {% display_sound_small_no_info sound %}
+                            </div>
+                        {% endfor %}
+                    {% endwith %}
+                    </div>
                 </div>
             </div>
+            <h5 class="v-spacing-top-1">
+                <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name|truncate_string:20 }}</a>
+            </h5>
+            <div class="v-spacing-top-1">
+                <a href="{% url "account" pack.user.username %}">{{ pack.user.username|truncate_string:15 }}</a> <span class="text-grey h-spacing-left-1 h-spacing-1">·</span><span class="text-grey">{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</span>
+            </div>
+            {% if pack.description %}
+                <div class="v-spacing-top-1 text-grey">
+                    {{ sound.description|striptags|safe|truncatewords:10 }}
+                </div>
+            {% endif %}
         </div>
-        <h5 class="v-spacing-top-1">
-            <a href="{% url "pack" pack.user.username pack.id %}" class="bw-link--black">
-                {{ pack.name }}
-            </a>
-        </h5>
-        <p>{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }} by <a href="{% url "account" pack.user.username %}">{{ pack.user.username }}</a></p>
-    </div>
+    {% elif size == 'big' %}
+        <div>
+            {% with pack.get_random_sounds_from_pack as sounds %}
+                <div class="row no-margins">
+                    {% for sound in sounds %}
+                        <div class="col-4">
+                            {% display_sound_small_no_info sound.id %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endwith %}
+            <h5 class="v-spacing-top-1 overflow-hidden">
+                <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name|truncate_string:65 }}</a>
+            </h5>
+            {% if pack.description %}
+                <div class="text-black v-spacing-top-2">{{ pack.description|striptags|safe|truncatewords:20 }}</div>
+            {% endif %}
+            {% with pack.get_pack_tags as tags %}
+                {% if tags != -1 %}
+                    <div class=" v-spacing-top-2">
+                    {% for tag in tags.tags|slice:":5" %}
+                        {% bw_tag tag %}
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="between v-spacing-top-2 v-spacing-3">
+                <div class="middle text-grey h-spacing-1">
+                    <div class="avatar h-spacing-1">
+                        <img src="{{ user_profile_locations.avatar.S.url }}" />
+                    </div>
+                    <a href="{% url 'account' pack.user %}">{{ pack.user | truncate_string:15 }}</a>
+                    <span class="h-spacing-left-1 text-light-grey">{{ pack.created|date:"F jS, Y" }}</span>
+                </div>
+                <div class="middle text-light-grey bw_sound-info-extended">
+                    <div><span class="bw-icon-wave"></span>
+                        <span class="h-spacing-left-1 h-spacing-3">{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</span></div>
+                    <div><span class="bw-icon-download"></span>
+                        <span class="h-spacing-left-1 h-spacing-3">{{ pack.num_downloads }}</span></div>
+                    <div><span class="bw-icon-cc"></span>
+                        <span class="h-spacing-left-1">{{ license_summary }}</span></div>
+                </div>
+            </div>
+
+        </div>
+    {% endif %}
 {% endwith %}
 {% endcache %}
 {% endif %}

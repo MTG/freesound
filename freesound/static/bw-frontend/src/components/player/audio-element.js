@@ -75,10 +75,6 @@ const removePlayingStatus = (parentNode, audioElement) => {
 }
 
 const onPlayerTimeUpdate = (audioElement, parentNode) => {
-  const progressStatus = parentNode.getElementsByClassName(
-    'bw-player__progress'
-  )[0]
-  const progressIndicator = [...progressStatus.childNodes][1]
   const { duration, currentTime } = audioElement
   const didReachTheEnd = duration === currentTime
   // reset progress at the end of playback
@@ -86,9 +82,15 @@ const onPlayerTimeUpdate = (audioElement, parentNode) => {
   const progress = playerSettings.showRemainingTime
     ? duration - timeElapsed
     : timeElapsed
-  progressIndicator.innerHTML = `${
-    playerSettings.showRemainingTime ? '-' : ''
-  }${formatAudioDuration(progress)}`
+
+  const progressStatus = parentNode.getElementsByClassName('bw-player__progress')
+  if (progressStatus.length > 0){
+    // only show remaining time if progressStatus elements are found (e.g. in minimal player these elements are not included)
+    const progressIndicator = [...progressStatus[0].childNodes][1]
+    progressIndicator.innerHTML = `${
+      playerSettings.showRemainingTime ? '-' : ''
+    }${formatAudioDuration(progress)}`
+  }
 }
 
 /**

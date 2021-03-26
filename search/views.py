@@ -53,10 +53,10 @@ def search_prepare_sort(sort, options):
 
 
 def search_process_filter(filter_query):
-    # Process the filter to replace humnan-readable Audio Commons descriptor names for the dynamic field names used in
+    # Process the filter to replace human-readable Audio Commons descriptor names for the dynamic field names used in
     # Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i). The dynamic field names we define in Solr
     # schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) and '*_s' (for string). At indexing time
-    # we append these suffixes to the ac descirptor names so Solr can treat the types properly. Now we automatically
+    # we append these suffixes to the ac descriptor names so Solr can treat the types properly. Now we automatically
     # append the suffices to the filter names so users do not need to deal with that.
     for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
         filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
@@ -78,6 +78,7 @@ def search_prepare_query(search_query,
                          grouping=False,
                          include_facets=True,
                          grouping_pack_limit=1,
+                         only_sounds_with_pack=False,
                          offset=None):
     query = SolrQuery()
 
@@ -106,6 +107,8 @@ def search_prepare_query(search_query,
 
     # Process filter
     filter_query = search_process_filter(filter_query)
+    if only_sounds_with_pack and not 'pack:' in filter_query:
+        filter_query += ' pack:*'  # Add a filter so that only sounds with packs are returned
 
     # Set all options
     query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
@@ -186,12 +189,17 @@ def search(request):
         current_page = 1
     sort = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-    grouping = request.GET.get("g", "1")  # Group by default
 
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is through AJAX (for sources remix editing), do not collapse
+    grouping = request.GET.get("g", "1") == "1"  # Group by default
     if "pack" in filter_query or request.GET.get("ajax", "") == "1":
-        grouping = ""
+        grouping = False
+
+    # If the query is filtered by pack, do not add the "only sounds with pack" filter (makes no sense)
+    only_sounds_with_pack = request.GET.get("only_p", "0") == "1"  # By default, do not limit to sounds with pack
+    if "pack" in filter_query:
+        only_sounds_with_pack = False
 
     # Set default values
     id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
@@ -257,6 +265,7 @@ def search(request):
         'page': current_page,
         'sort': sort[0],
         'group_by_pack': grouping,
+        'only_sounds_with_pack': only_sounds_with_pack,
         'advanced': json.dumps(advanced_search_params_dict) if advanced == "1" else ""
     }))
 
@@ -271,14 +280,16 @@ def search(request):
                                  username_weight,
                                  pack_tokenized_weight,
                                  original_filename_weight,
-                                 grouping=grouping
+                                 grouping=grouping,
+                                 only_sounds_with_pack=only_sounds_with_pack
                                  )
     tvars = {
         'error_text': None,
         'filter_query': filter_query,
         'filter_query_split': filter_query_split,
         'search_query': search_query,
-        'grouping': grouping,
+        'grouping': "1" if grouping else "",
+        'only_sounds_with_pack': "1" if only_sounds_with_pack else "",
         'advanced': advanced,
         'sort': sort,
         'sort_options': sort_options,

@@ -270,7 +270,7 @@
         <div id="user_most_used_tags" class="content_box">
             <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
             <p class="user_tagcloud">
-            {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url "tags" tag.name %}">{{tag.name}}</a></span> {% endfor %}
+            {% for tag in tags|add_sizes:"name:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url "tags" tag.name %}">{{tag.name}}</a></span> {% endfor %}
             </p>
         </div><!-- #user_most_used_tags -->
     {% endif %}

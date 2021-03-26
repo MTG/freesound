@@ -151,34 +151,45 @@ class Profile(SocialModel):
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])
 
-    @locations_decorator(cache=False)
-    def locations(self):
-        id_folder = str(self.user_id/1000)
-        if self.has_avatar:
-            s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, self.user_id)
-            m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, self.user_id)
-            l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, self.user_id)
+    @staticmethod
+    def locations_static(user_id, has_avatar):
+        id_folder = str(user_id / 1000)
+        if has_avatar:
+            s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, user_id)
+            m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, user_id)
+            l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, user_id)
+            xl_avatar = settings.AVATARS_URL + "%s/%d_XL.jpg" % (id_folder, user_id)
         else:
             s_avatar = settings.MEDIA_URL + "images/32x32_avatar.png"
             m_avatar = settings.MEDIA_URL + "images/40x40_avatar.png"
             l_avatar = settings.MEDIA_URL + "images/70x70_avatar.png"
+            xl_avatar = settings.MEDIA_URL + "images/100x100_avatar.png"
         return dict(
             avatar=dict(
                 S=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % self.user_id),
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % user_id),
                     url=s_avatar
                 ),
                 M=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % self.user_id),
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % user_id),
                     url=m_avatar
                 ),
                 L=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user_id),
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % user_id),
                     url=l_avatar
+                ),
+                XL=dict(
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_XL.jpg" % user_id),
+                    url=xl_avatar
                 )
             ),
-            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id))
+            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(user_id))
         )
+
+
+    @locations_decorator(cache=False)
+    def locations(self):
+        return Profile.locations_static(self.user_id, self.has_avatar)
 
     def email_type_enabled(self, email_type):
         """
@@ -432,6 +443,24 @@ class Profile(SocialModel):
             last_sound = lasts_sound_geotagged[0]
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
+
+    def get_average_rating(self):
+        # TODO: don't compute this realtime, store it in DB
+        ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
+        if ratings:
+            return 1.0*sum(ratings)/len(ratings)/2
+        else:
+            return 0
+
+    def get_total_uploaded_sounds_length(self):
+        # TODO: don't compute this realtime, store it in DB
+        durations = list(Sound.objects.filter(user=self.user).values_list('duration', flat=True))
+        return sum(durations)
+
+    @property
+    def num_packs(self):
+        # TODO: store this as an account field instead of computing it live
+        return Pack.objects.filter(user_id=self.user_id).count()
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

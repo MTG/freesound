@@ -70,7 +70,7 @@ from forum.models import Post
 from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.encryption import create_hash
@@ -358,6 +358,12 @@ def username_reminder(request):
 
 @login_required
 def home(request):
+    if using_beastwhoosh(request):
+        # In BW we don't have a "home" so we redirect to the account page. All the "extra" features provides in NG
+        # home page with respect to account page are either provided in the navbar user menus or will be provided in
+        # the "manage sounds" page
+        return HttpResponseRedirect(reverse('account', args=[request.user.username]))
+
     user = request.user
 
     # Tagcloud
@@ -453,8 +459,7 @@ def edit(request):
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
-            invalidate_template_cache('user_header', request.user.id)
-
+            invalidate_user_template_caches(request.user.id)
             profile.save()
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
@@ -474,6 +479,7 @@ def edit(request):
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True
                 profile.save()
+            invalidate_user_template_caches(request.user.id)
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")
@@ -510,6 +516,7 @@ def handle_uploaded_image(profile, f):
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
+    path_xl = profile.locations("avatar.XL.path")
     try:
         extract_square(tmp_image_path, path_s, 32)
         upload_logger.info("\tcreated small thumbnail")
@@ -529,6 +536,12 @@ def handle_uploaded_image(profile, f):
         upload_logger.info("\tcreated large thumbnail")
     except Exception as e:
         upload_logger.error("\tfailed creating large thumbnails: " + str(e))
+
+    try:
+        extract_square(tmp_image_path, path_xl, 100)
+        upload_logger.info("\tcreated extra-large thumbnail")
+    except Exception as e:
+        upload_logger.error("\tfailed creating extra-large thumbnails: " + str(e))
 
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
@@ -720,9 +733,9 @@ def describe_sounds(request):
                         'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
 
                     # Invalidate affected caches in user header
-                    invalidate_template_cache("user_header", request.user.id)
+                    invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
-                        invalidate_template_cache("user_header", moderator.id)
+                        invalidate_user_template_caches(moderator.id)
 
             except utils.sound_upload.NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
@@ -967,12 +980,12 @@ def account(request, username):
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                                .order_by("-last_updated")[0:10]
+                                .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
     following, followers, following_tags, following_count, followers_count, following_tags_count = \
         follow_utils.get_vars_for_account_view(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-    show_unfollow_button = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, user)
+    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
@@ -988,7 +1001,7 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
-        'home': False,
+        'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
         'tags': tags,
         'latest_sounds': latest_sounds,

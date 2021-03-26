@@ -19,7 +19,6 @@
 
   .modal-body {
     padding: 0 56px;
-    text-align: center;
 
     h5 {
       margin-bottom: 40px;
@@ -99,4 +98,16 @@
 
 .modal-wrapper {
   position: relative;
+}
+
+@for $i from 6 through 10 {
+  $value1: $i * 10;
+  $value2: $i / 10;
+  .modal-width-#{$value1} {
+    .modal-wrapper {
+      .modal-dialog {
+        max-width: 100% * $value2 !important;
+      }
+    }
+  }
 }

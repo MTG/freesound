@@ -38,3 +38,9 @@ button {
   @include reset-rounded-button($navy-grey, $black);
   @include reset-border-bottom-on-hover();
 }
+
+.btn-profile-adapt {
+  font-size: 14px;
+  color: $black;
+  font-weight: 500;
+}

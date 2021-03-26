@@ -34,7 +34,7 @@ from django.urls import reverse
 
 from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha
 from messages.models import Message, MessageBody
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_template_cache, invalidate_user_template_caches
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 
@@ -65,7 +65,7 @@ def messages_change_state(request):
             elif choice == "r":
                 messages.update(is_read=True)
 
-            invalidate_template_cache("user_header", request.user.id)
+            invalidate_user_template_caches(request.user.id)
 
     return HttpResponseRedirect(request.POST.get("next", reverse("messages")))
 
@@ -105,7 +105,7 @@ def message(request, message_id):
 
     if not message.is_read:
         message.is_read = True
-        invalidate_template_cache("user_header", request.user.id)
+        invalidate_user_template_caches(request.user.id)
         message.save()
 
     tvars = {'message': message}
@@ -139,7 +139,7 @@ def new_message(request, username=None, message_id=None):
                 Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False,
                                        is_archived=False, is_read=False)
 
-                invalidate_template_cache("user_header", user_to.id)
+                invalidate_user_template_caches(user_to.id)
 
                 try:
                     # send the user an email to notify him of the sent message!

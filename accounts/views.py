@@ -1013,18 +1013,18 @@ def account(request, username):
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
         'show_about': show_about,
+        'num_sounds_pending_count': num_sounds_pending_count,
     }
     if using_beastwhoosh(request):
         tvars.update({
-            'home': request.user == user,
+            'home': request.user == user
         })
     else:
         tvars.update({
             'home': False,
             'following': following,
             'followers': followers,
-            'following_tags': following_tags,
-            'num_sounds_pending_count': num_sounds_pending_count,
+            'following_tags': following_tags
         })
     return render(request, 'accounts/account.html', tvars)
 

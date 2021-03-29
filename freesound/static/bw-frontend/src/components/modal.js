@@ -82,16 +82,28 @@ const handleGenericModal = fetchContentUrl => {
         // Add modal contents to the generic modal wrapper (the requested URL should return a modal template
         // extending "modal_base.html")
         genericModalWrapper.innerHTML = req.responseText;
-
-        // Make modal visible and add dismiss click handler
         const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
         const modalContainer = document.getElementById(modalContainerId);
+
+        // Make modal visible
         modalContainer.classList.add('show');
         modalContainer.style.display = 'block';
 
+        // Add dismiss click handler
         const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
         modalDismiss.forEach(dismiss => {
           dismiss.addEventListener('click', () => handleDismissModal(modalContainerId));
+        });
+
+        // Make paginator update modal (if any)
+        modalContainer.getElementsByClassName('bw-pagination_container').forEach(paginationContainer => {
+          paginationContainer.getElementsByTagName('a').forEach(paginatorLinkElement => {
+            const loadPageUrl = paginatorLinkElement.href;
+            paginatorLinkElement.href = 'javascript:void(0);';
+            paginatorLinkElement.onclick = () => {
+              handleGenericModal(loadPageUrl);
+            };
+          });
         });
     }
   };

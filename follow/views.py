@@ -64,7 +64,7 @@ def following_users(request, username):
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal_body.html', tvars)
+        return render(request, 'accounts/modal_follow.html', tvars)
     else:
         return render(request, 'follow/following_users.html', tvars)
 
@@ -95,7 +95,7 @@ def followers(request, username):
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal_body.html', tvars)
+        return render(request, 'accounts/modal_follow.html', tvars)
     else:
         return render(request, 'follow/followers.html', tvars)
 
@@ -137,7 +137,7 @@ def following_tags(request, username):
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal_body.html', tvars)
+        return render(request, 'accounts/modal_follow.html', tvars)
     else:
         return render(request, 'follow/following_tags.html', tvars)
 

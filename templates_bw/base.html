@@ -18,12 +18,12 @@
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
-    {% include 'molecules/modal_login.html' %}
-    {% include 'molecules/modal_login_problems.html' %}
-    {% include 'molecules/modal_password_reset.html' %}
-    {% include 'molecules/modal_registration.html' %}
-    {% include 'molecules/modal_registration_feedback.html' %}
-    {% include 'molecules/modal_generic.html' %}
+    {% include 'accounts/modal_login.html' %}
+    {% include 'accounts/modal_login_problems.html' %}
+    {% include 'accounts/modal_password_reset.html' %}
+    {% include 'accounts/modal_registration.html' %}
+    {% include 'accounts/modal_registration_feedback.html' %}
+    <div id="generiModalWrapper"></div>
     {% include 'molecules/toast.html' %}
     <div class="notifications-wrapper"></div>
     {% if messages %}

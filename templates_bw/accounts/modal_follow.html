@@ -1,7 +1,14 @@
+{% extends "molecules/modal_base.html" %}
+
+{% block id %}followModal{% endblock %}
+{% block extra-class %}modal-width-60{% endblock %}
+{% block aria-labelledby %}followModalLabel{% endblock %}
+
 {% load bw_templatetags %}
 {% load display_user %}
 {% load util %}
 
+{% block body %}
 <div class="col-8 offset-2">
     {% if page == 'followers' %}
         <div class="v-spacing-5 text-center">
@@ -68,3 +75,4 @@
         {% endfor %}
     {% endif %}
 </div>
+{% endblock %}

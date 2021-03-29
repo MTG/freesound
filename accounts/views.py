@@ -272,7 +272,7 @@ def registration(request):
                 # When using beastwoosh, if the form is NOT valid we return the Django rendered HTML version of the
                 # registration modal (which includes the form and error messages) so the browser can show the updated
                 # modal contents to the user
-                return render(request, 'molecules/modal_registration.html', {'registration_form': form})
+                return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
         form = form_class()
 

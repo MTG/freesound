@@ -1,9 +1,17 @@
+{% extends "molecules/modal_base.html" %}
+
 {% load bw_templatetags %}
 {% load display_user %}
 {% load util %}
+{% load bw_templatetags %}
 
+{% block id %}followModal{% endblock %}
+{% block extra-class %}modal-width-60{% endblock %}
+{% block aria-labelledby %}followModalLabel{% endblock %}
+
+{% block body %}
 <div class="col-8 offset-2">
-    {% if page == 'followers' %}
+    {% if follow_page == 'followers' %}
         <div class="v-spacing-5 text-center">
             <h5>{{ user.username }}'s followers</h5>
         </div>
@@ -18,11 +26,11 @@
             </div>
         {% endfor %}
 
-    {% elif page == 'following' %}
+    {% elif follow_page == 'following' %}
         <div class="v-spacing-5 text-center">
             <h5>Users followed by {{ user.username }}</h5>
         </div>
-        {% for user in following %}
+        {% for user in page.object_list %}
             {% display_user_follow_lists user %}
             <div class="padding-left-3">
                 <div class="col-md-11 offset-1 v-spacing-top-3 v-spacing-3 divider-light"></div>
@@ -32,8 +40,11 @@
                 <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} is not following any users yet... &#128543</div>
             </div>
         {% endfor %}
+        <div class="v-spacing-top-5">
+            {% bw_paginator paginator page current_page request "" -1 %}
+        </div>
 
-    {% elif page == 'tags' %}
+    {% elif follow_page == 'tags' %}
         <div class="v-spacing-5 text-center">
             <h5>Tags followed by {{ user.username }}</h5>
         </div>
@@ -68,3 +79,4 @@
         {% endfor %}
     {% endif %}
 </div>
+{% endblock %}

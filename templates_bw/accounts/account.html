@@ -34,6 +34,41 @@
                         <a class="no-hover" href="{% url "messages-new" user.username %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Message</button></a>
                     {% endif %}
                 {% endif %}
+                {% if perms.tickets.can_moderate or request.user.is_staff %}
+                    <div class="dropdown display-inline-block">
+                        <a class="no-hover dropdown-toggle" aria-haspopup="true"
+                           aria-expanded="false" data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Mod actions</button></a>
+                        <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
+                            {% if not user.profile.is_whitelisted %}
+                                <li class="bw-nav__action dropdown-item text-light-grey">
+                                    This user is whitelisted
+                                </li>
+                            {% endif %}
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22">
+                                    See all forum posts
+                                </a>
+                            </li>
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" href="{% url "comments-by-user" user.username %}">
+                                    See all comments
+                                </a>
+                            </li>
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" href="{% url "tickets-user-pending_sounds" user.username %}">
+                                    Sounds pending moderation ({{ num_sounds_pending_count }})
+                                </a>
+                            </li>
+                            {% if request.user.is_staff %}
+                                <li class="bw-nav__action dropdown-item">
+                                    <a class="bw-link--red" href="{% url "admin:auth_user_change" user.id %}">
+                                        Edit in admin
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                {% endif %}
             </div>
             {% if not user.profile.is_deleted_user %}
                 <div class="bw-profile__description v-spacing-top-3">
@@ -151,7 +186,7 @@
                 <section id="latest_geotags" class="v-spacing-top-5 display-none">
                     <h5 class="padding-bottom-3">Latest geotags</h5>
                     <div id="map_canvas" class="sidebar-map" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
-                    <div class="v-spacing-top-1 center">
+                    <div class="v-spacing-top-2 center">
                         <a class="no-hover" href="{% url "geotags-for-user" user.username %}">See all geotags by {{ user.username }}</a>
                     </div>
                 </section>

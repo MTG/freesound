@@ -71,25 +71,40 @@ if (problemsLoggingInParam) {
   handleModal('forgottenPasswordModal');
 }
 
+const genericModalWrapper = document.getElementById('generiModalWrapper');
+
 const handleGenericModal = fetchContentUrl => {
   const req = new XMLHttpRequest();
   req.open('GET', fetchContentUrl, true);
   req.onload = () => {
     if (req.status >= 200 && req.status < 400) {
 
-        // Make modal visible and replace contents with those from response
-        const modalContainerId = 'genericModal';
-
+        // Add modal contents to the generic modal wrapper (the requested URL should return a modal template
+        // extending "modal_base.html")
+        genericModalWrapper.innerHTML = req.responseText;
+        const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
         const modalContainer = document.getElementById(modalContainerId);
+
+        // Make modal visible
         modalContainer.classList.add('show');
         modalContainer.style.display = 'block';
 
+        // Add dismiss click handler
         const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
         modalDismiss.forEach(dismiss => {
           dismiss.addEventListener('click', () => handleDismissModal(modalContainerId));
         });
 
-        modalContainer.getElementsByClassName('modal-body')[0].innerHTML = req.responseText;
+        // Make paginator update modal (if any)
+        modalContainer.getElementsByClassName('bw-pagination_container').forEach(paginationContainer => {
+          paginationContainer.getElementsByTagName('a').forEach(paginatorLinkElement => {
+            const loadPageUrl = paginatorLinkElement.href;
+            paginatorLinkElement.href = 'javascript:void(0);';
+            paginatorLinkElement.onclick = () => {
+              handleGenericModal(loadPageUrl);
+            };
+          });
+        });
     }
   };
   req.onerror = () => {

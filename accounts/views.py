@@ -272,7 +272,7 @@ def registration(request):
                 # When using beastwoosh, if the form is NOT valid we return the Django rendered HTML version of the
                 # registration modal (which includes the form and error messages) so the browser can show the updated
                 # modal contents to the user
-                return render(request, 'molecules/modal_registration.html', {'registration_form': form})
+                return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
         form = form_class()
 
@@ -1001,14 +1001,10 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
-        'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
         'tags': tags,
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
-        'following': following,
-        'followers': followers,
-        'following_tags': following_tags,
         'following_count': following_count,
         'followers_count': followers_count,
         'following_tags_count': following_tags_count,
@@ -1016,9 +1012,20 @@ def account(request, username):
         'unfollow_user_url': unfollow_user_url,
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
-        'num_sounds_pending_count': num_sounds_pending_count,
         'show_about': show_about,
+        'num_sounds_pending_count': num_sounds_pending_count,
     }
+    if using_beastwhoosh(request):
+        tvars.update({
+            'home': request.user == user
+        })
+    else:
+        tvars.update({
+            'home': False,
+            'following': following,
+            'followers': followers,
+            'following_tags': following_tags
+        })
     return render(request, 'accounts/account.html', tvars)
 
 

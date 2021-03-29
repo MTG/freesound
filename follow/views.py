@@ -19,7 +19,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
@@ -35,6 +35,7 @@ from collections import OrderedDict
 from socket import error as socket_error
 
 from utils.frontend_handling import using_beastwhoosh
+from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404
 
 
@@ -51,21 +52,27 @@ def following_users(request, username):
         is_owner = request.user == user
     following = follow_utils.get_users_following(user)
 
-    # NOTE: 'next_path' tvar below is used in BW for follow/unfollow buttons. We overwrite default value of next_path
-    # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
-    # body content URL
-
     tvars = {
-        'user': user,
-        'following': following,
-        'is_owner': is_owner,
-        'next_path': reverse('account', args=[username]) + '?following=1',  # Used in BW
-        'page': 'following' # Used in BW
+        'user': user
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal_body.html', tvars)
+        # In BW we paginate the results and return a modal
+        # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
+        # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
+        # body content URL
+        paginator = paginate(request, following, settings.FOLLOW_ITEMS_PER_PAGE)
+        tvars.update(paginator)
+        tvars.update({
+            'next_path': reverse('account', args=[username]) + '?following=1',
+            'follow_page': 'following'
+        })
+        return render(request, 'accounts/modal_follow.html', tvars)
     else:
+        tvars.update({
+            'following': following,
+            'is_owner': is_owner,
+        })
         return render(request, 'follow/following_users.html', tvars)
 
 
@@ -82,21 +89,27 @@ def followers(request, username):
         is_owner = request.user == user
     followers = follow_utils.get_users_followers(user)
 
-    # NOTE: 'next_path' tvar below is used in BW for follow/unfollow buttons. We overwrite default value of next_path
-    # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
-    # body content URL
-
     tvars = {
-        'user': user,
-        'followers': followers,
-        'is_owner': is_owner,
-        'next_path': reverse('account', args=[username]) + '?followers=1', # Used in BW,
-        'page': 'followers' # Used in BW
+        'user': user
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal_body.html', tvars)
+        # In BW we paginate the results and return a modal
+        # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
+        # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
+        # body content URL
+        paginator = paginate(request, followers, settings.FOLLOW_ITEMS_PER_PAGE)
+        tvars.update(paginator)
+        tvars.update({
+            'next_path': reverse('account', args=[username]) + '?followers=1',
+            'follow_page': 'followers'
+        })
+        return render(request, 'accounts/modal_follow.html', tvars)
     else:
+        tvars.update({
+            'followers': followers,
+            'is_owner': is_owner,
+        })
         return render(request, 'follow/followers.html', tvars)
 
 
@@ -120,25 +133,31 @@ def following_tags(request, username):
     for i in range(len(space_tags)):
         following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
 
-    # NOTE: 'next_path' tvar below is used in BW for follow/unfollow buttons. We overwrite default value of next_path
-    # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
-    # body content URL
-
     tvars = {
         'user': user,
-        'following': following,
-        'following_tags': following_tags,
-        'slash_tags': slash_tags,
-        'split_tags': split_tags,
-        'space_tags': space_tags,
-        'is_owner': is_owner,
-        'next_path': reverse('account', args=[username]) + '?following_tags=1', # Used in BW
-        'page': 'tags' # Used in BW
+        'following_tags': following_tags
     }
 
     if using_beastwhoosh(request):
-        return render(request, 'accounts/follow_modal_body.html', tvars)
+        # In BW we paginate the results and return a modal
+        # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
+        # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
+        # body content URL
+        paginator = paginate(request, following_tags, settings.FOLLOW_ITEMS_PER_PAGE)
+        tvars.update(paginator)
+        tvars.update({
+            'next_path': reverse('account', args=[username]) + '?following_tags=1', # Used in BW
+            'follow_page': 'tags' # Used in BW
+        })
+        return render(request, 'accounts/modal_follow.html', tvars)
     else:
+        tvars.update({
+            'following': following,
+            'slash_tags': slash_tags,
+            'split_tags': split_tags,
+            'space_tags': space_tags,
+            'is_owner': is_owner,
+        })
         return render(request, 'follow/following_tags.html', tvars)
 
 

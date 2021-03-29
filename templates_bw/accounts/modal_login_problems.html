@@ -13,7 +13,7 @@
         </div>
         <form id="problemsLoggingInModalForm" method="post" action="{% url 'problems-logging-in' %}">{% csrf_token %}
             {{ problems_logging_in_form }}
-            <button id="recovery-account" type="submit" class="btn btn-primary">Send me that link</button>
+            <button id="recovery-account" type="submit" class="btn btn-primary">Send me a link</button>
         </form>
     </div>
 {% endblock %}

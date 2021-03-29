@@ -185,7 +185,7 @@
                 {% if paginator.count > 0 %}
                     <aside class="col-sm-12 col-md-3">
                         {% if facets.license and facets.license|length > 1 %}
-                            {% display_facet "license" facets.license "list" "Licesnes" %}
+                            {% display_facet "license" facets.license "list" "Licenses" %}
                         {% endif %}
 
                         {% if facets.type and facets.type|length > 1 %}
@@ -246,7 +246,7 @@
                                     {% else %}
                                         {% display_pack_big result.pack_id %}
                                         <p class="text-grey text-right v-spacing-top-negative-2">
-                                            {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.more_from_pack|add:1}} result{{ result.more_from_pack|add:1|pluralize }} from that pack</a>
+                                            {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.more_from_pack|add:1}} result{{ result.more_from_pack|add:1|pluralize }} from this pack</a>
                                         </p>
                                     {% endif %}
                                     {% if not forloop.last %}

@@ -34,4 +34,5 @@ def invalidate_user_template_caches(user_id):
     invalidate_template_cache('user_header', user_id)
     invalidate_template_cache('bw_user_header', user_id)
     invalidate_template_cache('bw_user_profile_stats', user_id)
+    invalidate_template_cache('bw_user_profile_follow_stats', user_id)
 

@@ -33,7 +33,7 @@ SOLR_QUERY_LIMIT_PARAM = 3
 
 
 def get_users_following_qs(user):
-    return FollowingUserItem.objects.select_related('user_to__profile').filter(user_from=user)
+    return FollowingUserItem.objects.select_related('user_to__profile').filter(user_from=user).order_by('user_to__username')
 
 
 def get_users_following(user):
@@ -41,7 +41,7 @@ def get_users_following(user):
 
 
 def get_users_followers_qs(user):
-    return FollowingUserItem.objects.select_related('user_from__profile').filter(user_to=user)
+    return FollowingUserItem.objects.select_related('user_from__profile').filter(user_to=user).order_by('user_from__username')
 
 
 def get_users_followers(user):
@@ -49,7 +49,7 @@ def get_users_followers(user):
 
 
 def get_tags_following_qs(user):
-    return FollowingQueryItem.objects.filter(user=user)
+    return FollowingQueryItem.objects.filter(user=user).order_by('query')
 
 
 def get_tags_following(user):

@@ -50,8 +50,7 @@ def following_users(request, username):
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
-    following = follow_utils.get_users_following(user)
-
+    following = follow_utils.get_users_following_qs(user)
     tvars = {
         'user': user
     }
@@ -64,7 +63,7 @@ def following_users(request, username):
         paginator = paginate(request, following, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?following=1',
+            'next_path': reverse('account', args=[username]) + '?following={}'.format(paginator['current_page']),
             'follow_page': 'following'
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -87,8 +86,7 @@ def followers(request, username):
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
-    followers = follow_utils.get_users_followers(user)
-
+    followers = follow_utils.get_users_followers_qs(user)
     tvars = {
         'user': user
     }
@@ -101,7 +99,7 @@ def followers(request, username):
         paginator = paginate(request, followers, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?followers=1',
+            'next_path': reverse('account', args=[username]) + '?followers={}'.format(paginator['current_page']),
             'follow_page': 'followers'
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -124,18 +122,9 @@ def following_tags(request, username):
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
-    following = follow_utils.get_tags_following(user)
-    space_tags = following
-    split_tags = [tag.split(" ") for tag in space_tags]
-    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
-
-    following_tags = []
-    for i in range(len(space_tags)):
-        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
-
+    following_tags = follow_utils.get_tags_following_qs(user)
     tvars = {
         'user': user,
-        'following_tags': following_tags
     }
 
     if using_beastwhoosh(request):
@@ -146,16 +135,13 @@ def following_tags(request, username):
         paginator = paginate(request, following_tags, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?following_tags=1', # Used in BW
+            'next_path': reverse('account', args=[username]) + '?following_tags={}'.format(paginator['current_page']),
             'follow_page': 'tags' # Used in BW
         })
         return render(request, 'accounts/modal_follow.html', tvars)
     else:
         tvars.update({
-            'following': following,
-            'slash_tags': slash_tags,
-            'split_tags': split_tags,
-            'space_tags': space_tags,
+            'following_tags': following_tags,
             'is_owner': is_owner,
         })
         return render(request, 'follow/following_tags.html', tvars)

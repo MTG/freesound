@@ -30,27 +30,67 @@ taps.forEach(tap => {
 const userFollowersButton = document.getElementById('user-followers-button');
 const userFollowUsersButton = document.getElementById('user-following-users-button');
 const userFollowTagsButton = document.getElementById('user-following-tags-button');
+
+const removeFollowModalUrlParams = () => {
+  const searchParams = new URLSearchParams(window.location.search);
+  [userFollowersButton, userFollowUsersButton, userFollowTagsButton].forEach(button => {
+    searchParams.delete(button.dataset.modalActivationParam);
+  });
+  const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+  window.history.replaceState(null, "", url);
+};
+
+const setFollowModalUrlParamToCurrentPage = (modalActivationParam) => {
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // Find current page from paginator element in loaded modal
+  let page = 1;
+  const genericModalWrapperElement = document.getElementById('genericModalWrapper');
+  genericModalWrapperElement.getElementsByClassName('bw-pagination_selected').forEach(element => {
+    page = parseInt(element.innerHTML, 10);
+  });
+  searchParams.set(modalActivationParam, page);
+  const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+  window.history.replaceState(null, "", url);
+};
+
 [userFollowersButton, userFollowUsersButton, userFollowTagsButton].forEach(button => {
   button.addEventListener('click', () => {
-    handleGenericModal(button.dataset.modalContentUrl);
+    handleGenericModal(button.dataset.modalContentUrl, () => {
+      setFollowModalUrlParamToCurrentPage(button.dataset.modalActivationParam);
+    }, () => {
+      removeFollowModalUrlParams();
+    });
   });
 });
 
 const urlParams = new URLSearchParams(window.location.search);
-const followersModalParam = urlParams.get('followers');
-const followingModalParam = urlParams.get('following');
-const followingTagsModalParam = urlParams.get('followingTags');
+const followersModalParam = urlParams.get(userFollowersButton.dataset.modalActivationParam);
+const followingModalParam = urlParams.get(userFollowUsersButton.dataset.modalActivationParam);
+const followingTagsModalParam = urlParams.get(userFollowTagsButton.dataset.modalActivationParam);
 
 if (followersModalParam) {
-  handleGenericModal(userFollowersButton.dataset.modalContentUrl);
+  handleGenericModal(userFollowersButton.dataset.modalContentUrl, () => {
+      setFollowModalUrlParamToCurrentPage(userFollowersButton.dataset.modalActivationParam);
+    }, () => {
+      removeFollowModalUrlParams();
+    });
 }
 
 if (followingModalParam) {
-  handleGenericModal(userFollowUsersButton.dataset.modalContentUrl);
+  handleGenericModal(userFollowUsersButton.dataset.modalContentUrl, () => {
+      setFollowModalUrlParamToCurrentPage(userFollowUsersButton.dataset.modalActivationParam);
+    }, () => {
+      removeFollowModalUrlParams();
+    });
 }
 
 if (followingTagsModalParam) {
-  handleGenericModal(userFollowTagsButton.dataset.modalContentUrl);
+  handleGenericModal(userFollowTagsButton.dataset.modalContentUrl, () => {
+      setFollowModalUrlParamToCurrentPage(userFollowTagsButton.dataset.modalActivationParam);
+    }, () => {
+      removeFollowModalUrlParams();
+    });
 }
 
 

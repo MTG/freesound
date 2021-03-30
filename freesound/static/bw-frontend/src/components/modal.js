@@ -1,5 +1,5 @@
 import {initRegistrationForm, initProblemsLoggingInForm} from "../pages/loginAndRegistration";
-import {showToast} from "./toast";
+import {showToast, showToastNoTimeout, dismissToast} from "./toast";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
@@ -71,14 +71,14 @@ if (problemsLoggingInParam) {
   handleModal('forgottenPasswordModal');
 }
 
-const genericModalWrapper = document.getElementById('generiModalWrapper');
+const genericModalWrapper = document.getElementById('genericModalWrapper');
 
-const handleGenericModal = fetchContentUrl => {
+const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback) => {
+  showToastNoTimeout('Loading...');
   const req = new XMLHttpRequest();
   req.open('GET', fetchContentUrl, true);
   req.onload = () => {
     if (req.status >= 200 && req.status < 400) {
-
         // Add modal contents to the generic modal wrapper (the requested URL should return a modal template
         // extending "modal_base.html")
         genericModalWrapper.innerHTML = req.responseText;
@@ -89,10 +89,15 @@ const handleGenericModal = fetchContentUrl => {
         modalContainer.classList.add('show');
         modalContainer.style.display = 'block';
 
-        // Add dismiss click handler
+        // Add dismiss click handler including call to callback if defined
         const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
         modalDismiss.forEach(dismiss => {
-          dismiss.addEventListener('click', () => handleDismissModal(modalContainerId));
+          dismiss.addEventListener('click', () => {
+            handleDismissModal(modalContainerId);
+            if (onClosedCallback !== undefined){
+              onClosedCallback();
+            }
+          });
         });
 
         // Make paginator update modal (if any)
@@ -101,15 +106,24 @@ const handleGenericModal = fetchContentUrl => {
             const loadPageUrl = paginatorLinkElement.href;
             paginatorLinkElement.href = 'javascript:void(0);';
             paginatorLinkElement.onclick = () => {
-              handleGenericModal(loadPageUrl);
+              handleGenericModal(loadPageUrl, onLoadedCallback, onClosedCallback);
             };
           });
         });
+
+        // Dismiss loading indicator toast and call "on loaded" call back
+        dismissToast();
+        if (onLoadedCallback !== undefined){
+          onLoadedCallback();
+        }
+    } else {
+      // Unexpected errors happened while processing request: close modal and show error in toast
+      showToast('Some errors occurred while loading the requested content.')
     }
   };
   req.onerror = () => {
     // Unexpected errors happened while processing request: close modal and show error in toast
-    showToast('Some errors occurred while loading requested content.')
+    showToast('Some errors occurred while loading the requested content.')
   };
 
   // Send the form

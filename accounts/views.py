@@ -391,8 +391,9 @@ def home(request):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
     # Followers
-    following, followers, following_tags, following_count, followers_count, following_tags_count \
-        = follow_utils.get_vars_for_home_view(user)
+    following = follow_utils.get_users_following_qs(user)
+    followers = follow_utils.get_users_followers_qs(user)
+    following_tags = follow_utils.get_tags_following_qs(user)
 
     current_bulkdescribe = BulkUploadProgress.objects.filter(user=user).exclude(progress_type="C")
     tvars = {
@@ -409,9 +410,6 @@ def home(request):
         'following': following,
         'followers': followers,
         'following_tags': following_tags,
-        'following_count': following_count,
-        'followers_count': followers_count,
-        'following_tags_count': following_tags_count,
         'tags': tags,
     }
     return render(request, 'accounts/account.html', tvars)
@@ -981,8 +979,9 @@ def account(request, username):
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
                                 .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
-    following, followers, following_tags, following_count, followers_count, following_tags_count = \
-        follow_utils.get_vars_for_account_view(user)
+    following = follow_utils.get_users_following_qs(user)
+    followers = follow_utils.get_users_followers_qs(user)
+    following_tags = follow_utils.get_tags_following_qs(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
     show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
@@ -1001,31 +1000,24 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
+        'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
         'tags': tags,
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
-        'following_count': following_count,
-        'followers_count': followers_count,
-        'following_tags_count': following_tags_count,
         'follow_user_url': follow_user_url,
+        'following': following,
+        'followers': followers,
+        'following_tags': following_tags,
         'unfollow_user_url': unfollow_user_url,
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
         'show_about': show_about,
         'num_sounds_pending_count': num_sounds_pending_count,
+        'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
+        'followers_modal_page': request.GET.get('followers', 1),  # BW only
+        'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
     }
-    if using_beastwhoosh(request):
-        tvars.update({
-            'home': request.user == user
-        })
-    else:
-        tvars.update({
-            'home': False,
-            'following': following,
-            'followers': followers,
-            'following_tags': following_tags
-        })
     return render(request, 'accounts/account.html', tvars)
 
 

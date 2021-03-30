@@ -1,0 +1,26 @@
+.collapsable-block {
+  max-height: 1000px;
+  transition: max-height 1s;
+  overflow: hidden;
+
+  &-close {
+    max-height: 53px;
+  }
+}
+
+.collapsable-text {
+  color: $navy-grey;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  justify-content: space-between;
+  cursor: pointer;
+
+  &:before,
+  &:after {
+    content: ' ';
+    height: 1px;
+    width: calc(50% - 50px);
+    background-color: $navy-grey;
+  }
+}

@@ -4,6 +4,11 @@ const shell = require('shelljs');
 const pages = [
   'front',
   'browse',
+  'sound',
+  'profile',
+  'followers',
+  'following',
+  'tagsFollowing',
   'editprofile',
   'editprofilepassword',
   'editprofilenotifications',

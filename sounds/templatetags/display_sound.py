@@ -23,6 +23,7 @@ from __future__ import absolute_import
 from django import template
 from django.conf import settings
 
+from accounts.models import Profile
 from sounds.models import Sound
 
 register = template.Library()
@@ -103,15 +104,17 @@ def display_sound(context, sound, player_size='small'):
     else:
         request = context['request']
         return {
-            'sound':        sound_obj,
-            'sound_tags':   sound_obj.tag_array,
-            'sound_user':   sound_obj.username,
+            'sound': sound_obj,
+            'sound_tags': sound_obj.tag_array,
+            'sound_user': sound_obj.username,
             'license_name': sound_obj.license_name,
-            'media_url':    context['media_url'],
-            'request':      request,
-            'is_explicit':  sound_obj.is_explicit and
-                            (not request.user.is_authenticated or not request.user.profile.is_adult),
+            'user_profile_locations': Profile.locations_static(sound_obj.user_id, sound_obj.user_has_avatar),
+            'media_url': context['media_url'],
+            'request': request,
+            'is_explicit': sound_obj.is_explicit and
+                           (not request.user.is_authenticated or not request.user.profile.is_adult),
             'is_authenticated': request.user.is_authenticated(),
+            'request_user_is_author': request.user.is_authenticated() and sound_obj.user_id == request.user.id,
             'player_size': player_size,
             'min_num_ratings': settings.MIN_NUMBER_RATINGS,
         }
@@ -135,3 +138,7 @@ def display_sound_big_no_info(context, sound):
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
     return display_sound(context, sound, player_size='small_no_info')
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_minimal(context, sound):
+    return display_sound(context, sound, player_size='minimal')

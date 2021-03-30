@@ -23,11 +23,18 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
   const progressBarIndicator = parentNode.getElementsByClassName(
     'bw-player__progress-bar-indicator'
   )[0]
-  progressIndicator.style.transform = `translateX(${-100 +
-    progressPercentage}%)`
+
+  if (progressIndicator) {
+    const progressIndicatorRightBorderSize = progressIndicator.offsetWidth - progressIndicator.clientWidth
+    const width = progressIndicator.parentElement.clientWidth - progressIndicatorRightBorderSize
+    progressIndicator.style.transform = `translateX(${-width + ((width *
+        progressPercentage) /
+        100)}px)`
+  }
+
   if (progressBarIndicator) {
-    const parentWidth = progressBarIndicator.parentElement.clientWidth
-    progressBarIndicator.style.transform = `translateX(${(parentWidth *
+    const width = progressBarIndicator.parentElement.clientWidth - progressBarIndicator.clientWidth
+    progressBarIndicator.style.transform = `translateX(${(width *
       progressPercentage) /
       100}px)`
   }
@@ -68,10 +75,6 @@ const removePlayingStatus = (parentNode, audioElement) => {
 }
 
 const onPlayerTimeUpdate = (audioElement, parentNode) => {
-  const progressStatus = parentNode.getElementsByClassName(
-    'bw-player__progress'
-  )[0]
-  const progressIndicator = [...progressStatus.childNodes][1]
   const { duration, currentTime } = audioElement
   const didReachTheEnd = duration === currentTime
   // reset progress at the end of playback
@@ -79,9 +82,15 @@ const onPlayerTimeUpdate = (audioElement, parentNode) => {
   const progress = playerSettings.showRemainingTime
     ? duration - timeElapsed
     : timeElapsed
-  progressIndicator.innerHTML = `${
-    playerSettings.showRemainingTime ? '-' : ''
-  }${formatAudioDuration(progress)}`
+
+  const progressStatus = parentNode.getElementsByClassName('bw-player__progress')
+  if (progressStatus.length > 0){
+    // only show remaining time if progressStatus elements are found (e.g. in minimal player these elements are not included)
+    const progressIndicator = [...progressStatus[0].childNodes][1]
+    progressIndicator.innerHTML = `${
+      playerSettings.showRemainingTime ? '-' : ''
+    }${formatAudioDuration(progress)}`
+  }
 }
 
 /**

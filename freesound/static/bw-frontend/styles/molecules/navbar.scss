@@ -174,3 +174,29 @@ $navbar-height-mobile: 64px;
     }
   }
 }
+
+.bw-nav__followers {
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    width: 100%;
+    justify-content: center;
+
+    li {
+      margin: 0 12px;
+      font-size: 18px;
+
+      a {
+        color: $navy-light-grey;
+      }
+    }
+
+    .active {
+      a {
+        color: $black;
+      }
+    }
+  }
+}

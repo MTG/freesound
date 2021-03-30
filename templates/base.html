@@ -27,7 +27,7 @@
         <script src="{{media_url}}js/jquery.watermarkinput.js" type="text/javascript"></script>
         <script type="text/javascript">
             var isLoggedIn = {{request.user.is_authenticated|yesno:"true,false"}};
-            var loginUrl = "{% url 'accounts-login' %}?next={{request.path}}";
+            var loginUrl = "{% url 'login' %}?next={{request.path}}";
             $(document).ready(function() {
                  $("#search input[name=q]").Watermark("search sounds");
             });
@@ -87,7 +87,7 @@
                     {% endcache %}
                 {% else %}
                     <a href="{% url 'accounts-register' %}">Register</a>
-                    <a href="{% url 'accounts-login' %}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
+                    <a href="{% url 'login' %}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
                 {% endif %}
                 <a href="{% url 'accounts-upload' %}" id="upload_button"></a>
             </div>

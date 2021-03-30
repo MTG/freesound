@@ -1,0 +1,23 @@
+{% extends "molecules/modal_base.html" %}
+
+{% load bw_templatetags %}
+
+{% block id %}forgottenPasswordModal{% endblock %}
+{% block aria-labelledby %}forgottenPasswordModalLabel{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h5>Problems logging in?</h5>
+        <div class="text-grey v-spacing-top-negative-1 v-spacing-4">
+            Enter your email or username below and we'll send you a link to help you login into your account.
+        </div>
+        <form id="problemsLoggingInModalForm" method="post" action="{% url 'problems-logging-in' %}">{% csrf_token %}
+            {{ problems_logging_in_form }}
+            <button id="recovery-account" type="submit" class="btn btn-primary">Send me a link</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    <a class="v-spacing-top-3" data-link="loginModal">{% bw_icon 'chevron' 'bw-icon__chevron_left' %} Back to log in</a>
+{% endblock %}

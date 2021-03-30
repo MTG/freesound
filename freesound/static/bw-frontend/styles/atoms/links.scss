@@ -40,6 +40,10 @@ a {
       color: $red;
     }
   }
+
+  @include active {
+    color: $black;
+  }
 }
 
 .bw-link--white {

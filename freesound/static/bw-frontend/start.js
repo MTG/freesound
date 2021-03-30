@@ -12,6 +12,11 @@ const start = async () => {
       choices: [
         'Front',
         'Browse',
+        'Profile',
+        'Sound',
+        'Followers',
+        'Following',
+        'TagsFollowing',
         'EditProfile',
         'EditProfilePassword',
         'EditProfileNotifications',

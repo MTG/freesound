@@ -164,8 +164,24 @@ const createLoopButton = audioElement => {
   return loopButton
 }
 
-const createSpectogramButton = () => {
+/**
+ *
+ * @param {HTMLImgElement} playerImgNode
+ * @param {HTMLDivElement} parentNode
+ */
+const createSpectogramButton = (playerImgNode, parentNode) => {
   const spectogramButton = createControlButton('spectogram')
+  const { spectrum, waveform } = parentNode.dataset
+  spectogramButton.addEventListener('click', () => {
+    const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
+    if (hasWaveform) {
+      playerImgNode.src = spectrum
+      spectogramButton.classList.add('text-red')
+    } else {
+      playerImgNode.src = waveform
+      spectogramButton.classList.remove('text-red')
+    }
+  })
   return spectogramButton
 }
 
@@ -180,53 +196,60 @@ const createRulerButton = () => {
  * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
  */
-const createWaveformImage = (parentNode, audioElement, playerSize) => {
+const createPlayerImage = (parentNode, audioElement, playerSize) => {
   const imageContainer = document.createElement('div')
   imageContainer.className = 'bw-player__img-container'
   if (playerSize === 'big') {
     imageContainer.classList.add('bw-player__img-container--big')
+  } else if (playerSize === 'minimal') {
+    imageContainer.classList.add('bw-player__img-container--minimal')
   }
-  const { waveform, title } = parentNode.dataset
-  const waveformImage = document.createElement('img')
-  waveformImage.className = 'bw-player__img'
-  waveformImage.src = waveform
-  waveformImage.alt = title
-  const progressIndicator = createProgressIndicator(parentNode, audioElement)
-  imageContainer.appendChild(waveformImage)
-  imageContainer.appendChild(progressIndicator)
-  audioElement.addEventListener('loadedmetadata', () => {
-    const progressStatus = createProgressStatus(audioElement, playerSize)
-    imageContainer.appendChild(progressStatus)
-  })
-  imageContainer.addEventListener('click', evt => {
-    const clickPosition = evt.layerX
-    const width = evt.target.clientWidth
-    const positionRatio = clickPosition / width
-    const time = audioElement.duration * positionRatio
-    audioElement.currentTime = time
-    if (audioElement.paused) {
-      audioElement.play()
-    }
-  })
+  if (playerSize !== 'minimal') {
+    const {waveform, title} = parentNode.dataset
+    const playerImage = document.createElement('img')
+    playerImage.className = 'bw-player__img'
+    playerImage.src = waveform
+    playerImage.alt = title
+    const progressIndicator = createProgressIndicator(parentNode, audioElement)
+    imageContainer.appendChild(playerImage)
+    imageContainer.appendChild(progressIndicator)
+    audioElement.addEventListener('loadedmetadata', () => {
+      const progressStatus = createProgressStatus(audioElement, playerSize)
+      imageContainer.appendChild(progressStatus)
+    })
+    imageContainer.addEventListener('click', evt => {
+      const clickPosition = evt.layerX
+      const width = evt.target.clientWidth
+      const positionRatio = clickPosition / width
+      const time = audioElement.duration * positionRatio
+      audioElement.currentTime = time
+      if (audioElement.paused) {
+        audioElement.play()
+      }
+    })
+  }
   return imageContainer
 }
 
 /**
  *
  * @param {HTMLDivElement} parentNode
+ * @param {HTMLImgElement} playerImgNode
  * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
  */
-const createPlayerControls = (parentNode, audioElement, playerSize) => {
+const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSize) => {
   const playerControls = document.createElement('div')
   playerControls.className = 'bw-player__controls stop-propagation'
   if (playerSize === 'big') {
     playerControls.classList.add('bw-player__controls--big')
+  } else if (playerSize === 'minimal') {
+    playerControls.classList.add('bw-player__controls--minimal')
   }
   const playButton = createPlayButton(audioElement, playerSize)
   const stopButton = createStopButton(audioElement, parentNode)
   const loopButton = createLoopButton(audioElement)
-  const spectogramButton = createSpectogramButton()
+  const spectogramButton = createSpectogramButton(playerImgNode, parentNode)
   const rulerButton = createRulerButton()
   const controls =
     playerSize === 'big'
@@ -270,25 +293,21 @@ const createPlayer = parentNode => {
   const playerSize = parentNode.dataset.size
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
   const audioElement = createAudioElement(parentNode)
-  const waveformImage = createWaveformImage(
+  const playerImage = createPlayerImage(
     parentNode,
     audioElement,
     playerSize
   )
-  const controls = createPlayerControls(parentNode, audioElement, playerSize)
+  const playerImgNode = playerImage.getElementsByTagName('img')[0]
+  const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
   const bookmarkButton = createSetFavoriteButton(parentNode)
 
-  parentNode.appendChild(waveformImage)
+  parentNode.appendChild(playerImage)
   parentNode.appendChild(audioElement)
-  waveformImage.appendChild(controls)
+  playerImage.appendChild(controls)
   if (showBookmarkButton){
-    waveformImage.appendChild(bookmarkButton)
+    playerImage.appendChild(bookmarkButton)
   }
 }
 
-const setupPlayers = () => {
-  const players = [...document.getElementsByClassName('bw-player')]
-  players.forEach(createPlayer)
-}
-
-setupPlayers()
+export {createPlayer};

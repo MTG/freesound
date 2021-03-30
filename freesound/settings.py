@@ -235,11 +235,11 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 SUPPORT = ()
 
 IFRAME_PLAYER_SIZE = {
-        'large': [920, 245],
-        'medium': [481, 86],
-        'small': [375, 30],
-        'twitter_card': [440, 132]
-    }
+    'large': [920, 245],
+    'medium': [481, 86],
+    'small': [375, 30],
+    'twitter_card': [440, 132]
+}
 
 FREESOUND_RSS = ''
 
@@ -256,6 +256,7 @@ SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
+FOLLOW_ITEMS_PER_PAGE = 5  # BW only
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3

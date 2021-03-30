@@ -6,6 +6,11 @@
   &.bw-player__img-container--big {
     height: 330px;
   }
+
+  &.bw-player__img-container--minimal {
+    height: 20px;
+    width: 43px;
+  }
 }
 
 .bw-player__img {
@@ -35,7 +40,7 @@
   transform: translateX(-100%);
   border-right: 4px solid white;
   transition: opacity 0.2s ease;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.4);
   pointer-events: none;
 
   .bw-player--playing & {
@@ -79,6 +84,10 @@
     .bw-player__play-btn {
       font-size: 36px;
     }
+  }
+
+  &.bw-player__controls--minimal {
+    opacity: 1;
   }
 }
 

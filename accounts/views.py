@@ -34,10 +34,11 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -46,7 +47,7 @@ from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
@@ -56,10 +57,11 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
-    UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField
+    UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
+    BwProblemsLoggingInForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce
 from bookmarks.models import Bookmark
 from comments.models import Comment
@@ -68,8 +70,9 @@ from forum.models import Post
 from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.images import extract_square
@@ -95,7 +98,12 @@ def login(request, template_name, authentication_form):
     # Freesound-specific login view to check if a user has multiple accounts
     # with the same email address. We can switch back to the regular django view
     # once all accounts are adapted
-    response = LoginView.as_view(template_name=template_name, authentication_form=authentication_form)(request)
+    # NOTE: in the function below we need to make the template depend on the front-end because LoginView will not
+    # use our custom "render" function which would select the template for the chosen front-end automatically
+    # Also, we set the authentication form depending on front-end as there are small modifications.
+    response = LoginView.as_view(
+        template_name=template_name if not using_beastwhoosh(request) else 'accounts/login.html',
+        authentication_form=authentication_form if not using_beastwhoosh(request) else BwFsAuthenticationForm)(request)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
         # Now we check if the logged in user has shared email problems
@@ -109,6 +117,42 @@ def login(request, template_name, authentication_form):
         else:
             return response
 
+    return response
+
+
+class FsPasswordResetConfirmView(PasswordResetConfirmView):
+
+    def get_context_data(self, **kwargs):
+        context = super(FsPasswordResetConfirmView, self).get_context_data(**kwargs)
+        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+        # instead of staying in PasswordResetCompleteView (the current path).
+        context['next_path'] = reverse('accounts-home')
+        return context
+
+
+def password_reset_confirm(request, uidb64, token):
+    response = FsPasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html' if not using_beastwhoosh(request)
+            else 'accounts/password_reset_confirm.html',
+        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm
+    )(request, uidb64=uidb64, token=token)
+    return response
+
+
+class FsPasswordResetCompleteView(PasswordResetCompleteView):
+
+    def get_context_data(self, **kwargs):
+        context = super(FsPasswordResetCompleteView, self).get_context_data(**kwargs)
+        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+        # instead of staying in PasswordResetCompleteView (the current path).
+        context['next_path'] = reverse('accounts-home')
+        return context
+
+
+def password_reset_complete(request):
+    response = FsPasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html' if not using_beastwhoosh(request)
+        else 'accounts/password_reset_complete.html')(request)
     return response
 
 
@@ -204,31 +248,60 @@ def tos_acceptance(request):
 
 @transaction.atomic()
 def registration(request):
+    form_class = RegistrationForm if not using_beastwhoosh(request) else BwRegistrationForm
+
     if request.method == 'POST':
-        form = RegistrationForm(request.POST)
+        form = form_class(request.POST)
         if form.is_valid():
             user = form.save()
             send_activation(user)
-            return render(request, 'accounts/registration_done.html')
+            if using_beastwhoosh(request):
+                # When using beastwoosh, if the form is valid we will return a JSON response with the URL where
+                # the user should be redirected (a URL which will include the "Almost done" message). The browser
+                # will then take this URL and redirect the user.
+                next_param = request.GET.get('next', None)
+                if next_param is not None:
+                    return JsonResponse({'redirectURL': next_param + '?feedbackRegistration=1'})
+                else:
+                    return JsonResponse({'redirectURL': reverse('front-page') + '?feedbackRegistration=1'})
+            else:
+                # If not using beastwhoosh, we render the "registration done" page
+                return render(request, 'accounts/registration_done.html')
+        else:
+            if using_beastwhoosh(request) and request.GET.get('in_modal', False):
+                # When using beastwoosh, if the form is NOT valid we return the Django rendered HTML version of the
+                # registration modal (which includes the form and error messages) so the browser can show the updated
+                # modal contents to the user
+                return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
-        form = RegistrationForm()
+        form = form_class()
 
-    return render(request, 'accounts/registration.html', {'form': form})
+    if using_beastwhoosh(request):
+        # In beastwhoosh we don't have a dedicated registration page, redirect to front-page and auto-open the
+        # registration modal
+        return HttpResponseRedirect('{}?registration=1'.format(reverse('front-page')))
+    else:
+        return render(request, 'accounts/registration.html', {'form': form})
 
 
 def activate_user(request, username, uid_hash):
+    # NOTE: in these views we overwrite "next_path" variable from the context processor so we make sure that if the
+    # login modal is used the user will be redirected to the front-page instead of that same page
+
     try:
         user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
-        return render(request, 'accounts/activate.html', {'user_does_not_exist': True})
+        return render(request, 'accounts/activate.html', {'user_does_not_exist': True,
+                                                          'next_path': reverse('accounts-home')})
 
     new_hash = create_hash(user.id)
     if new_hash != uid_hash:
-        return render(request, 'accounts/activate.html', {'decode_error': True})
+        return render(request, 'accounts/activate.html', {'decode_error': True,
+                                                          'next_path': reverse('accounts-home')})
 
     user.is_active = True
     user.save()
-    return render(request, 'accounts/activate.html', {'all_ok': True})
+    return render(request, 'accounts/activate.html', {'all_ok': True, 'next_path': reverse('accounts-home')})
 
 
 def send_activation(user):
@@ -242,6 +315,7 @@ def send_activation(user):
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
 
 
+@redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
 def resend_activation(request):
     if request.method == 'POST':
         form = ReactivationForm(request.POST)
@@ -261,6 +335,7 @@ def resend_activation(request):
     return render(request, 'accounts/resend_activation.html', {'form': form})
 
 
+@redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
 def username_reminder(request):
     if request.method == 'POST':
         form = UsernameReminderForm(request.POST)
@@ -283,6 +358,12 @@ def username_reminder(request):
 
 @login_required
 def home(request):
+    if using_beastwhoosh(request):
+        # In BW we don't have a "home" so we redirect to the account page. All the "extra" features provides in NG
+        # home page with respect to account page are either provided in the navbar user menus or will be provided in
+        # the "manage sounds" page
+        return HttpResponseRedirect(reverse('account', args=[request.user.username]))
+
     user = request.user
 
     # Tagcloud
@@ -310,8 +391,9 @@ def home(request):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
     # Followers
-    following, followers, following_tags, following_count, followers_count, following_tags_count \
-        = follow_utils.get_vars_for_home_view(user)
+    following = follow_utils.get_users_following_qs(user)
+    followers = follow_utils.get_users_followers_qs(user)
+    following_tags = follow_utils.get_tags_following_qs(user)
 
     current_bulkdescribe = BulkUploadProgress.objects.filter(user=user).exclude(progress_type="C")
     tvars = {
@@ -328,9 +410,6 @@ def home(request):
         'following': following,
         'followers': followers,
         'following_tags': following_tags,
-        'following_count': following_count,
-        'followers_count': followers_count,
-        'following_tags_count': following_tags_count,
         'tags': tags,
     }
     return render(request, 'accounts/account.html', tvars)
@@ -378,8 +457,7 @@ def edit(request):
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
-            invalidate_template_cache('user_header', request.user.id)
-
+            invalidate_user_template_caches(request.user.id)
             profile.save()
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
@@ -399,6 +477,7 @@ def edit(request):
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True
                 profile.save()
+            invalidate_user_template_caches(request.user.id)
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")
@@ -435,6 +514,7 @@ def handle_uploaded_image(profile, f):
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
+    path_xl = profile.locations("avatar.XL.path")
     try:
         extract_square(tmp_image_path, path_s, 32)
         upload_logger.info("\tcreated small thumbnail")
@@ -454,6 +534,12 @@ def handle_uploaded_image(profile, f):
         upload_logger.info("\tcreated large thumbnail")
     except Exception as e:
         upload_logger.error("\tfailed creating large thumbnails: " + str(e))
+
+    try:
+        extract_square(tmp_image_path, path_xl, 100)
+        upload_logger.info("\tcreated extra-large thumbnail")
+    except Exception as e:
+        upload_logger.error("\tfailed creating extra-large thumbnails: " + str(e))
 
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
@@ -645,9 +731,9 @@ def describe_sounds(request):
                         'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
 
                     # Invalidate affected caches in user header
-                    invalidate_template_cache("user_header", request.user.id)
+                    invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
-                        invalidate_template_cache("user_header", moderator.id)
+                        invalidate_user_template_caches(moderator.id)
 
             except utils.sound_upload.NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
@@ -718,11 +804,11 @@ def attribution(request):
     qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
         .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
                 'pack__name', 'created').filter(user=request.user)
-    # NOTE: in the query above we duplciate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
+    # NOTE: in the query above we duplicate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
     # a requirement for doing QuerySet.union below. Also as a result of using QuerySet.union, the names of the columns
     # (keys in each dictionary element) are unified and taken from the main query set. This means that after the union,
     # queryset entries corresponding to PackDownload will have corresponding field names from entries corresponding to
-    # Download. Therefre to access the pack_id (which is the second value in the list), you'll need to do
+    # Download. Therefore to access the pack_id (which is the second value in the list), you'll need to do
     # item['sound_id'] instead of item ['pack_id']. See the template of this view for an example of this.
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
@@ -741,7 +827,8 @@ def download_attribution(request):
     qs_packs = PackDownload.objects.annotate(download_type=Value('pack', CharField()))\
         .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
                 'pack__name', 'created').filter(user=request.user)
-    # NOTE: see the above view, attribution.
+    # NOTE: see the above view, attribution. Note that we need to use .encode('utf-8') in some fields that can contain
+    # non-ascii characters even if these seem wrongly named due to the fact of using .union() in the QuerySet.
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
     download = request.GET.get('dl', '')
@@ -755,13 +842,15 @@ def download_attribution(request):
             output.write('Download Type,File Name,User,License\r\n')
             csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
-                csv_writer.writerow([row['download_type'][0].upper(), row['sound__original_filename'],
-                                    row['sound__user__username'], row['license__name'] or row['sound__license__name']])
+                csv_writer.writerow(
+                    [row['download_type'][0].upper(), row['sound__original_filename'].encode('utf-8'),
+                     row['sound__user__username'],
+                     row['license__name'].encode('utf-8') or row['sound__license__name'].encode('utf-8')])
         elif download == 'txt':
             for row in qs:
-                output.write("%s: %s by %s | License: %s\n" % (row['download_type'][0].upper(),
-                             row['sound__original_filename'], row['sound__user__username'],
-                             row['license__name'] or row['sound__license__name']))
+                output.write("{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
+                             row['sound__original_filename'].encode("utf-8"), row['sound__user__username'],
+                             row['license__name'].encode("utf-8") or row['sound__license__name'].encode("utf-8")))
         response.writelines(output.getvalue())
         return response
     else:
@@ -889,12 +978,13 @@ def account(request, username):
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                                .order_by("-last_updated")[0:10]
-    following, followers, following_tags, following_count, followers_count, following_tags_count = \
-        follow_utils.get_vars_for_account_view(user)
+                                .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
+    following = follow_utils.get_users_following_qs(user)
+    followers = follow_utils.get_users_followers_qs(user)
+    following_tags = follow_utils.get_tags_following_qs(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-    show_unfollow_button = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, user)
+    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
@@ -910,23 +1000,23 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
-        'home': False,
+        'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
         'tags': tags,
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
+        'follow_user_url': follow_user_url,
         'following': following,
         'followers': followers,
         'following_tags': following_tags,
-        'following_count': following_count,
-        'followers_count': followers_count,
-        'following_tags_count': following_tags_count,
-        'follow_user_url': follow_user_url,
         'unfollow_user_url': unfollow_user_url,
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
-        'num_sounds_pending_count': num_sounds_pending_count,
         'show_about': show_about,
+        'num_sounds_pending_count': num_sounds_pending_count,
+        'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
+        'followers_modal_page': request.GET.get('followers', 1),  # BW only
+        'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
     }
     return render(request, 'accounts/account.html', tvars)
 
@@ -1189,6 +1279,43 @@ def email_reset_complete(request, uidb36=None, token=None):
     return render(request, 'accounts/email_reset_complete.html', tvars)
 
 
+
+def problems_logging_in(request):
+    """This view gets a User object from BwProblemsLoggingInForm form contents and then either sends email instructions
+    to re-activate the user (if the user is not active) or sends instructions to re-set the password (if the user
+    is active).
+    """
+    if request.method == 'POST':
+        form = BwProblemsLoggingInForm(request.POST)
+        if form.is_valid():
+            username_or_email = form.cleaned_data['username_or_email']
+            try:
+                user = User.objects.get((Q(email__iexact=username_or_email)\
+                         | Q(username__iexact=username_or_email)))
+                if not user.is_active:
+                    # If user is not activated, send instructions to re-activate the user
+                    send_activation(user)
+                else:
+                    # If user is activated, send instructions to re-set the password (act as if the pre-BW password
+                    # reset view was called)
+                    # NOTE: we pass the same request.POST as we did to the BwProblemsLoggingInForm. We can do that
+                    # because both forms have the same fields.
+                    pwd_reset_form = FsPasswordResetForm(request.POST)
+                    if pwd_reset_form.is_valid():
+                        pwd_reset_form.save(
+                            subject_template_name='registration/password_reset_subject.txt',
+                            email_template_name='registration/password_reset_email.html',
+                            use_https=request.is_secure(),
+                            request=request
+                        )
+            except User.DoesNotExist:
+                pass
+
+    # The view returns the same empty response regardless of whether an email was sent or not. This is to avoid
+    # giving login credentials information to potential attackers.
+    return JsonResponse({})
+
+
 @login_required
 @transaction.atomic()
 def flag_user(request, username):
@@ -1277,7 +1404,7 @@ def clear_flags_user(request, username):
         tvars = {'num': num, 'username': username}
         return render(request, 'accounts/flags_cleared.html', tvars)
     else:
-        return HttpResponseRedirect(reverse('accounts-login'))
+        return HttpResponseRedirect(reverse('login'))
 
 
 @login_required

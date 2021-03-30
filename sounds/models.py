@@ -33,6 +33,7 @@ from django.db.models.signals import pre_delete, post_delete, post_save, pre_sav
 from django.dispatch import receiver
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
+from django.utils.text import Truncator
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -72,9 +73,14 @@ class License(OrderedModel):
     name = models.CharField(max_length=512)
     abbreviation = models.CharField(max_length=8, db_index=True)
     summary = models.TextField()
+    short_summary = models.TextField(null=True)
     deed_url = models.URLField()
     legal_code_url = models.URLField()
     is_public = models.BooleanField(default=True)
+
+    def get_short_summary(self):
+        return self.short_summary if self.short_summary is not None else Truncator(self.summary)\
+            .words(20, html=True, truncate='...')
 
     def __unicode__(self):
         return self.name
@@ -423,7 +429,10 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
+          geotags_geotag.lat as geotag_lat,
+          geotags_geotag.lon as geotag_lon,
           sounds_remixgroup_sounds.id as remixgroup_id,
+          accounts_profile.has_avatar as user_has_avatar,
           ac_analsyis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
@@ -434,8 +443,10 @@ class SoundManager(models.Manager):
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
+          LEFT JOIN accounts_profile ON accounts_profile.user_id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
                                                          AND ac_analsyis.extractor = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
@@ -1112,6 +1123,11 @@ class Sound(SocialModel):
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
+                for bw_player_size in ['small', 'middle', 'big_no_info', 'small_no_info']:
+                    for bw_request_user_is_author in [True, False]:
+                        invalidate_template_cache(
+                            "bw_display_sound",
+                            self.id, is_authenticated, is_explicit, bw_player_size, bw_request_user_is_author)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

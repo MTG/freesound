@@ -1,0 +1,39 @@
+.bw-followers {
+  &__close {
+    display: flex;
+    justify-content: flex-end;
+
+    a {
+      color: $black;
+    }
+  }
+}
+
+.bw-follows {
+  img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+  }
+
+  a {
+    font-size: 16px;
+  }
+
+  p {
+    font-size: 14px;
+    color: $navy-grey;
+    line-height: 20px;
+    margin: 0;
+    font-weight: 400;
+  }
+}
+
+.bw-tags-following {
+  text-align: center;
+
+  .btn-profile-adapt {
+    opacity: 1 !important;
+    margin: 12px 8px;
+  }
+}

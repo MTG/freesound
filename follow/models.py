@@ -39,12 +39,21 @@ class FollowingUserItem(models.Model):
 
 class FollowingQueryItem(models.Model):
     user = models.ForeignKey(User)
-    # TODO: refactor to tags instead of query
+    # TODO: refactor this to name it "tags" instead of "query"
     query = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return u"%s following tag '%s'" % (self.user, self.query)
+
+    def get_slash_tags(self):
+        return self.query.replace(" ", "/")
+
+    def get_split_tags(self):
+        return self.query.split(" ")
+
+    def get_space_tags(self):
+        return self.query
 
     class Meta:
         verbose_name_plural = 'Tags'

@@ -1014,6 +1014,9 @@ def account(request, username):
         'has_bookmarks': has_bookmarks,
         'show_about': show_about,
         'num_sounds_pending_count': num_sounds_pending_count,
+        'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
+        'followers_modal_page': request.GET.get('followers', 1),  # BW only
+        'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
     }
     return render(request, 'accounts/account.html', tvars)
 

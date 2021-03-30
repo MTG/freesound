@@ -1,5 +1,5 @@
 import {initRegistrationForm, initProblemsLoggingInForm} from "../pages/loginAndRegistration";
-import {showToast} from "./toast";
+import {showToast, showToastNoTimeout, dismissToast} from "./toast";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
@@ -74,10 +74,12 @@ if (problemsLoggingInParam) {
 const genericModalWrapper = document.getElementById('generiModalWrapper');
 
 const handleGenericModal = fetchContentUrl => {
+  showToastNoTimeout('Loading...');
   const req = new XMLHttpRequest();
   req.open('GET', fetchContentUrl, true);
   req.onload = () => {
     if (req.status >= 200 && req.status < 400) {
+        dismissToast();
 
         // Add modal contents to the generic modal wrapper (the requested URL should return a modal template
         // extending "modal_base.html")
@@ -105,11 +107,14 @@ const handleGenericModal = fetchContentUrl => {
             };
           });
         });
+    } else {
+      // Unexpected errors happened while processing request: close modal and show error in toast
+      showToast('Some errors occurred while loading the requested content.')
     }
   };
   req.onerror = () => {
     // Unexpected errors happened while processing request: close modal and show error in toast
-    showToast('Some errors occurred while loading requested content.')
+    showToast('Some errors occurred while loading the requested content.')
   };
 
   // Send the form

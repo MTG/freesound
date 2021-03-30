@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        <div class="row navbar-space-filler v-spacing-top-6 v-spacing-6 bw-edit-profile">
+            <aside class="col-3 offset-1">
+                <ul class="navbar-profile">
+                    <li class="nav-item">
+                        <a class="nav-link {% if activePage == 'profile'%} active {% endif %}" href="{% url 'accounts-edit' %}">Edit profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if activePage == 'email'%} active {% endif %}" href="{% url "accounts-email-reset" %}">Change email</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if activePage == 'password'%} active {% endif %}" href="{% url "password_change" %}">Change password</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if activePage == 'notifications'%} active {% endif %}" href="{% url "accounts-email-settings" %}">E-mail notifications</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if activePage == 'api'%} active {% endif %}" href="{% url "access-tokens" %}">Manage API keys</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if activePage == 'account'%} active {% endif %}" href="{% url "accounts-delete" %}">Close account</a>
+                    </li>
+                </ul>
+            </aside>
+            <div class="col-7 bw-edit-profile__info">
+                {% block main_content %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

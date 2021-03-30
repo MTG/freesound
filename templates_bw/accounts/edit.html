@@ -1,0 +1,57 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% load staticfiles %}
+{% load filter_img %}
+{% load bw_templatetags %}
+{% load util %}
+
+{% block title %}Edit profile{% endblock %}
+
+{% block main_content %}
+    <h1>Edit profile</h1>
+    <div class="v-spacing-top-6">
+        <img id="imageProfile" src="{{ profile.locations.avatar.L.url }}" />
+    </div>
+    <div class="bw-edit-profile__username v-spacing-top-2">
+        <h2>user.username</h2>
+    </div>
+    <div class="v-spacing-top-3">
+        <label for="file" class="btn-inverse bw-edit-profile__label_file">Change avatar</label>
+        <input type="file" id="file" class="bw-edit-profile__input_file" />
+        <button class="btn-inverse h-spacing-left-2">Delete avatar</button>
+    </div>
+    <div class="v-spacing-top-7 w-100">
+        <form class="bw-edit-profile__form w-100">
+            <label for="name" class="text-grey">
+                Name
+            </label>
+            <input id="name" type="text" placeholder="Write your name here" />
+            <label for="lastName" class="text-grey">
+                Last name
+            </label>
+            <input id="lastName" type="text" placeholder="Write your last name here" />
+            <label for="email" class="text-grey">
+                E-mail
+            </label>
+            <input id="email" type="email" placeholder="Write your E-mail here" />
+            <label for="location" class="text-grey">
+                Location
+            </label>
+            <input id="location" type="text" placeholder="Write your location here" />
+            <div class="bw-edit-profile__textarea_block">
+                <label for="about-edit-profile-textarea" class="text-grey">
+                    About
+                </label>
+                <textarea id="about-edit-profile-textarea" type="text" placeholder="Write something about yourself" maxlength="140"></textarea>
+                <div class="edit-profile-textarea-counter">
+                    <span id="counter-number">0</span><span>/140</span>
+                </div>
+            </div>
+            <button class="btn-primary w-100">Update profile</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/editProfile.78a8c324.js' %}"></script>
+{% endblock %}

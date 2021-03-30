@@ -488,7 +488,8 @@ def edit(request):
         'profile': profile,
         'profile_form': profile_form,
         'image_form': image_form,
-        'has_granted_permissions': has_granted_permissions
+        'has_granted_permissions': has_granted_permissions,
+        'activePage': 'profile',  # For BW account settings sidebar
     }
     return render(request, 'accounts/edit.html', tvars)
 

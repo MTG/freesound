@@ -282,11 +282,7 @@ def sound(request, username, sound_id):
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
     display_random_link = request.GET.get('random_browsing', False)
-    is_following = False
-    if request.user.is_authenticated:
-        users_following = follow_utils.get_users_following(request.user)
-        if sound.user in users_following:
-            is_following = True
+    is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
     tvars = {

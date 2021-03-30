@@ -18,13 +18,13 @@
 {% if followers %}
 	<h3>{% if is_owner %}You have{% else %}{{ user.username }} has {% endif %} {{ followers|length }} follower{{ followers|pluralize }}</h3>
 	<ul>
-        {% for user in followers %}
+        {% for follow_user_item in followers %}
 		 	    <div class="followers_page_user_info">
-			        <img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" />
-			        <div class="post_author"><a href="{% url "account" user.username %}">{{user.username|truncate_string:12}}</a></div>
+			        <img src="{{follow_user_item.user_from.profile.locations.avatar.M.url}}" alt="avatar" />
+			        <div class="post_author"><a href="{% url "account" follow_user_item.user_from.username %}">{{follow_user_item.user_from.username|truncate_string:12}}</a></div>
 			        <div class="people_user_info">
-			            {{user.profile.num_sounds}} sound{{user.profile.num_sounds|pluralize}}<br>
-			            {{user.profile.num_posts}} post{{user.profile.num_posts|pluralize}}<br>
+			            {{follow_user_item.user_from.profile.num_sounds}} sound{{follow_user_item.user_from.profile.num_sounds|pluralize}}<br>
+			            {{follow_user_item.user_from.profile.num_posts}} post{{follow_user_item.user_from.profile.num_posts|pluralize}}<br>
 			        </div>
 		    	</div>
         {% endfor %}

@@ -83,9 +83,9 @@
                 </div>
                 <div class="bw-profile__stats v-spacing-top-3">
                     <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
-                    <div><a id="user-followers-button" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1" href="javascript:void(0);">{{ followers_count }} followers</a></div>
-                    <div><a id="user-following-users-button" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1" href="javascript:void(0);">{{ following_count }} following</a></div>
-                    <div><a id="user-following-tags-button" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1" href="javascript:void(0);">{{ following_tags_count }} tags following</a></div>
+                    <div><a id="user-followers-button" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1" href="javascript:void(0);">{{ followers.count }} followers</a></div>
+                    <div><a id="user-following-users-button" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1" href="javascript:void(0);">{{ following.count }} following</a></div>
+                    <div><a id="user-following-tags-button" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1" href="javascript:void(0);">{{ following_tags.count }} tags following</a></div>
                 </div>
             {% endif %}
         </div>

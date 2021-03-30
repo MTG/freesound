@@ -50,8 +50,7 @@ def following_users(request, username):
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
-    following = follow_utils.get_users_following(user)
-
+    following = follow_utils.get_users_following_qs(user)
     tvars = {
         'user': user
     }
@@ -87,8 +86,7 @@ def followers(request, username):
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
-    followers = follow_utils.get_users_followers(user)
-
+    followers = follow_utils.get_users_followers_qs(user)
     tvars = {
         'user': user
     }
@@ -124,18 +122,9 @@ def following_tags(request, username):
     is_owner = False
     if request.user.is_authenticated:
         is_owner = request.user == user
-    following = follow_utils.get_tags_following(user)
-    space_tags = following
-    split_tags = [tag.split(" ") for tag in space_tags]
-    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
-
-    following_tags = []
-    for i in range(len(space_tags)):
-        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
-
+    following_tags = follow_utils.get_tags_following_qs(user)
     tvars = {
         'user': user,
-        'following_tags': following_tags
     }
 
     if using_beastwhoosh(request):
@@ -152,10 +141,7 @@ def following_tags(request, username):
         return render(request, 'accounts/modal_follow.html', tvars)
     else:
         tvars.update({
-            'following': following,
-            'slash_tags': slash_tags,
-            'split_tags': split_tags,
-            'space_tags': space_tags,
+            'following_tags': following_tags,
             'is_owner': is_owner,
         })
         return render(request, 'follow/following_tags.html', tvars)

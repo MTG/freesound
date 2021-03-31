@@ -57,7 +57,7 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
@@ -438,6 +438,7 @@ def edit_email_settings(request):
 @transaction.atomic()
 def edit(request):
     profile = request.user.profile
+    profile_form_class = ProfileForm if not using_beastwhoosh(request) else BwProfileForm
 
     def is_selected(prefix):
         if request.method == "POST":
@@ -451,7 +452,7 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        profile_form = profile_form_class(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
             # Update username, this will create an entry in OldUsername
@@ -463,13 +464,16 @@ def edit(request):
             if old_sound_signature != profile.sound_signature:
                 msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
             messages.add_message(request, messages.INFO, msg_txt)
-            return HttpResponseRedirect(reverse("accounts-home"))
+            if not using_beastwhoosh(request):
+                # In BW we don't redirect home after successful edit
+                return HttpResponseRedirect(reverse("accounts-home"))
     else:
-        profile_form = ProfileForm(request, instance=profile, prefix="profile")
+        profile_form = profile_form_class(request, instance=profile, prefix="profile")
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
         if image_form.is_valid():
+            print(image_form.cleaned_data["remove"])
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()
@@ -478,13 +482,18 @@ def edit(request):
                 profile.has_avatar = True
                 profile.save()
             invalidate_user_template_caches(request.user.id)
-            return HttpResponseRedirect(reverse("accounts-home"))
+            msg_txt = "Your profile has been updated correctly."
+            messages.add_message(request, messages.INFO, msg_txt)
+            if not using_beastwhoosh(request):
+                # In BW we don't redirect home after successful edit
+                return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
 
     tvars = {
+        'user': request.user,
         'profile': profile,
         'profile_form': profile_form,
         'image_form': image_form,

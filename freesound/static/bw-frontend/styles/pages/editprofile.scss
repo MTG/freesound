@@ -1,4 +1,5 @@
 .bw-edit-profile {
+
   &__info {
     display: flex;
     flex-direction: column;
@@ -43,14 +44,23 @@
     display: flex;
     flex-direction: column;
 
+    p {
+      margin-bottom: 0;
+    }
+
     label {
       width: 100%;
+      color: $navy-grey;
+    }
+
+    span.bw-checkbox-container + label {
+      color: $black;
     }
 
     input,
     textarea {
       margin-top: 12px;
-      margin-bottom: 39px;
+      margin-bottom: 30px;
       width: 100%;
       border: 1px solid $border-input-profile;
       background-color: $background-input-profile;
@@ -68,7 +78,7 @@
     }
 
     textarea {
-      min-height: 100px;
+      min-height: 150px;
       resize: none;
 
       &:focus {
@@ -93,6 +103,13 @@
     .radioAccount {
       margin-bottom: 28px;
       color: $navy-grey;
+    }
+
+    .helptext {
+      color: $navy-light-grey;
+      margin-top: -15px;
+      margin-bottom: 18px;
+      display: block;
     }
   }
 

@@ -38,7 +38,8 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView
+from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView, \
+    PasswordChangeView, PasswordChangeDoneView
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -120,39 +121,60 @@ def login(request, template_name, authentication_form):
     return response
 
 
-class FsPasswordResetConfirmView(PasswordResetConfirmView):
-
-    def get_context_data(self, **kwargs):
-        context = super(FsPasswordResetConfirmView, self).get_context_data(**kwargs)
-        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
-        # instead of staying in PasswordResetCompleteView (the current path).
-        context['next_path'] = reverse('accounts-home')
-        return context
-
-
 def password_reset_confirm(request, uidb64, token):
-    response = FsPasswordResetConfirmView.as_view(
-        template_name='registration/password_reset_confirm.html' if not using_beastwhoosh(request)
-            else 'accounts/password_reset_confirm.html',
-        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm
+    """
+    Password reset = change password without user being logged in (classic "forgot password" feature).
+    This view is called after user has received an email with instructions for resetting the password and clicks the
+    reset link.
+
+    We set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+    instead of staying in PasswordResetCompleteView (the current path).
+    """
+    response = PasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html'
+            if not using_beastwhoosh(request) else 'accounts/password_reset_confirm.html',
+        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm,
+        extra_context={'next_path': reverse('accounts-home')}
     )(request, uidb64=uidb64, token=token)
     return response
 
 
-class FsPasswordResetCompleteView(PasswordResetCompleteView):
-
-    def get_context_data(self, **kwargs):
-        context = super(FsPasswordResetCompleteView, self).get_context_data(**kwargs)
-        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
-        # instead of staying in PasswordResetCompleteView (the current path).
-        context['next_path'] = reverse('accounts-home')
-        return context
-
-
 def password_reset_complete(request):
-    response = FsPasswordResetCompleteView.as_view(
-        template_name='registration/password_reset_complete.html' if not using_beastwhoosh(request)
-        else 'accounts/password_reset_complete.html')(request)
+    """
+    Password reset = change password without user being logged in (classic "forgot password" feature).
+    This view is called when the password has been reset successfully.
+
+    We set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+    instead of staying in PasswordResetCompleteView (the current path).
+    """
+    response = PasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html'
+            if not using_beastwhoosh(request) else 'accounts/password_reset_complete.html',
+        extra_context={'next_path': reverse('accounts-home')})(request)
+    return response
+
+
+def password_change_form(request):
+    """
+    Password change = change password from the account settings page, while user is logged in.
+    This view is called when user requests to change the password and contains the form to do so.
+    """
+    response = PasswordChangeView.as_view(
+        template_name='registration/password_change_form.html'
+            if not using_beastwhoosh(request) else 'accounts/password_change_form.html',
+        extra_context={'activePage': 'password'})(request)
+    return response
+
+
+def password_change_done(request):
+    """
+    Password change = change password from the account settings page, while user is logged in.
+    This view is called when user has successfully changed the password by filling in the password change form.
+    """
+    response = PasswordChangeDoneView.as_view(
+        template_name='registration/password_change_done.html'
+            if not using_beastwhoosh(request) else 'accounts/password_change_done.html',
+        extra_context={'activePage': 'password'})(request)
     return response
 
 

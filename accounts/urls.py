@@ -29,7 +29,7 @@ from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
-from utils.frontend_handling import redirect_if_beastwhoosh, redirect_if_beastwhoosh_inline
+from utils.frontend_handling import redirect_if_beastwhoosh_inline
 
 # By putting some URLs at the top that are the same as the ones listed in
 # django.contrib.auth.urls, we can override some configuration:
@@ -52,8 +52,8 @@ urlpatterns = [
             auth_views.PasswordResetDoneView.as_view(),
             redirect_url_name='front-page'),
         name='password_reset_done'),
-    url(r'^password_change/$', auth_views.PasswordChangeView.as_view(), name='password_change'),
-    url(r'^password_change/done/$', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
+    url(r'^password_change/$', accounts.password_change_form, name='password_change'),
+    url(r'^password_change/done/$', accounts.password_change_done, name='password_change_done'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         accounts.password_reset_confirm, name='password_reset_confirm'),
     url(r'^reset/done/$', accounts.password_reset_complete, name='password_reset_complete'),

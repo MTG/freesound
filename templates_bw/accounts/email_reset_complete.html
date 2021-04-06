@@ -1,0 +1,22 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% load staticfiles %}
+{% load filter_img %}
+{% load bw_templatetags %}
+{% load util %}
+
+{% block title %}Email reset complete{% endblock %}
+
+{% block main_content %}
+
+
+
+<p></p>
+
+    <h1>Email reset complete</h1>
+
+    <div class="text-grey v-spacing-top-6">
+        Your new email address has been changed from <span class="text-black">{{ old_email }}</span> to <span class="text-black">{{ user.email }}</span>.
+    </div>
+
+{% endblock %}

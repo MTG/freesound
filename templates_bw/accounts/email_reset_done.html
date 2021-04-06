@@ -1,0 +1,21 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% load staticfiles %}
+{% load filter_img %}
+{% load bw_templatetags %}
+{% load util %}
+
+{% block title %}Email change email sent{% endblock %}
+
+{% block main_content %}
+
+    <h1>Email change email sent</h1>
+
+    <div class="text-grey v-spacing-top-6">
+        We've emailed you instructions for activating your new email address.
+        You should be receiving them shortly.
+        Note that if the newly introduced email address is already being used by another Freesound user, you will not
+        receive any instructions.
+    </div>
+
+{% endblock %}

@@ -1231,7 +1231,7 @@ def email_reset(request):
                 tvars = {
                     'uid': int_to_base36(user.id),
                     'user': user,
-                    'token': default_token_generator.make_token(user),
+                    'token': default_token_generator.make_token(user)
                 }
                 send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                                    'accounts/email_reset_email.txt', tvars,
@@ -1240,12 +1240,18 @@ def email_reset(request):
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user=request.user)
-    tvars = {'form': form, 'user': request.user}
+    tvars = {
+        'form': form,
+        'user': request.user,
+        'activePage': 'email'  # For BW account settings sidebar
+    }
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 
 def email_reset_done(request):
-    return render(request, 'accounts/email_reset_done.html')
+    return render(request, 'accounts/email_reset_done.html', {
+        'activePage': 'email' # For BW account settings sidebar
+    })
 
 
 @never_cache
@@ -1282,7 +1288,11 @@ def email_reset_complete(request, uidb36=None, token=None):
     # a User deletion pre_save hook if we detect that email has changed
 
     # Send email to the old address notifying about the change
-    tvars = {'old_email': old_email, 'user': user}
+    tvars = {
+        'old_email': old_email,
+        'user': user,
+        'activePage': 'email' # For BW account settings sidebar
+    }
     send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 

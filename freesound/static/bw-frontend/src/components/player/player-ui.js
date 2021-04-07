@@ -210,7 +210,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     imageContainer.classList.add('bw-player__img-container--minimal')
   }
   if (playerSize !== 'minimal') {
-    const startWithSpectrum = document.cookie.indexOf('preferSpectrogram=1') > -1;
+    const startWithSpectrum = document.cookie.indexOf('preferSpectrogram=yes') > -1;
     const {waveform, spectrum, title} = parentNode.dataset
     const playerImage = document.createElement('img')
     playerImage.className = 'bw-player__img'

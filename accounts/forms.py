@@ -390,6 +390,8 @@ class ProfileForm(forms.ModelForm):
 
 
 class BwProfileForm(ProfileForm):
+    prefer_spectrogram = forms.BooleanField(label="Display spectrogram in sound players by default", required=False,
+                                            widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
@@ -417,7 +419,6 @@ class BwProfileForm(ProfileForm):
             descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
             Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 
             and <code>${sound_id}</code> to refer to the id of the current sound. """ + html_tags_help_text
-
         self.fields['is_adult'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['is_adult'].label = self.fields['is_adult'].help_text
         self.fields['is_adult'].help_text = False

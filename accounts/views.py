@@ -484,6 +484,10 @@ def edit(request):
         profile_form = profile_form_class(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update spectrogram/waveform preference in user session
+            # TODO: this should be stored as a new field in the profile instead of in the session
+            request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
+
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
@@ -494,10 +498,14 @@ def edit(request):
                 msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
             messages.add_message(request, messages.INFO, msg_txt)
             if not using_beastwhoosh(request):
-                # In BW we don't redirect home after successful edit
+                # In BW we don't redirect home after successful edit but to the same page
                 return HttpResponseRedirect(reverse("accounts-home"))
+            else:
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         profile_form = profile_form_class(request, instance=profile, prefix="profile")
+        # TODO: once prefer_spectrogram is saved as a profile field, this won't be needed
+        profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")

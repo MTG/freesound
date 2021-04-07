@@ -486,7 +486,8 @@ def edit(request):
         if profile_form.is_valid():
             # Update spectrogram/waveform preference in user session
             # TODO: this should be stored as a new field in the profile instead of in the session
-            request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
+            if 'prefer_spectrogram' in profile_form.cleaned_data:
+                request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
 
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
@@ -505,7 +506,8 @@ def edit(request):
     else:
         profile_form = profile_form_class(request, instance=profile, prefix="profile")
         # TODO: once prefer_spectrogram is saved as a profile field, this won't be needed
-        profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
+        if 'prefer_spectrogram' in profile_form.fields:  # That field only exists in BW
+            profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")

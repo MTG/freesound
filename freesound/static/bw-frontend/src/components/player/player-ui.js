@@ -155,9 +155,9 @@ const createLoopButton = audioElement => {
   loopButton.addEventListener('click', () => {
     const willLoop = !audioElement.loop
     if (willLoop) {
-      loopButton.classList.add('text-red')
+      loopButton.classList.add('text-red-important')
     } else {
-      loopButton.classList.remove('text-red')
+      loopButton.classList.remove('text-red-important')
     }
     audioElement.loop = willLoop
   })
@@ -172,14 +172,19 @@ const createLoopButton = audioElement => {
 const createSpectogramButton = (playerImgNode, parentNode) => {
   const spectogramButton = createControlButton('spectogram')
   const { spectrum, waveform } = parentNode.dataset
+  if (playerImgNode.src.indexOf(waveform) === -1){
+    spectogramButton.classList.add('text-red-important');
+  }
   spectogramButton.addEventListener('click', () => {
     const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
     if (hasWaveform) {
       playerImgNode.src = spectrum
-      spectogramButton.classList.add('text-red')
+      spectogramButton.classList.add('text-red-important')
+      spectogramButton.parentElement.classList.add('bw-player__controls-inverted');
     } else {
       playerImgNode.src = waveform
-      spectogramButton.classList.remove('text-red')
+      spectogramButton.classList.remove('text-red-important')
+      spectogramButton.parentElement.classList.remove('bw-player__controls-inverted');
     }
   })
   return spectogramButton
@@ -205,10 +210,15 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     imageContainer.classList.add('bw-player__img-container--minimal')
   }
   if (playerSize !== 'minimal') {
-    const {waveform, title} = parentNode.dataset
+    const startWithSpectrum = document.cookie.indexOf('preferSpectrogram=1') > -1;
+    const {waveform, spectrum, title} = parentNode.dataset
     const playerImage = document.createElement('img')
     playerImage.className = 'bw-player__img'
-    playerImage.src = waveform
+    if (startWithSpectrum) {
+      playerImage.src = spectrum
+    } else {
+      playerImage.src = waveform
+    }
     playerImage.alt = title
     const progressIndicator = createProgressIndicator(parentNode, audioElement)
     imageContainer.appendChild(playerImage)
@@ -245,6 +255,9 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
     playerControls.classList.add('bw-player__controls--big')
   } else if (playerSize === 'minimal') {
     playerControls.classList.add('bw-player__controls--minimal')
+  }
+  if (playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1){
+    playerControls.classList.add('bw-player__controls-inverted');
   }
   const playButton = createPlayButton(audioElement, playerSize)
   const stopButton = createStopButton(audioElement, parentNode)

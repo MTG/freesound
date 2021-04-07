@@ -495,6 +495,17 @@ class EmailSettingsForm(forms.Form):
         label='Select the events for which you want to be notified by email:'
     )
 
+class BwEmailSettingsForm(EmailSettingsForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwEmailSettingsForm, self).__init__(*args, **kwargs)
+        self.fields['email_types'].label = False
+        # NOTE: the line below will add 'bw-checkbox' to all individual checkbox elements of
+        # forms.CheckboxSelectMultiple but also to the main ul element that wraps them all. This is not
+        # ideal as 'bw-checkbox' should only be applied to the checkbox elements. To solve this issue, the
+        # CSS and JS for checkboxes has been updated to only apply to checkbox elements.
+        self.fields['email_types'].widget.attrs['class'] = 'bw-checkbox'
+
 
 class FsPasswordResetForm(forms.Form):
     """

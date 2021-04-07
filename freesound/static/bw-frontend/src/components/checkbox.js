@@ -1,39 +1,35 @@
 const addVisibleCheckbox = (checkboxEl) => {
-  // Check if checkbox has a label element and re-order them
-  // We need to do this because Django does not provide an easy way to order checkbox/labels differently than
-  // the default
-  const labelEl = checkboxEl.previousElementSibling;
-  if ((labelEl) && (labelEl.tagName === 'LABEL')){
-      const wrapperEl = document.createElement('div');
-      checkboxEl.parentNode.insertBefore(wrapperEl, checkboxEl);
-      wrapperEl.appendChild(checkboxEl);
-      wrapperEl.appendChild(labelEl);
-      labelEl.classList.add('input-checkbox-label-default');
-  }
 
-  // Create the visible version of checkbox element
-  const parent = checkboxEl.parentNode
-  const actualCheckboxIndex = [...parent.children].findIndex(el => [...el.classList].includes('bw-checkbox'))
-  const insertBeforeElement = [...parent.children][actualCheckboxIndex + 1]
+    // We want <input type="checkbox" ...> elements to be inside their corresponding <label> element. When rendering
+    // forms with Django, this is not always true, and sometimes the input element is positioned right after the
+    // label element. Check if this is the case and re-position the checkbox element to be first child of label
+    // element
+    const labelEl = checkboxEl.previousElementSibling;
+    if ((labelEl) && (labelEl.tagName === 'LABEL')){
+        labelEl.prepend(checkboxEl);
+    }
 
-  let visibleElementAlreadyAdded = false;
-  if ((insertBeforeElement !== undefined) && (insertBeforeElement.classList.contains('bw-checkbox-container'))) {
-    visibleElementAlreadyAdded = true;
-  }
-  if (!visibleElementAlreadyAdded){
-    // Only add the visible checkbox element if it has not yet been added before
-    const visibleCheckboxContainer = document.createElement('span')
-    visibleCheckboxContainer.className = 'bw-checkbox-container'
-    parent.insertBefore(visibleCheckboxContainer, insertBeforeElement)
-    const checkboxIcon = document.createElement('span')
-    checkboxIcon.className = 'bw-icon-checkbox'
-    visibleCheckboxContainer.append(checkboxIcon)
-  }
+    // Add CSS class to the label element
+    checkboxEl.parentNode.classList.add('bw-checkbox-label');
+
+    // Create the visible version of checkbox element (if it has not been already created)
+    let visibleElementAlreadyAdded = false;
+    if ((checkboxEl.nextElementSibling !== null) && (checkboxEl.nextElementSibling.classList.contains('bw-checkbox-container'))){
+        visibleElementAlreadyAdded = true;
+    }
+    if (!visibleElementAlreadyAdded){
+        const visibleCheckboxContainer = document.createElement('span');
+        visibleCheckboxContainer.className = 'bw-checkbox-container';
+        checkboxEl.parentNode.insertBefore(visibleCheckboxContainer, checkboxEl.nextSibling);
+        const checkboxIcon = document.createElement('span');
+        checkboxIcon.className = 'bw-icon-checkbox';
+        visibleCheckboxContainer.append(checkboxIcon);
+    }
 };
 
 const addCheckboxVisibleElements = () => {
-  const checkboxes = [...document.getElementsByClassName('bw-checkbox')];
-  checkboxes.forEach(addVisibleCheckbox)
+    const checkboxes = [...document.querySelectorAll('input.bw-checkbox')];
+    checkboxes.forEach(addVisibleCheckbox);
 };
 
 addCheckboxVisibleElements();

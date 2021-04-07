@@ -58,7 +58,7 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
@@ -439,17 +439,20 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
+    email_settings_form_class = BwEmailSettingsForm if using_beastwhoosh(request) else EmailSettingsForm
+
     if request.method == "POST":
-        form = EmailSettingsForm(request.POST)
+        form = email_settings_form_class(request.POST)
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
             request.user.profile.set_enabled_email_types(email_type_ids)
             messages.add_message(request, messages.INFO, 'Your email notification preferences have been updated')
-            return HttpResponseRedirect(reverse("accounts-edit"))
+            if not using_beastwhoosh(request):
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()
-        form = EmailSettingsForm(initial={
+        form = email_settings_form_class(initial={
             'email_types': all_emails,
             })
     tvars = {'form': form}

@@ -455,7 +455,10 @@ def edit_email_settings(request):
         form = email_settings_form_class(initial={
             'email_types': all_emails,
             })
-    tvars = {'form': form}
+    tvars = {
+        'form': form,
+        'activePage': 'notifications'  # BW only
+    }
     return render(request, 'accounts/edit_email_settings.html', tvars)
 
 

@@ -1,4 +1,4 @@
-.bw-radio {
+input.bw-radio {
   display: none;
 }
 
@@ -13,4 +13,26 @@
 .bw-radio:checked ~ span {
   opacity: 1;
   color: $black;
+}
+
+.bw-multiple-radio {
+
+  ul {
+    padding: 0;
+  }
+
+  li {
+    list-style: none;
+    margin-bottom: nth($spacing-values-list, 2);
+  }
+}
+
+.bw-radio-label {
+
+  cursor: pointer;
+
+  .bw-radio-container {
+    vertical-align: -6%;
+    margin-right: 16px;
+  }
 }

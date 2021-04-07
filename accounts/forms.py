@@ -443,11 +443,8 @@ class EmailResetForm(forms.Form):
         return self.cleaned_data['password']
 
 
-DELETE_CHOICES = [('only_user',
-                   mark_safe(u'Delete only my user account information :)  '
-                             u'(see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a>'
-                             u' for more information)')),
-                  ('delete_sounds', u'Delete also my sounds and packs :(')]
+DELETE_CHOICES = [('only_user', mark_safe(u'<span>Delete only my user account information</span>')),
+                  ('delete_sounds', mark_safe(u'<span>Delete my user account information, my sounds and packs</span>'))]
 
 
 class DeleteUserForm(forms.Form):
@@ -485,6 +482,18 @@ class DeleteUserForm(forms.Form):
                 'encrypted_link': encrypted_link
                 }
         super(DeleteUserForm, self).__init__(*args, **kwargs)
+
+
+class BwDeleteUserForm(DeleteUserForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwDeleteUserForm, self).__init__(*args, **kwargs)
+        self.fields['delete_sounds'].label = False
+        # NOTE: the line below will add 'bw-radio' to all individual radio elements of
+        # forms.RadioSelect but also to the main ul element that wraps them all. This is not
+        # ideal as 'bw-radio' should only be applied to the radio elements. To solve this issue, the
+        # CSS and JS for checkboxes has been updated to only apply to radio elements.
+        self.fields['delete_sounds'].widget.attrs['class'] = 'bw-radio'
 
 
 class EmailSettingsForm(forms.Form):

@@ -58,7 +58,8 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
+    BwDeleteUserForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
@@ -1199,9 +1200,10 @@ def bulk_describe(request, bulk_id):
 @transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
-    error_message = None
+    delete_user_form_class = BwDeleteUserForm if using_beastwhoosh(request) else DeleteUserForm
+
     if request.method == 'POST':
-        form = DeleteUserForm(request.POST, user_id=request.user.id)
+        form = delete_user_form_class(request.POST, user_id=request.user.id)
         if not form.is_valid():
             form.reset_encrypted_link(request.user.id)
         else:
@@ -1211,11 +1213,12 @@ def delete(request):
             logout(request)
             return HttpResponseRedirect(reverse("front-page"))
     else:
-        form = DeleteUserForm(user_id=request.user.id)
+        form = delete_user_form_class(user_id=request.user.id)
 
     tvars = {
             'delete_form': form,
             'num_sounds': num_sounds,
+            'activePage': 'account',  # BW only
     }
     return render(request, 'accounts/delete.html', tvars)
 

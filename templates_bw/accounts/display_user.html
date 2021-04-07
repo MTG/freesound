@@ -1,9 +1,10 @@
 {% load util %}
+{% load bw_templatetags %}
 
 {% if size == 'comment' %}
     <div class="middle bw-sound-page__user v-spacing-top-1">
         <div class="avatar h-spacing-1">
-            <img src="{{ user.profile.locations.avatar.S.url }}" />
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 40 %}
         </div>
         <div class="h-spacing-left-1">
             <a href="{% url 'account' user.username %}">{{ user.username | truncate_string:15 }}</a>
@@ -13,7 +14,7 @@
 {% elif size == 'follow_lists' %}
     <div class="row bw-follows middle">
         <div class="col-md-1">
-            <img src="{{ user.profile.locations.avatar.S.url }}" />
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 50 %}
         </div>
         <div class="col-md-8">
             <div class="padding-left-3">

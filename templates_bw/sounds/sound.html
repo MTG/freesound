@@ -69,7 +69,7 @@
                         <!-- TODO: check after merge browser page -->
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="avatar h-spacing-1">
-                                <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
+                                {% bw_user_avatar sound.user.profile.locations.avatar.S.url sound.user.username 40 %}
                             </div>
                             <div class="h-spacing-left-1">
                                 <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>

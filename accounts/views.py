@@ -38,7 +38,8 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView
+from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView, \
+    PasswordChangeView, PasswordChangeDoneView
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -57,7 +58,8 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
+    BwDeleteUserForm
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
@@ -120,39 +122,60 @@ def login(request, template_name, authentication_form):
     return response
 
 
-class FsPasswordResetConfirmView(PasswordResetConfirmView):
-
-    def get_context_data(self, **kwargs):
-        context = super(FsPasswordResetConfirmView, self).get_context_data(**kwargs)
-        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
-        # instead of staying in PasswordResetCompleteView (the current path).
-        context['next_path'] = reverse('accounts-home')
-        return context
-
-
 def password_reset_confirm(request, uidb64, token):
-    response = FsPasswordResetConfirmView.as_view(
-        template_name='registration/password_reset_confirm.html' if not using_beastwhoosh(request)
-            else 'accounts/password_reset_confirm.html',
-        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm
+    """
+    Password reset = change password without user being logged in (classic "forgot password" feature).
+    This view is called after user has received an email with instructions for resetting the password and clicks the
+    reset link.
+
+    We set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+    instead of staying in PasswordResetCompleteView (the current path).
+    """
+    response = PasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html'
+            if not using_beastwhoosh(request) else 'accounts/password_reset_confirm.html',
+        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm,
+        extra_context={'next_path': reverse('accounts-home')}
     )(request, uidb64=uidb64, token=token)
     return response
 
 
-class FsPasswordResetCompleteView(PasswordResetCompleteView):
-
-    def get_context_data(self, **kwargs):
-        context = super(FsPasswordResetCompleteView, self).get_context_data(**kwargs)
-        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
-        # instead of staying in PasswordResetCompleteView (the current path).
-        context['next_path'] = reverse('accounts-home')
-        return context
-
-
 def password_reset_complete(request):
-    response = FsPasswordResetCompleteView.as_view(
-        template_name='registration/password_reset_complete.html' if not using_beastwhoosh(request)
-        else 'accounts/password_reset_complete.html')(request)
+    """
+    Password reset = change password without user being logged in (classic "forgot password" feature).
+    This view is called when the password has been reset successfully.
+
+    We set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+    instead of staying in PasswordResetCompleteView (the current path).
+    """
+    response = PasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html'
+            if not using_beastwhoosh(request) else 'accounts/password_reset_complete.html',
+        extra_context={'next_path': reverse('accounts-home')})(request)
+    return response
+
+
+def password_change_form(request):
+    """
+    Password change = change password from the account settings page, while user is logged in.
+    This view is called when user requests to change the password and contains the form to do so.
+    """
+    response = PasswordChangeView.as_view(
+        template_name='registration/password_change_form.html'
+            if not using_beastwhoosh(request) else 'accounts/password_change_form.html',
+        extra_context={'activePage': 'password'})(request)
+    return response
+
+
+def password_change_done(request):
+    """
+    Password change = change password from the account settings page, while user is logged in.
+    This view is called when user has successfully changed the password by filling in the password change form.
+    """
+    response = PasswordChangeDoneView.as_view(
+        template_name='registration/password_change_done.html'
+            if not using_beastwhoosh(request) else 'accounts/password_change_done.html',
+        extra_context={'activePage': 'password'})(request)
     return response
 
 
@@ -417,20 +440,26 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
+    email_settings_form_class = BwEmailSettingsForm if using_beastwhoosh(request) else EmailSettingsForm
+
     if request.method == "POST":
-        form = EmailSettingsForm(request.POST)
+        form = email_settings_form_class(request.POST)
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
             request.user.profile.set_enabled_email_types(email_type_ids)
             messages.add_message(request, messages.INFO, 'Your email notification preferences have been updated')
-            return HttpResponseRedirect(reverse("accounts-edit"))
+            if not using_beastwhoosh(request):
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()
-        form = EmailSettingsForm(initial={
+        form = email_settings_form_class(initial={
             'email_types': all_emails,
             })
-    tvars = {'form': form}
+    tvars = {
+        'form': form,
+        'activePage': 'notifications'  # BW only
+    }
     return render(request, 'accounts/edit_email_settings.html', tvars)
 
 
@@ -438,6 +467,7 @@ def edit_email_settings(request):
 @transaction.atomic()
 def edit(request):
     profile = request.user.profile
+    profile_form_class = ProfileForm if not using_beastwhoosh(request) else BwProfileForm
 
     def is_selected(prefix):
         if request.method == "POST":
@@ -451,9 +481,14 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        profile_form = profile_form_class(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update spectrogram/waveform preference in user session
+            # TODO: this should be stored as a new field in the profile instead of in the session
+            if 'prefer_spectrogram' in profile_form.cleaned_data:
+                request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
+
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
@@ -463,13 +498,21 @@ def edit(request):
             if old_sound_signature != profile.sound_signature:
                 msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
             messages.add_message(request, messages.INFO, msg_txt)
-            return HttpResponseRedirect(reverse("accounts-home"))
+            if not using_beastwhoosh(request):
+                # In BW we don't redirect home after successful edit but to the same page
+                return HttpResponseRedirect(reverse("accounts-home"))
+            else:
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
-        profile_form = ProfileForm(request, instance=profile, prefix="profile")
+        profile_form = profile_form_class(request, instance=profile, prefix="profile")
+        # TODO: once prefer_spectrogram is saved as a profile field, this won't be needed
+        if 'prefer_spectrogram' in profile_form.fields:  # That field only exists in BW
+            profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
         if image_form.is_valid():
+            print(image_form.cleaned_data["remove"])
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()
@@ -478,17 +521,23 @@ def edit(request):
                 profile.has_avatar = True
                 profile.save()
             invalidate_user_template_caches(request.user.id)
-            return HttpResponseRedirect(reverse("accounts-home"))
+            msg_txt = "Your profile has been updated correctly."
+            messages.add_message(request, messages.INFO, msg_txt)
+            if not using_beastwhoosh(request):
+                # In BW we don't redirect home after successful edit
+                return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
 
     tvars = {
+        'user': request.user,
         'profile': profile,
         'profile_form': profile_form,
         'image_form': image_form,
-        'has_granted_permissions': has_granted_permissions
+        'has_granted_permissions': has_granted_permissions,
+        'activePage': 'profile',  # For BW account settings sidebar
     }
     return render(request, 'accounts/edit.html', tvars)
 
@@ -1161,9 +1210,10 @@ def bulk_describe(request, bulk_id):
 @transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
-    error_message = None
+    delete_user_form_class = BwDeleteUserForm if using_beastwhoosh(request) else DeleteUserForm
+
     if request.method == 'POST':
-        form = DeleteUserForm(request.POST, user_id=request.user.id)
+        form = delete_user_form_class(request.POST, user_id=request.user.id)
         if not form.is_valid():
             form.reset_encrypted_link(request.user.id)
         else:
@@ -1173,11 +1223,12 @@ def delete(request):
             logout(request)
             return HttpResponseRedirect(reverse("front-page"))
     else:
-        form = DeleteUserForm(user_id=request.user.id)
+        form = delete_user_form_class(user_id=request.user.id)
 
     tvars = {
             'delete_form': form,
             'num_sounds': num_sounds,
+            'activePage': 'account',  # BW only
     }
     return render(request, 'accounts/delete.html', tvars)
 
@@ -1221,7 +1272,7 @@ def email_reset(request):
                 tvars = {
                     'uid': int_to_base36(user.id),
                     'user': user,
-                    'token': default_token_generator.make_token(user),
+                    'token': default_token_generator.make_token(user)
                 }
                 send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                                    'accounts/email_reset_email.txt', tvars,
@@ -1230,12 +1281,18 @@ def email_reset(request):
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user=request.user)
-    tvars = {'form': form, 'user': request.user}
+    tvars = {
+        'form': form,
+        'user': request.user,
+        'activePage': 'email'  # For BW account settings sidebar
+    }
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 
 def email_reset_done(request):
-    return render(request, 'accounts/email_reset_done.html')
+    return render(request, 'accounts/email_reset_done.html', {
+        'activePage': 'email' # For BW account settings sidebar
+    })
 
 
 @never_cache
@@ -1272,7 +1329,11 @@ def email_reset_complete(request, uidb36=None, token=None):
     # a User deletion pre_save hook if we detect that email has changed
 
     # Send email to the old address notifying about the change
-    tvars = {'old_email': old_email, 'user': user}
+    tvars = {
+        'old_email': old_email,
+        'user': user,
+        'activePage': 'email' # For BW account settings sidebar
+    }
     send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 

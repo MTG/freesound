@@ -91,6 +91,12 @@
   }
 }
 
+.bw-player__controls-inverted {
+  button {
+    color: $white;
+  }
+}
+
 .bw-player__progress-container {
   position: absolute;
   bottom: 0;

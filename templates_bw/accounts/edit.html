@@ -1,0 +1,38 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% load staticfiles %}
+
+{% block title %}Edit profile{% endblock %}
+
+{% block main_content %}
+    <h1>Edit profile</h1>
+    <div class="v-spacing-top-6">
+        <img id="imageProfile" src="{{ profile.locations.avatar.XL.url }}" />
+    </div>
+    <div class="bw-edit-profile__username v-spacing-top-2">
+        <h2>{{ user.username }}</h2>
+    </div>
+    <div class="v-spacing-top-3">
+        {{ image_form.errors }}
+        {% comment %}The form below is used to set an avatar and submit the form right after setting the image{% endcomment %}
+        <form id="avatarImageForm" class="display-inline-block" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+            <label for="id_image-file" class="btn-inverse bw-edit-profile__label_file">Change avatar</label>
+            <input type="file" id="id_image-file" name="image-file" class="bw-edit-profile__input_file" accept=".jpg,.png,.jpeg" />
+        </form>
+        {% comment %}The form below is used to delete the avatar with a single button click{% endcomment %}
+        <form  class="display-inline-block" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+            <input type="hidden" name="image-remove" value="1">
+            <button class="btn-inverse h-spacing-left-2 font-weight-semi-bold" {% if not profile.has_avatar %}disabled{% endif %}>Delete avatar</button>
+        </form>
+    </div>
+    <div class="v-spacing-top-7 w-100 v-spacing-5">
+        <form method="post" action="." class="bw-edit-profile__form w-100">{% csrf_token %}
+            {{profile_form.as_p}}
+            <button class="btn-primary w-100 v-spacing-top-5">Update profile</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/editProfile.78a8c324.js' %}"></script>
+{% endblock %}

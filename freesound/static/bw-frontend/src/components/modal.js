@@ -4,7 +4,6 @@ import {showToast, showToastNoTimeout, dismissToast} from "./toast";
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
 
 const urlParams = new URLSearchParams(window.location.search);
-const newPasswordParam = urlParams.get('newPassword');
 const registrationParam = urlParams.get('registration');
 const feedbackRegistrationParam = urlParams.get('feedbackRegistration');
 const problemsLoggingInParam = urlParams.get('loginProblems');
@@ -54,10 +53,6 @@ const handleModal = modalContainerId => {
 modals.forEach(modal => {
   modal.addEventListener('click', () => handleModal(modal.dataset.target.substring(1)));
 });
-
-if (newPasswordParam) {
-  handleModal('newPasswordModal');
-}
 
 if (registrationParam)  {
   handleModal('registerModal');

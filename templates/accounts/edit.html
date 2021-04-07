@@ -28,7 +28,7 @@
         <h3>Edit your avatar</h3>
         <form method="post" action="." enctype="multipart/form-data">{% csrf_token %}
             {% if profile.has_avatar %}
-            <p>Current:<br/><img src="{{profile.locations.avatar.L.url}}" /></p>
+            <p>Current:<br/><img src="{{profile.locations.avatar.XL.url}}" /></p>
             {% endif %}
             {{image_form.as_p}}
             <input type="submit" value="Save avatar" />

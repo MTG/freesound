@@ -1,19 +1,20 @@
 @font-face {
   font-family: 'bw-icons';
-  src: url('fonts/bw-icons.eot?444so5');
-  src: url('fonts/bw-icons.eot?444so5#iefix') format('embedded-opentype'),
-    url('fonts/bw-icons.ttf?444so5') format('truetype'),
-    url('fonts/bw-icons.woff?444so5') format('woff'),
-    url('fonts/bw-icons.svg?444so5#bw-icons') format('svg');
+  src: url('fonts/bw-icons.eot?r75uzm');
+  src: url('fonts/bw-icons.eot?r75uzm#iefix') format('embedded-opentype'),
+    url('fonts/bw-icons.ttf?r75uzm') format('truetype'),
+    url('fonts/bw-icons.woff?r75uzm') format('woff'),
+    url('fonts/bw-icons.svg?r75uzm#bw-icons') format('svg');
   font-weight: normal;
   font-style: normal;
+  font-display: block;
 }
 
 [class^='bw-icon-'],
 [class*=' bw-icon-'] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'bw-icons' !important;
-  speak: none;
+  speak: never;
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
@@ -46,6 +47,15 @@
   content: '\e94b';
   color: #cacad4;
 }
+
+.bw-checkbox:checked + .bw-checkbox-container .bw-icon-checkbox:before {
+  content: '\e912';
+}
+
+.bw-radio:checked + .bw-radio-container .bw-icon-radio-unchecked:before {
+  content: '\e936';
+}
+
 .bw-icon-arrow:before {
   content: '\e909';
 }
@@ -77,9 +87,6 @@
 }
 .bw-icon-checkbox-unselect:before {
   content: '\e911';
-}
-.bw-checkbox:checked + .bw-checkbox-container .bw-icon-checkbox:before {
-  content: '\e912';
 }
 .bw-icon-chevron-up:before {
   content: '\e913';
@@ -289,4 +296,10 @@
 }
 .bw-icon-cc:before {
   content: '\e900';
+}
+.bw-icon-radio-unchecked:before {
+  content: '\ea56';
+}
+.bw-icon-share2:before {
+  content: '\ea82';
 }

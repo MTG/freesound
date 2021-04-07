@@ -1,0 +1,38 @@
+input.bw-radio {
+  display: none;
+}
+
+.bw-icon-radio-unchecked {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  transition: opacity 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.bw-radio:checked ~ span {
+  opacity: 1;
+  color: $black;
+}
+
+.bw-multiple-radio {
+
+  ul {
+    padding: 0;
+  }
+
+  li {
+    list-style: none;
+    margin-bottom: nth($spacing-values-list, 2);
+  }
+}
+
+.bw-radio-label {
+
+  cursor: pointer;
+
+  .bw-radio-container {
+    vertical-align: -6%;
+    margin-right: 16px;
+  }
+}

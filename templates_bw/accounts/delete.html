@@ -1,0 +1,24 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% block title %}Delete account{% endblock title %}
+
+{% block main_content %}
+
+    <h1>Delete account</h1>
+
+    <div class="v-spacing-top-7 w-100 v-spacing-5">
+        <p class="font-weight-bold text-center v-spacing-4">Warning: You can not be “undeleted”, not even by administrators.</p>
+        <p class="v-spacing-2 text-grey">
+            Before deleting your account, please <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">read this page</a> to be
+            fully aware of what happens with your data. If you are entirely sure you want to delete your account, please choose one of the following options
+            and confirm your password:
+        </p>
+        <form method="post" class="bw-edit-profile__form w-100">{% csrf_token %}
+            <div class="bw-multiple-checkbox">
+                {{delete_form}}
+            </div>
+            <button class="btn-primary w-100 v-spacing-top-5">Close account</button>
+        </form>
+    </div>
+
+{% endblock %}

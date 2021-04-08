@@ -1,0 +1,50 @@
+{% load util %}
+{% load bw_templatetags %}
+
+{% if size == 'comment' %}
+    <div class="middle bw-sound-page__user v-spacing-top-1">
+        <div class="h-spacing-1">
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 40 %}
+        </div>
+        <div class="h-spacing-left-1">
+            <a href="{% url 'account' user.username %}">{{ user.username | truncate_string:15 }}</a>
+            <p class="text-grey">{{ comment_created|timesince }} ago</p>
+        </div>
+    </div>
+{% elif size == 'follow_lists' %}
+    <div class="row bw-follows middle">
+        <div class="col-md-1">
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 50 %}
+        </div>
+        <div class="col-md-8">
+            <div class="padding-left-3">
+                <div><a href="{% url 'account' user.username %}">{{ user.username | truncate_string:15 }}</a></div>
+                <div class="text-grey">
+                    {{user.profile.num_sounds}} sound{{user.profile.num_sounds|pluralize}}<span class="h-spacing-1 h-spacing-left-1">·</span>
+                    {{user.profile.num_posts}} post{{user.profile.num_posts|pluralize}}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 text-right">
+            {% if is_followed_by_request_user %}
+                <a class="no-hover" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}"><button class="btn-primary">Unfollow</button></a>
+            {% else %}
+                <a class="no-hover" href="{% url 'follow-user' user.username %}?next={{ next_path }}"><button class="btn-inverse btn-profile-adapt">Follow</button></a>
+            {% endif %}
+        </div>
+    </div>
+{% elif size == 'top_donor' %}
+    <div class="middle">
+        <div class="h-spacing-2">
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 36 %}
+        </div>
+        <div>
+            <a href="{% url 'account' user.username %}">{{ user.username }}</a>
+            <br />
+            <div class="text-light-grey">
+                {{ user.profile.num_sounds }} sound{{ user.profile.num_sounds|pluralize }}<span class="h-spacing-1 h-spacing-left-1">·</span>
+                {{ user.profile.num_posts }} post{{ user.profile.num_posts|pluralize }}
+            </div>
+        </div>
+    </div>
+{%  endif %}

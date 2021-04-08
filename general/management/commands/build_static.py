@@ -33,13 +33,12 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         """
-        This management command will use NPM to build static files and while set a number of Django settings as
-        environment variables so that these can be used in code.
+        This management command will use NPM to build static files and set a number of Django settings as
+        environment variables so that these can be used in static code.
+        NOTE: our current approach is to pass variables from Django as data properties of HTML elements, therefore
+        the functionality of passing Django settings as env variables below might not be used.
         """
-        # Build static files with some variables being passed from Django
-        variables = {
-            'QUERY_SUGGESTIONS_URL': reverse('query-suggestions')
-        }
+        variables = {}
         variables_for_command = ' '.join(['{0}={1}'.format(key, value) for key, value in variables.items()])
         build_static_command = variables_for_command + ' npm run build'
         console_logger.info('Building static files with command:\n' + build_static_command)

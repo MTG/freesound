@@ -34,7 +34,7 @@ from gearman.errors import ServerUnavailable
 
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_user_template_caches
 from utils.filesystem import md5file, remove_directory_if_empty, create_directories
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
@@ -212,10 +212,10 @@ def create_sound(user,
     else:
         # create moderation ticket!
         sound.create_moderation_ticket()
-        invalidate_template_cache("user_header", user.id)
+        invalidate_user_template_caches(user.id)
         moderators = Group.objects.get(name='moderators').user_set.all()
         for moderator in moderators:
-            invalidate_template_cache("user_header", moderator.id)
+            invalidate_user_template_caches(moderator.id)
 
     # 9 process sound and packs
     sound.compute_crc()

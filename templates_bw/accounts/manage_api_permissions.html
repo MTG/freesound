@@ -1,0 +1,51 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% block title %}Manage API permissions{% endblock %}
+
+{% block main_content %}
+
+    <h1>Manage API permissions</h1>
+
+    <div class="v-spacing-top-7 w-100 v-spacing-5">
+
+        {% if tokens %}
+
+            <div class="text-grey">
+                The list below shows all the 3rd party API applications to which you have granted permission to access your Freesound account.
+            </div>
+            <div class="text-grey v-spacing-top-2">
+                These applications can <i>act on your behalf</i> inside Freesound, and do things like searching and downloading sounds, rating and commenting sounds,
+                creating bookmarks and uploading sounds.
+            </div>
+            <div class="text-grey v-spacing-top-2">
+                If you have granted permissions to applications that do not appear in the list, the permissions will
+                have probably expired or have been canceled by the application.
+            </div>
+
+            <div class="v-spacing-top-5">
+                <div class="row no-gutters text-light-grey">
+                    <div class="col-4">Application name</div>
+                    <div class="col-4">Developer</div>
+                    <div class="col-4">Revoke permission</div>
+                </div>
+                {% for token in tokens %}
+                    <div class="row no-gutters v-spacing-top-2">
+                        <div class="col-4">{{ token.client_name }}</div>
+                        <div class="col-4"><a href="{% url "account" token.developer %}">{{ token.developer }}</a></div>
+                        <div class="col-4"><a class="no-hover" href="{% url "revoke-permission" token.client_id %}"><button class="btn-primary">Revoke</button></a></div>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <div class="text-grey">
+                You have not granted any permission to any 3rd party API application.
+            </div>
+            <div class="text-grey v-spacing-top-2">
+                If you have granted permissions to API applications that do not appear here, the permissions will have
+                probably expired or have been canceled by the API application.
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

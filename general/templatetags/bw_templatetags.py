@@ -24,6 +24,7 @@ from django import template
 from django.conf import settings
 from django.urls import reverse
 
+from follow.follow_utils import is_user_following_tag
 from general.templatetags.paginator import show_paginator
 from ratings.models import SoundRating
 
@@ -56,8 +57,27 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
             'url': url,
             'opacity_class': opacity_class}
 
+
+@register.inclusion_tag('atoms/avatar.html')
+def bw_user_avatar(avatar_url, username, size=40):
+    """
+    Displays a Beast Whoosh user avatar or no avatar if user has none
+    We check if user has custom avatar by checking if the given avatar URL contains the filename of the default
+    avatar for Freesound 2 UI. Once we get rid of old UI code, this function can be modified as the locations
+    decorator of the Profile model might return something different if user has no avatar.
+    """
+    return {
+        'size': size,
+        'has_avatar': '_avatar.png' not in avatar_url,
+        'avatar_url':avatar_url,
+        'username': username,
+        'font_size': int(size * 0.4),
+        'no_avatar_bg_color': settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1]))
+                                                        % len(settings.AVATAR_BG_COLORS)]}
+
+
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
-def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=False, update_stars_color_on_save=False):
+def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=False, update_stars_color_on_save=False):
     if hasattr(sound, 'username'):
         sound_user = sound.username
     else:
@@ -65,6 +85,10 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
     request = context['request']
     request_user = request.user.username
     is_authenticated = request.user.is_authenticated
+
+    if allow_rating is None:
+        # If allow_rating is None (default), allow rating only if the request user is not the author of the sound
+        allow_rating = request.user.id != sound.user_id
 
     if not use_request_user_rating:
         if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:
@@ -105,4 +129,18 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
 @register.inclusion_tag('molecules/paginator.html', takes_context=True)
 def bw_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
     return show_paginator(context, paginator, page, current_page, request,
-                          anchor=anchor, non_grouped_number_of_results=non_grouped_number_of_results )
+                          anchor=anchor, non_grouped_number_of_results=non_grouped_number_of_results)
+
+
+@register.inclusion_tag('molecules/maps_js_scripts.html', takes_context=True)
+def bw_maps_js_scripts(context):
+    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'media_url': settings.MEDIA_URL}
+
+
+@register.filter
+def user_following_tags(user, tags_slash):
+    if user.is_authenticated():
+        return is_user_following_tag(user, tags_slash)
+    else:
+        return False

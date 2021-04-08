@@ -24,10 +24,10 @@ import struct
 
 from django.conf import settings
 from django.http import Http404, HttpResponse
-from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 
 from sounds.models import Sound
+from utils.frontend_handling import render
 from utils.username import get_user_or_404, redirect_if_old_username_or_404
 
 

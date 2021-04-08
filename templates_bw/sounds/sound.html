@@ -9,6 +9,7 @@
 {% load flag_user %}
 {% load sound_signature%}
 {% load display_sound %}
+{% load display_user %}
 {% load bw_templatetags %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
@@ -67,8 +68,8 @@
 
                         <!-- TODO: check after merge browser page -->
                         <div class="middle bw-sound-page__user v-spacing-top-5">
-                            <div class="avatar h-spacing-1">
-                                <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
+                            <div class="h-spacing-1">
+                                {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username 40 %}
                             </div>
                             <div class="h-spacing-left-1">
                                 <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
@@ -77,9 +78,9 @@
                             {% if sound.user != request.user  %}
                                 <div class="h-spacing-left-3">
                                     {% if is_following %}
-                                        <a class="no-hover" href="{% url 'unfollow-user' sound.user.username %}?next={{ path }}"><button class="btn-secondary">Unfollow</button></a>
+                                        <a class="no-hover" href="{% url 'unfollow-user' sound.user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
                                     {% else %}
-                                        <a class="no-hover" href="{% url 'follow-user' sound.user.username %}?next={{ path }}"><button class="btn-inverse">Follow</button></a>
+                                        <a class="no-hover" href="{% url 'follow-user' sound.user.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
                                     {% endif %}
                                 </div>
                             {% endif %}
@@ -126,8 +127,8 @@
                                 </a>
                             </div>
                             <div class="v-spacing-top-4">
-                                {% for tag in sound_tags %}
-                                    {% bw_tag tag %}
+                                {% for tag in sound.tags.all %}
+                                    {% bw_tag tag.tag.name 1 "h-spacing-1" %}
                                 {% endfor %}
                             </div>
                             <div class="divider-light v-spacing-top-4"></div>
@@ -189,7 +190,7 @@
                             {% else %}
                                 {% if not request.user.is_authenticated and page.object_list %}
                                     <div class="v-spacing-top-4">
-                                        Please <a href="{% url 'accounts-login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                        Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
                                     </div>
                                 {% endif %}
                             {% endif %}
@@ -198,15 +199,7 @@
                                     {% for comment in page.object_list %}
                                         <div>
                                             <div style="display: flex; justify-content: space-between;">
-                                                <div class="middle bw-sound-page__user v-spacing-top-1">
-                                                    <div class="avatar h-spacing-1">
-                                                        <img src="{{ sound.user.profile.locations.avatar.S.url }}" />
-                                                    </div>
-                                                    <div class="h-spacing-left-1">
-                                                        <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
-                                                        <p class="text-grey">{{ comment.created|timesince }} ago</p>
-                                                    </div>
-                                                </div>
+                                                {% display_user_comment comment.user comment.created %}
                                                 <div class="text-right v-spacing-top-1">
                                                     {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
                                                     {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
@@ -221,7 +214,7 @@
                                         </div>
                                     {% endfor %}
 
-                                    <div class="">
+                                    <div>
                                         {% bw_paginator paginator page current_page request "comments" %}
                                     </div>
 
@@ -229,7 +222,7 @@
                                     <div class="text-grey">This sound has not been commented on yet, be the first to comment!</div>
                                     {% if not request.user.is_authenticated %}
                                         <div class="v-spacing-top-1">
-                                            Please <a href="{% url 'accounts-login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                            Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
                                         </div>
                                     {% endif %}
                                 {% endif %}

@@ -43,8 +43,7 @@
             <div class="row no-gutters">
                 <div class="col-8">
                     {% display_sound_big_no_info sound %}
-
-                    <div class="bw-sound-page__information v-spacing-top-7">
+                    <div class="bw-sound-page__information v-spacing-top-5">
                         <div class="row middle">
                             <div class="col-10 overflow-hidden">
                                 <h1>{{sound.original_filename}}</h1>
@@ -239,11 +238,11 @@
 
                         <div>
                             <ol>
-                                <li class="v-spacing-3"> {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'sound-downloaders' sound.user.username sound.id %}" class="bw-link--black"><span class="text-21">{{ sound.num_downloads }}</span> <span class="text-grey text-17">downloads</span></a></li>
+                                <li class="v-spacing-3"> {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'sound-downloaders' sound.user.username sound.id %}" class="bw-link--black"><span class="text-21">{{ sound.num_downloads }}</span> <span class="text-grey text-17 h-spacing-left-1">downloads</span></a></li>
                                 <li class="v-spacing-3">{% bw_icon 'comments' 'text-grey text-opacity-050' %}<span class="text-21">{{ sound.num_comments }}</span> <span class="text-grey text-17">comments</span></li>
                             </ol>
                         </div>
-                        <div>
+                        <div class="v-spacing-top-5">
                             {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ sound.license.name }}</span>
                         </div>
                         <div class="text-grey {% if sound.user == request.user %}v-spacing-4{% endif %} v-spacing-top-1">
@@ -303,7 +302,6 @@
 
                         </div>
                         <div>
-
                             <ol class="center">
                                 <li><a href="https://www.facebook.com/sharer/sharer.php?u={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'facebook' 'text-30' %}</div></a></li>
                                 <li class="h-spacing-left-2"><a href="https://twitter.com/share?url={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'twitter' 'text-30' %}</div></a></li>

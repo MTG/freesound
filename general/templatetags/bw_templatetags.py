@@ -118,12 +118,35 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
             stars_5.append('half')
 
     return {'sound_user': sound_user,
-            'request_user': request_user,
-            'is_authenticated': is_authenticated,
             'allow_rating': is_authenticated and allow_rating,
             'sound': sound,
             'update_stars_color_on_save': update_stars_color_on_save,
             'stars_range': zip(stars_5, list(range(1, 6)))}
+
+
+@register.inclusion_tag('atoms/stars.html', takes_context=True)
+def bw_generic_stars(context, rating_0_10):
+    # Pre process rating values to do less work in the template
+    stars_10 = []
+    for i in range(0, 10):
+        if rating_0_10 >= i + 1:
+            stars_10.append(True)
+        else:
+            stars_10.append(False)
+    stars_5 = []
+    for i in range(0, 10, 2):
+        if stars_10[i] and stars_10[i + 1]:
+            stars_5.append('full')
+        elif not stars_10[i] and not stars_10[i + 1]:
+            stars_5.append('empty')
+        else:
+            stars_5.append('half')
+
+    return {
+        'allow_rating': False,
+        'update_stars_color_on_save': False,
+        'stars_range': zip(stars_5, list(range(1, 6)))
+    }
 
 
 @register.inclusion_tag('molecules/paginator.html', takes_context=True)

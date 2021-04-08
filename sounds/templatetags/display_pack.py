@@ -62,15 +62,8 @@ def display_pack(context, pack, size='small'):
     request = context.get('request')
     if using_beastwhoosh(request):
         user_profile_locations = pack_obj[0].user.profile.locations()
-        license_names = list(Sound.objects.filter(pack=pack_obj[0]).values_list('license__name', flat=True))
-        if len(set(license_names)) == 1:
-            # All sounds have same license
-            license_summary = license_names[0]
-        else:
-            license_summary = 'Various licenses'
     else:
         user_profile_locations = None
-        license_summary = None
 
     # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
     # display_pack templatetag it is given request in the context as well.
@@ -78,7 +71,6 @@ def display_pack(context, pack, size='small'):
         'pack': pack_obj,
         'size': size,
         'user_profile_locations': user_profile_locations,
-        'license_summary': license_summary,
         'media_url': context['media_url'],
         'request': request
     }

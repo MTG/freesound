@@ -160,7 +160,7 @@
                             {% bw_icon 'play' 'text-light-grey' %} <span class="text-black">{{ user.profile.get_total_uploaded_sounds_length|duration_hours }}</span> <span>hours of audio</span>
                         </li>
                         <li>
-                            {% bw_icon 'star' 'text-light-grey' %} <span class="text-black">{{ user.profile.get_average_rating|floatformat:1 }}</span> <span>average rating</span>
+                            {% bw_icon 'star' 'text-light-grey' %} <span class="text-black">{{ user.profile.get_average_rating_0_5|floatformat:1 }}</span> <span>average rating</span>
                         </li>
                         <li>
                             {% bw_icon 'download' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_sound_downloads|add:user.profile.num_pack_downloads }}</span> <span>downloads</span>

@@ -5,6 +5,7 @@ const pages = [
   'front',
   'browse',
   'sound',
+  'pack',
   'profile',
   'followers',
   'following',

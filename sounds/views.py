@@ -255,7 +255,7 @@ def sound(request, username, sound_id):
                 raise Http404
     except Sound.DoesNotExist:
         if DeletedSound.objects.filter(sound_id=sound_id).exists():
-            return render(request, 'sounds/deleted_sound.html')
+            return render(request, 'sounds/sound_deleted.html')
         else:
             raise Http404
 
@@ -686,25 +686,32 @@ def pack(request, username, pack_id):
         raise Http404
 
     if pack.is_deleted:
-        return render(request, 'sounds/deleted_pack.html')
+        return render(request, 'sounds/pack_deleted.html')
 
-    qs = Sound.public.only('id').filter(pack=pack)
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE if not using_beastwhoosh(request) else 12)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 
     num_sounds_ok = paginator['paginator'].count
-    if num_sounds_ok == 0 and pack.num_sounds != 0:
-        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
-    else:
-        if num_sounds_ok < pack.num_sounds:
-            messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
+    if num_sounds_ok < pack.num_sounds:
+        messages.add_message(request, messages.INFO,
+                             'Some sounds of this pack might <b>not have been moderated or processed</b> yet.')
 
-    tvars = {'pack': pack,
-             'num_sounds_ok': num_sounds_ok,
-             'pack_sounds': pack_sounds
-             }
-    tvars.update(paginator)
+    if using_beastwhoosh(request):
+        is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, pack.user)
+    else:
+        is_following = None
+
+    tvars = {
+        'pack': pack,
+        'num_sounds_ok': num_sounds_ok,
+        'pack_sounds': pack_sounds,
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS,  # BW only
+        'is_following': is_following
+    }
+    if not using_beastwhoosh(request):
+        tvars.update(paginator)
 
     return render(request, 'sounds/pack.html', tvars)
 
@@ -828,8 +835,12 @@ def flag(request, username, sound_id):
 
 def sound_short_link(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
-    return redirect('sound', username=sound.user.username,
-            sound_id=sound.id)
+    return redirect('sound', username=sound.user.username, sound_id=sound.id)
+
+
+def pack_short_link(request, pack_id):
+    pack = get_object_or_404(Pack, id=pack_id)
+    return redirect('pack', username=pack.user.username, pack_id=pack.id)
 
 
 def __redirect_old_link(request, cls, url_name):

@@ -445,12 +445,17 @@ class Profile(SocialModel):
         return None
 
     def get_average_rating(self):
+        # Returns the average raring from 0 to 10
         # TODO: don't compute this realtime, store it in DB
         ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
         if ratings:
             return 1.0*sum(ratings)/len(ratings)/2
         else:
             return 0
+
+    def get_average_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.get_average_rating()/2
 
     def get_total_uploaded_sounds_length(self):
         # TODO: don't compute this realtime, store it in DB

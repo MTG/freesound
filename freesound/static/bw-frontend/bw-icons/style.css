@@ -159,6 +159,9 @@
 .bw-icon-link:before {
   content: '\e926';
 }
+.bw-icon-link:hover:before {
+  color: #000;
+}
 .bw-icon-list-bullets:before {
   content: '\e927';
 }

@@ -14,6 +14,7 @@ const start = async () => {
         'Browse',
         'Profile',
         'Sound',
+        'Pack',
         'Followers',
         'Following',
         'TagsFollowing',

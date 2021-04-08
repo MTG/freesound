@@ -57,6 +57,25 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
             'url': url,
             'opacity_class': opacity_class}
 
+
+@register.inclusion_tag('atoms/avatar.html')
+def bw_user_avatar(avatar_url, username, size=40):
+    """
+    Displays a Beast Whoosh user avatar or no avatar if user has none
+    We check if user has custom avatar by checking if the given avatar URL contains the filename of the default
+    avatar for Freesound 2 UI. Once we get rid of old UI code, this function can be modified as the locations
+    decorator of the Profile model might return something different if user has no avatar.
+    """
+    return {
+        'size': size,
+        'has_avatar': '_avatar.png' not in avatar_url,
+        'avatar_url':avatar_url,
+        'username': username,
+        'font_size': int(size * 0.4),
+        'no_avatar_bg_color': settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1]))
+                                                        % len(settings.AVATAR_BG_COLORS)]}
+
+
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
 def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=False, update_stars_color_on_save=False):
     if hasattr(sound, 'username'):

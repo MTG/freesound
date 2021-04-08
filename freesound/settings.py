@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os
 import datetime
-import re
 import logging.config
+import os
+import re
+
 import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -279,6 +280,11 @@ BASE_MAX_POSTS_PER_DAY = 5
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
+
+# Avatar background colors (only BW)
+from utils.audioprocessing.processing import interpolate_colors
+from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES
+AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]['wave_colors'][1:], num_colors=10)
 
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3

@@ -86,8 +86,8 @@
         </div>
         <div class="between v-spacing-top-2 v-spacing-3">
             <div class="middle text-grey h-spacing-1">
-                <div class="avatar h-spacing-1">
-                    <img src="{{ user_profile_locations.avatar.S.url }}" />
+                <div class="h-spacing-1">
+                    {% bw_user_avatar user_profile_locations.avatar.S.url sound_user 32 %}
                 </div>
                 <a href="{% url 'account' sound_user %}">{{ sound_user | truncate_string:15 }}</a>
                 <span class="h-spacing-left-1 text-light-grey">{{ sound.created|date:"F jS, Y" }}</span>

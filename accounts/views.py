@@ -512,7 +512,6 @@ def edit(request):
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
         if image_form.is_valid():
-            print(image_form.cleaned_data["remove"])
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()
@@ -530,6 +529,9 @@ def edit(request):
         image_form = AvatarForm(prefix="image")
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
+    has_old_avatar = not os.path.exists(profile.locations('avatar.XL.path')) \
+                     or os.path.getsize(profile.locations('avatar.XL.path')) == \
+                     os.path.getsize(profile.locations('avatar.L.path'))
 
     tvars = {
         'user': request.user,
@@ -537,6 +539,7 @@ def edit(request):
         'profile_form': profile_form,
         'image_form': image_form,
         'has_granted_permissions': has_granted_permissions,
+        'has_old_avatar': has_old_avatar,
         'activePage': 'profile',  # For BW account settings sidebar
     }
     return render(request, 'accounts/edit.html', tvars)

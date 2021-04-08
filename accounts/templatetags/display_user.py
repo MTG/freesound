@@ -21,6 +21,7 @@
 from __future__ import absolute_import
 
 from django import template
+from django.conf import settings
 from django.contrib.auth.models import User
 
 from accounts.models import Profile
@@ -65,7 +66,8 @@ def display_user(context, user, size='small', comment_created=None):
 
         is_followed_by_request_user = None
         if size == 'follow_lists':
-            is_followed_by_request_user = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user_obj)
+            is_followed_by_request_user = request.user.is_authenticated() \
+                                          and follow_utils.is_user_following_user(request.user, user_obj)
 
         return {
             'user': user_obj,
@@ -82,6 +84,11 @@ def display_user(context, user, size='small', comment_created=None):
 @register.inclusion_tag('accounts/display_user.html', takes_context=True)
 def display_user_follow_lists(context, user):
     return display_user(context, user, size='follow_lists')
+
+
+@register.inclusion_tag('accounts/display_user.html', takes_context=True)
+def display_user_top_donor(context, user):
+    return display_user(context, user, size='top_donor')
 
 
 @register.inclusion_tag('accounts/display_user.html', takes_context=True)

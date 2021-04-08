@@ -15,7 +15,7 @@
     <div class="container">
         <div class="row navbar-space-filler v-spacing-top-6 v-spacing-6 bw-profile__hero">
             <div>
-                <img src="{{user.profile.locations.avatar.XL.url}}" />
+                {% bw_user_avatar user.profile.locations.avatar.XL.url user.username 100 %}
             </div>
             <div class="bw-profile__username v-spacing-top-2">
                 <h1>{{ user.username }}</h1>

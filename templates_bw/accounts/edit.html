@@ -1,13 +1,19 @@
 {% extends "accounts/account_settings_base.html" %}
 
 {% load staticfiles %}
+{% load bw_templatetags %}
 
 {% block title %}Edit profile{% endblock %}
 
 {% block main_content %}
     <h1>Edit profile</h1>
     <div class="v-spacing-top-6">
-        <img id="imageProfile" src="{{ profile.locations.avatar.XL.url }}" />
+        {% if profile.has_avatar %}
+            <img id="imageProfile" class="avatar" style="width:100px;height:100px;" src="{{ profile.locations.avatar.XL.url }}" />
+        {% else %}
+            <img id="imageProfile" class="display-none avatar" style="width:100px;height:100px;" />
+            {% bw_user_avatar profile.locations.avatar.XL.url user.username 100 %}
+        {% endif %}
     </div>
     <div class="bw-edit-profile__username v-spacing-top-2">
         <h2>{{ user.username }}</h2>
@@ -25,6 +31,9 @@
             <button class="btn-inverse h-spacing-left-2 font-weight-semi-bold" {% if not profile.has_avatar %}disabled{% endif %}>Delete avatar</button>
         </form>
     </div>
+    {% if has_old_avatar %}
+        <div class="text-center text-grey v-spacing-top-2"><span class="text-red">Warning:</span> your avatar was uploaded with the previous version of Freesound. <br/>Please, re-upload the avatar to display it with optimal resolution.</span>
+    {% endif %}
     <div class="v-spacing-top-7 w-100 v-spacing-5">
         <form method="post" action="." class="bw-edit-profile__form w-100">{% csrf_token %}
             {{profile_form.as_p}}

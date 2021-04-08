@@ -512,7 +512,6 @@ def edit(request):
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
         if image_form.is_valid():
-            print(image_form.cleaned_data["remove"])
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()

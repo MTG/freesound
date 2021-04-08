@@ -63,8 +63,8 @@
 
             <div class="between v-spacing-top-2 v-spacing-3">
                 <div class="middle text-grey h-spacing-1">
-                    <div class="avatar h-spacing-1">
-                        <img src="{{ user_profile_locations.avatar.S.url }}" />
+                    <div class="h-spacing-1">
+                        {% bw_user_avatar user_profile_locations.avatar.S.url pack.user.username 32 %}
                     </div>
                     <a href="{% url 'account' pack.user %}">{{ pack.user | truncate_string:15 }}</a>
                     <span class="h-spacing-left-1 text-light-grey">{{ pack.created|date:"F jS, Y" }}</span>

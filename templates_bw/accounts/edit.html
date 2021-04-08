@@ -8,8 +8,12 @@
 {% block main_content %}
     <h1>Edit profile</h1>
     <div class="v-spacing-top-6">
-        {% bw_user_avatar profile.locations.avatar.XL.url user.username 80 %}
-        <img id="imageProfile" src="{{ profile.locations.avatar.XL.url }}" />
+        {% if profile.has_avatar %}
+            <img id="imageProfile" class="avatar" style="width:100px;height:100px;" src="{{ profile.locations.avatar.XL.url }}" />
+        {% else %}
+            <img id="imageProfile" class="display-none avatar" style="width:100px;height:100px;" />
+            {% bw_user_avatar profile.locations.avatar.XL.url user.username 100 %}
+        {% endif %}
     </div>
     <div class="bw-edit-profile__username v-spacing-top-2">
         <h2>{{ user.username }}</h2>

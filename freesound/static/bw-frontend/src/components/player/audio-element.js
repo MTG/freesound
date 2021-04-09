@@ -46,7 +46,7 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
  */
 const usePlayingAnimation = (audioElement, parentNode) => {
   const { duration, currentTime } = audioElement
-  const progress = Math.ceil((currentTime / duration) * 100)
+  const progress = (currentTime / duration) * 100
   setProgressIndicator(progress, parentNode)
   if (!audioElement.paused) {
     window.requestAnimationFrame(() =>
@@ -110,14 +110,22 @@ export const createAudioElement = parentNode => {
   oggSource.setAttribute('type', 'audio/ogg')
   audioElement.appendChild(mp3Source)
   audioElement.appendChild(oggSource)
+
+  let updatePlayerPositionTimer = undefined;
+
   audioElement.addEventListener('play', () => {
-    usePlayingStatus(audioElement, parentNode)
+    usePlayingStatus(audioElement, parentNode);
+    updatePlayerPositionTimer = setInterval(() => {
+      onPlayerTimeUpdate(audioElement, parentNode)
+  }, 100);
+
   })
   audioElement.addEventListener('pause', () => {
     removePlayingStatus(parentNode, audioElement)
+    if (updatePlayerPositionTimer !== undefined){
+      clearInterval(updatePlayerPositionTimer);
+    }
   })
-  audioElement.addEventListener('timeupdate', () => {
-    onPlayerTimeUpdate(audioElement, parentNode)
-  })
+
   return audioElement
 }

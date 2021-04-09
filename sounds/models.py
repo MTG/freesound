@@ -1385,7 +1385,10 @@ class Pack(SocialModel):
 
     def get_pack_tags_bw(self):
         results = get_pack_tags(self)
-        return [{'name': tag, 'count': count} for tag, count in results['tag']]
+        if results:
+            return [{'name': tag, 'count': count} for tag, count in results['tag']]
+        else:
+            return []
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)

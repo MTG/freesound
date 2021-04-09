@@ -1462,8 +1462,9 @@ class Pack(SocialModel):
         if license_summary_name != self.VARIOUS_LICENSES_NAME:
             return License.objects.get(name=license_summary_name).get_short_summary
         else:
-            return "This pack contains sounds with a mixture of licenses. Please check every individual sound page " \
-                   "(or the <i>_LICENSES.txt</i> file upon downloading the pack) to know under which license is released."
+            return "This pack contains sounds released under various licenses. Please check every individual sound page " \
+                   "(or the <i>readme</i> file upon downloading the pack) to know under which " \
+                   "license each sound is released."
 
     @property
     def license_summary_deed_url(self):

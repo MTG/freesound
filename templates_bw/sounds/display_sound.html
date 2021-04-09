@@ -13,6 +13,7 @@
             </h5>
             <div class="v-spacing-top-1">
                 <a href="{% url 'account' sound_user %}">{{ sound_user|truncate_string:15 }}</a>
+                <br><span class="text-grey">{{ sound.created|timesince }} ago</span>
             </div>
             <div class="v-spacing-top-1 text-grey">
                 {{ sound.description|striptags|safe|truncatewords:10 }}

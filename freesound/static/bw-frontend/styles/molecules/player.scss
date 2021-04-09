@@ -156,6 +156,15 @@
   color: $navy-grey;
 }
 
+.bw-player__progress-container--inverted {
+  .bw-player__progress {
+    color: #555555;
+    span {
+      background-color: transparentize($white, 0.4);
+    }
+  }
+}
+
 .bw-player__favorite {
   position: absolute;
   top: 0;

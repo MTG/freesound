@@ -21,7 +21,7 @@
                                 <h1><span class="text-light-grey">Pack: </span>{{ pack.name }} </h1>
                             </div>
                         </div>
-                        <div class="middle v-spacing-top-2">{% bw_generic_stars pack.get_average_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings >= min_num_ratings %}Overall rating ({{ pack.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                        <div class="middle v-spacing-top-2">{% bw_generic_stars pack.avg_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings >= min_num_ratings %}Overall rating ({{ pack.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
                                 {% bw_user_avatar pack.user.profile.locations.avatar.M.url pack.user.username 40 %}
@@ -40,7 +40,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="v-spacing-top-1" >
+                        <div class="v-spacing-top-3" >
                             {% if pack.description %}
                                 <div class="text-17 line-height-30">
                                     {{pack.description|replace_img|safe|linebreaksbr}}
@@ -81,13 +81,13 @@
                         <div>
                             <ol>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'wave' 'text-grey text-opacity-050' %}<span class="text-21">{{ pack.num_sounds }}</span> <span class="text-grey text-17">sounds</span>
+                                    {% bw_icon 'wave' 'text-grey text-opacity-050' %}<a href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=created+desc&g=1" class="bw-link--black  no-hover"><span class="text-21">{{ pack.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
                                 </li>
                                 <li class="v-spacing-3">
                                     {% bw_icon 'play' 'text-light-grey' %} <span class="text-21">{{ pack.get_total_pack_sounds_length|duration_hours }}</span> <span class="text-grey text-17">hours of audio</span>
                                 </li>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--black"><span class="text-21">{{ pack.num_downloads }}</span> <span class="text-grey text-17 h-spacing-left-1">downloads</span></a>
+                                    {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--black no-hover"><span class="text-21">{{ pack.num_downloads }}</span> <span class="text-grey text-17">downloads</span></a>
                                 </li>
                             </ol>
                         </div>

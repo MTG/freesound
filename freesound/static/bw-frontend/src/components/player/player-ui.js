@@ -73,8 +73,9 @@ const createProgressBar = audioElement => {
 /**
  * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
+ * @param {bool} startWithSpectrum
  */
-const createProgressStatus = (audioElement, playerSize) => {
+const createProgressStatus = (audioElement, playerSize, startWithSpectrum) => {
   const { duration } = audioElement
   const progressStatusContainer = document.createElement('div')
   progressStatusContainer.className = 'bw-player__progress-container'
@@ -88,6 +89,10 @@ const createProgressStatus = (audioElement, playerSize) => {
     progressStatusContainer.classList.add('bw-player__progress-container--big')
     progressStatus.classList.add('bw-player__progress--big')
     progressIndicator.classList.remove('hidden')
+  } else {
+    if (startWithSpectrum){
+      progressStatusContainer.classList.add('bw-player__progress-container--inverted')
+    }
   }
   durationIndicator.innerHTML = `${
     playerSettings.showRemainingTime ? '-' : ''
@@ -168,11 +173,13 @@ const createLoopButton = audioElement => {
  *
  * @param {HTMLImgElement} playerImgNode
  * @param {HTMLDivElement} parentNode
+ * @param {'small' | 'big'} playerSize
+ * @param {bool} startWithSpectrum
  */
-const createSpectogramButton = (playerImgNode, parentNode) => {
+const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWithSpectrum) => {
   const spectogramButton = createControlButton('spectogram')
   const { spectrum, waveform } = parentNode.dataset
-  if (playerImgNode.src.indexOf(waveform) === -1){
+  if (startWithSpectrum){
     spectogramButton.classList.add('text-red-important');
   }
   spectogramButton.addEventListener('click', () => {
@@ -181,10 +188,20 @@ const createSpectogramButton = (playerImgNode, parentNode) => {
       playerImgNode.src = spectrum
       spectogramButton.classList.add('text-red-important')
       spectogramButton.parentElement.classList.add('bw-player__controls-inverted');
+      if (playerSize !== 'big'){
+        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
+          progressIndicator.classList.add('bw-player__progress-inverted');
+        });
+      }
     } else {
       playerImgNode.src = waveform
       spectogramButton.classList.remove('text-red-important')
       spectogramButton.parentElement.classList.remove('bw-player__controls-inverted');
+      if (playerSize !== 'big') {
+        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
+          progressIndicator.classList.remove('bw-player__progress-inverted');
+        });
+      }
     }
   })
   return spectogramButton
@@ -224,7 +241,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     imageContainer.appendChild(playerImage)
     imageContainer.appendChild(progressIndicator)
     audioElement.addEventListener('loadedmetadata', () => {
-      const progressStatus = createProgressStatus(audioElement, playerSize)
+      const progressStatus = createProgressStatus(audioElement, playerSize, startWithSpectrum)
       imageContainer.appendChild(progressStatus)
     })
     imageContainer.addEventListener('click', evt => {
@@ -256,13 +273,14 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   } else if (playerSize === 'minimal') {
     playerControls.classList.add('bw-player__controls--minimal')
   }
-  if (playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1){
+  const startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+  if (startWithSpectrum){
     playerControls.classList.add('bw-player__controls-inverted');
   }
   const playButton = createPlayButton(audioElement, playerSize)
   const stopButton = createStopButton(audioElement, parentNode)
   const loopButton = createLoopButton(audioElement)
-  const spectogramButton = createSpectogramButton(playerImgNode, parentNode)
+  const spectogramButton = createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum)
   const rulerButton = createRulerButton()
   const controls =
     playerSize === 'big'

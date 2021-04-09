@@ -80,19 +80,13 @@
       list-style: none;
 
       li {
-        margin-bottom: 16px;
+        > span {
+          margin: 0 3px;
+        }
 
-        span {
-          margin: 0 5px;
-          font-size: 21px;
-
-          &:first-child {
-            font-size: 18px;
-            width: 18px;
-          }
-
-          &:last-child {
-            color: $navy-light-grey;
+        > a {
+          > span {
+            margin: 0 3px;
           }
         }
       }

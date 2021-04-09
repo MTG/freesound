@@ -592,7 +592,7 @@ class Sound(SocialModel):
     # counts, updated by django signals
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0, db_index=True)
-    avg_rating = models.FloatField(default=0)
+    avg_rating = models.FloatField(default=0)  # Store average rating from 0 to 10
     num_ratings = models.PositiveIntegerField(default=0)
 
     objects = SoundManager()
@@ -758,6 +758,11 @@ class Sound(SocialModel):
         if self.num_ratings <= settings.MIN_NUMBER_RATINGS:
             return 0
         return int(self.avg_rating*10)
+
+    @property
+    def avg_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.avg_rating / 2
 
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
@@ -1411,13 +1416,20 @@ class Pack(SocialModel):
                 sound_list=sounds_list))
         return attribution
 
-    def get_average_rating(self):
+    @property
+    def avg_rating(self):
+        # Return average rating from 0 to 10
         # TODO: don't compute this realtime, store it in DB
         ratings = list(SoundRating.objects.filter(sound__pack=self).values_list('rating', flat=True))
         if ratings:
-            return 1.0*sum(ratings)/len(ratings)/2
+            return 1.0*sum(ratings)/len(ratings)
         else:
             return 0
+
+    @property
+    def avg_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.avg_rating/2
 
     @property
     def num_ratings(self):

@@ -126,7 +126,7 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
 def bw_generic_stars(context, rating_0_10):
-    # Pre process rating values to do less work in the template
+    # Expects rating in 0-10 scale
     stars_10 = []
     for i in range(0, 10):
         if rating_0_10 >= i + 1:

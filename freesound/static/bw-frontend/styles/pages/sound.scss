@@ -20,7 +20,13 @@
 
     li {
       > span {
-        margin: 0 5px;
+        margin: 0 3px;
+      }
+
+      > a {
+        > span {
+          margin: 0 3px;
+        }
       }
     }
   }

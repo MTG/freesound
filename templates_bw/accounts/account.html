@@ -150,23 +150,23 @@
                 {% cache 43200 bw_user_profile_stats user.id %}
                 <section class="bw-profile__section_stats v-spacing-top-7">
                     <ol>
-                        <li>
-                            {% bw_icon 'wave' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_sounds }}</span> <span>sounds</span>
+                        <li class="v-spacing-3">
+                            {% bw_icon 'wave' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1"><span class="text-21">{{ user.profile.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
                         </li>
-                        <li>
-                            {% bw_icon 'playlist' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_packs }}</span> <span>packs</span>
+                        <li class="v-spacing-3">
+                            {% bw_icon 'playlist' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1&only_p=1"><span class="text-21">{{ user.profile.num_packs }}</span> <span class="text-grey text-17">packs</span></a>
                         </li>
-                        <li>
-                            {% bw_icon 'play' 'text-light-grey' %} <span class="text-black">{{ user.profile.get_total_uploaded_sounds_length|duration_hours }}</span> <span>hours of audio</span>
+                        <li class="v-spacing-3">
+                            {% bw_icon 'play' 'text-light-grey' %} <span class="text-21">{{ user.profile.get_total_uploaded_sounds_length|duration_hours }}</span> <span class="text-grey text-17">hours of audio</span>
                         </li>
-                        <li>
-                            {% bw_icon 'star' 'text-light-grey' %} <span class="text-black">{{ user.profile.avg_rating_0_5|floatformat:1 }}</span> <span>average rating</span>
+                        <li class="v-spacing-3">
+                            {% bw_icon 'star' 'text-light-grey' %} <span class="text-21">{{ user.profile.avg_rating_0_5|floatformat:1 }}</span> <span class="text-grey text-17">average rating</span>
                         </li>
-                        <li>
-                            {% bw_icon 'download' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_sound_downloads|add:user.profile.num_pack_downloads }}</span> <span>downloads</span>
-                        </li>
-                        <li>
-                            {% bw_icon 'comments' 'text-light-grey' %} <span class="text-black">{{ user.profile.num_posts }}</span> <span>forum posts</span>
+                        <li class="v-spacing-3">
+                            {% bw_icon 'download' 'text-light-grey' %} <span class="text-21">{{ user.profile.num_sound_downloads|add:user.profile.num_pack_downloads }}</span> <span class="text-grey text-17">downloads</span>
+                        </a>
+                        <li class="v-spacing-3">
+                            {% bw_icon 'comments' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22"><span class="text-21">{{ user.profile.num_posts }}</span> <span class="text-grey text-17">forum posts</span></a>
                         </li>
                     </ol>
                 </section>

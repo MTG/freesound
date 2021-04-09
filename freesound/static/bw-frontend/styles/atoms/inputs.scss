@@ -58,13 +58,14 @@ input {
 }
 
 .input-typeahead-suggestion-wrapper {
-  padding: $tiny-spacing;
+  padding: 2px;
+  padding-left: 15px;
   cursor: pointer;
   
   &:focus,
   &:hover,
   &:active,
   &.active {
-    background-color: lighten($navy-light-grey, 10%);
+    background-color: #f8f8f8;
   }
 }

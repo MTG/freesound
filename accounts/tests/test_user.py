@@ -25,6 +25,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.db import IntegrityError
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -631,27 +632,42 @@ class ChangeUsernameTest(TestCase):
         self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
         self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
 
-        # Now rename user for the second time
-        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewName']})
-        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
-        self.assertEqual(OldUsername.objects.filter(username='userANewName', user=userA).count(), 1)
-        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
-
-        # Try rename user with an existing username from another user
+        # Try rename again user with an existing username from another user
         userB = User.objects.create_user('userB', email='userB@freesound.org')
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [userB.username]})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['profile_form']['username'].errors))
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
-        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+        self.assertEqual(userA.username, 'userANewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
-        # Try rename user with a username that was already used by the same user in the past
+        # Try rename again user with a username that was already used by the same user in the past
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userA']})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['profile_form']['username'].errors))
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(userA.username, 'userANewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
+
+        # Try rename again user with a username that was already used by the same user in the past, but with different
+        # case for some characters
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'uSeRA']})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['profile_form']['username'].errors))
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
+
+        # Now rename user for the second time with a valid uname
+        resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewName']})
+        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        self.assertEqual(OldUsername.objects.filter(username='userANewName', user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Try to rename for a third time to a valid username but can't rename anymore because exceeded maximum
@@ -659,6 +675,8 @@ class ChangeUsernameTest(TestCase):
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userANewNewNewName']})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        self.assertIn('Your username can&#39;t be changed any further',
+                      str(resp.context['profile_form']['username'].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
@@ -700,6 +718,8 @@ class ChangeUsernameTest(TestCase):
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['adminform'].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
@@ -709,6 +729,20 @@ class ChangeUsernameTest(TestCase):
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['adminform'].errors))
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try rename user with a username that was already used by the same user in the past, but using different
+        # case for some characters
+        post_data.update({'username': u'uSeRA'})
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['adminform'].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
@@ -723,7 +757,8 @@ class ChangeUsernameTest(TestCase):
 
     def test_change_username_case_insensitiveness(self):
         """Test that changing the username for a new version of the username with different capitalization does not
-        create a new OldUsername object.
+        create a new OldUsername object. The username change is valid (e.g. userA > UserA), but it should not create
+        OldUsername entry because usernames should be treated as case insensitive.
         """
         # Create user and login
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
@@ -732,7 +767,17 @@ class ChangeUsernameTest(TestCase):
         # Rename "userA" to "UserA", should not create OldUsername object
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'UserA']})
         self.assertRedirects(resp, reverse('accounts-home'))
-        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 0)
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'UserA')  # Username capitalization was changed ...
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)  # ... but not OldUsername was created
+
+    def test_oldusername_username_unique_case_insensitiveness(self):
+        """Test that OldUsername.username is case insensitive at the DB level, and that we can't create objects
+        with different "capitalizations" of username property"""
+        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        OldUsername.objects.create(user=userA, username='newUserAUsername')
+        with self.assertRaises(IntegrityError):
+            OldUsername.objects.create(user=userA, username='NewUserAUsername')
 
 
 class ChangeEmailViaAdminTestCase(TestCase):

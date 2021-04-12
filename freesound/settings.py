@@ -28,6 +28,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
+    'admin_reorder.middleware.ModelAdminReorder',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -73,7 +74,49 @@ INSTALLED_APPS = [
     'monitor',
     'django_object_actions',
     'silk',
+    'admin_reorder',
 ]
+
+# Specify custom ordering of models in Django Admin index
+ADMIN_REORDER = (
+
+    {'app': 'accounts', 'models': (
+        'auth.User',
+        'accounts.Profile',
+        'accounts.DeletedUser',
+        'accounts.UserDeletionRequest',
+        'accounts.UserFlag',
+        'accounts.OldUsername',
+        'accounts.EmailBounce',
+        'auth.Groups'
+    )},
+    {'app': 'sounds', 'models': (
+        'sounds.Sound',
+        'sounds.Pack',
+        'sounds.DeletedSound',
+        'sounds.License',
+        {'model': 'sounds.Flag', 'label': 'Sound flags'},
+        'sounds.BulkUploadProgress',
+        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
+    )},
+    {'app': 'apiv2', 'label': 'API', 'models': (
+        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
+        'oauth2_provider.AccessToken',
+        'oauth2_provider.RefreshToken',
+        'oauth2_provider.Grant',
+    )},
+    'forum',
+    {'app': 'donations', 'models': (
+        'donations.Donation',
+        'donations.DonationsEmailSettings',
+        'donations.DonationsModalSettings',
+    )},
+
+
+    'sites',
+
+
+)
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC

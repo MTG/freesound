@@ -27,6 +27,12 @@
 }
 
 .divider-light {
-  border-top: 1px solid $navy-light-grey;
+  border-top: 1px solid $navy-grey;
   opacity: 0.15;
+}
+
+.border-light-grey-bottom-hover {
+  &:hover {
+    border-bottom: 1px solid $navy-light-grey;
+  }
 }

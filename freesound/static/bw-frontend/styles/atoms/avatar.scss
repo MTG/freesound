@@ -1,11 +1,9 @@
 .avatar {
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
+  border-radius: 50%;
+}
 
-  img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-  }
+.no-avatar {
+  border-radius: 50%;
+  text-align: center;
+  font-weight: bold;
 }

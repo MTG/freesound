@@ -34,7 +34,7 @@ admin.site.register(License, LicenseAdmin)
 
 
 class SoundAdmin(admin.ModelAdmin):
-    fieldsets = ((None, {'fields': ('user', )}),
+    fieldsets = ((None, {'fields': ('user', 'num_downloads' )}),
                  ('Filenames', {'fields': ('base_filename_slug',)}),
                  ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'sources', 'pack')}),
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
@@ -47,12 +47,33 @@ class SoundAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'original_filename', 'license', 'created', 'moderation_state')
     list_filter = ('moderation_state', 'license', 'processing_state')
     ordering = ['id']
+    search_fields = ('=id', '=user__username')
+    readonly_fields = ('num_downloads', )
 admin.site.register(Sound, SoundAdmin)
 
 
 class DeletedSoundAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
-    list_display = ('sound_id', 'user')
+    list_display = ('sound_id', 'user_link', 'created')
+    readonly_fields = ('data', 'sound_id', 'user')
+
+    def get_queryset(self, request):
+        # Override 'get_queryset' to optimize query by using select_related on appropriate fields
+        qs = super(DeletedSoundAdmin, self).get_queryset(request)
+        qs = qs.select_related('user')
+        return qs
+
+    def user_link(self, obj):
+        if obj.user is None:
+            return '-'
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse('admin:auth_user_change', args=[obj.user.id]),
+            '{0}'.format(obj.user.username))
+
+    user_link.allow_tags = True
+    user_link.admin_order_field = 'user'
+    user_link.short_description = 'User'
+
 admin.site.register(DeletedSound, DeletedSoundAdmin)
 
 

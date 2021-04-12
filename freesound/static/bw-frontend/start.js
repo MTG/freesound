@@ -1,7 +1,7 @@
-const inquirer = require('inquirer')
-const shell = require('shelljs')
+const inquirer = require('inquirer');
+const shell = require('shelljs');
 
-const outDir = 'freesound/static/bw-frontend/dist'
+const outDir = 'freesound/static/bw-frontend/dist';
 
 const start = async () => {
   const answers = await inquirer.prompt([
@@ -9,11 +9,24 @@ const start = async () => {
       type: 'list',
       name: 'pagename',
       message: 'Which page would you like to open?',
-      choices: ['Front', 'Browse'],
+      choices: [
+        'Front',
+        'Browse',
+        'Profile',
+        'Sound',
+        'Pack',
+        'Followers',
+        'Following',
+        'TagsFollowing',
+        'EditProfile',
+        'EditProfilePassword',
+        'EditProfileNotifications',
+        'EditProfileCloseAccount',
+      ],
       filter: val => val.toLowerCase(),
     },
-  ])
-  shell.exec(`parcel serve freesound/static/bw-frontend/html/${answers.pagename}.njk -d ${outDir}`)
-}
+  ]);
+  shell.exec(`parcel serve freesound/static/bw-frontend/html/${answers.pagename}.njk -d ${outDir}`);
+};
 
-start()
+start();

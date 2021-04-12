@@ -1,7 +1,98 @@
-.bw-icon-half-star .path2 {
-  margin-left: -23px;
+.bw-icon-half-star {
+  display: flex;
 
-  &:before {
-    margin-left: 0;
+  .path2 {
+    margin-left: -15px;
+
+    &:before {
+      margin-left: 0;
+    }
   }
 }
+
+.cleanIcon {
+  > span {
+    display: flex;
+  }
+}
+
+.bw-icon-facebook {
+  .path1:before {
+    color: $navy-grey;
+  }
+
+  &:hover .path1:before {
+    color: $navy-grey;
+    color: rgb(59, 89, 152);
+  }
+}
+
+.bw-icon-google-plus {
+  .path1:before {
+    color: $navy-grey;
+  }
+
+  &:hover .path1:before {
+    color: $navy-grey;
+    color: rgb(255, 53, 70);
+  }
+}
+
+.bw-icon-twitter {
+  .path1:before {
+    color: $navy-grey;
+  }
+
+  &:hover .path1:before {
+    color: $navy-grey;
+    color: rgb(85, 172, 238);
+  }
+}
+
+.bw-icon-tumblr {
+  .path1:before {
+    color: $navy-grey;
+  }
+
+  &:hover .path1:before {
+    color: $navy-grey;
+    color: rgb(20, 20, 36);
+  }
+}
+
+.bw-icon-embed-stroke {
+  .path1:before {
+    color: $navy-grey;
+  }
+
+  &:hover .path1:before {
+    color: $navy-grey;
+    color: rgb(255, 143, 24);
+  }
+}
+
+.bw-icon__chevron_left {
+  transform: rotate(180deg);
+  display: inline-block;
+}
+
+.bw-icon__download_reverse {
+  transform: rotate(180deg);
+  display: inline-block;
+}
+
+.bw-icon__inside_circle {
+  background-color: $navy-grey;
+  border-radius: 50%;
+  color: white;
+  font-size: 14px;
+  line-height: 30px;
+  width: 30px;
+  height: 30px;
+  padding-left: 6px;
+
+  &:hover {
+    background-color: $red;
+  }
+}
+

@@ -28,6 +28,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.management import call_command
+from django.db import IntegrityError
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.test.utils import patch_logger
@@ -264,7 +265,7 @@ class UserDelete(TestCase):
     @mock.patch('sounds.models.delete_sound_from_solr')
     def test_user_delete_sounds_and_user_object(self, delete_sound_from_solr, delete_sound_from_gaia):
         # This should delete all user content, including the User object, and create a DeletedUser object. This will
-        # NOT create DeletedSound objects.
+        # create DeletedSound objects.
         user = self.create_user_and_content()
         user_sounds = Sound.objects.filter(user=user)
         user_sound_ids = [s.id for s in user_sounds]
@@ -277,7 +278,7 @@ class UserDelete(TestCase):
         self.assertFalse(Post.objects.filter(author__id=user.id).exists())
         self.assertFalse(Pack.objects.filter(user__id=user.id).exists())
         self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
-        self.assertFalse(DeletedSound.objects.filter(user__id=user.id).exists())
+        self.assertTrue(DeletedSound.objects.filter(user__id=user.id).exists())
         self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
 
         calls = [mock.call(i) for i in user_sound_ids]
@@ -287,8 +288,8 @@ class UserDelete(TestCase):
     @mock.patch('sounds.models.delete_sound_from_gaia')
     @mock.patch('sounds.models.delete_sound_from_solr')
     def test_user_full_delete(self, delete_sound_from_solr, delete_sound_from_gaia):
-        # This should delete all user content, including the User object and without creating DeletedUser nor
-        # DeletedSound objects.
+        # This should delete all user content, including the User object and without creating DeletedUser. It does
+        # create however DeletedSound objects.
         user = self.create_user_and_content()
         user_sounds = Sound.objects.filter(user=user)
         user_sound_ids = [s.id for s in user_sounds]
@@ -302,7 +303,7 @@ class UserDelete(TestCase):
         self.assertFalse(Post.objects.filter(author__id=user.id).exists())
         self.assertFalse(Pack.objects.filter(user__id=user.id).exists())
         self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
-        self.assertFalse(DeletedSound.objects.filter(user__id=user.id).exists())
+        self.assertTrue(DeletedSound.objects.filter(user__id=user.id).exists())
 
         calls = [mock.call(i) for i in user_sound_ids]
         delete_sound_from_solr.assert_has_calls(calls, any_order=True)
@@ -328,7 +329,8 @@ class UserDelete(TestCase):
 
         # Test UserDeletionRequest object is created with status "tr" (Deletion action was triggered)
         self.assertTrue(UserDeletionRequest.objects.filter(
-            user=user, status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists())
+            user_from=user, user_to=user,
+            status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists())
 
         # Assert user is redirected to front page
         self.assertRedirects(resp, reverse('front-page'))
@@ -356,7 +358,8 @@ class UserDelete(TestCase):
 
         # Test UserDeletionRequest object is created with status "tr" (Deletion action was triggered)
         self.assertTrue(UserDeletionRequest.objects.filter(
-            user=user, status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists())
+            user_from=user, user_to=user,
+            status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists())
 
         # Assert user is redirected to front page
         self.assertRedirects(resp, reverse('front-page'))
@@ -492,11 +495,11 @@ class UserDelete(TestCase):
         self.assertIn('Found 2 users that should have been deleted and were not', cmd_output)
 
         # Do the actual deletion of the user as if the async task was triggered
-        # Check that user was deleted and UserDeletionRequest startus was also updated
+        # Check that user was deleted and UserDeletionRequest status was also updated
         user2.profile.delete_user()
         user2.refresh_from_db()
         self.assertEqual(user2.profile.is_anonymized_user, True)
-        self.assertEqual(UserDeletionRequest.objects.get(user=user2).status,
+        self.assertEqual(UserDeletionRequest.objects.get(user_to=user2).status,
                          UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
 
         # Run the command again, it should say that there is 1 user that should have been deleted
@@ -511,7 +514,7 @@ class UserDelete(TestCase):
         # have updated the UserDeletionRequest status for user 1
         cmd_output = call_command_get_console_log_output("check_async_deleted_users")
         self.assertIn('Found 0 users that should have been deleted and were not', cmd_output)
-        self.assertEqual(UserDeletionRequest.objects.get(user=user1).status,
+        self.assertEqual(UserDeletionRequest.objects.get(user_to=user1).status,
                          UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
 
 
@@ -524,9 +527,9 @@ class UserDeletionRequestTestCase(TestCase):
 
         # Test when deleting a user but preserving the user object in DB (anonymizing)
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        UserDeletionRequest.objects.create(user=user, username=username)
+        UserDeletionRequest.objects.create(user_to=user, username_to=username)
         user.profile.delete_user()
-        deletion_request = UserDeletionRequest.objects.get(username=username)
+        deletion_request = UserDeletionRequest.objects.get(username_to=username)
         deleted_user = DeletedUser.objects.get(username=username)
         self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
         self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
@@ -535,9 +538,9 @@ class UserDeletionRequestTestCase(TestCase):
 
         # Test when deleting a user and also deleting the user object in DB
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        UserDeletionRequest.objects.create(user=user, username=username)
+        UserDeletionRequest.objects.create(user_to=user, username_to=username)
         user.profile.delete_user(delete_user_object_from_db=True)
-        deletion_request = UserDeletionRequest.objects.get(username=username)
+        deletion_request = UserDeletionRequest.objects.get(username_to=username)
         deleted_user = DeletedUser.objects.get(username=username)
         self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
         self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
@@ -546,11 +549,11 @@ class UserDeletionRequestTestCase(TestCase):
 
         # Test with multiple requests
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        UserDeletionRequest.objects.create(user=user, username=username)
-        UserDeletionRequest.objects.create(user=user, username=username)
+        UserDeletionRequest.objects.create(user_to=user, username_to=username)
+        UserDeletionRequest.objects.create(user_to=user, username_to=username)
         user.profile.delete_user()
         deleted_user = DeletedUser.objects.get(username=username)
-        for deletion_request in UserDeletionRequest.objects.filter(username=username):
+        for deletion_request in UserDeletionRequest.objects.filter(username_to=username):
             self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
             self.assertEqual(deletion_request.deleted_user_id, deleted_user.id)
 
@@ -559,7 +562,7 @@ class UserDeletionRequestTestCase(TestCase):
         # in the status_history field
         username = "testusername"
         user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
-        deletion_request = UserDeletionRequest.objects.create(user=user, username=username, status="re")
+        deletion_request = UserDeletionRequest.objects.create(user_to=user, username_to=username, status="re")
         self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST)
         self.assertEqual(len(deletion_request.status_history), 1)
         self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in
@@ -761,7 +764,7 @@ class PasswordReset(TestCase):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"email_or_username": "testuser@freesound.org"})
+        self.client.post(reverse("password_reset"), {"username_or_email": "testuser@freesound.org"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
@@ -771,7 +774,7 @@ class PasswordReset(TestCase):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"email_or_username": "testuser"})
+        self.client.post(reverse("password_reset"), {"username_or_email": "testuser"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
@@ -782,7 +785,7 @@ class PasswordReset(TestCase):
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
         long_mail = ('1' * 255) + '@freesound.org'
-        resp = self.client.post(reverse("password_reset"), {"email_or_username": long_mail})
+        resp = self.client.post(reverse("password_reset"), {"username_or_email": long_mail})
 
         self.assertNotEqual(resp.context['form'].errors, None)
 
@@ -960,6 +963,8 @@ class ChangeUsernameTest(TestCase):
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [userB.username]})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['profile_form']['username'].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userA')  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
@@ -971,10 +976,12 @@ class ChangeUsernameTest(TestCase):
         self.assertEqual(userA.username, 'userANewName')
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
-        # Try rename user with a username that was already used by the same user in the past
+        # Try rename again user with a username that was already used by the same user in the past
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'userA']})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['profile_form']['username'].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewName')  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
@@ -1034,6 +1041,8 @@ class ChangeUsernameTest(TestCase):
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['adminform'].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
@@ -1043,6 +1052,20 @@ class ChangeUsernameTest(TestCase):
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['adminform'].errors))
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
+
+        # Try rename user with a username that was already used by the same user in the past, but using different
+        # case for some characters
+        post_data.update({'username': u'uSeRA'})
+        resp = self.client.post(admin_change_url, data=post_data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
+        self.assertIn('This username is already taken or has been in used in the past',
+                      str(resp.context['adminform'].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
@@ -1057,7 +1080,8 @@ class ChangeUsernameTest(TestCase):
 
     def test_change_username_case_insensitiveness(self):
         """Test that changing the username for a new version of the username with different capitalization does not
-        create a new OldUsername object.
+        create a new OldUsername object. The username change is valid (e.g. userA > UserA), but it should not create
+        OldUsername entry because usernames should be treated as case insensitive.
         """
         # Create user and login
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
@@ -1066,7 +1090,17 @@ class ChangeUsernameTest(TestCase):
         # Rename "userA" to "UserA", should not create OldUsername object
         resp = self.client.post(reverse('accounts-edit'), data={u'profile-username': [u'UserA']})
         self.assertRedirects(resp, reverse('accounts-home'))
-        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 0)
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'UserA')  # Username capitalization was changed ...
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)  # ... but not OldUsername was created
+
+    def test_oldusername_username_unique_case_insensitiveness(self):
+        """Test that OldUsername.username is case insensitive at the DB level, and that we can't create objects
+        with different "capitalizations" of username property"""
+        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        OldUsername.objects.create(user=userA, username='newUserAUsername')
+        with self.assertRaises(IntegrityError):
+            OldUsername.objects.create(user=userA, username='NewUserAUsername')
 
 
 class ChangeEmailViaAdminTestCase(TestCase):

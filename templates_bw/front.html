@@ -4,23 +4,29 @@
 {% load cache %}
 {% load display_sound %}
 {% load display_pack %}
+{% load display_user %}
 {% load util %}
+{% load bw_templatetags %}
 
 {% block title %}Freesound{% endblock %}
+
+{% block navbar %}{% include 'molecules/navbar_front_page.html' %}{% endblock %}
 
 {% block content %}
     <div class="container">
     <div class="bw-front__hero-container">
       <header>
-        <h1>Find any sound, for free</h1>
-        <p class="bw-front__subheader">In a collaborative database crafted by our community</p>
+        <h1>Find any sound you like</h1>
+        <p class="bw-front__subheader">In a collaborative collection of {{ total_num_sounds }} <a class="bw-link--grey" href="/help/faq/#licenses">free sounds</a></p>
       </header>
       <div class="bw-front__hero-container--search">
-        <div class="typeahead-wrapper">
-           <div class="input-wrapper">
-             <input type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true"{% endif %} />
-           </div>
-         </div>
+        <form method="get" action="/search/">
+            <div class="typeahead-wrapper">
+              <div class="input-wrapper">
+                <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" data-query-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"{% endif %} />
+              </div>
+            </div>
+        </form>
       </div>
     </div>
     <div class="row bw-front__content">
@@ -61,10 +67,10 @@
                 {% for popular_searches_slice in popular_searches|chunks:4 %}
                 <div>
                   <div class="row no-margins">
-                    {% for search_term in popular_searches_slice %}
-                    <div class="col v-spacing-1">
-                      <a class="no-hover" href="{% url 'sounds-search' %}?q={{ search_term }}"><button class="btn-inverse border-grey-light text-center no-border-radius padding-4 no-text-wrap w-100 h-100 v-spacing-1 no-letter-spacing">{{ search_term }}</button></a>
-                    </div>
+                    {% for search_term, url in popular_searches_slice %}
+                        <div class="col v-spacing-1">
+                          {% bw_tag search_term 4 'w-100 h-100' url 1.0 %}
+                        </div>
                     {% endfor %}
                   </div>
                 </div>
@@ -87,7 +93,7 @@
                   <div class="row no-margins">
                   {% for sound_id in sound_ids %}
                     <div class="col-4">
-                        {% display_sound sound_id %}
+                        {% display_sound_small sound_id %}
                     </div>
                   {% endfor %}
                   </div>
@@ -144,17 +150,8 @@
           </div>
           {% if top_donor %}
               <div class="h-spacing-left-3">
-                <div>Top donor this week:</div>
-                <div class="middle">
-                  <div class="avatar h-spacing-2">
-                    <img src="{{ top_donor.profile.locations.avatar.M.url }}" />
-                  </div>
-                  <div>
-                    <a href="{% url 'account' top_donor.username %}">{{ top_donor.username }}</a>
-                    <br />
-                    <div class="text-light-grey">{{ top_donor.profile.num_sounds }} sound{{ top_donor.profile.num_sounds|pluralize }} &middot; {{ top_donor.profile.num_posts }} post{{ top_donor.profile.num_posts|pluralize }}</div>
-                  </div>
-                </div>
+                <div class="v-spacing-1">Top donor this week:</div>
+                {% display_user_top_donor top_donor %}
               </div>
             {% endif %}
         </section>

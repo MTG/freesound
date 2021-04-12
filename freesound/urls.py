@@ -20,6 +20,8 @@
 #     See AUTHORS file.
 #
 
+import os
+
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import TemplateView, RedirectView
@@ -142,6 +144,8 @@ urlpatterns = [
 
     url(r'^donate/', donations.views.donate_redirect, name="donate-redirect"),
     url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
+    url(r'^p/(?P<pack_id>\d+)/$', sounds.views.pack_short_link, name="short-pack-link"),
+
 
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
@@ -159,8 +163,15 @@ from django.conf import settings
 from django.views.static import serve
 if settings.DEBUG:
     import debug_toolbar
+
+    def serve_source_map_files(request):
+        path = request.path
+        document_root = os.path.join(os.path.dirname(__file__), 'static', 'bw-frontend', 'dist')
+        return serve(request, path, document_root=document_root, show_indexes=False)
+
     urlpatterns += [
         url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
         url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
         url(r'^__debug__/', include(debug_toolbar.urls)),
+        url(r'^.*\.map$', serve_source_map_files),
     ]

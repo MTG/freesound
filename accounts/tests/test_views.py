@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -38,7 +39,10 @@ class SimpleUserTest(TestCase):
         user, packs, sounds = create_user_and_sounds(num_packs=1)
         self.user = user
         self.sound = sounds[0]
+        self.sound.original_filename = "a sound name with è+é non-ascii characters"
         self.pack = packs[0]
+        self.pack.name = "a pack name with è+é non-ascii characters"
+        self.pack.save()
         self.sound.moderation_state = "OK"
         self.sound.processing_state = "OK"
         self.sound.analysis_state = "OK"
@@ -138,9 +142,10 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=csv')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertEqual(resp.content, 'Download Type,File Name,User,License\r\n'
-                         + 'P,%s,%s,%s\r\n' % (self.pack, self.user.username, self.pack)
-                         + 'S,%s,%s,%s\r\n' % (self.sound.original_filename, self.user.username, self.sound.license))
+        self.assertEqual(resp.content,
+                         'Download Type,File Name,User,License\r\nP,{0},{1},{0}\r\nS,{2},{3},{4}\r\n'.format(
+                             self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
+                             self.sound.license))
 
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)
@@ -148,9 +153,11 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=txt')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertEqual(resp.content, 'P: %s by %s | License: %s\n' % (self.pack, self.user.username, self.pack)
-                         + 'S: %s by %s | License: %s\n'
-                         % (self.sound.original_filename, self.user.username, self.sound.license))
+        self.assertEqual(resp.content,
+                         'P: {0} by {1} | License: {0}\nS: {2} by {3} | License: {4}\n'.format(
+                             self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
+                             self.sound.license))
+
 
         # If user is deleted, get 404
         self.user.profile.delete_user()

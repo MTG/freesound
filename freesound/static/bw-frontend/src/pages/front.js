@@ -4,10 +4,21 @@ import navbar from '../components/navbar'
 import { addTypeAheadFeatures } from '../components/typeahead'
 import wait from '../utils/wait'
 
-const heroSearch = document.getElementsByClassName('bw-front__hero-search')[0]
-
+// Main search input box behaviour
 const input = document.getElementById('search-sounds')
+const querySuggestionsURL = input.dataset.querySuggestionsUrl
 
+const fetchSuggestions = async query => {
+  let response = await fetch(`${querySuggestionsURL}?q=${input.value}`)
+  let data = await response.json()
+  const suggestions = data.suggestions
+  return suggestions
+}
+
+addTypeAheadFeatures(input, fetchSuggestions)
+
+// Navbar search input box behaviour  (shouold only appear when heroSearch is not visible)
+const heroSearch = document.getElementsByClassName('bw-front__hero-search')[0]
 const SCROLL_CHECK_TIMER = 100 // min interval (in ms) between consecutive calls of scroll checking function
 const checkShouldShowSearchInNavbar = throttle(() => {
   const heroRect = heroSearch.getBoundingClientRect()
@@ -23,14 +34,3 @@ const checkShouldShowSearchInNavbar = throttle(() => {
 }, SCROLL_CHECK_TIMER)
 
 window.addEventListener('scroll', checkShouldShowSearchInNavbar)
-
-const query_suggestions_url = process.env.QUERY_SUGGESTIONS_URL
-
-const fetchSuggestions = async query => {
-  let response = await fetch(`${query_suggestions_url}?q=${input.value}`)
-  let data = await response.json()
-  const suggestions = data.suggestions
-  return suggestions
-}
-
-addTypeAheadFeatures(input, fetchSuggestions)

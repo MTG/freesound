@@ -42,12 +42,15 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_unicode
+from django.utils.functional import cached_property
+from django.utils.text import Truncator
 
 import accounts.models
 from apiv2.models import ApiV2Client
 from comments.models import Comment
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
+from ratings.models import SoundRating
 from search.views import get_pack_tags
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
@@ -71,9 +74,14 @@ class License(OrderedModel):
     name = models.CharField(max_length=512)
     abbreviation = models.CharField(max_length=8, db_index=True)
     summary = models.TextField()
+    short_summary = models.TextField(null=True)
     deed_url = models.URLField()
     legal_code_url = models.URLField()
     is_public = models.BooleanField(default=True)
+
+    def get_short_summary(self):
+        return self.short_summary if self.short_summary is not None else Truncator(self.summary)\
+            .words(20, html=True, truncate='...')
 
     def __unicode__(self):
         return self.name
@@ -422,7 +430,10 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
+          geotags_geotag.lat as geotag_lat,
+          geotags_geotag.lon as geotag_lon,
           sounds_remixgroup_sounds.id as remixgroup_id,
+          accounts_profile.has_avatar as user_has_avatar,
           ac_analsyis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
@@ -433,8 +444,10 @@ class SoundManager(models.Manager):
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
+          LEFT JOIN accounts_profile ON accounts_profile.user_id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
                                                          AND ac_analsyis.extractor = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
@@ -580,7 +593,7 @@ class Sound(SocialModel):
     # counts, updated by django signals
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0, db_index=True)
-    avg_rating = models.FloatField(default=0)
+    avg_rating = models.FloatField(default=0)  # Store average rating from 0 to 10
     num_ratings = models.PositiveIntegerField(default=0)
 
     objects = SoundManager()
@@ -746,6 +759,11 @@ class Sound(SocialModel):
         if self.num_ratings <= settings.MIN_NUMBER_RATINGS:
             return 0
         return int(self.avg_rating*10)
+
+    @property
+    def avg_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.avg_rating / 2
 
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
@@ -1111,6 +1129,11 @@ class Sound(SocialModel):
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
+                for bw_player_size in ['small', 'middle', 'big_no_info', 'small_no_info']:
+                    for bw_request_user_is_author in [True, False]:
+                        invalidate_template_cache(
+                            "bw_display_sound",
+                            self.id, is_authenticated, is_explicit, bw_player_size, bw_request_user_is_author)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
@@ -1195,7 +1218,7 @@ class SoundOfTheDay(models.Model):
 
 
 class DeletedSound(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     sound_id = models.IntegerField(default=0, db_index=True)
     data = JSONField()
@@ -1205,7 +1228,6 @@ def on_delete_sound(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
         ds, create = DeletedSound.objects.get_or_create(
             sound_id=instance.id,
-            user=instance.user,
             defaults={'data': {}})
 
         # Copy relevant data to DeletedSound for future research
@@ -1220,6 +1242,11 @@ def on_delete_sound(sender, instance, **kwargs):
             # this part of the code. If that happens, return form this function without creating the DeletedSound
             # object nor doing any of the other steps as this will have been already carried out.
             return
+
+        username = None
+        if instance.user:
+            username = instance.user.username
+        data['username'] = username
 
         pack = None
         if instance.pack:
@@ -1268,7 +1295,7 @@ def on_delete_sound(sender, instance, **kwargs):
 
 
 def post_delete_sound(sender, instance, **kwargs):
-    # after deleted sound update num_sound on profile and pack
+    # after deleted sound update num_sounds on profile and pack
     try:
         # before updating the number of sounds here, we need to refresh the object from the DB because another signal
         # triggered after a sound is deleted (the post_delete signal on Download object) also needs to modify the
@@ -1318,6 +1345,8 @@ class Pack(SocialModel):
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
     is_deleted = models.BooleanField(db_index=True, default=False)
 
+    VARIOUS_LICENSES_NAME = 'Various licenses'
+
     objects = PackManager()
 
     def __unicode__(self):
@@ -1355,13 +1384,20 @@ class Pack(SocialModel):
         sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
-    def get_pack_tags(self, max_tags=50):
+    def get_pack_tags(self):
         pack_tags = get_pack_tags(self)
         if pack_tags is not False:
             tags = [t[0] for t in pack_tags['tag']]
             return {'tags': tags, 'num_tags': len(tags)}
         else:
             return -1
+
+    def get_pack_tags_bw(self):
+        results = get_pack_tags(self)
+        if results:
+            return [{'name': tag, 'count': count} for tag, count in results['tag']]
+        else:
+            return []
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
@@ -1391,6 +1427,61 @@ class Pack(SocialModel):
                 licenses=licenses,
                 sound_list=sounds_list))
         return attribution
+
+    @property
+    def avg_rating(self):
+        # Return average rating from 0 to 10
+        # TODO: don't compute this realtime, store it in DB
+        ratings = list(SoundRating.objects.filter(sound__pack=self).values_list('rating', flat=True))
+        if ratings:
+            return 1.0*sum(ratings)/len(ratings)
+        else:
+            return 0
+
+    @property
+    def avg_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.avg_rating/2
+
+    @property
+    def num_ratings(self):
+        # TODO: store this as pack field instead of computing it live
+        return SoundRating.objects.filter(sound__pack=self).count()
+
+    def get_total_pack_sounds_length(self):
+        # TODO: don't compute this realtime, store it in DB
+        durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
+        return sum(durations)
+
+    @cached_property
+    def license_summary_name(self):
+        # TODO: store this in DB?
+        license_names = list(Sound.objects.filter(pack=self).values_list('license__name', flat=True))
+        if len(set(license_names)) == 1:
+            # All sounds have same license
+            license_summary = license_names[0]
+        else:
+            license_summary = self.VARIOUS_LICENSES_NAME
+        return license_summary
+
+    @property
+    def license_summary_text(self):
+        # TODO: store this in DB?
+        license_summary_name = self.license_summary_name
+        if license_summary_name != self.VARIOUS_LICENSES_NAME:
+            return License.objects.get(name=license_summary_name).get_short_summary
+        else:
+            return "This pack contains sounds released under various licenses. Please check every individual sound page " \
+                   "(or the <i>readme</i> file upon downloading the pack) to know under which " \
+                   "license each sound is released."
+
+    @property
+    def license_summary_deed_url(self):
+        license_summary_name = self.license_summary_name
+        if license_summary_name != self.VARIOUS_LICENSES_NAME:
+            return License.objects.get(name=license_summary_name).deed_url
+        else:
+            return ""
 
 
 class Flag(models.Model):
@@ -1430,7 +1521,7 @@ class Download(models.Model):
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+        Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
 
@@ -1440,9 +1531,9 @@ def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
         if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+            Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-                num_sound_downloads=F('num_sound_downloads') + 1)
+                num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
 
 
 class PackDownload(models.Model):
@@ -1460,7 +1551,7 @@ class PackDownloadSound(models.Model):
 @receiver(post_delete, sender=PackDownload)
 def update_num_downloads_on_delete_pack(**kwargs):
     download = kwargs['instance']
-    Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
+    Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
     accounts.models.Profile.objects.filter(user_id=download.user_id).update(
         num_pack_downloads=Greatest(F('num_pack_downloads') - 1, 0))
 
@@ -1469,9 +1560,9 @@ def update_num_downloads_on_delete_pack(**kwargs):
 def update_num_downloads_on_insert_pack(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
-        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
+        Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_pack_downloads=F('num_pack_downloads') + 1)
+            num_pack_downloads=Greatest(F('num_pack_downloads') + 1, 0))
 
 
 class RemixGroup(models.Model):

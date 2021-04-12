@@ -186,34 +186,45 @@ class Profile(SocialModel):
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])
 
-    @locations_decorator(cache=False)
-    def locations(self):
-        id_folder = str(self.user_id/1000)
-        if self.has_avatar:
-            s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, self.user_id)
-            m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, self.user_id)
-            l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, self.user_id)
+    @staticmethod
+    def locations_static(user_id, has_avatar):
+        id_folder = str(user_id / 1000)
+        if has_avatar:
+            s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, user_id)
+            m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, user_id)
+            l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, user_id)
+            xl_avatar = settings.AVATARS_URL + "%s/%d_XL.jpg" % (id_folder, user_id)
         else:
             s_avatar = settings.MEDIA_URL + "images/32x32_avatar.png"
             m_avatar = settings.MEDIA_URL + "images/40x40_avatar.png"
             l_avatar = settings.MEDIA_URL + "images/70x70_avatar.png"
+            xl_avatar = settings.MEDIA_URL + "images/100x100_avatar.png"
         return dict(
             avatar=dict(
                 S=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % self.user_id),
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % user_id),
                     url=s_avatar
                 ),
                 M=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % self.user_id),
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % user_id),
                     url=m_avatar
                 ),
                 L=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user_id),
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % user_id),
                     url=l_avatar
+                ),
+                XL=dict(
+                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_XL.jpg" % user_id),
+                    url=xl_avatar
                 )
             ),
-            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id))
+            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(user_id))
         )
+
+
+    @locations_decorator(cache=False)
+    def locations(self):
+        return Profile.locations_static(self.user_id, self.has_avatar)
 
     def email_type_enabled(self, email_type):
         """
@@ -397,8 +408,8 @@ class Profile(SocialModel):
             packs = Pack.objects.filter(user=self.user)
             collector = NestedObjects(using='default')
             collector.collect(sounds)
+            collector.collect(packs)
             ret['deleted'] = collector
-            ret['logic_deleted'] = packs
         if include_other_related_objects:
             collector = NestedObjects(using='default')
             collector.collect([self.user])
@@ -454,13 +465,19 @@ class Profile(SocialModel):
                     sounds_were_also_deleted=remove_sounds,
                     reason=deletion_reason)
 
-            # If UserDeletionRequest object(s) exist for that user, update the status and set deleted_user property
-            UserDeletionRequest.objects.filter(user_id=self.user.id)\
-                .update(status="de", deleted_user=deleted_user_object)
+            # Before deleting the user from db or anonymizing it, get a list of all UserDeletionRequest that will need
+            # to be updated once the user has been deleted (we do that because if the user gets deleted from DB, the
+            # 'user_to' field in UserDeletionRequest will be set to null and the therefore query below would not get
+            # all UserDeletionRequest that we want
+            udr_to_update_ids = \
+                list(UserDeletionRequest.objects.filter(user_to_id=self.user.id).values_list('id', flat=True))
 
             if delete_user_object_from_db:
                 # If user is to be completely deleted from the DB, use delete() method. This will remove all
                 # related objects like sounds, packs, comments, etc...
+                # NOTE: to prevent some possible issues because of the order in which objects are deleted, we first
+                # remove all the sounds and then remove the user object.
+                Sound.objects.filter(user=self.user).delete()
                 self.user.delete()
 
             else:
@@ -490,6 +507,14 @@ class Profile(SocialModel):
                     Pack.objects.filter(user=self.user).update(is_deleted=True)
                 else:
                     Sound.objects.filter(user=self.user).update(is_index_dirty=True)
+
+
+            # If UserDeletionRequest object(s) exist for that user, update the status and set deleted_user property
+            # NOTE: don't use QuerySet.update method because this won't trigger the pre_save/post_save signals
+            for udr in  UserDeletionRequest.objects.filter(id__in=udr_to_update_ids):
+                udr.status = UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED
+                udr.deleted_user = deleted_user_object
+                udr.save()
 
     def has_content(self):
         """
@@ -523,6 +548,31 @@ class Profile(SocialModel):
             last_sound = lasts_sound_geotagged[0]
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
+
+    @property
+    def avg_rating(self):
+        # Returns the average raring from 0 to 10
+        # TODO: don't compute this realtime, store it in DB
+        ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
+        if ratings:
+            return 1.0*sum(ratings)/len(ratings)
+        else:
+            return 0
+
+    @property
+    def avg_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.avg_rating/2
+
+    def get_total_uploaded_sounds_length(self):
+        # TODO: don't compute this realtime, store it in DB
+        durations = list(Sound.objects.filter(user=self.user).values_list('duration', flat=True))
+        return sum(durations)
+
+    @property
+    def num_packs(self):
+        # TODO: store this as an account field instead of computing it live
+        return Pack.objects.filter(user_id=self.user_id).count()
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
@@ -625,7 +675,7 @@ class UserEmailSetting(models.Model):
 
 class OldUsername(models.Model):
     user = models.ForeignKey(User, related_name="old_usernames")
-    username = models.CharField(max_length=255, db_index=True)
+    username = models.CharField(max_length=255, db_index=True, unique=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
@@ -664,7 +714,7 @@ class UserDeletionRequest(models.Model):
     This model is used to store information about the process of deleting Freesound user accounts.
     This was designed to handle the case when a user requests to be deleted via email and we need to track the
     whole process for GDPR compliance. However, it is also used for users who decide to delete their accounts
-    via the website form or for users deleted by Freesound admins. When a user requests to be deleted via email,
+    via the website form and for users deleted by Freesound admins. When a user requests to be deleted via email,
     we should manually create a UserDeletionRequest object using the Freesound admin interface and manage it
     from there. Once we actually call the delete function through the admin or through some other method, the status
     of this object will be automatically changed to 'User has been deleted or anonymized', and a DeletedUser
@@ -674,11 +724,29 @@ class UserDeletionRequest(models.Model):
     We can do that by making sure that all UserDeletionRequest with status 'Deletion action was triggered'
     have the UserDeletionRequest.user field set to null or pointing to a User object with
     User.profile.is_anonymized_user=True.
+
+    Description of most important fields:
+
+    email_from = email through which the deletion request was made (used for classic GDPR case)
+    user_from = user object who requested the deletion of 'user_to' (can be blank if request was done via email and
+        there is no user associated with that email)
+    username_from = username of 'user_from' (stored as string to better keep recprds in case 'user_from' gets deleted)
+    user_to = user object that will be deleted (can be the same as user_from in case of self-deletion)
+    username_to = username of 'user_to' (stored as string to better keep recprds in case 'user_from' gets deleted)
+    deleted_user = DeletedUser object after 'user_to' gets deleted
+
+    NOTE: username_from and username_to are filled in automatically when UserDeletionRequest object is saved.
     """
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='deletion_requests')
+    email_from = models.CharField(max_length=200, help_text="The email from which the user deletion request"
+                                                            "was received.")
+    user_from = models.ForeignKey(
+        User, null=True, on_delete=models.SET_NULL, related_name='deletion_requests_from', blank=True)
+    username_from = models.CharField(max_length=150, null=True, blank=True)
+    user_to = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='deletion_requests_to',
+                                help_text="The user account that should be deleted if this request proceeds. "
+                                          "Note that you can click on the magnifying glass icon and search by email.")
+    username_to = models.CharField(max_length=150, null=True, blank=True)
     deleted_user = models.ForeignKey(DeletedUser, null=True, on_delete=models.SET_NULL)
-    username = models.CharField(max_length=150, null=True, blank=True)
-    email = models.CharField(max_length=200)
     DELETION_REQUEST_STATUS_RECEIVED_REQUEST = 're'
     DELETION_REQUEST_STATUS_WAITING_FOR_USER = 'wa'
     DELETION_REQUEST_STATUS_DELETION_CANCELLED = 'ca'
@@ -720,6 +788,10 @@ def update_status_history(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=UserDeletionRequest)
 def updated_status_history(sender, instance, **kwargs):
-    # Automatically update the username field if user object is set
-    if instance.user is not None and not instance.user.profile.is_anonymized_user:
-        instance.username = instance.user.username
+    # Automatically update the username_to field if user_to is set
+    if instance.user_to is not None and not instance.user_to.profile.is_anonymized_user:
+        instance.username_to = instance.user_to.username
+
+    # Automatically update the username_from field if user_from is set
+    if instance.user_from is not None and not instance.user_from.profile.is_anonymized_user:
+        instance.username_from = instance.user_from.username

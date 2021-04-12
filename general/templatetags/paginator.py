@@ -24,7 +24,8 @@ from django import template
 register = template.Library()
 
 @register.inclusion_tag('templatetags/paginator.html', takes_context=True)
-def show_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results = -1 ):
+def show_paginator(
+        context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
     """
     Adds pagination context variables for use in displaying first, adjacent and
     last page links in addition to those created by the object_list generic
@@ -49,7 +50,8 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
     # although paginator objects are 0-based, we use 1-based paging
     page_numbers = [n for n in range(min_page_num, max_page_num) if n > 0 and n <= paginator.num_pages]
 
-    params = urllib.urlencode([(key, value.encode('utf-8')) for (key, value) in request.GET.items() if key.lower() != u"page"])
+    params = urllib.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
+                               if key.lower() != u"page"])
 
     if params == "":
         url = request.path + u"?page="

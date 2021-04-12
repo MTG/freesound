@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os
 import datetime
-import re
 import logging.config
+import os
+import re
+
 import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -109,6 +110,13 @@ USE_I18N = False
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'api_monitoring': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -228,11 +236,11 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 SUPPORT = ()
 
 IFRAME_PLAYER_SIZE = {
-        'large': [920, 245],
-        'medium': [481, 86],
-        'small': [375, 30],
-        'twitter_card': [440, 132]
-    }
+    'large': [920, 245],
+    'medium': [481, 86],
+    'small': [375, 30],
+    'twitter_card': [440, 132]
+}
 
 FREESOUND_RSS = ''
 
@@ -243,11 +251,13 @@ SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 15
 REMIXES_PER_PAGE = 10
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
+MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 100
+MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN = 20
 SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
+FOLLOW_ITEMS_PER_PAGE = 5  # BW only
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
@@ -275,6 +285,11 @@ BASE_MAX_POSTS_PER_DAY = 5
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
+
+# Avatar background colors (only BW)
+from utils.audioprocessing.processing import interpolate_colors
+from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES
+AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]['wave_colors'][1:], num_colors=10)
 
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3

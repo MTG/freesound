@@ -1,0 +1,65 @@
+{% import '../../atoms/icons.njk' as icons %}
+{% import '../../atoms/stars.njk' as stars %}
+
+{% macro sidebar(privateSpace) %}
+  <div class="bw-sound__sidebar">
+    <div>
+      <ol>
+        <li class="v-spacing-3">{{ icons.icon('download', 'text-grey text-opacity-050') }} <span class="text-21">247</span> <span class="text-grey text-17">downloads</span></li>
+        <li class="v-spacing-3">{{ icons.icon('comments', 'text-grey text-opacity-050') }} <span class="text-21">15</span> <span class="text-grey text-17">comments</span></li>
+      </ol>
+    </div>
+    <div>
+      {{ icons.icon('cc', 'text-grey text-opacity-050') }} <span class="text-20 h-spacing-left-2">Creative Commons 0</span>
+    </div>
+    <div class="text-grey v-spacing-top-1">
+      Curabitur suscipit luctus orci, et eleifend ante sagittis at. Sed sed tellus dapibus, blandit urna eget, tempus orci.
+    </div>
+    {% if privateSpace %} 
+      <button class="v-spacing-top-5 v-spacing-3 btn-secondary col-12">More similar sounds</button> 
+    {% else %}
+      <div class="v-spacing-top-5 v-spacing-5">
+        <p class="text-center text-26 font-weight-bold">Your rating:</p>
+        <div class="center">
+          {{ stars.rating() }}
+        </div>
+      </div>
+    {% endif %}
+    <div class="v-padding-bottom-7">
+      <button class="btn-primary col-12">Download sound</button>
+      <button class="btn-inverse col-12 v-spacing-top-3">Find similar sounds</button>
+    </div>
+    <div class="v-spacing-top-7">
+      <ol class="center">
+        <li><a href=""><div class="cleanIcon">{{ icons.icon('facebook', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('twitter', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('tumblr', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('google-plus', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('embed-stroke', 'text-30') }}</div></a></li>
+      </ol>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro sidebarPack() %}
+  <div class="bw-sound__sidebar v-spacing-top-7">
+    <div>
+      <ol>
+        <li class="v-spacing-3">{{ icons.icon('download', 'text-grey text-opacity-050') }} <span class="text-21">247</span> <span class="text-grey text-17">downloads</span></li>
+        <li class="v-spacing-3">{{ icons.icon('comments', 'text-grey text-opacity-050') }} <span class="text-21">15</span> <span class="text-grey text-17">comments</span></li>
+      </ol>
+    </div>
+    <div class="v-spacing-top-5">
+      <button class="btn-primary col-12">Download pack</button>
+    </div>
+    <div class="v-spacing-top-7">
+      <ol class="center">
+        <li><a href=""><div class="cleanIcon">{{ icons.icon('facebook', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('twitter', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('link', 'text-30 text-grey') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('google-plus', 'text-30') }}</div></a></li>
+        <li class="h-spacing-left-2"><a href=""><div class="cleanIcon">{{ icons.icon('embed-stroke', 'text-30') }}</div></a></li>
+      </ol>
+    </div>
+  </div>
+{% endmacro %}

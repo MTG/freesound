@@ -64,6 +64,34 @@ class UserFlagAdmin(admin.ModelAdmin):
     list_display = ('reporting_user', 'content_type', 'object_id', 'user')
 
 
+class DeletedUserAdmin(admin.ModelAdmin):
+    list_filter = ('reason', )
+    readonly_fields = ('user', 'username', 'email', 'date_joined', 'last_login', 'deletion_date', 'reason')
+    list_display = ('get_object_link', 'get_view_link', 'deletion_date', 'reason')
+    search_fields = ('=username',)
+
+    def get_object_link(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse('admin:accounts_deleteduser_change', args=[obj.id]),
+            'DeletedUser: {0}'.format(obj.username))
+    get_object_link.short_description = 'DeletedUser'
+    get_object_link.allow_tags = True
+    get_object_link.admin_order_field = 'username'
+
+    def get_view_link(self, obj):
+        if obj.user is None:
+            return '-'
+        else:
+            return '<a href="{0}" target="_blank">{1}</a>'.format(
+                reverse('account', args=[obj.user.username]), obj.user.username)
+    get_view_link.short_description = 'View on site'
+    get_view_link.allow_tags = True
+
+    def get_num_sounds(self, obj):
+        return '{0}'.format(obj.profile.num_sounds)
+    get_num_sounds.short_description = '# sounds'
+
+
 class LargeTablePaginator(Paginator):
     """ We use the information on postgres table 'reltuples' to avoid using count(*) for performance. """
     @cached_property
@@ -111,7 +139,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     readonly_fields = ('last_login', 'date_joined')
     search_fields = ('=username', '=email')
     actions = ()
-    list_display = ('username', 'email')
+    list_display = ('username', 'email', 'get_num_sounds', 'get_num_posts', 'date_joined', 'get_view_link')
     list_filter = ()
     ordering = ('id', )
     show_full_result_count = False
@@ -125,10 +153,30 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     paginator = LargeTablePaginator
 
+    def get_queryset(self, request):
+        # Override 'get_queryset' to optimize query by using select_related on appropriate fields
+        qs = super(FreesoundUserAdmin, self).get_queryset(request)
+        qs = qs.select_related('profile')
+        return qs
+
     def has_delete_permission(self, request, obj=None):
         # Disable the "Delete" button in the user detail page
         # We want to disable that button in favour of the custom asynchronous delete change actions
         return False
+
+    def get_view_link(self, obj):
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse('account', args=[obj.username]), obj.username)
+    get_view_link.short_description = 'View on site'
+    get_view_link.allow_tags = True
+
+    def get_num_sounds(self, obj):
+        return '{0}'.format(obj.profile.num_sounds)
+    get_num_sounds.short_description = '# sounds'
+
+    def get_num_posts(self, obj):
+        return '{0}'.format(obj.profile.num_posts)
+    get_num_posts.short_description = '# posts'
 
     def get_actions(self, request):
         # Disable the "delete" action in the list
@@ -144,17 +192,19 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
 
-            # Submit gearman job so user gets deleted asynchronously
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("delete_user",
-                    json.dumps({'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
-                wait_until_complete=False, background=True)
-
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
-            UserDeletionRequest.objects.create(user=request.user,
+            UserDeletionRequest.objects.create(user_from=request.user,
+                                               user_to=obj,
                                                status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
                                                triggered_deletion_action=delete_action,
                                                triggered_deletion_reason=delete_reason)
+
+            # Submit gearman job so user gets deleted asynchronously
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                                 json.dumps(
+                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
+                                 wait_until_complete=False, background=True)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,
@@ -178,18 +228,19 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
 
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user_from=request.user,
+                                               user_to=obj,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
             # Submit gearman job so user gets deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps(
                                      {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
                                  wait_until_complete=False, background=True)
-
-            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
-            UserDeletionRequest.objects.create(user=request.user,
-                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                                               triggered_deletion_action=delete_action,
-                                               triggered_deletion_reason=delete_reason)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,
@@ -203,7 +254,6 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         model_count = {model._meta.verbose_name_plural: len(objs) for
                        model, objs in user_info['deleted'].model_objs.items()}
         user_info['deleted_objects_details']['model_count'] = dict(model_count).items()
-        user_info['deleted_objects_details']['logic_deleted'] = user_info['logic_deleted']
 
         tvars = {'users_to_delete': [], 'type': 'delete_include_sounds'}
         tvars['users_to_delete'].append(user_info)
@@ -217,8 +267,15 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         username = obj.username
         if request.method == "POST":
             delete_action = DELETE_SPAMMER_USER_ACTION_NAME
-            delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
+            delete_reason = DeletedUser.DELETION_REASON_SPAMMER
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user_from=request.user,
+                                               user_to=obj,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
 
             # Submit gearman job so user gets deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
@@ -226,12 +283,6 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                  json.dumps(
                                      {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
                                  wait_until_complete=False, background=True)
-
-            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
-            UserDeletionRequest.objects.create(user=request.user,
-                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                                               triggered_deletion_action=delete_action,
-                                               triggered_deletion_reason=delete_reason)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,
@@ -244,7 +295,6 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         model_count = {model._meta.verbose_name_plural: len(objs) for
                        model, objs in user_info['deleted'].model_objs.items()}
         user_info['deleted_objects_details']['model_count'] = dict(model_count).items()
-        user_info['deleted_objects_details']['logic_deleted'] = user_info['logic_deleted']
 
         tvars = {'users_to_delete': [], 'type': 'delete_spammer'}
         tvars['users_to_delete'].append(user_info)
@@ -261,18 +311,19 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
 
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user_from=request.user,
+                                               user_to=obj,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
             # Submit gearman job so user gets deleted asynchronously
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("delete_user",
                                  json.dumps(
                                      {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
                                  wait_until_complete=False, background=True)
-
-            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
-            UserDeletionRequest.objects.create(user=request.user,
-                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                                               triggered_deletion_action=delete_action,
-                                               triggered_deletion_reason=delete_reason)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,
@@ -285,7 +336,6 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         model_count = {model._meta.verbose_name_plural: len(objs) for
                        model, objs in user_info['deleted'].model_objs.items()}
         user_info['deleted_objects_details']['model_count'] = dict(model_count).items()
-        user_info['deleted_objects_details']['logic_deleted'] = user_info['logic_deleted']
 
         tvars = {'users_to_delete': [], 'type': 'full_delete'}
         tvars['users_to_delete'].append(user_info)
@@ -295,10 +345,23 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     full_delete.label = "Full delete"
     full_delete.short_description = 'Completely delete user from db'
 
+    def view_on_site_action(self, request, obj):
+        return HttpResponseRedirect(reverse('account', args=[obj.username]))
+
+    view_on_site_action.label = "View on site"
+    view_on_site_action.short_description = 'Open user on site'
+
+    def edit_profile_admin(self, request, obj):
+        return HttpResponseRedirect(reverse('admin:accounts_profile_change', args=[obj.profile.id]))
+
+    edit_profile_admin.label = "Edit profile in admin"
+    edit_profile_admin.short_description = 'Edit profile in admin'
+
     # NOTE: in the line below we removed the 'full_delete' option as ideally we should never need to use it. In for
     # some unexpected reason we happen to need it, we can call the .delete() method on a user object using the terminal.
     # If we observe a real need for that, we can re-add the option to the admin.
-    change_actions = ('delete_spammer', 'delete_include_sounds', 'delete_preserve_sounds', )
+    change_actions = ('edit_profile_admin', 'view_on_site_action',
+                      'delete_spammer', 'delete_include_sounds', 'delete_preserve_sounds', )
 
 
 class OldUsernameAdmin(admin.ModelAdmin):
@@ -308,40 +371,53 @@ class OldUsernameAdmin(admin.ModelAdmin):
 
 
 class UserDeletionRequestAdmin(admin.ModelAdmin):
-    search_fields = ('=username', '=email')
-    raw_id_fields = ('user', )
-    list_display = ('email', 'username', 'user_link', 'deleted_user_link', 'status', 'last_updated')
     list_filter = ('status', )
+    search_fields = ('=username_to', '=email')
+    raw_id_fields = ('user_from', 'user_to' )
+    list_display = ('status', 'email_from', 'username_from', 'username_to', 'user_to_link', 'deleted_user_link',
+                    'get_reason', 'last_updated')
     fieldsets = (
-        (None, {'fields': ('email', 'status', 'user', 'username', 'status_history')}),
+        (None, {'fields':
+                    ('status', 'email_from', 'user_to', 'username_to',
+                     'deleted_user', 'status_history', 'last_updated')}),
     )
-    readonly_fields = ('status_history', 'username')
+    readonly_fields = ('status_history', 'user_from', 'username_from', 'username_to', 'last_updated', 'deleted_user')
 
     def get_queryset(self, request):
-        # overrride 'get_queryset' to optimize query by using select_related on 'user' and 'deleted_user'
+        # Override 'get_queryset' to optimize query by using select_related on appropriate fields
         qs = super(UserDeletionRequestAdmin, self).get_queryset(request)
-        qs = qs.select_related('user', 'deleted_user')
+        qs = qs.select_related('user_from', 'deleted_user', 'user_to')
         return qs
-
-    def user_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('admin:auth_user_change', args=[obj.user_id]),
-                                                              obj.user.username)
-    user_link.allow_tags = True
-    user_link.admin_order_field = 'user'
-    user_link.short_description = 'User object'
 
     def deleted_user_link(self, obj):
         if obj.deleted_user is None:
             return '-'
-        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('admin:accounts_deleteduser_change', args=[obj.deleted_user_id]),
-                                                              obj.deleted_user.username)
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse('admin:accounts_deleteduser_change', args=[obj.deleted_user_id]),
+            'DeletedUser: {0}'.format(obj.deleted_user.username))
+
     deleted_user_link.allow_tags = True
     deleted_user_link.admin_order_field = 'deleted_user'
-    deleted_user_link.short_description = 'Deleted user object'
+    deleted_user_link.short_description = 'DeletedUser'
 
+    def user_to_link(self, obj):
+        if obj.user_to is None:
+            return '-'
+        return '<a href="{0}" target="_blank">{1}</a>'.format(
+            reverse('admin:auth_user_change', args=[obj.user_to_id]), obj.user_to.username)
 
-class DeletedUserAdmin(admin.ModelAdmin):
-    readonly_fields = ('user', 'username', 'email', 'date_joined', 'last_login', 'deletion_date', 'reason')
+    user_to_link.allow_tags = True
+    user_to_link.admin_order_field = 'user_to'
+    user_to_link.short_description = 'User to'
+
+    def get_reason(self, obj):
+        if obj.triggered_deletion_reason:
+            return [label for key, label in DeletedUser.DELETION_REASON_CHOICES if key == obj.triggered_deletion_reason][0]
+        else:
+            return '-'
+
+    get_reason.allow_tags = True
+    get_reason.short_description = 'Reason'
 
 
 class EmailBounceAdmin(admin.ModelAdmin):

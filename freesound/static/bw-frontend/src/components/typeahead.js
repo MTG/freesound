@@ -3,11 +3,19 @@ import debounce from 'lodash.debounce'
 /**
  * @param {{ label: string, value: string, id?: number }} suggestion
  * @param {HTMLDivElement} optionsWrapper
+ * @param {HTMLDivElement} input
  */
-export const showSuggestion = (suggestion, optionsWrapper) => {
+export const showSuggestion = (suggestion, optionsWrapper, input) => {
   const suggestionWrapper = document.createElement('div')
   suggestionWrapper.classList.add('input-typeahead-suggestion-wrapper')
   suggestionWrapper.innerHTML = suggestion.label
+  suggestionWrapper.addEventListener('click', evt => {
+    optionsWrapper.classList.add('hidden')
+    input.value = suggestion.value
+    input.blur()
+    input.form.submit()  // Submit the form so query is executed
+  })
+
   optionsWrapper.appendChild(suggestionWrapper)
 }
 
@@ -39,7 +47,7 @@ export const addTypeAheadFeatures = (
     clearSuggestions(optionsWrapper)
     focusedOptionIndex = -1
     suggestions.forEach(suggestion =>
-      showSuggestion(suggestion, optionsWrapper)
+      showSuggestion(suggestion, optionsWrapper, input)
     )
   })
 
@@ -65,7 +73,12 @@ export const addTypeAheadFeatures = (
     optionsWrapper.classList.remove('hidden')
   })
   input.addEventListener('blur', () => {
-    optionsWrapper.classList.add('hidden')
+    // Use a timeout here so if blur is triggered because we clicked one of the suggestions, it has time
+    // to tigger the suggestion's click event before hidden is applied (that would prevent click event from
+    // triggering)
+    setTimeout(() => {
+      optionsWrapper.classList.add('hidden')
+    }, 200);
   })
   input.addEventListener('keydown', evt => {
     const DOWN_ARROW = 40
@@ -84,9 +97,9 @@ export const addTypeAheadFeatures = (
       updateFocusedOption()
     } else if (evt.keyCode === ENTER_KEY && focusedOptionIndex >= 0) {
       evt.preventDefault()
-      const selectedOptionValue = suggestions[focusedOptionIndex].value
-      input.value = selectedOptionValue
+      input.value = suggestions[focusedOptionIndex].value
       input.blur()
+      input.form.submit()  // Submit the form so query is executed
     }
   })
 }

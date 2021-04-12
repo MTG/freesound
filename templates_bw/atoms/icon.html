@@ -1,0 +1,9 @@
+<span class="bw-icon-{{ name }} {{ class_name }}">
+    {% if name == 'half-star' or name == 'facebook'  or name == 'twitter' or name == 'tumblr'  or name == 'google-plus' or name == 'embed-stroke' %}
+        <span class="path1"></span>
+        <span class="path2"></span>
+        {% if name == 'google-plus' %}
+            <span class="path3"></span>
+        {% endif %}
+    {% endif %}
+</span>

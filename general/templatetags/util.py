@@ -50,6 +50,13 @@ def duration(value):
 
 
 @register.filter
+def duration_hours(total_seconds):
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    return '{}:{}'.format(hours, minutes)
+
+
+@register.filter
 def in_list(value,arg):
     return value in arg
 

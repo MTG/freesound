@@ -24,6 +24,14 @@ a {
   }
 }
 
+.bw-link--grey-light {
+  color: $navy-light-grey;
+
+  @include active {
+    color: $black;
+  }
+}
+
 .bw-link--black {
   color: $black;
 
@@ -31,6 +39,10 @@ a {
     @include active {
       color: $red;
     }
+  }
+
+  @include active {
+    color: $black;
   }
 }
 

@@ -270,7 +270,7 @@
         <div id="user_most_used_tags" class="content_box">
             <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
             <p class="user_tagcloud">
-            {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url "tags" tag.name %}">{{tag.name}}</a></span> {% endfor %}
+            {% for tag in tags|add_sizes:"name:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url "tags" tag.name %}">{{tag.name}}</a></span> {% endfor %}
             </p>
         </div><!-- #user_most_used_tags -->
     {% endif %}
@@ -283,14 +283,14 @@
 
             {% if following %}
                 {% if home %}
-                    <h3>Users you are following ({{ following_count}})</h3>
+                    <h3>Users you are following ({{ following.count }})</h3>
                 {% else %}
-                    <h3>Users {{ user.username }} is following ({{ following_count}})</h3>
+                    <h3>Users {{ user.username }} is following ({{ following.count }})</h3>
                 {% endif %}
 
                 <ul>
-                    {% for suser in following %}
-                        <a href="{% url "account" suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                    {% for follow_user_item in following|slice:":21" %}
+                        <a href="{% url "account" follow_user_item.user_to.username %}" title="{{ follow_user_item.user_to.username }}"><img src="{{follow_user_item.user_to.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
                 <p><a href="{% url "user-following-users" user %}">more...</a></p>
@@ -298,14 +298,14 @@
 
             {% if followers %}
                 {% if home %}
-                    <h3>Users that are following you ({{ followers_count}})</h3>
+                    <h3>Users that are following you ({{ followers.count }})</h3>
                 {% else %}
-                    <h3>Users that are following {{ user.username }} ({{ followers_count}})</h3>
+                    <h3>Users that are following {{ user.username }} ({{ followers.count }})</h3>
                 {% endif %}
 
                 <ul>
-                    {% for suser in followers %}
-                        <a href="{% url "account" suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                    {% for follow_user_item in followers|slice:":21" %}
+                        <a href="{% url "account" follow_user_item.user_from.username %}" title="{{follow_user_item.user_from.username}}"><img src="{{follow_user_item.user_from.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
                 <p><a href="{% url "user-followers" user %}">more...</a></p>
@@ -314,15 +314,15 @@
             {% if following_tags %}
                 <div id="following_tags">
                     {% if home %}
-                        <h3>Tags you are following ({{ following_tags_count }})</h3>
+                        <h3>Tags you are following ({{ following_tags.count }})</h3>
                     {% else %}
-                        <h3>Tags {{ user.username }} is following ({{ following_tags_count }})</h3>
+                        <h3>Tags {{ user.username }} is following ({{ following_tags.count }})</h3>
                     {% endif %}
                     <ul>
-                        {% for space_tags, slash_tags, split_tags in following_tags %}
-                            <span class="tag_group" onclick="location.href='{% url "tags" slash_tags %}'">
+                        {% for follow_tag_item in following_tags|slice:":5" %}
+                            <span class="tag_group" onclick="location.href='{% url "tags" follow_tag_item.get_slash_tags %}'">
                             <ul class="tags" id="following_tags">
-                            {% for tag in split_tags %}
+                            {% for tag in follow_tag_item.get_split_tags %}
                                 {% comment %}<li><a href="{% url "tags"tag %}">{{ tag }}</a></li>{% endcomment %}
                                 <li><a>{{ tag }}</a></li>
                                 {% comment %}<li>{{ tag }}</li>{% endcomment %}

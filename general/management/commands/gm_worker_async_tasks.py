@@ -95,7 +95,7 @@ class Command(BaseCommand):
     def task_delete_user(self, gearman_worker, gearman_job):
         data = json.loads(gearman_job.data)
         user = User.objects.get(id=data['user_id'])
-        deletion_reason = User.objects.get(id=data['deletion_reason'])
+        deletion_reason = data['deletion_reason']
         workers_logger.info("Start deleting user (%s)" % json.dumps(
             {'task_name': data['action'], 'user_id': user.id, 'username': user.username,
              'deletion_reason': deletion_reason}))

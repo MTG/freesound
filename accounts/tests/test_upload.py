@@ -213,7 +213,7 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
 
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        expected_redirect_url = reverse('accounts-login') + '?next=%s' % reverse('accounts-bulk-describe',
+        expected_redirect_url = reverse('login') + '?next=%s' % reverse('accounts-bulk-describe',
                                                                                  args=[bulk.id])
         self.assertRedirects(resp, expected_redirect_url)  # If user not logged in, redirect to login page
 

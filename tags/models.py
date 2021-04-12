@@ -33,6 +33,9 @@ class Tag(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_browse_tag_url(self):
+        return reverse('tags', self.name)
+
     class Meta:
         ordering = ("name",)
 

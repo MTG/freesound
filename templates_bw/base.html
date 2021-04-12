@@ -18,7 +18,22 @@
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
+    {% include 'accounts/modal_login.html' %}
+    {% include 'accounts/modal_login_problems.html' %}
+    {% include 'accounts/modal_registration.html' %}
+    {% include 'accounts/modal_registration_feedback.html' %}
+    <div id="genericModalWrapper"></div>
+    {% include 'molecules/toast.html' %}
     <div class="notifications-wrapper"></div>
+    {% if messages %}
+        <div id="django-messages-content" class="display-none">
+            <ul>
+                {% for message in messages %}
+                    <li><span class="h-spacing-1">·</span>{{ message|safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
     <div class="bw-page">
     {% block navbar %}
         {% comment %}This block can be overriden by pages that use a different navbar{% endcomment %}
@@ -28,6 +43,9 @@
     {% endblock %}
     {% include 'molecules/footer.html' %}
     </div>
+    <script>
+        document.cookie = "preferSpectrogram={{spectrogram_preference|yesno}}";
+    </script>
     <script src="{% static 'bw-frontend/dist/src.7ed060e2.js' %}"></script>
     {% block extrabody %}
     {% endblock %}

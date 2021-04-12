@@ -21,15 +21,17 @@
 
 from django import template
 from django.utils.http import urlquote_plus
+
+from utils.frontend_handling import using_beastwhoosh
 from utils.tags import annotate_tags
 
 register = template.Library()
 
 
 @register.inclusion_tag('search/facet.html', takes_context=True)
-def display_facet(context, flt, facet, type):
+def display_facet(context, flt, facet, type, title=""):
     facet = annotate_tags([dict(name=f[0], count=f[1]) for f in facet if f[0] != "0"],
-                          sort=True, small_size=0.7, large_size=2.0)
+                          sort="name", small_size=0.7, large_size=2.0)
 
     # If the filter is grouping_pack and there are elements which do not contain the character "_" means that
     # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack
@@ -42,13 +44,38 @@ def display_facet(context, flt, facet, type):
     for element in facet:
         if flt == "grouping_pack":
             if element['name'].count("_") > 0:
-                # We also modify the dispay name to remove the id
+                # We also modify the display name to remove the id
                 element['display_name'] = element['name'][element['name'].find("_")+1:]
-                element['params'] = '%s %s:"%s"' % (filter_query, flt, urlquote_plus(element['name']))
-                filtered_facet.append(element)
+                element['params'] = u'{0} {1}:"{2}"'.format(filter_query, flt, urlquote_plus(element['name']))
+            else:
+                # If facet element belongs to "grouping pack" filter but does not have the "_" character in it, it
+                # means this corresponds to the "no pack" grouping which we don't want to show as a facet element.
+                continue
         else:
             element['display_name'] = element['name']
-            element['params'] = '%s %s:"%s"' % (filter_query, flt, urlquote_plus(element['name']))
-            filtered_facet.append(element)
-    context.update({"facet": filtered_facet, "type": type, "filter": flt})
+
+        element['params'] = u'{0} {1}:"{2}"'.format(filter_query, flt, urlquote_plus(element['name']))
+        element['id'] = u'{0}--{1}'.format(flt, urlquote_plus(element['name']))
+        element['add_filter_url'] = u'.?g={0}&only_p={1}&q={2}&f={3}'.format(
+            context['grouping'],
+            context['only_sounds_with_pack'],
+            context['search_query'],
+            element['params']
+        )
+        filtered_facet.append(element)
+
+    if using_beastwhoosh(context['request']):
+        # In BW ui, we sort the facets of type "cloud" by their frequency of occurrence and apply an opacity filter
+        if filtered_facet:
+            filtered_facet = sorted(filtered_facet, key=lambda x: x['count'], reverse=True)
+            max_count = max([element['count'] for element in filtered_facet])
+            for element in filtered_facet:
+                element['weight'] = (1.0 * element['count']) / max_count
+
+    context.update({
+        "facet": filtered_facet,
+        "type": type,
+        "filter": flt,
+        "title": title
+    })
     return context

@@ -1,11 +1,11 @@
 {% macro tag(tagName, size=1, classname="") %}
-  <button class="btn-inverse border-grey-light text-center no-border-radius padding-{{size}} no-text-wrap {{classname}} v-spacing-1 no-letter-spacing">
+  <button class="btn-inverse font-weight-normal border-grey-light text-center no-border-radius padding-{{size}} no-text-wrap {{classname}} v-spacing-1 no-letter-spacing opacity-050 tag-container">
     {{ tagName }}
   </button>
 {% endmacro %}
 
-{% macro tags(allTags) %}
+{% macro tags(allTags, size=1, classname="") %}
   {% for tagName in allTags %}
-    {{ tag(tagName) }}
+    {{ tag(tagName, size, classname) }}
   {% endfor %}
 {% endmacro %}

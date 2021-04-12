@@ -1225,64 +1225,65 @@ class DeletedSound(models.Model):
 
 
 def on_delete_sound(sender, instance, **kwargs):
-    if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        ds, create = DeletedSound.objects.get_or_create(
-            sound_id=instance.id,
-            defaults={'data': {}})
 
-        # Copy relevant data to DeletedSound for future research
-        # Note: we do not store information about individual downloads and ratings, we only
-        # store count and average (for ratings). We do not store at all information about bookmarks.
+    ds, create = DeletedSound.objects.get_or_create(
+        sound_id=instance.id,
+        defaults={'data': {}})
+    ds.user = instance.user
 
-        try:
-            data = Sound.objects.filter(pk=instance.pk).values()[0]
-        except IndexError:
-            # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
-            # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
-            # this part of the code. If that happens, return form this function without creating the DeletedSound
-            # object nor doing any of the other steps as this will have been already carried out.
-            return
+    # Copy relevant data to DeletedSound for future research
+    # Note: we do not store information about individual downloads and ratings, we only
+    # store count and average (for ratings). We do not store at all information about bookmarks.
 
-        username = None
-        if instance.user:
-            username = instance.user.username
-        data['username'] = username
+    try:
+        data = Sound.objects.filter(pk=instance.pk).values()[0]
+    except IndexError:
+        # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
+        # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
+        # this part of the code. If that happens, return form this function without creating the DeletedSound
+        # object nor doing any of the other steps as this will have been already carried out.
+        return
 
-        pack = None
-        if instance.pack:
-            pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
-        data['pack'] = pack
+    username = None
+    if instance.user:
+        username = instance.user.username
+    data['username'] = username
 
-        geotag = None
-        if instance.geotag:
-            geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
-        data['geotag'] = geotag
+    pack = None
+    if instance.pack:
+        pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
+    data['pack'] = pack
 
-        license = None
-        if instance.license:
-            license = License.objects.filter(pk=instance.license.pk).values()[0]
-        data['license'] = license
+    geotag = None
+    if instance.geotag:
+        geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
+    data['geotag'] = geotag
 
-        data['comments'] = list(instance.comments.values())
-        data['tags'] = list(instance.tags.values())
-        data['sources'] = list(instance.sources.values('id'))
+    license = None
+    if instance.license:
+        license = License.objects.filter(pk=instance.license.pk).values()[0]
+    data['license'] = license
 
-        # Alter datetime objects in data to avoid serialization problems
-        data['created'] = str(data['created'])
-        data['moderation_date'] = str(data['moderation_date'])
-        data['processing_date'] = str(data['processing_date'])
-        data['date_recorded'] = str(data['date_recorded'])  # This field is not used
-        if instance.pack:
-            data['pack']['created'] = str(data['pack']['created'])
-            data['pack']['last_updated'] = str(data['pack']['last_updated'])
-        for tag in data['tags']:
-            tag['created'] = str(tag['created'])
-        for comment in data['comments']:
-            comment['created'] = str(comment['created'])
-        if instance.geotag:
-            geotag['created'] = str(geotag['created'])
-        ds.data = data
-        ds.save()
+    data['comments'] = list(instance.comments.values())
+    data['tags'] = list(instance.tags.values())
+    data['sources'] = list(instance.sources.values('id'))
+
+    # Alter datetime objects in data to avoid serialization problems
+    data['created'] = str(data['created'])
+    data['moderation_date'] = str(data['moderation_date'])
+    data['processing_date'] = str(data['processing_date'])
+    data['date_recorded'] = str(data['date_recorded'])  # This field is not used
+    if instance.pack:
+        data['pack']['created'] = str(data['pack']['created'])
+        data['pack']['last_updated'] = str(data['pack']['last_updated'])
+    for tag in data['tags']:
+        tag['created'] = str(tag['created'])
+    for comment in data['comments']:
+        comment['created'] = str(comment['created'])
+    if instance.geotag:
+        geotag['created'] = str(geotag['created'])
+    ds.data = data
+    ds.save()
 
     try:
         if instance.geotag:

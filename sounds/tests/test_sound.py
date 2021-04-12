@@ -171,7 +171,7 @@ class ChangeSoundOwnerTestCase(TestCase):
         self.assertEqual(sound.original_path, fake_original_path_template.format(sound_id=sound.id, user_id=userB.id))
 
         # Delete original user and perform further checks
-        userA.delete()  # Completely delete form db (instead of user.profile.delete_user())
+        userA.profile.delete_user(delete_user_object_from_db=True)
         sound = Sound.objects.get(id=target_sound_id)
         self.assertItemsEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
         calls = [mock.call(i) for i in remaining_sound_ids]

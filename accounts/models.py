@@ -476,7 +476,7 @@ class Profile(SocialModel):
                 # If user is to be completely deleted from the DB, use delete() method. This will remove all
                 # related objects like sounds, packs, comments, etc...
                 # NOTE: to prevent some possible issues because of the order in which objects are deleted, we first
-                # remove all the sounds and then remove the user object.
+                # remove all the sounds of the user (and then Django removes the user object).
                 Sound.objects.filter(user=self.user).delete()
                 self.user.delete()
 

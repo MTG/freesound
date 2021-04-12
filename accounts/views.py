@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import cStringIO
+import csv
 import datetime
 import errno
 import json
@@ -25,13 +27,10 @@ import logging
 import os
 import tempfile
 import uuid
-import cStringIO
-import csv
 
 import gearman
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.forms import SetPasswordForm
@@ -48,7 +47,7 @@ from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
@@ -58,13 +57,13 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
+from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
-    BwDeleteUserForm
-from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
+    BwDeleteUserForm, UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
-    BwProblemsLoggingInForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce
+    BwProblemsLoggingInForm, username_taken_by_other_user
+from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
 from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
@@ -74,9 +73,9 @@ from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, Geotagg
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
-from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.images import extract_square
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import copy_avatar_to_mirror_locations, \
@@ -84,10 +83,11 @@ from utils.mirror_files import copy_avatar_to_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
 from utils.onlineusers import get_online_users
 from utils.pagination import paginate
-from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
+web_logger = logging.getLogger('web')
 
 
 @login_required
@@ -227,9 +227,8 @@ def check_username(request):
     if username:
         try:
             username_field.run_validators(username)
-            # If the validator passes, check if the username exists in the database
-            user = get_user_from_username_or_oldusername(username)
-            username_valid = user is None
+            # If the validator passes, check if the username is indeed available
+            username_valid = not username_taken_by_other_user(username)
         except ValidationError:
             username_valid = False
 
@@ -910,6 +909,7 @@ def download_attribution(request):
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
     user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
@@ -925,6 +925,7 @@ def downloaded_sounds(request, username):
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
     user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)
@@ -1222,8 +1223,33 @@ def delete(request):
         else:
             delete_sounds =\
                 form.cleaned_data['delete_sounds'] == 'delete_sounds'
-            request.user.profile.delete_user(remove_sounds=delete_sounds)
-            logout(request)
+            delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
+                else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+            delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(request.user.id, delete_action))
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user_from=request.user,
+                                               user_to=request.user,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
+            # Submit deletion job to gearman so the user is deleted asynchronously
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                                 json.dumps({'user_id': request.user.id, 'action': delete_action,
+                                             'deletion_reason': delete_reason}),
+                                 wait_until_complete=False, background=True)
+
+            # Show a message to the user that the account will be deleted shortly
+            messages.add_message(request, messages.INFO,
+                                 'Your user account will be deleted in a few moments. Note that this process could '
+                                 'take up to an hour for users with many uploaded sounds.')
+
+            # NOTE: we used to do logout here because the user account was deleted synchronously. However now we don't
+            # do this as the user is deleted asynchronously and we want to show the message that the user will be
+            # deleted soon
             return HttpResponseRedirect(reverse("front-page"))
     else:
         form = delete_user_form_class(user_id=request.user.id)

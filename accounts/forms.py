@@ -19,27 +19,35 @@
 #     See AUTHORS file.
 #
 
+import logging
 import time
+
 from django import forms
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import PermissionDenied
+from django.core.validators import RegexValidator
 from django.db.models import Q
-from django.utils.safestring import mark_safe
+from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.template import loader
 from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from multiupload.fields import MultiFileField
-from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType, OldUsername
+
+from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
+from utils.encryption import decrypt, encrypt
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
-from utils.encryption import decrypt, encrypt
-import logging
 
 web_logger = logging.getLogger('web')
 
@@ -145,6 +153,34 @@ class UsernameField(forms.CharField):
             required=required)
 
 
+def username_taken_by_other_user(username):
+    """
+    Check if a given username is already taken and can't be used for newly created users. Only usernames which
+    are not being used by existing User objects, OldUsername objects and DeletedUser objects are considered to be
+    available.
+
+    Args:
+        username (str): username to check
+
+    Returns:
+        bool: True if the username is already taken (not available), False otherwise
+
+    """
+    try:
+        User.objects.get(username__iexact=username)
+    except User.DoesNotExist:
+        try:
+            OldUsername.objects.get(username__iexact=username)
+        except OldUsername.DoesNotExist:
+            try:
+                DeletedUser.objects.get(username__iexact=username)
+            except DeletedUser.DoesNotExist:
+                # Only if no User, OldUsername or DeletedUser objects exist with that username, we consider it not
+                # being taken
+                return False
+    return True
+
+
 class RegistrationForm(forms.Form):
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
     username = UsernameField()
@@ -162,13 +198,8 @@ class RegistrationForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data["username"]
-        try:
-            User.objects.get(username__iexact=username)
-        except User.DoesNotExist:
-            try:
-                OldUsername.objects.get(username__iexact=username)
-            except OldUsername.DoesNotExist:
-                return username
+        if not username_taken_by_other_user(username):
+            return username
         raise forms.ValidationError("You cannot use this username to create an account")
 
     def clean_email2(self):
@@ -336,26 +367,28 @@ class ProfileForm(forms.ModelForm):
     def clean_username(self):
         username = self.cleaned_data["username"]
 
+        # NOTE: we also check for the "username" form field not being disabled because once the user has changed
+        # username the maximum number of times, the "username" field will be marked as disabled at form creation time.
+        # If the field is disabled, then the form's cleaned_data for that field will contain the initial contents
+        # of the field (i.e. the User username) regardless of whatever data form the HTML form is posted in the request.
+        if self.fields["username"].disabled:
+            return username
+
         # If user has accidentally cleared the field, treat it as unchanged
         if not username:
             username = self.request.user.username
 
-        # Check that:
-        #   1) It is not taken by another user
-        #   2) It was not used in the past by another (or the same) user
-        #   3) It has not been changed the maximum number of allowed times
-        # Only if the three conditions are met we allow to change the username
-        try:
-            User.objects.exclude(pk=self.request.user.id).get(username__iexact=username)
-        except User.DoesNotExist:
-            try:
-                OldUsername.objects.get(username__iexact=username)
-            except OldUsername.DoesNotExist:
-                if self.n_times_changed_username >= settings.USERNAME_CHANGE_MAX_TIMES:
-                    raise forms.ValidationError("Your username can't be changed any further. Please contact support "
-                                                "if you still need to change it.")
-                return username
-        raise forms.ValidationError("This username is already taken or has been in used in the past")
+        # If username was not changed, consider it valid
+        if username.lower() == self.request.user.username.lower():
+            return username
+
+        # Check that username is not used by another user. Note that because when the maximum number of username
+        # changes is reached, the "username" field of the ProfileForm is disabled and its contents won't change.
+        # Therefore we will never reach this part of the clean_username function and there's no need to check for
+        # the number of times the username was previously changed
+        if not username_taken_by_other_user(username):
+            return username
+        raise forms.ValidationError("This username is already taken or has been in used in the past by another user")
 
     def clean_about(self):
         about = self.cleaned_data['about']
@@ -450,7 +483,7 @@ DELETE_CHOICES = [('only_user', mark_safe(u'<span>Delete only my user account in
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
-    delete_sounds = forms.ChoiceField(choices=DELETE_CHOICES, widget=forms.RadioSelect())
+    delete_sounds = forms.ChoiceField(label="Do you also want your sounds and packs to be deleted?",  choices=DELETE_CHOICES, widget=forms.RadioSelect())
     password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):

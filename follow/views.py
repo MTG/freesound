@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,27 +18,28 @@
 # Authors:
 #     See AUTHORS file.
 #
+from collections import OrderedDict
+from datetime import datetime, timedelta
+from socket import error as socket_error
+
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
 from django.urls import reverse
 
 from follow import follow_utils
-from follow.models import FollowingUserItem
 from follow.models import FollowingQueryItem
-from django.contrib.auth.models import User
-from datetime import datetime, timedelta
-from collections import OrderedDict
-from socket import error as socket_error
-
+from follow.models import FollowingUserItem
 from utils.frontend_handling import using_beastwhoosh
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def following_users(request, username):
     """List of users that are being followed by user with "username"
     """
@@ -76,6 +76,7 @@ def following_users(request, username):
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def followers(request, username):
     """List of users that are following user with "username"
     """
@@ -112,6 +113,7 @@ def followers(request, username):
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def following_tags(request, username):
     """List of tags that are being followed by user with "username"
     """

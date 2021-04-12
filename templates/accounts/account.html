@@ -95,7 +95,7 @@
 
         <h1>{{user.username}}</h1>
 
-		{% if user.profile and not user.profile.is_deleted_user %}
+		{% if user.profile and not user.profile.is_anonymized_user %}
 
             <div id="account_info_left">
 

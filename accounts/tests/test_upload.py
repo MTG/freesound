@@ -43,7 +43,7 @@ class UserUploadAndDescribeSounds(TestCase):
     def test_handle_uploaded_file_html(self):
         # TODO: test html5 file uploads when we change uploader
         user = User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
 
         # Test successful file upload
         filename = "file.wav"
@@ -64,7 +64,7 @@ class UserUploadAndDescribeSounds(TestCase):
         # Create audio files
         filenames = ['file1.wav', 'file2.wav', 'file3.wav']
         user = User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         create_directories(user_upload_path)
         create_test_files(filenames, user_upload_path)
@@ -110,7 +110,7 @@ class UserUploadAndDescribeSounds(TestCase):
         # Create audio files
         filenames = ['file1.wav', 'file2.wav']
         user = User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         create_directories(user_upload_path)
         create_test_files(filenames, user_upload_path)
@@ -191,7 +191,7 @@ class BulkDescribe(TestCase):
     @mock.patch('gearman.GearmanClient.submit_job')
     def test_upload_csv(self, submit_job):
         user = User.objects.create_user("testuser", password="testpass")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
 
         # Test successful file upload and redirect
         filename = "file.csv"
@@ -217,7 +217,7 @@ class BulkDescribe(TestCase):
                                                                                  args=[bulk.id])
         self.assertRedirects(resp, expected_redirect_url)  # If user not logged in, redirect to login page
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertEqual(resp.status_code, 200)  # After login, page loads normally (200 OK)
 
@@ -228,7 +228,7 @@ class BulkDescribe(TestCase):
 
         with self.settings(BULK_UPLOAD_MIN_SOUNDS=10):
             # Now user is not allowed to load the page as user.profile.can_do_bulk_upload() returns False
-            self.client.login(username='testuser', password='testpass')
+            self.client.force_login(user)
             resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]), follow=True)
             self.assertRedirects(resp, reverse('accounts-home'))
             self.assertIn('Your user does not have permission to use the bulk describe', resp.content)
@@ -238,7 +238,7 @@ class BulkDescribe(TestCase):
         # Test that when BulkUploadProgress has not finished validation we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertIn('The uploaded data file has not yet been validated', resp.content)
 
@@ -248,7 +248,7 @@ class BulkDescribe(TestCase):
         # Test that when BulkUploadProgress has finished validation we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertIn('Validation results of the data file', resp.content)
 
@@ -268,7 +268,7 @@ class BulkDescribe(TestCase):
         # Test that when BulkUploadProgress has started description and processing we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="S", user=user, original_csv_filename="test.csv")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertIn('Your sounds are being described and processed', resp.content)
 
@@ -311,6 +311,6 @@ class BulkDescribe(TestCase):
         # Test that when BulkUploadProgress object is closed we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="C", user=user, original_csv_filename="test.csv")
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertIn('This bulk description process is closed', resp.content)

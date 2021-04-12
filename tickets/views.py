@@ -37,6 +37,7 @@ from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
 from utils.cache import invalidate_template_cache, invalidate_user_template_caches
+from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
 
 
@@ -212,6 +213,7 @@ def _get_new_uploaders_by_ticket():
     users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
     users_dict = {u.id: u for u in users}
     new_sounds_users = []
+
     for t in tickets:
         new_sounds_users.append({"user": users_dict[t['sender']],
                                  "username": users_dict[t['sender']].username,
@@ -606,9 +608,9 @@ def get_pending_sounds(user):
 
 
 @permission_required('tickets.can_moderate')
+@redirect_if_old_username_or_404
 def pending_tickets_per_user(request, username):
-
-    user = get_object_or_404(User, username=username)
+    user = request.parameter_user
     tickets_sounds = get_pending_sounds(user)
     pendings = []
     mods = set()

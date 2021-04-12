@@ -36,6 +36,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import F
+from django.db.models.functions import Greatest
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -1114,7 +1115,7 @@ class Sound(SocialModel):
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
-        delete_sound_from_gaia(self)
+        delete_sound_from_gaia(self.id)
 
     def invalidate_template_caches(self):
         for is_explicit in [True, False]:
@@ -1217,67 +1218,72 @@ class SoundOfTheDay(models.Model):
 
 
 class DeletedSound(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     sound_id = models.IntegerField(default=0, db_index=True)
     data = JSONField()
 
 
 def on_delete_sound(sender, instance, **kwargs):
-    if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        ds, create = DeletedSound.objects.get_or_create(
-            sound_id=instance.id,
-            user=instance.user,
-            defaults={'data': {}})
 
-        # Copy relevant data to DeletedSound for future research
-        # Note: we do not store information about individual downloads and ratings, we only
-        # store count and average (for ratings). We do not store at all information about bookmarks.
+    ds, create = DeletedSound.objects.get_or_create(
+        sound_id=instance.id,
+        defaults={'data': {}})
+    ds.user = instance.user
 
-        try:
-            data = Sound.objects.filter(pk=instance.pk).values()[0]
-        except IndexError:
-            # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
-            # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
-            # this part of the code. If that happens, return form this function without creating the DeletedSound
-            # object nor doing any of the other steps as this will have been already carried out.
-            return
+    # Copy relevant data to DeletedSound for future research
+    # Note: we do not store information about individual downloads and ratings, we only
+    # store count and average (for ratings). We do not store at all information about bookmarks.
 
-        pack = None
-        if instance.pack:
-            pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
-        data['pack'] = pack
+    try:
+        data = Sound.objects.filter(pk=instance.pk).values()[0]
+    except IndexError:
+        # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
+        # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
+        # this part of the code. If that happens, return form this function without creating the DeletedSound
+        # object nor doing any of the other steps as this will have been already carried out.
+        return
 
-        geotag = None
-        if instance.geotag:
-            geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
-        data['geotag'] = geotag
+    username = None
+    if instance.user:
+        username = instance.user.username
+    data['username'] = username
 
-        license = None
-        if instance.license:
-            license = License.objects.filter(pk=instance.license.pk).values()[0]
-        data['license'] = license
+    pack = None
+    if instance.pack:
+        pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
+    data['pack'] = pack
 
-        data['comments'] = list(instance.comments.values())
-        data['tags'] = list(instance.tags.values())
-        data['sources'] = list(instance.sources.values('id'))
+    geotag = None
+    if instance.geotag:
+        geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
+    data['geotag'] = geotag
 
-        # Alter datetime objects in data to avoid serialization problems
-        data['created'] = str(data['created'])
-        data['moderation_date'] = str(data['moderation_date'])
-        data['processing_date'] = str(data['processing_date'])
-        data['date_recorded'] = str(data['date_recorded'])  # This field is not used
-        if instance.pack:
-            data['pack']['created'] = str(data['pack']['created'])
-            data['pack']['last_updated'] = str(data['pack']['last_updated'])
-        for tag in data['tags']:
-            tag['created'] = str(tag['created'])
-        for comment in data['comments']:
-            comment['created'] = str(comment['created'])
-        if instance.geotag:
-            geotag['created'] = str(geotag['created'])
-        ds.data = data
-        ds.save()
+    license = None
+    if instance.license:
+        license = License.objects.filter(pk=instance.license.pk).values()[0]
+    data['license'] = license
+
+    data['comments'] = list(instance.comments.values())
+    data['tags'] = list(instance.tags.values())
+    data['sources'] = list(instance.sources.values('id'))
+
+    # Alter datetime objects in data to avoid serialization problems
+    data['created'] = str(data['created'])
+    data['moderation_date'] = str(data['moderation_date'])
+    data['processing_date'] = str(data['processing_date'])
+    data['date_recorded'] = str(data['date_recorded'])  # This field is not used
+    if instance.pack:
+        data['pack']['created'] = str(data['pack']['created'])
+        data['pack']['last_updated'] = str(data['pack']['last_updated'])
+    for tag in data['tags']:
+        tag['created'] = str(tag['created'])
+    for comment in data['comments']:
+        comment['created'] = str(comment['created'])
+    if instance.geotag:
+        geotag['created'] = str(geotag['created'])
+    ds.data = data
+    ds.save()
 
     try:
         if instance.geotag:
@@ -1290,8 +1296,12 @@ def on_delete_sound(sender, instance, **kwargs):
 
 
 def post_delete_sound(sender, instance, **kwargs):
-    # after deleted sound update num_sound on profile and pack
+    # after deleted sound update num_sounds on profile and pack
     try:
+        # before updating the number of sounds here, we need to refresh the object from the DB because another signal
+        # triggered after a sound is deleted (the post_delete signal on Download object) also needs to modify the
+        # user profile and if we don't refresh here the changes by that other signal will be overwritten when saving
+        instance.user.profile.refresh_from_db()
         instance.user.profile.update_num_sounds()
     except ObjectDoesNotExist:
         # If this is triggered after user.delete() (instead of sound.delete() or user.profile.delete_user()),
@@ -1512,9 +1522,9 @@ class Download(models.Model):
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+        Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_sound_downloads=F('num_sound_downloads') - 1)
+            num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=Download)
@@ -1522,9 +1532,9 @@ def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
         if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+            Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-                num_sound_downloads=F('num_sound_downloads') + 1)
+                num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
 
 
 class PackDownload(models.Model):
@@ -1542,18 +1552,18 @@ class PackDownloadSound(models.Model):
 @receiver(post_delete, sender=PackDownload)
 def update_num_downloads_on_delete_pack(**kwargs):
     download = kwargs['instance']
-    Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
+    Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
     accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-        num_pack_downloads=F('num_pack_downloads') - 1)
+        num_pack_downloads=Greatest(F('num_pack_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=PackDownload)
 def update_num_downloads_on_insert_pack(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
-        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
+        Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_pack_downloads=F('num_pack_downloads') + 1)
+            num_pack_downloads=Greatest(F('num_pack_downloads') + 1, 0))
 
 
 class RemixGroup(models.Model):

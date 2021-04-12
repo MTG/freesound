@@ -28,6 +28,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
+    'admin_reorder.middleware.ModelAdminReorder',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -73,7 +74,49 @@ INSTALLED_APPS = [
     'monitor',
     'django_object_actions',
     'silk',
+    'admin_reorder',
 ]
+
+# Specify custom ordering of models in Django Admin index
+ADMIN_REORDER = (
+
+    {'app': 'accounts', 'models': (
+        'auth.User',
+        'accounts.Profile',
+        'accounts.DeletedUser',
+        'accounts.UserDeletionRequest',
+        'accounts.UserFlag',
+        'accounts.OldUsername',
+        'accounts.EmailBounce',
+        'auth.Groups'
+    )},
+    {'app': 'sounds', 'models': (
+        'sounds.Sound',
+        'sounds.Pack',
+        'sounds.DeletedSound',
+        'sounds.License',
+        {'model': 'sounds.Flag', 'label': 'Sound flags'},
+        'sounds.BulkUploadProgress',
+        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
+    )},
+    {'app': 'apiv2', 'label': 'API', 'models': (
+        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
+        'oauth2_provider.AccessToken',
+        'oauth2_provider.RefreshToken',
+        'oauth2_provider.Grant',
+    )},
+    'forum',
+    {'app': 'donations', 'models': (
+        'donations.Donation',
+        'donations.DonationsEmailSettings',
+        'donations.DonationsModalSettings',
+    )},
+
+
+    'sites',
+
+
+)
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC
@@ -270,6 +313,11 @@ ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
 
 # Maximum number of times changing the username is allowed
 USERNAME_CHANGE_MAX_TIMES = 3
+
+# Number of hours we give to the async delete workers for deleting a user
+# before considering that deletion failed and therefore reporting that there i
+# one user that should have been deleted and was not
+CHECK_ASYNC_DELETED_USERS_HOURS_BACK = 1
 
 # Anti-spam restrictions for posting comments, messages and in forums
 # Time since last post (in seconds) and maximum number of posts per day

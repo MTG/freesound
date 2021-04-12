@@ -154,12 +154,12 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     return returned_data
 
 
-def delete_sound_from_gaia(sound):
-    web_logger.info("Deleting sound from gaia with id %d" % sound.id)
+def delete_sound_from_gaia(sound_id):
+    web_logger.info("Deleting sound from gaia with id %d" % sound_id)
     try:
-        Similarity.delete(sound.id)
+        Similarity.delete(sound_id)
     except Exception as e:
-        web_logger.error("Could not delete sound from gaia with id %d (%s)" % (sound.id, str(e)))
+        web_logger.warn("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
 
 
 def hash_cache_key(key):

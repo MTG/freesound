@@ -17,8 +17,8 @@ def remove_case_variations_of_oldusername_username(apps, schema_editor):
 
     # Iterate through them and leave only one OldUsername object per each username
     for username in usernames:
-        OldUsername.objects.filter(username__iexact=username)[1:].delete()
-
+        OldUsername.objects.filter(
+            id__in=OldUsername.objects.filter(username__iexact=username).values_list('id')[1:]).delete()
 
 
 class Migration(migrations.Migration):

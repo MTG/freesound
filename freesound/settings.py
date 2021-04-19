@@ -525,7 +525,7 @@ WORKER_TIMEOUT = 60 * 60
 
 ESSENTIA_EXECUTABLE = '/usr/local/bin/essentia_streaming_extractor_freesound'
 ESSENTIA_STATS_OUT_FORMAT = 'yaml'
-ESSENTIA_FRAMES_OUT_FORMAT = 'yaml'
+ESSENTIA_FRAMES_OUT_FORMAT = 'json'
 
 # Used to configure output formats in newer FreesoundExtractor versions
 ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))

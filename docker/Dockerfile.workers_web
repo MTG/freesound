@@ -11,7 +11,8 @@ RUN apt-get update \
 
 RUN mkdir /essentia && cd /essentia && git clone https://github.com/MTG/essentia.git
 WORKDIR /essentia/essentia
-# Checkout commit with Freesound Extractor update 0.6
+
+# Checkout commit with Freesound Extractor update 0.6 (some files will be overwritten later)
 RUN git fetch && git checkout 89f52d4efb21e11d3745fa4ce4e0bb0e49cd0e98
 
 WORKDIR /essentia/essentia/packaging
@@ -21,6 +22,26 @@ WORKDIR /essentia/essentia/
 # The line below is a dirty hack to fix a bug currently in Essentia's master branch (and merged to 89f52d4efb21e11d3745fa4ce4e0bb0e49cd0e98)
 # This can be removed once we update the commit to checkout for a version without the bug
 RUN sed -i 's/"HAVE_TENSORFLOW"/0/' src/examples/wscript
+
+# To build a freesound extractor which is compatible with the extractor currently installed in production (0.3) we need to
+# replace some essentia source code files for "streaming_extractor_freesound". This is because we can't build an older version
+# of essentia because it is almost impossible to re-recreate the required build environment with required library versions, etc.
+# Using this port of the old Freesound extractor is a temporary workaround so that we can build worker images that generate
+# analysis files compatible with those from production. Once we update the version of the Freesound extractor used in
+# production we can remove this bit of code here and simply checkout the needed git commit/tag above.
+ADD docker/old_freesound_extractor_port/extractor_version.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundDescriptorsSet.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundLowlevelDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundLowlevelDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundRhythmDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundRhythmDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundSfxDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundSfxDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundTonalDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundTonalDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/freesoundextractor.h /essentia/essentia/src/algorithms/extractor/
+ADD docker/old_freesound_extractor_port/freesoundextractor.cpp /essentia/essentia/src/algorithms/extractor/
+ADD docker/old_freesound_extractor_port/extractor_utils.cpp /essentia/essentia/src/examples/music_extractor/
 
 RUN PKG_CONFIG_PATH=packaging/debian_3rdparty/lib/pkgconfig ./waf configure --with-static-examples --with-example=streaming_extractor_freesound \
     && ./waf && ./waf install

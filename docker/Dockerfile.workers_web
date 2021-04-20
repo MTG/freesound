@@ -66,6 +66,7 @@ RUN wget -q -O - https://deb.nodesource.com/setup_14.x | bash - && apt-get updat
 	&& apt-get install -y --no-install-recommends \
 		sndfile-programs \
 		libsndfile1-dev \
+		libasound2-dev \
 		mplayer \
 		lame \
 		vorbis-tools \

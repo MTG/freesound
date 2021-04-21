@@ -1,4 +1,3 @@
-{% load google_analytics %}
 {% load cache %}
 {% load sound_tickets_count %}
 {% load pending_sounds %}
@@ -44,7 +43,6 @@
         <script src="{{ media_url }}html_player/soundmanager2.js"></script>
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
         <script async defer data-domain="freesound.org" src="https://analytics.freesound.org/js/plausible.js"></script>
-        {% google_analytics %}
         {% endblock %}
 
         {% if load_anniversary_content  %}

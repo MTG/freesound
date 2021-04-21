@@ -471,12 +471,6 @@ TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 # Sentry settings
 SENTRY_DSN = None
 
-
-# -------------------------------------------------------------------------------
-# Google analytics settings
-GOOGLE_ANALYTICS_KEY = ''
-
-
 # -------------------------------------------------------------------------------
 # Zendesk settings
 USE_ZENDESK_FOR_SUPPORT_REQUESTS = False

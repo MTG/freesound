@@ -74,15 +74,23 @@ const createProgressBar = audioElement => {
  * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
  * @param {bool} startWithSpectrum
+ * @param {number} durationDataProperty
  */
-const createProgressStatus = (audioElement, playerSize, startWithSpectrum) => {
-  const { duration } = audioElement
+const createProgressStatus = (audioElement, playerSize, startWithSpectrum, durationDataProperty) => {
+  let { duration } = audioElement
+  if ((duration === Infinity) || (isNaN(duration))){
+    // Duration was not properly retrieved from audioElement. If given from data property, use that one.
+    if (durationDataProperty !== undefined){
+      duration = durationDataProperty
+    }
+  }
   const progressStatusContainer = document.createElement('div')
   progressStatusContainer.className = 'bw-player__progress-container'
   const progressBar = createProgressBar(audioElement)
   const progressStatus = document.createElement('div')
   progressStatus.className = 'bw-player__progress'
   const durationIndicator = document.createElement('span')
+  durationIndicator.className = 'bw-total__sound_duration'
   const progressIndicator = document.createElement('span')
   progressIndicator.classList.add('hidden')
   if (playerSize === 'big') {
@@ -228,7 +236,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
   }
   if (playerSize !== 'minimal') {
     const startWithSpectrum = document.cookie.indexOf('preferSpectrogram=yes') > -1;
-    const {waveform, spectrum, title} = parentNode.dataset
+    const {waveform, spectrum, title, duration} = parentNode.dataset
     const playerImage = document.createElement('img')
     playerImage.className = 'bw-player__img'
     if (startWithSpectrum) {
@@ -240,9 +248,14 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     const progressIndicator = createProgressIndicator(parentNode, audioElement)
     imageContainer.appendChild(playerImage)
     imageContainer.appendChild(progressIndicator)
+    const progressStatus = createProgressStatus(audioElement, playerSize, startWithSpectrum, parseFloat(duration, 10))
+    imageContainer.appendChild(progressStatus)
     audioElement.addEventListener('loadedmetadata', () => {
-      const progressStatus = createProgressStatus(audioElement, playerSize, startWithSpectrum)
-      imageContainer.appendChild(progressStatus)
+      // If "loadedmetadata" event is received and valid duration value has been obtained, replace duration from data
+      // property with "real" duration from loaded file
+      if (audioElement.duration !== Infinity){
+        progressStatus.getElementsByClassName('bw-total__sound_duration')[0].innerHTML = formatAudioDuration(audioElement.duration);
+      }
     })
     imageContainer.addEventListener('click', evt => {
       const clickPosition = evt.layerX

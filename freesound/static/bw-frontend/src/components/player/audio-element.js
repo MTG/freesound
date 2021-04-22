@@ -101,6 +101,7 @@ export const createAudioElement = parentNode => {
   const { mp3, ogg } = parentNode.dataset
   const audioElement = document.createElement('audio')
   audioElement.setAttribute('controls', true)
+  audioElement.setAttribute('preload', 'metadata')
   audioElement.setAttribute('controlslist', 'nodownload')
   const mp3Source = document.createElement('source')
   mp3Source.setAttribute('src', mp3)

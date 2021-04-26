@@ -51,6 +51,8 @@ def _get_url_as_json(url, data=None, timeout=None):
         kwargs['data'] = data
     if timeout is not None:
         kwargs['timeout'] = timeout
+    else:
+        kwargs['timeout'] = settings.SIMILARITY_TIMEOUT
     f = urllib2.urlopen(url.replace(" ", "%20"), **kwargs)
     resp = f.read()
     return json.loads(resp)

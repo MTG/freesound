@@ -460,12 +460,14 @@ DEFAULT_SEARCH_WEIGHTS = {
 SIMILARITY_ADDRESS = 'similarity'
 SIMILARITY_PORT = 8008
 SIMILARITY_INDEXING_SERVER_PORT = 8009
+SIMILARITY_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Tag recommendation client settings
 TAGRECOMMENDATION_ADDRESS = 'tagrecommendation'
 TAGRECOMMENDATION_PORT = 8010
 TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
+TAGRECOMMENDATION_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Sentry settings

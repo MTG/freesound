@@ -187,6 +187,7 @@ class UserDelete(TestCase):
         # Create threads and posts (use mock to avoid trying to index the posts to solr)
         with mock.patch('forum.models.send_posts_to_solr'):
             forum, _ = Forum.objects.get_or_create(name="Test forum")
+            self.forum = forum
             thread = Thread.objects.create(author=user, title="Test thread by {}".format(username), forum=forum)
             for i in range(0, 3):
                 Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
@@ -440,6 +441,10 @@ class UserDelete(TestCase):
         user.profile.num_sounds = user.profile.num_sounds - 1
         user.profile.num_posts = user.profile.num_posts - 1
         user.profile.save()
+
+        # Also set count fields of objects related to those that will be deleted to be out-of-sync
+        self.forum.num_threads = 0
+        self.forum.save()
 
         # Delete user including sounds (which will delete Download objects as well) and also deleting the User object
         # from DB which will trigger deleting associated content like posts, etc.

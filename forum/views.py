@@ -30,6 +30,7 @@ from django.template import loader
 from django.urls import reverse
 from django.db import transaction
 
+from accounts.models import DeletedUser
 from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.mail import send_mail_template
@@ -413,7 +414,9 @@ def moderate_posts(request):
                     post.save()
                 elif action == "Delete User":
                     try:
-                        post.author.delete()
+                        deletion_reason = DeletedUser.DELETION_REASON_SPAMMER
+                        post.author.profile.delete_user(delete_user_object_from_db=True,
+                                                        deletion_reason=deletion_reason)
                         messages.add_message(request, messages.INFO, 'The user has been successfully deleted.')
                     except User.DoesNotExist:
                         messages.add_message(request, messages.INFO, 'The user has already been deleted.')

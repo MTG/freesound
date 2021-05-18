@@ -120,7 +120,7 @@ urlpatterns = [
     url(r'^monitor/', include('monitor.urls')),
     url(r'^follow/', include('follow.urls')),
 
-    url(r'^blog/$', RedirectView.as_view(url='http://blog.freesound.org/'), name="blog"),
+    url(r'^blog/$', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
     url(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views

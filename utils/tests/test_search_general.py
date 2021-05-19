@@ -22,7 +22,8 @@ from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
-from utils.search.search_general import search_prepare_parameters, split_filter_query, search_prepare_query
+from utils.search.search_general import search_prepare_parameters, split_filter_query, \
+    search_prepare_query, remove_facet_filters
 from search.forms import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_WEB
 
 
@@ -109,6 +110,18 @@ class SearchUtilsTest(TestCase):
         self.assertDictEqual(query_params, expected_default_query_params)
         self.assertDictEqual(advanced_search_params_dict, expected_advanced_search_params_dict)
         self.assertDictEqual(extra_vars, expected_extra_vars)
+
+    def test_remove_facet_filters(self):
+        query_filter_str = 'f=is_geotagged:1 tag:"dog"'
+        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        self.assertTrue(has_facet_filter)
+        self.assertEqual(filter_without_facet, 'f=is_geotagged:1')
+
+    def test_remove_facet_filters_no_facet(self):
+        query_filter_str = 'f=duration:[1+TO+10]+is_geotagged:1&s=duration+desc'
+        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        self.assertFalse(has_facet_filter)
+        self.assertEqual(filter_without_facet, query_filter_str)
 
     def test_search_prepare_parameters_non_ascii_query(self):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()

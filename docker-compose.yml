@@ -11,10 +11,9 @@ services:
         image: postgres:12.1
         volumes:
             - pgdata:/var/lib/postgresql/data
+            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         env_file:
             - environment
-        volumes:
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:
             - 5432:5432
         environment:
@@ -40,7 +39,8 @@ services:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
- 
+            - redis
+
     search:
         build:
             context: ./docker/search
@@ -102,9 +102,9 @@ services:
 
     redis:
         image: redis:alpine
-        command: redis-server --port 6380
+        command: redis-server --port 6379
         ports:
-            - 6380:6380
+            - 6379:6379
 
     gearmand:
         image: artefactual/gearmand

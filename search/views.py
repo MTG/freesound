@@ -69,6 +69,7 @@ def search(request):
         'filter_query_split': filter_query_split,
         'search_query': query_params['search_query'],
         'grouping': query_params['grouping'],
+        'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_unformatted': extra_vars['sort_unformatted'],

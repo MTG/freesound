@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os
 import datetime
-import re
 import logging.config
+import os
+import re
+
 import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -27,6 +28,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
+    'admin_reorder.middleware.ModelAdminReorder',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -73,7 +75,49 @@ INSTALLED_APPS = [
     'monitor',
     'django_object_actions',
     'silk',
+    'admin_reorder',
 ]
+
+# Specify custom ordering of models in Django Admin index
+ADMIN_REORDER = (
+
+    {'app': 'accounts', 'models': (
+        'auth.User',
+        'accounts.Profile',
+        'accounts.DeletedUser',
+        'accounts.UserDeletionRequest',
+        'accounts.UserFlag',
+        'accounts.OldUsername',
+        'accounts.EmailBounce',
+        'auth.Groups'
+    )},
+    {'app': 'sounds', 'models': (
+        'sounds.Sound',
+        'sounds.Pack',
+        'sounds.DeletedSound',
+        'sounds.License',
+        {'model': 'sounds.Flag', 'label': 'Sound flags'},
+        'sounds.BulkUploadProgress',
+        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
+    )},
+    {'app': 'apiv2', 'label': 'API', 'models': (
+        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
+        'oauth2_provider.AccessToken',
+        'oauth2_provider.RefreshToken',
+        'oauth2_provider.Grant',
+    )},
+    'forum',
+    {'app': 'donations', 'models': (
+        'donations.Donation',
+        'donations.DonationsEmailSettings',
+        'donations.DonationsModalSettings',
+    )},
+
+
+    'sites',
+
+
+)
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC
@@ -110,6 +154,13 @@ USE_I18N = False
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'api_monitoring': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -229,11 +280,11 @@ STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
 SUPPORT = ()
 
 IFRAME_PLAYER_SIZE = {
-        'large': [920, 245],
-        'medium': [481, 86],
-        'small': [375, 30],
-        'twitter_card': [440, 132]
-    }
+    'large': [920, 245],
+    'medium': [481, 86],
+    'small': [375, 30],
+    'twitter_card': [440, 132]
+}
 
 FREESOUND_RSS = ''
 
@@ -250,6 +301,7 @@ SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
+FOLLOW_ITEMS_PER_PAGE = 5  # BW only
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
@@ -263,6 +315,11 @@ ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
 # Maximum number of times changing the username is allowed
 USERNAME_CHANGE_MAX_TIMES = 3
 
+# Number of hours we give to the async delete workers for deleting a user
+# before considering that deletion failed and therefore reporting that there i
+# one user that should have been deleted and was not
+CHECK_ASYNC_DELETED_USERS_HOURS_BACK = 1
+
 # Anti-spam restrictions for posting comments, messages and in forums
 # Time since last post (in seconds) and maximum number of posts per day
 LAST_FORUM_POST_MINIMUM_TIME = 60 * 5
@@ -272,6 +329,11 @@ BASE_MAX_POSTS_PER_DAY = 5
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
+
+# Avatar background colors (only BW)
+from utils.audioprocessing.processing import interpolate_colors
+from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES
+AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]['wave_colors'][1:], num_colors=10)
 
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
@@ -399,22 +461,18 @@ DEFAULT_SEARCH_WEIGHTS = {
 SIMILARITY_ADDRESS = 'similarity'
 SIMILARITY_PORT = 8008
 SIMILARITY_INDEXING_SERVER_PORT = 8009
+SIMILARITY_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Tag recommendation client settings
 TAGRECOMMENDATION_ADDRESS = 'tagrecommendation'
 TAGRECOMMENDATION_PORT = 8010
 TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
+TAGRECOMMENDATION_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Sentry settings
 SENTRY_DSN = None
-
-
-# -------------------------------------------------------------------------------
-# Google analytics settings
-GOOGLE_ANALYTICS_KEY = ''
-
 
 # -------------------------------------------------------------------------------
 # Zendesk settings
@@ -464,7 +522,7 @@ WORKER_TIMEOUT = 60 * 60
 
 ESSENTIA_EXECUTABLE = '/usr/local/bin/essentia_streaming_extractor_freesound'
 ESSENTIA_STATS_OUT_FORMAT = 'yaml'
-ESSENTIA_FRAMES_OUT_FORMAT = 'yaml'
+ESSENTIA_FRAMES_OUT_FORMAT = 'json'
 
 # Used to configure output formats in newer FreesoundExtractor versions
 ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))

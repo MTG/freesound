@@ -22,6 +22,7 @@
 
 
 import datetime
+import json
 import logging
 import os
 from collections import OrderedDict
@@ -34,7 +35,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
@@ -66,6 +66,7 @@ from similarity.client import Similarity
 from sounds.models import Sound, Pack, License
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
@@ -1419,12 +1420,21 @@ def monitor_api_credential(request, key):
             day_limit = limit_rates[1].split('/')[0]
         except IndexError:
             day_limit = 0
+        n_days = int(request.GET.get('n_days', 30))
+        usage_history = client.get_usage_history(n_days_back=n_days)
         tvars = {
-                'client': client,
-                'limit': day_limit
-                }
-        messages.add_message(request, messages.INFO, "This functionality is still in beta state. The number of requests"
-                                                     " shown here might not be 100% accurate.")
+            'n_days': n_days,
+            'n_days_options': [
+                (30, '1 month'),
+                (93, '3 months'),
+                (182, '6 months'),
+                (365, '1 year')
+            ], 'client': client,
+            'data': json.dumps([(str(date), count) for date, count in usage_history]),
+            'total_in_range': sum([count for _, count in usage_history]),
+            'total_in_range_above_5000': sum([count - 5000 for _, count in usage_history if count > 5000]),
+            'limit': day_limit
+        }
         return render(request, 'api/monitor_api_credential.html', tvars)
     except ApiV2Client.DoesNotExist:
         raise Http404
@@ -1487,8 +1497,14 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render(request, 'api/manage_permissions.html',
-                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False})
+    return render(request, 'accounts/manage_api_permissions.html' if using_beastwhoosh(request)
+                            else 'api/manage_permissions.html', {
+        'user': request.user,
+        'tokens': tokens,
+        'grants': grants,
+        'show_expiration_date': False,
+        'activePage': 'api',  # BW only
+    })
 
 
 @login_required
@@ -1502,6 +1518,7 @@ def revoke_permission(request, client_id):
     for grant in grants:
         grant.delete()
 
+    messages.add_message(request, messages.INFO, "Permission has been successfully revoked")
     return HttpResponseRedirect(reverse("access-tokens"))
 
 

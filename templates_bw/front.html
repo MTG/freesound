@@ -4,6 +4,7 @@
 {% load cache %}
 {% load display_sound %}
 {% load display_pack %}
+{% load display_user %}
 {% load util %}
 {% load bw_templatetags %}
 
@@ -22,7 +23,7 @@
         <form method="get" action="/search/">
             <div class="typeahead-wrapper">
               <div class="input-wrapper">
-                <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" autocomplete="off"{% endif %} />
+                <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" data-query-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"{% endif %} />
               </div>
             </div>
         </form>
@@ -149,17 +150,8 @@
           </div>
           {% if top_donor %}
               <div class="h-spacing-left-3">
-                <div>Top donor this week:</div>
-                <div class="middle">
-                  <div class="avatar h-spacing-2">
-                    <img src="{{ top_donor.profile.locations.avatar.M.url }}" />
-                  </div>
-                  <div>
-                    <a href="{% url 'account' top_donor.username %}">{{ top_donor.username }}</a>
-                    <br />
-                    <div class="text-light-grey">{{ top_donor.profile.num_sounds }} sound{{ top_donor.profile.num_sounds|pluralize }} &middot; {{ top_donor.profile.num_posts }} post{{ top_donor.profile.num_posts|pluralize }}</div>
-                  </div>
-                </div>
+                <div class="v-spacing-1">Top donor this week:</div>
+                {% display_user_top_donor top_donor %}
               </div>
             {% endif %}
         </section>

@@ -72,7 +72,6 @@ window.addEventListener('scroll', checkShouldShowSearchInNavbar)
 
 var search_form_element = document.getElementById('search_form');
 var search_page_navbar_form = document.getElementById('search-page-navbar-form');
-var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
 var advanced_search_options_div = document.getElementById('advanced-search-options');
 var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
 var toggle_advanced_search_options_element = document.getElementById('toggle_advanced_search_options');
@@ -82,6 +81,7 @@ var filter_duration_max_element = document.getElementById('filter_duration_max')
 var filter_is_geotagged_element = document.getElementById('filter_is_geotagged');
 var sort_by_element = document.getElementById('sort-by');
 var grouping_geotagged_element  = document.getElementById('grouping_geotagged');
+var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
 
 function updateToggleAdvancedSearchOptionsText()
 {
@@ -119,6 +119,16 @@ toggle_advanced_search_options_element.addEventListener('click', toggleAdvancedS
 function set_hidden_grouping_value(){
   var element = document.getElementById('grouping_geotagged');
   var hiddenElement = document.getElementById('grouping_geotagged_hidden');
+  if (element.checked) {
+    hiddenElement.value = "1";
+  } else {
+    hiddenElement.value = "";
+  }
+}
+
+function set_hidden_only_sounds_with_pack_value(){
+  var element = document.getElementById('only_sounds_with_pack');
+  var hiddenElement = document.getElementById('only_sounds_with_pack_hidden');
   if (element.checked) {
     hiddenElement.value = "1";
   } else {
@@ -272,6 +282,10 @@ sort_by_element.addEventListener('change', function() {
 
 grouping_geotagged_element.addEventListener('change', function() {
   set_hidden_grouping_value();
+})
+
+only_sounds_with_pack_element.addEventListener('change', function() {
+  set_hidden_only_sounds_with_pack_value();
 })
 
 document.body.addEventListener('keydown',  evt => {

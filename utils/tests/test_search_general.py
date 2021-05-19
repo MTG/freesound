@@ -45,9 +45,10 @@ class SearchUtilsTest(TestCase):
             'sort': [SEARCH_DEFAULT_SORT],
             'sounds_per_page': settings.SOUNDS_PER_PAGE,
             'current_page': 1,
-            'grouping': u'1',
-            'filter_query': u'',
-            'search_query': u'',
+            'grouping': '1',
+            'filter_query': '',
+            'search_query': '',
+            'only_sounds_with_pack': False,
         }
 
         expected_extra_vars = {
@@ -57,6 +58,7 @@ class SearchUtilsTest(TestCase):
             'sort_options': SEARCH_SORT_OPTIONS_WEB,
             'cluster_id': '',
             'filter_query_non_facets': '',
+            'has_facet_filter': False,
         }
 
         self.assertDictEqual(query_params, expected_default_query_params)
@@ -82,6 +84,7 @@ class SearchUtilsTest(TestCase):
             'grouping': u'',
             'filter_query': u'duration:[1 TO 10] is_geotagged:1',
             'search_query': u'dog',
+            'only_sounds_with_pack': False,
         }
 
         expected_extra_vars = {
@@ -91,6 +94,7 @@ class SearchUtilsTest(TestCase):
             'sort_options': SEARCH_SORT_OPTIONS_WEB,
             'cluster_id': '',
             'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
+            'has_facet_filter': False,
         }
 
         expected_advanced_search_params_dict = {

@@ -22,7 +22,7 @@ RUN apt-get update \
 ENV PYTHON_PIP_VERSION 20.0.2
 RUN set -ex; \
 	\
-	wget -O get-pip.py 'https://bootstrap.pypa.io/get-pip.py'; \
+	wget -O get-pip.py 'https://bootstrap.pypa.io/pip/2.7/get-pip.py'; \
 	\
 	python get-pip.py \
 		--disable-pip-version-check \

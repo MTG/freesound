@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load filter_img %}
+{% load paginator %}
+{% load util %}
+{% load ratings %}
+{% load absurl %}
+{% load flag_user %}
+{% load sound_signature%}
+{% load display_sound %}
+{% load display_user %}
+{% load bw_templatetags %}
+
+{% block title %}{{sound.original_filename}} by {{sound.user.username}}{% endblock title %}
+
+{% block head %}
+    {{ block.super }}
+    <meta property="og:title" content="{{ sound.original_filename }} by {{ sound.user.username }}" />
+    <meta property="og:type" content="song" />
+    <meta property="og:audio" content="https://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
+    <meta property="og:audio:artist" content="{{ sound.user.username }}" />
+    <meta property="og:audio:title" content="{{ sound.original_filename }}" />
+    <meta property="og:url" content="{% absurl 'sound' sound.user.username sound.id %}" />
+    <meta property="og:audio:type" content="application/mp3" />
+    <meta property="og:site_name" content="Freesound" />
+    <meta property="fb:admins" content="100002130282170" />
+    <meta name="twitter:card" content="player" />
+    <meta name="twitter:site" content="@freesound_dev" />
+    <meta name="twitter:title" content="{{ sound.original_filename }}" />
+    <meta name="twitter:description" content="{{sound.description}}" />
+    <meta name="twitter:image" content="{{sound.get_large_thumbnail_abs_url}}" />
+    <meta name="twitter:player" content="{% absurl 'embed-simple-sound-iframe' sound.id "full_size" %}" />
+    <meta name="twitter:player:width" content="{{ sizes.twitter_card.0 }}" />
+    <meta name="twitter:player:height" content="{{ sizes.twitter_card.1 }}" />
+    <meta name="twitter:player:stream" content="{{ sound.get_preview_abs_url }}" />
+    <meta name="twitter:player:stream:content_type" content="audio/mp4" />
+{% endblock head %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
+            <div class="row no-gutters">
+                <div class="col-8">
+                    {% display_sound_big_no_info sound %}
+                    <div class="bw-sound-page__information v-spacing-top-5">
+                        <div class="row middle">
+                            <div class="col-10 overflow-hidden">
+                                <h1>{{sound.original_filename}}</h1>
+                            </div>
+                            <div class="col-2 text-right">
+                                <div class="text-grey">
+                                    {% if sound.similarity_state == 'OK' %}
+                                        <a class="no-hover" href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow">
+                                            <button title="Find similar sounds" class="btn-neutral">{% bw_icon 'similar' %}</button>
+                                        </a>
+                                    {% endif %}
+                                    <span class="h-spacing-2"></span>
+                                    <button title="Save as favorite" class="btn-neutral">
+                                        {% bw_icon 'bookmark' %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+
+                        <!-- TODO: check after merge browser page -->
+                        <div class="middle bw-sound-page__user v-spacing-top-5">
+                            <div class="h-spacing-1">
+                                {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username 40 %}
+                            </div>
+                            <div class="h-spacing-left-1">
+                                <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
+                                <p class="text-grey">{{ sound.created|date:"F jS, Y" }}</p>
+                            </div>
+                            {% if sound.user != request.user  %}
+                                <div class="h-spacing-left-3">
+                                    {% if is_following %}
+                                        <a class="no-hover" href="{% url 'unfollow-user' sound.user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
+                                    {% else %}
+                                        <a class="no-hover" href="{% url 'follow-user' sound.user.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="middle v-spacing-top-3">
+                            {% if sound.geotag_id %}
+                                <div>
+                                    <a href="{% url 'sound-geotag' sound.user.username sound.id %}">
+                                        {% bw_icon 'pin' %} {{ sound.geotag.lat|floatformat:3 }}, {{ sound.geotag.lon|floatformat:3 }}
+                                    </a>
+                                    {% comment %}In the span above we should put the textual name of the place where the sound was recorded
+                                    (if there is geotag). For now we'll put cooedinates{% endcomment %}
+                                </div>
+                                {% if sound.pack_id or sound.remix_group.all.count %}
+                                    <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if sound.pack_id %}
+                                <div class="text-grey">
+                                   This sound is part of the pack <a href="{% url 'pack' username sound.pack.id %}">{{ sound.pack.name}}</a>
+                                </div>
+                                {% if sound.remix_group.all.count %}
+                                    <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                                {% endif %}
+                            {% endif %}
+                            {% if sound.remix_group.all.count %}
+                                <div class="text-grey">
+                                   This sound has <a href="{% url 'sound-remixes' sound.user.username sound.id %}">remixes or has been remixed</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="v-spacing-top-1">
+                            <div class="text-17 line-height-30">
+                                {{ sound.description|replace_img|safe|linebreaks }}
+                            </div>
+                            {% if sound.user.profile.sound_signature %}
+                                <div class="v-spacing-top-3 text-grey">
+                                    <p>{{sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+                                </div>
+                            {% endif %}
+                            <div class="v-spacing-top-3">
+                                <a href="{% url 'sound-flag' sound.user.username sound.id %}" title="Flag this sound as ilegal, offensive or other..." class="text-light-grey">
+                                    {% bw_icon 'flag' %} Sound illegal or offensive? Flag it!
+                                </a>
+                            </div>
+                            <div class="v-spacing-top-4">
+                                {% for tag in sound.tags.all %}
+                                    {% bw_tag tag.tag.name 1 "h-spacing-1" %}
+                                {% endfor %}
+                            </div>
+                            <div class="divider-light v-spacing-top-4"></div>
+                            <div class="v-spacing-top-4 row">
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Type</p>
+                                    <p class="no-margins">{{sound.get_type_display}} (.{{sound.type}})</p>
+                                </div>
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Duration</p>
+                                    <p class="no-margins">{{sound.duration|duration}}</p>
+                                </div>
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Fliesize</p>
+                                    <p class="no-margins">{{sound.filesize|filesizeformat}}</p>
+                                </div>
+                                {% if sound.bitdepth %}
+                                    <div class="col-md-2 text-center text-17">
+                                        <p class="text-grey no-margins">Samplerate</p>
+                                        <p class="no-margins">{{sound.samplerate}} Hz</p>
+                                    </div>
+                                    <div class="col-md-2 text-center text-17">
+                                        <p class="text-grey no-margins">Bitdepth</p>
+                                        <p class="no-margins">{{sound.bitdepth}} bit</p>
+                                    </div>
+                                {% else %}
+                                    <div class="col-md-2 text-center text-17">
+                                        <p class="text-grey no-margins">Samplerate</p>
+                                        <p class="no-margins">-</p>
+                                    </div>
+                                    <div class="col-md-2 text-center text-17">
+                                        <p class="text-grey no-margins">Bitrate</p>
+                                        <p class="no-margins">{{sound.bitrate}} kbps</p>
+                                    </div>
+                                {% endif %}
+                                <div class="col-md-2 text-center text-17">
+                                    <p class="text-grey no-margins">Channels</p>
+                                    <p class="no-margins">{{sound.get_channels_display}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="v-spacing-top-6">
+                        <div>
+                            <h6 class="text-26 no-margins ">Comments</h6>
+                            <a name="comments"></a>
+                            {% if request.user.is_authenticated %}
+                                <form method="POST" action=".#comments" class="disable-on-submit">{% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            <textarea name="comment" id="id_comment" class="v-spacing-top-4 bw-comments_textarea" placeholder="Write your comment here..."></textarea>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button id="sound_comment_submit" class="v-spacing-top-5 btn-inverse text-14">Post comment</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% else %}
+                                {% if not request.user.is_authenticated and page.object_list %}
+                                    <div class="v-spacing-top-4">
+                                        Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            <div class="v-spacing-top-5">
+                                {% if page.object_list %}
+                                    {% for comment in page.object_list %}
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between;">
+                                                {% display_user_comment comment.user comment.created %}
+                                                <div class="text-right v-spacing-top-1">
+                                                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                                                    {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
+                                                        <a href="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">Delete comment</a>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks }}</p>
+                                            {% if not forloop.last %}
+                                                <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+
+                                    <div>
+                                        {% bw_paginator paginator page current_page request "comments" %}
+                                    </div>
+
+                                {% else %}
+                                    <div class="text-grey">This sound has not been commented on yet, be the first to comment!</div>
+                                    {% if not request.user.is_authenticated %}
+                                        <div class="v-spacing-top-1">
+                                            Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-3 offset-1">
+                    <div class="bw-sound__sidebar">
+                        {% if display_random_link %}
+                            <a class="no-hover" href="{% url 'sounds-random' %}"><button class="btn-secondary col-12 v-spacing-3">Get another random sound!</button></a>
+                        {% endif %}
+                        <div>
+                            <ol>
+                                <li class="v-spacing-3"> {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'sound-downloaders' sound.user.username sound.id %}" class="bw-link--black no-hover"><span class="text-21">{{ sound.num_downloads }}</span> <span class="text-grey text-17">downloads</span></a></li>
+                                <li class="v-spacing-3">{% bw_icon 'comments' 'text-grey text-opacity-050' %}<a href="#comments" class="bw-link--black no-hover"><span class="text-21">{{ sound.num_comments }}</span> <span class="text-grey text-17">comments</span></a></li>
+                            </ol>
+                        </div>
+                        <div class="v-spacing-top-5">
+                            {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ sound.license.name }}</span>
+                        </div>
+                        <div class="text-grey {% if sound.user == request.user %}v-spacing-4{% endif %} v-spacing-top-1">
+                            {{ sound.license.get_short_summary|safe }} <a href="{{ sound.license.deed_url }}" target="_blank" class="bw-link--black">More...</a>
+                        </div>
+
+                        {% if sound.user != request.user %}
+                            <div class="v-spacing-top-5 v-spacing-5">
+                                <p class="text-center text-26 font-weight-bold">Your rating:</p>
+                                <div class="center text-20">
+                                    {% bw_sound_stars sound True True True %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="v-padding-bottom-5">
+
+                            {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
+                                {% if request.user.is_authenticated %}
+                                    <a class="no-hover" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');" title="Download sound"><button class="btn-primary col-12">Download sound</button></a>
+                                {% else %}
+                                    <a class="no-hover" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" title="Login to download"><button class="btn-primary col-12">Login to download</button></a>
+                                {% endif %}
+                            {% else %}
+                                <div class="v-spacing-top-3 text-center">Download unavailable, sound not yet processed or moderated</div>
+                            {% endif %}
+
+                            {% if perms.sound.can_edit or sound.user == request.user %}
+                                {% if sound.processing_state == 'OK' %}
+                                    <a class="no-hover" href="{% url 'sound-edit' sound.user.username sound.id %}"><button class="btn-secondary col-12 v-spacing-top-3" title="Edit sound">Edit sound</button></a>
+                                {% else %}
+                                    <div class="v-spacing-top-3 text-grey text-center">Sound is processing, cannot edit</div>
+                                {% endif %}
+                            {% endif %}
+
+                            {% comment %}
+                            {% if sound.similarity_state == 'OK' %}
+                                <a class="no-hover" href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow"><button class="btn-inverse col-12 v-spacing-top-3" title="Find similar sounds">Find similar sounds</button></a>
+                            {% endif %}
+                            {% endcomment %}
+
+                            {% if request.user.is_staff or perms.tickets.can_moderate or sound.user == request.user %}
+                                <div class="divider-light v-spacing-top-4 padding-bottom-1"></div>
+                            {% endif %}
+
+                            {% if request.user.is_staff %}
+                                <a class="no-hover" href="{% url 'admin:sounds_sound_change' sound.id %}"><button class="btn-inverse col-12 v-spacing-top-3"  title="Edit sound in the admin">Edit in the admin</button></a>
+                            {% endif %}
+
+                            {% if perms.tickets.can_moderate or sound.user == request.user %}
+                                {% if sound.ticket %}
+                                    <a class="no-hover" href="{% url 'tickets-ticket' sound.ticket.key %}"><button class="btn-inverse col-12 v-spacing-top-3"  title="Go to moderation ticket">Go to moderation ticket</button></a>
+                                {% else %}
+                                    <div class="v-spacing-top-3 text-grey text-center">No moderation ticket for this sound</div>
+                                {% endif %}
+                            {% endif %}
+
+                        </div>
+                        <div>
+                            <ol class="center">
+                                <li><a href="https://www.facebook.com/sharer/sharer.php?u={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'facebook' 'text-30' %}</div></a></li>
+                                <li class="h-spacing-left-2"><a href="https://twitter.com/share?url={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'twitter' 'text-30' %}</div></a></li>
+                                <li class="h-spacing-left-2"><a id="toggle-share-link" class="cursor-pointer"><div class="cleanIcon">{% bw_icon 'share2' 'bw-icon__inside_circle' %}</div></a></li>
+                                <li class="h-spacing-left-2"><a id="toggle-embed-code" class="cursor-pointer"><div class="cleanIcon">{% bw_icon 'embed-stroke' 'text-30' %}</div></a></li>
+                            </ol>
+                        </div>
+
+                        <div id="share-link" class="v-spacing-top-5">
+                             <span class="text-grey">Share url: </span><br><input class="w-100" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />
+                        </div>
+
+                        <div id="embed-links" class="v-spacing-top-5">
+                            <div class="v-spacing-1">
+                                <div>920 x 245</div>
+                                <img id="large-embed-image" src="{{ media_url }}images/widgets/embed_large_scaled_active_color.png" alt="Embed example, large size"/>
+                            </div>
+                            <div class="v-spacing-1">
+                                <div>481 x 86</div>
+                                <img id="medium-embed-image" src="{{ media_url }}images/widgets/embed_medium_scaled_active_color.png" alt="Embed example, medium size"/>
+                            </div>
+                            <div class="v-spacing-1">
+                                <div>375 x 30</div>
+                                <img id="small-embed-image" src="{{ media_url }}images/widgets/embed_small_scaled_active_color.png" alt="Embed example, small size"/>
+                            </div>
+                            <textarea
+                                    id="embed-code"
+                                    data-size-large="{{sizes.large.0}},{{sizes.large.1}}"
+                                    data-size-medium="{{sizes.medium.0}},{{sizes.medium.1}}"
+                                    data-size-small="{{sizes.small.0}},{{sizes.small.1}}"
+                                    data-iframe-url-template="{% absurl 'embed-simple-sound-iframe' sound.id 'SIZE' %}"
+                                    rows="4"
+                                    placeholder="The embed code will appear here"
+                                    class="w-100 v-spacing-top-2">
+                            </textarea>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            {% comment %}
+            <div class="v-spacing-top-7">
+                <h6 class="text-26 no-margins">Similar sounds</h6>
+                <div class="row v-spacing-top-4">
+                    <div class="col-3">
+                        {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut.') }}
+                    </div>
+                    <div class="col-3">
+                        {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
+                    </div>
+                    <div class="col-3">
+                        {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+                    </div>
+                    <div class="col-3">
+                        {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+                    </div>
+                </div>
+                <div class="v-spacing-top-4 center">
+                    <button class="v-spacing-top-1 btn-secondary">More similar sounds</button>
+                </div>
+            </div>
+            {% endcomment %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/sound.39986920.js' %}"></script>
+{% endblock %}

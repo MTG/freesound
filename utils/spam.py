@@ -34,7 +34,7 @@ def is_spam(request, comment):
     if request.user.profile.num_sounds > 0:
         return False
 
-    domain = "http://%s" % Site.objects.get_current().domain
+    domain = "https://%s" % Site.objects.get_current().domain
     api = Akismet(key=settings.AKISMET_KEY, blog_url=domain)
 
     data = {

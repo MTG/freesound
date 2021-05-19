@@ -10,10 +10,12 @@
 
 <div>
   <p><strong>WARNING:</strong> this is PERMANENT!</p>
-    <p>You can not be "undeleted", not even by administrators...</p>
-    
-    <p>If you are entirely sure you want to delete your account, please choose one of the following options
-    (form valid for 10 seconds only):</p>
+    <p>Before deleting your account, please check the <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">
+        deletion FAQ page</a> to make sure you understand the consequences of this action. Note that you can not
+        be "undeleted", not even by administrators...</p>
+
+    <p>If you are entirely sure you want to delete your account, please choose one of the following options and confirm
+        your user password (form valid for 10 seconds only):</p>
     <form method="post">
       {% csrf_token %}
       {{delete_form.as_p}}

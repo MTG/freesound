@@ -2,6 +2,10 @@
   color: $red;
 }
 
+.text-red-important {
+  color: $red!important;
+}
+
 .text-grey {
   color: $navy-grey;
 }
@@ -14,12 +18,28 @@
   color: $black;
 }
 
+.text-white {
+  color: $white;
+}
+
+.text-yellow-rating {
+  color: $yellow-rating;
+}
+
 .text-center {
   text-align: center;
 }
 
+.text-left {
+  text-align: left;
+}
+
 .text-right {
   text-align: right;
+}
+
+.text-opacity-050 {
+  opacity: 0.5;
 }
 
 .caps {
@@ -28,6 +48,10 @@
 
 .font-weight-normal {
   font-weight: normal;
+}
+
+.font-weight-semi-bold {
+  font-weight: 600;
 }
 
 .font-weight-bold {
@@ -46,4 +70,16 @@
 
 .no-letter-spacing {
   letter-spacing: 0;
+}
+
+@for $i from 14 through 30 {
+  .text-#{$i} {
+    font-size: #{$i}px;
+  }
+}
+
+@for $i from 14 through 30 {
+  .line-height-#{$i} {
+    line-height: #{$i}px;
+  }
 }

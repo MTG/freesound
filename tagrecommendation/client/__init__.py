@@ -29,7 +29,7 @@ _URL_ADD_TO_INDEX             = 'add_to_index/'
 
 
 def _get_url_as_json(url):
-    f = urllib2.urlopen(url.replace(" ","%20"))
+    f = urllib2.urlopen(url.replace(" ","%20"), timeout=settings.TAGRECOMMENDATION_TIMEOUT)
     resp = f.read()
     return json.loads(resp)
 

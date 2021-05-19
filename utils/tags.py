@@ -33,9 +33,20 @@ def annotate(dictionary, **kwargs):
     return x
 
 
-def annotate_tags(tags, sort=True, small_size=0.7, large_size=1.8):
+def annotate_tags(tags, sort=None, small_size=0.7, large_size=1.8):
     """
-    if tags are given as:
+    Process a list of tags with counts and annotate it with computed size. Size will be proportional to count.
+
+    Args:
+        tags (List[dict]): list of dictionaries with the tag "name" and "count" (see example below)
+        sort (str or None): whether to sort the annotated list by "name", "count" or None
+        small_size (float): smallest annotated size
+        large_size (float): highest annotated range
+
+    Returns:
+        List[dict]: list of dictionaries with the tag "name", "count" and "size"
+
+    For example, if tags are given as:
     [ {"name": "tag1", "count": 1}, {"name": "tag2", "count": 200}, {"name": "tag3", "count": 200}]
     after this function the list will look like this:
     [ {"name": "tag1", "count": 1, "size": 0.7}, {"name": "tag2", "count": 200, "size": 1.8}, {"name": "tag3", "count": 200, "size": 1.8}]
@@ -43,8 +54,11 @@ def annotate_tags(tags, sort=True, small_size=0.7, large_size=1.8):
     unique_counts = sorted(set(tag["count"] for tag in tags))
     lookup = dict(zip(unique_counts, size_generator(small_size, large_size, len(unique_counts))))
     tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
-    if sort:
-        tags.sort(cmp=lambda x, y: cmp(x["name"].lower(), y["name"].lower()))
+    if sort is not None:
+        if sort == "name":
+            tags.sort(cmp=lambda x, y: cmp(x["name"].lower(), y["name"].lower()))
+        elif sort == "count":
+            tags.sort(cmp=lambda x, y: cmp(x["count"], y["count"]), reverse=True)
     return tags
 
 

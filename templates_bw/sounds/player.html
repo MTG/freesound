@@ -1,11 +1,12 @@
 <div
     class="bw-player"
-    data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' %}small{% elif player_size == 'big_no_info' %}big{% endif %}"
-    data-bookmark="{% if player_size == 'middle' %}false{% else %}true{% endif %}"
+    data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' %}small{% elif player_size == 'big_no_info' %}big{% elif player_size == 'minimal' %}minimal{% endif %}"
+    data-bookmark="{% if player_size == 'small' %}true{% else %}false{% endif %}"
     data-mp3="{{ sound.locations.preview.LQ.mp3.url }}"
     data-ogg="{{ sound.locations.preview.LQ.ogg.url }}"
-    data-waveform="{{ sound.locations.display.wave_bw.M.url }}"
-    data-spectrum="{{ sound.locations.display.spectral_bw.M.url }}"
+    data-waveform="{% if player_size != 'big_no_info' %}{{ sound.locations.display.wave_bw.M.url }}{% else %}{{ sound.locations.display.wave_bw.L.url }}{% endif %}"
+    data-spectrum="{% if player_size != 'big_no_info' %}{{ sound.locations.display.spectral_bw.M.url }}{% else %}{{ sound.locations.display.spectral_bw.L.url }}{% endif %}"
     data-title="{{ sound.original_filename }}"
+    data-duration="{{ sound.duration }}"
     data-favorite="false">
 </div>

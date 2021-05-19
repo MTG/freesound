@@ -24,6 +24,7 @@ freesound.komodoproject
 .idea/
 clustering/clustering_settings.py
 .env
+see_last_email
 
 # BW fornt end
 .cache

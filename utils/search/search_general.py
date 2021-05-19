@@ -161,12 +161,17 @@ def search_prepare_parameters(request):
     except ValueError:
         current_page = 1
     sort_unformatted = request.GET.get("s", None)
-    grouping = request.GET.get("g", "1")  # Group by default
-
+    
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is through AJAX (for sources remix editing), do not collapse
+    grouping = request.GET.get("g", "1")  # Group by default
     if "pack" in filter_query or request.GET.get("ajax", "") == "1":
-        grouping = ""
+        grouping = False
+
+    # If the query is filtered by pack, do not add the "only sounds with pack" filter (makes no sense)
+    only_sounds_with_pack = request.GET.get("only_p", "0") == "1"  # By default, do not limit to sounds with pack
+    if "pack" in filter_query:
+        only_sounds_with_pack = False
 
     # Set default values
     id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
@@ -239,6 +244,7 @@ def search_prepare_parameters(request):
         'pack_tokenized_weight': pack_tokenized_weight,
         'original_filename_weight': original_filename_weight,
         'grouping': grouping,
+        'only_sounds_with_pack': only_sounds_with_pack,
     }
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
@@ -276,6 +282,7 @@ def search_prepare_query(search_query,
                          include_facets=True,
                          grouping_pack_limit=1,
                          offset=None,
+                         only_sounds_with_pack=False,
                          in_ids=[]):
     """Create the Solr query object given the query parameters.
     
@@ -295,6 +302,7 @@ def search_prepare_query(search_query,
         include_facets (bool): include facets or no.
         grouping_pack_limit (int): number of sounds showed for each pack.
         offset (int): a numerical offset.
+        only_sounds_with_pack (bool): include only sound from pack or no.
         in_ids (list): list of sound ids for cluster filter facet.
 
     Returns: (SolrQuery): the solr query object corresponding to the user submitted query.
@@ -324,6 +332,8 @@ def search_prepare_query(search_query,
 
     # Process filter
     filter_query = search_process_filter(filter_query)
+    if only_sounds_with_pack and not 'pack:' in filter_query:
+        filter_query += ' pack:*'  # Add a filter so that only sounds with packs are returned
 
     # Process filter for clustering.
     # When applying clustering facet, a in_ids argument is passed. We check if fliters exsit and in this case 

@@ -5,6 +5,7 @@
 {% load search %}
 {% load bw_templatetags %}
 {% load display_sound %}
+{% load display_pack %}
 
 {% block title %}Search{% endblock %}
 
@@ -36,7 +37,11 @@
                     <div>
                         <div class="divider-light"></div>
                         <div class="padding-3 v-padding-2 between font-weight-bold">
-                            <div class="col-4">{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sounds</div>
+                            {% if not only_sounds_with_pack %}
+                                <div class="col-4">{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}</div>
+                            {% else %}
+                                <div class="col-4">{{ paginator.count }} pack{{ paginator.count|pluralize }}</div>
+                            {% endif %}
                             {% comment %}
                                 <div class="bw_search-tab">Sounds</div>
                             {% endcomment %}
@@ -59,64 +64,72 @@
                             </div>
                         </div>
                         <div class="divider-light"></div>
-                        <div id="advanced-search-options" {% if not advanced == "1" %}style="display:none"{% endif %}>
+                        <div id="advanced-search-options" class="{% if not advanced == "1" %}display-none{% endif %}">
                             <div class="v-padding-2 between">
                                 <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" %}1{% else %}0{% endif %}" />
 
-                                <div class="col-4 bw-search__advanced-search-filter-section">
+                                <div class="col-5 bw-search__advanced-search-filter-section">
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Search in</span>
                                     </div>
-                                    <ul class="bw-search__filter-value-list">
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" on name="a_tag" {% if a_tag %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Tags</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_filename" {% if a_filename %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Sound name</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_description" {% if a_description %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Description</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_packname" {% if a_packname %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Pack name</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_soundid" {% if a_soundid %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Sound ID</div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
-                                                    <input type="checkbox" class="bw-checkbox" name="a_username" {% if a_username %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name">Username</div>
-                                            </label>
-                                        </li>
-                                    </ul>
+                                    <div class="row no-gutters">
+                                        <div class="col-5">
+                                            <ul class="bw-search__filter-value-list">
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" on name="a_tag" {% if a_tag %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Tags</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_filename" {% if a_filename %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Sound name</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_description" {% if a_description %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Description</div>
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-5">
+                                            <ul class="bw-search__filter-value-list">
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_packname" {% if a_packname %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Pack name</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_soundid" {% if a_soundid %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Sound ID</div>
+                                                    </label>
+                                                </li>
+                                                <li class="bw-search__filter-value v-padding-1">
+                                                    <label class="between w-100">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input type="checkbox" class="bw-checkbox" name="a_username" {% if a_username %}checked{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">Username</div>
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="col-4 bw-search__advanced-search-filter-section">
@@ -128,7 +141,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-4 bw-search__advanced-search-filter-section">
+                                <div class="col-3 bw-search__advanced-search-filter-section">
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Other</span>
                                     </div>
@@ -150,6 +163,15 @@
                                                 <div class="bw-search__filter-name">Group sounds by pack</div>
                                             </label>
                                         </li>
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input id="only_sounds_with_pack" type="checkbox" class="bw-checkbox" {% if only_sounds_with_pack == "1" %}checked{% endif %}/>
+                                                    <input id="only_sounds_with_pack_hidden" type="hidden" name="only_p" {% ifequal only_sounds_with_pack "1" %}value="1"{% else %}value=""{% endifequal %} />
+                                                </div>
+                                                <div class="bw-search__filter-name">Display results as packs</div>
+                                            </label>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -163,7 +185,7 @@
                 {% if paginator.count > 0 %}
                     <aside class="col-sm-12 col-md-3">
                         {% if facets.license and facets.license|length > 1 %}
-                            {% display_facet "license" facets.license "list" "Licesnes" %}
+                            {% display_facet "license" facets.license "list" "Licenses" %}
                         {% endif %}
 
                         {% if facets.type and facets.type|length > 1 %}
@@ -190,8 +212,10 @@
                             {% display_facet "channels" facets.channels "list" "Channels" %}
                         {% endif %}
 
-                        {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
-                            {% display_facet "grouping_pack" facets.grouping_pack "list" "Packs"%}
+                        {% if not only_sounds_with_pack %}
+                            {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
+                                {% display_facet "grouping_pack" facets.grouping_pack "list" "Packs"%}
+                            {% endif %}
                         {% endif %}
 
                         {% if facets.username and facets.username|length > 1 %}
@@ -212,10 +236,17 @@
                         <div class="v-spacing-6">
                             {% for result in docs %}
                                 <div class="bw-search__result">
-                                    {% display_sound_middle result.sound %}
-                                    {% if result.more_from_pack %}
+                                    {% if not only_sounds_with_pack %}
+                                        {% display_sound_middle result.sound %}
+                                        {% if result.more_from_pack %}
+                                            <p class="text-grey text-right v-spacing-top-negative-2">
+                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.more_from_pack}} more result{{ result.more_from_pack|pluralize }} from the same pack</a> {{ result.pack_name|truncate_string:35 }}
+                                            </p>
+                                        {% endif %}
+                                    {% else %}
+                                        {% display_pack_big result.pack_id %}
                                         <p class="text-grey text-right v-spacing-top-negative-2">
-                                            {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }} from the same pack</a> "{{ result.pack_name|truncate_string:35 }}"
+                                            {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.more_from_pack|add:1}} result{{ result.more_from_pack|add:1|pluralize }} from this pack</a>
                                         </p>
                                     {% endif %}
                                     {% if not forloop.last %}
@@ -225,7 +256,7 @@
                             {% endfor %}
                         </div>
 
-                        <div class="">
+                        <div class="v-spacing-6">
                             {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
                         </div>
                     </main>

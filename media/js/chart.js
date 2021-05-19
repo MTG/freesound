@@ -20,7 +20,7 @@ function displayCharts(selectClass, data, options, exclude){
   var concat = [].concat.apply([], data);
   
   x.domain(d3.extent(concat, function(d) { return new Date(d[options.attrX]); }));
-  y.domain([0, d3.max(concat, function(d) { return parseInt(d[options.attrY])})]);
+  y.domain([0, 1.2*d3.max(concat, function(d) { return parseInt(d[options.attrY])})]);
   
   g.append("g")
       .attr("transform", "translate(0," + height + ")")

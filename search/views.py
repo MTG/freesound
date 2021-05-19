@@ -34,6 +34,8 @@ from utils.frontend_handling import render
 from utils.logging_filters import get_client_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
+from utils.search.wrapper import SearchEngine
+
 
 search_logger = logging.getLogger("search")
 
@@ -147,8 +149,13 @@ def perform_solr_query(q, current_page):
     This util function performs the query to Solr and returns needed parameters to continue with the view.
     The main reason to have this util function is to facilitate mocking in unit tests for this view.
     """
-    solr = Solr(settings.SOLR_URL)
-    results = SolrResponseInterpreter(solr.select(unicode(q)))
+    # solr = Solr(settings.SOLR_URL)
+    # results = SolrResponseInterpreter(solr.select(unicode(q)))
+    search_engine = SearchEngine(settings.SOLR_URL)
+    results = search_engine.search(q)
+    # pysolr
+    # r = solr.select(q.as_dict())
+    # results = SolrResponseInterpreter(r)
     paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
     page = paginator.page(current_page)
     return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs

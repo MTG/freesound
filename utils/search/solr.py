@@ -27,6 +27,12 @@ import itertools, re, urllib
 import httplib, urlparse
 import cjson
 from socket import error
+import json
+import types
+
+import pysolr
+
+
 class Multidict(dict):
     """A dictionary that represents a query string. If values in the dics are tuples, they are expanded.
     None values are skipped and all values are utf-encoded. We need this because in solr, we can have multiple
@@ -272,6 +278,14 @@ class SolrQuery(object):
     def __unicode__(self):
         return urllib.urlencode(Multidict(self.params))
 
+    # pysolr
+    # def as_dict(self):
+    #     params = {k: v for k, v in self.params.iteritems() if v is not None}
+    #     for k, v in params.iteritems():
+    #         if type(v) == types.BooleanType:
+    #             params[k] = json.dumps(v)
+    #     return params
+
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field
 
@@ -397,6 +411,9 @@ class Solr(object):
 
         self.persistent = persistent
 
+        # pysolr
+        # self.pysolr = pysolr.Solr(url)
+
         if self.persistent:
             self.conn = httplib.HTTPConnection(self.host, self.port)
 
@@ -434,6 +451,10 @@ class Solr(object):
         else:
             return self.decoder.decode(self._request(query_string=query_string))
 
+    # pysolr 
+    # def select(self, query_string, raw=False):
+    #     return self.pysolr.search(**query_string)
+
     def add(self, docs):
         encoded_docs = self.encoder.encode(docs)
         try:
@@ -468,6 +489,8 @@ class Solr(object):
 
 class SolrResponseInterpreter(object):
     def __init__(self, response):
+        # pysolr
+        # response = response.raw_response
         if "grouped" in response:
             if "thread_title_grouped" in response["grouped"].keys():
                 self.docs = response["grouped"]["thread_title_grouped"]["groups"]

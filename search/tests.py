@@ -18,10 +18,10 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from sounds.models import Sound
-from search.views import search_process_filter
+from utils.search.search_general import search_process_filter
 from utils.search.solr import SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from utils.test_helpers import create_user_and_sounds
 import mock

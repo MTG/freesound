@@ -151,13 +151,27 @@ USE_TZ = False
 # to load the internationalization machinery.
 USE_I18N = False
 
+# Redis and caches
+REDIS_HOST = 'redis'
+REDIS_PORT = 6379
+API_MONITORING_REDIS_STORE_ID = 0
+CACHE_REDIS_STORE_ID = 1
+AUDIO_FEATURES_REDIS_STORE_ID = 2
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
     'api_monitoring': {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/0",
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, API_MONITORING_REDIS_STORE_ID),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    'clustering': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CACHE_REDIS_STORE_ID),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -530,6 +544,26 @@ ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file
 # Files above this filesize after converting to 16bit mono PCM won't be analyzed (in bytes, ~5MB per minute).
 MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 
+# -------------------------------------------------------------------------------
+# Search results clustering
+
+# Celery configuration
+CELERY_BROKER_URL = 'redis://{}:{}'.format(REDIS_HOST, REDIS_PORT)
+CELERY_RESULT_BACKEND = 'redis://{}:{}'.format(REDIS_HOST, REDIS_PORT)
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Environment variables
+# '1' indicates that a process is running as a celery worker.
+# We get it from environment variable to avoid the need of a specific settings file for celery workers.
+# We enable the imports of clustering dependencies only in celery workers.
+IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
+
+# Determines whether to use or not the clustering feature.
+# Set to False by default (to be overwritten in local_settings.py)
+# When activated, Enables to do js calls & html clustering facets rendering
+ENABLE_SEARCH_RESULTS_CLUSTERING = False
 
 # -------------------------------------------------------------------------------
 # API settings
@@ -667,18 +701,6 @@ TEMPLATES = [
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
-
-
-# Search Result Clustering Environment variables
-# '1' indicates that a process is running as a celery worker.
-# We get it from environment variable to avoid the need of a specific settings file for celery workers.
-# We enable the imports of clustering dependencies only in celery workers.
-IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
-
-# Determines whether to use or not the clustering feature.
-# Set to False by default (to be overwritten in local_settings.py)
-# When activated, Enables to do js calls & html clustering facets rendering
-ENABLE_SEARCH_RESULTS_CLUSTERING = False
 
 
 # -------------------------------------------------------------------------------

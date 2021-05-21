@@ -1,14 +1,33 @@
-import copy
-import traceback, logging
-from django.conf import settings
-from django.core.cache import cache
+#
+# Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
+#
+# Freesound is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# Freesound is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#     See AUTHORS file.
+#
+
+from django.core.cache import caches
+
+from clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
+from tasks import cluster_sounds
 from utils.encryption import create_hash
 from utils.search.search_general import search_prepare_query, perform_solr_query, \
     search_prepare_parameters
-
-from tasks import cluster_sounds
-from clustering_settings import MAX_RESULTS_FOR_CLUSTERING, CLUSTERING_CACHE_TIME, DEFAULT_FEATURES
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
+
+cache_clustering = caches["clustering"]
 
 
 def get_sound_ids_from_solr_query(query_params):
@@ -58,17 +77,15 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     # done on the non faceted filtered results. Without that, people directly requesting a facet filtered
     # page would have a clustering performed on filtered results.
     query_params['filter_query'] = extra_vars['filter_query_non_facets']
-
     cache_key = 'cluster-results-{search_query}-{filter_query}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
                 '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params) \
                 .replace(' ', '')
 
     cache_key += '-{}'.format(features)
-
     cache_key_hashed = hash_cache_key(cache_key)
 
     # check if result is in cache
-    result = cache.get(cache_key_hashed)
+    result = cache_clustering.get(cache_key_hashed)
 
     if result and result not in (CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED):
         result.update({'finished': True, 'error': False})

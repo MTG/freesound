@@ -1,5 +1,25 @@
+#
+# Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
+#
+# Freesound is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# Freesound is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#     See AUTHORS file.
+#
+
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
 from celery.decorators import task
 from celery import Task
 import logging
@@ -9,6 +29,8 @@ from clustering_settings import CLUSTERING_CACHE_TIME, CLUSTERING_PENDING_CACHE_
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 logger = logging.getLogger('clustering')
+
+cache_clustering = caches["clustering"]
 
 
 class ClusteringTask(Task):
@@ -32,16 +54,16 @@ def cluster_sounds(cache_key_hashed, sound_ids, features):
         features (str): name of the features used for clustering the sounds (defined in the clustering settings file).
     """
     # store pending state in cache
-    cache.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_PENDING_CACHE_TIME)
+    cache_clustering.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_PENDING_CACHE_TIME)
 
     try:
         # perform clustering
         result = cluster_sounds.engine.cluster_points(cache_key_hashed, features, sound_ids)
 
         # store result in cache
-        cache.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
+        cache_clustering.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
 
     except Exception as e:  
         # delete pending state if exception raised during clustering
-        cache.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_FAILED, CLUSTERING_PENDING_CACHE_TIME)
+        cache_clustering.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_FAILED, CLUSTERING_PENDING_CACHE_TIME)
         logger.error("Exception raised while clustering sounds", exc_info=True)

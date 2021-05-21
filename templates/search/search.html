@@ -7,13 +7,13 @@
 {% load static %}
 
 {% if clustering_on %}
-{% block extra_headers %}
-    <link rel="stylesheet" type="text/css" href="{{media_url}}css/graph-clustering.css"/>
-    <script src="//unpkg.com/force-graph"></script>
-    <script src="//unpkg.com/d3-quadtree"></script>
-    <script src="//unpkg.com/d3-force"></script>
-    <script src="{{media_url}}js/d3-graph-clustering.js" type="text/javascript"></script>
-{% endblock %}
+    {% block extra_headers %}
+        <link rel="stylesheet" type="text/css" href="{{media_url}}css/graph-clustering.css"/>
+        <script src="//unpkg.com/force-graph"></script>
+        <script src="//unpkg.com/d3-quadtree"></script>
+        <script src="//unpkg.com/d3-force"></script>
+        <script src="{{media_url}}js/d3-graph-clustering.js" type="text/javascript"></script>
+    {% endblock %}
 {% endif %}
 
 {% block title %}sound search{% endblock title %}
@@ -103,21 +103,18 @@
         		descriptions[j].innerHTML = descriptions[j].innerHTML.replace(re,"<b>"+term+"</b>");
         	}
         }
-        
-        const clustering_on = {{clustering_on}};
 
+        {% if clustering_on %}
         // Ajax request clustering
-        if (clustering_on) {
-            request_clustering();
+        request_clustering();
+        graph = undefined;
+        graphLoaded = false;
+        showCluster = undefined;
 
-            graph = undefined;
-            graphLoaded = false;
-            showCluster = undefined;
-
-            $('#show-clustering-graph-button').click(function () {
-                showGraph();
-            });
-        }
+        $('#show-clustering-graph-button').click(function () {
+            showGraph();
+        });
+        {% endif %}
     });
 
     function addAdvancedSearchOptionsFilters()
@@ -242,6 +239,7 @@
         $("#filter_query").val(cleaned);
     }
 
+    {% if clustering_on %}
     // toggle and show graph
     function updateShowGraphButton() {
         var buttonText = $("#clustering-graph").is(":visible")? "hide" : "show";
@@ -370,6 +368,7 @@
                             });
                     }
         });
+        {% endif %}
     }
 
 </script>

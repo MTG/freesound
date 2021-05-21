@@ -1,24 +1,40 @@
+#
+# Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
+#
+# Freesound is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# Freesound is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#     See AUTHORS file.
+#
+
+import json
 import logging
 import os
-import sys
-import time
-import yaml
-import json
-
-from django.conf import settings
-from gaia2 import DataSet, View, DistanceFunctionFactory
-import numpy as np
-import redis
 
 import clustering_settings as clust_settings
-
+import numpy as np
+import redis
+from django.conf import settings
+from gaia2 import DataSet, View, DistanceFunctionFactory
 
 logger = logging.getLogger('clustering')
 
 
 class RedisStore(object):
     def __init__(self):
-        self.r = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+        self.r = redis.StrictRedis(
+            host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.AUDIO_FEATURES_REDIS_STORE_ID)
 
     def set_feature(self, sound_id, feature):
         self.r.set(str(sound_id), json.dumps(feature))

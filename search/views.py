@@ -22,25 +22,25 @@
 import datetime
 import json
 import logging
+import re
 from collections import defaultdict, Counter
 
-import re
 from django.conf import settings
-from django.shortcuts import render, redirect, reverse
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+from django.shortcuts import render, reverse
 
-import sounds
 import forum
-from utils.search.search_general import search_prepare_sort, search_process_filter, \
-    search_prepare_query, perform_solr_query, search_prepare_parameters, split_filter_query
-from utils.logging_filters import get_client_ip
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
-    SolrResponseInterpreterPaginator, SolrException
-from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
+import sounds
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
+from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
+from utils.frontend_handling import render
+from utils.logging_filters import get_client_ip
+from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
+    split_filter_query
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
+    SolrResponseInterpreterPaginator, SolrException
 
 search_logger = logging.getLogger("search")
 
@@ -78,6 +78,7 @@ def search(request):
         'current_page': query_params['current_page'],
         'url_query_params_string': url_query_params_string,
         'cluster_id': extra_vars['cluster_id'],
+        'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING
     }
     
     tvars.update(advanced_search_params_dict)
@@ -125,10 +126,6 @@ def search(request):
     except Exception as e:
         search_logger.error('Could probably not connect to Solr - %s' % e)
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
-
-    # enables AJAX clustering call & html clustering facets rendering
-    if settings.ENABLE_SEARCH_RESULTS_CLUSTERING:
-        tvars.update({'clustering_on': "true"})
 
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', tvars)

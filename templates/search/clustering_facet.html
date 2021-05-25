@@ -5,7 +5,7 @@
                 <span class="dummy-span-cluster-examples" id="c{{cluster_id}}-{{forloop.counter0}}" 
                     sound-id="{{sound_id}}" sound-url="{{sound_url}}"></span>
             {% endfor %}
-            <a href="{% url 'sounds-search' %}?{{url_query_params_string | safe}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
+            <a href="{% url 'sounds-search' %}?{{url_query_params_string}}&cluster_id={{cluster_id|add:1}}">Cluster #{{cluster_id|add:1}}
             </a> ({{num_results}}) 
             <span>
             &nbsp;<img class="cluster-audio-examples" src="{{media_url}}images/fugue-icons/icons/headphone.png" width="16" height="16" alt="listen" title="click to skip" />

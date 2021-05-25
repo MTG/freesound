@@ -303,7 +303,7 @@
     // function for requesting clustering
     function request_clustering()
     {
-        $.get({% url 'clustering-facet' %} + '?{{ url_query_params_string | safe }}', 
+        $.get({% url 'clustering-facet' %} + '?{{ url_query_params_string }}', 
                 {}, 
                 function( data ) {
                     clustering_trial_number += 1;
@@ -353,7 +353,7 @@
 
                         // request clustered graph
                         // set graph as a global variable
-                        $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string | safe}}", {
+                        $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string}}", {
                             }).then(res => JSON.parse(res)).then(data => {
                                 graph = data;
                                 if ($("#clustering-graph-modal").is(":visible")) {

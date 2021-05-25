@@ -23,14 +23,13 @@
 INDEX_DIR = '/freesound-data/clustering_index/'
 
 # Configuration of the features used for clustering or evaluation.
-# We define here for each features the Gaia dataset index file, the descriptor name within the dataset 
-# and the metric used for similarity computation.
+# We define here for each features a json file index file, and possible additonal info.
 # The minimum requirement is to have one available set of features and set it as the default features
 # used for clustering (see variable bellow).
 AVAILABLE_FEATURES = {
     # AudioSet Features (feature vector of the frame of max energy)
     'AUDIOSET_FEATURES': {
-        'DATASET_FILE': ''
+        'DATASET_FILE': 'AS_features_max_nrg.json'
     },
     # tag-based features used as reference features (Bag of Words - LDA)
     'TAG_DERIVED_FEATURES': None,

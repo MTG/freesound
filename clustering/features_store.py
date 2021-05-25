@@ -58,8 +58,10 @@ class FeaturesStore(object):
         self.__load_features()
 
     def __load_features(self):
-        AS_features = json.load(open(os.path.join(
-            clust_settings.INDEX_DIR, clust_settings.DEFAULT_FEATURES), 'r'))
+        self.AS_features = json.load(open(os.path.join(
+            clust_settings.INDEX_DIR, 
+            clust_settings.AVAILABLE_FEATURES[clust_settings.DEFAULT_FEATURES]['DATASET_FILE']
+        ), 'r'))
         self.redis.set_features(self.AS_features)
 
     def return_features(self, sound_ids):

@@ -40,7 +40,7 @@ if settings.IS_CELERY_WORKER:
     from sklearn.feature_selection import mutual_info_classif
     from sklearn.neighbors import kneighbors_graph
 
-    from gaia_wrapper import GaiaWrapperClustering
+    from features_store import FeaturesStore
 
 logger = logging.getLogger('clustering')
 
@@ -52,16 +52,14 @@ class ClusteringEngine():
 
     Instead of directly using the audio feature space for performing the clustering, it creates a 
     K-Nearest Neighbors Graph that is then partitioned for obtaining the clusters.
-    It relies on Gaia for performing nearest neighbor searches on a multi-dimentional feature space
-    (in gaia_wrapper.py file). The available features used for clustering are listed in the 
-    clustering_settings.py file. It requires building the Gaia dataset index file in advanced.
+    The available features used for clustering are listed in the clustering_settings.py file.
 
     It also includes some methods that enable to automaticaly estimate the performance of the clustering
     method. Moreover, a few unsued alternative methods for performing some intermediate steps are left 
     here for developement and research purpose.
     """
     def __init__(self):
-        self.gaia = GaiaWrapperClustering()
+        self.feature_store = FeaturesStore()
 
     def _prepare_clustering_result_and_reference_features_for_evaluation(self, partition):
         """Formats the clustering classes and some reference features in order to then estimate how good is the 
@@ -80,9 +78,9 @@ class ClusteringEngine():
                 and list of classes (clusters) idx.
         """
         sound_ids_list, clusters = partition.keys(), partition.values()
-        reference_features = self.gaia.return_sound_reference_features(sound_ids_list)
+        reference_features = self.feature_store.return_sound_reference_features(sound_ids_list)
 
-        # Remove sounds that are not in the gaia reference dataset
+        # Remove sounds that are not in the reference dataset
         idx_to_remove = set([idx for idx, feature in enumerate(reference_features) if feature is None])
         reference_features_filtered = [f for idx, f in enumerate(reference_features) if idx not in idx_to_remove]
         clusters_filtered = [c for idx, c in enumerate(clusters) if idx not in idx_to_remove]
@@ -267,20 +265,12 @@ class ClusteringEngine():
         # neighbors for small collections, while limiting it for larger collections, which ensures low-computational complexity.
         k = int(np.ceil(np.log2(len(sound_ids_list))))
 
-        # for sound_id in sound_ids_list:
-        #     try:
-        #         nearest_neighbors = self.gaia.search_nearest_neighbors(sound_id, k, sound_ids_list, features=features)
-        #         graph.add_edges_from([(sound_id, i[0]) for i in nearest_neighbors if i[1]<clust_settings.MAX_NEIGHBORS_DISTANCE])
-        #     except ValueError:  # node does not exist in Gaia dataset
-        #         graph.remove_node(sound_id)
-
-        sound_features, sound_ids_out = self.gaia.return_features(sound_ids_list)
+        sound_features, sound_ids_out = self.feature_store.return_features(sound_ids_list)
         A = kneighbors_graph(sound_features, k)
         for idx_from, (idx_to, distance) in enumerate(zip(A.indices, A.data)):
             idx_from = int(idx_from / k)
             if distance < clust_settings.MAX_NEIGHBORS_DISTANCE:
                 graph.add_edge(sound_ids_out[idx_from], sound_ids_out[idx_to])
-
 
         # Remove isolated nodes
         graph.remove_nodes_from(list(nx.isolates(graph)))
@@ -467,19 +457,3 @@ class ClusteringEngine():
                                    num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
 
         return {'error': False, 'result': communities, 'graph': graph_json}
-
-    def k_nearest_neighbors(self, sound_id, k):
-        """Performs a K-Nearest Neighbors search on the sound given as input.
-
-        This is currently not used, but could be useful for instance for the get similar sounds feature.
-
-        Args: 
-            sound_id (str): Sound id as query.
-            k (str): number of nearest neighbors to get.
-
-        Returns:
-            str: string containing the comma-separated ids of the nearest neighbors sounds.
-        """
-        logger.info('Request k nearest neighbors of point {}'.format(sound_id))
-        results = self.gaia.search_nearest_neighbors(sound_id, int(k))
-        return json.dumps(results)

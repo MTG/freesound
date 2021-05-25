@@ -30,9 +30,7 @@ INDEX_DIR = '/freesound-data/clustering_index/'
 AVAILABLE_FEATURES = {
     # AudioSet Features (feature vector of the frame of max energy)
     'AUDIOSET_FEATURES': {
-        'DATASET_FILE': 'FS_AS_embeddings_mean_max_min_nrg_normalized',
-        'GAIA_DESCRIPTOR_NAMES': 'AS_embeddings_ppc_max_energy',
-        'GAIA_METRIC': 'euclidean'
+        'DATASET_FILE': ''
     },
     # tag-based features used as reference features (Bag of Words - LDA)
     'TAG_DERIVED_FEATURES': None,

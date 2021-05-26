@@ -57,3 +57,4 @@ dj-database-url==0.5.0
 pysndfile==1.4.3
 pytz==2020.1
 raven==6.10.0
+pyparsing==2.4.7

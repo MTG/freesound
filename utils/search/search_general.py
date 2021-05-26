@@ -34,6 +34,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrExce
     SolrResponseInterpreterPaginator
 from utils.text import remove_control_chars
 from utils.logging_filters import get_client_ip
+from utils.search.filter_string_parsing import parse_query_filter_string
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
@@ -249,7 +250,8 @@ def search_prepare_parameters(request):
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
-    filter_query_non_facets, has_facet_filter = remove_facet_filters(filter_query)
+    # filter_query_non_facets, has_facet_filter = remove_facet_filters(filter_query)
+    filter_query_non_facets, has_facet_filter = remove_facet_filters_pyparsing(filter_query)
 
     # These variables are not used for querying the sound collection
     # We keep them separated in order to facilitate the distinction between variables used for performing
@@ -420,6 +422,44 @@ def remove_facet_filters(filter_query):
 
     filter_query = filter_query.strip('" ').lstrip('" ')
 
+    return filter_query, has_facet_filter
+
+
+def remove_facet_filters_pyparsing(filter_query):
+    """Process query filter string to keep only non facet filters
+
+    Useful for being able to combine classic facet filters and clustering. Addtionaly, it returns
+    a boolean that indicates if a facet filter was present in the query.
+
+    Args:
+        filter_query (str): query filter string.
+    
+    Returns: 
+        filter_query (str): query filter string with only non facet filters.
+        has_facet_filter (bool): boolean indicating if there exist facet filters in the processed string.
+    """
+    facet_filter_strings = (
+        "samplerate", 
+        "grouping_pack", 
+        "username", 
+        "tag", 
+        "bitrate", 
+        "bitdepth", 
+        "type", 
+        "channels", 
+        "license",
+    )
+    has_facet_filter = False
+    parsed_filters = parse_query_filter_string(filter_query)
+
+    filter_query_parts = []
+    for parsed_filter in parsed_filters:
+        if parsed_filter[0] in facet_filter_strings:
+            has_facet_filter = True
+        else:
+            filter_query_parts.append(''.join(parsed_filter))
+
+    filter_query = ' '.join(filter_query_parts)
     return filter_query, has_facet_filter
 
 

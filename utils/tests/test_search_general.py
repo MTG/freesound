@@ -23,7 +23,7 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
 from utils.search.search_general import search_prepare_parameters, split_filter_query, \
-    search_prepare_query, remove_facet_filters, remove_facet_filters_pyparsing
+    search_prepare_query, remove_facet_filters
 from search.forms import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_WEB
 
 
@@ -113,13 +113,13 @@ class SearchUtilsTest(TestCase):
 
     def test_remove_facet_filters(self):
         query_filter_str = 'is_geotagged:1 tag:"dog"'
-        filter_without_facet, has_facet_filter = remove_facet_filters_pyparsing(query_filter_str)
+        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
         self.assertTrue(has_facet_filter)
         self.assertEqual(filter_without_facet, 'is_geotagged:1')
 
     def test_remove_facet_filters_no_facet(self):
         query_filter_str = 'duration:[1 TO 10] is_geotagged:1'
-        filter_without_facet, has_facet_filter = remove_facet_filters_pyparsing(query_filter_str)
+        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
         self.assertFalse(has_facet_filter)
         self.assertEqual(filter_without_facet, query_filter_str)
 

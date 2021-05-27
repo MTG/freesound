@@ -19,7 +19,7 @@
 #
 
 from pyparsing import CaselessLiteral, Word, alphanums, alphas8bit, nums, quotedString, \
-    operatorPrecedence, opAssoc, removeQuotes, Literal, Group, White, Optional
+    operatorPrecedence, opAssoc, removeQuotes, Literal, Group, White, Optional, ParseException
 
 
 alphanums_plus = alphanums + '_' + '"'  # Allow underscore character and " in filter name
@@ -29,7 +29,8 @@ or_ = CaselessLiteral("or")
 not_ = CaselessLiteral("not")
 filterValueText = Word(alphanums_plus + alphas8bit + float_nums + '-') | quotedString.setParseAction(removeQuotes)
 number_or_asterisk_or_quotedString = Literal('*') | Word(float_nums) | quotedString.setParseAction(removeQuotes)
-filterValueRange = Literal('[') + number_or_asterisk_or_quotedString + White(' ', max=1) + Literal('TO') + White(' ', max=1) + number_or_asterisk_or_quotedString + Literal(']')
+filterValueRange = Literal('[') + number_or_asterisk_or_quotedString + White(' ', max=1) + Literal('TO') \
+                   + White(' ', max=1) + number_or_asterisk_or_quotedString + Literal(']')
 fieldName = Word(alphanums_plus)
 filterTerm = fieldName + Literal(':') + (filterValueText | filterValueRange)
 filterExpr = operatorPrecedence(Group(filterTerm),
@@ -42,7 +43,27 @@ filterExpr = operatorPrecedence(Group(filterTerm),
 
 
 def parse_query_filter_string(filter_query):
+    """Parse the query filter string containing field names and values.
+
+    This is useful for for being able to manipulate different filters and removing filters coming 
+    from facets (which is needed for applying clustering without being affected by filtering facets).
+
+    Example:
+    f = " duration:[1 TO *] is_geotagged:1 tag:dog"
+    parse_query_filter_string(f)
+    -> ([(['duration', ':', '[', '1', ' ', 'TO', ' ', '*', ']'], {}), 
+         (['is_geotagged', ':', '1'], {}), (['tag', ':', 'dog'], {})], {})
+
+    Args:
+        filter_query (str): query filter string from a user submitted search query.
+    
+    Returns:
+        pyparsing.ParseResults: can be treated as a list containing lists of filter fields' names and values
+    """
     if filter_query:
-        return filterExpr.parseString(filter_query)[0]
+        try:
+            return filterExpr.parseString(filter_query)[0]
+        except ParseException:
+            return []
     else:
         return []

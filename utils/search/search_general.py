@@ -452,14 +452,21 @@ def remove_facet_filters_pyparsing(filter_query):
     has_facet_filter = False
     parsed_filters = parse_query_filter_string(filter_query)
 
-    filter_query_parts = []
-    for parsed_filter in parsed_filters:
-        if parsed_filter[0] in facet_filter_strings:
-            has_facet_filter = True
-        else:
-            filter_query_parts.append(''.join(parsed_filter))
+    if parsed_filters:
+        # check if not nested meaning there is only one filter
+        # if yes, make it nested to treat it the same way as if there was several filters
+        if isinstance(parsed_filters[0], basestring):
+            parsed_filters = [parsed_filters]
+        
+        filter_query_parts = []
+        for parsed_filter in parsed_filters:
+            if parsed_filter[0] in facet_filter_strings:
+                has_facet_filter = True 
+            else:
+                filter_query_parts.append(''.join(parsed_filter))
 
-    filter_query = ' '.join(filter_query_parts)
+        filter_query = ' '.join(filter_query_parts)
+    
     return filter_query, has_facet_filter
 
 

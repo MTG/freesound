@@ -34,7 +34,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrExce
     SolrResponseInterpreterPaginator
 from utils.text import remove_control_chars
 from utils.logging_filters import get_client_ip
-from utils.search.filter_string_parsing import parse_query_filter_string
+from utils.search.lucene_parser import parse_query_filter_string
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")

@@ -18,17 +18,18 @@
 #     See AUTHORS file.
 #
 
-from pyparsing import CaselessLiteral, Word, alphanums, alphas8bit, nums, quotedString, \
-    operatorPrecedence, opAssoc, removeQuotes, Literal, Group, White, Optional, ParseException
+from pyparsing import CaselessLiteral, Word, alphanums, alphas8bit, nums, printables, \
+        operatorPrecedence, opAssoc, Literal, Group, White, Optional, ParseException
 
 
+printables_less = printables.replace('"', '')
 alphanums_plus = alphanums + '_'  # Allow underscore character
 float_nums = nums + '.'  # Allow float numbers
 and_ = CaselessLiteral("and")
 or_ = CaselessLiteral("or")
 not_ = CaselessLiteral("not")
-filterValueText = Word(alphanums_plus + alphas8bit + float_nums + '-' + '+')
-filterValueTextWithSpaces = Literal('"') + Word(alphanums_plus + alphas8bit  + '-' + ' ' + '+') + Literal('"')
+filterValueText = Word(alphanums_plus + alphas8bit + float_nums + '-' + '+' + ',')
+filterValueTextWithSpaces = Literal('"') + Word(' ' + printables_less) + Literal('"')
 number_or_asterisk_or_quotedString = Literal('*') | Word(float_nums)
 filterValueRange = Literal('[') + number_or_asterisk_or_quotedString + White(' ', max=1) + Literal('TO') \
                    + White(' ', max=1) + number_or_asterisk_or_quotedString + Literal(']')

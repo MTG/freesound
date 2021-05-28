@@ -124,6 +124,25 @@ class SearchUtilsTest(TestCase):
         self.assertFalse(has_facet_filter)
         self.assertEqual(filter_without_facet, query_filter_str)
 
+    def test_remove_facet_filters_special_char(self):
+        query_filter_str = 'grouping_pack:"1_:)" tag:"dog"'
+        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        self.assertTrue(has_facet_filter)
+        self.assertEqual(filter_without_facet, '')
+
+    def test_remove_facet_filters_special_char2(self):
+        query_filter_str='grouping_pack:"19265_Impacts, Hits, Friction & Tools" tag:"tools" samplerate:"44100" \
+                          bitrate:"1379" duration:[0 TO 10]'
+        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        self.assertTrue(has_facet_filter)
+        self.assertEqual(filter_without_facet, 'duration:[0 TO 10]')
+
+    def test_remove_facet_filters_special_char3(self):
+        query_filter_str='grouping_pack:"..." tag:"da@," duration:[0 TO 1.1]'
+        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        self.assertTrue(has_facet_filter)
+        self.assertEqual(filter_without_facet, 'duration:[0 TO 1.1]')
+
     def test_search_prepare_parameters_non_ascii_query(self):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()
         request = self.factory.get(reverse('sounds-search')+u'?q=Æ æ ¿ É')

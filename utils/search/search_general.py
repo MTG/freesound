@@ -26,6 +26,7 @@ import json
 
 import re
 from django.conf import settings
+from django.utils.http import urlquote_plus
 
 import sounds
 from search import forms
@@ -120,7 +121,7 @@ def split_filter_query(filter_query, cluster_id):
                 if valid_filter:
                     filter = {
                         'name': filter_display,
-                        'remove_url': filter_query.replace(filter_str, ''),
+                        'remove_url': urlquote_plus(filter_query.replace(filter_str, '')),
                         'cluster_id': cluster_id,
                     }
                     filter_query_split.append(filter)
@@ -130,7 +131,7 @@ def split_filter_query(filter_query, cluster_id):
         if cluster_id and cluster_id.isdigit():
             filter_query_split.append({
                 'name': "Cluster #" + cluster_id,
-                'remove_url': filter_query,
+                'remove_url': urlquote_plus(filter_query),
                 'cluster_id': '',
             })
 

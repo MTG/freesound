@@ -27,8 +27,8 @@ float_nums = nums + '.'  # Allow float numbers
 and_ = CaselessLiteral("and")
 or_ = CaselessLiteral("or")
 not_ = CaselessLiteral("not")
-filterValueText = Word(alphanums_plus + alphas8bit + float_nums + '-')
-filterValueTextWithSpaces = Literal('"') + Word(alphanums_plus + alphas8bit  + '-' + ' ') + Literal('"')
+filterValueText = Word(alphanums_plus + alphas8bit + float_nums + '-' + '+')
+filterValueTextWithSpaces = Literal('"') + Word(alphanums_plus + alphas8bit  + '-' + ' ' + '+') + Literal('"')
 number_or_asterisk_or_quotedString = Literal('*') | Word(float_nums)
 filterValueRange = Literal('[') + number_or_asterisk_or_quotedString + White(' ', max=1) + Literal('TO') \
                    + White(' ', max=1) + number_or_asterisk_or_quotedString + Literal(']')

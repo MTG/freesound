@@ -217,6 +217,21 @@ class SearchUtilsTest(TestCase):
         self.assertIn(expected_filter_query_split[1]['remove_url'],
                       filter_query_split[grouping_pack_facet_dict_idx]['remove_url'])
 
+    # these tests just ensure that no exception is returned when trying to parse filter strings 
+    # that gave problems while developping the filter string parser function 
+    # utils.search.lucene_parser.parse_query_filter_string()
+    def test_split_filter_query_special_created(self):
+        filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'
+        filter_query_split = split_filter_query(filter_query_string, '')
+
+    def test_split_filter_query_special_char(self):
+        filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
+        filter_query_split = split_filter_query(filter_query_string, '')
+
+    def test_split_filter_query_special_char2(self):
+        filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
+        filter_query_split = split_filter_query(filter_query_string, '')
+
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter

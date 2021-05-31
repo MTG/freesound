@@ -18,21 +18,24 @@
 #     See AUTHORS file.
 #
 
+import sys
+
 from pyparsing import CaselessLiteral, Word, alphanums, alphas8bit, nums, printables, \
         operatorPrecedence, opAssoc, Literal, Group, White, Optional, ParseException
 
 
-printables_less = printables.replace('"', '')
+# get all unicodes (https://stackoverflow.com/questions/2339386/python-pyparsing-unicode-characters)
+unicodePrintables = u''.join(unichr(c) for c in xrange(sys.maxunicode) if not unichr(c).isspace())
+printables_less = unicodePrintables.replace('"', '')
 alphanums_plus = alphanums + '_'  # Allow underscore character
 float_nums = nums + '.'  # Allow float numbers
-and_ = CaselessLiteral("and")
 or_ = CaselessLiteral("or")
-not_ = CaselessLiteral("not")
+
 filterValueText = Word(alphanums_plus + alphas8bit + float_nums + '-' + '+' + ',')
 filterValueTextWithSpaces = Literal('"') + Word(' ' + printables_less) + Literal('"')
-number_or_asterisk_or_quotedString = Literal('*') | Word(float_nums)
-filterValueRange = Literal('[') + number_or_asterisk_or_quotedString + White(' ', max=1) + Literal('TO') \
-                   + White(' ', max=1) + number_or_asterisk_or_quotedString + Literal(']')
+alphanum_float_plus_minus_star = alphanums_plus + float_nums + '+' + '-' + '*'
+filterValueRange = Literal('[') + Word(alphanum_float_plus_minus_star) + White(' ', max=1) + Literal('TO') \
+                   + White(' ', max=1) + Word(alphanum_float_plus_minus_star) + Literal(']')
 fieldName = Word(alphanums_plus)
 filterTerm = fieldName + Literal(':') + (filterValueText | filterValueTextWithSpaces | filterValueRange)
 filterExpr = operatorPrecedence(Group(filterTerm), [(Optional(or_ | "||").setName("or"), 2, opAssoc.LEFT)])
@@ -57,9 +60,11 @@ def parse_query_filter_string(filter_query):
         pyparsing.ParseResults: can be treated as a list containing lists of filter fields' names and values
     """
     if filter_query:
-        try:
-            return filterExpr.parseString(filter_query)[0]
-        except ParseException:
-            return []
+        filter_list_str = filterExpr.parseString(filter_query)[0]
+        # check if not nested meaning there is only one filter
+        # if yes, make it nested to treat it the same way as if there were several filters
+        if isinstance(filter_list_str[0], basestring):
+            filter_list_str = [filter_list_str]
+        return filter_list_str
     else:
         return []

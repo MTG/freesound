@@ -104,20 +104,21 @@ def split_filter_query(filter_query, cluster_id):
     # Generate array with information of filters
     filter_query_split = []
     if filter_query != "":
-        for filter_str in re.findall(r'[\w-]+:\"[^\"]+', filter_query):
-            valid_filter = True
-            filter_str = filter_str + '"'
-            filter_display = filter_str.replace('"', '')
-            filter_name = filter_str.split(":")[0]
+        for filter_list_str in parse_query_filter_string(filter_query):
+            # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
+            filter_name = filter_list_str[0]
             if filter_name != "duration" and filter_name != "is_geotagged":
+                valid_filter = True
+                filter_str = ''.join(filter_list_str)
+                filter_display = ''.join(filter_list_str).replace('"', '')
                 if filter_name == "grouping_pack":
-                    val = filter_display.split(":")[1]
+                    filter_value = filter_list_str[-2]
                     # If pack does not contain "_" then it's not a valid pack filter
-                    if "_" in val:
-                        filter_display = "pack:"+ val.split("_")[1]
+                    if "_" in filter_value:
+                        filter_display = "pack:"+ ''.join(filter_value.split("_")[1:])
                     else:
                         valid_filter = False
-
+                
                 if valid_filter:
                     filter = {
                         'name': filter_display,
@@ -415,12 +416,7 @@ def remove_facet_filters(filter_query):
     has_facet_filter = False
     parsed_filters = parse_query_filter_string(filter_query)
 
-    if parsed_filters:
-        # check if not nested meaning there is only one filter
-        # if yes, make it nested to treat it the same way as if there was several filters
-        if isinstance(parsed_filters[0], basestring):
-            parsed_filters = [parsed_filters]
-        
+    if parsed_filters:       
         filter_query_parts = []
         for parsed_filter in parsed_filters:
             if parsed_filter[0] in facet_filter_strings:

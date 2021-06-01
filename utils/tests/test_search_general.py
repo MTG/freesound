@@ -62,6 +62,7 @@ class SearchUtilsTest(TestCase):
             'cluster_id': '',
             'filter_query_non_facets': '',
             'has_facet_filter': False,
+            'parsed_filters': []
         }
 
         self.assertDictEqual(query_params, expected_default_query_params)
@@ -98,6 +99,7 @@ class SearchUtilsTest(TestCase):
             'cluster_id': '',
             'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
             'has_facet_filter': False,
+            'parsed_filters': [[u'duration', ':', '[', u'1', u' ', 'TO', u' ', u'10', ']'], [u'is_geotagged', ':', u'1']]
         }
 
         expected_advanced_search_params_dict = {
@@ -115,32 +117,37 @@ class SearchUtilsTest(TestCase):
 
     def test_remove_facet_filters(self):
         query_filter_str = 'is_geotagged:1 tag:"dog"'
-        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        parsed_filters = parse_query_filter_string(query_filter_str)
+        filter_without_facet, has_facet_filter = remove_facet_filters(parsed_filters)
         self.assertTrue(has_facet_filter)
         self.assertEqual(filter_without_facet, 'is_geotagged:1')
 
     def test_remove_facet_filters_no_facet(self):
         query_filter_str = 'duration:[1 TO 10] is_geotagged:1'
-        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        parsed_filters = parse_query_filter_string(query_filter_str)
+        filter_without_facet, has_facet_filter = remove_facet_filters(parsed_filters)
         self.assertFalse(has_facet_filter)
         self.assertEqual(filter_without_facet, query_filter_str)
 
     def test_remove_facet_filters_special_char(self):
         query_filter_str = 'grouping_pack:"1_:)" tag:"dog"'
-        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        parsed_filters = parse_query_filter_string(query_filter_str)
+        filter_without_facet, has_facet_filter = remove_facet_filters(parsed_filters)
         self.assertTrue(has_facet_filter)
         self.assertEqual(filter_without_facet, '')
 
     def test_remove_facet_filters_special_char2(self):
-        query_filter_str='grouping_pack:"19265_Impacts, Hits, Friction & Tools" tag:"tools" samplerate:"44100" \
+        query_filter_str = 'grouping_pack:"19265_Impacts, Hits, Friction & Tools" tag:"tools" samplerate:"44100" \
                           bitrate:"1379" duration:[0 TO 10]'
-        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        parsed_filters = parse_query_filter_string(query_filter_str)
+        filter_without_facet, has_facet_filter = remove_facet_filters(parsed_filters)
         self.assertTrue(has_facet_filter)
         self.assertEqual(filter_without_facet, 'duration:[0 TO 10]')
 
     def test_remove_facet_filters_special_char3(self):
-        query_filter_str='grouping_pack:"..." tag:"da@," duration:[0 TO 1.1]'
-        filter_without_facet, has_facet_filter = remove_facet_filters(query_filter_str)
+        query_filter_str = 'grouping_pack:"..." tag:"da@," duration:[0 TO 1.1]'
+        parsed_filters = parse_query_filter_string(query_filter_str)
+        filter_without_facet, has_facet_filter = remove_facet_filters(parsed_filters)
         self.assertTrue(has_facet_filter)
         self.assertEqual(filter_without_facet, 'duration:[0 TO 1.1]')
 
@@ -153,7 +160,8 @@ class SearchUtilsTest(TestCase):
     def test_split_filter_query_duration_and_facet(self):
         # We check that the combination of a duration filter and a facet filter (CC Attribution) works correctly.
         filter_query_string = u'duration:[0 TO 10] license:"Attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
-        filter_query_split = split_filter_query(filter_query_string, '')
+        parsed_filters = parse_query_filter_string(filter_query_string)
+        filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
 
         # duraton filter is not a facet, but should stay present when removing a facet.
         expected_filter_query_split = [
@@ -197,7 +205,8 @@ class SearchUtilsTest(TestCase):
 
     def test_split_filter_query_special_chars(self):
         filter_query_string = u'license:"Sampling+" grouping_pack:"1_example pack + @ #()*"'
-        filter_query_split = split_filter_query(filter_query_string, '')
+        parsed_filters = parse_query_filter_string(filter_query_string)
+        filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
 
         expected_filter_query_split = [
@@ -221,25 +230,25 @@ class SearchUtilsTest(TestCase):
     # these tests just ensure that no exception is returned when trying to parse filter strings 
     # that gave problems while developping the filter string parser function 
     # utils.search.lucene_parser.parse_query_filter_string()
-    def test_split_filter_query_special_created(self):
+    def test_parse_filter_query_special_created(self):
         filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'
-        filter_query_split = split_filter_query(filter_query_string, '')
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
-    def test_split_filter_query_special_char(self):
+    def test_parse_filter_query_special_char(self):
         filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
-        filter_query_split = split_filter_query(filter_query_string, '')
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
-    def test_split_filter_query_special_char2(self):
+    def test_parse_filter_query_special_char2(self):
         filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
-        filter_query_split = split_filter_query(filter_query_string, '')
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
-    def test_split_filter_query_empty_value(self):
+    def test_parse_filter_query_empty_value(self):
         filter_query_string = 'grouping_pack:'
-        filter_query_split = split_filter_query(filter_query_string, '')
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
-    def test_split_filter_query_geofilter(self):
+    def test_parse_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''
-        filter_query_split = split_filter_query(filter_query_string, '')
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
     def test_lucene_parser_removes_empty_value_filters(self):
         filter_query_string = 'tag:"cool" license:'
@@ -252,7 +261,8 @@ class SearchUtilsTest(TestCase):
         # works correctly.
         filter_query_string = u'duration:[0 TO 10] license:"Attribution"'
         # the cluster filter is set in the second argument of split_filter_query()
-        filter_query_split = split_filter_query(filter_query_string, '1')
+        parsed_filters = parse_query_filter_string(filter_query_string)
+        filter_query_split = split_filter_query(filter_query_string, parsed_filters, '1')
 
         expected_filter_query_split = [
             {'remove_url': urlquote_plus(u'duration:[0 TO 10]'), 'name': u'license:Attribution'},

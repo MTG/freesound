@@ -61,7 +61,7 @@ def search(request):
         in_ids = []
     query_params.update({'in_ids': in_ids})
 
-    filter_query_split = split_filter_query(query_params['filter_query'], cluster_id)
+    filter_query_split = split_filter_query(query_params['filter_query'], extra_vars['parsed_filters'], cluster_id)
 
     tvars = {
         'error_text': None,

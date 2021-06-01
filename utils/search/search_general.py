@@ -87,8 +87,8 @@ def search_process_filter(filter_query):
     return filter_query
 
 
-def split_filter_query(filter_query, cluster_id):
-    """Parses and pre-process search filter parameters and returns the filters' information.
+def split_filter_query(filter_query, parsed_filters, cluster_id):
+    """Pre-process parsed search filter parameters and returns the filters' information.
 
     This function is used in the search template to display the filter and the link when removing them.
     The clustering facet filter is in a separate query parameter. It facilitates to distinguish them from
@@ -96,6 +96,7 @@ def split_filter_query(filter_query, cluster_id):
 
     Args:
         filter_query (str): query filter string.
+        parsed_filters (List[List[str]]): parsed query filter.
         cluster_id (str): cluster filter string.
 
     Returns:
@@ -103,8 +104,8 @@ def split_filter_query(filter_query, cluster_id):
     """
     # Generate array with information of filters
     filter_query_split = []
-    if filter_query != "":
-        for filter_list_str in parse_query_filter_string(filter_query):
+    if parsed_filters:
+        for filter_list_str in parsed_filters:
             # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
             filter_name = filter_list_str[0]
             if filter_name != "duration" and filter_name != "is_geotagged":
@@ -234,6 +235,12 @@ def search_prepare_parameters(request):
     sort_options = SEARCH_SORT_OPTIONS_WEB
     sort = search_prepare_sort(sort_unformatted, sort_options)
 
+    # parse query filter string and remove empty value fields
+    parsed_filters = parse_query_filter_string(filter_query)
+    filter_query = ' '.join([''.join(filter_str) for filter_str in parsed_filters])
+
+    filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
+
     query_params = {
         'search_query': search_query,
         'filter_query': filter_query,
@@ -252,7 +259,6 @@ def search_prepare_parameters(request):
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
-    filter_query_non_facets, has_facet_filter = remove_facet_filters(filter_query)
 
     # These variables are not used for querying the sound collection
     # We keep them separated in order to facilitate the distinction between variables used for performing
@@ -265,6 +271,7 @@ def search_prepare_parameters(request):
         'cluster_id': cluster_id,
         'filter_query_non_facets': filter_query_non_facets,
         'has_facet_filter': has_facet_filter,
+        'parsed_filters': parsed_filters
     }
 
     return query_params, advanced_search_params_dict, extra_vars
@@ -389,14 +396,14 @@ def search_prepare_query(search_query,
     return query
 
 
-def remove_facet_filters(filter_query):
+def remove_facet_filters(parsed_filters):
     """Process query filter string to keep only non facet filters
 
     Useful for being able to combine classic facet filters and clustering. Addtionaly, it returns
     a boolean that indicates if a facet filter was present in the query.
 
     Args:
-        filter_query (str): query filter string.
+        parsed_filters (List[List[str]]): parsed query filter.
     
     Returns: 
         filter_query (str): query filter string with only non facet filters.
@@ -414,7 +421,7 @@ def remove_facet_filters(filter_query):
         "license",
     )
     has_facet_filter = False
-    parsed_filters = parse_query_filter_string(filter_query)
+    filter_query = ""
 
     if parsed_filters:       
         filter_query_parts = []

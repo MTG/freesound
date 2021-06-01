@@ -25,6 +25,7 @@ from django.conf import settings
 from django.utils.http import urlquote_plus
 from utils.search.search_general import search_prepare_parameters, split_filter_query, \
     search_prepare_query, remove_facet_filters
+from utils.search.lucene_parser import parse_query_filter_string
 from search.forms import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_WEB
 
 
@@ -239,6 +240,11 @@ class SearchUtilsTest(TestCase):
     def test_split_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''
         filter_query_split = split_filter_query(filter_query_string, '')
+
+    def test_lucene_parser_removes_empty_value_filters(self):
+        filter_query_string = 'tag:"cool" license:'
+        parsed_filters = parse_query_filter_string(filter_query_string)
+        self.assertEqual(parsed_filters, [['tag', ':', '"', 'cool', '"']])
 
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):

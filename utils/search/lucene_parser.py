@@ -47,25 +47,33 @@ def parse_query_filter_string(filter_query):
 
     This is useful for for being able to manipulate different filters and removing filters coming 
     from facets (which is needed for applying clustering without being affected by filtering facets).
+    Additionally it removes filters that contain empty values.
 
     Example:
     f = " duration:[1 TO *] is_geotagged:1 tag:dog"
     parse_query_filter_string(f)
-    -> ([(['duration', ':', '[', '1', ' ', 'TO', ' ', '*', ']'], {}), 
-         (['is_geotagged', ':', '1'], {}), (['tag', ':', 'dog'], {})], {})
+    -> [['duration', ':', '[', '1', ' ', 'TO', ' ', '*', ']'], 
+        ['is_geotagged', ':', '1'], 
+        ['tag', ':', 'dog']]
 
     Args:
         filter_query (str): query filter string from a user submitted search query.
     
     Returns:
-        pyparsing.ParseResults: can be treated as a list containing lists of filter fields' names and values
+        List[List[str]]: list containing lists of filter fields' names and values
     """
     if filter_query:
-        filter_list_str = filterExpr.parseString(filter_query)[0]
+        filter_list_str = filterExpr.parseString(filter_query)[0].asList()
+
         # check if not nested meaning there is only one filter
         # if yes, make it nested to treat it the same way as if there were several filters
         if isinstance(filter_list_str[0], basestring):
             filter_list_str = [filter_list_str]
+
+        # remove empty filter values
+        filter_list_str = [
+            filter_str for filter_str in filter_list_str if filter_str[-1] != ":"
+        ]
         return filter_list_str
     else:
         return []

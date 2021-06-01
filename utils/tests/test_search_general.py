@@ -232,6 +232,10 @@ class SearchUtilsTest(TestCase):
         filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
         filter_query_split = split_filter_query(filter_query_string, '')
 
+    def test_split_filter_query_empty_value(self):
+        filter_query_string = 'grouping_pack:'
+        filter_query_split = split_filter_query(filter_query_string, '')
+
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter

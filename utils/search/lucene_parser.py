@@ -21,7 +21,7 @@
 import sys
 
 from pyparsing import CaselessLiteral, Word, alphanums, alphas8bit, nums, printables, \
-        operatorPrecedence, opAssoc, Literal, Group, White, Optional, ParseException
+        operatorPrecedence, opAssoc, Literal, Group, White, Optional, ParseException, Empty
 
 
 # get all unicodes (https://stackoverflow.com/questions/2339386/python-pyparsing-unicode-characters)
@@ -37,7 +37,7 @@ alphanum_float_plus_minus_star = alphanums_plus + float_nums + '+' + '-' + '*'
 filterValueRange = Literal('[') + Word(alphanum_float_plus_minus_star) + White(' ', max=1) + Literal('TO') \
                    + White(' ', max=1) + Word(alphanum_float_plus_minus_star) + Literal(']')
 fieldName = Word(alphanums_plus)
-filterTerm = fieldName + Literal(':') + (filterValueText | filterValueTextWithSpaces | filterValueRange)
+filterTerm = fieldName + Literal(':') + (filterValueText | filterValueTextWithSpaces | filterValueRange | Empty())
 filterExpr = operatorPrecedence(Group(filterTerm), [(Optional(or_ | "||").setName("or"), 2, opAssoc.LEFT)])
 
 

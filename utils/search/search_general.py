@@ -113,7 +113,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
                 filter_str = ''.join(filter_list_str)
                 filter_display = ''.join(filter_list_str).replace('"', '')
                 if filter_name == "grouping_pack":
-                    filter_value = filter_list_str[-2]
+                    filter_value = filter_list_str[-1].rstrip('"')
                     # If pack does not contain "_" then it's not a valid pack filter
                     if "_" in filter_value:
                         filter_display = "pack:"+ ''.join(filter_value.split("_")[1:])

@@ -99,7 +99,7 @@ class SearchUtilsTest(TestCase):
             'cluster_id': '',
             'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
             'has_facet_filter': False,
-            'parsed_filters': [[u'duration', ':', '[', u'1', u' ', 'TO', u' ', u'10', ']'], [u'is_geotagged', ':', u'1']]
+            'parsed_filters': [[u'duration', ':', '[', u'1', ' TO ', u'10', ']'], [u'is_geotagged', ':', u'1']]
         }
 
         expected_advanced_search_params_dict = {
@@ -242,26 +242,34 @@ class SearchUtilsTest(TestCase):
         filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
         filter_query_split = parse_query_filter_string(filter_query_string)
 
-    def test_parse_filter_query_empty_value(self):
-        filter_query_string = 'grouping_pack:'
-        filter_query_split = parse_query_filter_string(filter_query_string)
+    # def test_parse_filter_query_empty_value(self):
+    #     filter_query_string = 'grouping_pack:'
+    #     filter_query_split = parse_query_filter_string(filter_query_string)
 
     def test_parse_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''
         filter_query_split = parse_query_filter_string(filter_query_string)
+        self.assertEqual(filter_query_split, [
+            ['tag', ':', '"cool"'],
+            ["'{!", 'geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50', "}'"]
+        ])
 
-    def test_lucene_parser_removes_empty_value_filters(self):
-        filter_query_string = 'tag:"cool" license:'
-        parsed_filters = parse_query_filter_string(filter_query_string)
-        self.assertEqual(parsed_filters, [['tag', ':', '"', 'cool', '"']])
+    # def test_lucene_parser_removes_empty_value_filters(self):
+    #     filter_query_string = 'tag:"cool" license:'
+    #     parsed_filters = parse_query_filter_string(filter_query_string)
+    #     self.assertEqual(parsed_filters, [['tag', ':', '"cool"']])
 
-    def test_lucene_parser_composed_filter_with_OR(self):
+    def test_parse_filter_composed_with_OR(self):
         filter_query_string = 'tag:"cool" license:("Attribution" OR "Creative Commons 0")'
         parsed_filters = parse_query_filter_string(filter_query_string)
         self.assertEqual(parsed_filters, [
-            ['tag', ':', '"', 'cool', '"'],
-            ['license', ':', '(', '"Attribution" OR "Creative Commons 0"', ')']
+            ['tag', ':', '"cool"'],
+            ['license', ':', '(', '"Attribution"', "OR", '"Creative Commons 0"', ')']
         ])
+
+    def test_parse_filter_nested_composed_with_OR(self):
+        filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
+        parsed_filters = parse_query_filter_string(filter_query_string)
 
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):

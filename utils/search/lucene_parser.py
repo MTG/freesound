@@ -17,39 +17,87 @@
 # Authors:
 #     See AUTHORS file.
 #
+import collections
 
-import sys
-
-from pyparsing import CaselessLiteral, Word, alphanums, alphas8bit, nums, printables, \
-        operatorPrecedence, opAssoc, Literal, Group, White, Optional, ParseException, Empty
+import pyparsing as pp
+from pyparsing import pyparsing_common as ppc
 
 
-# get all unicodes (https://stackoverflow.com/questions/2339386/python-pyparsing-unicode-characters)
-unicode_printables = u''.join(unichr(c) for c in xrange(sys.maxunicode) if not unichr(c).isspace())
-printables_less = unicode_printables.replace('"', '')
-alphanums_plus = alphanums + '_'
-float_nums = nums + '.'
-or_ = CaselessLiteral("or")
+pp.ParserElement.enablePackrat()
 
-# filter value without ""
-filter_value_text = Word(alphanums_plus + alphas8bit + float_nums + '-' + '+' + ',')
+COLON, LBRACK, RBRACK, LBRACE, RBRACE, TILDE, CARAT = map(pp.Literal, ":[]{}~^")
+LPAR, RPAR = map(pp.Literal, "()")
+and_, or_, not_, to_ = map(pp.CaselessKeyword, "AND OR NOT TO".split())
+keyword = and_ | or_ | not_ | to_
 
-# filter value with "" (any character including spaces)
-filter_value_text_with_spaces = Literal('"') + Word(' ' + printables_less) + Literal('"')
+expression = pp.Forward()
 
-# case for treating eg, 'license:("Attribution" OR "Creative Commons 0")'
-filter_value_text_with_parentheses = Literal('(') + Word(' "' + printables_less.replace('(','').replace(')', '')) + Literal(')')
+valid_word = pp.Regex(
+    r'([a-zA-Z0-9*_+.-]|\\\\|\\([+\-!(){}\[\]^"~*?:]|\|\||&&))+'
+).setName("word")
+valid_word.setParseAction(
+    lambda t: t[0].replace("\\\\", chr(127)).replace("\\", "").replace(chr(127), "\\")
+)
 
-# for float ranged values
+string = pp.QuotedString('"', unquoteResults=False)
+alphanums_plus = pp.alphanums + '_'
+float_nums = pp.nums + '.'
 alphanum_float_plus_minus_star = alphanums_plus + float_nums + '+' + '-' + '*'
-filter_value_range = Literal('[') + Word(alphanum_float_plus_minus_star) + White(' ', max=1) + Literal('TO') \
-                    + White(' ', max=1) + Word(alphanum_float_plus_minus_star) + Literal(']')
 
-geotag_filter = Literal("'{!") + Word(' ' + '=' + ',' + alphanum_float_plus_minus_star) + Literal("}'")
+required_modifier = pp.Literal("+")("required")
+prohibit_modifier = pp.Literal("-")("prohibit")
+integer = ppc.integer()
+proximity_modifier = pp.Group(TILDE + integer("proximity"))
+number = ppc.fnumber()
+fuzzy_modifier = TILDE + pp.Optional(number, default=0.5)("fuzzy")
 
-field_name = Word(alphanums_plus)
-filter_term = field_name + Literal(':') + (filter_value_text | filter_value_text_with_spaces | filter_value_text_with_parentheses | filter_value_range | Empty())
-filter_expr = operatorPrecedence(Group(filter_term | geotag_filter), [(Optional(or_ | "||").setName("or"), 2, opAssoc.LEFT)])
+term = pp.Forward().setName("field")
+field_name = valid_word().setName("fieldname")
+incl_range_search = pp.Group(LBRACK - term("lower") + to_ + term("upper") + RBRACK)
+excl_range_search = pp.Group(LBRACE - term("lower") + to_ + term("upper") + RBRACE)
+range_search = incl_range_search("incl_range") | excl_range_search("excl_range")
+boost = CARAT - number("boost")
+
+geotag_filter = pp.Literal("'{!") + pp.Word(' ' + '=' + ',' + alphanum_float_plus_minus_star) + pp.Literal("}'")
+string_expr = pp.Group(string + proximity_modifier) | string
+word_expr = pp.Group(valid_word + fuzzy_modifier) | valid_word
+term << (
+    pp.Optional(field_name("field") + COLON)
+    + (word_expr | string_expr | range_search | pp.Group(LPAR + expression + RPAR))
+    + pp.Optional(boost)
+)
+term.setParseAction(lambda t: [t] if "field" in t or "boost" in t else None)
+
+expression << pp.infixNotation(
+    pp.Group(term | geotag_filter),
+    [
+        (required_modifier | prohibit_modifier, 1, pp.opAssoc.RIGHT),
+        ((not_ | "!").setParseAction(lambda: "NOT"), 1, pp.opAssoc.RIGHT),
+        ((and_ | "&&").setParseAction(lambda: "AND"), 2, pp.opAssoc.LEFT),
+        (
+            pp.Optional(or_ | "||").setName("or"),
+            2,
+            pp.opAssoc.LEFT,
+        ),
+    ],
+)
+
+
+def flatten(l):
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, basestring):
+            for sub in flatten(el):
+                yield sub
+        else:
+            # for range filter with TO, we manually add the mandatory spaces in the parsed output
+            if el == 'TO':
+                yield ' ' + el + ' '
+            else:
+                yield el
+
+
+def flatten_sub(l):
+    return [list(flatten(sub)) for sub in l]
 
 
 def parse_query_filter_string(filter_query):
@@ -73,11 +121,15 @@ def parse_query_filter_string(filter_query):
         List[List[str]]: list containing lists of filter fields' names and values
     """
     if filter_query:
-        filter_list_str = filter_expr.parseString(filter_query)[0].asList()
+        filter_list_str = expression.parseString(filter_query).asList()[0]
+
         # check if not nested meaning there is only one filter
         # if yes, make it nested to treat it the same way as if there were several filters
         if isinstance(filter_list_str[0], basestring):
             filter_list_str = [filter_list_str]
+
+        # we flatten the sub lists contained in the parsed output
+        filter_list_str = flatten_sub(filter_list_str)
 
         # remove empty filter values
         filter_list_str = [

@@ -255,6 +255,14 @@ class SearchUtilsTest(TestCase):
         parsed_filters = parse_query_filter_string(filter_query_string)
         self.assertEqual(parsed_filters, [['tag', ':', '"', 'cool', '"']])
 
+    def test_lucene_parser_composed_filter_with_OR(self):
+        filter_query_string = 'tag:"cool" license:("Attribution" OR "Creative Commons 0")'
+        parsed_filters = parse_query_filter_string(filter_query_string)
+        self.assertEqual(parsed_filters, [
+            ['tag', ':', '"', 'cool', '"'],
+            ['license', ':', '(', '"Attribution" OR "Creative Commons 0"', ')']
+        ])
+
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter

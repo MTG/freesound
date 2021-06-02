@@ -33,12 +33,13 @@ or_ = CaselessLiteral("or")
 
 filterValueText = Word(alphanums_plus + alphas8bit + float_nums + '-' + '+' + ',')
 filterValueTextWithSpaces = Literal('"') + Word(' ' + printables_less) + Literal('"')
+filterValueTextWithParentheses = Literal('(') + Word(' "' + printables_less.replace('(','').replace(')', '')) + Literal(')')
 alphanum_float_plus_minus_star = alphanums_plus + float_nums + '+' + '-' + '*'
 filterValueRange = Literal('[') + Word(alphanum_float_plus_minus_star) + White(' ', max=1) + Literal('TO') \
                    + White(' ', max=1) + Word(alphanum_float_plus_minus_star) + Literal(']')
 geotagFilter = Literal("'{!") + Word(' ' + '=' + ',' + alphanum_float_plus_minus_star) + Literal("}'")
 fieldName = Word(alphanums_plus)
-filterTerm = fieldName + Literal(':') + (filterValueText | filterValueTextWithSpaces | filterValueRange | Empty())
+filterTerm = fieldName + Literal(':') + (filterValueText | filterValueTextWithSpaces | filterValueTextWithParentheses | filterValueRange | Empty())
 filterExpr = operatorPrecedence(Group(filterTerm | geotagFilter), [(Optional(or_ | "||").setName("or"), 2, opAssoc.LEFT)])
 
 
@@ -64,7 +65,6 @@ def parse_query_filter_string(filter_query):
     """
     if filter_query:
         filter_list_str = filterExpr.parseString(filter_query)[0].asList()
-
         # check if not nested meaning there is only one filter
         # if yes, make it nested to treat it the same way as if there were several filters
         if isinstance(filter_list_str[0], basestring):

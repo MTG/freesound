@@ -62,7 +62,8 @@ class SearchUtilsTest(TestCase):
             'cluster_id': '',
             'filter_query_non_facets': '',
             'has_facet_filter': False,
-            'parsed_filters': []
+            'parsed_filters': [],
+            'parsing_error': False
         }
 
         self.assertDictEqual(query_params, expected_default_query_params)
@@ -99,7 +100,8 @@ class SearchUtilsTest(TestCase):
             'cluster_id': '',
             'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
             'has_facet_filter': False,
-            'parsed_filters': [[u'duration', ':', '[', u'1', ' TO ', u'10', ']'], [u'is_geotagged', ':', u'1']]
+            'parsed_filters': [[u'duration', ':', '[', u'1', ' TO ', u'10', ']'], [u'is_geotagged', ':', u'1']],
+            'parsing_error': False,
         }
 
         expected_advanced_search_params_dict = {

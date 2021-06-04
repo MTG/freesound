@@ -23,9 +23,6 @@ import random
 from utils.logging_filters import get_client_ip
 
 def rate_by_ip(group, request):
-    from django.conf import settings
-    if settings.DEBUG:
-        return 'test_ip'
     ip = get_client_ip(request)
     if ip == '-':
         # If for some reason an ip is not returned by get_client_ip, we generate a random number to avoid putting all

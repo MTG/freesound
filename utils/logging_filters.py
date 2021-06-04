@@ -21,8 +21,17 @@
 import logging
 import json
 
+from django.conf import settings
+
 
 def get_client_ip(request):
+    """
+    This method returns the IP of the current request by retrieving it from the HTTP_X_FORWARDED_FOR header (which
+    is added by nginx). If in DEBUG mode, a fake test IP will be returned.
+    """
+    if settings.DEBUG:
+        return '1.2.3.4'
+
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         ip = x_forwarded_for.split(',')[0].strip()

@@ -26,12 +26,14 @@ import re
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from ratelimit.decorators import ratelimit
 
 import forms
 import sounds
 import forum
 from utils.frontend_handling import render
 from utils.logging_filters import get_client_ip
+from utils.ratelimit import rate_by_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 
@@ -154,6 +156,7 @@ def perform_solr_query(q, current_page):
     return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
 
+@ratelimit(key=rate_by_ip, rate=settings.SEARCH_PAGE_RATELIMIT, group='search', block=True)
 def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")

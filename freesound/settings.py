@@ -531,6 +531,13 @@ MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 
 
 # -------------------------------------------------------------------------------
+# Rate limiting
+
+SEARCH_PAGE_RATELIMIT = '2/s'
+SIMILARITY_PAGE_RATELIMIT = '2/s'
+
+
+# -------------------------------------------------------------------------------
 # API settings
 
 ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False

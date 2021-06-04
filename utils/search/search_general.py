@@ -96,6 +96,11 @@ def add_sounds_to_solr(sounds):
     solr.add(documents)
 
 
+def commit():
+    solr = Solr(settings.SOLR_URL)
+    solr.commit()
+
+
 def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=False, delete_if_existing=False):
     """
     Add all sounds from the sound_queryset to the Solr index.
@@ -126,7 +131,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=Fal
         except SolrException as e:
             console_logger.error("failed to add sound batch to solr index, reason: %s", str(e))
             raise
-
+    commit()
     return num_correctly_indexed_sounds
 
 

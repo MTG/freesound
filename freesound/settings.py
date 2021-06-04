@@ -441,7 +441,8 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
 
 # -------------------------------------------------------------------------------
 # SOLR and search settings
-SOLR_URL = "http://search:8080/fs2/"
+SOLR_URL = "http://searchfive:8983/solr/freesound/"
+#SOLR_URL = "http://search:8080/fs2/"
 SOLR_FORUM_URL = "http://search:8080/forum/"
 
 ENABLE_QUERY_SUGGESTIONS = False  # Only for BW

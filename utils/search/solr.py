@@ -455,8 +455,6 @@ class Solr(object):
 
     def commit(self, wait_flush=True, wait_searcher=True):
         message = ET.Element('commit')
-        message.set("waitFlush", str(wait_flush).lower())
-        message.set("waitSearcher", str(wait_searcher).lower())
         self._request(message=ET.tostring(message, "utf-8"))
 
     def optimize(self, wait_flush=True, wait_searcher=True):

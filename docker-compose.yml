@@ -4,6 +4,7 @@ volumes:
     pgdata:
     m2home:
     solrdata:
+    solr5data:
     fswebhome:
 
 services:
@@ -55,7 +56,19 @@ services:
             - 8080:8080
         environment:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
-         
+
+    searchfive:
+        build:
+            context: ./docker
+            dockerfile: Dockerfile.search5
+        init: true
+        volumes:
+            - solr5data:/var/lib/solr
+            - ./utils/search/solr5.5:/solr.home
+            - ./docker/search/fs-solr.sh:/docker-entrypoint-initdb.d/freesound.sh
+        ports:
+            - 8081:8983
+
     tagrecommendation:
         build:
             context: ./tagrecommendation
@@ -69,7 +82,7 @@ services:
             - 8010:8010
         environment:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
-    
+
     similarity:
         build:
             context: ./similarity
@@ -110,7 +123,7 @@ services:
         depends_on:
             - db
             - gearmand
-    
+
     worker_analysis:
         build:
             context: ./

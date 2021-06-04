@@ -20,12 +20,23 @@
 
 import random
 
+from django.conf import settings
+
 from utils.logging_filters import get_client_ip
 
-def rate_by_ip(group, request):
+def get_ip_or_random_ip(request):
     ip = get_client_ip(request)
     if ip == '-':
         # If for some reason an ip is not returned by get_client_ip, we generate a random number to avoid putting all
         # requests in the same key
-        ip = random.random()
-    return '{}-{}'.format(group, ip)
+        ip = str(random.random())
+    return ip
+
+def key_for_ratelimiting(group, request):
+    return '{}-{}'.format(group, get_ip_or_random_ip(request))
+
+def rate_per_ip(group, request):
+    ip = get_ip_or_random_ip(request)
+    if ip in settings.BLOCKED_IPS:
+        return '0/s'
+    return settings.RATELIMITS[group]

@@ -60,7 +60,7 @@ from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beast
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
-from utils.ratelimit import rate_by_ip
+from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import get_random_sound_from_solr
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
@@ -660,7 +660,7 @@ def geotag(request, username, sound_id):
 
 
 @redirect_if_old_username_or_404
-@ratelimit(key=rate_by_ip, rate=settings.SIMILARITY_PAGE_RATELIMIT, group='similarity', block=True)
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound,
                               id=sound_id,

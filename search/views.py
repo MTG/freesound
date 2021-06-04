@@ -33,7 +33,7 @@ import sounds
 import forum
 from utils.frontend_handling import render
 from utils.logging_filters import get_client_ip
-from utils.ratelimit import rate_by_ip
+from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 
@@ -156,7 +156,7 @@ def perform_solr_query(q, current_page):
     return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
 
-@ratelimit(key=rate_by_ip, rate=settings.SEARCH_PAGE_RATELIMIT, group='search', block=True)
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")

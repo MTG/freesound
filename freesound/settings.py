@@ -533,9 +533,13 @@ MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 # -------------------------------------------------------------------------------
 # Rate limiting
 
-SEARCH_PAGE_RATELIMIT = '2/s'
-SIMILARITY_PAGE_RATELIMIT = '2/s'
-
+RATELIMIT_SEARCH_GROUP = 'search'
+RATELIMIT_SIMILARITY_GROUP = 'similarity'
+RATELIMITS = {
+    RATELIMIT_SEARCH_GROUP: '2/s',
+    RATELIMIT_SIMILARITY_GROUP: '2/s'
+}
+BLOCKED_IPS = []
 
 # -------------------------------------------------------------------------------
 # API settings

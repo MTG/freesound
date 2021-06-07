@@ -39,4 +39,4 @@ def rate_per_ip(group, request):
     ip = get_ip_or_random_ip(request)
     if ip in settings.BLOCKED_IPS:
         return '0/s'
-    return settings.RATELIMITS[group]
+    return settings.RATELIMITS(group, settings.RATELIMIT_DEFAULT_GROUP_RATELIMIT)

@@ -1,0 +1,40 @@
+name: Freesound Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ '*' ]
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup
+      run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
+
+    - name: update settings file
+      run: sed -i 's#^DISPLAY_DEBUG_TOOLBAR.*#DISPLAY_DEBUG_TOOLBAR = False#' freesound/local_settings.py
+
+    - name: Login to Docker Hub
+      run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+      continue-on-error: true
+
+    - name: Pull docker images
+      run: docker-compose pull
+
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      continue-on-error: true
+
+    - name: Build base image
+      run: make -C docker
+
+    - name: Build images
+      run: docker-compose -f docker-compose.travis.yml build db test_runner
+
+    - name: Run tests
+      run: docker-compose -f docker-compose.travis.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings

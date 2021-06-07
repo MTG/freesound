@@ -77,6 +77,7 @@ from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.images import extract_square
+from utils.logging_filters import get_client_ip
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
@@ -88,6 +89,7 @@ from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
 web_logger = logging.getLogger('web')
+volatile_logger = logging.getLogger('volatile')
 
 
 @login_required
@@ -97,6 +99,7 @@ def crash_me(request):
 
 
 def ratelimited_error(request, exception):
+    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request)})))
     return render(request, '429.html', status=429)
 
 

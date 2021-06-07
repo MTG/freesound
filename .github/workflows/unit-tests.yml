@@ -14,6 +14,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Notify workflow starting
+      if: success()
+      id: slack
+      uses: voxmedia/github-action-slack-notify-build@v1
+      with:
+        channel_id: CCLF4PSNP
+        status: STARTING
+        color: warning
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+
     - name: Setup
       run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
 
@@ -43,6 +54,7 @@ jobs:
       uses: voxmedia/github-action-slack-notify-build@v1
       if: success()
       with:
+        message_id: ${{ steps.slack.outputs.message_id }}
         channel_id: CCLF4PSNP
         status: SUCCESS
         color: good
@@ -53,6 +65,7 @@ jobs:
       uses: voxmedia/github-action-slack-notify-build@v1
       if: failure()
       with:
+        message_id: ${{ steps.slack.outputs.message_id }}
         channel_id: CCLF4PSNP
         status: FAILED
         color: danger

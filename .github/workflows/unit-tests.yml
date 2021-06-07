@@ -39,10 +39,6 @@ jobs:
     - name: Run tests
       run: docker-compose -f docker-compose.travis.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings
 
-  notificaction:
-    runs-on: ubuntu-latest
-
-    steps:
     - name: Notify success
       uses: voxmedia/github-action-slack-notify-build@v1
       if: success()

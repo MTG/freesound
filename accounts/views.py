@@ -96,6 +96,10 @@ def crash_me(request):
     raise Exception
 
 
+def ratelimited_error(request, exception):
+    return render(request, '429.html', status=429)
+
+
 def login(request, template_name, authentication_form):
     # Freesound-specific login view to check if a user has multiple accounts
     # with the same email address. We can switch back to the regular django view

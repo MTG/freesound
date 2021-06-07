@@ -29,6 +29,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
     'admin_reorder.middleware.ModelAdminReorder',
+    'ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -533,6 +534,7 @@ MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 # -------------------------------------------------------------------------------
 # Rate limiting
 
+RATELIMIT_VIEW = 'accounts.views.ratelimited_error'
 RATELIMIT_SEARCH_GROUP = 'search'
 RATELIMIT_SIMILARITY_GROUP = 'similarity'
 RATELIMITS = {

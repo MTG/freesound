@@ -91,8 +91,8 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
     """Pre-process parsed search filter parameters and returns the filters' information.
 
     This function is used in the search template to display the filter and the link when removing them.
-    The clustering facet filter is in a separate query parameter. It facilitates to distinguish them from
-    the classical facet filters.
+    The cluster ID is provided seprated from the parsed filters in order to keep clustering explicitly 
+    separated from the rest of the filters.
 
     Args:
         filter_query (str): query filter string.
@@ -399,8 +399,12 @@ def search_prepare_query(search_query,
 def remove_facet_filters(parsed_filters):
     """Process query filter string to keep only non facet filters
 
-    Useful for being able to combine classic facet filters and clustering. Addtionaly, it returns
-    a boolean that indicates if a facet filter was present in the query.
+    Fact filters correspond to the filters that can be applied using one of the displayed facet in
+    the search interface. It is useful for being able to combine classic facet filters and clustering
+    because clustering has to be done on the results of a search without applying facet filters (we want
+    to have the clustering facet behaving as a traditional facet, meaning that the clustering should not 
+    be re-triggered when applying new facet filters on the results).
+    Addtionaly, it returns a boolean that indicates if a facet filter was present in the query.
 
     Args:
         parsed_filters (List[List[str]]): parsed query filter.

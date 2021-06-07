@@ -18,11 +18,79 @@
 #     See AUTHORS file.
 #
 
+import ipaddress
 import random
+import time
 
+from django.core.cache import cache
 from django.conf import settings
 
 from utils.logging_filters import get_client_ip
+
+last_cached_blocked_ips = []
+last_cached_blocked_ips_timestamp = 0
+
+
+def get_ips_to_block():
+    """
+    Get a list of IPs to block. Returned IPs include a combination of the IPs listed in settings.BLOCKED_IPS and
+    a list of IPs cached with the key settings.CACHED_BLOCKED_IPS_KEY. To avoid many queries to the cache, this
+    function stores the cached IPs in a global variable and only refreshes them after settings.CACHED_BLOCKED_IPS_TIME
+    seconds have passed since the last time the cache was queried for settings.CACHED_BLOCKED_IPS_KEY. This effectively
+    adds a 2nd layer of cache.
+
+    Returns:
+        List[str]: List of IPs to block
+    """
+    global last_cached_blocked_ips, last_cached_blocked_ips_timestamp
+    now = time.time()
+    if now - last_cached_blocked_ips_timestamp > settings.CACHED_BLOCKED_IPS_TIME:
+        last_cached_blocked_ips = cache.get(settings.CACHED_BLOCKED_IPS_KEY, None)
+        last_cached_blocked_ips_timestamp = now
+    if last_cached_blocked_ips is not None:
+        return list(set(settings.BLOCKED_IPS + last_cached_blocked_ips))
+    else:
+        return settings.BLOCKED_IPS
+
+
+def add_new_ip_to_block(ip):
+    """
+    Add a new IP to the cached list of IPs to block so that further requests to that IP will get blocked.
+    Note that it might take up to settings.CACHED_BLOCKED_IPS_TIME before that IP actually starts to
+    get blocked.
+
+    This method is intended to be used from the console as a quick way og blocking an IP. However, note that
+    if the cache gets cleared, that IP will no longer be clocked. For long-time persistent IP blocking,
+    settings.BLOCKED_IPS should be used.
+
+    Args:
+        ip (str): IP to block. Can also specify a range as described in ipaddress.IPv4Network docs.
+    """
+    cached_ips_to_block = cache.get(settings.CACHED_BLOCKED_IPS_KEY, None)
+    if cached_ips_to_block is not None:
+        cached_ips_to_block += [ip]
+    else:
+        cached_ips_to_block = [ip]
+    cache.set(settings.CACHED_BLOCKED_IPS_KEY, cached_ips_to_block)
+
+
+def ip_should_be_blocked(ip):
+    """
+    Determines whether an IP should be blocked. To do that, it uses ipaddress.ip_network objects which support
+    IP comparison using ranges.
+
+    Args:
+        ip (str): IP to check. Can also specify a range as described in ipaddress.IPv4Network docs.
+
+    Returns:
+        bool: True if the IP should be blocked, False otherwise.
+
+    """
+    for ip_to_block in get_ips_to_block():
+        if ipaddress.ip_network(unicode(ip_to_block)).overlaps(ipaddress.ip_network(unicode(ip))):
+            return True
+    return False
+
 
 def get_ip_or_random_ip(request):
     ip = get_client_ip(request)
@@ -32,11 +100,13 @@ def get_ip_or_random_ip(request):
         ip = str(random.random())
     return ip
 
+
 def key_for_ratelimiting(group, request):
     return '{}-{}'.format(group, get_ip_or_random_ip(request))
 
+
 def rate_per_ip(group, request):
     ip = get_ip_or_random_ip(request)
-    if ip in settings.BLOCKED_IPS:
+    if ip_should_be_blocked(ip):
         return '0/s'
-    return settings.RATELIMITS(group, settings.RATELIMIT_DEFAULT_GROUP_RATELIMIT)
+    return settings.RATELIMITS.get(group, settings.RATELIMIT_DEFAULT_GROUP_RATELIMIT)

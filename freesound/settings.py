@@ -543,6 +543,8 @@ RATELIMITS = {
     RATELIMIT_SIMILARITY_GROUP: '2/s'
 }
 BLOCKED_IPS = []
+CACHED_BLOCKED_IPS_KEY = 'cached_blocked_ips'
+CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 
 # -------------------------------------------------------------------------------
 # API settings

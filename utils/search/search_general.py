@@ -27,6 +27,7 @@ import json
 import re
 from django.conf import settings
 from django.utils.http import urlquote_plus
+from pyparsing import ParseException
 
 import sounds
 from search import forms
@@ -236,7 +237,13 @@ def search_prepare_parameters(request):
     sort = search_prepare_sort(sort_unformatted, sort_options)
 
     # parse query filter string and remove empty value fields
-    parsed_filters = parse_query_filter_string(filter_query)
+    parsing_error = False
+    try:
+        parsed_filters = parse_query_filter_string(filter_query)
+    except ParseException as e:
+        parsed_filters = []
+        parsing_error = True
+
     filter_query = ' '.join([''.join(filter_str) for filter_str in parsed_filters])
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
@@ -271,7 +278,8 @@ def search_prepare_parameters(request):
         'cluster_id': cluster_id,
         'filter_query_non_facets': filter_query_non_facets,
         'has_facet_filter': has_facet_filter,
-        'parsed_filters': parsed_filters
+        'parsed_filters': parsed_filters,
+        'parsing_error': parsing_error
     }
 
     return query_params, advanced_search_params_dict, extra_vars

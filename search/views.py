@@ -48,6 +48,12 @@ search_logger = logging.getLogger("search")
 def search(request):
     query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
+    # check if there was a filter parsing error
+    if extra_vars['parsing_error']:
+        search_logger.warning('Query filter parsing error. filter: %s' % (request.GET.get("f", "")))
+        extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
+        return render(request, 'search/search.html', extra_vars)
+
     # get the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
 

@@ -227,24 +227,38 @@ class SearchUtilsTest(TestCase):
         self.assertIn(expected_filter_query_split[1]['remove_url'],
                       filter_query_split[grouping_pack_facet_dict_idx]['remove_url'])
 
-    # these tests just ensure that no exception is returned when trying to parse filter strings 
+    # most of these tests just ensure that no exception is returned when trying to parse filter strings 
     # that gave problems while developping the filter string parser function 
     # utils.search.lucene_parser.parse_query_filter_string()
     def test_parse_filter_query_special_created(self):
-        filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'
-        filter_query_split = parse_query_filter_string(filter_query_string)
+        raised = False
+        e = None
+        try:
+            filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'       
+            filter_query_split = parse_query_filter_string(filter_query_string)
+        except Exception as e:
+            raised=True
+        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
 
     def test_parse_filter_query_special_char(self):
-        filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
-        filter_query_split = parse_query_filter_string(filter_query_string)
+        raised = False
+        e = None
+        try:
+            filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
+            filter_query_split = parse_query_filter_string(filter_query_string)
+        except Exception as e:
+            raised=True
+        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
 
     def test_parse_filter_query_special_char2(self):
-        filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
-        filter_query_split = parse_query_filter_string(filter_query_string)
-
-    # def test_parse_filter_query_empty_value(self):
-    #     filter_query_string = 'grouping_pack:'
-    #     filter_query_split = parse_query_filter_string(filter_query_string)
+        raised = False
+        e = None
+        try:
+            filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
+            filter_query_split = parse_query_filter_string(filter_query_string)
+        except Exception as e:
+            raised=True
+        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
 
     def test_parse_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''
@@ -253,11 +267,6 @@ class SearchUtilsTest(TestCase):
             ['tag', ':', '"cool"'],
             ["'{!", 'geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50', "}'"]
         ])
-
-    # def test_lucene_parser_removes_empty_value_filters(self):
-    #     filter_query_string = 'tag:"cool" license:'
-    #     parsed_filters = parse_query_filter_string(filter_query_string)
-    #     self.assertEqual(parsed_filters, [['tag', ':', '"cool"']])
 
     def test_parse_filter_composed_with_OR(self):
         filter_query_string = 'tag:"cool" license:("Attribution" OR "Creative Commons 0")'
@@ -268,8 +277,15 @@ class SearchUtilsTest(TestCase):
         ])
 
     def test_parse_filter_nested_composed_with_OR(self):
-        filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
-        parsed_filters = parse_query_filter_string(filter_query_string)
+        raised = False
+        e = None
+        try:
+            filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
+            parsed_filters = parse_query_filter_string(filter_query_string)
+        except Exception as e:
+            raised=True
+        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
+        
 
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):

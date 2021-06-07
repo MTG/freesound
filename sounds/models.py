@@ -101,11 +101,16 @@ class BulkUploadProgress(models.Model):
         ("C", 'Closed'),  # Process has finished and has been closes
     )
     progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
-    csv_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+    csv_filename = models.CharField(max_length=512, null=True, blank=True, default=None)
     original_csv_filename = models.CharField(max_length=255)
     validation_output = JSONField(null=True)
     sounds_valid = models.PositiveIntegerField(null=False, default=0)
     description_output = JSONField(null=True)
+
+    @property
+    def csv_path(self):
+        directory = os.path.join(settings.CSV_PATH, str(self.user.id))
+        return os.path.join(directory, self.csv_filename)
 
     def get_bulk_upload_basic_data_for_log(self):
         return {

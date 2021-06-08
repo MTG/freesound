@@ -85,7 +85,7 @@ def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
     """
-    cache_key = "random_sound"
+    cache_key = settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY
     random_sound = cache.get(cache_key)
     if not random_sound:
         try:

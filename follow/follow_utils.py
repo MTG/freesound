@@ -22,18 +22,18 @@
 
 from follow.models import FollowingUserItem, FollowingQueryItem
 import sounds
-from search.views import search_prepare_query, search_prepare_sort
+from utils.search.search_general import search_prepare_query, search_prepare_sort
 from django.conf import settings
 from utils.search.solr import Solr, SolrResponseInterpreter
 from search.forms import SEARCH_SORT_OPTIONS_WEB
-# from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import urllib
 
 SOLR_QUERY_LIMIT_PARAM = 3
 
 
 def get_users_following_qs(user):
-    return FollowingUserItem.objects.select_related('user_to__profile').filter(user_from=user).order_by('user_to__username')
+    return FollowingUserItem.objects.select_related('user_to__profile')\
+        .filter(user_from=user).order_by('user_to__username')
 
 
 def get_users_following(user):
@@ -41,7 +41,8 @@ def get_users_following(user):
 
 
 def get_users_followers_qs(user):
-    return FollowingUserItem.objects.select_related('user_from__profile').filter(user_to=user).order_by('user_from__username')
+    return FollowingUserItem.objects.select_related('user_from__profile')\
+        .filter(user_to=user).order_by('user_from__username')
 
 
 def get_users_followers(user):

@@ -107,6 +107,8 @@ urlpatterns = [
     url(r'^contact/', support.views.contact, name="contact"),
 
     url(r'^search/$', search.views.search, name='sounds-search'),
+    url(r'^clustering_facet/$', search.views.clustering_facet, name='clustering-facet'),
+    url(r'^clustered_graph/$', search.views.clustered_graph, name='clustered-graph-json'),
     url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
 
     url(r'', include('ratings.urls')),

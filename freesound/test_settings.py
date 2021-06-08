@@ -24,6 +24,9 @@ CACHES = {
     },
     'api_monitoring': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'clustering': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 

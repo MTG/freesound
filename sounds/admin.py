@@ -44,11 +44,26 @@ class SoundAdmin(admin.ModelAdmin):
                                             'similarity_state')}),
                  )
     raw_id_fields = ('user', 'pack', 'sources')
-    list_display = ('id', 'user', 'original_filename', 'license', 'created', 'moderation_state')
-    list_filter = ('moderation_state', 'license', 'processing_state')
+    list_display = ('id', 'user', 'get_sound_name', 'created', 'moderation_state', 'processing_state', 'analysis_state')
+    list_filter = ('moderation_state', 'processing_state', 'analysis_state')
     ordering = ['id']
     search_fields = ('=id', '=user__username')
     readonly_fields = ('num_downloads', )
+    actions = ('reprocess_sound', )
+
+    def get_sound_name(self, obj):
+        max_len = 15
+        return '{0}{1}'.format(obj.original_filename[:max_len], '...' if len(obj.original_filename) > max_len else '')
+    get_sound_name.short_description = 'Name'
+
+    def reprocess_sound(self, request, queryset):
+        for sound in queryset:
+            sound.process(force=True, high_priority=True)
+            sound.analyze(force=True, high_priority=True)
+
+    reprocess_sound.short_description = 'Re-process and re-analyze sounds'
+
+
 admin.site.register(Sound, SoundAdmin)
 
 

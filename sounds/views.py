@@ -115,7 +115,10 @@ def sounds(request):
     popular_packs = Pack.objects.select_related('user').filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            random_sound = None
     else:
         random_sound = None
     tvars = {
@@ -198,7 +201,10 @@ def front_page(request):
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            random_sound = None
     else:
         random_sound = None
 

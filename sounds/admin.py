@@ -20,8 +20,10 @@
 #     See AUTHORS file.
 #
 
+from django.conf.urls import url
 from django.contrib import admin, messages
-from django.db import models
+from django.core.management import call_command
+from django.http import HttpResponseRedirect
 from django.template.defaultfilters import truncatechars
 from django.urls import reverse
 from django_object_actions import DjangoObjectActions
@@ -171,8 +173,23 @@ admin.site.register(Flag, FlagAdmin)
 
 
 class SoundOfTheDayAdmin(admin.ModelAdmin):
+    change_list_template = "admin_custom/sound_of_the_day_changelist.html"
     raw_id_fields = ('sound',)
     list_display = ('date_display', 'sound', 'email_sent')
+    ordering = ('-date_display', )
+
+    def get_urls(self):
+        urls = super(SoundOfTheDayAdmin, self).get_urls()
+        my_urls = [
+            url('generate_new_sounds/', self.generate_new_sounds),
+        ]
+        return my_urls + urls
+
+    def generate_new_sounds(self, request):
+        call_command('create_random_sounds')
+        messages.add_message(request, messages.INFO, 'New random sounds of the dat have been generated!')
+        return HttpResponseRedirect(reverse('admin:sounds_soundoftheday_changelist'))
+
 admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)
 
 

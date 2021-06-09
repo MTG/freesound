@@ -344,6 +344,7 @@ BASE_MAX_POSTS_PER_DAY = 5
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
+RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
 
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors

@@ -76,5 +76,10 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'volatile': {
+            'handlers': ['stdout'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }

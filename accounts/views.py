@@ -614,16 +614,17 @@ def describe(request):
         if csv_form.is_valid():
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
             create_directories(directory, exist_ok=True)
-
             extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
-            path = os.path.join(directory, str(uuid.uuid4()) + '.%s' % extension)
+            new_csv_filename = str(uuid.uuid4()) + '.%s' % extension
+            path = os.path.join(directory, new_csv_filename)
             destination = open(path, 'wb')
 
             f = csv_form.cleaned_data['csv_file']
             for chunk in f.chunks():
                 destination.write(chunk)
 
-            bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path, original_csv_filename=f.name)
+            bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
+                                                     original_csv_filename=f.name)
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("validate_bulk_describe_csv", str(bulk.id), wait_until_complete=False, background=True)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))

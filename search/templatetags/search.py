@@ -39,7 +39,7 @@ def display_facet(context, flt, facet, type, title=""):
     # are not unique!. What we do then is filter out the facet elements where, only for the case of grouping_pack,
     # the element name is a single number that does not contain the character "_"
 
-    filter_query = context['filter_query']
+    filter_query = urlquote_plus(context['filter_query'])
     filtered_facet = []
     for element in facet:
         if flt == "grouping_pack":

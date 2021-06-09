@@ -19,6 +19,7 @@
 #
 
 import ipaddress
+import logging
 import random
 import time
 
@@ -26,6 +27,8 @@ from django.core.cache import cache
 from django.conf import settings
 
 from utils.logging_filters import get_client_ip
+
+console_logger = logging.getLogger('console')
 
 last_cached_blocked_ips = []
 last_cached_blocked_ips_timestamp = 0
@@ -59,13 +62,22 @@ def add_new_ip_to_block(ip):
     Note that it might take up to settings.CACHED_BLOCKED_IPS_TIME before that IP actually starts to
     get blocked.
 
-    This method is intended to be used from the console as a quick way og blocking an IP. However, note that
-    if the cache gets cleared, that IP will no longer be clocked. For long-time persistent IP blocking,
-    settings.BLOCKED_IPS should be used.
+    This method is intended to be used from the console as a quick way of blocking an IP. However, note that
+    if the cache gets cleared, that IP will no longer be blocked. For long-time persistent IP blocking,
+    settings.BLOCKED_IPS should be used. To use this method, login in a Django console and type:
+
+        from utils.ratelimit import add_new_ip_to_block
+        add_new_ip_to_block("1.2.3.4")
 
     Args:
         ip (str): IP to block. Can also specify a range as described in ipaddress.IPv4Network docs.
     """
+    try:
+        ipaddress.ip_network(unicode(ip))
+    except ValueError as e:
+        console_logger.info('The provided IP {} is not valid: {}'.format(ip, e))
+        return
+
     cached_ips_to_block = cache.get(settings.CACHED_BLOCKED_IPS_KEY, None)
     if cached_ips_to_block is not None:
         cached_ips_to_block += [ip]
@@ -74,7 +86,7 @@ def add_new_ip_to_block(ip):
     cache.set(settings.CACHED_BLOCKED_IPS_KEY, cached_ips_to_block)
 
 
-def ip_should_be_blocked(ip):
+def ip_is_blocked(ip):
     """
     Determines whether an IP should be blocked. To do that, it uses ipaddress.ip_network objects which support
     IP comparison using ranges.
@@ -107,6 +119,6 @@ def key_for_ratelimiting(group, request):
 
 def rate_per_ip(group, request):
     ip = get_ip_or_random_ip(request)
-    if ip_should_be_blocked(ip):
+    if ip_is_blocked(ip):
         return '0/s'
     return settings.RATELIMITS.get(group, settings.RATELIMIT_DEFAULT_GROUP_RATELIMIT)

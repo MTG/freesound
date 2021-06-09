@@ -29,6 +29,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
     'admin_reorder.middleware.ModelAdminReorder',
+    'ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -564,6 +565,21 @@ IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
 # Set to False by default (to be overwritten in local_settings.py)
 # When activated, Enables to do js calls & html clustering facets rendering
 ENABLE_SEARCH_RESULTS_CLUSTERING = False
+
+# -------------------------------------------------------------------------------
+# Rate limiting
+
+RATELIMIT_VIEW = 'accounts.views.ratelimited_error'
+RATELIMIT_SEARCH_GROUP = 'search'
+RATELIMIT_SIMILARITY_GROUP = 'similarity'
+RATELIMIT_DEFAULT_GROUP_RATELIMIT = '2/s'
+RATELIMITS = {
+    RATELIMIT_SEARCH_GROUP: '2/s',
+    RATELIMIT_SIMILARITY_GROUP: '2/s'
+}
+BLOCKED_IPS = []
+CACHED_BLOCKED_IPS_KEY = 'cached_blocked_ips'
+CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 
 # -------------------------------------------------------------------------------
 # API settings

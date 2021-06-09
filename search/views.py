@@ -29,6 +29,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
+from ratelimit.decorators import ratelimit
 
 import forum
 import sounds
@@ -37,6 +38,7 @@ from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_
 from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
 from utils.frontend_handling import render
 from utils.logging_filters import get_client_ip
+from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
     split_filter_query
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
@@ -45,6 +47,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
 search_logger = logging.getLogger("search")
 
 
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
     query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
@@ -86,7 +89,7 @@ def search(request):
         'cluster_id': extra_vars['cluster_id'],
         'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING
     }
-    
+
     tvars.update(advanced_search_params_dict)
 
     search_logger.info(u'Search (%s)' % json.dumps({
@@ -103,7 +106,7 @@ def search(request):
     query = search_prepare_query(**query_params)
 
     try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, 
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query,
                                                                                           query_params['current_page'])
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
@@ -117,7 +120,7 @@ def search(request):
         docs = [doc for doc in docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
-        
+
         tvars.update({
             'paginator': paginator,
             'page': page,
@@ -144,7 +147,7 @@ def _get_ids_in_cluster(request, requested_cluster_id):
     """
     try:
         requested_cluster_id = int(requested_cluster_id) - 1
-    
+
         # results are cached in clustering_utilities, available features are defined in the clustering settings file.
         result = cluster_sound_results(request, features=DEFAULT_FEATURES)
         results = result['result']
@@ -171,7 +174,7 @@ def clustering_facet(request):
     """
     # pass the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
-    # remove existing cluster facet filter from the params since the returned cluster facets will include 
+    # remove existing cluster facet filter from the params since the returned cluster facets will include
     # their correspondinng cluster_id query parameter (done in the template)
     url_query_params_string = re.sub(r"(&cluster_id=[0-9]*)", "", url_query_params_string)
 
@@ -194,7 +197,7 @@ def clustering_facet(request):
     query_params, _, extra_vars = search_prepare_parameters(request)
     if extra_vars['has_facet_filter']:
         sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
-        results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered] 
+        results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered]
                    for cluster in results]
 
     num_sounds_per_cluster = [len(cluster) for cluster in results]
@@ -211,30 +214,30 @@ def clustering_facet(request):
         cluster_tags[partition[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
 
     # count 3 most occuring tags
-    # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict 
+    # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict
     cluster_most_occuring_tags = [
         [tag for tag, _ in Counter(cluster_tags[cluster_id]).most_common(NUM_TAGS_SHOWN_PER_CLUSTER_FACET)]
         if cluster_tags[cluster_id] else []
         for cluster_id in range(len(results))
     ]
     most_occuring_tags_formatted = [
-        ' '.join(most_occuring_tags) 
+        ' '.join(most_occuring_tags)
         for most_occuring_tags in cluster_most_occuring_tags
     ]
 
     # extract sound examples for each cluster
     sound_ids_examples_per_cluster = [
-        map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET]) 
+        map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET])
         for cluster_sound_ids in results
     ]
     sound_ids_examples = [item for sublist in sound_ids_examples_per_cluster for item in sublist]
     sound_urls = {
-        sound.id: sound.locations()['preview']['LQ']['ogg']['url'] 
-            for sound in sound_instances 
+        sound.id: sound.locations()['preview']['LQ']['ogg']['url']
+            for sound in sound_instances
             if sound.id in sound_ids_examples
     }
     sound_url_examples_per_cluster = [
-        [(sound_id, sound_urls[sound_id]) for sound_id in cluster_sound_ids] 
+        [(sound_id, sound_urls[sound_id]) for sound_id in cluster_sound_ids]
             for cluster_sound_ids in sound_ids_examples_per_cluster
     ]
 
@@ -242,9 +245,9 @@ def clustering_facet(request):
             'results': partition,
             'url_query_params_string': url_query_params_string,
             'cluster_id_num_results_tags_sound_examples': zip(
-                range(num_clusters), 
-                num_sounds_per_cluster, 
-                most_occuring_tags_formatted, 
+                range(num_clusters),
+                num_sounds_per_cluster,
+                most_occuring_tags_formatted,
                 sound_url_examples_per_cluster
             ),
     })

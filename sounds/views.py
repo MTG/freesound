@@ -118,6 +118,8 @@ def sounds(request):
         try:
             random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
         except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
             random_sound = None
     else:
         random_sound = None
@@ -204,6 +206,8 @@ def front_page(request):
         try:
             random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
         except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
             random_sound = None
     else:
         random_sound = None

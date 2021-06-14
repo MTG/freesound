@@ -153,11 +153,14 @@ USE_TZ = False
 USE_I18N = False
 
 # Redis and caches
+# NOTE: some of these settings need to be re-defined in local_settings.py (eg to build cache urls)
+# We should optimize that so settings do not need to be re-defined
 REDIS_HOST = 'redis'
 REDIS_PORT = 6379
 API_MONITORING_REDIS_STORE_ID = 0
 CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
+CELERY_BROKER_REDIS_STORE_ID = 3
 
 CACHES = {
     'default': {
@@ -548,13 +551,7 @@ MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 
 # -------------------------------------------------------------------------------
 # Search results clustering
-
-# Celery configuration
-CELERY_BROKER_URL = 'redis://{}:{}'.format(REDIS_HOST, REDIS_PORT)
-CELERY_RESULT_BACKEND = 'redis://{}:{}'.format(REDIS_HOST, REDIS_PORT)
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+# NOTE: celery configuration is set after the local settings import
 
 # Environment variables
 # '1' indicates that a process is running as a celery worker.
@@ -739,6 +736,15 @@ if SENTRY_DSN:
 
 
 # -------------------------------------------------------------------------------
+# Celery
+
+CELERY_BROKER_URL = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
+CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# -------------------------------------------------------------------------------
 # Extra Freesound settings
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
@@ -760,10 +766,6 @@ AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
-
-
-# -------------------------------------------------------------------------------
-# Settings depending on DEBUG config
 
 # In a typical development setup original files won't be available in the filesystem, but preview files
 # might be available as these take much less space. The flag below will configure Freesound to use these

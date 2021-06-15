@@ -243,12 +243,15 @@ DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 
-# AWS tokens (for accessing email bounce list and email statistics)
+# AWS credentials for sending email (SES)
 AWS_REGION = ''
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 
-# Email bounce processing parameters
+# AWS credentials for accessing bounces queue (SQS)
+AWS_SQS_REGION = ''
+AWS_SQS_ACCESS_KEY_ID = ''
+AWS_SQS_SECRET_ACCESS_KEY = ''
 AWS_SQS_QUEUE_URL = ''
 AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
 

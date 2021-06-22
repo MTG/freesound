@@ -167,7 +167,7 @@ def donation_session_stripe(request):
         if form.is_valid():
             email_to = request.user.email if request.user.is_authenticated() else None
             amount = form.cleaned_data['amount']
-            domain = "http://%s" % Site.objects.get_current().domain
+            domain = "https://%s" % Site.objects.get_current().domain
             return_url_success = urlparse.urljoin(domain, reverse('donation-success'))
             return_url_success += '?token={}'.format(form.encoded_data)
             return_url_cancel = urlparse.urljoin(domain, reverse('donate'))

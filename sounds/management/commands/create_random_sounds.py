@@ -21,6 +21,7 @@
 import datetime
 
 from django.conf import settings
+from django.core.cache import cache
 
 from sounds.models import SoundOfTheDay
 from utils.management_commands import LoggingBaseCommand
@@ -47,4 +48,8 @@ class Command(LoggingBaseCommand):
             for i in range(number_sounds):
                 td = datetime.timedelta(days=i+1)
                 SoundOfTheDay.objects.create_sound_for_date(datetime.date.today() + td)
+
+        # Now delete existing cache of random sound so that it is reloaded the next time the sound is requested
+        cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
+
         self.log_end({'n_random_sounds_created': sounds_to_create})

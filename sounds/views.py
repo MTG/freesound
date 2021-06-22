@@ -40,6 +40,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse, resolve
 from django.utils.six.moves.urllib.parse import urlparse
+from ratelimit.decorators import ratelimit
 
 from comments.forms import CommentForm
 from comments.models import Comment
@@ -59,6 +60,7 @@ from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beast
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
+from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import get_random_sound_from_solr
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
@@ -85,7 +87,7 @@ def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
     """
-    cache_key = "random_sound"
+    cache_key = settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY
     random_sound = cache.get(cache_key)
     if not random_sound:
         try:
@@ -115,7 +117,12 @@ def sounds(request):
     popular_packs = Pack.objects.select_related('user').filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
+            random_sound = None
     else:
         random_sound = None
     tvars = {
@@ -198,7 +205,12 @@ def front_page(request):
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
+            random_sound = None
     else:
         random_sound = None
 
@@ -658,6 +670,7 @@ def geotag(request, username, sound_id):
 
 
 @redirect_if_old_username_or_404
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound,
                               id=sound_id,

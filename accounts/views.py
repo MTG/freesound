@@ -77,6 +77,7 @@ from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.images import extract_square
+from utils.logging_filters import get_client_ip
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
@@ -88,12 +89,18 @@ from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
 web_logger = logging.getLogger('web')
+volatile_logger = logging.getLogger('volatile')
 
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def crash_me(request):
     raise Exception
+
+
+def ratelimited_error(request, exception):
+    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request)})))
+    return render(request, '429.html', status=429)
 
 
 def login(request, template_name, authentication_form):
@@ -607,16 +614,17 @@ def describe(request):
         if csv_form.is_valid():
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
             create_directories(directory, exist_ok=True)
-
             extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
-            path = os.path.join(directory, str(uuid.uuid4()) + '.%s' % extension)
+            new_csv_filename = str(uuid.uuid4()) + '.%s' % extension
+            path = os.path.join(directory, new_csv_filename)
             destination = open(path, 'wb')
 
             f = csv_form.cleaned_data['csv_file']
             for chunk in f.chunks():
                 destination.write(chunk)
 
-            bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path, original_csv_filename=f.name)
+            bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
+                                                     original_csv_filename=f.name)
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("validate_bulk_describe_csv", str(bulk.id), wait_until_complete=False, background=True)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))

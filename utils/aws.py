@@ -42,9 +42,9 @@ def init_client(service):
     if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
         raise AwsCredentialsNotConfigured()
 
-    return client(service, region_name=settings.AWS_REGION,
-                  aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+    return client(service, region_name=settings.AWS_SQS_REGION,
+                  aws_access_key_id=settings.AWS_SQS_ACCESS_KEY_ID,
+                  aws_secret_access_key=settings.AWS_SQS_SECRET_ACCESS_KEY)
 
 
 class EmailStats(object):

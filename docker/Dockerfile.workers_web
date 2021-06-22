@@ -76,6 +76,7 @@ RUN wget -q -O - https://deb.nodesource.com/setup_14.x | bash - && apt-get updat
 		zlib1g-dev \
 		libpng-dev \
 		nodejs \
+		ffmpeg \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Make some folders to add code and data

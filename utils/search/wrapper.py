@@ -1,7 +1,7 @@
 from django.conf import settings
 
-from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, \
-    SolrException, BaseSolrAddEncoder, SolrJsonResponseDecoder
+from utils.search.backend.solr.client import SolrQuery, Solr, SolrResponseInterpreter, \
+    SolrException, BaseSolrAddEncoder, SolrJsonResponseDecoder, SolrResponseInterpreterPaginator
 
 
 class SearchEngine(object):
@@ -11,9 +11,23 @@ class SearchEngine(object):
 
     def search(self, query):
         return SolrResponseInterpreter(self.backend.select(unicode(query)))
+    
+    def return_paginator(self, results, num_per_page):
+        return SolrResponseInterpreterPaginator(results, num_per_page)
 
-    def add_to_index(self):
-        pass
+    def add_to_index(self, docs):
+        self.backend.add(docs)
 
-    def remove_from_index(self):
-        pass
+    def remove_from_index(self, sound_id):
+        self.backend.delete_by_id(sound_id)
+
+    def remove_from_index_by_query(self, query):
+        self.backend.delete_by_query(query)
+
+    def remove_documents_by_ids(self, document_ids):
+        sound_ids_query = ' OR '.join(['id:{0}'.format(document_id) for document_id in document_ids])
+        self.backend.remove_from_index_by_query(sound_ids_query)
+
+
+class QueryManager(SolrQuery):
+    pass

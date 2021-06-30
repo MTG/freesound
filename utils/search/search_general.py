@@ -32,12 +32,11 @@ from pyparsing import ParseException
 import sounds
 from search import forms
 from search.forms import SEARCH_SORT_OPTIONS_WEB
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, SolrException, \
-    SolrResponseInterpreterPaginator
+from utils.search.backend.solr.client import SolrException
 from utils.text import remove_control_chars
 from utils.logging_filters import get_client_ip
 from utils.search.lucene_parser import parse_query_filter_string
-from utils.search.wrapper import SearchEngine
+from utils.search.wrapper import SearchEngine, QueryManager
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
@@ -324,10 +323,10 @@ def search_prepare_query(search_query,
         only_sounds_with_pack (bool): include only sound from pack or no.
         in_ids (list): list of sound ids for cluster filter facet.
 
-    Returns: (SolrQuery): the solr query object corresponding to the user submitted query.
+    Returns: (QueryManager): the query object corresponding to the user submitted query.
 
     """
-    query = SolrQuery()
+    query = QueryManager()
 
     # Set field weights and scoring function
     field_weights = []
@@ -461,7 +460,7 @@ def perform_solr_query(q, current_page):
     # pysolr
     # r = solr.select(q.as_dict())
     # results = SolrResponseInterpreter(r)
-    paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+    paginator = search_engine.return_paginator(results, settings.SOUNDS_PER_PAGE)
     page = paginator.page(current_page)
     return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
@@ -520,11 +519,13 @@ def convert_to_solr_document(sound):
 
 
 def add_sounds_to_solr(sounds):
-    solr = Solr(settings.SOLR_URL)
+    # solr = Solr(settings.SOLR_URL)
+    search_engine = SearchEngine(settings.SOLR_URL)
     documents = [convert_to_solr_document(s) for s in sounds]
     console_logger.info("Adding %d sounds to solr index" % len(documents))
     search_logger.info("Adding %d sounds to solr index" % len(documents))
-    solr.add(documents)
+    # solr.add(documents)
+    search_engine.add_to_index(documents)
 
 
 def add_all_sounds_to_solr(sound_queryset, slice_size=1000, mark_index_clean=False, delete_if_existing=False):
@@ -565,16 +566,20 @@ def get_all_sound_ids_from_solr(limit=False):
     search_logger.info("getting all sound ids from solr.")
     if not limit:
         limit = 99999999999999
-    solr = Solr(settings.SOLR_URL)
+    # solr = Solr(settings.SOLR_URL)
+    search_engine = SearchEngine(settings.SOLR_URL)
     solr_ids = []
     solr_count = None
     PAGE_SIZE = 2000
     current_page = 1
     while (len(solr_ids) < solr_count or solr_count is None) and len(solr_ids) < limit:
-        response = SolrResponseInterpreter(
-            solr.select(unicode(search_prepare_query(
+        # response = SolrResponseInterpreter(
+        #     solr.select(unicode(search_prepare_query(
+        #         '', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE,
+        #         include_facets=False))))
+        response = search_engine.search(search_prepare_query(
                 '', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE,
-                include_facets=False))))
+                include_facets=False))
         solr_ids += [element['id'] for element in response.docs]
         solr_count = response.num_found
         current_page += 1
@@ -582,10 +587,13 @@ def get_all_sound_ids_from_solr(limit=False):
 
 
 def check_if_sound_exists_in_solr(sound):
-    solr = Solr(settings.SOLR_URL)
-    response = SolrResponseInterpreter(
-        solr.select(unicode(search_prepare_query(
-            '', 'id:%i' % sound.id, search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), 1, 1))))
+    # solr = Solr(settings.SOLR_URL)
+    search_engine = SearchEngine(settings.SOLR_URL)
+    # response = SolrResponseInterpreter(
+    #     solr.select(unicode(search_prepare_query(
+    #         '', 'id:%i' % sound.id, search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), 1, 1))))
+    response = search_engine.search(search_prepare_query(
+            '', 'id:%i' % sound.id, search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), 1, 1))
     return response.num_found > 0
 
 
@@ -594,15 +602,17 @@ def get_random_sound_from_solr():
     This is used for random sound browsing. We filter explicit sounds,
     but otherwise don't have any other restrictions on sound attributes
     """
-    solr = Solr(settings.SOLR_URL)
-    query = SolrQuery()
+    # solr = Solr(settings.SOLR_URL)
+    search_engine = SearchEngine(settings.SOLR_URL)
+    query = QueryManager()
     rand_key = random.randint(1, 10000000)
     sort = ['random_%d asc' % rand_key]
     filter_query = 'is_explicit:0'
     query.set_query("*:*")
     query.set_query_options(start=0, rows=1, field_list=["*"], filter_query=filter_query, sort=sort)
     try:
-        response = SolrResponseInterpreter(solr.select(unicode(query)))
+        # response = SolrResponseInterpreter(solr.select(unicode(query)))
+        response = search_engine.search(query)
         docs = response.docs
         if docs:
             return docs[0]
@@ -614,7 +624,8 @@ def get_random_sound_from_solr():
 def delete_sound_from_solr(sound_id):
     search_logger.info("deleting sound with id %d" % sound_id)
     try:
-        Solr(settings.SOLR_URL).delete_by_id(sound_id)
+        # Solr(settings.SOLR_URL).delete_by_id(sound_id)
+        SearchEngine(settings.SOLR_URL).remove_from_index(sound_id)
     except (SolrException, socket.error) as e:
         search_logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
 
@@ -625,13 +636,13 @@ def delete_sounds_from_solr(sound_ids):
         range_ids = sound_ids[i:i+solr_max_boolean_clause]
         try:
             search_logger.info(
-                "deleting %i sounds from solr [%i of %i, %i sounds]" %
+                "deleting %i sounds from search engine [%i of %i, %i sounds]" %
                 (len(sound_ids),
                  count + 1,
                  int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
                  len(range_ids)))
-            sound_ids_query = ' OR '.join(['id:{0}'.format(sid) for sid in range_ids])
-            Solr(settings.SOLR_URL).delete_by_query(sound_ids_query)
+            SearchEngine(settings.SOLR_URL).remove_documents_by_ids(range_ids)
+            
         except (SolrException, socket.error) as e:
             search_logger.error('could not delete solr sounds chunk %i of %i' %
                                 (count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause))))

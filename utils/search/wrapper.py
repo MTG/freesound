@@ -31,3 +31,7 @@ class SearchEngine(object):
 
 class QueryManager(SolrQuery):
     pass
+
+
+class SearchEngineException(SolrException):
+    pass

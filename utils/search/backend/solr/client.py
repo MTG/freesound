@@ -20,17 +20,23 @@
 #     Bram de Jong
 #
 
-from datetime import datetime, date
+import itertools
+import json
+import re
+import types
+import urllib
+from datetime import date, datetime
+from socket import error
 from time import strptime
 from xml.etree import cElementTree as ET
-import itertools, re, urllib
-import httplib, urlparse
-import cjson
-from socket import error
-import json
-import types
 
+import cjson
+import httplib
 import pysolr
+import urlparse
+
+from django.conf import settings
+from utils.text import remove_control_chars
 
 
 class Multidict(dict):
@@ -608,6 +614,59 @@ class SolrResponseInterpreterPaginator(object):
                 }
 
 
+def convert_to_solr_document(sound):
+    document = {}
+
+    # Basic sound fields
+    keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels', 'md5',
+                      'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
+    for key in keep_fields:
+        document[key] = getattr(sound, key)
+    document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
+    document["description"] = remove_control_chars(getattr(sound, "description"))
+    document["tag"] = getattr(sound, "tag_array")
+    document["license"] = getattr(sound, "license_name")
+
+    if getattr(sound, "pack_id"):
+        document["pack"] = remove_control_chars(getattr(sound, "pack_name"))
+        document["grouping_pack"] = str(getattr(sound, "pack_id")) + "_" + remove_control_chars(getattr(sound, "pack_name"))
+    else:
+        document["grouping_pack"] = str(getattr(sound, "id"))
+
+    document["is_geotagged"] = False
+    if getattr(sound, "geotag_id"):
+        document["is_geotagged"] = True
+        if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
+            document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
+
+    document["bitdepth"] = getattr(sound, "bitdepth") if getattr(sound, "bitdepth") else 0
+    document["bitrate"] = getattr(sound, "bitrate") if getattr(sound, "bitrate") else 0
+    document["samplerate"] = int(getattr(sound, "samplerate")) if getattr(sound, "samplerate") else 0
+
+    document["comment"] = [remove_control_chars(comment_text) for comment_text in getattr(sound, "comments_array")]
+    document["comments"] = getattr(sound, "num_comments")
+    locations = sound.locations()
+    document["waveform_path_m"] = locations["display"]["wave"]["M"]["path"]
+    document["waveform_path_l"] = locations["display"]["wave"]["L"]["path"]
+    document["spectral_path_m"] = locations["display"]["spectral"]["M"]["path"]
+    document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
+    document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
+
+    # Audio Commons analysis
+    # NOTE: as the sound object here is the one returned by SoundManager.bulk_query_solr, it will have the Audio Commons
+    # descriptor fields under a property called 'ac_analysis'.
+    ac_analysis = getattr(sound, "ac_analysis")
+    if ac_analysis is not None:
+        # If analysis is present, index all existing analysis fields under Solr's dynamic fields "*_i", "*_d", "*_s"
+        # and "*_b" depending on the value's type. Also add Audio Commons prefix.
+        for key, value in ac_analysis.items():
+            suffix = settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+            if suffix:
+                document['{0}{1}{2}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key, suffix)] = value
+
+    return document
+
+    
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

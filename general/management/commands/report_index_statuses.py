@@ -22,7 +22,7 @@ import logging
 
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
-from utils.search.search_general import get_all_sound_ids_from_solr, delete_sounds_from_solr
+from utils.search.search_general import get_all_sound_ids_from_search_engine, delete_sounds_from_search_engine
 from utils.similarity_utilities import Similarity
 
 console_logger = logging.getLogger('console')
@@ -48,7 +48,7 @@ class Command(LoggingBaseCommand):
 
         # Get all solr ids
         console_logger.info("Getting solr ids...")
-        solr_ids = get_all_sound_ids_from_solr()
+        solr_ids = get_all_sound_ids_from_search_engine()
 
         # Get ell gaia ids
         console_logger.info("Getting gaia ids...")
@@ -86,7 +86,7 @@ class Command(LoggingBaseCommand):
             # Delete sounds from solr that are not in the db
             if in_solr_not_in_fs:
                 console_logger.info("\nDeleting %i sounds that should not be in solr" % len(in_solr_not_in_fs))
-                delete_sounds_from_solr(sound_ids=in_solr_not_in_fs)
+                delete_sounds_from_search_engine(sound_ids=in_solr_not_in_fs)
 
         in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mpa))))
         in_fs_not_in_gaia = list(set(fs_mpa).intersection(set(set(fs_mpa).difference(gaia_ids))))

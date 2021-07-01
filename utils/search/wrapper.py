@@ -1,7 +1,8 @@
 from django.conf import settings
 
 from utils.search.backend.solr.client import SolrQuery, Solr, SolrResponseInterpreter, \
-    SolrException, BaseSolrAddEncoder, SolrJsonResponseDecoder, SolrResponseInterpreterPaginator
+    SolrException, BaseSolrAddEncoder, SolrJsonResponseDecoder, SolrResponseInterpreterPaginator, \
+    convert_to_solr_document
 
 
 class SearchEngine(object):
@@ -35,3 +36,7 @@ class QueryManager(SolrQuery):
 
 class SearchEngineException(SolrException):
     pass
+
+
+def convert_to_search_engine_document(document):
+    return convert_to_solr_document(document)

@@ -61,7 +61,7 @@ from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search.search_general import get_random_sound_from_solr
+from utils.search.search_general import get_random_sound_from_search_engine
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
@@ -143,7 +143,7 @@ def remixed(request):
 
 
 def random(request):
-    sound = get_random_sound_from_solr()
+    sound = get_random_sound_from_search_engine()
     sound_obj = None
     if sound:
         try:

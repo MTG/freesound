@@ -23,7 +23,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
-from utils.search.search_general import add_all_sounds_to_solr, delete_sounds_from_solr, get_all_sound_ids_from_solr
+from utils.search.search_general import add_all_sounds_to_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
 
 console_logger = logging.getLogger("console")
 
@@ -42,11 +42,11 @@ class Command(BaseCommand):
         # Get all sounds moderated and processed ok and add them to solr (also delete them before re-indexing)
         sounds_to_index = Sound.objects.filter(processing_state="OK", moderation_state="OK")
         console_logger.info("Re-indexing %d sounds to solr", sounds_to_index.count())
-        add_all_sounds_to_solr(sounds_to_index, mark_index_clean=True, delete_if_existing=True)
+        add_all_sounds_to_search_engine(sounds_to_index, mark_index_clean=True, delete_if_existing=True)
 
         # Delete all sounds in solr which are not found in the Freesound DB
-        solr_ids = get_all_sound_ids_from_solr()
+        solr_ids = get_all_sound_ids_from_search_engine()
         indexed_sound_ids = sounds_to_index.values_list('id', flat=True)
         sound_ids_to_delete = list(set(solr_ids).difference(indexed_sound_ids))
         console_logger.info("Deleting %d non-existing sounds form solr", len(sound_ids_to_delete))
-        delete_sounds_from_solr(sound_ids=sound_ids_to_delete)
+        delete_sounds_from_search_engine(sound_ids=sound_ids_to_delete)

@@ -160,7 +160,7 @@ class TicketTestsFromQueue(TicketTests):
             'action': action, 'message': u'', 'ticket': self.ticket.id,
             'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sound_from_search_engine')
     def test_delete_ticket_from_queue(self, delete_sound_solr):
         resp = self._perform_action(u'Delete')
 

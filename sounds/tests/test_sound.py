@@ -127,7 +127,7 @@ class ChangeSoundOwnerTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sound_from_search_engine')
     def test_change_sound_owner(self, delete_sound_solr):
         # Prepare some content
         userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
@@ -182,7 +182,7 @@ class ProfileNumSoundsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sound_from_search_engine')
     def test_moderation_and_processing_state_changes(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
@@ -204,7 +204,7 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(user.profile.num_sounds, 0)  # Sound unmoderated
         self.assertEqual(delete_sound_solr.call_count, 2) # Sound deleted once when going to FA, once when DE
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sound_from_search_engine')
     def test_sound_delete(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
@@ -219,7 +219,7 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(Comment.objects.count(), 0)
         delete_sound_solr.assert_called_once_with(sound_id)
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sound_from_search_engine')
     def test_deletedsound_creation(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
@@ -258,7 +258,7 @@ class PackNumSoundsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sound_from_search_engine')
     def test_create_and_delete_sounds(self, delete_sound_solr):
         N_SOUNDS = 5
         user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
@@ -341,7 +341,7 @@ class SoundViewsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sound_from_search_engine')
     def test_delete_sound_view(self, delete_sound_solr):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
         sound = sounds[0]

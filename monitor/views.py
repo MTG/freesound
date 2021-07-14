@@ -34,6 +34,7 @@ from django.shortcuts import render
 from django.urls import reverse
 
 import tickets
+from freesound.celery import get_queues_task_counts
 from sounds.models import Sound
 from tickets import TICKET_STATUS_CLOSED
 
@@ -46,7 +47,11 @@ def get_gearman_status(request):
         gearman_status = gm_admin_client.get_status()
     except gearman.errors.ServerUnavailable:
         gearman_status = list()
-    return render(request, 'monitor/gearman_status.html', {'gearman_status': gearman_status})
+
+    celery_task_counts = get_queues_task_counts()
+
+    return render(request, 'monitor/gearman_status.html',
+                  {'gearman_status': gearman_status, 'celery_task_counts': celery_task_counts})
 
 
 @login_required

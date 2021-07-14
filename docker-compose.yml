@@ -90,7 +90,7 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.clustering
         init: true
-        command: celery -A freesound worker -l info
+        command: celery -A freesound worker -l info -Q clustering
         volumes:
             - .:/code
             - ./freesound-data/clustering_index:/freesound-data/clustering_index

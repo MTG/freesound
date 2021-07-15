@@ -45,8 +45,9 @@ def get_queue_tasks_body(queue_name):
 def get_queues_task_counts():
     data = []
     # TODO: get celery queue names automatically
-    print(app.queues.keys())
+    print(app.control.inspect().stats())
     for queue_name in ['clustering', 'analyze_method1', 'analyze_method2']:
-        data.append((queue_name, len(get_queue_tasks_body(queue_name))))
+        num_workers = 0
+        data.append((queue_name, len(get_queue_tasks_body(queue_name)), num_workers))
     return data
 

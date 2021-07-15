@@ -14,9 +14,9 @@
 <table style="min-width:500px;">
 {% for item in celery_task_counts %}
     {% if forloop.counter0 == 0 %}
-        <tr><td><b>queue</b></td><td><b>number</b></td></tr>
+        <tr><td><b>queue</b></td><td><b>number</b></td><td><b>workers</b></td></tr>
     {% endif %}
-    <tr><td>{{ item.0 }}</td><td>{{ item.1 }}</td></tr>
+    <tr><td>{{ item.0 }}</td><td>{{ item.1 }}</td><td>{{ item.2 }}</td></tr>
 {% empty %}
     <p>No information available...</p>
 {% endfor %}

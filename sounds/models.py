@@ -1102,7 +1102,7 @@ class Sound(SocialModel):
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
-    def analyze_v2(self, force=False, high_priority=False, extractor="defaultExtractor"):
+    def analyze_v2(self, force=False, high_priority=False, analyzer="fs-essentia:1"):
         """
         Trigger analysis of the sound if analysis_state is not "OK" or force=True. 'high_priority' argument can be
         set to True to send the processing job with high priority to the gearman job server. Analysis code runs
@@ -1113,7 +1113,7 @@ class Sound(SocialModel):
             self.set_analysis_state("QU")
             gm_client.submit_job("analyze_sound_v2", json.dumps({
                 'sound_id': self.id,
-                'extractor': extractor
+                'analyzer': analyzer
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze_sound_v2'" % self.id)
 

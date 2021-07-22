@@ -105,38 +105,40 @@ class Command(BaseCommand):
         task_name = 'analyze_sound_v2'
         job_data = json.loads(gearman_job.data)
         sound_id = job_data['sound_id']
-        extractor = job_data.get('extractor', False)
+        analyzer = job_data.get('analyzer', False)
 
         workers_logger.info("Starting analysis (v2) of sound (%s)" % json.dumps(
-            {'task_name': task_name, 'sound_id': sound_id, 'extractor':extractor}))
+            {'task_name': task_name, 'sound_id': sound_id, 'analyzer':analyzer}))
 
         try:
             check_if_free_space()
             sound = Sound.objects.get(id=sound_id)
+            # Analysis happens here, this one is a fake one
             result = json.dumps({'loudness':40, 'spectral_centroid':1500})
             # Handle analysis failure commented for the future
             # if result:
-            SoundAnalysis.objects.get_or_create(sound=sound, extractor=extractor,
-                                            extractor_version="hello",
+            SoundAnalysis.objects.get_or_create(sound=sound, analyzer=analyzer,
+                                            analyzer_version=1,
                                             analysis_data=result)
+            sound.set_analysis_state("OK")
             workers_logger.info("Analysis finished (%s)" % json.dumps(
-                 {'task_name': task_name, 'sound_id': sound_id, 'extractor':extractor}))
+                 {'task_name': task_name, 'sound_id': sound_id, 'analyzer':analyzer}))
             # else:
             #     workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
             #         {'task_name': task_name, 'sound_id': sound_id, 'result': 'failure',
             #          'work_time': round(time.time() - start_time)}))
 
-        except Sound.DoesNotExist:
+        except Sound.DoesNotExist as e:
             workers_logger.error("Failed to analyze a sound that does not exist (%s)"% json.dumps(
-                {'task_name': task_name, 'sound_id': sound_id, 'error': str(e)}))
+                {'task_name': task_name, 'sound_id': sound_id, 'analyzer':analyzer, 'error': str(e)}))
         except WorkerException as e:
             workers_logger.error("WorkerException while analyzing sound (%s)" % json.dumps(
-                {'task_name': task_name, 'sound_id': sound_id, 'error': str(e),
+                {'task_name': task_name, 'sound_id': sound_id, 'analyzer':analyzer, 'error': str(e),
                  'work_time': round(time.time() - start_time)}))
 
         except Exception as e:
             workers_logger.error("Unexpected error while analyzing sound (%s)" % json.dumps(
-                {'task_name': task_name, 'sound_id': sound_id, 'error': str(e),
+                {'task_name': task_name, 'sound_id': sound_id, 'analyzer':analyzer, 'error': str(e),
                  'work_time': round(time.time() - start_time)}))
 
         cancel_timeout_alarm()

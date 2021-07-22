@@ -24,7 +24,7 @@ import logging
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from sounds.models import Sound, SoundAnalysis
+from sounds.models import SoundAnalysis
 
 console_logger = logging.getLogger("console")
 
@@ -37,5 +37,5 @@ class Command(BaseCommand):
         console_logger.info("Obtaining SoundAnalysis list...")
         for a in SoundAnalysis.objects.all():
             print(json.dumps({'SoundAnalysis_id': a.id, 'sound_id': a.sound.id, 
-                            'extractor': a.extractor, 'extractor_version': a.extractor_version
+                            'analyzer': a.analyzer, 'analyzer_version': a.analyzer_version
                             }))

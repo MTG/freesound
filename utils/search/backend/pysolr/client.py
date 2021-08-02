@@ -22,6 +22,7 @@
 
 import itertools
 import json
+import math
 import re
 import types
 import urllib
@@ -312,6 +313,25 @@ class SolrQuery(object):
         self.params['group.cache.percent'] = group_cache_percent
 
 
+def encode_value(value):
+    if isinstance(value, datetime):
+        value = value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    elif isinstance(value, date):
+        value = value.strftime('%Y-%m-%dT00:00:00.000Z')
+    elif isinstance(value, bool):
+        if value:
+            value = 'true'
+        else:
+            value = 'false'
+    else:
+        value = unicode(value)
+    return value
+
+
+def encode_list_dicts(list_dicts):
+    return [dict((k, encode_value(v)) for (k, v) in d.items()) for d in list_dicts]
+
+
 class SolrException(Exception):
     pass
 
@@ -365,7 +385,7 @@ class Solr(object):
         return self.pysolr.search(**query_string)
 
     def add(self, docs):
-        self.pysolr.add(docs)
+        self.pysolr.add(encode_list_dicts(docs))
 
     def delete_by_id(self, id):
         self.pysolr.delete_by_id(self, id)

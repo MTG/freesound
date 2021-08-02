@@ -41,9 +41,7 @@ from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
     split_filter_query
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
-    SolrResponseInterpreterPaginator, SolrException
-from utils.search.wrapper import SearchEngine
+from utils.search.backend.pysolr.wrapper import SearchEngine, QueryManager, SearchEngineException
 
 
 search_logger = logging.getLogger("search")
@@ -131,7 +129,7 @@ def search(request):
             'non_grouped_number_of_results': non_grouped_number_of_results,
         })
 
-    except SolrException as e:
+    except SearchEngineException as e:
         search_logger.warning('Search error: query: %s error %s' % (query, e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
@@ -351,7 +349,7 @@ def search_forum(request):
         if advanced_search == "1" and date_from != "" or date_to != "":
             filter_query = __add_date_range(filter_query, date_from, date_to)
 
-        query = SolrQuery()
+        query = QueryManager()
         query.set_dismax_query(search_query, query_fields=[("thread_title", 4),
                                                            ("post_body", 3),
                                                            ("thread_author", 3),
@@ -382,20 +380,20 @@ def search_forum(request):
         query.set_group_field("thread_title_grouped")
         query.set_group_options(group_limit=30)
 
-        solr = Solr(settings.SOLR_FORUM_URL)
+        search_engine = SearchEngine(settings.SOLR_FORUM_URL)
 
         try:
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+            results = search_engine.search(query)
+            paginator = search_engine.return_paginator(results, settings.SOUNDS_PER_PAGE)
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
-        except SolrException as e:
+        except SearchEngineException as e:
             search_logger.warning("search error: query: %s error %s" % (query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            search_logger.error("Could probably not connect to Solr - %s" % e)
+            search_logger.error("Could probably not connect to the search engine - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 
@@ -423,16 +421,16 @@ def search_forum(request):
 
 
 def get_pack_tags(pack_obj):
-    query = SolrQuery()
+    query = QueryManager()
     query.set_dismax_query('')
     filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
     query.set_query_options(field_list=["id"], filter_query=filter_query)
     query.add_facet_fields("tag")
     query.set_facet_options("tag", limit=20, mincount=1)
     try:
-        solr = Solr(settings.SOLR_URL)
-        results = SolrResponseInterpreter(solr.select(unicode(query)))
-    except (SolrException, Exception) as e:
+        search_engine = SearchEngine(settings.SOLR_URL)
+        results = search_engine.search(query)
+    except (SearchEngineException, Exception) as e:
         #  TODO: do something here?
         return False
     return results.facets

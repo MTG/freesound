@@ -27,7 +27,7 @@ class SearchEngine(object):
 
     def remove_documents_by_ids(self, document_ids):
         sound_ids_query = ' OR '.join(['id:{0}'.format(document_id) for document_id in document_ids])
-        self.backend.remove_from_index_by_query(sound_ids_query)
+        self.backend.delete_by_query(sound_ids_query)
 
 
 class QueryManager(SolrQuery):

@@ -34,7 +34,7 @@ from search import forms
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 from utils.logging_filters import get_client_ip
 from utils.search.lucene_parser import parse_query_filter_string
-from utils.search.wrapper import SearchEngine, QueryManager, SearchEngineException, convert_to_search_engine_document
+from utils.search.backend.pysolr.wrapper import SearchEngine, QueryManager, SearchEngineException, convert_to_search_engine_document
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")

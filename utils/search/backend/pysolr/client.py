@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:
-#     Bram de Jong
+#     See AUTHORS file.
 #
 
 import itertools
@@ -32,6 +32,7 @@ from xml.etree import cElementTree as ET
 
 import cjson
 import httplib
+import pysolr
 import urlparse
 
 from django.conf import settings
@@ -283,6 +284,14 @@ class SolrQuery(object):
     def __unicode__(self):
         return urllib.urlencode(Multidict(self.params))
 
+    # pysolr
+    def as_dict(self):
+        params = {k: v for k, v in self.params.iteritems() if v is not None}
+        for k, v in params.iteritems():
+            if type(v) == types.BooleanType:
+                params[k] = json.dumps(v)
+        return params
+
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field
 
@@ -303,110 +312,23 @@ class SolrQuery(object):
         self.params['group.cache.percent'] = group_cache_percent
 
 
-
-class BaseSolrAddEncoder(object):
-    """A Solr Add encoder has one method, called encode. This method will be called on whatever is
-    passed to the Solr add() method. It should return an XML compatible with the installed Solr schema.
-
-    >>> encoder = BaseSolrAddEncoder()
-    >>> encoder.encode([{"id": 5, "name": "guido", "tag":["python", "coder"], "status":"bdfl"}])
-    '<add><doc><field name="status">bdfl</field><field name="tag">python</field><field name="tag">coder</field><field name="id">5</field><field name="name">guido</field></doc></add>'
-    """
-    def encode(self, docs):
-        """Encodes a document as an XML tree. this particular one takes a dictionary and
-        translates the key value pairs to <field name="key">value<f/field>
-        """
-        message = ET.Element('add')
-
-        def add_basic_type(element, name, value):
-            """Converts python values to a form suitable for insertion into the xml
-            we send to solr and adds it to the doc XML.
-            """
-            if isinstance(value, datetime):
-                value = value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-            elif isinstance(value, date):
-                value = value.strftime('%Y-%m-%dT00:00:00.000Z')
-            elif isinstance(value, bool):
-                if value:
-                    value = 'true'
-                else:
-                    value = 'false'
-            else:
-                value = unicode(value)
-
-            field = ET.Element('field', name=name)
-            field.text = value
-            element.append(field)
-
-        for doc in docs:
-            d = ET.Element('doc')
-            for key, value in doc.items():
-                # handle lists, tuples, and other iterabes
-                if isinstance(value, (list, tuple)):
-                    for v in value:
-                        add_basic_type(d, key, v)
-                # handle strings and unicode
-                else:
-                    add_basic_type(d, key, value)
-            message.append(d)
-
-        return ET.tostring(message, "utf-8")
-
-
-
-class SolrResponseDecoderException(Exception):
-    pass
-
-
-class BaseSolrResponseDecoder(object):
-    """The BaseSolrResponseDecoder takes the Response object from urllib2 and decodes it"""
-
-
-class SolrJsonResponseDecoder(BaseSolrResponseDecoder):
-
-    def __init__(self):
-        # matches returned dates in JSON strings
-        self.date_match = re.compile("-?\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.?\d*[a-zA-Z]*")
-
-    def decode(self, response_object):
-        #return self._decode_dates(json.load(response_object))
-        return self._decode_dates(cjson.decode(unicode(response_object.read(),'utf-8'))) #@UndefinedVariable
-
-    def _decode_dates(self, d):
-        """Recursively decode date strings to datetime objects.
-        """
-        if isinstance(d, dict):
-            for key, value in d.items():
-                d[key] = self._decode_dates(value)
-        elif isinstance(d, list):
-            for index, value in enumerate(d):
-                d[index] = self._decode_dates(value)
-        elif isinstance(d, basestring):
-            if self.date_match.match(d):
-                try:
-                    d = datetime(*strptime(d[0:19], "%Y-%m-%dT%H:%M:%S")[0:6])
-                except:
-                    raise SolrResponseDecoderException, u"Response object has unknown date format: %s" % d
-        return d
-
-
 class SolrException(Exception):
     pass
 
 
 class Solr(object):
-    def __init__(self, url="http://localhost:8983/solr", verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder()):
+    def __init__(self, url="http://localhost:8983/solr", verbose=False, persistent=False):
         url_split = urlparse.urlparse(url)
 
         self.host = url_split.hostname
         self.port = url_split.port
         self.path = url_split.path.rstrip('/')
 
-        self.decoder = decoder
-        self.encoder = encoder
         self.verbose = verbose
-
         self.persistent = persistent
+
+        # TODO: check if we need specific settings here when creating the Solr object from pysolr (e.g. always_commit, timeout, ...)
+        self.pysolr = pysolr.Solr(url)
 
         if self.persistent:
             self.conn = httplib.HTTPConnection(self.host, self.port)
@@ -440,30 +362,19 @@ class Solr(object):
         return response
 
     def select(self, query_string, raw=False):
-        if raw:
-            return unicode(self._request(query_string=query_string).read())
-        else:
-            return self.decoder.decode(self._request(query_string=query_string))
+        return self.pysolr.search(**query_string)
 
     def add(self, docs):
-        encoded_docs = self.encoder.encode(docs)
-        try:
-            self._request(message=encoded_docs)
-        except error as e:
-            raise SolrException(e)
+        self.pysolr.add(docs)
 
     def delete_by_id(self, id):
-        try:
-            self._request(message=u'<delete><id>%s</id></delete>' % unicode(id))
-        except error as e:
-            raise SolrException(e)
+        self.pysolr.delete_by_id(self, id)
 
     def delete_by_query(self, query):
-        try:
-            self._request(message=u'<delete><query>%s</query></delete>' % unicode(query))
-        except error as e:
-            raise SolrException(e)
+        self.pysolr.delete(q=query)
 
+    # pysolr also provides functions for commit and optimize in https://github.com/django-haystack/pysolr/blob/master/pysolr.py
+    # TODO: check if it can be easily replaced here and where these things are used
     def commit(self, wait_flush=True, wait_searcher=True):
         message = ET.Element('commit')
         message.set("waitFlush", str(wait_flush).lower())
@@ -479,6 +390,8 @@ class Solr(object):
 
 class SolrResponseInterpreter(object):
     def __init__(self, response):
+        response = response.raw_response
+
         if "grouped" in response:
             if "thread_title_grouped" in response["grouped"].keys():
                 self.docs = response["grouped"]["thread_title_grouped"]["groups"]

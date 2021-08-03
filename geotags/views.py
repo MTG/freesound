@@ -25,6 +25,7 @@ import struct
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.views.decorators.cache import cache_page
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from sounds.models import Sound
 from utils.frontend_handling import render
@@ -135,6 +136,7 @@ def geotags_box(request):
     return render(request, 'geotags/geotags.html', tvars)
 
 
+@xframe_options_exempt
 def embed_iframe(request):
     tvars = _get_geotags_query_params(request)
     tvars.update({

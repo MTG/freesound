@@ -388,7 +388,7 @@ class Solr(object):
         self.pysolr.add(encode_list_dicts(docs))
 
     def delete_by_id(self, id):
-        self.pysolr.delete_by_id(self, id)
+        self.pysolr.delete(id=id)
 
     def delete_by_query(self, query):
         self.pysolr.delete(q=query)

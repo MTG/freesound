@@ -23,6 +23,7 @@ import json
 import logging
 import time
 from collections import defaultdict
+from django.views.decorators.clickjacking import xframe_options_exempt
 from operator import itemgetter
 
 from django.conf import settings
@@ -903,6 +904,7 @@ def display_sound_wrapper(request, username, sound_id):
     return render(request, 'sounds/display_sound.html', tvars)
 
 
+@xframe_options_exempt
 def embed_iframe(request, sound_id, player_size):
     """
     This view returns an HTML player of `sound_id` which can be embeded in external sites.

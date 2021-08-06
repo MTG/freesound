@@ -2,6 +2,8 @@ from __future__ import absolute_import
 import os
 import base64
 import json
+import requests
+from django.conf import settings
 
 from celery import Celery
 
@@ -17,37 +19,33 @@ app = Celery('freesound')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load tasks from only the clustering app.
-app.autodiscover_tasks('clustering', related_name='tasks')
-app.autodiscover_tasks('sounds', related_name='tasks')
-
-# Route tasks to individual queues
-app.conf.task_routes = {
-    'clustering.cluster_sounds': {'queue': 'clustering'},
-    'sounds.analyze_method1': {'queue': 'analyze_method1'},
-    'sounds.analyze_method2': {'queue': 'analyze_method2'},
-}
-
-
-def get_queue_tasks_body(queue_name):
-
-    with app.pool.acquire(block=True) as conn:
-        tasks = conn.default_channel.client.lrange(queue_name, 0, -1)
-        decoded_tasks = []
-
-    for task in tasks:
-        j = json.loads(task)
-        body = json.loads(base64.b64decode(j['body']))
-        decoded_tasks.append(body)
-
-    return decoded_tasks
+app.autodiscover_tasks()
 
 
 def get_queues_task_counts():
+    try:
+        raw_data = requests.get('http://{}:{}/api/queues'.format(settings.RABBITMQ_HOST, settings.RABBITMQ_API_PORT),
+                                auth=(settings.RABBITMQ_USER, settings.RABBITMQ_PASS)).json()
+    except Exception as e:
+        raw_data = []
+        print e
+
     data = []
-    # TODO: get celery queue names automatically
-    print(app.control.inspect().stats())
-    for queue_name in ['clustering', 'analyze_method1', 'analyze_method2']:
-        num_workers = 0
-        data.append((queue_name, len(get_queue_tasks_body(queue_name)), num_workers))
+    for queue_data in raw_data:
+        queue_name = queue_data['name']
+        if 'celery' in queue_name:
+            continue
+        try:
+            message_rate = queue_data['message_stats']['ack_details']['rate']
+        except KeyError:
+            message_rate = -1
+        data.append((queue_name,
+                     queue_data['messages_ready'],
+                     queue_data['messages_unacknowledged'],
+                     queue_data['consumers'],
+                     message_rate
+                     ))
+
+    data = sorted(data, key=lambda x: x[0])
     return data
 

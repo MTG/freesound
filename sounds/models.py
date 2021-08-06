@@ -48,6 +48,7 @@ from django.utils.text import Truncator
 import accounts.models
 from apiv2.models import ApiV2Client
 from comments.models import Comment
+from freesound.celery import app as celery_app
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
@@ -1117,6 +1118,9 @@ class Sound(SocialModel):
                 'sound_id': self.id
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
+
+    def analyze_new(self, method="analyze_method1", force=False, high_priority=False):
+        celery_app.send_task(method, kwargs={'sound_id': self.id}, queue=method)
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)

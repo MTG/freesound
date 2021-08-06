@@ -41,7 +41,7 @@ from tickets import TICKET_STATUS_CLOSED
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
-def get_gearman_status(request):
+def get_queues_status(request):
     try:
         gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
         gearman_status = gm_admin_client.get_status()
@@ -50,7 +50,7 @@ def get_gearman_status(request):
 
     celery_task_counts = get_queues_task_counts()
 
-    return render(request, 'monitor/gearman_status.html',
+    return render(request, 'monitor/queues_status.html',
                   {'gearman_status': gearman_status, 'celery_task_counts': celery_task_counts})
 
 
@@ -107,7 +107,7 @@ def monitor_home(request):
              "sounds_analysis_failed_count": sounds_analysis_failed_count,
              "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "gearman_stats_url": reverse('gearman-stats'),
+             "queues_stats_url": reverse('queues-stats'),
     }
 
     return render(request, 'monitor/monitor.html', tvars)

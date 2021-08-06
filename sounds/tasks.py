@@ -20,18 +20,9 @@
 
 from celery.decorators import task
 
-
-@task(name='sounds.analyze_method1')
-def analyze_method1(sound_id):
-    print('Analyzing sound {} with method 1'.format(sound_id))
+@task(name="process_analysis_results")
+def process_analysis_results(sound_id, analyzer):
+    print('Processing analysis results for sound sound {} after analyzer {}'.format(sound_id, analyzer))
     import time
-    time.sleep(1)
-    print('Done analyzing sound {} with method 1'.format(sound_id))
-
-
-@task(name='analysis_method1.analyze_method2')
-def analyze_method2(sound_id):
-    print('Analyzing sound {} with method 2'.format(sound_id))
-    import time
-    time.sleep(1)
-    print('Done analyzing sound {} with method 2'.format(sound_id))
+    time.sleep(2)
+    print('Done processing analysis results for sound sound {} after analyzer {}'.format(sound_id, analyzer))

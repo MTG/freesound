@@ -41,7 +41,7 @@ class ClusteringTask(Task):
             self.engine = ClusteringEngine()
             
 
-@task(name="clustering.cluster_sounds", base=ClusteringTask)
+@task(name="cluster_sounds", base=ClusteringTask)
 def cluster_sounds(cache_key_hashed, sound_ids, features):
     """ Triggers the clustering of the sounds given as argument with the specified features.
 

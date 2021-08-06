@@ -37,13 +37,13 @@
     {%  if request.user.is_staff %}
     <script>
         setInterval(function(){
-            $.get("{{ gearman_stats_url }}", function(data){
+            $.get("{{ queues_stats_url }}", function(data){
                 console.log(data)
-                $('#gearmanStatus').html(data);
+                $('#queuesStatus').html(data);
               });
             }, 1000);
     </script>
-    <div id="gearmanStatus"></div>
+    <div id="queuesStatus"></div>
     {% endif %}
 
 {% endblock content %}

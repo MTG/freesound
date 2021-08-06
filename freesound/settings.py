@@ -740,8 +740,13 @@ if SENTRY_DSN:
 
 # -------------------------------------------------------------------------------
 # Celery
+RABBITMQ_USER = "guest"
+RABBITMQ_PASS = "guest"
+RABBITMQ_HOST = 'rabbit'
+RABBITMQ_PORT = '5672'
+RABBITMQ_API_PORT = '15672'
 
-CELERY_BROKER_URL = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
+CELERY_BROKER_URL = 'amqp://{}:{}@{}:{}//'.format(RABBITMQ_USER, RABBITMQ_PASS, RABBITMQ_HOST, RABBITMQ_PORT)
 CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'

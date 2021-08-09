@@ -353,34 +353,6 @@ class Solr(object):
         if self.persistent:
             self.conn = httplib.HTTPConnection(self.host, self.port)
 
-    def _request(self, query_string="", message=""):
-        if query_string != "":
-            path = '%s/select/?%s' % (self.path, query_string)
-        else:
-            path = '%s/update' % self.path
-
-        if self.verbose:
-            print "Connecting to Solr server: %s:%s" % (self.host, self.port)
-            print "\tPath:", path
-            print "\tSending data:", message
-
-        if self.persistent:
-            conn = self.conn
-        else:
-            conn = httplib.HTTPConnection(self.host, self.port)
-
-        if query_string:
-            conn.request('GET', path)
-        elif message:
-            conn.request('POST', path, message, {'Content-type': 'text/xml'})
-
-        response = conn.getresponse()
-
-        if response.status != 200:
-            raise SolrException, response.reason
-
-        return response
-
     def select(self, query_string, raw=False):
         return self.pysolr.search(**query_string)
 
@@ -392,21 +364,6 @@ class Solr(object):
 
     def delete_by_query(self, query):
         self.pysolr.delete(q=query)
-
-    # pysolr also provides functions for commit and optimize in https://github.com/django-haystack/pysolr/blob/master/pysolr.py
-    # TODO: check if it can be easily replaced here and where these things are used
-    # Only forum related post were using manual commit, not sure if it is needed. I think we can get rid of it
-    def commit(self, wait_flush=True, wait_searcher=True):
-        message = ET.Element('commit')
-        message.set("waitFlush", str(wait_flush).lower())
-        message.set("waitSearcher", str(wait_searcher).lower())
-        self._request(message=ET.tostring(message, "utf-8"))
-
-    def optimize(self, wait_flush=True, wait_searcher=True):
-        message = ET.Element('optimize')
-        message.set("waitFlush", str(wait_flush).lower())
-        message.set("waitSearcher", str(wait_searcher).lower())
-        self._request(message=ET.tostring(message, "utf-8"))
 
 
 class SolrResponseInterpreter(object):

@@ -29,7 +29,7 @@ import sounds.models
 from follow import follow_utils
 from search.views import perform_solr_query
 from tags.models import Tag, FS1Tag
-from utils.search.solr import SolrQuery, SolrException, Solr
+from utils.search.backend.pysolr.wrapper import SearchEngineException, QueryManager
 
 search_logger = logging.getLogger("search")
 
@@ -48,7 +48,7 @@ def tags(request, multiple_tags=None):
     except ValueError:
         current_page = 1
 
-    query = SolrQuery()
+    query = QueryManager()
     if multiple_tags:
         query.set_query(" ".join("tag:\"" + tag + "\"" for tag in multiple_tags))
     else:
@@ -88,7 +88,7 @@ def tags(request, multiple_tags=None):
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
-    except SolrException as e:
+    except SearchEngineException as e:
         error = True
         search_logger.warning('Search error: query: %s error %s' % (query, e))
     except Exception as e:

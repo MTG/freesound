@@ -49,7 +49,7 @@ from search.views import search_prepare_query
 from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
+from utils.search.backend.pysolr.wrapper import SearchEngine, SearchEngineException
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
@@ -322,7 +322,7 @@ def api_search(
 
         # Standard text-based search
         try:
-            solr = Solr(settings.SOLR_URL)
+            search_engine = SearchEngine(settings.SOLR_URL)
             query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
                                          unquote(search_form.cleaned_data['filter'] or ""),
                                          search_form.cleaned_data['sort'],
@@ -331,7 +331,7 @@ def api_search(
                                          grouping=search_form.cleaned_data['group_by_pack'],
                                          include_facets=False)
 
-            result = SolrResponseInterpreter(solr.select(unicode(query)))
+            result = search_engine.search(query)
             solr_ids = [element['id'] for element in result.docs]
             solr_count = result.num_found
 
@@ -345,7 +345,7 @@ def api_search(
 
             return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
-        except SolrException as e:
+        except SearchEngineException as e:
             if search_form.cleaned_data['filter'] is not None:
                 raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field '
                                               'names are correct)' % e.message, resource=resource)

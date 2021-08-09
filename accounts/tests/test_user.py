@@ -184,8 +184,8 @@ class UserDelete(TestCase):
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
             target_sound.add_comment(user, "{0} comment {1}".format(username, i))
-        # Create threads and posts (use mock to avoid trying to index the posts to solr)
-        with mock.patch('forum.models.send_posts_to_solr'):
+        # Create threads and posts (use mock to avoid trying to index the posts to the search engine)
+        with mock.patch('forum.models.send_posts_to_search_engine'):
             forum, _ = Forum.objects.get_or_create(name="Test forum")
             self.forum = forum
             thread = Thread.objects.create(author=user, title="Test thread by {}".format(username), forum=forum)
@@ -410,8 +410,8 @@ class UserDelete(TestCase):
 
     @mock.patch('sounds.models.delete_sound_from_gaia')
     @mock.patch('sounds.models.delete_sound_from_search_engine')
-    @mock.patch('forum.models.delete_post_from_solr')
-    def test_delete_user_with_count_fields_out_of_sync(self, delete_post_from_solr, delete_sound_from_search_engine,
+    @mock.patch('forum.models.delete_post_from_search_engine')
+    def test_delete_user_with_count_fields_out_of_sync(self, delete_post_from_search_engine, delete_sound_from_search_engine,
                                                        delete_sound_from_gaia):
         # Test that deleting a user work properly even when the profile count fields (num_sounds, num_posts,
         # num_sound_downloads and num_pack_downloads) are out of sync. This is a potential issue because if the

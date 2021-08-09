@@ -395,6 +395,7 @@ class Solr(object):
 
     # pysolr also provides functions for commit and optimize in https://github.com/django-haystack/pysolr/blob/master/pysolr.py
     # TODO: check if it can be easily replaced here and where these things are used
+    # Only forum related post were using manual commit, not sure if it is needed. I think we can get rid of it
     def commit(self, wait_flush=True, wait_searcher=True):
         message = ET.Element('commit')
         message.set("waitFlush", str(wait_flush).lower())

@@ -18,15 +18,15 @@ class SearchEngine(object):
     def add_to_index(self, docs):
         self.backend.add(docs)
 
-    def remove_from_index(self, sound_id):
-        self.backend.delete_by_id(sound_id)
+    def remove_from_index(self, document_id):
+        self.backend.delete_by_id(document_id)
 
     def remove_from_index_by_query(self, query):
         self.backend.delete_by_query(query)
 
     def remove_documents_by_ids(self, document_ids):
-        sound_ids_query = ' OR '.join(['id:{0}'.format(document_id) for document_id in document_ids])
-        self.backend.delete_by_query(sound_ids_query)
+        document_ids_query = ' OR '.join(['id:{0}'.format(document_id) for document_id in document_ids])
+        self.backend.delete_by_query(document_ids_query)
 
 
 class QueryManager(SolrQuery):

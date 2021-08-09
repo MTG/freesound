@@ -34,7 +34,7 @@ from django.utils.encoding import smart_unicode
 import accounts
 from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
-from utils.search.search_forum import delete_post_from_solr, send_posts_to_solr
+from utils.search.search_forum import delete_post_from_search_engine, send_posts_to_search_engine
 
 web_logger = logging.getLogger('web')
 
@@ -142,11 +142,11 @@ def update_num_threads_on_thread_update(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Thread)
 def index_posts_on_thread_update(sender, instance, **kwargs):
-    """Update posts in solr if a Thread is saved
-    If a thread is renamed, or moved from one Forum to another we need to update these fields in solr"""
+    """Update posts in the search engine if a Thread is saved
+    If a thread is renamed, or moved from one Forum to another we need to update these fields in the search engine"""
     # Reload the thread because its num_posts may still be an F-expression
     instance.refresh_from_db()
-    send_posts_to_solr(instance.post_set.all())
+    send_posts_to_search_engine(instance.post_set.all())
 
 
 @receiver(post_delete, sender=Thread)
@@ -253,7 +253,7 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
     the only post in a thread, also delete the thread.
     """
     post = instance
-    delete_post_from_solr(post.id)
+    delete_post_from_search_engine(post.id)
     if post.moderation_state == "NM":
         # If the first post is NM and there are subsequent posts in this thread then
         # we won't correctly set thread.first_post. This won't happen in regular use,

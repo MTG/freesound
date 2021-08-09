@@ -19,12 +19,12 @@
 #
 
 from django.core.management.base import BaseCommand
-from utils.search.search_forum import add_all_posts_to_solr
+from utils.search.search_forum import add_all_posts_to_search_engine
 
 
 class Command(BaseCommand):
     args = ''
-    help = 'Take all posts and send them to Solr'
+    help = 'Take all posts and send them to the search engine'
 
     def handle(self, *args, **options):
-        add_all_posts_to_solr()
+        add_all_posts_to_search_engine()

@@ -35,7 +35,7 @@ from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.search.search_forum import add_post_to_solr, delete_post_from_solr
+from utils.search.search_forum import add_post_to_search_engine, delete_post_from_search_engine
 from utils.text import text_may_be_spam, remove_control_chars
 
 
@@ -188,11 +188,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(
                         author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
-                    # DO NOT add the post to solr, only do it when it is moderated
+                    # DO NOT add the post to the search engine, only do it when it is moderated
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
-                    add_post_to_solr(post.id)
+                    add_post_to_search_engine(post.id)
                     set_to_moderation = False
 
                 if form.cleaned_data["subscribe"]:
@@ -266,11 +266,11 @@ def new_thread(request, forum_name_slug):
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(author=request.user, body=post_body, thread=thread,
                                                moderation_state="NM")
-                    # DO NOT add the post to solr, only do it when it is moderated
+                    # DO NOT add the post to the search engine, only do it when it is moderated
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=post_body, thread=thread)
-                    add_post_to_solr(post.id)
+                    add_post_to_search_engine(post.id)
                     set_to_moderation = False
 
                 # Add first post to thread (first post will always be the same)
@@ -388,7 +388,7 @@ def post_edit(request, post_id):
             if form.is_valid():
                 post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
-                add_post_to_solr(post.id)  # Update post in solr
+                add_post_to_search_engine(post.id)  # Update post in the search engine
                 return HttpResponseRedirect(
                     reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:

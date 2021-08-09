@@ -348,10 +348,7 @@ class Solr(object):
         self.persistent = persistent
 
         # TODO: check if we need specific settings here when creating the Solr object from pysolr (e.g. always_commit, timeout, ...)
-        if "fakehost" not in url:
-            self.pysolr = pysolr.Solr(url)
-        else:
-            self.pysolr = None
+        self.pysolr = pysolr.Solr(url)
 
         if self.persistent:
             self.conn = httplib.HTTPConnection(self.host, self.port)

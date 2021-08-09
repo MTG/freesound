@@ -33,8 +33,7 @@ class QueryManager(SolrQuery):
     pass
 
 
-class SearchEngineException(SolrException):
-    pass
+SearchEngineException = SolrException
 
 
 def convert_to_search_engine_document(document):

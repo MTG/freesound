@@ -354,16 +354,28 @@ class Solr(object):
             self.conn = httplib.HTTPConnection(self.host, self.port)
 
     def select(self, query_string, raw=False):
-        return self.pysolr.search(**query_string)
+        try:
+            return self.pysolr.search(**query_string)
+        except pysolr.SolrError as e:
+            raise SolrException, str(e)
 
     def add(self, docs):
-        self.pysolr.add(encode_list_dicts(docs))
+        try:
+            self.pysolr.add(encode_list_dicts(docs))
+        except pysolr.SolrError as e:
+            raise SolrException, str(e)
 
     def delete_by_id(self, id):
-        self.pysolr.delete(id=id)
+        try:
+            self.pysolr.delete(id=id)
+        except pysolr.SolrError as e:
+            raise SolrException, str(e)
 
     def delete_by_query(self, query):
-        self.pysolr.delete(q=query)
+        try:
+            self.pysolr.delete(q=query)
+        except pysolr.SolrError as e:
+            raise SolrException, str(e)
 
 
 class SolrResponseInterpreter(object):

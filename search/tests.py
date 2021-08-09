@@ -22,7 +22,9 @@ from django.test import TestCase
 from django.urls import reverse
 from sounds.models import Sound
 from utils.search.search_general import search_process_filter
-from utils.search.solr import SolrResponseInterpreter, SolrResponseInterpreterPaginator
+# We still import some things of the pysolr client here because we are testing specific things of the client.
+# TODO: Probably, we should create some tests inside the folder of each search backend and remove them from here.
+from utils.search.backend.pysolr.client import SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from utils.test_helpers import create_user_and_sounds
 import mock
 import copy

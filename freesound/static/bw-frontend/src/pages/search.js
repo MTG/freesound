@@ -1,6 +1,9 @@
 import './page-polyfills';
 import throttle from "lodash.throttle";
 import navbar from "../components/navbar";
+import jquery from 'jquery';
+var $=jquery.noConflict();
+
 
 // Main search input box behaviour
 const searchInputBrowse = document.getElementById('search-input-browse');
@@ -312,3 +315,147 @@ search_page_navbar_form.addEventListener('submit', function(evt){
   // It is also needed to return false to prevent default form submission
   return false;
 })
+
+// Ajax request clustering
+var clusteringUrls = document.getElementById("cluster-urls");
+var uurl = clusteringUrls.getAttribute("url")
+var uuurl = clusteringUrls.getAttribute("uurl")
+
+request_clustering();
+graph = undefined;
+graphLoaded = false;
+showCluster = undefined;
+
+$('#show-clustering-graph-button').click(function () {
+    showGraph();
+});
+
+// toggle and show graph
+function updateShowGraphButton() {
+    var buttonText = $("#clustering-graph").is(":visible")? "hide" : "show";
+    $("#show-clustering-graph-button").html(buttonText);
+}
+
+function showGraph() {
+    $("#clustering-graph-modal").show();
+    if (graph !== undefined && graphLoaded === false) {
+        activateGraph(graph);
+        graphLoaded = true;
+    }
+}
+
+function closeGraphModal() {
+    $("#clustering-graph-modal").hide();
+}
+
+// play cluster examples on mouseover & click
+mouse_on_cluster_facet_preview = false;
+function enableAudioClusterExamples() {
+    function playAudio(el, index) {
+        var dummySpanClusterExamples = el.children('.dummy-span-cluster-examples');
+        var cluster_idx = $('.clustering-facet').index($(el));
+        var index = (typeof index == 'number') ? index: parseInt(Math.random()*dummySpanClusterExamples.length);
+        var selectedExample = dummySpanClusterExamples.eq(index);
+        var soundId = selectedExample.attr("sound-id");
+        var soundUrl = selectedExample.attr("sound-url");
+        play_sound_from_url(soundId, soundUrl, function () {
+            index = (index + 1) % dummySpanClusterExamples.length;
+            // this condition ensures that we don't trigger more plays when not previewing the right cluster.
+            // otherwise it could happen that stopAllAudio() would not stop the recursive loop.
+            if (mouse_on_cluster_facet_preview == cluster_idx) {
+                playAudio(el, index)
+            }
+        });
+    };
+
+    function stopAllAudio() {
+        $('audio').each(function (i, el) {el.pause();});
+    };
+    
+    $(".cluster-audio-examples")
+        .mouseenter(function() {
+            var cluster_idx = $('.clustering-facet').index($(this).parents('.clustering-facet'));
+            mouse_on_cluster_facet_preview = cluster_idx;
+            stopSound();
+            playAudio($(this).parent().parent(), false);
+        })
+        .mouseleave(function() {
+            mouse_on_cluster_facet_preview = false;
+            stopSound();
+        })
+        .click(function() {
+            stopSound();
+            playAudio($(this).parent().parent(), false);
+        });
+}
+
+var clustering_trial_number = 0;
+// function for requesting clustering
+function request_clustering()
+{
+    $.get(uurl, 
+            {}, 
+            function( data ) {
+                clustering_trial_number += 1;
+                if (data.status === 'pending') {
+                    if (clustering_trial_number < 1000) {
+                        setTimeout(() => {
+                            request_clustering();
+                        }, 500);
+                    } else {
+                        $('#facet-loader').hide();
+                        $('#cluster-fail-icon').show();
+                    }
+                } else if (data.status === 'failed') {
+                    // clustering failed
+                    $('#facet-loader').hide();
+                    $('#cluster-fail-icon').show();
+                } else {
+                    $('#facet-loader').hide();
+                    $('#show-clustering-graph-button').show();
+                    $('#cluster-labels').html(data);
+                    $('#clusters-div').replaceWith(data);
+                    // add cluster colors
+                    var num_clusters = Math.max(
+                        ...Array.from($('.clustering-facet').map(
+                            (e, l)=>parseInt($(l).attr('cluster-id')))
+                        )
+                    ) + 1;
+                    $('#cluster-labels').find('.clustering-facet').each((i, l) => {
+                        $(l).find('a').css("color", cluster2color($(l).attr('cluster-id'), num_clusters));
+                        $(l).find('a').css('font-weight', 'bold');
+                    });
+                    enableAudioClusterExamples();
+
+                    $('.cluster-link-button').click(function () {
+                        $("#clustering-graph-modal").show();
+                        var clusterId = $(this).attr('cluster-id');
+                        showCluster = clusterId;
+                        if (graph !== undefined && graphLoaded === false) {
+                            activateGraph(graph, clusterId);
+                            graphLoaded = true;
+                        }
+                    });
+
+                    $('#close-modal-button').click(function () {
+                        closeGraphModal();
+                    })
+
+                    // request clustered graph
+                    // set graph as a global variable
+                    $.get(uuurl, {
+                        }).then(res => JSON.parse(res)).then(data => {
+                            graph = data;
+                            if ($("#clustering-graph-modal").is(":visible")) {
+                                if (showCluster !== undefined) {
+                                    activateGraph(graph, showCluster);
+                                    graphLoaded = true;
+                                } else {
+                                    activateGraph(graph);
+                                    graphLoaded = true;
+                                }
+                            }
+                        });
+                }
+    });
+}

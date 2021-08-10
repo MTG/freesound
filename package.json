@@ -44,6 +44,7 @@
     "normalize.css": "^8.0.1",
     "player": "^0.6.1",
     "regenerator-runtime": "^0.13.3",
-    "whatwg-fetch": "^3.0.0"
+    "whatwg-fetch": "^3.0.0",
+    "jquery": "^1.5.2"
   }
 }

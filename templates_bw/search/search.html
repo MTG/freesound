@@ -184,6 +184,24 @@
             <div class="row no-gutters">
                 {% if paginator.count > 0 %}
                     <aside class="col-sm-12 col-md-3">
+
+                        {% if clustering_on %}
+                            <div class="bw-search__filter-section" id="cluster-urls" url="{% url 'clustering-facet' %}?{{ url_query_params_string }}" uurl="{% url 'clustered-graph-json' %}?{{url_query_params_string}}">
+                                <div class="bw-search__filter-section-name caps text-light-grey between">
+                                    <span>clusters</span>
+                                </div>
+                                <div id="facet-loader" class="clustering-loader"></div>
+                                <img style="display: none;" id="cluster-fail-icon" src="{{media_url}}images/fugue-icons/icons/cross.png" alt=""/>
+                                <button style="display: none;" id="show-clustering-graph-button">
+                                    show
+                                </button>
+                                <div id='clusters-div'>
+                                    <br>
+                                </div>
+                            </div>
+                            <div class="divider-light"></div>
+                        {% endif %}
+
                         {% if facets.license and facets.license|length > 1 %}
                             {% display_facet "license" facets.license "list" "Licenses" %}
                         {% endif %}

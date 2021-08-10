@@ -1,0 +1,20 @@
+<ul class="bw-search__filter-value-list">
+    {% for cluster_id, num_results, tags, sound_examples in cluster_id_num_results_tags_sound_examples %}
+        <li class="bw-search__filter-value v-padding-1">
+            <div class="bw-search__filter-name">
+                <a href="{% url 'sounds-search' %}?{{url_query_params_string}}&cluster_id={{ cluster_id|add:1 }}" class="bw-link--black bw-cluster-name">
+                    {{ cluster_id|add:1 }} - {{tags}}
+                </a>
+                <div class="bw-search__filter-clustering-icon-box">
+                    <img class="cluster-audio-examples bw-search__filter-clustering-icon" src="{{media_url}}images/fugue-icons/icons/headphone.png" 
+                        width="14" height="14" alt="listen" title="click to skip" />
+                    <img class="cluster-link-button bw-search__filter-clustering-icon" cluster-id="{{cluster_id}}" src="{{media_url}}images/fugue-icons/icons/external.png" 
+                        width="14" height="14" alt="listen" title=""/>
+                </div>
+                <div class="bw-search__filter-count">
+                    ({{ num_results }})
+                </div>
+            </div>
+        </li>
+    {% endfor %}
+</ul>

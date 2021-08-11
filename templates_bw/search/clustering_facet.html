@@ -1,6 +1,10 @@
 <ul class="bw-search__filter-value-list">
     {% for cluster_id, num_results, tags, sound_examples in cluster_id_num_results_tags_sound_examples %}
-        <li class="bw-search__filter-value v-padding-1">
+        <li class="bw-search__filter-value v-padding-1 clustering-facet" cluster-id={{cluster_id}}>
+            {% for sound_id, sound_url in sound_examples %}
+                <span class="dummy-span-cluster-examples" id="c{{cluster_id}}-{{forloop.counter0}}" 
+                    sound-id="{{sound_id}}" sound-url="{{sound_url}}"></span>
+            {% endfor %}
             <div class="bw-search__filter-name">
                 <a href="{% url 'sounds-search' %}?{{url_query_params_string}}&cluster_id={{ cluster_id|add:1 }}" class="bw-link--black bw-cluster-name">
                     {{ cluster_id|add:1 }} - {{tags}}

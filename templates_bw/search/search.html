@@ -186,7 +186,9 @@
                     <aside class="col-sm-12 col-md-3">
 
                         {% if clustering_on %}
-                            <div class="bw-search__filter-section" id="cluster-urls" url="{% url 'clustering-facet' %}?{{ url_query_params_string }}" uurl="{% url 'clustered-graph-json' %}?{{url_query_params_string}}">
+                            <div class="bw-search__filter-section" id="cluster-urls-div" 
+                                url-clustering="{% url 'clustering-facet' %}?{{ url_query_params_string }}" 
+                                url-graph="{% url 'clustered-graph-json' %}?{{url_query_params_string}}">
                                 <div class="bw-search__filter-section-name caps text-light-grey between">
                                     <span>clusters</span>
                                 </div>

@@ -289,6 +289,22 @@
             </div>
         {% endif %}
     </div>
+
+    <div id="clustering-graph-modal" class="modal" style="display: none;">
+    <div id="clustering-graph" class="modal-content">
+        <div class="modal-header">
+            Clustering Visualisation
+            <span id="close-modal-button" class="close-modal">×</span>
+        </div>
+        <div id="chart-container" class="modal-body">
+            <div id="h1">Selected sounds (ctrl + click)</div>
+            <div id="h2"></div>
+            <div id="cluster-labels"></div>
+            <div id="graph"></div>
+            <div id="graph-loader" class="clustering-loader"></div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extrabody %}

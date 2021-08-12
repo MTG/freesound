@@ -38,13 +38,17 @@
     "bootstrap": "^4.3.1",
     "classlist-polyfill": "^1.2.0",
     "core-js": "^3.6.1",
+    "d3": "^7.0.0",
+    "d3-force": "3.0.0",
+    "d3-quadtree": "3.0.1",
     "element-closest": "^3.0.1",
+    "force-graph": "1.42.2",
+    "jquery": "^1.5.2",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "normalize.css": "^8.0.1",
     "player": "^0.6.1",
     "regenerator-runtime": "^0.13.3",
-    "whatwg-fetch": "^3.0.0",
-    "jquery": "^1.5.2"
+    "whatwg-fetch": "^3.0.0"
   }
 }

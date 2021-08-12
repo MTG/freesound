@@ -1,6 +1,8 @@
 import './page-polyfills';
 import throttle from "lodash.throttle";
 import navbar from "../components/navbar";
+import ForceGraph from "force-graph";
+import * as d3 from "d3";
 import jquery from 'jquery';
 var $=jquery.noConflict();
 
@@ -517,7 +519,8 @@ function cluster2color (group_id, num_clusters) {
 }
 
 function activateGraph (graph, clusterId=undefined) {
-  var data = JSON.parse(graph);
+  var data = graph;
+  // var data = JSON.parse(graph);
 
   var num_clusters = Math.max(...data.nodes.map(node => node.group))+1;
 
@@ -606,7 +609,7 @@ function activateGraph (graph, clusterId=undefined) {
 
   // remeber if ctrl key is pressed
   var cntrlIsPressed = false;
-  bookmarkedSounds = [];
+  var bookmarkedSounds = [];
 
   $(document).keydown(function(event) {
       if (event.which == "17")

@@ -1,0 +1,24 @@
+<h3>gearman status</h3>
+<table style="min-width:500px;">
+{% for item in gearman_status %}
+    {% if forloop.counter0 == 0 %}
+        <tr><td></td><td>queued</td><td>running</td><td>N workers</td></tr>
+    {% endif %}
+    <tr><td><b>{{ item.task }}</b></td><td>{{ item.queued }}</td><td>{{ item.running }}</td><td>{{ item.workers }}</td></tr>
+{% empty %}
+    <p>No information available...</p>
+{% endfor %}
+</table>
+
+<h3>rabbitmq status</h3>
+<table style="min-width:500px;">
+{% for item in celery_task_counts %}
+    {% if forloop.counter0 == 0 %}
+        <tr><td><b>queue</b></td><td><b>messages ready</b></td><td><b>messages unacked</b></td><td><b>consumers</b></td><td><b>rate</b></td></tr>
+    {% endif %}
+    <tr><td>{{ item.0 }}</td><td>{{ item.1 }}</td><td>{{ item.2 }}</td><td>{{ item.3 }}</td><td>{{ item.4 }}/s</td></tr>
+{% empty %}
+    <p>No information available...</p>
+{% endfor %}
+</table>
+

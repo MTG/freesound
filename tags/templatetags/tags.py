@@ -26,7 +26,7 @@ register = template.Library()
 @register.filter
 def add_sizes(tags, arguments):
     sort, small_size, large_size = arguments.split(":")
-    return annotate_tags(tags, sort.lower() == "true", float(small_size), float(large_size))
+    return annotate_tags(tags, sort, float(small_size), float(large_size))
 
 @register.filter
 def join_tags_exclude(list, exclude):

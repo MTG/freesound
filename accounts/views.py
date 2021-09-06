@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import cStringIO
+import csv
 import datetime
 import errno
 import json
@@ -25,20 +27,18 @@ import logging
 import os
 import tempfile
 import uuid
-import cStringIO
-import csv
 
 import gearman
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView
+from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView, \
+    PasswordChangeView, PasswordChangeDoneView
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
@@ -47,7 +47,7 @@ from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
@@ -57,12 +57,13 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm
-from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
+from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
+    BwDeleteUserForm, UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
-    BwProblemsLoggingInForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, EmailBounce
+    BwProblemsLoggingInForm, username_taken_by_other_user
+from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
 from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
@@ -70,28 +71,36 @@ from forum.models import Post
 from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
-from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.images import extract_square
+from utils.logging_filters import get_client_ip
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
 from utils.onlineusers import get_online_users
 from utils.pagination import paginate
-from utils.username import get_user_from_username_or_oldusername, redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
+web_logger = logging.getLogger('web')
+volatile_logger = logging.getLogger('volatile')
 
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def crash_me(request):
     raise Exception
+
+
+def ratelimited_error(request, exception):
+    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request)})))
+    return render(request, '429.html', status=429)
 
 
 def login(request, template_name, authentication_form):
@@ -120,39 +129,60 @@ def login(request, template_name, authentication_form):
     return response
 
 
-class FsPasswordResetConfirmView(PasswordResetConfirmView):
-
-    def get_context_data(self, **kwargs):
-        context = super(FsPasswordResetConfirmView, self).get_context_data(**kwargs)
-        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
-        # instead of staying in PasswordResetCompleteView (the current path).
-        context['next_path'] = reverse('accounts-home')
-        return context
-
-
 def password_reset_confirm(request, uidb64, token):
-    response = FsPasswordResetConfirmView.as_view(
-        template_name='registration/password_reset_confirm.html' if not using_beastwhoosh(request)
-            else 'accounts/password_reset_confirm.html',
-        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm
+    """
+    Password reset = change password without user being logged in (classic "forgot password" feature).
+    This view is called after user has received an email with instructions for resetting the password and clicks the
+    reset link.
+
+    We set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+    instead of staying in PasswordResetCompleteView (the current path).
+    """
+    response = PasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html'
+            if not using_beastwhoosh(request) else 'accounts/password_reset_confirm.html',
+        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm,
+        extra_context={'next_path': reverse('accounts-home')}
     )(request, uidb64=uidb64, token=token)
     return response
 
 
-class FsPasswordResetCompleteView(PasswordResetCompleteView):
-
-    def get_context_data(self, **kwargs):
-        context = super(FsPasswordResetCompleteView, self).get_context_data(**kwargs)
-        # Set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
-        # instead of staying in PasswordResetCompleteView (the current path).
-        context['next_path'] = reverse('accounts-home')
-        return context
-
-
 def password_reset_complete(request):
-    response = FsPasswordResetCompleteView.as_view(
-        template_name='registration/password_reset_complete.html' if not using_beastwhoosh(request)
-        else 'accounts/password_reset_complete.html')(request)
+    """
+    Password reset = change password without user being logged in (classic "forgot password" feature).
+    This view is called when the password has been reset successfully.
+
+    We set 'next_path'  parameter so we configure login modal to redirect to front page after successful login
+    instead of staying in PasswordResetCompleteView (the current path).
+    """
+    response = PasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html'
+            if not using_beastwhoosh(request) else 'accounts/password_reset_complete.html',
+        extra_context={'next_path': reverse('accounts-home')})(request)
+    return response
+
+
+def password_change_form(request):
+    """
+    Password change = change password from the account settings page, while user is logged in.
+    This view is called when user requests to change the password and contains the form to do so.
+    """
+    response = PasswordChangeView.as_view(
+        template_name='registration/password_change_form.html'
+            if not using_beastwhoosh(request) else 'accounts/password_change_form.html',
+        extra_context={'activePage': 'password'})(request)
+    return response
+
+
+def password_change_done(request):
+    """
+    Password change = change password from the account settings page, while user is logged in.
+    This view is called when user has successfully changed the password by filling in the password change form.
+    """
+    response = PasswordChangeDoneView.as_view(
+        template_name='registration/password_change_done.html'
+            if not using_beastwhoosh(request) else 'accounts/password_change_done.html',
+        extra_context={'activePage': 'password'})(request)
     return response
 
 
@@ -204,9 +234,8 @@ def check_username(request):
     if username:
         try:
             username_field.run_validators(username)
-            # If the validator passes, check if the username exists in the database
-            user = get_user_from_username_or_oldusername(username)
-            username_valid = user is None
+            # If the validator passes, check if the username is indeed available
+            username_valid = not username_taken_by_other_user(username)
         except ValidationError:
             username_valid = False
 
@@ -272,7 +301,7 @@ def registration(request):
                 # When using beastwoosh, if the form is NOT valid we return the Django rendered HTML version of the
                 # registration modal (which includes the form and error messages) so the browser can show the updated
                 # modal contents to the user
-                return render(request, 'molecules/modal_registration.html', {'registration_form': form})
+                return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
         form = form_class()
 
@@ -358,6 +387,12 @@ def username_reminder(request):
 
 @login_required
 def home(request):
+    if using_beastwhoosh(request):
+        # In BW we don't have a "home" so we redirect to the account page. All the "extra" features provides in NG
+        # home page with respect to account page are either provided in the navbar user menus or will be provided in
+        # the "manage sounds" page
+        return HttpResponseRedirect(reverse('account', args=[request.user.username]))
+
     user = request.user
 
     # Tagcloud
@@ -385,8 +420,9 @@ def home(request):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
     # Followers
-    following, followers, following_tags, following_count, followers_count, following_tags_count \
-        = follow_utils.get_vars_for_home_view(user)
+    following = follow_utils.get_users_following_qs(user)
+    followers = follow_utils.get_users_followers_qs(user)
+    following_tags = follow_utils.get_tags_following_qs(user)
 
     current_bulkdescribe = BulkUploadProgress.objects.filter(user=user).exclude(progress_type="C")
     tvars = {
@@ -403,9 +439,6 @@ def home(request):
         'following': following,
         'followers': followers,
         'following_tags': following_tags,
-        'following_count': following_count,
-        'followers_count': followers_count,
-        'following_tags_count': following_tags_count,
         'tags': tags,
     }
     return render(request, 'accounts/account.html', tvars)
@@ -413,20 +446,26 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
+    email_settings_form_class = BwEmailSettingsForm if using_beastwhoosh(request) else EmailSettingsForm
+
     if request.method == "POST":
-        form = EmailSettingsForm(request.POST)
+        form = email_settings_form_class(request.POST)
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
             request.user.profile.set_enabled_email_types(email_type_ids)
             messages.add_message(request, messages.INFO, 'Your email notification preferences have been updated')
-            return HttpResponseRedirect(reverse("accounts-edit"))
+            if not using_beastwhoosh(request):
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()
-        form = EmailSettingsForm(initial={
+        form = email_settings_form_class(initial={
             'email_types': all_emails,
             })
-    tvars = {'form': form}
+    tvars = {
+        'form': form,
+        'activePage': 'notifications'  # BW only
+    }
     return render(request, 'accounts/edit_email_settings.html', tvars)
 
 
@@ -434,6 +473,7 @@ def edit_email_settings(request):
 @transaction.atomic()
 def edit(request):
     profile = request.user.profile
+    profile_form_class = ProfileForm if not using_beastwhoosh(request) else BwProfileForm
 
     def is_selected(prefix):
         if request.method == "POST":
@@ -447,22 +487,33 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        profile_form = profile_form_class(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update spectrogram/waveform preference in user session
+            # TODO: this should be stored as a new field in the profile instead of in the session
+            if 'prefer_spectrogram' in profile_form.cleaned_data:
+                request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
+
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
-            invalidate_template_cache('user_header', request.user.id)
-
+            invalidate_user_template_caches(request.user.id)
             profile.save()
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
                 msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
             messages.add_message(request, messages.INFO, msg_txt)
-            return HttpResponseRedirect(reverse("accounts-home"))
+            if not using_beastwhoosh(request):
+                # In BW we don't redirect home after successful edit but to the same page
+                return HttpResponseRedirect(reverse("accounts-home"))
+            else:
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
-        profile_form = ProfileForm(request, instance=profile, prefix="profile")
+        profile_form = profile_form_class(request, instance=profile, prefix="profile")
+        # TODO: once prefer_spectrogram is saved as a profile field, this won't be needed
+        if 'prefer_spectrogram' in profile_form.fields:  # That field only exists in BW
+            profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
@@ -474,17 +525,28 @@ def edit(request):
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True
                 profile.save()
-            return HttpResponseRedirect(reverse("accounts-home"))
+            invalidate_user_template_caches(request.user.id)
+            msg_txt = "Your profile has been updated correctly."
+            messages.add_message(request, messages.INFO, msg_txt)
+            if not using_beastwhoosh(request):
+                # In BW we don't redirect home after successful edit
+                return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
+    has_old_avatar = not os.path.exists(profile.locations('avatar.XL.path')) \
+                     or os.path.getsize(profile.locations('avatar.XL.path')) == \
+                     os.path.getsize(profile.locations('avatar.L.path'))
 
     tvars = {
+        'user': request.user,
         'profile': profile,
         'profile_form': profile_form,
         'image_form': image_form,
-        'has_granted_permissions': has_granted_permissions
+        'has_granted_permissions': has_granted_permissions,
+        'has_old_avatar': has_old_avatar,
+        'activePage': 'profile',  # For BW account settings sidebar
     }
     return render(request, 'accounts/edit.html', tvars)
 
@@ -510,6 +572,7 @@ def handle_uploaded_image(profile, f):
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
+    path_xl = profile.locations("avatar.XL.path")
     try:
         extract_square(tmp_image_path, path_s, 32)
         upload_logger.info("\tcreated small thumbnail")
@@ -530,6 +593,12 @@ def handle_uploaded_image(profile, f):
     except Exception as e:
         upload_logger.error("\tfailed creating large thumbnails: " + str(e))
 
+    try:
+        extract_square(tmp_image_path, path_xl, 100)
+        upload_logger.info("\tcreated extra-large thumbnail")
+    except Exception as e:
+        upload_logger.error("\tfailed creating extra-large thumbnails: " + str(e))
+
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
 
@@ -545,16 +614,17 @@ def describe(request):
         if csv_form.is_valid():
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
             create_directories(directory, exist_ok=True)
-
             extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
-            path = os.path.join(directory, str(uuid.uuid4()) + '.%s' % extension)
+            new_csv_filename = str(uuid.uuid4()) + '.%s' % extension
+            path = os.path.join(directory, new_csv_filename)
             destination = open(path, 'wb')
 
             f = csv_form.cleaned_data['csv_file']
             for chunk in f.chunks():
                 destination.write(chunk)
 
-            bulk = BulkUploadProgress.objects.create(user=request.user, csv_path=path, original_csv_filename=f.name)
+            bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
+                                                     original_csv_filename=f.name)
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
             gm_client.submit_job("validate_bulk_describe_csv", str(bulk.id), wait_until_complete=False, background=True)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
@@ -720,9 +790,9 @@ def describe_sounds(request):
                         'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
 
                     # Invalidate affected caches in user header
-                    invalidate_template_cache("user_header", request.user.id)
+                    invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
-                        invalidate_template_cache("user_header", moderator.id)
+                        invalidate_user_template_caches(moderator.id)
 
             except utils.sound_upload.NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
@@ -847,6 +917,7 @@ def download_attribution(request):
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
     user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
@@ -862,6 +933,7 @@ def downloaded_sounds(request, username):
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
     user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)
@@ -967,12 +1039,13 @@ def account(request, username):
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                                .order_by("-last_updated")[0:10]
-    following, followers, following_tags, following_count, followers_count, following_tags_count = \
-        follow_utils.get_vars_for_account_view(user)
+                                .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
+    following = follow_utils.get_users_following_qs(user)
+    followers = follow_utils.get_users_followers_qs(user)
+    following_tags = follow_utils.get_tags_following_qs(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-    show_unfollow_button = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, user)
+    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
@@ -988,23 +1061,23 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     tvars = {
-        'home': False,
+        'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
         'tags': tags,
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
+        'follow_user_url': follow_user_url,
         'following': following,
         'followers': followers,
         'following_tags': following_tags,
-        'following_count': following_count,
-        'followers_count': followers_count,
-        'following_tags_count': following_tags_count,
-        'follow_user_url': follow_user_url,
         'unfollow_user_url': unfollow_user_url,
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
-        'num_sounds_pending_count': num_sounds_pending_count,
         'show_about': show_about,
+        'num_sounds_pending_count': num_sounds_pending_count,
+        'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
+        'followers_modal_page': request.GET.get('followers', 1),  # BW only
+        'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
     }
     return render(request, 'accounts/account.html', tvars)
 
@@ -1149,23 +1222,50 @@ def bulk_describe(request, bulk_id):
 @transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
-    error_message = None
+    delete_user_form_class = BwDeleteUserForm if using_beastwhoosh(request) else DeleteUserForm
+
     if request.method == 'POST':
-        form = DeleteUserForm(request.POST, user_id=request.user.id)
+        form = delete_user_form_class(request.POST, user_id=request.user.id)
         if not form.is_valid():
             form.reset_encrypted_link(request.user.id)
         else:
             delete_sounds =\
                 form.cleaned_data['delete_sounds'] == 'delete_sounds'
-            request.user.profile.delete_user(remove_sounds=delete_sounds)
-            logout(request)
+            delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
+                else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+            delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
+            web_logger.info('Requested async deletion of user {0} - {1}'.format(request.user.id, delete_action))
+
+            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+            UserDeletionRequest.objects.create(user_from=request.user,
+                                               user_to=request.user,
+                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                               triggered_deletion_action=delete_action,
+                                               triggered_deletion_reason=delete_reason)
+
+            # Submit deletion job to gearman so the user is deleted asynchronously
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                                 json.dumps({'user_id': request.user.id, 'action': delete_action,
+                                             'deletion_reason': delete_reason}),
+                                 wait_until_complete=False, background=True)
+
+            # Show a message to the user that the account will be deleted shortly
+            messages.add_message(request, messages.INFO,
+                                 'Your user account will be deleted in a few moments. Note that this process could '
+                                 'take up to an hour for users with many uploaded sounds.')
+
+            # NOTE: we used to do logout here because the user account was deleted synchronously. However now we don't
+            # do this as the user is deleted asynchronously and we want to show the message that the user will be
+            # deleted soon
             return HttpResponseRedirect(reverse("front-page"))
     else:
-        form = DeleteUserForm(user_id=request.user.id)
+        form = delete_user_form_class(user_id=request.user.id)
 
     tvars = {
             'delete_form': form,
             'num_sounds': num_sounds,
+            'activePage': 'account',  # BW only
     }
     return render(request, 'accounts/delete.html', tvars)
 
@@ -1209,7 +1309,7 @@ def email_reset(request):
                 tvars = {
                     'uid': int_to_base36(user.id),
                     'user': user,
-                    'token': default_token_generator.make_token(user),
+                    'token': default_token_generator.make_token(user)
                 }
                 send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                                    'accounts/email_reset_email.txt', tvars,
@@ -1218,12 +1318,18 @@ def email_reset(request):
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user=request.user)
-    tvars = {'form': form, 'user': request.user}
+    tvars = {
+        'form': form,
+        'user': request.user,
+        'activePage': 'email'  # For BW account settings sidebar
+    }
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 
 def email_reset_done(request):
-    return render(request, 'accounts/email_reset_done.html')
+    return render(request, 'accounts/email_reset_done.html', {
+        'activePage': 'email' # For BW account settings sidebar
+    })
 
 
 @never_cache
@@ -1260,7 +1366,11 @@ def email_reset_complete(request, uidb36=None, token=None):
     # a User deletion pre_save hook if we detect that email has changed
 
     # Send email to the old address notifying about the change
-    tvars = {'old_email': old_email, 'user': user}
+    tvars = {
+        'old_email': old_email,
+        'user': user,
+        'activePage': 'email' # For BW account settings sidebar
+    }
     send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                        'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 

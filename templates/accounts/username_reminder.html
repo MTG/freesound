@@ -5,7 +5,7 @@
 {% block section_content %}
 <h1>Username reminder</h1>
 {% if sent %}
-    <p>A username reminder was sent to you email address, please make sure you check both your <strong>inbox</strong> and your <strong>spam folder</strong> the our email!</p>
+    <p>A username reminder was sent to your email address, please make sure you check both your <strong>inbox</strong> and <strong>spam folder</strong> for the email!</p>
 {% else %}
     <form method="post" action=".">{% csrf_token %}
     {{form.as_p}}

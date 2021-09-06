@@ -31,7 +31,7 @@ register = template.Library()
 @register.inclusion_tag('search/facet.html', takes_context=True)
 def display_facet(context, flt, facet, type, title=""):
     facet = annotate_tags([dict(name=f[0], count=f[1]) for f in facet if f[0] != "0"],
-                          sort=True, small_size=0.7, large_size=2.0)
+                          sort="name", small_size=0.7, large_size=2.0)
 
     # If the filter is grouping_pack and there are elements which do not contain the character "_" means that
     # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack
@@ -39,7 +39,7 @@ def display_facet(context, flt, facet, type, title=""):
     # are not unique!. What we do then is filter out the facet elements where, only for the case of grouping_pack,
     # the element name is a single number that does not contain the character "_"
 
-    filter_query = context['filter_query']
+    filter_query = urlquote_plus(context['filter_query'])
     filtered_facet = []
     for element in facet:
         if flt == "grouping_pack":
@@ -56,8 +56,9 @@ def display_facet(context, flt, facet, type, title=""):
 
         element['params'] = u'{0} {1}:"{2}"'.format(filter_query, flt, urlquote_plus(element['name']))
         element['id'] = u'{0}--{1}'.format(flt, urlquote_plus(element['name']))
-        element['add_filter_url'] = u'.?g={0}&q={1}&f={2}'.format(
+        element['add_filter_url'] = u'.?g={0}&only_p={1}&q={2}&f={3}'.format(
             context['grouping'],
+            context['only_sounds_with_pack'],
             context['search_query'],
             element['params']
         )
@@ -65,10 +66,11 @@ def display_facet(context, flt, facet, type, title=""):
 
     if using_beastwhoosh(context['request']):
         # In BW ui, we sort the facets of type "cloud" by their frequency of occurrence and apply an opacity filter
-        filtered_facet = sorted(filtered_facet, key=lambda x: x['count'], reverse=True)
-        max_count = max([element['count'] for element in filtered_facet])
-        for element in filtered_facet:
-            element['weight'] = (1.0 * element['count']) / max_count
+        if filtered_facet:
+            filtered_facet = sorted(filtered_facet, key=lambda x: x['count'], reverse=True)
+            max_count = max([element['count'] for element in filtered_facet])
+            for element in filtered_facet:
+                element['weight'] = (1.0 * element['count']) / max_count
 
     context.update({
         "facet": filtered_facet,

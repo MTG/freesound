@@ -67,7 +67,7 @@
 
   &:hover .path1:before {
     color: $navy-grey;
-    color: rgb(255, 53, 70);
+    color: rgb(255, 143, 24);
   }
 }
 
@@ -75,3 +75,24 @@
   transform: rotate(180deg);
   display: inline-block;
 }
+
+.bw-icon__download_reverse {
+  transform: rotate(180deg);
+  display: inline-block;
+}
+
+.bw-icon__inside_circle {
+  background-color: $navy-grey;
+  border-radius: 50%;
+  color: white;
+  font-size: 14px;
+  line-height: 30px;
+  width: 30px;
+  height: 30px;
+  padding-left: 6px;
+
+  &:hover {
+    background-color: $red;
+  }
+}
+

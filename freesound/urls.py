@@ -107,6 +107,8 @@ urlpatterns = [
     url(r'^contact/', support.views.contact, name="contact"),
 
     url(r'^search/$', search.views.search, name='sounds-search'),
+    url(r'^clustering_facet/$', search.views.clustering_facet, name='clustering-facet'),
+    url(r'^clustered_graph/$', search.views.clustered_graph, name='clustered-graph-json'),
     url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
 
     url(r'', include('ratings.urls')),
@@ -120,7 +122,7 @@ urlpatterns = [
     url(r'^monitor/', include('monitor.urls')),
     url(r'^follow/', include('follow.urls')),
 
-    url(r'^blog/$', RedirectView.as_view(url='http://blog.freesound.org/'), name="blog"),
+    url(r'^blog/$', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
     url(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
@@ -144,6 +146,8 @@ urlpatterns = [
 
     url(r'^donate/', donations.views.donate_redirect, name="donate-redirect"),
     url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
+    url(r'^p/(?P<pack_id>\d+)/$', sounds.views.pack_short_link, name="short-pack-link"),
+
 
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),

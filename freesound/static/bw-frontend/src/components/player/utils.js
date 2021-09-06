@@ -22,7 +22,7 @@ const formatMilliseconds = value => {
  * @param {number} duration
  */
 export const formatAudioDuration = duration => {
-  if (duration === Infinity){
+  if ((duration === Infinity) || (isNaN(duration))){
     return `?:?:?`
   }
   const minutes = Math.floor(duration / 60)
@@ -31,4 +31,12 @@ export const formatAudioDuration = duration => {
   return `${padSingleDigits(minutes)}:${padSingleDigits(
     seconds
   )}:${formatMilliseconds(milliseconds)}`
+}
+
+
+export const stopAllPlayers = () => {
+  const players = [...document.getElementsByClassName('bw-player')]
+  players.forEach(player => {
+    player.getElementsByTagName('audio').forEach(audioElement=>{audioElement.pause()});
+  });
 }

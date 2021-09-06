@@ -2,6 +2,10 @@
   color: $red;
 }
 
+.text-red-important {
+  color: $red!important;
+}
+
 .text-grey {
   color: $navy-grey;
 }
@@ -12,6 +16,10 @@
 
 .text-black {
   color: $black;
+}
+
+.text-white {
+  color: $white;
 }
 
 .text-yellow-rating {
@@ -40,6 +48,10 @@
 
 .font-weight-normal {
   font-weight: normal;
+}
+
+.font-weight-semi-bold {
+  font-weight: 600;
 }
 
 .font-weight-bold {

@@ -73,21 +73,34 @@ const createProgressBar = audioElement => {
 /**
  * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
+ * @param {bool} startWithSpectrum
+ * @param {number} durationDataProperty
  */
-const createProgressStatus = (audioElement, playerSize) => {
-  const { duration } = audioElement
+const createProgressStatus = (audioElement, playerSize, startWithSpectrum, durationDataProperty) => {
+  let { duration } = audioElement
+  if ((duration === Infinity) || (isNaN(duration))){
+    // Duration was not properly retrieved from audioElement. If given from data property, use that one.
+    if (durationDataProperty !== undefined){
+      duration = durationDataProperty
+    }
+  }
   const progressStatusContainer = document.createElement('div')
   progressStatusContainer.className = 'bw-player__progress-container'
   const progressBar = createProgressBar(audioElement)
   const progressStatus = document.createElement('div')
   progressStatus.className = 'bw-player__progress'
   const durationIndicator = document.createElement('span')
+  durationIndicator.className = 'bw-total__sound_duration'
   const progressIndicator = document.createElement('span')
   progressIndicator.classList.add('hidden')
   if (playerSize === 'big') {
     progressStatusContainer.classList.add('bw-player__progress-container--big')
     progressStatus.classList.add('bw-player__progress--big')
     progressIndicator.classList.remove('hidden')
+  } else {
+    if (startWithSpectrum){
+      progressStatusContainer.classList.add('bw-player__progress-container--inverted')
+    }
   }
   durationIndicator.innerHTML = `${
     playerSettings.showRemainingTime ? '-' : ''
@@ -155,9 +168,9 @@ const createLoopButton = audioElement => {
   loopButton.addEventListener('click', () => {
     const willLoop = !audioElement.loop
     if (willLoop) {
-      loopButton.classList.add('text-red')
+      loopButton.classList.add('text-red-important')
     } else {
-      loopButton.classList.remove('text-red')
+      loopButton.classList.remove('text-red-important')
     }
     audioElement.loop = willLoop
   })
@@ -168,18 +181,35 @@ const createLoopButton = audioElement => {
  *
  * @param {HTMLImgElement} playerImgNode
  * @param {HTMLDivElement} parentNode
+ * @param {'small' | 'big'} playerSize
+ * @param {bool} startWithSpectrum
  */
-const createSpectogramButton = (playerImgNode, parentNode) => {
+const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWithSpectrum) => {
   const spectogramButton = createControlButton('spectogram')
   const { spectrum, waveform } = parentNode.dataset
+  if (startWithSpectrum){
+    spectogramButton.classList.add('text-red-important');
+  }
   spectogramButton.addEventListener('click', () => {
     const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
     if (hasWaveform) {
       playerImgNode.src = spectrum
-      spectogramButton.classList.add('text-red')
+      spectogramButton.classList.add('text-red-important')
+      spectogramButton.parentElement.classList.add('bw-player__controls-inverted');
+      if (playerSize !== 'big'){
+        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
+          progressIndicator.classList.add('bw-player__progress-inverted');
+        });
+      }
     } else {
       playerImgNode.src = waveform
-      spectogramButton.classList.remove('text-red')
+      spectogramButton.classList.remove('text-red-important')
+      spectogramButton.parentElement.classList.remove('bw-player__controls-inverted');
+      if (playerSize !== 'big') {
+        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
+          progressIndicator.classList.remove('bw-player__progress-inverted');
+        });
+      }
     }
   })
   return spectogramButton
@@ -201,29 +231,43 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
   imageContainer.className = 'bw-player__img-container'
   if (playerSize === 'big') {
     imageContainer.classList.add('bw-player__img-container--big')
+  } else if (playerSize === 'minimal') {
+    imageContainer.classList.add('bw-player__img-container--minimal')
   }
-  const { waveform, title } = parentNode.dataset
-  const playerImage = document.createElement('img')
-  playerImage.className = 'bw-player__img'
-  playerImage.src = waveform
-  playerImage.alt = title
-  const progressIndicator = createProgressIndicator(parentNode, audioElement)
-  imageContainer.appendChild(playerImage)
-  imageContainer.appendChild(progressIndicator)
-  audioElement.addEventListener('loadedmetadata', () => {
-    const progressStatus = createProgressStatus(audioElement, playerSize)
-    imageContainer.appendChild(progressStatus)
-  })
-  imageContainer.addEventListener('click', evt => {
-    const clickPosition = evt.layerX
-    const width = evt.target.clientWidth
-    const positionRatio = clickPosition / width
-    const time = audioElement.duration * positionRatio
-    audioElement.currentTime = time
-    if (audioElement.paused) {
-      audioElement.play()
+  if (playerSize !== 'minimal') {
+    const startWithSpectrum = document.cookie.indexOf('preferSpectrogram=yes') > -1;
+    const {waveform, spectrum, title, duration} = parentNode.dataset
+    const playerImage = document.createElement('img')
+    playerImage.className = 'bw-player__img'
+    if (startWithSpectrum) {
+      playerImage.src = spectrum
+    } else {
+      playerImage.src = waveform
     }
-  })
+    playerImage.alt = title
+    const progressIndicator = createProgressIndicator(parentNode, audioElement)
+    imageContainer.appendChild(playerImage)
+    imageContainer.appendChild(progressIndicator)
+    const progressStatus = createProgressStatus(audioElement, playerSize, startWithSpectrum, parseFloat(duration, 10))
+    imageContainer.appendChild(progressStatus)
+    audioElement.addEventListener('loadedmetadata', () => {
+      // If "loadedmetadata" event is received and valid duration value has been obtained, replace duration from data
+      // property with "real" duration from loaded file
+      if (audioElement.duration !== Infinity){
+        progressStatus.getElementsByClassName('bw-total__sound_duration')[0].innerHTML = formatAudioDuration(audioElement.duration);
+      }
+    })
+    imageContainer.addEventListener('click', evt => {
+      const clickPosition = evt.layerX
+      const width = evt.target.clientWidth
+      const positionRatio = clickPosition / width
+      const time = audioElement.duration * positionRatio
+      audioElement.currentTime = time
+      if (audioElement.paused) {
+        audioElement.play()
+      }
+    })
+  }
   return imageContainer
 }
 
@@ -239,11 +283,17 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   playerControls.className = 'bw-player__controls stop-propagation'
   if (playerSize === 'big') {
     playerControls.classList.add('bw-player__controls--big')
+  } else if (playerSize === 'minimal') {
+    playerControls.classList.add('bw-player__controls--minimal')
+  }
+  const startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+  if (startWithSpectrum){
+    playerControls.classList.add('bw-player__controls-inverted');
   }
   const playButton = createPlayButton(audioElement, playerSize)
   const stopButton = createStopButton(audioElement, parentNode)
   const loopButton = createLoopButton(audioElement)
-  const spectogramButton = createSpectogramButton(playerImgNode, parentNode)
+  const spectogramButton = createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum)
   const rulerButton = createRulerButton()
   const controls =
     playerSize === 'big'
@@ -304,9 +354,4 @@ const createPlayer = parentNode => {
   }
 }
 
-const setupPlayers = () => {
-  const players = [...document.getElementsByClassName('bw-player')]
-  players.forEach(createPlayer)
-}
-
-setupPlayers()
+export {createPlayer};

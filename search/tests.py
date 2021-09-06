@@ -18,11 +18,12 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from sounds.models import Sound
-from search.views import search_process_filter
+from utils.search.search_general import search_process_filter
 from utils.search.solr import SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from utils.test_helpers import create_user_and_sounds
 import mock
 import copy
 
@@ -81,6 +82,70 @@ solr_select_returned_data = {
         'status': 0
     }
 }
+
+
+def return_successful_clustering_results(sound_id_1, sound_id_2, sound_id_3, sound_id_4):
+    return {
+        'graph': {
+            'directed': False,
+            'graph': {
+
+            },
+            'nodes': [
+                {
+                    'group_centrality': 0.5,
+                    'group': 0,
+                    'id': sound_id_1
+                },
+                {
+                    'group_centrality': 1,
+                    'group': 0,
+                    'id': sound_id_2
+                },
+                {
+                    'group_centrality': 0.5,
+                    'group': 1,
+                    'id': sound_id_3
+                },
+                {
+                    'group_centrality': 1,
+                    'group': 1,
+                    'id': sound_id_4
+                },
+            ],
+            'links': [
+                {
+                    'source': sound_id_1,
+                    'target': sound_id_2
+                },
+                {
+                    'source': sound_id_1,
+                    'target': sound_id_3
+                },
+                {
+                    'source': sound_id_3,
+                    'target': sound_id_4
+                },
+            ],
+            'multigraph': False
+        },
+        'finished': True,
+        'result': [
+            [
+                sound_id_1,
+                sound_id_2
+            ],
+            [
+                sound_id_3,
+                sound_id_4
+            ],
+        ],
+        'error':False
+    }
+
+pending_clustering_results = {'finished': False, 'error': False}
+
+failed_clustering_results = {'finished': False, 'error': True}
 
 
 class SearchPageTests(TestCase):
@@ -162,3 +227,55 @@ class SearchProcessFilter(TestCase):
 
 
 
+class SearchResultClustering(TestCase):
+
+    fixtures = ['licenses']
+
+    def setUp(self):
+        _, _, sounds = create_user_and_sounds(num_sounds=4, tags='tag1, tag2, tag3')
+        sound_ids = []
+        sound_id_preview_urls = []
+        for sound in sounds:
+            sound_ids.append(str(sound.id))
+            sound_id_preview_urls.append((sound.id, sound.locations()['preview']['LQ']['ogg']['url']))
+
+        self.sound_id_preview_urls = sound_id_preview_urls
+        self.successful_clustering_results = return_successful_clustering_results(*sound_ids)
+        self.pending_clustering_results = pending_clustering_results
+        self.failed_clustering_results = failed_clustering_results
+
+    @mock.patch('search.views.cluster_sound_results')
+    def test_successful_search_result_clustering_view(self, cluster_sound_results):
+        cluster_sound_results.return_value = self.successful_clustering_results
+        resp = self.client.get(reverse('clustering-facet'))
+
+        # 200 status code & use of clustering facets template
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'search/clustering_facet.html')
+
+        # check cluster's content
+        # 2 sounds per clusters
+        # 3 most used tags in the cluster 'tag1 tag2 tag3'
+        # context variable cluster_id_num_results_tags_sound_examples: [(<cluster_id>, <num_sounds>, <tags>, <ids_preview_urls>), ...]
+        self.assertEqual(resp.context['cluster_id_num_results_tags_sound_examples'], [
+            (0, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[:2]), 
+            (1, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[2:])
+        ])
+
+    @mock.patch('search.views.cluster_sound_results')
+    def test_pending_search_result_clustering_view(self, cluster_sound_results):
+        cluster_sound_results.return_value = self.pending_clustering_results
+        resp = self.client.get(reverse('clustering-facet'))
+
+        # 200 status code & JSON response content
+        self.assertEqual(resp.status_code, 200)
+        self.assertJSONEqual(resp.content, {'status': 'pending'})
+
+    @mock.patch('search.views.cluster_sound_results')
+    def test_failed_search_result_clustering_view(self, cluster_sound_results):
+        cluster_sound_results.return_value = self.failed_clustering_results
+        resp = self.client.get(reverse('clustering-facet'))
+
+        # 200 status code & JSON response content
+        self.assertEqual(resp.status_code, 200)
+        self.assertJSONEqual(resp.content, {'status': 'failed'})

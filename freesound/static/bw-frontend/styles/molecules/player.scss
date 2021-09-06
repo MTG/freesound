@@ -6,6 +6,11 @@
   &.bw-player__img-container--big {
     height: 330px;
   }
+
+  &.bw-player__img-container--minimal {
+    height: 20px;
+    width: 43px;
+  }
 }
 
 .bw-player__img {
@@ -80,6 +85,16 @@
       font-size: 36px;
     }
   }
+
+  &.bw-player__controls--minimal {
+    opacity: 1;
+  }
+}
+
+.bw-player__controls-inverted {
+  button {
+    color: $white;
+  }
 }
 
 .bw-player__progress-container {
@@ -139,6 +154,15 @@
     border-radius: 2px;
   }
   color: $navy-grey;
+}
+
+.bw-player__progress-container--inverted {
+  .bw-player__progress {
+    color: #555555;
+    span {
+      background-color: transparentize($white, 0.4);
+    }
+  }
 }
 
 .bw-player__favorite {

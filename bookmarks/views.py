@@ -20,7 +20,6 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
@@ -31,10 +30,11 @@ from bookmarks.forms import BookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def bookmarks(request, username, category_id=None):
     user = request.parameter_user
 

@@ -91,7 +91,7 @@ class Command(BaseCommand):
         section = options['section']
 
         if not base_url:
-            base_url = "http://%s/" % Site.objects.get_current().domain
+            base_url = "https://%s/" % Site.objects.get_current().domain
 
         test_client = None
         if not token:

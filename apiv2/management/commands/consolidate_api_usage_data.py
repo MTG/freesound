@@ -49,10 +49,14 @@ class Command(LoggingBaseCommand):
             date_filter = now - datetime.timedelta(days=i)
             monitoring_key_pattern = '{0}-{1}-{2}_*'.format(date_filter.year, date_filter.month, date_filter.day)
             for key, count in cache_api_monitoring.get_many(cache_api_monitoring.keys(monitoring_key_pattern)).items():
-                apiv2_client = ApiV2Client.objects.get(oauth_client__client_id=key.split('_')[1])
-                usage_history, _ = APIClientDailyUsageHistory\
-                    .objects.get_or_create(date=date_filter, apiv2_client=apiv2_client)
-                usage_history.number_of_requests = count
-                usage_history.save()
+                try:
+                    apiv2_client = ApiV2Client.objects.get(oauth_client__client_id=key.split('_')[1])
+                    usage_history, _ = APIClientDailyUsageHistory\
+                        .objects.get_or_create(date=date_filter, apiv2_client=apiv2_client)
+                    usage_history.number_of_requests = count
+                    usage_history.save()
+                except ApiV2Client.DoesNotExist:
+                    # Client has been deleted, no usage history to update
+                    pass
 
         self.log_end()

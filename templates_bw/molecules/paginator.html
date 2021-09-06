@@ -1,5 +1,7 @@
 {% load bw_templatetags %}
 
+{% if page_numbers|length > 1 %}
+
 <ul class="bw-pagination_container">
     {% if page.has_previous %}
         <li class="bw-pagination_circle bw-pagination_direction"> <a href="{{ url_prev_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white no-hover" title="Previous Page">{% bw_icon 'arrow-left' 'white' %}</a> </li>
@@ -27,3 +29,5 @@
         <li class="bw-pagination_circle bw-pagination_direction"> <a href="{{ url_next_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white no-hover" title="Next Page">{% bw_icon 'arrow' %}</a> </li>
     {% endif %}
 </ul>
+
+{% endif %}

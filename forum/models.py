@@ -25,6 +25,7 @@ import logging
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.db.models import F
+from django.db.models.functions import Greatest
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
@@ -121,6 +122,7 @@ def update_num_threads_on_thread_insert(sender, instance, created, **kwargs):
     if created:
         thread.forum.num_threads = F('num_threads') + 1
         thread.forum.save()
+        thread.forum.refresh_from_db()
 
 
 @receiver(pre_save, sender=Thread)
@@ -132,7 +134,7 @@ def update_num_threads_on_thread_update(sender, instance, **kwargs):
         with transaction.atomic():
             old_thread = Thread.objects.get(pk=instance.id)
             if old_thread.forum_id != instance.forum_id:
-                old_thread.forum.num_threads = F('num_threads') - 1
+                old_thread.forum.num_threads = Greatest(F('num_threads') - 1, 0)
                 old_thread.forum.save()
                 instance.forum.num_threads = F('num_threads') + 1
                 instance.forum.save()
@@ -155,7 +157,7 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
     try:
         with transaction.atomic():
             thread.forum.refresh_from_db()
-            thread.forum.num_threads = F('num_threads') - 1
+            thread.forum.num_threads = Greatest(F('num_threads') - 1, 0)
             thread.forum.set_last_post()
             thread.forum.save()
     except Forum.DoesNotExist:

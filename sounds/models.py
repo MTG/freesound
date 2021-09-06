@@ -1524,12 +1524,19 @@ class SoundAnalysis(models.Model):
     instead of AudioCommonsAnalysis) so that we can use it in the future for standard Essentia analysis
     or for other extractors as well, but for the current use case that wouldn't be needed.
     """
+    STATUS_CHOICES = (
+            ("OK", 'Ok'),  # Sounds will only be in "PE" before the very first time they are processed
+            ("SK", 'Skipped'),
+            ("FA", 'Failed'),
+        )
+
     sound = models.ForeignKey(Sound, related_name='analyses')
     created = models.DateTimeField(auto_now_add=True)
     analyzer = models.CharField(db_index=True, max_length=255)
     analyzer_version = models.CharField(db_index=True, max_length=255)
     analysis_filename = models.CharField(max_length=255, null=True)
     analysis_data = JSONField(null=True)
+    analysis_status = models.CharField(db_index=True, max_length=2, choices=STATUS_CHOICES)
 
     @property
     def analysis_filepath(self):

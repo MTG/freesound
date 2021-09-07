@@ -574,7 +574,8 @@ function activateGraph (graph, clusterId=undefined) {
   }
 
   async function getSoundDisplay(node) {
-    const url = "/embed/sound/iframe/"+ node.id +"/simple/medium/";
+    // const url = "/embed/sound/iframe/"+ node.id +"/simple/medium/";
+    const url = node.sound_display_url;
     $.get(url, {}).then(data => {
       $(".graph-node-card").html(data);
     });

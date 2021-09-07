@@ -900,6 +900,9 @@ def display_sound_wrapper(request, username, sound_id):
         'is_explicit': is_explicit,
         'is_authenticated': request.user.is_authenticated()  # cache computation is weird with CallableBool
     }
+    if using_beastwhoosh(request):
+        # TODO: check if the template needs other params
+        tvars['player_size'] = 'small'
     return render(request, 'sounds/display_sound.html', tvars)
 
 

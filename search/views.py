@@ -286,6 +286,7 @@ def clustered_graph(request):
                 sound.original_filename,
                 ' '.join(sound.tag_array),
                 reverse("sound", args=(sound.username, sound.id)),
+                reverse('sound-display', args=(sound.username, sound.id)),
                 sound_locations['display']['wave']['M']['url'],
             )}
         )
@@ -295,7 +296,8 @@ def clustered_graph(request):
         node['name'] = sound_metadata[int(node['id'])][1]
         node['tags'] = sound_metadata[int(node['id'])][2]
         node['sound_page_url'] = sound_metadata[int(node['id'])][3]
-        node['image_url'] = sound_metadata[int(node['id'])][4]
+        node['sound_display_url'] = sound_metadata[int(node['id'])][4]
+        node['image_url'] = sound_metadata[int(node['id'])][5]
 
     return JsonResponse(json.dumps(graph), safe=False)
 

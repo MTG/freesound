@@ -569,7 +569,15 @@ function activateGraph (graph, clusterId=undefined) {
       html_label += '<div class="graph-node-card-content">' + node.tags + '</div>'
       html_label += '<div class="graph-node-card-image"><span class="clustering-loader"></span><img src="' + node.image_url + '"></img></div>'
       html_label += '</div>'
+      getSoundDisplay(node);
       return html_label
+  }
+
+  async function getSoundDisplay(node) {
+    const url = "/embed/sound/iframe/"+ node.id +"/simple/medium/";
+    $.get(url, {}).then(data => {
+      $(".graph-node-card").html(data);
+    });
   }
 
   // cross-link node objects

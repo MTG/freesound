@@ -1616,7 +1616,7 @@ class SoundAnalysis(models.Model):
     analyzer_version = models.CharField(db_index=True, max_length=255)
     analysis_filename = models.CharField(max_length=255, null=True)
     analysis_data = JSONField(null=True)
-    analysis_status = models.CharField(db_index=True, max_length=2, choices=STATUS_CHOICES)
+    analysis_status = models.CharField(null=True, db_index=True, max_length=2, choices=STATUS_CHOICES)
 
     @property
     def analysis_filepath(self):
@@ -1624,6 +1624,16 @@ class SoundAnalysis(models.Model):
         and under a sound ID folder structure like sounds and other sound-related files."""
         id_folder = str(self.id / 1000)
         return os.path.join(settings.ANALYSIS_PATH, id_folder, "%s" % self.analysis_filename)
+
+    def set_analysis_status(self, status):
+        """
+        Updates self.analysis_state field of the Sound object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        two processes in parallel and we want to avoid possible field overwrites.
+        :param str state: new state to which self.analysis_state should be set
+        """
+        self.analysis_status = status
+        self.save(update_fields=['analysis_status'])
 
     def get_analysis(self):
         """Returns the contents of the analysis"""

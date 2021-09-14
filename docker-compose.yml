@@ -129,7 +129,7 @@ services:
 
     # New analysis method1 worker (celery worker) - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer1:
-        image: new_analyzer_test:20210806_ca720e7
+        image: new_analyzer_test
         init: true
         command: celery -A main worker --concurrency=4 -l info -Q analyze_method1
         depends_on:

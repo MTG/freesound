@@ -39,18 +39,42 @@ class Command(BaseCommand):
             '--analysis_config_file',
             action='store',
             required=True,
-            help='Absolute path to the analysis configuration file')
+            help="Absolute path to the analysis configuration file")
         parser.add_argument(
             '--dry_run',
             action="store_true",
-            help='Flag to only print the main status of the analysis. It does not trigger any analysis.')
+            help="Flag to only print the main status of the analysis. It prevents any analysis from being triggered.")
+        parser.add_argument(
+            '--include_skipped',
+            dest='include_skipped',
+            action="store_true",
+            help="Flag to analyze sounds that haven't been analyzed.")
+        parser.add_argument(
+            '--include_failed',
+            dest='include_failed',
+            action="store_true",
+            help="Flag to analyze sounds that have failed their analysis.")
+        parser.add_argument(
+            '--include_ok',
+            dest='include_ok',
+            action="store_true",
+            help="Flag to repeat the analysis of sounds that have been succesfully analyzed.")
+        parser.add_argument(
+            '--include_missing',
+            dest='include_missing',
+            action="store_true",
+            help="Flag to repeat the analysis of sounds that have been succesfully analyzed.")
+        parser.add_argument(
+            '--max_per_analyzer',
+            action="store",
+            help="It allows to set a maximum number of analysis jobs to create per analyzer.")
 
     def handle(self, *args, **options):
         # Read config json
         with open(options['analysis_config_file']) as json_file:
             config_file = json.load(json_file)
 
-        # Print information about the already analyzed sounds if the dry_run flag exists
+        # Print information about the already analyzed sounds
         ok_total = SoundAnalysis.objects.filter(analysis_status="OK").count()
         sk_total = SoundAnalysis.objects.filter(analysis_status="SK").count()
         fa_total = SoundAnalysis.objects.filter(analysis_status="FA").count()
@@ -66,23 +90,40 @@ class Command(BaseCommand):
 
         # Count number of analysis done with each analyzer
         for a in config_file['analyzers']:
-            analyzer, version = a.split(":")
+            analyzer, version = a.split("_")
             ok = SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="OK").count()
             sk = SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="SK").count()
             fa = SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="FA").count()
             missing = n_sounds-(ok+sk+fa)
-            # print row with more info
+            # print one row per analyzer
             console_logger.info("{: >44} {: >11} {: >11} {: >11} {: >11}".format(
                 *[a+' |', '{0} |'.format(ok), '{0} |'.format(sk), '{0} |'.format(fa), missing]))
 
+        # Only trigger analysis if dry_run flag is not included in the command
         if not options['dry_run']:
             console_logger.info("Analysis configuration file: {0}".format(config_file))
-            for a in config_file['analyzers']:
-                # Check all sounds available
-                for s in Sound.objects.all():
-                    analyzer, version = a.split("_")
-                    # if the combination sound-analyzer-version does not exist, trigger analysis
-                    if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer, analyzer_version=version).exists():
+            for analyzer_complete_name in config_file['analyzers']:
+                analyzer, version = analyzer_complete_name.split("_")
+
+                if options['include_missing']:
+                    for s in Sound.objects.all():
+                        # if the combination sound-analyzer-version does not exist, trigger analysis
+                        if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer, analyzer_version=version).exists():
+                            console_logger.info(
+                                "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
+                            s.analyze_new(method=analyzer_complete_name)
+                if options['include_skipped']:
+                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="SK"):
                         console_logger.info(
-                            "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
-                        s.analyze_v2(analyzer=analyzer, force=True)
+                                "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
+                        a.sound.analyze_new(method=analyzer_complete_name)
+                if options['include_failed']:
+                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="FA"):
+                        console_logger.info(
+                                "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
+                        a.sound.analyze_new(method=analyzer_complete_name)
+                if options['include_ok']:
+                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="OK"):
+                        console_logger.info(
+                                "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
+                        a.sound.analyze_new(method=analyzer_complete_name)

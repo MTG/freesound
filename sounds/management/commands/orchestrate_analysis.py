@@ -32,14 +32,15 @@ console_logger = logging.getLogger("console")
 class Command(BaseCommand):
 
     help = """Checks if there are sounds that have not been analyzed by the analyzers defined in the Analysis 
-    Configuration File (or that are analyzed with older versions) and send jobs to the analysis workers if needed"""
+    Configuration File (or that are analyzed with older versions) and send jobs to the analysis workers if needed.
+    If there are no flags indicating which sounds to be analyzed, no analysis is triggered."""
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--analysis_config_file',
             action='store',
             required=True,
-            help="Absolute path to the analysis configuration file")
+            help="Absolute path to the analysis configuration file.")
         parser.add_argument(
             '--dry_run',
             action="store_true",
@@ -48,7 +49,7 @@ class Command(BaseCommand):
             '--include_skipped',
             dest='include_skipped',
             action="store_true",
-            help="Flag to analyze sounds that haven't been analyzed.")
+            help="Flag to analyze sounds that were skipped in previous analysis.")
         parser.add_argument(
             '--include_failed',
             dest='include_failed',
@@ -63,7 +64,7 @@ class Command(BaseCommand):
             '--include_missing',
             dest='include_missing',
             action="store_true",
-            help="Flag to repeat the analysis of sounds that have been succesfully analyzed.")
+            help="Flag to analyze sounds that haven't been analyzed.")
         parser.add_argument(
             '--max_per_analyzer',
             action="store",
@@ -101,11 +102,19 @@ class Command(BaseCommand):
 
         # Only trigger analysis if dry_run flag is not included in the command
         if not options['dry_run']:
-            console_logger.info("Analysis configuration file: {0}".format(config_file))
+            if not options['include_missing'] and not options['include_skipped'] and not options['include_failed'] and not options['include_ok']:
+                console_logger.info(
+                    "No analysis has been specified. Please indicate which sounds to analyze with the --include_missing, --include_skipped, --include_failed and/or --include_ok arguments.")
+                console_logger.info("Use the help command for more information.")
+            else:
+                console_logger.info("Starting analysis... ")
+                console_logger.info("Analysis configuration file: {0}".format(config_file))
+
             for analyzer_complete_name in config_file['analyzers']:
                 analyzer, version = analyzer_complete_name.split("_")
 
                 if options['include_missing']:
+                    console_logger.info("Analyzing all sounds that haven't been analyzed yet...")
                     for s in Sound.objects.all():
                         # if the combination sound-analyzer-version does not exist, trigger analysis
                         if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer, analyzer_version=version).exists():
@@ -113,17 +122,20 @@ class Command(BaseCommand):
                                 "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                             s.analyze_new(method=analyzer_complete_name)
                 if options['include_skipped']:
+                    console_logger.info("Analyzing all sounds whose analysis was skipped (marked as 'SK')...")
                     for a in SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="SK"):
                         console_logger.info(
-                                "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
+                            "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                         a.sound.analyze_new(method=analyzer_complete_name)
                 if options['include_failed']:
+                    console_logger.info("Analyzing all sounds whose analysis failed (marked as 'FA')...")
                     for a in SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="FA"):
                         console_logger.info(
-                                "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
+                            "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                         a.sound.analyze_new(method=analyzer_complete_name)
                 if options['include_ok']:
+                    console_logger.info("Analyzing all sounds whose analysis was successful (marked as 'OK')...")
                     for a in SoundAnalysis.objects.filter(analyzer=analyzer, analyzer_version=version, analysis_status="OK"):
                         console_logger.info(
-                                "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
+                            "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                         a.sound.analyze_new(method=analyzer_complete_name)

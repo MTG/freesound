@@ -33,6 +33,7 @@ from django.db import transaction
 from accounts.models import DeletedUser
 from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_post_to_solr, delete_post_from_solr

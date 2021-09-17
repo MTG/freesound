@@ -54,4 +54,8 @@
   display: none;
 }
 
+.inline-block {
+  display: inline-block;
+}
+
 @include make-grid-columns();

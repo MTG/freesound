@@ -11,10 +11,9 @@ services:
         image: postgres:12.1
         volumes:
             - pgdata:/var/lib/postgresql/data
+            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         env_file:
             - environment
-        volumes:
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:
             - 5432:5432
         environment:
@@ -84,6 +83,21 @@ services:
         ports:
             - 8008:8008
         environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+
+    clustering:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.clustering
+        init: true
+        command: celery -A freesound worker -l info
+        volumes:
+            - .:/code
+            - ./freesound-data/clustering_index:/freesound-data/clustering_index
+        depends_on:
+            - redis
+        environment:
+            - ENV_CELERY_WORKER=1
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
 
     redis:

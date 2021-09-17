@@ -22,78 +22,47 @@
 
 from follow.models import FollowingUserItem, FollowingQueryItem
 import sounds
-from search.views import search_prepare_query, search_prepare_sort
+from utils.search.search_general import search_prepare_query, search_prepare_sort
 from django.conf import settings
 from utils.search.solr import Solr, SolrResponseInterpreter
 from search.forms import SEARCH_SORT_OPTIONS_WEB
-# from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import urllib
 
 SOLR_QUERY_LIMIT_PARAM = 3
 
 
+def get_users_following_qs(user):
+    return FollowingUserItem.objects.select_related('user_to__profile')\
+        .filter(user_from=user).order_by('user_to__username')
+
+
 def get_users_following(user):
-    items = FollowingUserItem.objects.select_related('user_to__profile').filter(user_from=user)
-    return [item.user_to for item in items]
+    return [item.user_to for item in get_users_following_qs(user)]
+
+
+def get_users_followers_qs(user):
+    return FollowingUserItem.objects.select_related('user_from__profile')\
+        .filter(user_to=user).order_by('user_from__username')
 
 
 def get_users_followers(user):
-    items = FollowingUserItem.objects.select_related('user_from__profile').filter(user_to=user)
-    return [item.user_from for item in items]
+    return [item.user_from for item in get_users_followers_qs(user)]
+
+
+def get_tags_following_qs(user):
+    return FollowingQueryItem.objects.filter(user=user).order_by('query')
 
 
 def get_tags_following(user):
-    items = FollowingQueryItem.objects.filter(user=user)
-    return [item.query for item in items]
+    return [item.query for item in get_tags_following_qs(user)]
 
 
 def is_user_following_user(user_from, user_to):
-    return user_to in get_users_following(user=user_from)
+    return FollowingUserItem.objects.filter(user_from=user_from, user_to=user_to).exists()
 
 
 def is_user_following_tag(user, slash_tag):
-    tags_following = get_tags_following(user)
-    space_tag = slash_tag.replace("/", " ")
-    return space_tag in tags_following
-
-
-def is_user_being_followed_by_user(user_from, user_to):
-    return user_to in get_users_followers(user_from)
-
-
-def get_vars_for_account_view(user):
-    return get_vars_for_views_helper(user, clip=True)
-
-
-def get_vars_for_home_view(user):
-    return get_vars_for_views_helper(user, clip=False)
-
-
-def get_vars_for_views_helper(user, clip):
-
-    following = get_users_following(user)
-    followers = get_users_followers(user)
-    following_tags = get_tags_following(user)
-
-    following_count = len(following)
-    followers_count = len(followers)
-    following_tags_count = len(following_tags)
-
-    # show only the first 21 (3 rows) followers and following users and 5 following tags
-    if clip:
-        following = following[:21]
-        followers = followers[:21]
-        following_tags = following_tags[:5]
-
-    space_tags = following_tags
-    split_tags = [tag.split(" ") for tag in space_tags]
-    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
-
-    following_tags = []
-    for i in range(len(space_tags)):
-        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
-
-    return following, followers, following_tags, following_count, followers_count, following_tags_count
+    return FollowingQueryItem.objects.filter(user=user, query=slash_tag.replace("/", " ")).exists()
 
 
 def get_stream_sounds(user, time_lapse):

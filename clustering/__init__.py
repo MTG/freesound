@@ -18,12 +18,6 @@
 #     See AUTHORS file.
 #
 
-from django import template
-from django.conf import settings
-
-register = template.Library()
-
-@register.inclusion_tag('templatetags/google_analytics.html')
-def google_analytics():
-    return {'google_analytics_key' : settings.GOOGLE_ANALYTICS_KEY}
-    
+# strings used for communicating the state of the clustering process
+CLUSTERING_RESULT_STATUS_PENDING = "pending"
+CLUSTERING_RESULT_STATUS_FAILED = "failed"

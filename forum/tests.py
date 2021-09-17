@@ -358,7 +358,7 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user fails creating thread
         long_title = 255 * '1'
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
             u'body': [u'New thread body (first post)'], u'subscribe': [u'on'], u'title': [long_title]
         })

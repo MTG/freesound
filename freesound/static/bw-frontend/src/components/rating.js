@@ -1,3 +1,5 @@
+import {showToast} from "./toast";
+
 const ratingInputs = document.getElementsByClassName('bw-rating__input');
 
 const updateStarIconsClasses = (ratingContainerElement, newRatingValue) => {
@@ -22,7 +24,6 @@ const updateStarIconsClasses = (ratingContainerElement, newRatingValue) => {
 };
 
 const handleRatingInput = ratingInput => {
-  console.log(ratingInput)
   const {updateStarsColorOnSave} = ratingInput.parentNode.dataset;
   const {rateUrl} = ratingInput.dataset;
   const req = new XMLHttpRequest();
@@ -33,9 +34,9 @@ const handleRatingInput = ratingInput => {
         if (updateStarsColorOnSave === "true"){
           updateStarIconsClasses(ratingInput.parentNode, ratingInput.value);
         }
-        // TODO: show message that the rating was saved
+        showToast('Your rating has been recorded');
       } else {
-        // TODO: show message that the rating could not be saved
+        showToast('There were problems entering your rating. Please try again later');
       }
     }
   };
@@ -43,6 +44,5 @@ const handleRatingInput = ratingInput => {
 };
 
 ratingInputs.forEach(ratingInput => {
-    console.log(ratingInput)
   ratingInput.addEventListener('click', () => handleRatingInput(ratingInput))
 });

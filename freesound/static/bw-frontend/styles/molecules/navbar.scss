@@ -155,6 +155,52 @@ $navbar-height-mobile: 64px;
   }
 }
 
+.navbar-profile {
+  list-style: none;
+
+  .nav-item {
+    margin: 16px 0;
+
+    .nav-link {
+      color: $navy-grey;
+
+      &.active {
+        color: $black;
+      }
+
+      &:hover {
+        color: $black;
+      }
+    }
+  }
+}
+
+.bw-nav__followers {
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    width: 100%;
+    justify-content: center;
+
+    li {
+      margin: 0 12px;
+      font-size: 18px;
+
+      a {
+        color: $navy-light-grey;
+      }
+    }
+
+    .active {
+      a {
+        color: $black;
+      }
+    }
+  }
+}
+
 .navbar-forums-hot {
   list-style: none;
   display: flex;

@@ -4,3 +4,6 @@ env
 freesound-data
 .git
 node_modules
+_docs/api/build
+bw_static
+freesound/static/bw-frontend/dist

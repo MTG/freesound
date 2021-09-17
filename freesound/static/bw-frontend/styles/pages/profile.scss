@@ -1,0 +1,101 @@
+.bw-profile {
+  &__hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__username h1 {
+    color: $red;
+    font-size: 38px;
+  }
+
+  &__description {
+    font-size: 15px;
+    max-width: 568px;
+    text-align: center;
+  }
+
+  &__stats {
+    display: flex;
+    font-size: 15px;
+
+    a {
+      color: $navy-grey;
+    }
+
+    div:after {
+      content: ' ';
+      background-color: $navy-grey;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      margin: 0 12px 3px;
+      display: inline-block;
+    }
+    div:last-child:after {
+      display: none;
+    }
+  }
+
+  &__taps_nav {
+    margin-top: 25px;
+    margin-bottom: 25px;
+
+    ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      width: 100%;
+      justify-content: center;
+
+      li {
+        margin: 0 12px;
+        font-size: 18px;
+        color: $navy-light-grey;
+        cursor: pointer;
+      }
+
+      .active {
+        color: $black;
+      }
+    }
+  }
+
+  &__tap_container {
+    display: none;
+
+    &__active {
+      display: block;
+    }
+  }
+
+  &__section_stats {
+    padding-bottom: 32px;
+
+    ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      li {
+        > span {
+          margin: 0 3px;
+        }
+
+        > a {
+          > span {
+            margin: 0 3px;
+          }
+        }
+      }
+    }
+  }
+
+  &__sections {
+    h5 {
+      font-size: 26px;
+    }
+  }
+}

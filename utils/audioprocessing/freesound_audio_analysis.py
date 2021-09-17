@@ -66,13 +66,8 @@ class FreesoundAudioAnalyzer(FreesoundAudioProcessorBase):
                     essentia_profile_path=settings.ESSENTIA_PROFILE_FILE_PATH)
 
                 # Move essentia output files to analysis data directory
-                if settings.ESSENTIA_PROFILE_FILE_PATH:
-                    # Never versions of FreesoundExtractor using profile file use a different naming convention
-                    shutil.move(os.path.join(tmp_directory, 'ess_%i' % self.sound.id), statistics_path)
-                    shutil.move(os.path.join(tmp_directory, 'ess_%i_frames' % self.sound.id), frames_path)
-                else:
-                    shutil.move(os.path.join(tmp_directory, 'ess_%i_statistics.yaml' % self.sound.id), statistics_path)
-                    shutil.move(os.path.join(tmp_directory, 'ess_%i_frames.json' % self.sound.id), frames_path)
+                shutil.move(os.path.join(tmp_directory, 'ess_%i_statistics.yaml' % self.sound.id), statistics_path)
+                shutil.move(os.path.join(tmp_directory, 'ess_%i_frames.json' % self.sound.id), frames_path)
 
                 self.log_info("created analysis files with FreesoundExtractor: %s, %s" % (statistics_path, frames_path))
 

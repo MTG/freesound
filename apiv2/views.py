@@ -35,7 +35,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
@@ -67,6 +66,7 @@ from similarity.client import Similarity
 from sounds.models import Sound, Pack, License
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
@@ -1497,8 +1497,14 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render(request, 'api/manage_permissions.html',
-                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False})
+    return render(request, 'accounts/manage_api_permissions.html' if using_beastwhoosh(request)
+                            else 'api/manage_permissions.html', {
+        'user': request.user,
+        'tokens': tokens,
+        'grants': grants,
+        'show_expiration_date': False,
+        'activePage': 'api',  # BW only
+    })
 
 
 @login_required
@@ -1512,6 +1518,7 @@ def revoke_permission(request, client_id):
     for grant in grants:
         grant.delete()
 
+    messages.add_message(request, messages.INFO, "Permission has been successfully revoked")
     return HttpResponseRedirect(reverse("access-tokens"))
 
 

@@ -2,6 +2,10 @@
   color: $red;
 }
 
+.text-red-important {
+  color: $red!important;
+}
+
 .text-grey {
   color: $navy-grey;
 }
@@ -14,12 +18,20 @@
   color: $black;
 }
 
+.text-white {
+  color: $white;
+}
+
 .text-yellow-rating {
   color: $yellow-rating;
 }
 
 .text-center {
   text-align: center;
+}
+
+.text-left {
+  text-align: left;
 }
 
 .text-right {
@@ -30,16 +42,16 @@
   opacity: 0.5;
 }
 
-.text-right {
-  text-align: right;
-}
-
 .caps {
   text-transform: uppercase;
 }
 
 .font-weight-normal {
   font-weight: normal;
+}
+
+.font-weight-semi-bold {
+  font-weight: 600;
 }
 
 .font-weight-bold {

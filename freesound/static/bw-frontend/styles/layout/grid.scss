@@ -21,6 +21,11 @@
   align-items: center;
 }
 
+.start {
+  display: flex;
+  align-items: start;
+}
+
 .between {
   display: flex;
   justify-content: space-between;

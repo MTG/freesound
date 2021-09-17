@@ -5,12 +5,21 @@ const pages = [
   'front',
   'browse',
   'sound',
+  'pack',
+  'profile',
+  'followers',
+  'following',
+  'tagsFollowing',
+  'editprofile',
+  'editprofilepassword',
+  'editprofilenotifications',
+  'editprofilecloseaccount',
   'forumshot',
   'forummostcommented',
   'forumlists',
   'forumliststhread',
   'forumthread',
-  'forumnewthread',
+  'forumnewthread'
 ];
 
 const outDir = 'freesound/static/bw-frontend/dist';

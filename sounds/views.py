@@ -23,6 +23,7 @@ import json
 import logging
 import time
 from collections import defaultdict
+from django.views.decorators.clickjacking import xframe_options_exempt
 from operator import itemgetter
 
 from django.conf import settings
@@ -40,6 +41,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse, resolve
 from django.utils.six.moves.urllib.parse import urlparse
+from ratelimit.decorators import ratelimit
 
 from comments.forms import CommentForm
 from comments.models import Comment
@@ -55,10 +57,11 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
+from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import get_random_sound_from_solr
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
@@ -85,7 +88,7 @@ def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
     """
-    cache_key = "random_sound"
+    cache_key = settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY
     random_sound = cache.get(cache_key)
     if not random_sound:
         try:
@@ -104,6 +107,7 @@ def get_sound_of_the_day_id():
     return random_sound
 
 
+@redirect_if_beastwhoosh('sounds-search', query_string='s=created+desc&g=1')
 def sounds(request):
     latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
@@ -114,7 +118,12 @@ def sounds(request):
     popular_packs = Pack.objects.select_related('user').filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
+            random_sound = None
     else:
         random_sound = None
     tvars = {
@@ -159,6 +168,7 @@ def random(request):
         reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
+@redirect_if_beastwhoosh('sounds-search', query_string='s=created+desc&g=1&only_p=1')
 def packs(request):
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
@@ -196,7 +206,12 @@ def front_page(request):
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
+            random_sound = None
     else:
         random_sound = None
 
@@ -226,7 +241,8 @@ def front_page(request):
         'top_donor': top_donor,
         'total_num_sounds': total_num_sounds,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
-        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beash whoosh only
+        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
+        'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
     }
     return render(request, 'front.html', tvars)
 
@@ -252,7 +268,7 @@ def sound(request, username, sound_id):
                 raise Http404
     except Sound.DoesNotExist:
         if DeletedSound.objects.filter(sound_id=sound_id).exists():
-            return render(request, 'sounds/deleted_sound.html')
+            return render(request, 'sounds/sound_deleted.html')
         else:
             raise Http404
 
@@ -279,11 +295,7 @@ def sound(request, username, sound_id):
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
     display_random_link = request.GET.get('random_browsing', False)
-    is_following = False
-    if request.user.is_authenticated:
-        users_following = follow_utils.get_users_following(request.user)
-        if sound.user in users_following:
-            is_following = True
+    is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
     tvars = {
@@ -294,8 +306,7 @@ def sound(request, username, sound_id):
         'is_following': is_following,
         'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
-        'min_num_ratings': settings.MIN_NUMBER_RATINGS,
-        'path': request.build_absolute_uri()  # used as "next" parameter for follow/unfollow user links in BW
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)
@@ -335,7 +346,7 @@ def after_download_modal(request):
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
                                                     reverse("sound", args=[username, sound_id])))
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -362,7 +373,7 @@ def sound_download(request, username, sound_id):
 @transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -660,6 +671,7 @@ def geotag(request, username, sound_id):
 
 
 @redirect_if_old_username_or_404
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound,
                               id=sound_id,
@@ -688,31 +700,41 @@ def pack(request, username, pack_id):
         raise Http404
 
     if pack.is_deleted:
-        return render(request, 'sounds/deleted_pack.html')
+        return render(request, 'sounds/pack_deleted.html')
 
-    qs = Sound.public.only('id').filter(pack=pack)
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE if not using_beastwhoosh(request) else 12)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 
     num_sounds_ok = paginator['paginator'].count
-    if num_sounds_ok == 0 and pack.num_sounds != 0:
-        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
-    else:
-        if num_sounds_ok < pack.num_sounds:
-            messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
+    if num_sounds_ok < pack.num_sounds:
+        messages.add_message(request, messages.INFO,
+                             'Some sounds of this pack might <b>not have been moderated or processed</b> yet.')
 
-    tvars = {'pack': pack,
-             'num_sounds_ok': num_sounds_ok,
-             'pack_sounds': pack_sounds
-             }
-    tvars.update(paginator)
+    if using_beastwhoosh(request):
+        is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, pack.user)
+    else:
+        is_following = None
+
+    tvars = {
+        'pack': pack,
+        'num_sounds_ok': num_sounds_ok,
+        'pack_sounds': pack_sounds,
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS,  # BW only
+        'is_following': is_following
+    }
+    if not using_beastwhoosh(request):
+        tvars.update(paginator)
 
     return render(request, 'sounds/pack.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=created+desc&g=1&only_p=1'.format(reverse('sounds-search'), username))
+
     user = request.parameter_user
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
@@ -728,6 +750,9 @@ def packs_for_user(request, username):
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=created+desc&g=1'.format(reverse('sounds-search'), username))
+
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
@@ -824,8 +849,12 @@ def flag(request, username, sound_id):
 
 def sound_short_link(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
-    return redirect('sound', username=sound.user.username,
-            sound_id=sound.id)
+    return redirect('sound', username=sound.user.username, sound_id=sound.id)
+
+
+def pack_short_link(request, pack_id):
+    pack = get_object_or_404(Pack, id=pack_id)
+    return redirect('pack', username=pack.user.username, pack_id=pack.id)
 
 
 def __redirect_old_link(request, cls, url_name):
@@ -875,6 +904,7 @@ def display_sound_wrapper(request, username, sound_id):
     return render(request, 'sounds/display_sound.html', tvars)
 
 
+@xframe_options_exempt
 def embed_iframe(request, sound_id, player_size):
     """
     This view returns an HTML player of `sound_id` which can be embeded in external sites.

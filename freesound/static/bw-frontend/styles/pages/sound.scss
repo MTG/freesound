@@ -6,12 +6,6 @@
   }
 
   &__user {
-    img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-    }
-
     p {
       margin: 0;
     }
@@ -26,7 +20,13 @@
 
     li {
       > span {
-        margin: 0 5px;
+        margin: 0 3px;
+      }
+
+      > a {
+        > span {
+          margin: 0 3px;
+        }
       }
     }
   }

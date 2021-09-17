@@ -221,6 +221,14 @@ class SoundOfTheDayTestCase(TestCase):
         sound_of_days = SoundOfTheDay.objects.count()
         self.assertEqual(sound_of_days, 6)
 
+    def test_create_sounds_command_clears_random_sound_cache(self):
+        """When generating new random sounds with the management command, we should clear
+        the cache storing the current random sound to make sure when the sound is needed again
+        the correct sound ID will be retrieved from the sound of the day table."""
+        cache.set(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY, 1234)
+        call_command("create_random_sounds")
+        self.assertIsNone(cache.get(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY, None))
+
     def test_send_email_once(self):
         """If we have a SoundOfTheDay, send the sound's user an email, but only once"""
         sound = Sound.objects.get(id=19)
@@ -257,4 +265,4 @@ class SoundOfTheDayTestCase(TestCase):
         sound = Sound.objects.get(id=19)
         sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
         sound_id = get_sound_of_the_day_id()
-        cache_set.assert_called_with("random_sound", 19, 48600)
+        cache_set.assert_called_with(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY, 19, 48600)

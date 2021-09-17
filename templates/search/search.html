@@ -4,6 +4,17 @@
 {% load paginator %}
 {% load search %}
 {% load util %}
+{% load static %}
+
+{% if clustering_on %}
+    {% block extra_headers %}
+        <link rel="stylesheet" type="text/css" href="{{media_url}}css/graph-clustering.css"/>
+        <script src="//unpkg.com/force-graph"></script>
+        <script src="//unpkg.com/d3-quadtree"></script>
+        <script src="//unpkg.com/d3-force"></script>
+        <script src="{{media_url}}js/d3-graph-clustering.js" type="text/javascript"></script>
+    {% endblock %}
+{% endif %}
 
 {% block title %}sound search{% endblock title %}
 
@@ -36,10 +47,26 @@
 <p id="filter_query_display">
 
 {% for filter in filter_query_split %}
-    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="remove this filter">{{ filter.name }}</a>
+    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}&s={{sort_unformatted}}&cluster_id={{ filter.cluster_id }}" title="remove this filter">{{ filter.name }}</a>
 {% endfor %}
 
 </p>
+
+<div id="clustering-graph-modal" class="modal" style="display: none;">
+    <div id="clustering-graph" class="modal-content">
+        <div class="modal-header">
+            Clustering Visualisation
+            <span id="close-modal-button" class="close-modal">×</span>
+        </div>
+        <div id="chart-container" class="modal-body">
+            <div id="h1">Selected sounds (ctrl + click)</div>
+            <div id="h2"></div>
+            <div id="cluster-labels"></div>
+            <div id="graph"></div>
+            <div id="graph-loader" class="clustering-loader"></div>
+        </div>
+    </div>
+</div>
 
 <script type="text/javascript">
 
@@ -77,6 +104,17 @@
         	}
         }
 
+        {% if clustering_on %}
+        // Ajax request clustering
+        request_clustering();
+        graph = undefined;
+        graphLoaded = false;
+        showCluster = undefined;
+
+        $('#show-clustering-graph-button').click(function () {
+            showGraph();
+        });
+        {% endif %}
     });
 
     function addAdvancedSearchOptionsFilters()
@@ -201,6 +239,138 @@
         $("#filter_query").val(cleaned);
     }
 
+    {% if clustering_on %}
+    // toggle and show graph
+    function updateShowGraphButton() {
+        var buttonText = $("#clustering-graph").is(":visible")? "hide" : "show";
+        $("#show-clustering-graph-button").html(buttonText);
+    }
+
+    function showGraph() {
+        $("#clustering-graph-modal").show();
+        if (graph !== undefined && graphLoaded === false) {
+            activateGraph(graph);
+            graphLoaded = true;
+        }
+    }
+
+    function closeGraphModal() {
+        $("#clustering-graph-modal").hide();
+    }
+
+    // play cluster examples on mouseover & click
+    mouse_on_cluster_facet_preview = false;
+    function enableAudioClusterExamples() {
+        function playAudio(el, index) {
+            var dummySpanClusterExamples = el.children('.dummy-span-cluster-examples');
+            var cluster_idx = $('.clustering-facet').index($(el));
+            var index = (typeof index == 'number') ? index: parseInt(Math.random()*dummySpanClusterExamples.length);
+            var selectedExample = dummySpanClusterExamples.eq(index);
+            var soundId = selectedExample.attr("sound-id");
+            var soundUrl = selectedExample.attr("sound-url");
+            play_sound_from_url(soundId, soundUrl, function () {
+                index = (index + 1) % dummySpanClusterExamples.length;
+                // this condition ensures that we don't trigger more plays when not previewing the right cluster.
+                // otherwise it could happen that stopAllAudio() would not stop the recursive loop.
+                if (mouse_on_cluster_facet_preview == cluster_idx) {
+                    playAudio(el, index)
+                }
+            });
+        };
+
+        function stopAllAudio() {
+            $('audio').each(function (i, el) {el.pause();});
+        };
+        
+        $(".cluster-audio-examples")
+            .mouseenter(function() {
+                var cluster_idx = $('.clustering-facet').index($(this).parents('.clustering-facet'));
+                mouse_on_cluster_facet_preview = cluster_idx;
+                stopSound();
+                playAudio($(this).parent().parent(), false);
+            })
+            .mouseleave(function() {
+                mouse_on_cluster_facet_preview = false;
+                stopSound();
+            })
+            .click(function() {
+                stopSound();
+                playAudio($(this).parent().parent(), false);
+            });
+    }
+
+    var clustering_trial_number = 0;
+    // function for requesting clustering
+    function request_clustering()
+    {
+        $.get({% url 'clustering-facet' %} + '?{{ url_query_params_string }}', 
+                {}, 
+                function( data ) {
+                    clustering_trial_number += 1;
+                    if (data.status === 'pending') {
+                        if (clustering_trial_number < 1000) {
+                            setTimeout(() => {
+                                request_clustering();
+                            }, 500);
+                        } else {
+                            $('#facet-loader').hide();
+                            $('#cluster-fail-icon').show();
+                        }
+                    } else if (data.status === 'failed') {
+                        // clustering failed
+                        $('#facet-loader').hide();
+                        $('#cluster-fail-icon').show();
+                    } else {
+                        $('#facet-loader').hide();
+                        $('#show-clustering-graph-button').show();
+                        $('#cluster-labels').html(data);
+                        $('#clusters-div').replaceWith(data);
+                        // add cluster colors
+                        var num_clusters = Math.max(
+                            ...Array.from($('.clustering-facet').map(
+                                (e, l)=>parseInt($(l).attr('cluster-id')))
+                            )
+                        ) + 1;
+                        $('#cluster-labels').find('.clustering-facet').each((i, l) => {
+                            $(l).find('a').css("color", cluster2color($(l).attr('cluster-id'), num_clusters));
+                            $(l).find('a').css('font-weight', 'bold');
+                        });
+                        enableAudioClusterExamples();
+
+                        $('.cluster-link-button').click(function () {
+                            $("#clustering-graph-modal").show();
+                            var clusterId = $(this).attr('cluster-id');
+                            showCluster = clusterId;
+                            if (graph !== undefined && graphLoaded === false) {
+                                activateGraph(graph, clusterId);
+                                graphLoaded = true;
+                            }
+                        });
+
+                        $('#close-modal-button').click(function () {
+                            closeGraphModal();
+                        })
+
+                        // request clustered graph
+                        // set graph as a global variable
+                        $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string}}", {
+                            }).then(res => JSON.parse(res)).then(data => {
+                                graph = data;
+                                if ($("#clustering-graph-modal").is(":visible")) {
+                                    if (showCluster !== undefined) {
+                                        activateGraph(graph, showCluster);
+                                        graphLoaded = true;
+                                    } else {
+                                        activateGraph(graph);
+                                        graphLoaded = true;
+                                    }
+                                }
+                            });
+                    }
+        });
+    }
+    {% endif %}
+
 </script>
 
 {% if error_text %}
@@ -208,6 +378,20 @@
 {% else %}
     {% if facets %}
     <div id="sidebar" style="float:right">
+
+        {% if clustering_on %}
+            <h3>clusters 
+                <div id="facet-loader" class="clustering-loader"></div>
+                <img style="display: none;" id="cluster-fail-icon" src="{{media_url}}images/fugue-icons/icons/cross.png" alt=""/>
+                <button style="display: none;" id="show-clustering-graph-button">
+                    show
+                </button>
+            </h3>
+            <div id='clusters-div'>
+                <br>
+            </div>
+        {% endif %}
+
         {% if facets.license and facets.license|length > 1 %}
             <h3>licenses</h3>
             {% display_facet "license" facets.license "list" %}

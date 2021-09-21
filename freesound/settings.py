@@ -766,6 +766,7 @@ PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
+ANALYSIS_NEW_PATH = os.path.join(DATA_PATH, "analysis_new/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
 

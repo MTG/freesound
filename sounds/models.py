@@ -714,6 +714,9 @@ class Sound(SocialModel):
                     url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
                         id_folder, self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)
                 )
+            ),
+            analysis_new=dict(
+                path=os.path.join(settings.ANALYSIS_NEW_PATH, id_folder)
             )
         )
 
@@ -1120,7 +1123,8 @@ class Sound(SocialModel):
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def analyze_new(self, method="analyze_method1", force=False, high_priority=False):
-        celery_app.send_task(method, kwargs={'sound_id': self.id}, queue=method)
+        celery_app.send_task(method, kwargs={'sound_path': self.locations('path'), 'analysis_folder': self.locations(
+                            'analysis_new.path'), 'metadata': json.dumps({'sound_id': self.id})}, queue=method)
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
@@ -1627,10 +1631,10 @@ class SoundAnalysis(models.Model):
 
     def set_analysis_status(self, status):
         """
-        Updates self.analysis_state field of the Sound object and saves to DB without updating other
-        fields. This function is used in cases when two instances of the same Sound object could be edited by
+        Updates self.analysis_status field of the SoundAnalysis object and saves to DB without updating other
+        fields. This function is used in cases when two instances of the same SoundAnalysis object could be edited by
         two processes in parallel and we want to avoid possible field overwrites.
-        :param str state: new state to which self.analysis_state should be set
+        :param str status: new state to which self.analysis_state should be set
         """
         self.analysis_status = status
         self.save(update_fields=['analysis_status'])

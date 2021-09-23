@@ -56,20 +56,21 @@ def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
 
 
 @task(name="process_analysis_results")
-def process_analysis_results(sound_id, analyzer, analyzer_version, result, status):
-    workers_logger.info("Processing analysis results of sound {} (analyzer: {}, analyzer version: {}, analysis status: {}).".format(
-        sound_id, analyzer, analyzer_version, status))
+def process_analysis_results(sound_id, analyzer, analysis_filename, status):
+    workers_logger.info("Processing analysis results of sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
+        sound_id, analyzer, status, analysis_filename))
     start_time = time.time()
     try:
         check_if_free_space()
         # Analysis happens in a different celery worker, here we just save the results in a SoundAnalysis object
         sound = Sound.objects.get(id=sound_id)
+        # If the results of the analysis are not huge, these can be directly stored in DB (using the analysis_data field) – this depends on the analyzer
+        # (right now we just save the path to the json file where the results are)
         a, _ = SoundAnalysis.objects.get_or_create(sound=sound, analyzer=analyzer,
-                                                   analyzer_version=analyzer_version,
-                                                   analysis_data=result)
+                                                   analysis_filename=analysis_filename)
         a.set_analysis_status(status)
-        workers_logger.info("Done processing analysis results for sound {} (analyzer: {}, analyzer_version: {}, analysis status: {}).".format(
-            sound_id, analyzer, analyzer_version, status))
+        workers_logger.info("Done processing analysis results for sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
+            sound_id, analyzer, status, analysis_filename))
     except Sound.DoesNotExist as e:
         workers_logger.error("Failed to analyze a sound that does not exist (sound_id: {}, analyzer:{}, error: {})".format(
             sound_id, analyzer, str(e)))

@@ -21,9 +21,8 @@
 import logging
 import os
 import time
-
-from django.conf import settings  # ??
 from celery.decorators import task
+from django.conf import settings
 
 from sounds.models import Sound, SoundAnalysis
 
@@ -39,7 +38,7 @@ class WorkerException(Exception):
     pass
 
 
-def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
+def check_if_free_space(directory=settings.ANALYSIS_NEW_PATH,
                         min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
     """
     Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
@@ -64,11 +63,16 @@ def process_analysis_results(sound_id, analyzer, analysis_filename, status):
         check_if_free_space()
         # Analysis happens in a different celery worker, here we just save the results in a SoundAnalysis object
         sound = Sound.objects.get(id=sound_id)
-        # If the results of the analysis are not huge, these can be directly stored in DB (using the analysis_data field) – this depends on the analyzer
-        # (right now we just save the path to the json file where the results are)
-        a, _ = SoundAnalysis.objects.get_or_create(sound=sound, analyzer=analyzer,
-                                                   analysis_filename=analysis_filename)
+        a = SoundAnalysis.objects.get(sound=sound, analyzer=analyzer)
+        # Update status
         a.set_analysis_status(status)
+        # If the results of the analysis are not huge, these can be directly stored in DB using the analysis_data field
+        # (this depends on the analyzer, right now we just save the path of the json file where the results are)
+        a.analysis_filename = analysis_filename
+        # Set is_queued to false, as the analysis has finished
+        a.is_queued = False
+        a.save(update_fields=['analysis_filename', 'is_queued'])
+        
         workers_logger.info("Done processing analysis results for sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
             sound_id, analyzer, status, analysis_filename))
     except Sound.DoesNotExist as e:

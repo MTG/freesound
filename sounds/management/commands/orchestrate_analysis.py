@@ -114,26 +114,26 @@ class Command(BaseCommand):
                 if options['include_missing']:
                     console_logger.info("Analyzing all sounds that haven't been analyzed yet...")
                     for s in Sound.objects.all():
-                        # if the combination sound-analyzer-version does not exist, trigger analysis
-                        if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer).exists():
+                        # if the combination sound-analyzer does not exist, trigger analysis
+                        if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer, is_queued=False).exists():
                             console_logger.info(
                                 "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                             s.analyze_new(method=analyzer)
                 if options['include_skipped']:
                     console_logger.info("Analyzing all sounds whose analysis was skipped (marked as 'SK')...")
-                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="SK"):
+                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="SK", is_queued=False):
                         console_logger.info(
                             "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                         a.sound.analyze_new(method=analyzer)
                 if options['include_failed']:
                     console_logger.info("Analyzing all sounds whose analysis failed (marked as 'FA')...")
-                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="FA"):
+                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="FA", is_queued=False):
                         console_logger.info(
                             "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                         a.sound.analyze_new(method=analyzer)
                 if options['include_ok']:
                     console_logger.info("Analyzing all sounds whose analysis was successful (marked as 'OK')...")
-                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="OK"):
+                    for a in SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="OK", is_queued=False):
                         console_logger.info(
                             "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                         a.sound.analyze_new(method=analyzer)

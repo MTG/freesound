@@ -1123,8 +1123,11 @@ class Sound(SocialModel):
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def analyze_new(self, method="fs-essentia-extractor_1", force=False, high_priority=False):
+        sound = Sound.objects.get(id=self.id)
+        SoundAnalysis.objects.get_or_create(sound=sound, analyzer=method, is_queued=True)
         celery_app.send_task(method, kwargs={'sound_id': self.id, 'sound_path': self.locations('path'), 
                     'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=method)
+        sounds_logger.info("Send sound with id {} to analyzer {}".format(self.id, method))
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
@@ -1621,6 +1624,7 @@ class SoundAnalysis(models.Model):
     analysis_filename = models.CharField(max_length=255, null=True)
     analysis_data = JSONField(null=True)
     analysis_status = models.CharField(null=True, db_index=True, max_length=2, choices=STATUS_CHOICES)
+    is_queued = models.BooleanField(default=False)
 
     @property
     def analysis_filepath(self):

@@ -1122,9 +1122,9 @@ class Sound(SocialModel):
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
-    def analyze_new(self, method="analyze_method1", force=False, high_priority=False):
-        celery_app.send_task(method, kwargs={'sound_path': self.locations('path'), 'analysis_folder': self.locations(
-                            'analysis_new.path'), 'metadata': json.dumps({'sound_id': self.id})}, queue=method)
+    def analyze_new(self, method="fs-essentia-extractor_1", force=False, high_priority=False):
+        celery_app.send_task(method, kwargs={'sound_id': self.id, 'sound_path': self.locations('path'), 
+                    'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=method)
 
     def delete_from_indexes(self):
         delete_sound_from_solr(self.id)
@@ -1609,7 +1609,7 @@ class SoundAnalysis(models.Model):
     or for other extractors as well, but for the current use case that wouldn't be needed.
     """
     STATUS_CHOICES = (
-            ("OK", 'Ok'),  # Sounds will only be in "PE" before the very first time they are processed
+            ("OK", 'Ok'),
             ("SK", 'Skipped'),
             ("FA", 'Failed'),
         )

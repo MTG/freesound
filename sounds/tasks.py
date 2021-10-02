@@ -55,10 +55,11 @@ def check_if_free_space(directory=settings.ANALYSIS_NEW_PATH,
 
 
 @task(name="process_analysis_results")
-def process_analysis_results(sound_id, analyzer, analysis_filename, status):
+def process_analysis_results(sound_id, analyzer, analysis_filename, status, exception=None):
     workers_logger.info("Processing analysis results of sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
         sound_id, analyzer, status, analysis_filename))
     start_time = time.time()
+
     try:
         check_if_free_space()
         # Analysis happens in a different celery worker, here we just save the results in a SoundAnalysis object
@@ -66,15 +67,19 @@ def process_analysis_results(sound_id, analyzer, analysis_filename, status):
         a = SoundAnalysis.objects.get(sound=sound, analyzer=analyzer)
         # Update status
         a.set_analysis_status(status)
-        # If the results of the analysis are not huge, these can be directly stored in DB using the analysis_data field
-        # (this depends on the analyzer, right now we just save the path of the json file where the results are)
-        a.analysis_filename = analysis_filename
         # Set is_queued to false, as the analysis has finished
         a.is_queued = False
-        a.save(update_fields=['analysis_filename', 'is_queued'])
-        
-        workers_logger.info("Done processing analysis results for sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
-            sound_id, analyzer, status, analysis_filename))
+        if exception:
+            a.save(update_fields=['is_queued'])
+            workers_logger.error("Done processing. Analysis of sound {} failed (analyzer: {}, analysis status: {}, exception: {}).".format(
+                sound_id, analyzer, status, exception))
+        else:
+            # If the results of the analysis are not huge, these can be directly stored in DB using the analysis_data field
+            # (this depends on the analyzer, right now we just save the path of the json file where the results are)
+            a.analysis_filename = analysis_filename
+            a.save(update_fields=['analysis_filename', 'is_queued'])
+            workers_logger.info("Done processing analysis results for sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
+                sound_id, analyzer, status, analysis_filename))
     except Sound.DoesNotExist as e:
         workers_logger.error("Failed to analyze a sound that does not exist (sound_id: {}, analyzer:{}, error: {})".format(
             sound_id, analyzer, str(e)))

@@ -11,7 +11,10 @@
             <div class="row padding-top-3 padding-bottom-3">
                 <div class="col-md-7 middle">
                     {% comment %}In original design, forum tabs were placed here{% endcomment %}
-                    <input type="search" class="bw-forums__input-search" placeholder="Search in the forum..." />
+                    <form method="get" action="{% url "forums-search" %}">
+                        <input type="hidden" name="advanced_search"  value="0"/>
+                        <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in the forum..." />
+                    </form>
                 </div>
                 {% comment %}<div class="col-md-4 offset-md-1 text-right">
                     <button class="btn-inverse btn-profile-adapt"><span class="text-18 padding-right-1">+</span> New thread</button>

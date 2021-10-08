@@ -88,7 +88,8 @@ class last_action(object):
 
 @last_action
 def forums(request):
-    forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
+    forums = Forum.objects.select_related(
+        'last_post', 'last_post__author', 'last_post__author__profile', 'last_post__thread').all()
     tvars = {'forums': forums}
     return render(request, 'forum/index.html', tvars)
 
@@ -102,8 +103,12 @@ def forum(request, forum_name_slug):
 
     tvars = {'forum': forum}
     paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
-                         .select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)
+                         .select_related('last_post', 'last_post__author', 'last_post__author__profile',
+                                         'author', 'author__profile', 'first_post'),
+                         settings.FORUM_THREADS_PER_PAGE if not using_beastwhoosh(request) else
+                         settings.FORUM_THREADS_PER_PAGE_BW)
     tvars.update(paginator)
+    print paginator
 
     return render(request, 'forum/threads.html', tvars)
 

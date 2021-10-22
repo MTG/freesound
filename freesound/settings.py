@@ -91,7 +91,8 @@ ADMIN_REORDER = (
         'accounts.UserFlag',
         'accounts.OldUsername',
         'accounts.EmailBounce',
-        'auth.Groups'
+        'auth.Groups',
+        'fsmessages.Message'
     )},
     {'app': 'sounds', 'models': (
         'sounds.Sound',
@@ -114,11 +115,7 @@ ADMIN_REORDER = (
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-
-
     'sites',
-
-
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled

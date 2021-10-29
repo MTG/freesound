@@ -487,7 +487,7 @@ Name                  Type              Description
 ``pack``              URI               If the sound is part of a pack, this URI points to that pack's API resource.
 ``download``          URI               The URI for retrieving the original sound.
 ``bookmark``          URI               The URI for bookmarking the sound.
-``previews``          object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively). **API authentication is required for retrieving sound previews (Token or OAuth2)**.
+``previews``          object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
 ``images``            object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
 ``num_downloads``     number            The number of times the sound was downloaded.
 ``avg_rating``        number            The average rating of the sound.

@@ -77,7 +77,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
     getSoundsLocations(geotags_url, function(data){
         var nSounds = data.length;
-        if (nSounds > 0) {  // only if the user has sounds, we render a map
+        if (nSounds >= 0) {
 
             // Define initial map center and zoom
             var init_zoom = 2;

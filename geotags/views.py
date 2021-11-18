@@ -23,6 +23,7 @@ import math
 import struct
 
 from django.conf import settings
+from django.core.cache import cache
 from django.http import Http404, HttpResponse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -44,12 +45,16 @@ def generate_bytearray(sound_queryset):
     return HttpResponse(packed_sounds.getvalue(), content_type='application/octet-stream')
 
 
-@cache_page(60 * 15)
 def geotags_barray(request, tag=None):
-    sounds = Sound.objects.select_related('geotag')
-    if tag:
-        sounds = sounds.filter(tags__tag__name__iexact=tag)
-    return generate_bytearray(sounds.exclude(geotag=None).all())
+    if tag is not None:
+        sounds = Sound.objects.select_related('geotag').filter(tags__tag__name__iexact=tag)
+        return generate_bytearray(sounds.exclude(geotag=None).all())
+    else:
+        cached_bytearay = cache.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
+        if cached_bytearay is None:
+            return generate_bytearray(Sound.objects.none())
+        else:
+            return cached_bytearay
 
 
 def geotags_box_barray(request):

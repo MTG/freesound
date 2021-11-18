@@ -350,6 +350,9 @@ NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
 
+# Cache key for storing "all geotags" bytearray
+ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
+
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors
 from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES

@@ -177,14 +177,14 @@ void FreesoundExtractor::compute() {
   streaming::AlgorithmFactory& factory = streaming::AlgorithmFactory::instance();
 
   results.set("metadata.version.essentia", essentia::version);
-  results.set("metadata.version.essentia_git_sha", essentia::version_git_sha);
+  //results.set("metadata.version.essentia_git_sha", essentia::version_git_sha);
   results.set("metadata.version.freesound_extractor", FREESOUND_EXTRACTOR_VERSION);
   // TODO: extractor_build_id
 
-  results.set("metadata.audio_properties.analysis.equal_loudness", false);
-  results.set("metadata.audio_properties.analysis.sample_rate", analysisSampleRate);
-  results.set("metadata.audio_properties.analysis.downmix", downmix);
-  results.set("metadata.audio_properties.analysis.start_time", startTime);
+  results.set("metadata.audio_properties.equal_loudness", false);
+  //results.set("metadata.audio_properties.analysis.sample_rate", analysisSampleRate);
+  //results.set("metadata.audio_properties.analysis.downmix", downmix);
+  //results.set("metadata.audio_properties.analysis.start_time", startTime);
   //results.set("metadata.audio_properties.analysis.end_time", endTime);
 
   // Reading metadata for Freesound too. This could be useful.  
@@ -420,7 +420,7 @@ void FreesoundExtractor::readMetadata(const string& audioFilename, Pool& results
   } else {
     basename = audioFilename;
   }
-  results.set("metadata.tags.file_name", basename);
+  //results.set("metadata.tags.file_name", basename);
 }
 
 
@@ -430,11 +430,11 @@ void FreesoundExtractor::computeAudioMetadata(const string& audioFilename, Pool&
                                                 "filename",   audioFilename,
                                                 "computeMD5", true);
 
-  loader->output("md5")             >> PC(results, "metadata.audio_properties.md5_encoded");
-  loader->output("sampleRate")      >> PC(results, "metadata.audio_properties.sample_rate");
-  loader->output("numberChannels")  >> PC(results, "metadata.audio_properties.number_channels");
-  loader->output("bit_rate")        >> PC(results, "metadata.audio_properties.bit_rate");
-  loader->output("codec")           >> PC(results, "metadata.audio_properties.codec");
+  loader->output("md5")             >> NOWHERE;
+  loader->output("sampleRate")      >> NOWHERE;
+  loader->output("numberChannels")  >> NOWHERE;
+  loader->output("bit_rate")        >> NOWHERE;
+  loader->output("codec")           >> NOWHERE;
 
   streaming::Algorithm* demuxer = factory.create("StereoDemuxer");
   streaming::Algorithm* muxer = factory.create("StereoMuxer");
@@ -480,12 +480,13 @@ void FreesoundExtractor::computeAudioMetadata(const string& audioFilename, Pool&
     throw EssentiaException(msg);
   }
 
-  results.set("metadata.audio_properties.length", length);
-  results.set("metadata.audio_properties.analysis.length", analysis_length);
+  //results.set("metadata.audio_properties.length", length);
+  //results.set("metadata.audio_properties.analysis.length", analysis_length);
 
   // This is just our best guess as to if a file is in a lossless or lossy format
   // It won't protect us against people converting from (e.g.) mp3 -> flac
   // before submitting
+  /*
   const char* losslessCodecs[] = {"alac", "ape", "flac", "shorten", "tak", "truehd", "tta", "wmalossless"};
   vector<string> lossless = arrayToVector<string>(losslessCodecs);
   const string codec = results.value<string>("metadata.audio_properties.codec");
@@ -494,6 +495,7 @@ void FreesoundExtractor::computeAudioMetadata(const string& audioFilename, Pool&
       isLossless = true;
   }
   results.set("metadata.audio_properties.lossless", isLossless);
+  */
 }
 
 

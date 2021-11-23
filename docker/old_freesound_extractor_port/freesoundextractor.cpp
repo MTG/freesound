@@ -404,7 +404,7 @@ void FreesoundExtractor::readMetadata(const string& audioFilename, Pool& results
 
   metadata->compute();
 
-  results.merge(poolTags);
+  //results.merge(poolTags);
   delete metadata;
 
 #if defined(OS_WIN32) && !defined(OS_MINGW)

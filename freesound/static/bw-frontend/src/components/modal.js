@@ -66,6 +66,21 @@ if (problemsLoggingInParam) {
   handleModal('forgottenPasswordModal');
 }
 
+// Confirmation modal
+const confirmationModalButtons = [...document.querySelectorAll('[data-toggle="confirmation-modal"]')];
+confirmationModalButtons.forEach(modalButton => {
+  modalButton.addEventListener('click', () => {
+      const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+      confirmationModalTitle.innerText = modalButton.dataset.modalConfirmationTitle;
+      const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
+      confirmationModalAcceptForm.action = modalButton.dataset.modalConfirmationUrl;
+      handleModal('confirmationModal');
+  });
+});
+
+
+// Generic modals
+
 const genericModalWrapper = document.getElementById('genericModalWrapper');
 
 const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback) => {
@@ -124,6 +139,5 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback)
   // Send the form
   req.send();
 };
-
 
 export {handleDismissModal, handleModal, handleGenericModal};

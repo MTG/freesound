@@ -31,7 +31,7 @@ from django.urls import reverse
 from django.db import transaction
 
 from accounts.models import DeletedUser
-from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
+from forum.forms import PostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template
@@ -258,9 +258,10 @@ def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
+    FormToUse = BwNewThreadForm if using_beastwhoosh(request) else NewThreadForm
 
     if request.method == 'POST':
-        form = NewThreadForm(request.POST)
+        form = FormToUse(request.POST)
         if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 post_title = form.cleaned_data["title"]
@@ -298,14 +299,14 @@ def new_thread(request, forum_name_slug):
                                                                  "approved by moderators")
                     return HttpResponseRedirect(post.thread.forum.get_absolute_url())
     else:
-        form = NewThreadForm()
+        form = FormToUse()
 
     if not user_can_post_in_forum:
         messages.add_message(request, messages.INFO, user_can_post_message)
 
     if user_is_blocked_for_spam_reports:
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
-                                                     "has been temporaly blocked after multiple spam reports")
+                                                     "has been temporarily blocked after multiple spam reports")
 
     tvars = {'forum': forum,
              'form': form}

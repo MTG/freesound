@@ -31,7 +31,7 @@ from django.urls import reverse
 from django.db import transaction
 
 from accounts.models import DeletedUser
-from forum.forms import PostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm
+from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template
@@ -184,9 +184,10 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                        .order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
+    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
 
     if request.method == 'POST':
-        form = PostReplyForm(request, quote, request.POST)
+        form = FromToUse(request, quote, request.POST)
 
         if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
@@ -234,9 +235,9 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     return HttpResponseRedirect(post.thread.get_absolute_url())
     else:
         if quote:
-            form = PostReplyForm(request, quote, {'body': quote})
+            form = FromToUse(request, quote, {'body': quote})
         else:
-            form = PostReplyForm(request, quote)
+            form = FromToUse(request, quote)
 
     if not user_can_post_in_forum:
         messages.add_message(request, messages.INFO, user_can_post_message)
@@ -390,9 +391,10 @@ def post_delete_confirm(request, post_id):
 @transaction.atomic()
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
+    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
     if post.author == request.user or request.user.has_perm('forum.change_post'):
         if request.method == 'POST':
-            form = PostReplyForm(request, '', request.POST)
+            form = FromToUse(request, '', request.POST)
             if form.is_valid():
                 post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
@@ -400,7 +402,7 @@ def post_edit(request, post_id):
                 return HttpResponseRedirect(
                     reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:
-            form = PostReplyForm(request, '', {'body': post.body})
+            form = FromToUse(request, '', {'body': post.body})
         tvars = {'form': form}
         return render(request, 'forum/post_edit.html', tvars)
     else:

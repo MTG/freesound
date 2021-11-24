@@ -52,7 +52,9 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                        {% if not forloop.last %}
+                            <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                        {% endif %}
                     </div>
                 {% empty %}
                     <div class="bw-threads">

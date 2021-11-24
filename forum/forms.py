@@ -41,9 +41,31 @@ class PostReplyForm(forms.Form):
             raise forms.ValidationError("You should type something...")
 
         if is_spam(self.request, body):
-            raise forms.ValidationError("Your post was considered spam, please edit and repost. If it keeps failing please contact the admins.")
+            raise forms.ValidationError("Your post was considered spam, please edit and repost. "
+                                        "If it keeps failing please contact the admins.")
 
         return body
+
+class BwPostReplyForm(PostReplyForm):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super(BwPostReplyForm, self).__init__(*args, **kwargs)
+
+        html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
+                        <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
+                        <code>blockquote</code> and <code>code</code>."""
+
+        self.fields['body'].label = "Message"
+        self.fields['body'].widget.attrs['placeholder'] = "Write the first message of your thread"
+        self.fields['body'].widget.attrs['rows'] = False
+        self.fields['body'].widget.attrs['cols'] = False
+        self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
+        self.fields['body'].help_text = html_tags_help_text
+        self.fields['subscribe'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['subscribe'].label = self.fields['subscribe'].help_text
+        self.fields['subscribe'].help_text = False
+
 
 
 class NewThreadForm(forms.Form):

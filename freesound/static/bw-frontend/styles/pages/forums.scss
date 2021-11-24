@@ -30,6 +30,14 @@
       color: $black;
     }
 
+    .latest-posts-in-thread {
+      max-height: 400px;
+      overflow: scroll;
+      padding: 10px 20px;
+      border: 1px solid $border-input-profile;
+      background-color: $background-input-profile;
+    }
+
     input,
     textarea {
       margin-top: 12px;

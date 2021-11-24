@@ -3,7 +3,7 @@
 {% load staticfiles %}
 {% load filter_img %}
 
-{% block title %}Forums - {{forum.name}} - New Thread{% endblock %}
+{% block title %}Forums - {{forum.name}} - {{ thread.title }} - {% if editing %}Edit post{% else %}Post reply{% endif %}{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -21,7 +21,7 @@
                             <a class="nav-link" href="{% url "forums-thread" forum.name_slug thread.id %}">{{ thread.title }}</a>
                         </li>
                         <li class="nav-item text-16">
-                            Post reply
+                            {% if editing %}Edit post{% else %}Post reply{% endif %}
                         </li>
                   </ul>
                 </div>
@@ -42,29 +42,30 @@
                     </div>
                     <div class="row v-spacing-top-5">
                         <div class="col-md-7 offset-3">
-                            <button class="btn-primary w-100">Post reply</button>
+                            <button class="btn-primary w-100">{% if editing %}Edit post{% else %}Post reply{% endif %}</button>
                         </div>
                     </div>
-                    <div class="row v-spacing-top-5">
-                        <div class="col-md-7 offset-3">
-                                <span class="text-16 font-weight-bold">Latest posts in this thread:</span>
-                                <div class="latest-posts-in-thread v-spacing-top-2">
-                                    {% for post in latest_posts %}
-                                        <div class="v-spacing-2">
-                                            <a href="{% url "account" post.author.username %}">{{post.author.username}}</a><span class="text-grey">, {{post.created|timesince}} ago:</span>
-                                            <p>
-                                                {{post.body|replace_img|safe|linebreaks}}
-                                            </p>
-                                        </div>
-                                        {% if not forloop.last %}
-                                            <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
-                                        {% endif %}
-                                    {% endfor %}
+                    {% if latest_posts %}
+                        <div class="row v-spacing-top-5">
+                            <div class="col-md-7 offset-3">
+                                    <span class="text-16 font-weight-bold">Previous posts in this thread:</span>
+                                    <div class="latest-posts-in-thread v-spacing-top-2">
+                                        {% for post in latest_posts %}
+                                            <div class="v-spacing-2">
+                                                <a href="{% url "account" post.author.username %}">{{post.author.username}}</a><span class="text-grey">, {{post.created|timesince}} ago:</span>
+                                                <p>
+                                                    {{post.body|replace_img|safe|linebreaks}}
+                                                </p>
+                                            </div>
+                                            {% if not forloop.last %}
+                                                <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
+                    {% endif %}
                 </form>
             </div>
         </div>

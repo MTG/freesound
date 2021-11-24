@@ -118,6 +118,10 @@ class Thread(models.Model):
     def get_absolute_url(self):
         return reverse("forums-thread", args=[smart_unicode(self.forum.name_slug), self.id])
 
+    def is_user_subscribed(self, user):
+        """A user is subscribed to a thread if a Subscription object exists that related the two of them"""
+        return Subscription.objects.filter(thread=self, subscriber=user, is_active=True).exists()
+
     class Meta:
         ordering = ('-status', '-last_post__created')
 

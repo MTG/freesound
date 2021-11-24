@@ -208,6 +208,9 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     if not subscription.is_active:
                         subscription.is_active = True
                         subscription.save()
+                else:
+                    # If "subscribe" not in form, then remove subscription (if any is existing)
+                    Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
 
                 # figure out if there are active subscriptions in this thread
                 if not set_to_moderation:
@@ -234,10 +237,10 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                                                                  "approved by moderators")
                     return HttpResponseRedirect(post.thread.get_absolute_url())
     else:
+        initial = {'subscribe': thread.is_user_subscribed(request.user)}
         if quote:
-            form = FromToUse(request, quote, {'body': quote})
-        else:
-            form = FromToUse(request, quote)
+            initial.update({'body': quote})
+        form = FromToUse(request, quote, initial=initial)
 
     if not user_can_post_in_forum:
         messages.add_message(request, messages.INFO, user_can_post_message)
@@ -399,12 +402,35 @@ def post_edit(request, post_id):
                 post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
                 add_post_to_solr(post.id)  # Update post in solr
+
+                if form.cleaned_data["subscribe"]:
+                    subscription, created = Subscription.objects.get_or_create(thread=post.thread,
+                                                                               subscriber=request.user)
+                    if not subscription.is_active:
+                        subscription.is_active = True
+                        subscription.save()
+                else:
+                    # If "subscribe" not in form, then remove subscription (if any is existing)
+                    Subscription.objects.filter(thread=post.thread, subscriber=request.user).delete()
+
                 return HttpResponseRedirect(
                     reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:
-            form = FromToUse(request, '', {'body': post.body})
-        tvars = {'form': form}
-        return render(request, 'forum/post_edit.html', tvars)
+            initial = {
+                'subscribe': post.thread.is_user_subscribed(request.user),
+                'body': post.body
+            }
+            form = FromToUse(request, '', initial=initial)
+
+        latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum') \
+                           .order_by('-created') \
+                           .filter(thread=post.thread, moderation_state="OK", created__lt=post.created)[0:15]
+        tvars = {'forum': post.thread.forum,
+                 'thread': post.thread,
+                 'form': form,
+                 'latest_posts': latest_posts,
+                 'editing': True}
+        return render(request, 'forum/reply.html', tvars)
     else:
         raise Http404
 

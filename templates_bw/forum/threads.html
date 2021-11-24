@@ -6,16 +6,16 @@
 {% block content %}
     <div class="container">
         <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
-            <h1>Freesound forums</h1>
+            <h1>Freesound Forums</h1>
             <div class="divider-light v-spacing-top-4"></div>
             <div class="row">
                 <div class="col-md-6">
                     <ul class="navbar-forums-hot navbar-breadcrumb">
                         <li class="nav-item">
-                              <a class="nav-link" href="{% url "forums-forums" %}">Freesound forums</a>
+                              <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                            <a class="nav-link nav-link-black" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
                         </li>
                   </ul>
                 </div>

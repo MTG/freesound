@@ -40,14 +40,14 @@
 
         {% csrf_token %}
         <div>
-            <span class="text-grey" id="{{content_obj_id}}{{flag_type}}_link">
+            <span class="text-light-grey" id="{{content_obj_id}}{{flag_type}}_link">
             {% if flagged %}
                 {{ done_text }}
             {% else %}
-                <a onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{ flag_type }}',{{ content_obj_id }},'{% url "flag-user" username %}')" href="javascript:void(0)">{{ link_text }}</a>
+                <a class="text-grey" onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{ flag_type }}',{{ content_obj_id }},'{% url "flag-user" username %}')" href="javascript:void(0)">{{ link_text }}</a>
             {% endif %}
             </span>
-            <span class="text-grey" id="{{content_obj_id}}{{flag_type}}_wheel"></span>
+            <span class="text-light-grey" id="{{content_obj_id}}{{flag_type}}_wheel"></span>
         </div>
 
     {% endif %}

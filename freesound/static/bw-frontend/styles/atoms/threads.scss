@@ -86,15 +86,27 @@
   }
 
   i {
-    font-size: 10px;
+    font-size: 12px;
     margin: 0 2px;
   }
 
-  &__quote {
+  blockquote {
     border-radius: 5px;
     background-color: rgba(150, 150, 170, 0.1);
     border: 1px solid rgba(150, 150, 170, 0.08);
     padding: 24px;
+    margin: 0px;
+
+    p {
+      font-size: 15px;
+      line-height: 20px;
+      color: #333;
+    }
+
+    blockquote {
+      padding: 0;
+      border: 0;
+    }
   }
 
   &__textarea {

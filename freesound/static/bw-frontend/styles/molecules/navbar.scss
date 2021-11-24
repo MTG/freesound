@@ -221,6 +221,10 @@ $navbar-height-mobile: 64px;
       &:hover {
         color: $black;
       }
+
+      &.nav-link-black {
+        color: $black;
+      }
     }
 
     span {

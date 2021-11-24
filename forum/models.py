@@ -52,11 +52,11 @@ class Forum(OrderedModel):
                                      related_name="latest_in_forum",
                                      on_delete=models.SET_NULL)
 
-    def set_last_post(self):
+    def set_last_post(self, commit=False):
         """
         Set the `last_post` field of this forum to be the most recently
         written OK moderated Post.
-        This does not save the current Forum object.
+        NOTE: this does not save the current Forum object unless commit is set to True.
         """
         qs = Post.objects.filter(thread__forum=self, moderation_state='OK')
         qs = qs.order_by('-created')
@@ -64,6 +64,8 @@ class Forum(OrderedModel):
             self.last_post = qs[0]
         else:
             self.last_post = None
+        if commit:
+            self.save()
 
     def __unicode__(self):
         return self.name
@@ -94,14 +96,22 @@ class Thread(models.Model):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def set_last_post(self):
+    def set_last_post(self, commit=False):
+        """
+        Updates the last_post and first_post properties of the Thread model
+        NOTE: this does not save the Thread object unless commit is set to True
+        """
         qs = Post.objects.filter(thread=self)
         has_posts = qs.exists()
         moderated_posts = qs.filter(moderation_state='OK').order_by('-created')
         if moderated_posts.count() > 0:
             self.last_post = moderated_posts[0]
+            self.first_post = moderated_posts[len(moderated_posts) -1]
         else:
             self.last_post = None
+            self.first_post = None
+        if commit:
+            self.save()
 
         return has_posts
 

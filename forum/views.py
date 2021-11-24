@@ -138,6 +138,7 @@ def thread(request, forum_name_slug, thread_id):
 
     tvars = {'thread': thread,
              'forum': forum,
+             'post_counter_offset': settings.FORUM_POSTS_PER_PAGE * (paginator['current_page'] - 1),  # Only used in BW
              'has_subscription': has_subscription}
     tvars.update(paginator)
     return render(request, 'forum/thread.html', tvars)

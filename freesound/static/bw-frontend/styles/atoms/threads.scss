@@ -53,6 +53,15 @@
     text-overflow: ellipsis;
   }
 
+  .forum-icon-round {
+    background-image: url('assets/logos/logo-red-inverted.svg');
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    background-position: center;
+    background-size: 70px;
+  }
+
   p {
     margin: 0;
     color: $navy-grey;

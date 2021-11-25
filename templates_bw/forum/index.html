@@ -26,7 +26,12 @@
                     <div class="bw-threads">
                         <div class="row">
                             <div class="col-md-1">
-                                {% bw_icon 'atom' 'text-50 text-red' %}
+
+                                {% if forum.last_post.created > request.last_action_time and forum.last_post.author != request.user %}
+                                    <div class="forum-icon-round "></div>
+                                {% else %}
+                                    <div class="forum-icon-round grayscale"></div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4">
                                 <h6><a href="{{forum.get_absolute_url}}">{{ forum.name }}</a></h6>

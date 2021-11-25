@@ -109,7 +109,7 @@ class Thread(models.Model):
             self.save(update_fields=['last_post'])
 
         # Invalidate the thread common commenters cache as it could have changed
-        invalidate_template_cache('bw_thread_common_commenters', thread.id)
+        invalidate_template_cache('bw_thread_common_commenters', self.id)
 
         return has_posts
 

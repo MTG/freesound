@@ -98,23 +98,22 @@ class Thread(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def set_last_post(self, commit=False):
-        """
-        Updates the last_post and first_post properties of the Thread model
-        NOTE: this does not save the Thread object unless commit is set to True
-        """
         qs = Post.objects.filter(thread=self)
         has_posts = qs.exists()
         moderated_posts = qs.filter(moderation_state='OK').order_by('-created')
         if moderated_posts.count() > 0:
             self.last_post = moderated_posts[0]
-            self.first_post = moderated_posts[len(moderated_posts) -1]
         else:
             self.last_post = None
-            self.first_post = None
         if commit:
-            self.save()
+            self.save(update_fields=['last_post'])
 
         return has_posts
+
+    def set_first_post(self, commit=False):
+        self.first_post = self.post_set.first()
+        if commit:
+            self.save(update_fields=['first_post'])
 
     def get_absolute_url(self):
         return reverse("forums-thread", args=[smart_unicode(self.forum.name_slug), self.id])
@@ -308,8 +307,7 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
                     # We leave the author of the thread as the author of the first post
                     if post.thread.first_post_id == post.id:
                         # This is unconditionally the first post, even if it's not moderated
-                        post.thread.first_post = post.thread.post_set.first()
-                        post.thread.save(update_fields=['first_post'])
+                        post.thread.set_first_post(commit=True)
                 else:
                     post.thread.delete()
         except Thread.DoesNotExist:
@@ -336,3 +334,4 @@ class Subscription(models.Model):
 
     def __unicode__(self):
         return u"%s subscribed to %s" % (self.subscriber, self.thread)
+F

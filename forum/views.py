@@ -33,6 +33,7 @@ from django.db import transaction
 from accounts.models import DeletedUser
 from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
+from utils.cache import invalidate_template_cache
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
@@ -108,7 +109,6 @@ def forum(request, forum_name_slug):
                          settings.FORUM_THREADS_PER_PAGE if not using_beastwhoosh(request) else
                          settings.FORUM_THREADS_PER_PAGE_BW)
     tvars.update(paginator)
-    print paginator
 
     return render(request, 'forum/threads.html', tvars)
 
@@ -211,6 +211,9 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 else:
                     # If "subscribe" not in form, then remove subscription (if any is existing)
                     Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
+
+                # Invalidate the thread common commenters cache as it could have changed
+                invalidate_template_cache('bw_thread_common_commenters', thread.id)
 
                 # figure out if there are active subscriptions in this thread
                 if not set_to_moderation:
@@ -361,6 +364,7 @@ def old_topic_link_redirect(request):
 
 @login_required
 def post_delete(request, post_id):
+    # NOTE: this view is not used in beast whoosh because we use JS modal for confirmation of deletion
     post = get_object_or_404(Post, id=post_id)
     if post.author == request.user or request.user.has_perm('forum.delete_post'):
         tvars = {'post': post}
@@ -374,16 +378,29 @@ def post_delete_confirm(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
         if post.author == request.user or request.user.has_perm('forum.delete_post'):
+            # Delete post and save reference to thread, forum and creation date (it will be used later to
+            # decide to what post redirect after deletion)
+            deleted_post_created = post.created
             thread = post.thread
             forum = thread.forum
             post.delete()
+
+            # Invalidate the thread common commenters cache as it could have changed
+            invalidate_template_cache('bw_thread_common_commenters', thread.id)
+
             # If the post was the only post in the thread, redirect to the forum
             try:
                 thread.refresh_from_db()
             except Thread.DoesNotExist:
                 return redirect('forums-forum', forum_name_slug=forum.name_slug)
+
+            # Otherwise redirect to the previous post in the thread (if not previous posts, redirect to last post)
             try:
-                return redirect('forums-post', thread.forum.name_slug, thread.id, thread.last_post.id)
+                previous_posts = thread.post_set.filter(created__lte=deleted_post_created).order_by('-created')
+                if previous_posts.count():
+                    return redirect('forums-post', thread.forum.name_slug, thread.id, previous_posts[0].id)
+                else:
+                    return redirect('forums-post', thread.forum.name_slug, thread.id, thread.last_post_id)
             except (Post.DoesNotExist, Thread.DoesNotExist, AttributeError):
                 return HttpResponseRedirect(reverse('forums-forums'))
 
@@ -448,6 +465,10 @@ def moderate_posts(request):
                 if action == "Approve":
                     post.moderation_state = "OK"
                     post.save()
+
+                    # Invalidate the thread common commenters cache as it could have changed
+                    invalidate_template_cache('bw_thread_common_commenters', post.thread.id)
+
                 elif action == "Delete User":
                     try:
                         deletion_reason = DeletedUser.DELETION_REASON_SPAMMER

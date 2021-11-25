@@ -70,7 +70,9 @@
                                             <a class="text-grey text-20 cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this post?" data-modal-confirmation-url="{% url "forums-post-delete-confirm" post.id %}" title="Delete post"><i class="bw-icon-trash-filled"></i></a>
                                         </span>
                                         {% endif %}
-                                        <span class="text-light-grey">#{{ forloop.counter|add:post_counter_offset }}</span>
+                                        <a class="text-grey" href="{% url "forums-post" forum.name_slug thread.id post.id %}">
+                                            #{{ forloop.counter|add:post_counter_offset }}
+                                        </a>
                                     </div>
                                 </div>
                                 <div class="text-left text-black v-spacing-top-1">

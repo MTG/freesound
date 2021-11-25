@@ -58,6 +58,7 @@ class BwPostReplyForm(PostReplyForm):
 
         self.fields['body'].label = "Message"
         self.fields['body'].widget.attrs['placeholder'] = "Write the first message of your thread"
+        self.fields['body'].widget.attrs['autofocus'] = "autofocus"
         self.fields['body'].widget.attrs['rows'] = False
         self.fields['body'].widget.attrs['cols'] = False
         self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
@@ -87,6 +88,7 @@ class BwNewThreadForm(NewThreadForm):
 
         # Customize some placeholders and classes, remove labels and help texts
         self.fields['title'].widget.attrs['placeholder'] = 'Write your new thread title'
+        self.fields['title'].widget.attrs['autofocus'] = "autofocus"
         self.fields['body'].label = "Message"
         self.fields['body'].widget.attrs['placeholder'] = "Write the first message of your thread"
         self.fields['body'].widget.attrs['rows'] = False

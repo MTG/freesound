@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load bw_templatetags %}
+{% load cache %}
 
 {% block title %}Forums - {{forum.name}}{% endblock %}
 
@@ -41,11 +42,23 @@
                                 <p>Started by <a href="{% url 'account' thread.author.username%}">{{ thread.author.username }}</a> {{thread.first_post.created|timesince}} ago · {{thread.num_posts}} repl{{thread.num_posts|pluralize:"y,ies"}}</p>
                             </div>
                             <div class="col-md-4 offset-md-2">
-                                {% if thread.last_post.id %}
-                                    {% comment %}<div class="bw-threads__avatars-block">{{avatars([1,2,3,4,5,6,7,8,9, 50] | random)}}</div>{% endcomment %}
+                                    {% cache 3600 bw_thread_common_commenters thread.id %}
                                     <div class="bw-threads__avatars-block">
-                                        {% bw_user_avatar thread.last_post.author.profile.locations.avatar.M.url thread.last_post.author.username 30 %}
+                                        {% with thread.get_most_relevant_commenters_info_for_avatars as info %}
+                                            {% for user_avatar_url, username in info.common_commenters %}
+                                                <div class="bw-threads__avatar-mini-container">
+                                                    {% bw_user_avatar user_avatar_url username 32 %}
+                                                </div>
+                                            {% endfor %}
+                                            {% if info.num_extra_commenters > 0 %}
+                                                <div class="bw-threads__avatar-mini-container">
+                                                    <div class="bw-threads__avatar-mini-cover">+{{ info.num_extra_commenters }}</div>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
                                     </div>
+                                    {% endcache %}
+                                    {% if thread.last_post.id %}
                                     <p class="text-right">
                                         <a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest reply</a> by <a href="{% url "account" thread.last_post.author.username %}">{{thread.last_post.author.username}}</a> {{thread.last_post.created|timesince}} ago
                                     </p>

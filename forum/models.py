@@ -22,6 +22,7 @@
 
 import logging
 
+from collections import Counter
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.db.models import F
@@ -121,6 +122,17 @@ class Thread(models.Model):
     def is_user_subscribed(self, user):
         """A user is subscribed to a thread if a Subscription object exists that related the two of them"""
         return Subscription.objects.filter(thread=self, subscriber=user, is_active=True).exists()
+
+    def get_most_relevant_commenters_info_for_avatars(self):
+        author_ids = Post.objects.filter(thread=self, moderation_state="OK").values_list('author__id', flat=True)
+        num_distinct_authors = len(set(author_ids))
+        most_common_author_ids = [uid for (uid, _) in Counter(author_ids).most_common(6)]
+        users_data = User.objects.select_related('profile').filter(id__in=most_common_author_ids)
+        info_to_return = {
+            'common_commenters': [(user.profile.locations('avatar.S.url'), user.username) for user in users_data],
+            'num_extra_commenters': num_distinct_authors - len(most_common_author_ids)
+        }
+        return info_to_return
 
     class Meta:
         ordering = ('-status', '-last_post__created')

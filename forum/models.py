@@ -108,6 +108,9 @@ class Thread(models.Model):
         if commit:
             self.save(update_fields=['last_post'])
 
+        # Invalidate the thread common commenters cache as it could have changed
+        invalidate_template_cache('bw_thread_common_commenters', thread.id)
+
         return has_posts
 
     def set_first_post(self, commit=False):

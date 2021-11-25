@@ -42,7 +42,7 @@
                                 <p>Started by <a href="{% url 'account' thread.author.username%}">{{ thread.author.username }}</a> {{thread.first_post.created|timesince}} ago · {{thread.num_posts}} repl{{thread.num_posts|pluralize:"y,ies"}}</p>
                             </div>
                             <div class="col-md-4 offset-md-2">
-                                    {% cache 3600 bw_thread_common_commenters thread.id %}
+                                    {% cache 86400 bw_thread_common_commenters thread.id %}
                                     <div class="bw-threads__avatars-block">
                                         {% with thread.get_most_relevant_commenters_info_for_avatars as info %}
                                             {% for user_avatar_url, username in info.common_commenters %}

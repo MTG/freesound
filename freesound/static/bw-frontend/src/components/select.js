@@ -96,8 +96,8 @@ function createSelect() {
     element.value = valueToSelect;
 
     // Trigger change event manually (setting the value programatically does not trigger the event)
-    var event = document.createEvent("HTMLEvents");
-    event.initEvent("change", true, false);
+    var event = document.createEvent('HTMLEvents');
+    event.initEvent('change', true, false);
     element.dispatchEvent(event);
   }
   var buttonSelect = document.getElementsByClassName('select-dropdown__button');

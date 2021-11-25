@@ -22,6 +22,12 @@ const start = async () => {
         'EditProfilePassword',
         'EditProfileNotifications',
         'EditProfileCloseAccount',
+        'ForumsHot',
+        'ForumMostCommented',
+        'ForumLists',
+        'ForumListsThread',
+        'ForumThread',
+        'ForumNewthread'
       ],
       filter: val => val.toLowerCase(),
     },

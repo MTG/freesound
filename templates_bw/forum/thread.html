@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% load bw_templatetags %}
+{% load smileys %}
+{% load flag_user %}
+{% load filter_img %}
+
+{% block title %}Forums - {{forum.name}} - {{thread.title}}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+            <div class="row">
+                <div class="col-md-12">
+                    <ul class="navbar-forums-hot navbar-breadcrumb v-spacing-2">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-black" href="{% url "forums-thread" forum.name_slug thread.id %}">{{ thread.title }}</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="divider-light v-spacing-top-1 v-spacing-5"></div>
+            <div class="between middle">
+                <h1>{{ thread.title }}</h1>
+                <div class="col-4 text-right">
+                    {% if has_subscription %}
+                        <a title="Unsubscribe to stop receiving email notifications" class="no-hover" href="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}"><button class="btn-secondary">Unsubscribe</button></a>
+                    {% else %}
+                        <a title="Subscribe to receive email notifications" class="no-hover" href="{% url "forums-thread-subscribe" forum.name_slug thread.id %}"><button class="btn-inverse btn-profile-adapt">Subscribe</button></a>
+                    {% endif %}
+                    <a class="no-hover" href="{% url "forums-reply" forum.name_slug thread.id %}"><button class="btn-inverse btn-profile-adapt"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</button></a>
+                </div>
+            </div>
+            {% if thread.last_post.id %}
+                <p class="text-grey v-spacing-7">Started {{ thread.first_post.created|date:"F jS, Y" }}  ·  {{thread.num_posts}} repl{{thread.num_posts|pluralize:"y,ies"}}  ·  <a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest reply</a> by <a href="{% url "account" thread.last_post.author.username %}">{{ thread.last_post.author.username }}</a> {{ thread.last_post.created|timesince }} ago</p>
+            {% endif %}
+            <div class="v-spacing-top-4">
+                {% for post in page.object_list %}
+                    <a name="post{{post.id}}"></a>
+                    <div class="bw-post">
+                        <div class="row">
+                            <div class="col-md-1">
+                                {% bw_user_avatar post.author.profile.locations.avatar.L.url post.author.username 70 %}
+                            </div>
+                            <div class="col-md-2">
+                                <h6><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
+                                <p class="text-grey no-margins">{{ post.author.profile.num_sounds }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
+                                <p class="text-grey no-margins">{{ post.author.profile.num_posts }} post{{ post.author.profile.num_posts|pluralize }}</p>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="between">
+                                    <span class="text-grey text-14">{{post.created|timesince}} ago</span>
+                                    <div class="text-14">
+                                        <span class="padding-right-2">
+                                            <a class="text-grey" href="{% url "forums-reply-quote" forum.name_slug thread.id post.id %}" title="Quote and reply"><i class="bw-icon-quote-reverse"></i><i class="bw-icon-quote"></i></a>
+                                        </span>
+                                        {% if post.author == request.user or perms.forums.change_post %}
+                                        <span class="padding-right-2">
+                                            <a class="text-grey" href="{% url "forums-post-edit" post.id %}" title="Edit post"><i class="bw-icon-edit"></i></a>
+                                        </span>
+                                        {% endif %}
+                                        {% if post.author == request.user or perms.forums.delete_post %}
+                                        <span class="padding-right-2">
+                                            <a class="text-grey text-20 cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this post?" data-modal-confirmation-url="{% url "forums-post-delete-confirm" post.id %}" title="Delete post"><i class="bw-icon-trash-filled"></i></a>
+                                        </span>
+                                        {% endif %}
+                                        <a class="text-grey" href="{% url "forums-post" forum.name_slug thread.id post.id %}">
+                                            #{{ forloop.counter|add:post_counter_offset }}
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="text-left text-black v-spacing-top-1">
+                                    {{ post.body|replace_img|smileys|safe|linebreaks }}
+                                    {% if post.author.profile.signature %}
+                                    <div class="text-grey">
+                                        {{post.author.profile.signature|replace_img|smileys|safe}}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="between middle v-spacing-top-3">
+                                {% if request.user.is_staff %}
+                                    <div class="text-light-grey">Admin:
+                                        <a class="text-grey" href="{% url "admin:forum_post_change" post.id %}">post</a> |
+                                        <a class="text-grey" href="{% url "admin:forum_thread_change" thread.id %}">thread</a>
+                                    </div>
+                                {% endif %}
+                                    <div class="text-right text-13 bw-post__report">
+                                        {% flag_user "FP" post.author.username post.id "" post.author.profile.num_sounds %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="v-spacing-top-4">
+                {% comment %}
+                {% if isLogged %}
+                    {{ thread.newPost() }}
+                {% else %}
+                    <p>Please <a href="">log in</a> to comment</p>
+                {% endif %}
+                {% endcomment %}
+            </div>
+            <div class="v-spacing-top-7">
+                {% bw_paginator paginator page current_page request "thread" %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

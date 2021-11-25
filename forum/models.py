@@ -22,6 +22,7 @@
 
 import logging
 
+from collections import Counter
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.db.models import F
@@ -52,11 +53,11 @@ class Forum(OrderedModel):
                                      related_name="latest_in_forum",
                                      on_delete=models.SET_NULL)
 
-    def set_last_post(self):
+    def set_last_post(self, commit=False):
         """
         Set the `last_post` field of this forum to be the most recently
         written OK moderated Post.
-        This does not save the current Forum object.
+        NOTE: this does not save the current Forum object unless commit is set to True.
         """
         qs = Post.objects.filter(thread__forum=self, moderation_state='OK')
         qs = qs.order_by('-created')
@@ -64,6 +65,8 @@ class Forum(OrderedModel):
             self.last_post = qs[0]
         else:
             self.last_post = None
+        if commit:
+            self.save()
 
     def __unicode__(self):
         return self.name
@@ -94,7 +97,7 @@ class Thread(models.Model):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def set_last_post(self):
+    def set_last_post(self, commit=False):
         qs = Post.objects.filter(thread=self)
         has_posts = qs.exists()
         moderated_posts = qs.filter(moderation_state='OK').order_by('-created')
@@ -102,11 +105,36 @@ class Thread(models.Model):
             self.last_post = moderated_posts[0]
         else:
             self.last_post = None
+        if commit:
+            self.save(update_fields=['last_post'])
+
+        # Invalidate the thread common commenters cache as it could have changed
+        invalidate_template_cache('bw_thread_common_commenters', self.id)
 
         return has_posts
 
+    def set_first_post(self, commit=False):
+        self.first_post = self.post_set.first()
+        if commit:
+            self.save(update_fields=['first_post'])
+
     def get_absolute_url(self):
         return reverse("forums-thread", args=[smart_unicode(self.forum.name_slug), self.id])
+
+    def is_user_subscribed(self, user):
+        """A user is subscribed to a thread if a Subscription object exists that related the two of them"""
+        return Subscription.objects.filter(thread=self, subscriber=user, is_active=True).exists()
+
+    def get_most_relevant_commenters_info_for_avatars(self):
+        author_ids = Post.objects.filter(thread=self, moderation_state="OK").values_list('author__id', flat=True)
+        num_distinct_authors = len(set(author_ids))
+        most_common_author_ids = [uid for (uid, _) in Counter(author_ids).most_common(6)]
+        users_data = User.objects.select_related('profile').filter(id__in=most_common_author_ids)
+        info_to_return = {
+            'common_commenters': [(user.profile.locations('avatar.S.url'), user.username) for user in users_data],
+            'num_extra_commenters': num_distinct_authors - len(most_common_author_ids)
+        }
+        return info_to_return
 
     class Meta:
         ordering = ('-status', '-last_post__created')
@@ -282,8 +310,7 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
                     # We leave the author of the thread as the author of the first post
                     if post.thread.first_post_id == post.id:
                         # This is unconditionally the first post, even if it's not moderated
-                        post.thread.first_post = post.thread.post_set.first()
-                        post.thread.save(update_fields=['first_post'])
+                        post.thread.set_first_post(commit=True)
                 else:
                     post.thread.delete()
         except Thread.DoesNotExist:
@@ -310,3 +337,4 @@ class Subscription(models.Model):
 
     def __unicode__(self):
         return u"%s subscribed to %s" % (self.subscriber, self.thread)
+F

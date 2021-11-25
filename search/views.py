@@ -36,7 +36,7 @@ import sounds
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
-from utils.frontend_handling import render
+from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
@@ -301,6 +301,13 @@ def clustered_graph(request):
 
 
 def search_forum(request):
+
+    if using_beastwhoosh(request):
+        # On beastwhoosh we use a different view to handle forum search which uses postgres instead of solr
+        # We need to import the view here to avoid issues with imports
+        from forum.views import bw_forum_search
+        return bw_forum_search(request)
+
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     try:

@@ -13,3 +13,4 @@ import './loginModals';
 import './toast';
 import './recaptcha';
 import './djangoMessages';
+import './unsecureImageCheck';

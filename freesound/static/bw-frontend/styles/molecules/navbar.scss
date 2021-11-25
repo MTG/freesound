@@ -200,3 +200,53 @@ $navbar-height-mobile: 64px;
     }
   }
 }
+
+.navbar-forums-hot {
+  list-style: none;
+  display: flex;
+  padding-left: 0;
+  margin: 32px 0;
+
+  .nav-item {
+    margin-right: 24px;
+
+    .nav-link {
+      font-size: 16px;
+      color: $navy-grey;
+
+      &.active {
+        color: $black;
+      }
+
+      &:hover {
+        color: $black;
+      }
+
+      &.nav-link-black {
+        color: $black;
+      }
+    }
+
+    span {
+      margin-left: 16px;
+      color: $navy-grey;
+    }
+  }
+}
+
+.navbar-breadcrumb {
+  .nav-item {
+    margin: 0;
+
+    &:after {
+      content: '>';
+      margin: 0 12px;
+    }
+
+    &:last-child {
+      &:after {
+        display: none;
+      }
+    }
+  }
+}

@@ -19,7 +19,7 @@
                             </li>
                             {% if forum %}
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                                    <a class="nav-link" href="{{current_forum.get_absolute_url}}">{{ current_forum.name }}</a>
                                 </li>
                             {% endif %}
                             <li class="nav-item text-16">
@@ -30,17 +30,17 @@
                     <div class="col-md-5 offset-md-1 between middle">
                         <form method="get" action="{% url "forums-search" %}">
                             <input type="hidden" name="advanced_search"  value="0"/>
-                            <input type="hidden" name="forum" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum.name_slug}}{% endif %}"/>
-                            <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in this forum..." value="{{ query }}"/>
+                            <input type="hidden" name="forum" value="{% if current_forum %}{{current_forum.name_slug}}{% else %}{% endif %}"/>
+                            <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in this forum..." value="{{ search_query }}"/>
                         </form>
                         <div class="text-grey">
-                            {{ paginator.count }} result{{ paginator.count|pluralize }} found
+                            {{ paginator.count }} post{{ paginator.count|pluralize }}
                         </div>
                     </div>
                 </div>
             <div class="divider-light"></div>
             <div class="v-spacing-top-4">
-                {% for post in page.object_list  %}
+                {% for post in posts  %}
                     <div class="bw-post">
                         <div class="row">
                             <div class="col-md-1">
@@ -61,9 +61,7 @@
                                     <span class="text-grey text-14">{{post.created|timesince}} ago</span>
                                 </div>
                                 <div class="text-black v-spacing-top-1">
-                                    {% with post.body|replace_img|smileys|safe|linebreaks as pre_processed_text %}
-                                        {% highlight_text_and_truncate pre_processed_text query 70 10 %}
-                                    {% endwith %}
+                                    {{ post.highlighted_content|safe|truncatewords_html:70 }}
                                 </div>
                                 <div class="v-spacing-top-2">
                                     <a href="{% url 'forums-post' post.thread.forum.name_slug post.thread_id post.id %}">Read full post...</a>

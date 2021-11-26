@@ -493,35 +493,3 @@ def moderate_posts(request):
     tvars = {'post_list': post_list,
              'hide_search': True}
     return render(request, 'forum/moderate.html', tvars)
-
-
-def search_in_forum_using_postgres(query, search_in_forum=None):
-    search_vector = SearchVector('thread__title') + SearchVector('body') + SearchVector('thread__author__username') + \
-                    SearchVector('author__username') + SearchVector('thread__forum__name')
-    search_vector_weights = [1.0, 0.75, 0.75, 0.75, 0.5]
-    query = SearchQuery(query)
-    rank = SearchRank(search_vector, query, weights=search_vector_weights)
-    filter_params = {
-        'moderation_state': 'OK',
-    }
-    if search_in_forum is not None:
-        filter_params.update({'thread__forum': search_in_forum})
-    results = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile').filter(**filter_params).annotate(rank=rank).filter(rank__gt=0).order_by('-rank')
-    return results
-
-
-def bw_forum_search(request):
-    # In BW we do forum search using postgres instead of solr
-    search_query = request.GET.get("q", "")
-    current_forum_name_slug = request.GET.get("forum", "").strip()  # for context sensitive search
-    try:
-        search_in_forum = Forum.objects.get(name_slug=current_forum_name_slug)
-    except Forum.DoesNotExist:
-        search_in_forum = None
-    results = search_in_forum_using_postgres(search_query, search_in_forum=search_in_forum)
-    tvars = {
-        "query": search_query,
-        "forum": search_in_forum,
-    }
-    tvars.update(paginate(request, results, 15))
-    return render(request, 'forum/search.html', tvars)

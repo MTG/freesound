@@ -10,7 +10,7 @@
             <h1>Freesound Forums</h1>
             <div class="divider-light v-spacing-top-4"></div>
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-lg-6">
                     <ul class="navbar-forums-hot navbar-breadcrumb">
                         <li class="nav-item">
                               <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
@@ -20,7 +20,7 @@
                         </li>
                   </ul>
                 </div>
-                <div class="col-md-5 offset-md-1 between middle">
+                <div class="col-lg-6 between middle v-spacing-2 v-spacing-top-2">
                     <form method="get" action="{% url "forums-search" %}">
                         <input type="hidden" name="advanced_search"  value="0"/>
                         <input type="hidden" name="forum" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum.name_slug}}{% endif %}"/>
@@ -35,7 +35,11 @@
                     <div class="bw-threads">
                         <div class="row">
                             <div class="col-md-1">
-                                {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username 50 %}
+                                {% if thread.last_post.created > request.last_action_time and forum.last_post.author != request.user %}
+                                    {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username 50 "new-posts-notification" %}
+                                {% else %}
+                                    {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username 50 %}
+                                {% endif %}
                             </div>
                             <div class="col-md-5">
                                 <h6><a href="{% url "forums-thread" forum.name_slug thread.id %}" {% if thread.status != 2 %}class="text-black"{% endif %}>{{thread.title|safe}}</a></h6>

@@ -30,7 +30,6 @@
   }
 
   &__avatar-mini-cover {
-    position: absolute;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -60,6 +59,23 @@
     height: 50px;
     background-position: center;
     background-size: 70px;
+  }
+
+  .new-posts-notification {
+    position: relative;
+
+    &:after {
+      display: block;
+      position: absolute;
+      content: ' ';
+      height: 7px;
+      width: 7px;
+      border-radius: 50%;
+      background-color: $red;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+    }
   }
 
   p {

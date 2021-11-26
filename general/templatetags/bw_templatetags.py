@@ -61,7 +61,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
 
 
 @register.inclusion_tag('atoms/avatar.html')
-def bw_user_avatar(avatar_url, username, size=40):
+def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
     """
     Displays a Beast Whoosh user avatar or no avatar if user has none
     We check if user has custom avatar by checking if the given avatar URL contains the filename of the default
@@ -74,6 +74,7 @@ def bw_user_avatar(avatar_url, username, size=40):
         'avatar_url':avatar_url,
         'username': username,
         'font_size': int(size * 0.4),
+        'extra_class': extra_class,
         'no_avatar_bg_color': settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1]))
                                                         % len(settings.AVATAR_BG_COLORS)]}
 

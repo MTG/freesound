@@ -9,7 +9,7 @@
 
 {% block content %}
     <div class="container">
-        <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+        <div class="navbar-space-filler v-spacing-3 v-spacing-top-5">
             <div class="row">
                 <div class="col-md-12">
                     <ul class="navbar-forums-hot navbar-breadcrumb v-spacing-2">
@@ -25,10 +25,12 @@
                     </ul>
                 </div>
             </div>
-            <div class="divider-light v-spacing-top-1 v-spacing-5"></div>
-            <div class="between middle">
-                <h1>{{ thread.title }}</h1>
-                <div class="col-4 text-right">
+            <div class="divider-light v-spacing-top-1 v-spacing-3"></div>
+            <div class="row between middle">
+                <div class="col-lg-8">
+                    <h1>{{ thread.title }}</h1>
+                </div>
+                <div class="col-lg-4 text-right">
                     {% if has_subscription %}
                         <a title="Unsubscribe to stop receiving email notifications" class="no-hover" href="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}"><button class="btn-secondary">Unsubscribe</button></a>
                     {% else %}

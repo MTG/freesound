@@ -26,11 +26,10 @@
                     <div class="bw-threads">
                         <div class="row">
                             <div class="col-md-1">
-
                                 {% if forum.last_post.created > request.last_action_time and forum.last_post.author != request.user %}
-                                    <div class="forum-icon-round "></div>
+                                    <div class="forum-icon-round new-posts-notification"></div>
                                 {% else %}
-                                    <div class="forum-icon-round grayscale"></div>
+                                    <div class="forum-icon-round"></div>
                                 {% endif %}
                             </div>
                             <div class="col-md-4">
@@ -48,7 +47,9 @@
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                        {% if not forloop.last %}
+                            <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>

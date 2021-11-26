@@ -4,7 +4,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=1000, initial-scale=1">
     <meta name="theme-color" content="#000000">
     <title>Freesound - {% block title %}{% endblock %}</title>
     <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
@@ -13,7 +13,6 @@
     {% endblock %}
     <link rel="stylesheet" href="{% static 'bw-frontend/dist/src.7ed060e2.css' %}">
   </head>
-
   <body>
     <noscript>
       You need to enable JavaScript to run this app.
@@ -47,6 +46,11 @@
     <script async defer data-domain="freesound.org" src="https://analytics.freesound.org/js/plausible.js"></script>
     <script>
         document.cookie = "preferSpectrogram={{spectrogram_preference|yesno}}";
+        const siteWidth = 1000;
+        const scale = window.innerWidth / siteWidth;
+        if (scale < 1){
+            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale);
+        }
     </script>
     <script src="{% static 'bw-frontend/dist/src.7ed060e2.js' %}"></script>
     {% block extrabody %}

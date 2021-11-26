@@ -36,6 +36,7 @@ import sounds
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
+from forum.models import Post
 from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
@@ -301,13 +302,6 @@ def clustered_graph(request):
 
 
 def search_forum(request):
-
-    if using_beastwhoosh(request):
-        # On beastwhoosh we use a different view to handle forum search which uses postgres instead of solr
-        # We need to import the view here to avoid issues with imports
-        from forum.views import bw_forum_search
-        return bw_forum_search(request)
-
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     try:
@@ -384,8 +378,10 @@ def search_forum(request):
                                 filter_query=filter_query,
                                 sort=sort)
 
-        query.set_group_field("thread_title_grouped")
-        query.set_group_options(group_limit=30)
+        if not using_beastwhoosh(request):
+            # Do not group by thread in beastwhoosh
+            query.set_group_field("thread_title_grouped")
+            query.set_group_options(group_limit=30)
 
         solr = Solr(settings.SOLR_FORUM_URL)
 
@@ -423,6 +419,15 @@ def search_forum(request):
         'sort': sort,
         'results': results,
     }
+
+    if using_beastwhoosh(request):
+        posts = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
+            .filter(id__in=[d['id'] for d in results.docs])
+        for post in posts:
+            post.highlighted_content = results.highlighting[str(post.id)]['post_body'][0]
+        tvars.update({
+            'posts': posts
+        })
 
     return render(request, 'search/search_forum.html', tvars)
 

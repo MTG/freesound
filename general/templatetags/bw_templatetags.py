@@ -170,31 +170,3 @@ def user_following_tags(user, tags_slash):
         return is_user_following_tag(user, tags_slash)
     else:
         return False
-
-@register.simple_tag
-def highlight_text_and_truncate(text, query, truncate_words=70, max_words_before_first_ocurrence=10):
-    """
-    This is a rather rudimentary html text highlighting used for showing forum search results in BW frontend.
-    We do a simple replace of the query terms to boldify them. It can fail if query terms collide with html tags,
-    but for our simple implementation that is ok. In worst case scenario, highlighting will not work properly.
-    We also truncate the text at the beginning and at the end, so that highlighted occurrences are shown.
-    Django 3.3 should make this process easier as search results highlighting is better integrated with postgres
-    full text search capabilities (which we use for forum search in BW).
-    """
-    first_occurrence_position_word = len(text)
-    highlighted = text
-    for token in query.split(' '):
-        if token in highlighted:
-            highlighted = text.replace(token, '<span class="font-weight-bold">{}</span>'.format(token))
-            position_char = highlighted.index(token)
-            position_word = highlighted[:position_char].count(' ')
-            if position_word < first_occurrence_position_word:
-                first_occurrence_position_word = position_word
-
-    if first_occurrence_position_word > max_words_before_first_ocurrence:
-        text_to_truncate = \
-            truncatewords_html(highlighted,
-                               first_occurrence_position_word - max_words_before_first_ocurrence).rsplit(' ', 1)[0]
-        highlighted = '... ' + highlighted.replace(text_to_truncate, '')
-
-    return mark_safe(truncatewords_html(highlighted, truncate_words))

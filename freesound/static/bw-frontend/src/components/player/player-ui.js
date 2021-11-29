@@ -286,19 +286,24 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   } else if (playerSize === 'minimal') {
     playerControls.classList.add('bw-player__controls--minimal')
   }
-  const startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+
+  let startWithSpectrum = false;
+  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
+    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+  }
   if (startWithSpectrum){
     playerControls.classList.add('bw-player__controls-inverted');
   }
-  const playButton = createPlayButton(audioElement, playerSize)
-  const stopButton = createStopButton(audioElement, parentNode)
-  const loopButton = createLoopButton(audioElement)
-  const spectogramButton = createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum)
-  const rulerButton = createRulerButton()
+
   const controls =
     playerSize === 'big'
-      ? [loopButton, stopButton, playButton, spectogramButton, rulerButton]
-      : [loopButton, playButton]
+      ? [createLoopButton(audioElement),
+         createStopButton(audioElement, parentNode),
+         createPlayButton(audioElement, playerSize),
+         createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
+         createRulerButton()]
+      : [createLoopButton(audioElement),
+         createPlayButton(audioElement, playerSize)]
   controls.forEach(el => playerControls.appendChild(el))
   return playerControls
 }

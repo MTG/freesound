@@ -25,6 +25,7 @@ import struct
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404, HttpResponse
+from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 
@@ -114,9 +115,22 @@ def _get_geotags_query_params(request):
 
 def geotags(request, tag=None):
     tvars = _get_geotags_query_params(request)
+    if tag is None:
+        url = reverse('geotags-barray')
+        # If "all geotags map" and no lat/lon/zoom is indicated, center map so whole world is visible
+        if tvars['center_lat'] is None:
+            tvars['center_lat'] = 24
+        if tvars['center_lon'] is None:
+            tvars['center_lon'] = 20
+        if tvars['zoom'] is None:
+            tvars['zoom'] = 2
+    else:
+        url = reverse('geotags-barray', args=[tag])
+
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': tag,
         'username': None,
+        'url': url,
     })
     return render(request, 'geotags/geotags.html', tvars)
 
@@ -128,6 +142,7 @@ def for_user(request, username):
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': None,
         'username': request.parameter_user.username,
+        'url': reverse('geotags-for-user-barray', args=[username]),
     })
     return render(request, 'geotags/geotags.html', tvars)
 

@@ -345,13 +345,13 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                             "circle-color": [
                                 "step",
                                 ["get", "point_count"],
-                                "#007fff",  // 0 to 10
+                                "#1d9fb5",  // 0 to 10
                                 10,
-                                "#ffad00",  // 10 to 100
+                                "#1cae48",  // 10 to 100
                                 100,
-                                "#ff0006",  // 100 to 1000
+                                "#ff9e35",  // 100 to 1000
                                 1000,
-                                "#ff00ef"  // 1000+
+                                "#ff3546"  // 1000+
                             ],
                             "circle-radius": [
                                 "step",

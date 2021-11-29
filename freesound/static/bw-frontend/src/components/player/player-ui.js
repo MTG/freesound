@@ -21,7 +21,7 @@ const createProgressIndicator = (parentNode, audioElement) => {
     'mousemove',
     throttle(evt => {
       const progressPercentage =
-        evt.layerX / progressIndicatorContainer.clientWidth
+        evt.offsetX / progressIndicatorContainer.clientWidth
       setProgressIndicator(progressPercentage * 100, parentNode)
     }),
     50
@@ -54,12 +54,12 @@ const createProgressBar = audioElement => {
   progressBar.addEventListener(
     'mousemove',
     throttle(evt => {
-      progressBarIndicatorGhost.style.transform = `translateX(${evt.layerX}px)`
+      progressBarIndicatorGhost.style.transform = `translateX(${evt.offsetX}px)`
       progressBarIndicatorGhost.style.opacity = 0.5
-      progressBarTime.style.transform = `translateX(calc(${evt.layerX}px - 50%))`
+      progressBarTime.style.transform = `translateX(calc(${evt.offsetX}px - 50%))`
       progressBarTime.style.opacity = 1
       progressBarTime.innerHTML = formatAudioDuration(
-        (audioElement.duration * evt.layerX) / progressBar.clientWidth
+        (audioElement.duration * evt.offsetX) / progressBar.clientWidth
       )
     }, 30)
   )
@@ -135,13 +135,14 @@ const createPlayButton = (audioElement, playerSize) => {
     playerSize === 'big' ? 'play-stroke' : 'play'
   )
   playButton.classList.add('bw-player__play-btn')
-  playButton.addEventListener('click', () => {
+  playButton.addEventListener('click', (e) => {
     const isPlaying = !audioElement.paused
     if (isPlaying) {
       audioElement.pause()
     } else {
       audioElement.play()
     }
+    e.stopPropagation()
   })
   return playButton
 }
@@ -152,10 +153,11 @@ const createPlayButton = (audioElement, playerSize) => {
  */
 const createStopButton = (audioElement, parentNode) => {
   const stopButton = createControlButton('stop')
-  stopButton.addEventListener('click', () => {
+  stopButton.addEventListener('click', (e) => {
     audioElement.pause()
     audioElement.currentTime = 0
     setProgressIndicator(0, parentNode)
+    e.stopPropagation()
   })
   return stopButton
 }
@@ -165,7 +167,7 @@ const createStopButton = (audioElement, parentNode) => {
  */
 const createLoopButton = audioElement => {
   const loopButton = createControlButton('loop')
-  loopButton.addEventListener('click', () => {
+  loopButton.addEventListener('click', (e) => {
     const willLoop = !audioElement.loop
     if (willLoop) {
       loopButton.classList.add('text-red-important')
@@ -173,6 +175,7 @@ const createLoopButton = audioElement => {
       loopButton.classList.remove('text-red-important')
     }
     audioElement.loop = willLoop
+    e.stopPropagation()
   })
   return loopButton
 }
@@ -258,7 +261,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
       }
     })
     imageContainer.addEventListener('click', evt => {
-      const clickPosition = evt.layerX
+      const clickPosition = evt.offsetX
       const width = evt.target.clientWidth
       const positionRatio = clickPosition / width
       const time = audioElement.duration * positionRatio
@@ -266,6 +269,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
       if (audioElement.paused) {
         audioElement.play()
       }
+      evt.stopPropagation()
     })
   }
   return imageContainer
@@ -324,13 +328,14 @@ const createSetFavoriteButton = parentNode => {
   favoriteButtonContainer.appendChild(
     getIsFavorite() ? unfavoriteButton : favoriteButton
   )
-  favoriteButtonContainer.addEventListener('click', () => {
+  favoriteButtonContainer.addEventListener('click', (e) => {
     const isCurrentlyFavorite = getIsFavorite()
     favoriteButtonContainer.innerHTML = ''
     favoriteButtonContainer.appendChild(
       isCurrentlyFavorite ? favoriteButton : unfavoriteButton
     )
     parentNode.dataset.favorite = `${!isCurrentlyFavorite}`
+    e.stopPropagation()
   })
   return favoriteButtonContainer
 }

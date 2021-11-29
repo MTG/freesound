@@ -174,5 +174,8 @@ def infowindow(request, sound_id):
     except Sound.DoesNotExist:
         raise Http404
 
-    tvars = {'sound': sound}
+    tvars = {
+        'sound': sound,
+        'minimal': request.GET.get('minimal', False)
+    }
     return render(request, 'geotags/infowindow.html', tvars)

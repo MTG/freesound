@@ -93,7 +93,7 @@ function clipLatLonRanges(lat, lon){
     return [lat, lon];
 }
 
-function ajaxLoad(url,callback,postData,plain) {
+function ajaxLoad(url, callback, postData, plain) {
     var http_request = false;
 
     if (window.XMLHttpRequest) { // Mozilla, Safari, ...
@@ -238,8 +238,12 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                     stopAllPlayers();
                     var coordinates = e.features[0].geometry.coordinates.slice();
                     var sound_id = e.features[0].properties.id;
-
-                    ajaxLoad( '/geotags/infowindow/' + sound_id, function(data, responseCode)
+                    let url = '/geotags/infowindow/' + sound_id;
+                    if (document.getElementById(map_element_id).offsetWidth < 500){
+                        // If map is small, use minimal info windows
+                        url += '/?minimal=1'
+                    }
+                    ajaxLoad(url , function(data, responseCode)
                     {
                         // Ensure that if the map is zoomed out such that multiple
                         // copies of the feature are visible, the popup appears

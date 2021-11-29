@@ -124,6 +124,22 @@
         {% comment %}This size is used in map info windows and only includes a play/stop and loop button{% endcomment %}
         {% include "sounds/player.html" %}
 
+    {% elif player_size == 'infowindow' %}
+        {% comment %}This size is used in geotags map infowindows. If uses a small player and also shows some metadatata{% endcomment %}
+        <div class="v-spacing-1 overfow-scroll">
+            {% include "sounds/player.html" %}
+            <h5 class="v-spacing-top-1">
+                <a target="_blank" class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename|truncate_string:20 }}</a>
+            </h5>
+            <div class="v-spacing-top-1">
+                <a target="_blank" href="{% url 'account' sound_user %}">{{ sound_user|truncate_string:15 }}</a>
+                <br><span class="text-grey">{{ sound.created|timesince }} ago</span>
+            </div>
+            <div class="v-spacing-top-1 text-grey">
+                {{ sound.description|striptags|safe|truncatewords:30 }}
+            </div>
+        </div>
+
     {% endif %}
 {% endcache %}
 {% endif %}

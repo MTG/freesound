@@ -8,6 +8,7 @@ const embedCodeElement = document.getElementById("embedCode");
 const embedClusterCheckElement = document.getElementById("embedClusterCheck");
 const embedWidthInputElement = document.getElementById("embedWidthInput");
 const embedHeightInputElement = document.getElementById("embedHeightInput");
+const tagFilterInput = document.getElementById("tagFilter");
 
 let currentLat;
 let currentLon;
@@ -100,6 +101,18 @@ const changeEmbedWidthHeightCluster = () => {
        changeEmbedWidthHeightCluster();
     });
 });
+
+if (tagFilterInput !== null){
+    tagFilterInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            // Submit query filter
+            const tag = tagFilterInput.value;
+            const url = `${tagFilterInput.dataset.baseUrl + tag}/?c_lat=${currentLat}&c_lon=${currentLon}&z=${currentZoom}`;
+            window.location = url;
+        }
+        e.stopPropagation();
+    });
+}
 
 if ((mapCanvas.dataset.mapCenterLat !== "None") &&
     (mapCanvas.dataset.mapCenterLon !== "None") &&

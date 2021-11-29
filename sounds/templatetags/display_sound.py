@@ -40,7 +40,7 @@ def display_sound(context, sound, player_size='small'):
         sound (int or Sound): sound ID or Sound object of the sound that will be shown. If no sound exists for the
           given ID, the display_sound.html will be rendered with empty HTML.
         player_size (str, optional): size of the player to display. This parameter only applies to BW interface.
-          Must be one of ['small' (default), 'big_no_info', 'small_no_info']. Information about the contents of each
+          See functions below and template file for available sizes. Information about the contents of each
           size is given in the display_sound.html template code.
 
     Returns:
@@ -124,11 +124,9 @@ def display_sound(context, sound, player_size='small'):
 def display_sound_small(context, sound):
     return display_sound(context, sound, player_size='small')
 
-
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
     return display_sound(context, sound, player_size='middle')
-
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info(context, sound):
@@ -142,3 +140,7 @@ def display_sound_small_no_info(context, sound):
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_minimal(context, sound):
     return display_sound(context, sound, player_size='minimal')
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_infowindow(context, sound):
+    return display_sound(context, sound, player_size='infowindow')

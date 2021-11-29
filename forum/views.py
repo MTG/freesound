@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+import datetime
 import re
 from django.conf import settings
 from django.contrib import messages
@@ -106,7 +106,7 @@ def forum(request, forum_name_slug):
     tvars = {'forum': forum}
     paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
                          .select_related('last_post', 'last_post__author', 'last_post__author__profile',
-                                         'author', 'author__profile', 'first_post'),
+                                         'author', 'author__profile', 'first_post', 'forum'),
                          settings.FORUM_THREADS_PER_PAGE if not using_beastwhoosh(request) else
                          settings.FORUM_THREADS_PER_PAGE_BW)
     tvars.update(paginator)
@@ -118,9 +118,12 @@ def forum(request, forum_name_slug):
 @transaction.atomic()
 def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
-    thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
+    thread = get_object_or_404(Thread.objects.select_related('last_post', 'last_post__author'),
+                               forum=forum, id=thread_id, first_post__moderation_state="OK")
 
-    paginator = paginate(request, Post.objects.select_related('author', 'author__profile').filter(
+    paginator = paginate(request, Post.objects.select_related(
+        'author', 'author__profile', 'thread', 'thread__forum',
+    ).filter(
         thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE)
 
     has_subscription = False
@@ -154,6 +157,35 @@ def latest_posts(request):
     tvars = {'hide_search': hide_search}
     tvars.update(paginator)
     return render(request, 'forum/latest_posts.html', tvars)
+
+
+def get_hot_threads(n=None, days=15):
+    if not settings.DEBUG:
+        last_days_filter = datetime.datetime.today() - datetime.timedelta(days=days)
+    else:
+        # If in DEBUG mode we won't have recent posts, so we modify the filter to match all existing threads
+        last_days_filter = Post.objects.order_by('created').first().created
+    return Thread.objects.filter(first_post__moderation_state="OK",
+                                 last_post__moderation_state="OK",
+                                 last_post__created__gte=last_days_filter) \
+               .order_by('-last_post__created') \
+               .select_related('author',
+                               'forum',
+                               'last_post',
+                               'last_post__author',
+                               'last_post__thread',
+                               'last_post__thread__forum')[:n]
+
+
+def hot_threads(request):
+    if not using_beastwhoosh(request):
+        # "hot threads" is a BW only page, if on NG, redirect to "latest posts"
+        return HttpResponseRedirect(reverse('forums-latest-posts'))
+
+    paginator = paginate(request, get_hot_threads(), settings.FORUM_THREADS_PER_PAGE_BW)
+    tvars = {}
+    tvars.update(paginator)
+    return render(request, 'forum/hot_threads.html', tvars)
 
 
 @last_action

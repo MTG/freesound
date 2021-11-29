@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load bw_templatetags %}
+{% load display_forum_objects %}
 {% load cache %}
 
 {% block title %}Forums - {{forum.name}}{% endblock %}
@@ -10,7 +11,7 @@
             <h1>Freesound Forums</h1>
             <div class="divider-light v-spacing-top-4"></div>
             <div class="row">
-                <div class="col-lg-6">
+                <div class="col-lg-7">
                     <ul class="navbar-forums-hot navbar-breadcrumb">
                         <li class="nav-item">
                               <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
@@ -20,7 +21,7 @@
                         </li>
                   </ul>
                 </div>
-                <div class="col-lg-6 between middle v-spacing-2 v-spacing-top-2">
+                <div class="col-lg-5 between middle v-spacing-2 v-spacing-top-2">
                     <form method="get" action="{% url "forums-search" %}">
                         <input type="hidden" name="advanced_search"  value="0"/>
                         <input type="hidden" name="forum" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum.name_slug}}{% endif %}"/>
@@ -32,47 +33,10 @@
             <div class="divider-light"></div>
             <div class="v-spacing-top-4">
                 {% for thread in page.object_list %}
-                    <div class="bw-threads">
-                        <div class="row">
-                            <div class="col-md-1">
-                                {% if thread.last_post.created > request.last_action_time and forum.last_post.author != request.user %}
-                                    {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username 50 "new-posts-notification" %}
-                                {% else %}
-                                    {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username 50 %}
-                                {% endif %}
-                            </div>
-                            <div class="col-md-5">
-                                <h6><a href="{% url "forums-thread" forum.name_slug thread.id %}" {% if thread.status != 2 %}class="text-black"{% endif %}>{{thread.title|safe}}</a></h6>
-                                <p>Started by <a href="{% url 'account' thread.author.username%}">{{ thread.author.username }}</a> {{thread.first_post.created|timesince}} ago · {{thread.num_posts}} repl{{thread.num_posts|pluralize:"y,ies"}}</p>
-                            </div>
-                            <div class="col-md-4 offset-md-2">
-                                    {% cache 86400 bw_thread_common_commenters thread.id %}
-                                    <div class="bw-threads__avatars-block">
-                                        {% with thread.get_most_relevant_commenters_info_for_avatars as info %}
-                                            {% for user_avatar_url, username in info.common_commenters %}
-                                                <div class="bw-threads__avatar-mini-container">
-                                                    {% bw_user_avatar user_avatar_url username 32 %}
-                                                </div>
-                                            {% endfor %}
-                                            {% if info.num_extra_commenters > 0 %}
-                                                <div class="bw-threads__avatar-mini-container">
-                                                    <div class="bw-threads__avatar-mini-cover">+{{ info.num_extra_commenters }}</div>
-                                                </div>
-                                            {% endif %}
-                                        {% endwith %}
-                                    </div>
-                                    {% endcache %}
-                                    {% if thread.last_post.id %}
-                                    <p class="text-right">
-                                        <a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest reply</a> by <a href="{% url "account" thread.last_post.author.username %}">{{thread.last_post.author.username}}</a> {{thread.last_post.created|timesince}} ago
-                                    </p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% if not forloop.last %}
-                            <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
-                        {% endif %}
-                    </div>
+                    {% display_thread thread %}
+                    {% if not forloop.last %}
+                        <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                    {% endif %}
                 {% empty %}
                     <div class="bw-threads">
                         <div class="row">

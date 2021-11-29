@@ -48,6 +48,7 @@ from comments.models import Comment
 from donations.models import DonationsModalSettings, Donation
 from follow import follow_utils
 from forum.models import Thread
+from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
     RemixForm, PackForm
@@ -192,15 +193,7 @@ def front_page(request):
         popular_searches = [(query_terms, '{0}?q={1}'.format(reverse('sounds-search'), query_terms))
                             for query_terms in popular_searches]
 
-    current_forum_threads = Thread.objects.filter(first_post__moderation_state="OK",
-                                                  last_post__moderation_state="OK") \
-                                          .order_by('-last_post__created') \
-                                          .select_related('author',
-                                                          'forum',
-                                                          'last_post',
-                                                          'last_post__author',
-                                                          'last_post__thread',
-                                                          'last_post__thread__forum')[:10]
+    current_forum_threads = get_hot_threads(n=10)
 
     num_latest_sounds = 5 if not using_beastwhoosh(request) else 9
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)

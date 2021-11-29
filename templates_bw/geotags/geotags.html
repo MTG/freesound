@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load bw_templatetags %}
+{% load absurl %}
+{% load staticfiles %}
+
+{% block title %}Map of sounds{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+            {% if username %}
+                <h1>Map of sounds for user <a href="{% url "account" username %}">{{ username }}</a></h1>
+            {% else %}
+                {% if tag %}
+                    <h1>Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a></h1>
+                {% else %}
+                    <h1>Map of sounds</h1>
+                {% endif %}
+            {% endif %}
+            <div class="col-12 v-spacing-top-4 no-paddings">
+                <div id="mapCanvas" style="height:800px; max-height: 800px;z-index: 0;"
+                     data-map-center-lat="{{ center_lat }}"
+                     data-map-center-lon="{{ center_lon }}"
+                     data-map-zoom="{{ zoom }}"
+                     data-map-username="{{ username }}"
+                     data-map-tag="{{ tag }}"
+                     data-geotags-url="{{ url }}"
+                     data-geotags-url-box="{% url "geotags-box-barray" %}"
+                     data-geotags-embed-base-url="{% absurl 'embed-geotags-box-iframe' %}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8 v-spacing-top-3 middle">
+                    <div><button id="embedControlsLabel" class="btn btn-primary">Embed this map</button></div>
+                    <div id="indicator" class="spacing-4 middle">&nbsp;<img width="12px" height="12px" src="{{ media_url }}images/indicator.gif" style="float:right;margin-top:3px;"></div>
+                </div>
+                <div class="col-md-4 v-spacing-top-2 text-right">
+                    {% if username or tag %}
+                        <a class="no-hover" href="{% url "geotags" %}"><button class="btn btn-secondary">View all geotags</button></a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="embedControls" class="display-none w-100">
+                        <p>
+                            Embed width: <input type="number" min="100" step="1" value="900" id="embedWidthInput" style="width: 50px;"/>&nbsp;&nbsp;
+                            Embed height: <input type="number" min="100" step="1" value="600" id="embedHeightInput" style="width: 50px;"/>&nbsp;&nbsp;
+                            Show clusters in embed: <input type="checkbox" checked id="embedClusterCheck" />
+                        </p>
+                        <p>
+                            <textarea id="embedCode" readonly style="width:100%;height:60px;"></textarea>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+    {% bw_maps_js_scripts %}
+    <script src="{% static 'bw-frontend/dist/map.0122a7d4.js' %}"></script>
+{% endblock %}

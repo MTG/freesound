@@ -29,6 +29,7 @@ urlpatterns = [
     url(r'^moderate/$', forum_views.moderate_posts, name="forums-moderate"),
     url(r'^forums-search/$', search_views.search_forum, name="forums-search"),
     url(r'^latest_posts/$', forum_views.latest_posts, name="forums-latest-posts"),
+    url(r'^hot_treads/$', forum_views.hot_threads, name="forums-hot-threads"),
     url(r'^(?P<forum_name_slug>[\w\-]+)/$', forum_views.forum, name="forums-forum"),
     url(r'^(?P<forum_name_slug>[\w\-]+)/new-thread/$', forum_views.new_thread, name="forums-new-thread"),
     url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', forum_views.thread, name="forums-thread"),

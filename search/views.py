@@ -421,10 +421,11 @@ def search_forum(request):
     }
 
     if using_beastwhoosh(request):
-        posts = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
-            .filter(id__in=[d['id'] for d in results.docs])
-        for post in posts:
-            post.highlighted_content = results.highlighting[str(post.id)]['post_body'][0]
+        if results:
+            posts = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
+                .filter(id__in=[d['id'] for d in results.docs])
+        else:
+            posts = []
         tvars.update({
             'posts': posts
         })

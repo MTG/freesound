@@ -41,12 +41,16 @@
     <div class="container">
         <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
             {% if is_explicit %}
-                <div class="explicit-sound-blocker">
-                    <h4>Content warning</h4>
-                    <p>This sound may be inappropriate for some users
-                        <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page
-                    </p>
-                    <button class="btn btn-primary">Show anyway</button>
+                <div class="explicit-sound-blocker w-100">
+                    <div class="row no-paddings">
+                        <div class="col-md-7 v-spacing-4 v-spacing-top-4">
+                            <h4>Content warning</h4>
+                            <p>This sound may be inappropriate for some users
+                                <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page
+                            </p>
+                            <button class="btn btn-primary">Show anyway</button>
+                        </div>
+                    </div>
                 </div>
             {% endif %}
             <div class="row no-gutters {% if is_explicit %}blur{% endif %}">

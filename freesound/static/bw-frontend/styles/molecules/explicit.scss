@@ -4,33 +4,10 @@
     pointer-events: none;
 }
 
-.explicit_content_text{
-    position: absolute;
-    margin-left: 35px;
-    margin-top: 25px;
-    z-index: 1;
-    white-space:nowrap;
-}
-.explicit_content_text span{
-    font-size: 12px;
-    padding: 10px;
-    background-color: #fff;
-    opacity: 0.9;
-    border-radius: 6px;
-    color: #666;
-}
-
 .explicit-sound-blocker{
-    background-color: #fff;
     position: absolute;
     padding: 40px;
-    border-radius: 6px;
-    opacity: 0.9;
-    white-space:nowrap;
-    z-index: 10;
-    width: 500px;
-    left: 0;
-    right: 0;
-    margin-left: auto;
-    margin-right: auto;
+    z-index: 1;
+    text-align: center;
+    background-color: rgba(255,255,255,0.5);
 }

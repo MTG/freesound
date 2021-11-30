@@ -11,7 +11,7 @@
                             <h2 class="text-center v-spacing-2">{{entry.title|truncatewords:10}}</h2>
                             <p class="text-grey text-center">
                                 {{entry.published_parsed|tuple_to_time|date:"F jS, Y"}}
-                                {{entry.summary|safe|striptags|slice:":-18"|truncatewords:100}}
+                                {{entry.summary|safe|striptags|slice:":-24"|truncatewords:100}}
                             </p>
                             <div class="center">
                                 <a class="no-hover" href="{{ entry.link }}"><button class="btn-primary h-spacing-2">Read more</button></a>

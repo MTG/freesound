@@ -29,10 +29,8 @@ const showMapEvenIfNoGeotags = true;
 const toggleEmbedControls = () => {
     if (embedControls.classList.contains('display-none')){
         embedControls.classList.remove('display-none');
-        embedControls.classList.add('display-inline-block');
         embedControlsLabel.innerText = "Hide embed options";
     } else{
-        embedControls.classList.remove('display-inline-block');
         embedControls.classList.add('display-none');
         embedControlsLabel.innerText = "Embed this map";
     }

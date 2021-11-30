@@ -189,6 +189,7 @@ def front_page(request):
     trending_pack_ids = cache.get("trending_pack_ids", None)
     total_num_sounds = cache.get("total_num_sounds", 0)
     popular_searches = cache.get("popular_searches", None)
+    top_donor_user_id = cache.get("top_donor_user_id", None)
     if popular_searches is not None:
         popular_searches = [(query_terms, '{0}?q={1}'.format(reverse('sounds-search'), query_terms))
                             for query_terms in popular_searches]
@@ -208,21 +209,6 @@ def front_page(request):
     else:
         random_sound = None
 
-    top_donor = None
-    if using_beastwhoosh(request):
-        # TODO: simplify the calculation of the top donor using annotate in the query
-        # TODO: add pertinent caching strategy here
-        last_week = get_n_weeks_back_datetime(n_weeks=1)
-        top_donor_data = defaultdict(int)
-        for username, amount in \
-            Donation.objects.filter(created__gt=last_week)\
-                    .exclude(user=None, is_anonymous=True)\
-                    .values_list('user__username', 'amount'):
-            top_donor_data[username] += amount
-        if top_donor_data:
-            top_donor_username = sorted(top_donor_data.items(), key=lambda x: x[1], reverse=True)[0][0]
-            top_donor = User.objects.get(username=top_donor_username)
-
     tvars = {
         'rss_cache': rss_cache,
         'popular_searches': popular_searches,
@@ -231,7 +217,7 @@ def front_page(request):
         'current_forum_threads': current_forum_threads,
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,
-        'top_donor': top_donor,
+        'top_donor_user_id': top_donor_user_id,
         'total_num_sounds': total_num_sounds,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only

@@ -175,11 +175,7 @@
                                     </div>
                                     {% if sound.user != request.user  %}
                                         <div class="h-spacing-left-3">
-                                            {% if is_following %}
-                                                <a class="no-hover" href="{% url 'unfollow-user' sound.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
-                                            {% else %}
-                                                <a class="no-hover" href="{% url 'follow-user' sound.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
-                                            {% endif %}
+                                            <a class="no-hover" href="{% url 'follow-user' sound.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
                                         </div>
                                     {% endif %}
                                 </div>

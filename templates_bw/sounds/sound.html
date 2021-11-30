@@ -40,7 +40,16 @@
 {% block content %}
     <div class="container">
         <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
-            <div class="row no-gutters">
+            {% if is_explicit %}
+                <div class="explicit-sound-blocker">
+                    <h4>Content warning</h4>
+                    <p>This sound may be inappropriate for some users
+                        <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page
+                    </p>
+                    <button class="btn btn-primary">Show anyway</button>
+                </div>
+            {% endif %}
+            <div class="row no-gutters {% if is_explicit %}blur{% endif %}">
                 <div class="col-8">
                     {% display_sound_big_no_info sound %}
                     <div class="bw-sound-page__information v-spacing-top-5">

@@ -8,6 +8,9 @@
 {% load util %}
 {% load bw_templatetags %}
 
+{% load filter_img %}
+{% load ratings %}
+
 {% block title %}Freesound{% endblock %}
 
 {% block navbar %}{% include 'molecules/navbar_front_page.html' %}{% endblock %}
@@ -133,7 +136,91 @@
       <hr />
       <section class="v-spacing-6">
         <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
-        {% display_sound_big_no_info random_sound %}
+          {% with random_sound as sound %}
+              {% display_sound_big_no_info random_sound %}
+              <div id="randomSoundDetails" class="bw-sound-page__information v-spacing-top-2 display-none">
+                  <div class="row middle">
+                      <div class="col-10 overflow-hidden">
+                          <h4 class="padding-bottom-1"><a class="bw-link--black" href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a></h4>
+                      </div>
+                      <div class="col-2 text-right">
+                          <div class="text-grey">
+                              {% if sound.similarity_state == 'OK' %}
+                                  <a class="no-hover" href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow">
+                                      <button title="Find similar sounds" class="btn-neutral">{% bw_icon 'similar' %}</button>
+                                  </a>
+                              {% endif %}
+                              <span class="h-spacing-2"></span>
+                              <button title="Save as favorite" class="btn-neutral">
+                                  {% bw_icon 'bookmark' %}
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="middle v-spacing-top-1">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                  <div class="middle bw-sound-page__user v-spacing-top-2">
+                      <div class="h-spacing-1">
+                          {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username 40 %}
+                      </div>
+                      <div class="h-spacing-left-1">
+                          <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
+                          <p class="text-grey">{{ sound.created|date:"F jS, Y" }}</p>
+                      </div>
+                      {% if sound.user != request.user  %}
+                          <div class="h-spacing-left-3">
+                              {% if is_following %}
+                                  <a class="no-hover" href="{% url 'unfollow-user' sound.user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
+                              {% else %}
+                                  <a class="no-hover" href="{% url 'follow-user' sound.user.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
+                              {% endif %}
+                          </div>
+                      {% endif %}
+                  </div>
+                  <div class="middle v-spacing-top-3">
+                      {% if sound.geotag_id %}
+                          <div>
+                              <a href="{% url 'sound-geotag' sound.user.username sound.id %}">
+                                  {% bw_icon 'pin' %} {{ sound.geotag.lat|floatformat:3 }}, {{ sound.geotag.lon|floatformat:3 }}
+                              </a>
+                          </div>
+                          {% if sound.pack_id or sound.remix_group.all.count %}
+                              <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                          {% endif %}
+                      {% endif %}
+                      {% if sound.pack_id %}
+                          <div class="text-grey">
+                              This sound is part of the pack <a href="{% url 'pack' username sound.pack.id %}">{{ sound.pack.name}}</a>
+                          </div>
+                          {% if sound.remix_group.all.count %}
+                              <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                          {% endif %}
+                      {% endif %}
+                      {% if sound.remix_group.all.count %}
+                          <div class="text-grey">
+                              This sound has <a href="{% url 'sound-remixes' sound.user.username sound.id %}">remixes or has been remixed</a>
+                          </div>
+                      {% endif %}
+                  </div>
+                  <div class="v-spacing-top-1">
+                      <div class="text-17 line-height-30">
+                          {{ sound.description|replace_img|safe|linebreaks|truncatewords:30 }}
+                      </div>
+                      <div class="v-spacing-top-3">
+                          <a href="{% url 'sound-flag' sound.user.username sound.id %}" title="Flag this sound as ilegal, offensive or other..." class="text-light-grey">
+                              {% bw_icon 'flag' %} Sound illegal or offensive? Flag it!
+                          </a>
+                      </div>
+                      <div class="v-spacing-top-4">
+                          {% for tag in sound.tags.all %}
+                              {% bw_tag tag.tag.name 1 "h-spacing-1" %}
+                          {% endfor %}
+                      </div>
+                  </div>
+              </div>
+              <div class="text-center text-16 v-spacing-top-2">
+                  <a id="randomSoundDetailsToggleLink" class="bw-link--grey" href="javascript:void(0);">Reveal details</a>
+              </div>
+          {% endwith %}
       </section>
       {% endif %}
 

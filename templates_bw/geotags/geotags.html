@@ -17,8 +17,11 @@
                     <h1>Map of sounds</h1>
                 {% endif %}
             {% endif %}
-            <div class="col-12 v-spacing-top-4 no-paddings">
-                <div id="mapCanvas" style="height:800px; max-height: 800px;z-index: 0;"
+            <div class="col-12 no-paddings v-spacing-top-negative-3 text-right text-grey">
+                <span id="indicator">Loading sounds... <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"></span>
+            </div>
+            <div class="col-12 v-spacing-top-3 no-paddings">
+                <div id="mapCanvas" style="height:700px; max-height: 700px;z-index: 0;"
                      data-map-center-lat="{{ center_lat }}"
                      data-map-center-lon="{{ center_lon }}"
                      data-map-zoom="{{ zoom }}"
@@ -30,24 +33,28 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-8 v-spacing-top-3 middle">
-                    <div><button id="embedControlsLabel" class="btn btn-primary">Embed this map</button></div>
-                    <div id="indicator" class="spacing-4 middle">&nbsp;<img width="12px" height="12px" src="{{ media_url }}images/indicator.gif" style="float:right;margin-top:3px;"></div>
+                <div class="col-md-7 v-spacing-top-2 middle">
+                    <div><a id="embedControlsLabel" href="javascript:void(0);">Embed this map</a></div>
                 </div>
                 {% if username %}
-                    <div class="col-md-4 v-spacing-top-3 text-right">
-                        <a class="no-hover" href="{% url "geotags" %}"><button class="btn btn-secondary">View all geotags</button></a>
+                    <div class="col-md-5 v-spacing-top-2 text-right">
+                        <a class="no-hover" href="{% url "geotags" %}"><button class="btn btn-secondary btn-inverse">View all geotags</button></a>
                     </div>
                 {% else %}
-                    <div class="offset-1 col-md-3 v-spacing-top-3 middle text-right">
+                    <div class="{% if not tag %}offset-2 col-md-3 text-right{% else %}col-md-3{% endif %} v-spacing-top-3 middle">
                         <input data-base-url="{% url "geotags" %}" id="tagFilter" type="search" name="t" class="bw-forums__input-search" placeholder="Filter by tag..." value="{% if tag %}{{ tag }}{% endif %}" />
                     </div>
+                    {% if tag %}
+                        <div class="col-md-2 v-spacing-top-2 text-right ">
+                            <a class="no-hover" href="{% url "geotags" %}"><button class="btn btn-secondary btn-inverse">Clear filter</button></a>
+                        </div>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="row">
                 <div class="col-md-12">
                     <div id="embedControls" class="display-none w-100 login-page-form">
-                        <form class="w-50 v-spacing-top-3">
+                        <form class="w-50 v-spacing-top-2">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label for="embedWidthInput">Embed width</label> <input type="number" min="100" step="1" value="900" id="embedWidthInput"/>&nbsp;&nbsp;

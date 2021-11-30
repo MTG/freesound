@@ -656,9 +656,15 @@ def remix_group(request, group_id):
 
 @redirect_if_old_username_or_404
 def geotag(request, username, sound_id):
-    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound.objects.select_related('geotag'), id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
+    if using_beastwhoosh(request):
+        # In beastwhoosh, we redirect to the main geotags map and center arround coordinates
+        return HttpResponseRedirect(
+            reverse('geotags') + u'?c_lat={}&c_lon={}&z={}'.format(
+                sound.geotag.lat, sound.geotag.lon, sound.geotag.zoom))
+
     tvars = {'sound': sound}
     return render(request, 'sounds/geotag.html', tvars)
 

@@ -138,7 +138,7 @@ function ajaxLoad(url, callback, postData, plain) {
 }
 
 function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds_changed_callback,
-                       center_lat, center_lon, zoom, show_search, show_style_selector, cluster){
+                       center_lat, center_lon, zoom, show_search, show_style_selector, cluster, show_if_empty){
     /*
     This function is used to display maps with sounds. It is used in all pages where maps with markers (which represent
     sounds) are shown: user home/profile, pack page, geotags map, embeds. Parameters:
@@ -156,6 +156,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
     - show_search: display search bar to fly to places in the map
     - show_terrain_selector: display button to switch between streets and satellite styles
     - cluster: whether or not to perform point clustering (on by default)
+    - show_if_empty: show map even if there are no geotags to show
 
     This function first calls the Freesound endpoint which returns the list of geotags to be displayed as markers.
     Once the data is received, it creates the map and does all necessary stuff to display it.
@@ -167,7 +168,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 
     getSoundsLocations(geotags_url, function(data){
         var nSounds = data.length;
-        if (nSounds > 0) {  // only if the user has sounds, we render a map
+        if ((nSounds > 0) || show_if_empty) {
 
             // Define initial map center and zoom
             var init_zoom = 2;
@@ -218,9 +219,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                 bounds.extend([lon, lat]);
             });
 
-
             map.on('load', function() {
-
                 const mapElement = document.getElementById(map_element_id);
 
                 // Add satellite/streets controls
@@ -294,13 +293,15 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                         map.fitBounds(bounds, {duration:0, padding: {top:40, right:40, left:40, bottom:40}});
                     } else {
                         map.setZoom(3);
-                        map.setCenter(geojson_features[0].geometry.coordinates);
+                        if (nSounds > 0){
+                            map.setCenter(geojson_features[0].geometry.coordinates);
+                        }
                     }
                 }
 
                 // Run callback function (if passed) after map is built
                 if (on_built_callback !== undefined){
-                    on_built_callback();
+                    on_built_callback(nSounds);
                 }
 
                 // Add listener for callback on bounds changed

@@ -23,6 +23,8 @@ let centerLon;
 let zoom;
 const showSearch = true;
 const showStyleSelector = true;
+const clusterGeotags = true;
+const showMapEvenIfNoGeotags = true;
 
 const toggleEmbedControls = () => {
     if (embedControls.classList.contains('display-none')){
@@ -106,11 +108,15 @@ if (tagFilterInput !== null){
     tagFilterInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             // Submit query filter
-            const tag = tagFilterInput.value;
-            const url = `${tagFilterInput.dataset.baseUrl + tag}/?c_lat=${currentLat}&c_lon=${currentLon}&z=${currentZoom}`;
+            const tag = tagFilterInput.value.replace(/[^A-Za-z0-9-_]/g, '');  // Only allow alphanumeric plus - _
+            const includeLatLonZoom = false;
+            let url = `${tagFilterInput.dataset.baseUrl + tag}/`;
+            if (includeLatLonZoom){
+                url += `?c_lat=${currentLat}&c_lon=${currentLon}&z=${currentZoom}`;
+            }
             window.location = url;
+            e.stopPropagation();
         }
-        e.stopPropagation();
     });
 }
 
@@ -129,6 +135,6 @@ if (box !== ''){
      url = `${urlBox}?box=${box}`;
 }
 
-makeSoundsMap(url, 'mapCanvas', () => {
-  loadingIndicator.style.display = 'none';
-}, updateEmbedCode, centerLat, centerLon, zoom, showSearch, showStyleSelector);
+makeSoundsMap(url, 'mapCanvas', (numLoadedSounds) => {
+  loadingIndicator.innerText = `${numLoadedSounds} sound${ numLoadedSounds === 1 ? '': 's'}`;
+}, updateEmbedCode, centerLat, centerLon, zoom, showSearch, showStyleSelector, clusterGeotags, showMapEvenIfNoGeotags);

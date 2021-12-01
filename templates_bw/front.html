@@ -40,7 +40,7 @@
                 {% endif %}
 
                 {% cache 300 bw_front_page_latest_additions %}
-                    <section class="v-spacing-6">
+                    <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
@@ -64,7 +64,7 @@
 
                 {% if popular_searches %}
                     <hr />
-                    <section class="v-spacing-6">
+                    <section class="v-spacing-4">
                         <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
@@ -74,7 +74,7 @@
                                             <div class="row no-margins">
                                                 {% for search_term, url in popular_searches_slice %}
                                                     <div class="col v-spacing-1">
-                                                        {% bw_tag search_term 4 'w-100 h-100' url 1.0 %}
+                                                        {% bw_tag search_term 4 'w-100 h-75 display-inline-block' url 1.0 %}
                                                     </div>
                                                 {% endfor %}
                                             </div>

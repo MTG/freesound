@@ -20,8 +20,8 @@
                 <a href="{% url 'account' sound_user %}">{{ sound_user|truncate_string:15 }}</a>
                 <br><span class="text-grey">{{ sound.created|timesince }} ago</span>
             </div>
-            <div class="v-spacing-top-1 text-grey">
-                {{ sound.description|striptags|safe|truncatewords:10 }}
+            <div class="v-spacing-top-1 text-grey overflow-hidden">
+                {{ sound.description|striptags|safe|truncatewords_html:10 }}
             </div>
         </div>
 
@@ -63,7 +63,7 @@
                         </div>
                     </div>
 
-                    <p class="text-black">{{ sound.description|striptags|safe|truncatewords:20 }}</p>
+                    <p class="text-black overflow-hidden">{{ sound.description|striptags|safe|truncatewords_html:20 }}</p>
                     {% for tag in sound_tags|slice:":5" %}
                         {% bw_tag tag %}
                     {% endfor %}
@@ -146,8 +146,8 @@
                 <a target="_blank" href="{% url 'account' sound_user %}">{{ sound_user|truncate_string:15 }}</a>
                 <br><span class="text-grey">{{ sound.created|timesince }} ago</span>
             </div>
-            <div class="v-spacing-top-1 text-grey">
-                {{ sound.description|striptags|safe|truncatewords:30 }}
+            <div class="v-spacing-top-1 text-grey overflow-hidden">
+                {{ sound.description|striptags|safe|truncatewords_html:30 }}
             </div>
         </div>
 

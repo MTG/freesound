@@ -206,7 +206,7 @@
                                 </div>
                                 <div class="v-spacing-top-1">
                                     <div class="text-17 line-height-30">
-                                        {{ sound.description|replace_img|safe|linebreaks|truncatewords:30 }}
+                                        {{ sound.description|replace_img|safe|linebreaks|truncatewords_html:30 }}
                                     </div>
                                     <div class="v-spacing-top-3">
                                         {% for tag in sound.tag_array %}

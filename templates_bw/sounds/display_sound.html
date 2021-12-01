@@ -47,10 +47,8 @@
                         </div>
                         <div class="text-grey">
                             {% if sound.similarity_state == 'OK' %}
-                                <a class="no-hover" rel="nofollow" href="{% url "sound-similar" sound_user sound.id %}">
-                                    <button title="Find similar sounds" class="btn-neutral">
-                                        {% bw_icon 'similar' %}
-                                    </button>
+                                <a class="no-hover btn-neutral" rel="nofollow" href="{% url "sound-similar" sound_user sound.id %}" title="Find similar sounds">
+                                    {% bw_icon 'similar' %}
                                 </a>
                                 <span class="h-spacing-2"></span>
                             {% endif %}

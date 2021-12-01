@@ -225,10 +225,8 @@
                     <main class="col-sm-12 col-md-8 offset-md-1">
                         <div class="v-spacing-3 v-spacing-top-1">
                             {% for filter in filter_query_split %}
-                                <a class="no-hover" href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
-                                    <button class="btn-inverse bw-search__active-filters-button">
-                                        {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
-                                    </button>
+                                <a class="no-hover btn-inverse bw-search__active-filters-button" href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
+                                    {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
                                 </a>
                             {% endfor %}
                         </div>

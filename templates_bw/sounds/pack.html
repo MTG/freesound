@@ -33,9 +33,9 @@
                             {% if pack.user != request.user  %}
                                 <div class="h-spacing-left-3">
                                     {% if is_following %}
-                                        <a class="no-hover" href="{% url 'unfollow-user' pack.user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
+                                        <a class="no-hover btn-secondary" href="{% url 'unfollow-user' pack.user.username %}?next={{ next_path }}">Unfollow</a>
                                     {% else %}
-                                        <a class="no-hover" href="{% url 'follow-user' pack.user.username %}?next={{ next_path }}"><button class="btn-inverse">Follow</button></a>
+                                        <a class="no-hover btn-inverse" href="{% url 'follow-user' pack.user.username %}?next={{ next_path }}">Follow</a>
                                     {% endif %}
                                 </div>
                             {% endif %}
@@ -99,13 +99,13 @@
                         </div>
                         <div class="v-spacing-top-6">
                             {% if request.user.is_authenticated %}
-                                <a class="no-hover" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Download pack"><button class="btn-primary col-12">Download pack</button></a>
+                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Download pack">Download pack</a>
                             {% else %}
-                                <a class="no-hover" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Login to download"><button class="btn-primary col-12">Login to download</button></a>
+                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Login to download">Login to download</a>
                             {% endif %}
                         </div>
                         {% if perms.pack.can_edit or pack.user == request.user %}
-                            <a class="no-hover" href="{% url 'pack-edit' pack.user.username pack.id %}"><button class="btn-secondary col-12 v-spacing-top-3" title="Edit pack">Edit pack</button></a>
+                            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'pack-edit' pack.user.username pack.id %}" title="Edit pack">Edit pack</a>
                         {% endif %}
                         <div class="v-spacing-top-7">
                             <ol class="center">

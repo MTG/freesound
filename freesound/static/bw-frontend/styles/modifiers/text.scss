@@ -83,3 +83,9 @@
     line-height: #{$i}px;
   }
 }
+
+@for $i from 1 through 8 {
+  .line-height-fs-#{$i} {
+    line-height: #{$i};
+  }
+}

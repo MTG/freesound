@@ -1131,8 +1131,13 @@ class Sound(SocialModel):
 
         invalidate_template_cache("sound_footer_bottom", self.id)
 
-        # NOTE: in BW we removed display sound caches because DB queries are optimized and the caches are not
-        # very useful. If we were to enable them again, check old code of this function in the repository history.
+        for is_authenticated in [True, False]:
+            for is_explicit in [True, False]:
+                invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
+
+        # NOTE: in BW we removed the display sound caches because DB queries are optimized and the caches are not
+        # very useful (DB queries are also optimal in NG, but we never removed caching code). If we were to enable
+        # them again, check old code of this function in the repository history.
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

@@ -117,7 +117,7 @@
                     {% endfor %}
                     {% if latest_sounds %}
                         <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1"><button class="btn btn-primary">See all sounds by {{ user.username }}</button></a>
+                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1"><button class="btn-primary">See all sounds by {{ user.username }}</button></a>
                         </div>
                     {% endif %}
                 </div>
@@ -138,7 +138,7 @@
                     {% endfor %}
                     {% if latest_packs %}
                         <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1&only_p=1"><button class="btn btn-primary">See all packs by {{ user.username }}</button></a>
+                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1&only_p=1"><button class="btn-primary">See all packs by {{ user.username }}</button></a>
                         </div>
                     {% endif %}
                 </div>

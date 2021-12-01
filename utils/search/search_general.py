@@ -166,6 +166,11 @@ def search_prepare_parameters(request):
     except ValueError:
         current_page = 1
     sort_unformatted = request.GET.get("s", None)
+
+    if search_query == "":
+        # When making empty queries, automatically set sort to "created desc" as relevance score
+        # based sorting makes no sense
+        sort_unformatted = "created desc"
     
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is through AJAX (for sources remix editing), do not collapse

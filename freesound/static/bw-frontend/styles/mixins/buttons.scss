@@ -34,6 +34,8 @@
   border-radius: $button-border-radius;
   background-color: $color;
   color: $white;
+  font-weight: bold;
+  line-height: 1.15;
   transition: background-color 0.2s ease;
 
   @include active() {

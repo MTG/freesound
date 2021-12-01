@@ -440,14 +440,17 @@ class BwProfileForm(ProfileForm):
         self.fields['about'].widget.attrs['placeholder'] = 'Write something about yourself'
         self.fields['about'].widget.attrs['rows'] = False
         self.fields['about'].widget.attrs['cols'] = False
+        self.fields['about'].widget.attrs['class'] = 'unsecure-image-check'
         self.fields['about'].help_text = html_tags_help_text
         self.fields['signature'].widget.attrs['placeholder'] = 'Write a signature for your forum messages'
         self.fields['signature'].widget.attrs['rows'] = False
         self.fields['signature'].widget.attrs['cols'] = False
         self.fields['signature'].help_text = html_tags_help_text
+        self.fields['signature'].widget.attrs['class'] = 'unsecure-image-check'
         self.fields['sound_signature'].widget.attrs['placeholder'] = "Write a signature for your sound descriptions"
         self.fields['sound_signature'].widget.attrs['rows'] = False
         self.fields['sound_signature'].widget.attrs['cols'] = False
+        self.fields['sound_signature'].widget.attrs['class'] = 'unsecure-image-check'
         self.fields['sound_signature'].help_text = """Your sound signature is added to the end of each of your sound 
             descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
             Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 

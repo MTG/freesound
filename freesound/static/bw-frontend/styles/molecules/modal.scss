@@ -61,7 +61,7 @@
 
   .modal-footer {
     border: 0;
-    padding: 0 56px 56px;
+    padding: 0 56px 26px;
     flex-direction: column;
 
     button {
@@ -82,8 +82,8 @@
   }
 
   .modal-extra-info {
-    position: absolute;
-    top: calc(78vh + 2.5rem);
+    position: relative;
+    top: 45px;
     left: auto;
     right: auto;
     width: 100%;

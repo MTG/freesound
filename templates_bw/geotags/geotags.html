@@ -38,7 +38,7 @@
                 </div>
                 {% if username %}
                     <div class="col-md-5 v-spacing-top-2 text-right">
-                        <a class="no-hover" href="{% url "geotags" %}"><button class="btn btn-secondary btn-inverse">View all geotags</button></a>
+                        <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
                     </div>
                 {% else %}
                     <div class="{% if not tag %}offset-2 col-md-3 text-right{% else %}col-md-3{% endif %} v-spacing-top-3 middle">
@@ -46,7 +46,7 @@
                     </div>
                     {% if tag %}
                         <div class="col-md-2 v-spacing-top-2 text-right ">
-                            <a class="no-hover" href="{% url "geotags" %}"><button class="btn btn-secondary btn-inverse">Clear filter</button></a>
+                            <a class="no-hover" href="{% url "geotags" %}"><button class="btn-secondary btn-inverse">Clear filter</button></a>
                         </div>
                     {% endif %}
                 {% endif %}

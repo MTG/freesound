@@ -53,7 +53,7 @@ def duration(value):
 def duration_hours(total_seconds):
     hours = int(total_seconds // 3600)
     minutes = int((total_seconds % 3600) // 60)
-    return '{}:{}'.format(hours, minutes)
+    return '{}:{:02d}'.format(hours, minutes)
 
 
 @register.filter

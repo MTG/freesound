@@ -22,16 +22,16 @@
             </div>
             <div class="v-spacing-top-3">
                 {% if home %}
-                    <button class="btn-inverse btn-profile-adapt">Manage uploads</button>
-                    <a class="no-hover" href="{% url 'accounts-edit' %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Edit profile</button></a>
+                    <a class="no-hover btn-inverse btn-profile-adapt" href="#">Manage uploads</a>
+                    <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Edit profile</a>
                 {% else %}
                     {% if not user.profile.is_deleted_user %}
                         {% if show_unfollow_button %}
-                            <a class="no-hover" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
+                            <a class="no-hover btn-secondary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
                         {% else %}
-                            <a class="no-hover" href="{% url 'follow-user' user.username %}?next={{ next_path }}"><button class="btn-inverse btn-profile-adapt">Follow</button></a>
+                            <a class="no-hover btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
                         {% endif %}
-                        <a class="no-hover" href="{% url "messages-new" user.username %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Message</button></a>
+                        <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
                     {% endif %}
                 {% endif %}
                 {% if perms.tickets.can_moderate or request.user.is_staff %}
@@ -117,7 +117,7 @@
                     {% endfor %}
                     {% if latest_sounds %}
                         <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1"><button class="btn btn-primary">See all sounds by {{ user.username }}</button></a>
+                            <a class="no-hover btn-primary" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1">See all sounds by {{ user.username }}</a>
                         </div>
                     {% endif %}
                 </div>
@@ -138,7 +138,7 @@
                     {% endfor %}
                     {% if latest_packs %}
                         <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1&only_p=1"><button class="btn btn-primary">See all packs by {{ user.username }}</button></a>
+                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1&only_p=1"><button class="btn-primary">See all packs by {{ user.username }}</button></a>
                         </div>
                     {% endif %}
                 </div>

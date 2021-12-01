@@ -73,6 +73,11 @@ def show_paginator(
         url_first_page = url + '1'
     url_last_page = url + str(paginator.num_pages)
 
+    if page_numbers:
+        last_is_next = paginator.num_pages - 1 == page_numbers[-1]
+    else:
+        last_is_next = False
+
     return {
         "page": page,
         "paginator": paginator,
@@ -80,7 +85,7 @@ def show_paginator(
         "page_numbers": page_numbers,
         "show_first": 1 not in page_numbers,
         "show_last": paginator.num_pages not in page_numbers,
-        "last_is_next": paginator.num_pages - 1 == page_numbers[-1],
+        "last_is_next": last_is_next,
         "url" : url,
         "url_prev_page": url_prev_page,
         "url_next_page": url_next_page,

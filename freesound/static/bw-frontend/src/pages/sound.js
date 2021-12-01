@@ -65,3 +65,35 @@ largeEmbedImageElement.addEventListener('click', () => generateEmbedCode('large'
 
 embedLinksElement.style.display = "none"
 shareLinkElement.style.display = "none"
+
+// Transform time marks in sound description and comments into playable timestamps
+const audioElement = document.getElementsByTagName('audio')[0];
+
+const findTimeLinksAndAddEventListeners = element => {
+    // Replace timestamps of pattern #m:ss (e.g. #0:36) for anchor with a specific class and play icon
+    const playIconHtml = '<span class="bw-icon-play" style="font-size:70%"></span>';
+    element.innerHTML = element.innerHTML.replaceAll(/#\d+:\d+/g, '<a class="play-at-time" href="javascript:void(0);">' + playIconHtml + '$&</a>');
+    element.innerHTML = element.innerHTML.replaceAll(playIconHtml + '#', playIconHtml);
+    // Add listener events to each of the created anchors
+    element.getElementsByClassName('play-at-time').forEach(playAyTimeElement => {
+        playAyTimeElement.addEventListener('click', (e) => {
+            if (!e.altKey){
+                const seconds = parseInt(playAyTimeElement.innerText.split(':')[0], 10) * 60 + parseInt(playAyTimeElement.innerText.split(':')[1], 10);
+                audioElement.currentTime = seconds;
+                audioElement.play();
+            } else {
+                audioElement.pause();
+            }
+        });
+    });
+};
+
+const soundDescriptionElement = document.getElementById('soundDescriptionSection');
+const soundCommentsSection = document.getElementById('soundCommentsSection');
+const soundCommentElements = soundCommentsSection.getElementsByTagName('p');
+
+soundCommentElements.forEach(element => {
+    findTimeLinksAndAddEventListeners(element);
+});
+
+findTimeLinksAndAddEventListeners(soundDescriptionElement);

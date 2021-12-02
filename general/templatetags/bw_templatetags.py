@@ -28,6 +28,7 @@ from django.utils.safestring import mark_safe
 
 from follow.follow_utils import is_user_following_tag
 from general.templatetags.paginator import show_paginator
+from general.templatetags.plausible import plausible_scripts
 from ratings.models import SoundRating
 
 register = template.Library()
@@ -173,3 +174,9 @@ def user_following_tags(user, tags_slash):
         return is_user_following_tag(user, tags_slash)
     else:
         return False
+
+
+@register.inclusion_tag('molecules/plausible_scripts.html', takes_context=False)
+def bw_plausible_scripts():
+    return plausible_scripts()
+

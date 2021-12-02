@@ -721,6 +721,11 @@ TEMPLATES = [
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
+# -------------------------------------------------------------------------------
+# Analytics
+PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
+PLAUSIBLE_SEPARATE_FRONTENDS = True
+
 
 # -------------------------------------------------------------------------------
 # Import local settings

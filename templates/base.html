@@ -1,6 +1,7 @@
 {% load cache %}
 {% load sound_tickets_count %}
 {% load pending_sounds %}
+{% load plausible %}
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://ogp.me/ns#" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
@@ -43,18 +44,7 @@
         <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
         <script src="{{ media_url }}html_player/soundmanager2.js"></script>
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
-
-        <script defer data-domain="freesound.org" src="{{media_url}}js/plausible.manual.js"></script>
-        <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
-        <script>
-          let url = window.location.href;
-          let redactedUrl = url.replace(/\/\d+\//g, "/_ID_/"); // Replace numberic IDs
-          redactedUrl = redactedUrl.replace(/people\/(\w+)\//ig, "people/_ID_/");  // Replace usernames
-          redactedUrl = redactedUrl.replace(/browse\/geotags\/(\w+)\//ig, "browse/geotags/_TAG_/");  // Replace tag frm geotags
-          redactedUrl = redactedUrl.replace(/browse\/tags\/.*/ig, "browse/tags/_TAGS_/");  // Replace mulitple tags form tags
-          plausible('pageview', { u: redactedUrl });
-        </script>
-
+        {% plausible_scripts %}
         {% endblock %}
 
         {% if load_anniversary_content  %}

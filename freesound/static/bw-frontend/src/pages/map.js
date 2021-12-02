@@ -76,10 +76,10 @@ const updateEmbedCode = (_, lat, lon, zoom, boxBlLat, boxBlLon, boxTrLat, boxTrL
     let embedCode = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"" + mapCanvas.dataset.geotagsEmbedBaseUrl
         + "?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&c=" + cluster + "&w=" + width + "&h=" + height;
     if (mapCanvas.dataset.mapUsername !== "None"){
-        embedCode += "&username={{ username }}";
+        embedCode += "&username=" + mapCanvas.dataset.mapUsername;
     }
     if (mapCanvas.dataset.mapTag !== "None"){
-        embedCode += "&tag={{ tag }}";
+        embedCode += "&tag=" + mapCanvas.dataset.mapTag;
     }
     embedCode += box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
     embedCodeElement.innerText = embedCode;

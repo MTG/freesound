@@ -290,7 +290,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                 if (center_lat === undefined){
                     // If initital center and zoom were not given, adjust map boundaries now based on the sounds
                     if (nSounds > 1){
-                        map.fitBounds(bounds, {duration:0, padding: {top:40, right:40, left:40, bottom:40}});
+                        map.fitBounds(bounds, {duration:0, padding: {top:80, right:80, left:80, bottom:80}});
                     } else {
                         map.setZoom(3);
                         if (nSounds > 0){

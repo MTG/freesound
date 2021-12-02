@@ -50,6 +50,8 @@
           let url = window.location.href;
           let redactedUrl = url.replace(/\/\d+\//g, "/_ID_/"); // Replace numberic IDs
           redactedUrl = redactedUrl.replace(/people\/(\w+)\//ig, "people/_ID_/");  // Replace usernames
+          redactedUrl = redactedUrl.replace(/browse\/geotags\/(\w+)\//ig, "browse/geotags/_TAG_/");  // Replace tag frm geotags
+          redactedUrl = redactedUrl.replace(/browse\/tags\/.*/ig, "browse/tags/_TAGS_/");  // Replace mulitple tags form tags
           plausible('pageview', { u: redactedUrl });
         </script>
 

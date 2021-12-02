@@ -41,8 +41,8 @@ class Command(LoggingBaseCommand):
         # Don't set expiration time because the bytearray will be overwriten everytime this command runs
         sounds = Sound.objects.select_related('geotag').exclude(geotag=None)
         count = sounds.count()
-        computed_bytearray = generate_bytearray(sounds.all())
-        cache.set(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY, computed_bytearray, timeout=None)
+        computed_bytearray, num_geotags = generate_bytearray(sounds.all())
+        cache.set(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY, [computed_bytearray, num_geotags], timeout=None)
         console_logger.info('Generated all geotags bytarray with {} sounds'.format(count))
 
         self.log_end({'all_geotags_bytearray_n_sounds': count})

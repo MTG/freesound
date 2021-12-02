@@ -19,6 +19,8 @@
 #
 
 import cStringIO
+import json
+import logging
 import math
 import struct
 
@@ -33,33 +35,49 @@ from sounds.models import Sound
 from utils.frontend_handling import render
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
+web_logger = logging.getLogger('web')
+
+
+def log_map_load(map_type, num_geotags):
+    web_logger.info('Map load (%s)' % json.dumps({'map_type': map_type, 'num_geotags': num_geotags}))
+
 
 def generate_bytearray(sound_queryset):
     # sounds as bytearray
     packed_sounds = cStringIO.StringIO()
+    num_sounds_in_bytearray = 0
     for s in sound_queryset:
         if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lon):
             packed_sounds.write(struct.pack("i", s.id))
             packed_sounds.write(struct.pack("i", int(s.geotag.lat*1000000)))
             packed_sounds.write(struct.pack("i", int(s.geotag.lon*1000000)))
+            num_sounds_in_bytearray += 1
 
-    return HttpResponse(packed_sounds.getvalue(), content_type='application/octet-stream')
+    return packed_sounds.getvalue(), num_sounds_in_bytearray
 
 
 def geotags_barray(request, tag=None):
+    is_embed = request.GET.get("embed", "0") == "1"
     if tag is not None:
         sounds = Sound.objects.select_related('geotag').filter(tags__tag__name__iexact=tag)
-        return generate_bytearray(sounds.exclude(geotag=None).all())
+        generated_bytearray, num_geotags = generate_bytearray(sounds.exclude(geotag=None).all())
+        if num_geotags > 0:
+            log_map_load('tag-embed' if is_embed else 'tag', num_geotags)
+        return HttpResponse(generated_bytearray, content_type='application/octet-stream')
     else:
-        cached_bytearay = cache.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
-        if cached_bytearay is None:
-            return generate_bytearray(Sound.objects.none())
+        cached_bytearray, num_geotags = cache.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
+        if cached_bytearray is not None:
+            log_map_load('all-embed' if is_embed else 'all', num_geotags)
+            return HttpResponse(cached_bytearray, content_type='application/octet-stream')
         else:
-            return cached_bytearay
+            generated_bytearray, _ = generate_bytearray(Sound.objects.none())
+            return HttpResponse(generated_bytearray, content_type='application/octet-stream')
+
 
 
 def geotags_box_barray(request):
     box = request.GET.get("box", "-180,-90,180,90")
+    is_embed = request.GET.get("embed", "0") == "1"
     try:
         min_lat, min_lon, max_lat, max_lon = box.split(",")
         qs = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK")
@@ -73,7 +91,10 @@ def geotags_box_barray(request):
         elif min_lat > max_lat and min_lon > max_lon:
             sounds = qs.exclude(geotag__lat__range=(max_lat, min_lat)).exclude(geotag__lon__range=(max_lon, min_lon))
 
-        return generate_bytearray(sounds)
+        generated_bytearray, num_geotags = generate_bytearray(sounds)
+        if num_geotags > 0:
+            log_map_load('box-embed' if is_embed else 'box', num_geotags)
+        return HttpResponse(generated_bytearray, content_type='application/octet-stream')
     except ValueError:
         raise Http404
 
@@ -82,25 +103,38 @@ def geotags_box_barray(request):
 @raise_404_if_user_is_deleted
 @cache_page(60 * 15)
 def geotags_for_user_barray(request, username):
+    is_embed = request.GET.get("embed", "0") == "1"
     sounds = Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('user-embed' if is_embed else 'user', num_geotags)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
     sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('user_latest', num_geotags)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 def geotags_for_pack_barray(request, pack_id):
     sounds = Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None)
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('pack', num_geotags)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 def geotag_for_sound_barray(request, sound_id):
     sounds = Sound.objects.filter(id=sound_id).exclude(geotag=None)
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('sound', num_geotags)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 def _get_geotags_query_params(request):

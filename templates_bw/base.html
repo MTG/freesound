@@ -43,7 +43,15 @@
     {% endblock %}
     {% include 'molecules/footer.html' %}
     </div>
-    <script async defer data-domain="freesound.org" src="https://analytics.freesound.org/js/plausible.js"></script>
+
+    <script defer data-domain="freesound.org" src="{{media_url}}js/plausible.manual.js"></script>
+    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+    <script>
+      let url = window.location.href;
+      let redactedUrl = url.replace(/\/\d+\//g, "/_ID_/"); // Replace numberic IDs
+      redactedUrl = redactedUrl.replace(/people\/(\w+)\//ig, "people/_ID_/");  // Replace usernames
+      plausible('pageview', { u: redactedUrl });
+    </script>
     <script>
         document.cookie = "preferSpectrogram={{spectrogram_preference|yesno}}";
         const siteWidth = 1000;

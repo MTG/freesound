@@ -1,5 +1,6 @@
 import './page-polyfills';
 import {showToast} from '../components/toast';
+import {playAtTime} from '../components/player/utils';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -79,8 +80,7 @@ const findTimeLinksAndAddEventListeners = element => {
         playAyTimeElement.addEventListener('click', (e) => {
             if (!e.altKey){
                 const seconds = parseInt(playAyTimeElement.innerText.split(':')[0], 10) * 60 + parseInt(playAyTimeElement.innerText.split(':')[1], 10);
-                audioElement.currentTime = seconds;
-                audioElement.play();
+                playAtTime(audioElement, seconds);
             } else {
                 audioElement.pause();
             }

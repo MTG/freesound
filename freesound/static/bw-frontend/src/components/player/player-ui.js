@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import throttle from 'lodash.throttle'
 import playerSettings from './settings'
-import { formatAudioDuration } from './utils'
+import { formatAudioDuration, playAtTime } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator } from './audio-element'
 
@@ -37,8 +37,9 @@ const createProgressIndicator = (parentNode, audioElement) => {
 
 /**
  * @param {HTMLAudioElement} audioElement
+ * @param {number} duration
  */
-const createProgressBar = audioElement => {
+const createProgressBar = (audioElement, duration) => {
   const progressBar = document.createElement('div')
   progressBar.className = 'bw-player__progress-bar'
   const progressBarIndicator = document.createElement('div')
@@ -54,12 +55,18 @@ const createProgressBar = audioElement => {
   progressBar.addEventListener(
     'mousemove',
     throttle(evt => {
+      let audioDuration;
+      if (audioElement.readyState > 0){
+        audioDuration = audioElement.duration
+      } else {
+        audioDuration = duration
+      }
       progressBarIndicatorGhost.style.transform = `translateX(${evt.offsetX}px)`
       progressBarIndicatorGhost.style.opacity = 0.5
       progressBarTime.style.transform = `translateX(calc(${evt.offsetX}px - 50%))`
       progressBarTime.style.opacity = 1
       progressBarTime.innerHTML = formatAudioDuration(
-        (audioElement.duration * evt.offsetX) / progressBar.clientWidth
+        (audioDuration * evt.offsetX) / progressBar.clientWidth
       )
     }, 30)
   )
@@ -86,7 +93,7 @@ const createProgressStatus = (audioElement, playerSize, startWithSpectrum, durat
   }
   const progressStatusContainer = document.createElement('div')
   progressStatusContainer.className = 'bw-player__progress-container'
-  const progressBar = createProgressBar(audioElement)
+  const progressBar = createProgressBar(audioElement, duration)
   const progressStatus = document.createElement('div')
   progressStatus.className = 'bw-player__progress'
   const durationIndicator = document.createElement('span')
@@ -251,7 +258,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     const progressIndicator = createProgressIndicator(parentNode, audioElement)
     imageContainer.appendChild(playerImage)
     imageContainer.appendChild(progressIndicator)
-    const progressStatus = createProgressStatus(audioElement, playerSize, startWithSpectrum, parseFloat(duration, 10))
+    const progressStatus = createProgressStatus(audioElement, playerSize, startWithSpectrum, parseFloat(duration))
     imageContainer.appendChild(progressStatus)
     audioElement.addEventListener('loadedmetadata', () => {
       // If "loadedmetadata" event is received and valid duration value has been obtained, replace duration from data
@@ -264,10 +271,20 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
       const clickPosition = evt.offsetX
       const width = evt.target.clientWidth
       const positionRatio = clickPosition / width
-      const time = audioElement.duration * positionRatio
-      audioElement.currentTime = time
+      let time;
+      if (audioElement.readyState > 0) {
+        // If data is loaded, we can use duration property from the audioElement...
+        time = audioElement.duration * positionRatio
+      } else {
+        // If not loaded, we use the duration we pass as metadata
+        time = parseFloat(duration) * positionRatio
+      }
       if (audioElement.paused) {
-        audioElement.play()
+        // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
+        playAtTime(audioElement, time)
+      } else {
+        // If already playing, just change current time
+        audioElement.currentTime = time
       }
       evt.stopPropagation()
     })

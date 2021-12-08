@@ -2098,10 +2098,6 @@ ul.pagination {
     margin-bottom: 20px;
 }
 
-#sidebar #latest_geotags {
-    display: none;
-}
-
 #sidebar #latest_geotags #map_canvas {
     position: relative;
     left: -19px;

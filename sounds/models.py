@@ -1488,6 +1488,14 @@ class Pack(SocialModel):
         else:
             return ""
 
+    @property
+    def has_geotags(self):
+        # Returns whether or not the pack has geotags
+        # This is used in the pack page to decide whether or not to show the geotags map. Doing this generates one
+        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a pack (which would
+        # return empty query set if no geotags and indeed generate more queries).
+        return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
+
 
 class Flag(models.Model):
     sound = models.ForeignKey(Sound)

@@ -550,6 +550,14 @@ class Profile(SocialModel):
         return None
 
     @property
+    def has_geotags(self):
+        # Returns whether or not the user has geotags
+        # This is used in the profile page to decide whether or not to show the geotags map. Doing this generates one
+        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a user (which would
+        # return empty query set if no geotags and indeed generate more queries).
+        return Sound.objects.filter(user=self.user).exclude(geotag=None).count() > 0
+
+    @property
     def avg_rating(self):
         # Returns the average raring from 0 to 10
         # TODO: don't compute this realtime, store it in DB

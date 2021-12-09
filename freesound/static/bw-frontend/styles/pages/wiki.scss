@@ -1,0 +1,47 @@
+.bw-wiki {
+
+  h1 {
+    margin-bottom: 24px;
+  }
+
+  h2 {
+    margin-bottom: 12px;
+    margin-top: 40px;
+  }
+
+  h3 {
+    color: $navy-light-grey;
+    font-size: 28px;
+    margin-bottom: 12px;
+    margin-top: 30px;
+  }
+
+  :target {
+    display: block;
+    position: relative;
+    top: 0px;
+    visibility: visible;
+
+  }
+
+  table {
+    border-collapse: collapse;
+    margin-bottom: 18px;
+    padding: 4px;
+  }
+
+  th {
+    font-size: 15px;
+    font-weight: bold;
+    text-align: left;
+    padding: 6px 6px 6px 12px;
+  }
+
+  td {
+    padding: 6px 6px 6px 12px;
+  }
+
+  tr:nth-child(even) {
+    background: $navy-light-grey;
+  }
+}

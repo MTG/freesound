@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load markup_freesound %}
+
+{% block title %}Help - {{content.title}}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="bw-wiki navbar-space-filler v-spacing-3  v-spacing-top-3">
+            {% if content.title == "Frequently Asked Questions" %}
+                {% comment %}When showing the "Frequently Asked Questions", we load the geotag picker help tool code
+                so that it is corresctly displayed when showGeotagPickerHelpTool() is run. We can't place this code in the
+                wiki page content as script tag would be stripped.
+                {% include 'geotags/geotag_picker_help_tool.html' %}{% endcomment %}
+            {% endif %}
+            {{ content.body|markdown:"wikilinks,codehilite,markdown.extensions.toc" }}
+            {% if perms.wiki.change_page %}
+            <div class="v-spacing-top-5 text-right">
+                <a class="btn-primary no-hover" href="{% url "wiki-page-edit" name %}">Edit this page</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load markup_freesound %}
+{% load bw_templatetags %}
+
+{% block title %}Editing - {{content.title}}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="bw-wiki navbar-space-filler v-spacing-3  v-spacing-top-3">
+            <h1>Editing - {{ name }}</h1>
+
+            {% if content %}
+            <ul class="v-spacing-4">
+                <li><strong>version</strong>: {{content.id}} - <a href="{% url "wiki-page-history" name %}">history and comparison</a></li>
+                <li><strong>previous edit date</strong>: {{content.created}}</li>
+                {% if content.author %}
+                <li><strong>previous author</strong>: {{content.author.username}}</li>
+                {% else %}
+                <li><strong>no previous author</strong></li>
+                {% endif %}
+            </ul>
+            {% endif %}
+
+            <form method="post" action=".">{% csrf_token %}
+            {{ form }}
+            <div class="text-right">
+                <button class="btn-primary v-spacing-top-5">Save</button>
+            </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

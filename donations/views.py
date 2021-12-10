@@ -10,13 +10,14 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 
 from forms import DonateForm
 from models import Donation, DonationCampaign
+from utils.frontend_handling import render
 from utils.mail import send_mail_template
 
 web_logger = logging.getLogger('web')

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Donate{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="bw-wiki navbar-space-filler v-spacing-3  v-spacing-top-3">
+
+            <h1>Donations</h1>
+
+            <h3 class="text-red">Why should I donate to Freesound?</h3>
+            <ul>
+                <li style="margin-top: 8px"><b>We are growing and need more resources</b>.
+                    Freesound was <a href="https://freesound.org/help/about/" target="_blank">started in 2005</a>
+                    at the <a href="https://www.upf.edu/web/mtg" target="_blank">Music Technology Group</a>
+                    and it has always been developed and maintained here.
+                    We need your donations in order to be able dedicate more resources to Freesound and not only
+                    maintain it but also make it better: add new features, improve existing ones, etc.
+                </li>
+                <li style="margin-top: 8px"><b>We don't like ads</b>.
+                    Because of the nature of Freesound and the philosophy
+                    of openness, sharing and reuse that we promote, we think that
+                    the sustainability model that best fits our case
+                    is one based on user donations like Wikipedia.
+                </li>
+                <li style="margin-top: 8px"><b>It doesn't take a large donation to help us</b>.
+                    There are many users who <a href="https://blog.freesound.org/?p=666" target="_blank">
+                    regularly download content from Freesound</a>.
+                    If many of us contribute, donating just a little bit will be enough to keep Freesound in good shape.
+                    Ah, and if you donate you'll appear in this glorious <a href="{% url 'donors' %}">list of Freesound donors</a> :)
+                </li>
+            </ul>
+
+            <p>
+                In case you want to donate, please use the form below.
+                If you want more information about Freesound and its sustainability, check out this <a href="/forum/freesound-project/40188/">forum
+                thread</a>.
+                <br>Thanks for supporting Freesound!
+            </p>
+
+            <!-- donations -->
+            <div id="donation_form_wrapper">
+
+              <div id="donation_form">
+                <form method="post" action="{% url 'donation-session-paypal' %}">
+                  <ul class="errorlist nonfield"></ul>
+                  <ul style="list-style-type: none;padding-left:0px;line-height: 18px;">
+                  {% csrf_token %}
+
+                  <p>
+                    Please choose the <b>name</b> that will appear with the donation:
+                  </p>
+                  {% for choice in form.donation_type %}
+                  <li>
+                      <input type="radio"
+                             name="{{ form.donation_type.name }}"
+                             value="{{ choice.data.value }}"
+                             id="id_{{ form.donation_type.name }}_{{ forloop.counter0 }}"
+                             {% if form.donation_type.value == choice.data.value %}
+                                 checked='checked'
+                             {% endif %}/>
+                      {{ choice.choice_label }}
+                      {% if choice.data.value == '2' %} {{form.name_option}} {% endif %}
+                  </li>
+                  {% endfor %}
+                  </ul>
+                  <p>{{form.amount.label_tag }}
+                    <span class="currency">&euro;</span>
+                    {{ form.amount}}
+                  </p>
+                  <p>
+                    {{ form.recurring.label_tag }}
+                    {{ form.recurring}}
+                  </p>
+                  <p>
+                    {{ form.show_amount.label_tag }}
+                    {{ form.show_amount}}
+                  </p>
+                  <button class="btn-primary v-spacing-1 donation_button_paypal">Donate with</button>
+                  <button class="btn-secondary v-spacing-5 donation_button_stripe">Donate with Credit Card</button>
+                </form>
+              </div>
+            </div>
+
+            <p>
+                <b>Note</b>: donations are managed through the <a href="https://www.upf.edu/web/phonos" target="_blank"> Phonos Foundation</a>,
+                    an institution linked to the <a href="https://www.upf.edu/web/mtg" target="_blank">Music
+                    Technology Group</a> for the promotion of social and cultural initiatives.
+                Currently, we only accept donations via PayPal and international credit cards.
+            </p>
+
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+<script src="https://js.stripe.com/v3"></script>
+<script type="text/javascript">
+  $(document).ready(function (){
+
+    var form = $('#donation_form form');
+    $('.donation_button_paypal').click(function(e) {
+      $.ajax({
+        type: form.attr('method'),
+        url: form.attr('action'),
+        data: form.serialize(), // serializes the form's elements.
+        success: function(data)
+        {
+          if (data.errors != null) {
+              $('.errorlist').html("");
+            $.each(data.errors['__all__'], function (index, error) {
+              $('.errorlist').append("<li>"+error+"</li>");
+            });
+          } else {
+            paypalForm = $('<form />', {
+              action: data.url,
+              method: "POST",
+              style: 'display: none;'
+            });
+            $.each(data.params,function (name, value) {
+              $('<input />', {
+                type: 'hidden',
+                name: name,
+                value: value
+              }).appendTo(paypalForm);
+            });
+            paypalForm.appendTo('body').submit();
+          }
+        }
+      });
+      e.preventDefault(); // avoid to execute the actual submit of the form.
+    });
+
+    var stripe = Stripe('{{stripe_key}}');
+    var amount = $('#id_amount');
+
+    $('.donation_button_stripe').click(function(e) {
+      $.ajax({
+        type: form.attr('method'),
+        url: "{% url 'donation-session-stripe' %}",
+        data: form.serialize(), // serializes the form's elements.
+        success: function(data)
+        {
+          if (data.errors != null) {
+              $('.errorlist').html("");
+            $.each(data.errors['__all__'], function (index, error) {
+              $('.errorlist').append("<li>"+error+"</li>");
+            });
+          } else {
+            session=data.session_id;
+            console.log(session)
+            stripe.redirectToCheckout({
+                sessionId: session
+              }).then(function (result) {
+                // Error calling stripe api
+                $('.errorlist').html("");
+                $('.errorlist').append("<li>Error calling stripe API, please retry later.</li>");
+            });
+           }
+        }
+      });
+      e.preventDefault(); // avoid to execute the actual submit of the form.
+   });
+    $('#id_recurring').change(function(e) {
+        if ($('#id_recurring').is(':checked')){
+            // Disable credit card donation button
+            $('.donation_button_stripe').attr('disabled', true);
+        } else {
+            // Enable credit card donation button
+            $('.donation_button_stripe').attr('disabled', false);
+        }
+    });
+  });
+</script>
+{% endblock %}

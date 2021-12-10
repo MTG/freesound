@@ -60,17 +60,23 @@ function toggleMapStyle(idx){
         // if idx is passed, it means map objects will have been saved in maps variable
         var map = window.maps[idx];
     }
-    var map_element_id = $(map.getCanvas()).parent().parent().attr('id');
+
+    var mapElementId = map.getCanvas().parentElement.parentElement.id;
+    const mapElement = document.getElementById(mapElementId);
 
     if (map.getStyle().sprite.indexOf(FREESOUND_STREETS_STYLE_ID) !== -1){
         // Using streets map, switch to satellite
         map.setStyle('mapbox://styles/freesound/' + FREESOUND_SATELLITE_STYLE_ID);
-        $('#' + map_element_id).find('.map_terrain_menu')[0].innerText = 'Show streets';
+        mapElement.getElementsByClassName('map_terrain_menu').forEach(element => {
+            element.innerText = 'Show streets';
+        });
 
     } else {
         // Using satellite map, switch to streets
         map.setStyle('mapbox://styles/freesound/' + FREESOUND_STREETS_STYLE_ID);
-        $('#' + map_element_id).find('.map_terrain_menu')[0].innerText = 'Show terrain';
+        mapElement.getElementsByClassName('map_terrain_menu').forEach(element => {
+            element.innerText = 'Show terrain';
+        });
     }
 }
 
@@ -401,8 +407,8 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 }
 
 
-function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callback,
-                              center_lat, center_lon, zoom, idx){
+function makeGeotagEditMap(map_element_id, arrow_url, on_bounds_changed_callback,
+                           center_lat, center_lon, zoom, idx){
 
     /*
     This function is used to display the map used to add a geotag to a sound maps with sounds. It is used in the sound
@@ -441,13 +447,15 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
     map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken, minLength: MIN_INPUT_CHARACTERS_FOR_GEOCODER }), 'top-left');
 
-    map.toggleStyle = function() {
-        toggleMapStyle(map, map_element_id);
-    };
-
     map.on('load', function() {
         // Add controls for toggling style
-        $('#' + map_element_id).append('<div class="map_terrain_menu" onclick="toggleMapStyle(' + idx + ')">Show streets</div>');
+        const mapElement = document.getElementById(map_element_id);
+
+        const styleSelectorElement = document.createElement('div');
+        styleSelectorElement.className = "map_terrain_menu";
+        styleSelectorElement.onclick = () => {toggleMapStyle(idx)};
+        styleSelectorElement.innerHTML = "Show streets"
+        mapElement.append(styleSelectorElement);
 
         // Add listener for callback on bounds changed
         if (on_bounds_changed_callback !== undefined) {
@@ -511,4 +519,4 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
     return map;
 }
 
-export {makeSoundsMap};
+export {makeSoundsMap, makeGeotagEditMap};

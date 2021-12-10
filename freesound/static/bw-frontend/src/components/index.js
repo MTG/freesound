@@ -15,3 +15,4 @@ import './recaptcha';
 import './djangoMessages';
 import './unsecureImageCheck';
 import './explicit';
+import './geotagPicker';

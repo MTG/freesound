@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 {% load markup_freesound %}
+{% load bw_templatetags %}
 
 {% block title %}Help - {{content.title}}{% endblock %}
 
@@ -10,8 +11,10 @@
             {% if content.title == "Frequently Asked Questions" %}
                 {% comment %}When showing the "Frequently Asked Questions", we load the geotag picker help tool code
                 so that it is corresctly displayed when showGeotagPickerHelpTool() is run. We can't place this code in the
-                wiki page content as script tag would be stripped.
-                {% include 'geotags/geotag_picker_help_tool.html' %}{% endcomment %}
+                wiki page content as script tag would be stripped.{% endcomment %}
+
+                {% bw_maps_js_scripts %}
+
             {% endif %}
             {{ content.body|markdown:"wikilinks,codehilite,markdown.extensions.toc" }}
             {% if perms.wiki.change_page %}

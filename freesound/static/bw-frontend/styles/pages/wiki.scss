@@ -7,21 +7,16 @@
   h2 {
     margin-bottom: 12px;
     margin-top: 40px;
+
+    a {
+      color: $black;
+    }
   }
 
   h3 {
-    color: $navy-light-grey;
     font-size: 28px;
     margin-bottom: 12px;
     margin-top: 30px;
-  }
-
-  :target {
-    display: block;
-    position: relative;
-    top: 0px;
-    visibility: visible;
-
   }
 
   table {
@@ -42,6 +37,6 @@
   }
 
   tr:nth-child(even) {
-    background: $navy-light-grey;
+    background: #efefef;
   }
 }

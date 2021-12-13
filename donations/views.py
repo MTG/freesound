@@ -17,7 +17,7 @@ from django.views.generic import ListView
 
 from forms import DonateForm, BwDonateForm
 from models import Donation, DonationCampaign
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh, BwCompatibleTemplateResponse
 from utils.mail import send_mail_template
 
 web_logger = logging.getLogger('web')
@@ -243,11 +243,10 @@ def donation_session_paypal(request):
 
 
 def donate(request):
-    ''' Donate page: display form for donations where if user is logged in
-    we give the option to doneate anonymously otherwise we just give the option
-    to enter the name that will be displayed.
-    If request is post we generate the data to send to paypal.
-    '''
+    """Donate page: display form for donations where if user is logged in we give the option to donate anonymously
+    otherwise we just give the option to enter the name that will be displayed. If request is post we generate the
+    data to send to paypal or stripe.
+    """
     default_donation_amount = request.GET.get(settings.DONATION_AMOUNT_REQUEST_PARAM, None)
     FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
     form = FormToUse(user=request.user, default_donation_amount=default_donation_amount)
@@ -256,6 +255,7 @@ def donate(request):
 
 
 class DonationsList(ListView):
+    response_class = BwCompatibleTemplateResponse
     model = Donation
     paginate_by = settings.DONATIONS_PER_PAGE
     ordering = ["-created"]

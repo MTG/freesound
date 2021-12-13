@@ -24,6 +24,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render as django_render
 from django.template import TemplateDoesNotExist
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.decorators import available_attrs
 
@@ -63,7 +64,7 @@ def render(request, template_name, context=None, content_type=None, status=None,
     except TemplateDoesNotExist:
 
         if name != settings.FRONTEND_DEFAULT:
-            # If the required template does can't be found using the dselected engine, try with the default engine
+            # If the required template does can't be found using the selected engine, try with the default engine
             return django_render(request, template_name, context, content_type, status, using=settings.FRONTEND_DEFAULT)
         else:
             # If the default engine was being used, then raise the exception normally
@@ -187,3 +188,33 @@ def redirect_if_beastwhoosh_inline(function=None, redirect_url_name='front-page'
                 return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator(function)
+
+
+class BwCompatibleTemplateResponse(TemplateResponse):
+
+    @property
+    def rendered_content(self):
+        """
+        This is a customized version of TemplateResponse required for compatibility with the co-existence of the two
+        front ends. Class-based views do not use the "render" shortcut to render the templates, so we can not use our
+        customized "render" shortcut (see above in this file) which selects the right frontend according to the
+        request and defaults to old frontend if template not found. We re-implement the same logic here, in the
+        BwCompatibleTemplateResponse class which must be used in Class-based views if we want them to be compatible
+        with BW frontend. As an example use of this class, see donations.views.DonationsList. Once we remove the old
+        interface, we'll be able to get rid of these helper methods.
+        """
+        name = selected_frontend(self._request)
+        self.using = name
+        try:
+            template = self.resolve_template(self.template_name)
+        except TemplateDoesNotExist:
+            if name != settings.FRONTEND_DEFAULT:
+                # If the required template does can't be found using the selected engine, try with the default engine
+                self.using = settings.FRONTEND_DEFAULT
+                template = self.resolve_template(self.template_name)
+            else:
+                # If the default engine was being used, then raise the exception normally
+                raise
+        context = self.resolve_context(self.context_data)
+        content = template.render(context, self._request)
+        return content

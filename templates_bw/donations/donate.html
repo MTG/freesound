@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load bw_templatetags %}
+
+{% block title %}Donate{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="bw-donate navbar-space-filler v-spacing-3  v-spacing-top-3">
+            <h1 class="v-spacing-4">Donations</h1>
+            <h3 class="text-red">Why should I donate to Freesound?</h3>
+            <div class="row v-spacing-top-4">
+                <div class="col-md-4 v-spacing-2">
+                    <b>{% bw_icon 'check' %}We are growing and need more resources</b>.
+                        Freesound was <a href="https://freesound.org/help/about/" target="_blank">started in 2005</a>
+                        at the <a href="https://www.upf.edu/web/mtg" target="_blank">Music Technology Group</a>
+                        and it has always been developed and maintained here.
+                        We need your donations in order to be able dedicate more resources to Freesound and not only
+                        maintain it but also make it better: add new features, improve existing ones, etc.
+                </div>
+                <div class="col-md-4 v-spacing-2">
+                    <b>{% bw_icon 'check' %}We don't like ads</b>.
+                        Because of the nature of Freesound and the philosophy
+                        of openness, sharing and reuse that we promote, we think that
+                        the sustainability model that best fits our case
+                        is one based on user donations like Wikipedia.
+                </div>
+                <div class="col-md-4 v-spacing-2">
+                    <b>{% bw_icon 'check' %}It doesn't take a large donation to help us</b>.
+                        There are many users who <a href="https://blog.freesound.org/?s=numbers" target="_blank">
+                        regularly download content from Freesound</a>.
+                        If many of us contribute, donating just a little bit will be enough to keep Freesound in good shape.
+                        Ah, and if you donate you'll appear in this glorious <a href="{% url 'donors' %}">list of Freesound donors</a>.
+                </div>
+            </div>
+            <div class="row v-spacing-top-2">
+                <div class="col-md-12">
+                    In case you want to donate, please use the form below.
+                    If you want more information about Freesound and its sustainability, check out this <a href="/forum/freesound-project/40188/">forum
+                    thread</a>. <br>Thanks for supporting Freesound!
+                </div>
+            </div>
+            <div class="row v-spacing-top-4">
+                <div class="col-md-6 offset-md-3">
+                    <form id="donation_form" method="post" action="{% url 'donation-session-paypal' %}">{% csrf_token %}
+                        <ul class="errorlist v-spacing-3"></ul>
+                        {{ form }}
+                        <button id="donation_button_credit_card" class="btn-primary v-spacing-1 v-spacing-top-4 donation_button_stripe" data-stripe-key="{{ stripe_key }}" data-stripe-url="{% url 'donation-session-stripe' %}">Donate with credit card</button>
+                        <button id="donation_button_paypal" class="btn-blue v-spacing-5 donation_button_paypal">Donate with <i>PayPal</i></button>
+                    </form>
+                </div>
+            </div>
+            <p>
+                <b>Note</b>: donations are managed through the <a href="https://www.upf.edu/web/phonos" target="_blank"> Phonos Foundation</a>,
+                    an institution linked to the <a href="https://www.upf.edu/web/mtg" target="_blank">Music
+                    Technology Group</a> for the promotion of social and cultural initiatives.
+                Currently, we only accept donations via PayPal and international credit cards.
+            </p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+<script src="https://js.stripe.com/v3"></script>
+<script src="{% static 'bw-frontend/dist/donate.91032cb0.js' %}"></script>
+{% endblock %}

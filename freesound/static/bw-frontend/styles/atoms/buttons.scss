@@ -20,6 +20,11 @@ button {
   @include rounded-button($black, $black-hover);
 }
 
+.btn-blue {
+  letter-spacing: -1px;
+  @include rounded-button($blue, $blue-hover);
+}
+
 .btn-inverse {
   letter-spacing: -1px;
   @include rounded-button(transparent, $black);

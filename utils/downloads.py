@@ -62,7 +62,6 @@ def should_suggest_donation(user, times_shown_in_last_day):
     indicating how many days after a donation we show the modal again, after how many downloads we display the modal 
     and for how long. The modal will be shown a maximum number of times per day.
     """
-
     donation_modal_settings = DonationsModalSettings.get_donation_modal_settings()
 
     if times_shown_in_last_day >= donation_modal_settings.max_times_display_a_day:

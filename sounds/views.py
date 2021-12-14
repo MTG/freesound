@@ -299,6 +299,8 @@ def after_download_modal(request):
     """
     response_content = None  # Default content of the response set to None (no modal)
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
+    should_show_modal = False
+    bw_response = None
 
     def modal_shown_timestamps_cache_key(user):
         return 'modal_shown_timestamps_donations_shown_%i' % user.id
@@ -315,10 +317,21 @@ def after_download_modal(request):
             modal_shown_timestamps.append(time.time())
             cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps,
                       60 * 60 * 24)  # 24 lifetime cache
+            should_show_modal = True
+
+    if should_show_modal:
+        if using_beastwhoosh(request):
+            return render(request, 'donations/modal_after_download_donation_request.html',
+                          {'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM})
+        else:
             template = loader.get_template('sounds/after_download_modal_donation.html')
             response_content = template.render({'sound_name': sound_name})
-
-    return JsonResponse({'content': response_content})
+            return JsonResponse({'content': response_content})
+    else:
+        if using_beastwhoosh(request):
+            return HttpResponse()
+        else:
+            return JsonResponse({'content': None})
 
 
 @redirect_if_old_username_or_404

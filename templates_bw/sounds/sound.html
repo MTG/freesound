@@ -275,7 +275,7 @@
 
                             {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
                                 {% if request.user.is_authenticated %}
-                                    <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');" title="Download sound">Download sound</a>
+                                    <a class="no-hover btn-primary display-inline-block w-100 text-center sound-download-button" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" data-show-after-download-modal-url="{% url "after-download-modal" %}" title="Download sound">Download sound</a>
                                 {% else %}
                                     <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" title="Login to download">Login to download</a>
                                 {% endif %}

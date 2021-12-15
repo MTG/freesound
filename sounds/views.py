@@ -219,6 +219,7 @@ def front_page(request):
         'random_sound': random_sound,
         'top_donor_user_id': top_donor_user_id,
         'total_num_sounds': total_num_sounds,
+        'is_authenticated': request.user.is_authenticated(),
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
         'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
@@ -671,6 +672,9 @@ def geotag(request, username, sound_id):
 @redirect_if_old_username_or_404
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?similar=1')
+
     sound = get_object_or_404(Sound,
                               id=sound_id,
                               moderation_state="OK",
@@ -684,7 +688,11 @@ def similar(request, username, sound_id):
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
 
     tvars = {'similar_sounds': similar_sounds}
-    return render(request, 'sounds/similar.html', tvars)
+    if using_beastwhoosh(request):
+        # In BW similar sounds are displayed in a modal
+        return render(request, 'sounds/modal_similar_sounds.html', tvars)
+    else:
+        return render(request, 'sounds/similar.html', tvars)
 
 
 @redirect_if_old_username_or_404

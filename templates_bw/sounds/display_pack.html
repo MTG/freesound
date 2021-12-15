@@ -22,10 +22,10 @@
                     </div>
                 </div>
             </div>
-            <h5 class="v-spacing-top-1 ellipsis">
+            <h5 class="ellipsis line-height-percentage-150">
                 <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
             </h5>
-            <div class="v-spacing-top-1">
+            <div>
                 <a href="{% url "account" pack.user.username %}">{{ pack.user.username|truncate_string:15 }}</a> <span class="text-grey h-spacing-left-1 h-spacing-1">·</span><span class="text-grey">{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</span>
                 <br><span class="text-grey">{{ pack.created|timesince }} ago</span>
             </div>

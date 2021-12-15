@@ -1,6 +1,7 @@
 import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
+import {openSimilarSoundsModal} from "../components/similarSoundsModal";
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -97,3 +98,15 @@ soundCommentElements.forEach(element => {
 });
 
 findTimeLinksAndAddEventListeners(soundDescriptionElement);
+
+// Open similar sounds modal if activation parameter is passed
+const urlParams = new URLSearchParams(window.location.search);
+const similarSoundsButtons = [...document.querySelectorAll('[data-toggle^="similar-sounds-modal"]')];
+if (similarSoundsButtons.length > 0){
+    const similarSoundsModalActivationParam = similarSoundsButtons[0].dataset.modalActivationParam;
+    const similarSoundsModalParamValue = urlParams.get(similarSoundsModalActivationParam);
+    if (similarSoundsModalParamValue) {
+        openSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
+    }
+}
+

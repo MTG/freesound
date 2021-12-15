@@ -89,3 +89,11 @@
     line-height: #{$i};
   }
 }
+
+@for $i from 0 through 10 {
+  $value1: $i * 10 + 100;
+  $value2: ($i * 10 + 100) / 100;
+  .line-height-percentage-#{$value1} {
+    line-height: #{$value2};
+  }
+}

@@ -111,7 +111,7 @@
     .modal-wrapper {
       .modal-dialog {
         max-width: 100% * $value2 !important;
-        @media (max-width:576px) {
+        @media (max-width:750px) {
             max-width: 100% !important;
         }
       }

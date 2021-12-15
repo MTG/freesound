@@ -1,0 +1,32 @@
+{% extends "molecules/modal_base.html" %}
+{% load display_sound %}
+{% load util %}
+
+{% block id %}similarSoundsModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-labelledby %}similarSoundsModalLabel{% endblock %}
+
+{% block body %}
+<div class="col-10 offset-1">
+    <div class="text-center">
+        <h5 class="v-spacing-5">Similar sounds</h5>
+    </div>
+    <div class="v-spacing-4">
+        {% for sounds_chunk in similar_sounds|slice:"1:13"|chunks:3 %}
+            <div class="row no-margins">
+                {% for sound in sounds_chunk %}
+                    <div class="col-lg-4">
+                        {% display_sound_small_no_bookmark sound %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% empty %}
+            <div class="text-center">
+                <div class="text-grey v-spacing-top-1">Looks like we can't find any similar sounds yet.
+                    It's probable this is because the query sound has been uploaded recently and we haven't
+                    updated our similarity database yet. Try again later!</div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

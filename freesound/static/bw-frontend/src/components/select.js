@@ -109,9 +109,9 @@ function createSelect() {
 
   var buttonSelect = document.getElementsByClassName('select-dropdown__button');
   for (var i = 0, len = buttonSelect.length; i < len; i++) {
-    if (!buttonSelect[i].hasAttribute('data-listenr-added')){
+    if (!buttonSelect[i].hasAttribute('data-listener-added')){
       // Only add the listener if it has not already been added
-      buttonSelect[i].setAttribute('data-listenr-added', true);
+      buttonSelect[i].setAttribute('data-listener-added', true);
       buttonSelect[i].addEventListener(
         'click',
         function(e) {

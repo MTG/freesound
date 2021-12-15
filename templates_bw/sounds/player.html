@@ -2,7 +2,7 @@
     class="bw-player"
     data-sound-id="{{ sound.id }}"
     data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' %}small{% elif player_size == 'big_no_info' %}big{% elif player_size == 'minimal' %}minimal{% endif %}"
-    data-bookmark="{% if player_size == 'small' or player_size == 'small_no_info' %}true{% else %}false{% endif %}"
+    data-bookmark="{% if show_bookmark_button %}true{% else %}false{% endif %}"
     data-mp3="{{ sound.locations.preview.LQ.mp3.url }}"
     data-ogg="{{ sound.locations.preview.LQ.ogg.url }}"
     data-waveform="{% if player_size != 'big_no_info' %}{{ sound.locations.display.wave_bw.M.url }}{% else %}{{ sound.locations.display.wave_bw.L.url }}{% endif %}"

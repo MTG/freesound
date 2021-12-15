@@ -32,8 +32,8 @@ const initBookmarkFormModal = (soundId) => {
     // We need to trigger create select elements because bookmark form has one
     createSelect();
 
-    // Bind action to save bookmark in add bookmark button (and prevent default form submit)
-    const modalElement = document.getElementById(`bookmarkSoundModal-${ soundId }`);
+    // Bind action to save bookmark in "add bookmark button" (and prevent default form submit)
+    const modalElement = document.getElementById(`bookmarkSoundModal`);
     const selectElement = modalElement.getElementsByTagName('select')[0];
     selectElement.insertAdjacentHTML("beforebegin", 'Category: ');
     const formElement = modalElement.getElementsByTagName('form')[0];
@@ -49,19 +49,23 @@ const initBookmarkFormModal = (soundId) => {
     });
 };
 
-const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle^="bookmark-modal-"]')];
-bookmarkSoundButtons.forEach(element => {
-    element.addEventListener('click', (evt) => {
-        evt.preventDefault();
-        const dataToggleAttributeSplit = element.getAttribute('data-toggle').split('-');
-        const soundId = parseInt(dataToggleAttributeSplit[dataToggleAttributeSplit.length - 1], 10);
-        const modalUrl = `${ bookmarkFormModalUrl }${ soundId }/`;
-        if (!evt.altKey) {
-            handleGenericModal(modalUrl, () => {
-                initBookmarkFormModal(soundId);
-            }, () => {}, true, false);
-        } else {
-            saveBookmark(soundId);
-        }
+const bindBookmarkSoundButtons = () => {
+    const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle^="bookmark-modal-"]')];
+    bookmarkSoundButtons.forEach(element => {
+        element.addEventListener('click', (evt) => {
+            evt.preventDefault();
+            const dataToggleAttributeSplit = element.getAttribute('data-toggle').split('-');
+            const soundId = parseInt(dataToggleAttributeSplit[dataToggleAttributeSplit.length - 1], 10);
+            const modalUrl = `${bookmarkFormModalUrl}${soundId}/`;
+            if (!evt.altKey) {
+                handleGenericModal(modalUrl, () => {
+                    initBookmarkFormModal(soundId);
+                }, () => {}, true, false);
+            } else {
+                saveBookmark(soundId);
+            }
+        });
     });
-});
+}
+
+bindBookmarkSoundButtons();

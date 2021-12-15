@@ -39,7 +39,7 @@
                     {{ rss_cache }}
                 {% endif %}
 
-                {% cache 300 bw_front_page_latest_additions %}
+                {% cache 300 bw_front_page_latest_additions is_authenticated %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
                         <div class="bw-carousel-container">
@@ -87,7 +87,7 @@
                 {% endif %}
 
                 {% if trending_sound_ids %}
-                    {% cache 300 bw_front_page_trending_sounds %}
+                    {% cache 300 bw_front_page_trending_sounds is_authenticated %}
                     <hr />
                     <section class="v-spacing-2">
                         <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
@@ -113,7 +113,7 @@
                 {% endif %}
 
                 {% if trending_pack_ids %}
-                    {% cache 300 bw_front_page_trending_packs %}
+                    {% cache 300 bw_front_page_trending_packs is_authenticated %}
                     <hr />
                     <section class="v-spacing-2">
                         <h3 class="v-spacing-4 v-spacing-top-4">Trending packs</h3>
@@ -139,7 +139,7 @@
                 {% endif %}
 
                 {% if random_sound %}
-                    {% cache 300 bw_front_page_random_sound %}
+                    {% cache 300 bw_front_page_random_sound is_authenticated %}
                     <hr />
                     <section class="v-spacing-6">
                         <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>

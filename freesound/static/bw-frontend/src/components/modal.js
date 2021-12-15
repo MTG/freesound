@@ -90,7 +90,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
   const req = new XMLHttpRequest();
   req.open('GET', fetchContentUrl, doRequestAsync !== false);
   req.onload = () => {
-    if (req.status >= 200 && req.status < 400) {
+    if (req.status >= 200 && req.status < 300) {
         if (req.responseText !== ""){
             // If response contents are not empty, add modal contents to the generic modal wrapper (the requested URL
             // should return a modal template extending "modal_base.html")

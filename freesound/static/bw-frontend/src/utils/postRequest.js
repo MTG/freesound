@@ -22,7 +22,7 @@ const makePostRequest = (url, data, successCallback, errorCallback) => {
     // TODO: do not hardcode the URL below
     req.open('POST', url, true);
     req.onload = () => {
-        if (req.status === 200) {
+        if (req.status >= 200 && req.status < 300) {
             successCallback(req.responseText);
         } else {
             errorCallback(req.responseText);

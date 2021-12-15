@@ -5,7 +5,7 @@
 
 {% block body %}
     <div class="text-center">
-        <h5>Join Freesound</h5>
+        <h5 class="v-spacing-5">Join Freesound</h5>
         <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}" data-check-username-url="{% url 'check_username' %}">{% csrf_token %}
             {{ registration_form }}
             {{ registration_form.recaptcha_response.errors }}

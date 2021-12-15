@@ -2,14 +2,14 @@
 {% load staticfiles %}
 {% load bw_templatetags %}
 
-{% block id %}bookmarkSoundModal-{{ sound_id }}{% endblock %}
+{% block id %}bookmarkSoundModal{% endblock %}
 {% block extra-class %}modal-width-60{% endblock %}
-{% block aria-labelledby %}bookmarkSoundModalLabel-{{ sound_id }}{% endblock %}
+{% block aria-labelledby %}bookmarkSoundModalLabel{% endblock %}
 
 {% block body %}
 <div class="col-10 offset-1">
-    <div class="v-spacing-5 text-center">
-        <h5>Bookmark this sound</h5>
+    <div class="text-center">
+        <h5 class="v-spacing-5">Bookmark this sound</h5>
     </div>
     <div class="v-spacing-4">
         {% if bookmarks %}

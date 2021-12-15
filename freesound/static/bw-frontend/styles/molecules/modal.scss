@@ -29,6 +29,10 @@
       display: flex;
       flex-direction: column;
 
+      .select-dropdown {
+        margin-bottom: 15px;
+      }
+
       input {
         height: 48px;
         border-radius: 5px;

@@ -10,8 +10,10 @@ const problemsLoggingInParam = urlParams.get('loginProblems');
 
 const handleDismissModal = modalContainerId => {
   const modalContainer = document.getElementById(modalContainerId);
-  modalContainer.classList.remove('show');
-  modalContainer.style.display = 'none';
+  if (modalContainer !== null){
+    modalContainer.classList.remove('show');
+    modalContainer.style.display = 'none';
+  }
 };
 
 const handleModal = modalContainerId => {
@@ -83,8 +85,8 @@ confirmationModalButtons.forEach(modalButton => {
 
 const genericModalWrapper = document.getElementById('genericModalWrapper');
 
-const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback, doRequestAsync, doNotShowLoadingToast) => {
-  if (doNotShowLoadingToast !== false) { showToastNoTimeout('Loading...'); }
+const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback, doRequestAsync, showLoadingToast) => {
+  if (showLoadingToast !== false) { showToastNoTimeout('Loading...'); }
   const req = new XMLHttpRequest();
   req.open('GET', fetchContentUrl, doRequestAsync !== false);
   req.onload = () => {
@@ -123,13 +125,13 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
             });
 
             // Dismiss loading indicator toast and call "on loaded" call back
-            if (doNotShowLoadingToast !== false) { dismissToast(); }
+            if (showLoadingToast !== false) { dismissToast(); }
             if (onLoadedCallback !== undefined){
               onLoadedCallback();
             }
         } else {
             // If response contents are empty, do not show any modal but dismiss the loading toast (if used)
-            if (doNotShowLoadingToast !== false) { dismissToast(); }
+            if (showLoadingToast !== false) { dismissToast(); }
         }
     } else {
       // Unexpected errors happened while processing request: close modal and show error in toast

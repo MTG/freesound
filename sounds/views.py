@@ -514,7 +514,7 @@ def sound_edit(request, username, sound_id):
             geotag_form = GeotaggingForm(prefix="geotag")
 
     license_form = NewLicenseForm(request.POST)
-    if request.POST and license_form.is_valid():
+    if request.method == 'POST' and license_form.is_valid():
         new_license = license_form.cleaned_data["license"]
         if new_license != sound.license:
             sound.set_license(new_license)

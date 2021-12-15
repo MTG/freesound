@@ -55,7 +55,7 @@
 
                             {% if is_authenticated %}
                                 <a class="no-hover" rel="nofollow" href="#">
-                                    <button title="Save as favorite" class="btn-neutral">
+                                    <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
                                 </a>

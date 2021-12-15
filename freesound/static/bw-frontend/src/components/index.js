@@ -17,3 +17,4 @@ import './unsecureImageCheck';
 import './explicit';
 import './geotagPicker';
 import './afterDownloadModal';
+import './bookmarkSound';

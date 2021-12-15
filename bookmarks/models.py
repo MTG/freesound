@@ -36,13 +36,20 @@ class BookmarkCategory(models.Model):
 
 class Bookmark(models.Model):
     user = models.ForeignKey(User)
-    name = models.CharField(max_length=128, default="")
+    name = models.CharField(max_length=128, default="", blank=True)
     category = models.ForeignKey(BookmarkCategory, blank=True, null=True, default=None, related_name='bookmarks')
     sound = models.ForeignKey(Sound)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __unicode__(self):
         return u"Bookmark: %s" % self.name
-    
+
+    @property
+    def name_or_sound_name(self):
+        if self.name:
+            return self.name
+        else:
+            return self.sound.original_filename
+
     class Meta:
         ordering = ("-created", )

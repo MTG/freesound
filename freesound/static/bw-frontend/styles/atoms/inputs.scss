@@ -26,6 +26,9 @@
 
 input[type='search'] {
   margin-left: 40px;
+  -moz-appearance: none; /* avoid browser styling older firefox */
+  -webkit-appearance: none; /* avoid browser styling safari, chrome, edge and ie mobile */
+  appearance: none; /* avoid browser styling rest */
 }
 
 input {

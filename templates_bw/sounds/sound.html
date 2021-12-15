@@ -59,17 +59,17 @@
                     <div class="bw-sound-page__information v-spacing-top-5">
                         <div class="row middle">
                             <div class="col-10 overflow-hidden">
-                                <h1>{{sound.original_filename}}</h1>
+                                <h1><a class="bw-link--black" href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a></h1>
                             </div>
                             <div class="col-2 text-right">
                                 <div class="text-grey">
                                     {% if sound.similarity_state == 'OK' %}
-                                        <a class="no-hover btn-neutral" href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow" title="Find similar sounds">
+                                        <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
                                             {% bw_icon 'similar' %}
-                                        </a>
+                                        </button>
+                                        <span class="h-spacing-2"></span>
                                     {% endif %}
-                                    <span class="h-spacing-2"></span>
-                                    <button title="Save as favorite" class="btn-neutral">
+                                    <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
                                 </div>

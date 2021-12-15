@@ -41,7 +41,7 @@ donationButtonPaypalElement.addEventListener('click', (event) => {
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
     const params = serialize(formElement);
     req.onload = () => {
-        if (req.status >= 200 && req.status < 400) {
+        if (req.status >= 200 && req.status < 300) {
             const data = JSON.parse(req.responseText);
             if (data.errors != null) {
                 formErrorlistElement.innerHTML = '';
@@ -85,7 +85,7 @@ donationButtonCreditCardElement.addEventListener('click', (event) => {
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
     const params = serialize(formElement);
     req.onload = () => {
-        if (req.status >= 200 && req.status < 400) {
+        if (req.status >= 200 && req.status < 300) {
             const data = JSON.parse(req.responseText);
             if (data.errors != null) {
                 formErrorlistElement.innerHTML = '';

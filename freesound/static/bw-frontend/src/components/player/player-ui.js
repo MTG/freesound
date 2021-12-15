@@ -334,7 +334,7 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
  * @param {HTMLDivElement} parentNode
  */
 const createSetFavoriteButton = parentNode => {
-  const getIsFavorite = () => parentNode.dataset.favorite === 'true'
+  const getIsFavorite = () => false // parentNode.dataset.favorite === 'true' // We always show the same button even if sound already bookmarked
   const favoriteButtonContainer = document.createElement('div')
   const favoriteButton = createControlButton('bookmark')
   const unfavoriteButton = createControlButton('bookmark-filled')
@@ -342,6 +342,7 @@ const createSetFavoriteButton = parentNode => {
     'bw-player__favorite',
     'stop-propagation'
   )
+  favoriteButtonContainer.setAttribute('data-toggle', `bookmark-modal-${ parentNode.dataset.soundId }`);
   favoriteButtonContainer.appendChild(
     getIsFavorite() ? unfavoriteButton : favoriteButton
   )
@@ -349,7 +350,7 @@ const createSetFavoriteButton = parentNode => {
     const isCurrentlyFavorite = getIsFavorite()
     favoriteButtonContainer.innerHTML = ''
     favoriteButtonContainer.appendChild(
-      isCurrentlyFavorite ? favoriteButton : unfavoriteButton
+      isCurrentlyFavorite ? unfavoriteButton : favoriteButton
     )
     parentNode.dataset.favorite = `${!isCurrentlyFavorite}`
     e.stopPropagation()

@@ -114,7 +114,7 @@ def contact(request):
     if request.user.is_authenticated:
         user = request.user
 
-    if request.POST:
+    if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data['subject']

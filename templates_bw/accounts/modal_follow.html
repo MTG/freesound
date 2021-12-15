@@ -12,8 +12,8 @@
 {% block body %}
 <div class="col-8 offset-2">
     {% if follow_page == 'followers' %}
-        <div class="v-spacing-5 text-center">
-            <h5>{{ user.username }}'s followers</h5>
+        <div class="text-center">
+            <h5 class="v-spacing-5">{{ user.username }}'s followers</h5>
         </div>
         {% for follow_user_item in page.object_list %}
             {% display_user_follow_lists follow_user_item.user_from %}

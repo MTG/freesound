@@ -19,11 +19,11 @@ const saveBookmark = (soundId, data) => {
     }
     makePostRequest(`${ addBookmarkUrl }${ soundId }/`, formData, (responseText) => {
         // Bookmark saved successfully. Close model and show feedback
-        handleDismissModal(`bookmarkSoundModal-${ soundId }`);
+        handleDismissModal(`bookmarkSoundModal`);
         showToast(JSON.parse(responseText).message);
     }, () => {
         // Unexpected errors happened while processing request: close modal and show error in toast
-        handleDismissModal(`bookmarkSoundModal-${ soundId }`);
+        handleDismissModal(`bookmarkSoundModal`);
         showToast('Some errors occurred while bookmarking the sound.');
     });
 }

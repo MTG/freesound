@@ -1400,7 +1400,7 @@ class Pack(SocialModel):
     def get_pack_tags_bw(self):
         results = get_pack_tags(self)
         if results:
-            return [{'name': tag, 'count': count} for tag, count in results['tag']]
+            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in results['tag']]
         else:
             return []
 

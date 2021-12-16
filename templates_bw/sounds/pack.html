@@ -48,7 +48,7 @@
                             {% endif %}
                             <div class="v-spacing-top-4">
                                 {% for tag in pack.get_pack_tags_bw|add_sizes:"count:0.1:1.0" %}
-                                    {% bw_tag tag.name 1 '' tag.get_browse_tag_url tag.size %}
+                                    {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
                                 {% endfor %}
                             </div>
                         </div>

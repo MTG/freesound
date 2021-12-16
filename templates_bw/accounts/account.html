@@ -177,7 +177,7 @@
                     <section class="v-spacing-top-5 padding-bottom-5">
                         <h5 class="padding-bottom-3">Most used tags</h5>
                         {% for tag in tags|add_sizes:"count:0.1:1.0" %}
-                            {% bw_tag tag.name 1 '' tag.get_browse_tag_url tag.size %}
+                            {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
                         {% endfor %}
                     </section>
                 {% endif %}

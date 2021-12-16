@@ -321,7 +321,7 @@ class Profile(SocialModel):
         except Exception as e:
             return False
 
-        return [{'name': tag, 'count': count} for tag, count in results.facets['tag']]
+        return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in results.facets['tag']]
 
     def is_trustworthy(self):
         """

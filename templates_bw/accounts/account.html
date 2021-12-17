@@ -183,7 +183,7 @@
                 {% endif %}
 
                 <div class="divider-light"></div>
-                <section id="latest_geotags" class="v-spacing-top-5 display-none">
+                <section id="latest_geotags" class="v-spacing-top-5 display-none" data-map-loaded="false">
                     <h5 class="padding-bottom-3">Latest geotags</h5>
                     <div id="map_canvas" class="sidebar-map" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
                     <div class="v-spacing-top-2 center">

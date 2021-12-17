@@ -9,7 +9,7 @@ const tapsElements = document.getElementsByClassName('bw-profile__tap_container'
 const cleanActiveClass = () => {
   taps.forEach(tap => tap.classList.remove('active'));
   tapsElements.forEach(tapElement =>
-    tapElement.classList.remove('bw-profile__tap_container__active')
+      tapElement.classList.remove('bw-profile__tap_container__active')
   );
 };
 
@@ -71,32 +71,48 @@ const followingTagsModalParam = urlParams.get(userFollowTagsButton.dataset.modal
 
 if (followersModalParam) {
   handleGenericModal(userFollowersButton.dataset.modalContentUrl, () => {
-      setFollowModalUrlParamToCurrentPage(userFollowersButton.dataset.modalActivationParam);
-    }, () => {
-      removeFollowModalUrlParams();
-    });
+    setFollowModalUrlParamToCurrentPage(userFollowersButton.dataset.modalActivationParam);
+  }, () => {
+    removeFollowModalUrlParams();
+  });
 }
 
 if (followingModalParam) {
   handleGenericModal(userFollowUsersButton.dataset.modalContentUrl, () => {
-      setFollowModalUrlParamToCurrentPage(userFollowUsersButton.dataset.modalActivationParam);
-    }, () => {
-      removeFollowModalUrlParams();
-    });
+    setFollowModalUrlParamToCurrentPage(userFollowUsersButton.dataset.modalActivationParam);
+  }, () => {
+    removeFollowModalUrlParams();
+  });
 }
 
 if (followingTagsModalParam) {
   handleGenericModal(userFollowTagsButton.dataset.modalContentUrl, () => {
-      setFollowModalUrlParamToCurrentPage(userFollowTagsButton.dataset.modalActivationParam);
-    }, () => {
-      removeFollowModalUrlParams();
-    });
+    setFollowModalUrlParamToCurrentPage(userFollowTagsButton.dataset.modalActivationParam);
+  }, () => {
+    removeFollowModalUrlParams();
+  });
 }
 
 
 // User geotags map
+// Load the map only when user clicks on "load map" button
 const mapCanvas = document.getElementById('map_canvas');
 const latestGeotagsSection = document.getElementById('latest_geotags');
-makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
-  latestGeotagsSection.style.display = 'block'; // Once map is ready, show geotags section
-});
+const loadButtonWrapper = document.createElement('div');
+const loadMapButton = document.createElement('button');
+const loadMap = () => {
+  loadButtonWrapper.remove();
+  if (latestGeotagsSection.getAttribute('data-map-loaded') !== 'true') {
+    makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
+      latestGeotagsSection.setAttribute('data-map-loaded', "true");
+      latestGeotagsSection.style.display = 'block'; // Once map is ready, show geotags section
+    });
+  }
+}
+loadButtonWrapper.id = 'loadMapButtonWrapper';
+loadButtonWrapper.classList.add('text-center v-spacing-top-4 v-spacing-bottom-4');
+loadMapButton.onclick = () => {loadMap()};
+loadMapButton.classList.add('btn-inverted');
+loadMapButton.innerText = 'Load map...';
+loadButtonWrapper.appendChild(loadMapButton);
+latestGeotagsSection.parentNode.insertBefore(loadButtonWrapper, latestGeotagsSection);

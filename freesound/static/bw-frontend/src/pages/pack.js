@@ -29,9 +29,26 @@ toggleShareLinkElement.addEventListener('click',  toggleShareLink);
 shareLinkElement.style.display = "none"
 
 // Pack geotags map
-
+// Load the map only when user clicks on "load map" button
 const mapCanvas = document.getElementById('map_canvas');
 const geotagsSection = document.getElementById('pack_geotags');
-makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
-  geotagsSection.style.display = 'block'; // Once map is ready, show geotags section
-});
+const loadButtonWrapper = document.createElement('div');
+const loadMapButton = document.createElement('button');
+const loadMap = () => {
+    loadMapButton.disabled = true;
+    loadMapButton.innerText = 'Loading...'
+    if (geotagsSection.getAttribute('data-map-loaded') !== 'true') {
+        makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
+            loadButtonWrapper.remove();
+            geotagsSection.setAttribute('data-map-loaded', "true");
+            mapCanvas.style.display = 'block'; // Once map is ready, show geotags section
+        });
+    }
+}
+loadButtonWrapper.id = 'loadMapButtonWrapper';
+loadButtonWrapper.classList.add('text-center', 'v-spacing-top-6', 'v-spacing-6');
+loadMapButton.onclick = () => {loadMap()};
+loadMapButton.classList.add('btn-inverse');
+loadMapButton.innerText = 'Load map...';
+loadButtonWrapper.appendChild(loadMapButton);
+geotagsSection.insertBefore(loadButtonWrapper, mapCanvas);

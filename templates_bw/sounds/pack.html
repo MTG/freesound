@@ -118,9 +118,9 @@
                         <div id="share-link" class="v-spacing-top-5">
                              <span class="text-grey">Share url: </span><br><input class="w-100" type="text" readonly value="{% absurl 'short-pack-link' pack.id %}" />
                         </div>
-                        <div id="pack_geotags" class="v-spacing-top-6 display-none">
+                        <div id="pack_geotags" class="v-spacing-top-6" data-map-loaded="false">
                             <h5 class="padding-bottom-3">Geotags in this pack</h5>
-                            <div id="map_canvas" class="sidebar-map" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
+                            <div id="map_canvas" class="sidebar-map display-none" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
                         </div>
                     </div>
                 </div>

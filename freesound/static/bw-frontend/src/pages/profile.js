@@ -101,18 +101,20 @@ const latestGeotagsSection = document.getElementById('latest_geotags');
 const loadButtonWrapper = document.createElement('div');
 const loadMapButton = document.createElement('button');
 const loadMap = () => {
-  loadButtonWrapper.remove();
+  loadMapButton.disabled = true;
+  loadMapButton.innerText = 'Loading...'
   if (latestGeotagsSection.getAttribute('data-map-loaded') !== 'true') {
     makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
+      loadButtonWrapper.remove();
       latestGeotagsSection.setAttribute('data-map-loaded', "true");
-      latestGeotagsSection.style.display = 'block'; // Once map is ready, show geotags section
+      mapCanvas.style.display = 'block'; // Once map is ready, show geotags section
     });
   }
 }
 loadButtonWrapper.id = 'loadMapButtonWrapper';
-loadButtonWrapper.classList.add('text-center v-spacing-top-4 v-spacing-bottom-4');
+loadButtonWrapper.classList.add('text-center', 'v-spacing-top-6', 'v-spacing-6');
 loadMapButton.onclick = () => {loadMap()};
-loadMapButton.classList.add('btn-inverted');
+loadMapButton.classList.add('btn-inverse');
 loadMapButton.innerText = 'Load map...';
 loadButtonWrapper.appendChild(loadMapButton);
-latestGeotagsSection.parentNode.insertBefore(loadButtonWrapper, latestGeotagsSection);
+latestGeotagsSection.insertBefore(loadButtonWrapper, mapCanvas);

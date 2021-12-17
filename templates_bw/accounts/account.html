@@ -181,7 +181,7 @@
                         {% endfor %}
                     </section>
                 {% endif %}
-
+                {% if user.profile.has_geotags %}
                 <div class="divider-light"></div>
                 <section id="latest_geotags" class="v-spacing-top-5" data-map-loaded="false">
                     <h5 class="padding-bottom-3">Latest geotags</h5>
@@ -189,7 +189,7 @@
                     <div class="v-spacing-top-2 center">
                         <a class="no-hover" href="{% url "geotags-for-user" user.username %}">See all geotags by {{ user.username }}</a>
                     </div>
-                </section>
+                </section>{% endif %}
             </aside>
         </div>
     </div>

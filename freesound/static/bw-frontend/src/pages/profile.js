@@ -117,4 +117,7 @@ loadMapButton.onclick = () => {loadMap()};
 loadMapButton.classList.add('btn-inverse');
 loadMapButton.innerText = 'Load map...';
 loadButtonWrapper.appendChild(loadMapButton);
-latestGeotagsSection.insertBefore(loadButtonWrapper, mapCanvas);
+if (latestGeotagsSection !== null){
+  latestGeotagsSection.insertBefore(loadButtonWrapper, mapCanvas);
+}
+

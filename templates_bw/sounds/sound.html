@@ -101,10 +101,8 @@
                             {% if sound.geotag_id %}
                                 <div>
                                     <a href="{% url 'sound-geotag' sound.user.username sound.id %}">
-                                        {% bw_icon 'pin' %} {{ sound.geotag.lat|floatformat:3 }}, {{ sound.geotag.lon|floatformat:3 }}
+                                        {% bw_icon 'pin' %} {{ sound.geotag.get_location_name }}
                                     </a>
-                                    {% comment %}In the span above we should put the textual name of the place where the sound was recorded
-                                    (if there is geotag). For now we'll put cooedinates{% endcomment %}
                                 </div>
                                 {% if sound.pack_id or sound.remix_group.all.count %}
                                     <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>

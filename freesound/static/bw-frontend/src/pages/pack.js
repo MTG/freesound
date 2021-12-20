@@ -46,7 +46,7 @@ const loadMap = () => {
     }
 }
 loadButtonWrapper.id = 'loadMapButtonWrapper';
-loadButtonWrapper.classList.add('text-center', 'v-spacing-top-6', 'v-spacing-6');
+loadButtonWrapper.classList.add('middle', 'center', 'sidebar-map', 'border-radius-5', 'bg-navy-light-grey');
 loadMapButton.onclick = () => {loadMap()};
 loadMapButton.classList.add('btn-inverse');
 loadMapButton.innerText = 'Load map...';

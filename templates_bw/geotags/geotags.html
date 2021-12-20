@@ -10,21 +10,23 @@
         <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
             {% if username %}
                 <h1>Map of sounds for user <a href="{% url "account" username %}">{{ username }}</a></h1>
+            {% elif tag %}
+                <h1>Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a></h1>
+            {% elif sound %}
+                <h1>Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a></h1>
             {% else %}
-                {% if tag %}
-                    <h1>Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a></h1>
-                {% else %}
-                    <h1>Map of sounds</h1>
-                {% endif %}
+                <h1>Map of sounds</h1>
             {% endif %}
+
             <div class="col-12 no-paddings v-spacing-top-negative-3 text-right text-grey">
                 <span id="indicator">Loading sounds... <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"></span>
             </div>
-            <div class="col-12 v-spacing-top-3 no-paddings">
+            <div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">
                 <div id="mapCanvas" style="height:700px; max-height: 700px;z-index: 0;"
                      data-map-center-lat="{{ center_lat }}"
                      data-map-center-lon="{{ center_lon }}"
                      data-map-zoom="{{ zoom }}"
+                     data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
                      data-map-username="{{ username }}"
                      data-map-tag="{{ tag }}"
                      data-geotags-url="{{ url }}"
@@ -32,11 +34,14 @@
                      data-geotags-embed-base-url="{% absurl 'embed-geotags-box-iframe' %}">
                 </div>
             </div>
+
             <div class="row">
                 <div class="col-md-7 v-spacing-top-2 middle">
+                     {% if not sound %}
                     <div><a id="embedControlsLabel" href="javascript:void(0);">Embed this map</a></div>
+                    {% endif %}
                 </div>
-                {% if username %}
+                {% if username or sound %}
                     <div class="col-md-5 v-spacing-top-2 text-right">
                         <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
                     </div>
@@ -51,6 +56,7 @@
                     {% endif %}
                 {% endif %}
             </div>
+            {% if not sound %}
             <div class="row">
                 <div class="col-md-12">
                     <div id="embedControls" class="display-none w-100 login-page-form">
@@ -71,7 +77,7 @@
                     </div>
                 </div>
             </div>
-
+            {% endif %}
         </div>
     </div>
 {% endblock %}

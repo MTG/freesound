@@ -21,7 +21,7 @@ let currentBoxTrLon;
 let centerLat;
 let centerLon;
 let zoom;
-const showSearch = true;
+const showSearch = (mapCanvas.hasAttribute('mapShowSearch') && mapCanvas.getAttribute('mapShowSearch') === 'true');
 const showStyleSelector = true;
 const clusterGeotags = true;
 const showMapEvenIfNoGeotags = true;
@@ -36,9 +36,11 @@ const toggleEmbedControls = () => {
     }
 };
 
-embedControlsLabel.addEventListener('click', () => {
-    toggleEmbedControls();
-});
+if (embedControlsLabel !== null ){
+    embedControlsLabel.addEventListener('click', () => {
+        toggleEmbedControls();
+    });
+}
 
 const updateQueryStringParameter = (uri, key, value) => {
     var re = new RegExp("([?&])" + key + "=.*?(&|#|$)", "i");
@@ -97,9 +99,11 @@ const changeEmbedWidthHeightCluster = () => {
 }
 
 [embedWidthInputElement, embedHeightInputElement, embedClusterCheckElement].forEach(element => {
-    element.addEventListener('change', () => {
-       changeEmbedWidthHeightCluster();
-    });
+    if (element !== null){
+        element.addEventListener('change', () => {
+           changeEmbedWidthHeightCluster();
+        });
+    }
 });
 
 if (tagFilterInput !== null){

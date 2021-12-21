@@ -223,6 +223,7 @@ def front_page(request):
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
         'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
+        'enable_popular_searches': settings.ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE,  # Used for beast whoosh only
     }
     return render(request, 'front.html', tvars)
 

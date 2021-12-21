@@ -3,22 +3,35 @@
 {% load absurl %}
 {% load staticfiles %}
 
-{% block title %}Map of sounds{% endblock %}
+{% block title %}
+    {% if username %}
+        Map of sounds for user {{ username }}
+    {% elif tag %}
+        Map of sounds with tag {{tag}}
+    {% elif sound %}
+        Map for sound {{ sound.original_filename }}
+    {% else %}
+        Map of sounds
+    {% endif %}
+{% endblock %}
 
 {% block content %}
     <div class="container">
         <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
-            {% if username %}
-                <h1>Map of sounds for user <a href="{% url "account" username %}">{{ username }}</a></h1>
-            {% elif tag %}
-                <h1>Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a></h1>
-            {% elif sound %}
-                <h1>Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a></h1>
-            {% else %}
-                <h1>Map of sounds</h1>
-            {% endif %}
-
-            <div class="col-12 no-paddings v-spacing-top-negative-3 text-right text-grey">
+            <div class="col-11 no-paddings">
+                <h1 class="line-height-percentage-140 ellipsis">
+                    {% if username %}
+                        Map of sounds for user <a href="{% url "account" username %}">{{ username }}</a>
+                    {% elif tag %}
+                        Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a>
+                    {% elif sound %}
+                        Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>
+                    {% else %}
+                        Map of sounds
+                    {% endif %}
+                </h1>
+            </div>
+            <div class="col-12 no-paddings v-spacing-top-negative-4 text-right text-grey">
                 <span id="indicator">Loading sounds... <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"></span>
             </div>
             <div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">

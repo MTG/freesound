@@ -43,13 +43,13 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
                         <div class="bw-carousel-container">
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     {% for sounds in latest_sounds|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for sound in sounds %}
-                                                    <div class="col-4 no-padding-left padding-right-4">
+                                                    <div class="col-4">
                                                         {% display_sound sound.id %}
                                                     </div>
                                                 {% endfor %}
@@ -62,43 +62,19 @@
                     </section>
                 {% endcache %}
 
-                {% if popular_searches and enable_popular_searches %}
-                    <hr />
-                    <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
-                        <div class="bw-carousel-container">
-                            <div class="bw-carousel-wrapper">
-                                <div class="bw-carousel with-dots">
-                                    {% for popular_searches_slice in popular_searches|chunks:4 %}
-                                        <div>
-                                            <div class="row no-margins">
-                                                {% for search_term, url in popular_searches_slice %}
-                                                    <div class="col v-spacing-1">
-                                                        {% bw_tag search_term 4 'w-100 h-75 display-inline-block' url 1.0 %}
-                                                    </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                {% endif %}
-
                 {% if trending_sound_ids %}
                     {% cache 300 bw_front_page_trending_sounds is_authenticated %}
                     <hr />
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds during the last week">Trending sounds</h3>
                         <div class="bw-carousel-container">
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     {% for sound_ids in trending_sound_ids|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for sound_id in sound_ids %}
-                                                    <div class="col-4 no-padding-left padding-right-4">
+                                                    <div class="col-4">
                                                         {% display_sound_small sound_id %}
                                                     </div>
                                                 {% endfor %}
@@ -118,13 +94,13 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
                         <div class="bw-carousel-container">
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     {% for sound_ids in trending_new_sound_ids|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for sound_id in sound_ids %}
-                                                    <div class="col-4 no-padding-left padding-right-4">
+                                                    <div class="col-4">
                                                         {% display_sound_small sound_id %}
                                                     </div>
                                                 {% endfor %}
@@ -144,13 +120,13 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded pack created in the last week">Trending new packs</h3>
                         <div class="bw-carousel-container">
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     {% for pack_ids in trending_new_pack_ids|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for pack_id in pack_ids %}
-                                                    <div class="col-4 no-padding-left padding-right-4">
+                                                    <div class="col-4">
                                                         {% display_pack pack_id %}
                                                     </div>
                                                 {% endfor %}
@@ -249,6 +225,29 @@
                     {% endcache %}
                 {% endif %}
 
+                {% if popular_searches and enable_popular_searches %}
+                    <hr />
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
+                        <div class="bw-carousel-container">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
+                                <div class="bw-carousel with-dots">
+                                    {% for popular_searches_slice in popular_searches|chunks:4 %}
+                                        <div>
+                                            <div class="row no-margins">
+                                                {% for search_term, url in popular_searches_slice %}
+                                                    <div class="col v-spacing-1">
+                                                        {% bw_tag search_term 4 'w-100 h-75 display-inline-block' url 1.0 %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                {% endif %}
             </main>
             <aside class="col-md-3">
                 <section class="v-spacing-4">

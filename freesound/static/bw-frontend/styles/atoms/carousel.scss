@@ -51,9 +51,15 @@
   bottom: 0;
   font-size: 0.5em;
   opacity: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 5%;
 
   .bw-carousel-container:hover > & {
     opacity: 1;
+  }
+
+  &.dots-distance-0 {
+    bottom: -1px;
   }
 
   &.dots-distance-1 {

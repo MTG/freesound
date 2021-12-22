@@ -1033,7 +1033,7 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
-@cache_page(60 * 60)
+#@cache_page(60 * 60)
 def charts(request):
     """
     This view shows some general Freesound use statistics. Some of the queries can be a bit slow but the view is
@@ -1065,36 +1065,48 @@ def charts(request):
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     # Top recent uploaders (by count and by length)
-    top_recent_uploaders_by_count = Sound.objects \
+    top_recent_uploaders_by_count = Sound.public \
         .filter(created__gte=last_time) \
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])}
     top_recent_uploaders_by_count_display = [
-        (user.profile.locations("avatar.M.url"), user.username, top_recent_uploaders_by_count[i]['n_sounds']) for
-        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count]))]
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['n_sounds']) for item in top_recent_uploaders_by_count]
 
-    top_recent_uploaders_by_length = Sound.objects \
+    top_recent_uploaders_by_length = Sound.public \
          .filter(created__gte=last_time) \
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])}
     top_recent_uploaders_by_length_display = [
-        (user.profile.locations("avatar.M.url"), user.username, top_recent_uploaders_by_length[i]['total_duration']) for
-        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length]))]
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['total_duration']) for item in top_recent_uploaders_by_length]
 
     # All time top uploaders (by count and by length)
-    all_time_top_uploaders_by_count = Sound.objects \
+    all_time_top_uploaders_by_count = Sound.public \
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])}
     all_time_top_uploaders_by_count_display = [
-        (user.profile.locations("avatar.M.url"), user.username, all_time_top_uploaders_by_count[i]['n_sounds']) for
-        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count]))]
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['n_sounds']) for item in all_time_top_uploaders_by_count]
 
-    all_time_top_uploaders_by_length = Sound.objects \
+    all_time_top_uploaders_by_length = Sound.public \
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])}
     all_time_top_uploaders_by_length_display = [
-        (user.profile.locations("avatar.M.url"), user.username, all_time_top_uploaders_by_length[i]['total_duration']) for
-        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length]))]
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['total_duration']) for item in all_time_top_uploaders_by_length]
 
     tvars = {
         'num_days': num_days,

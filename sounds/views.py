@@ -186,7 +186,8 @@ def packs(request):
 def front_page(request):
     rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
     trending_sound_ids = cache.get("trending_sound_ids", None)
-    trending_pack_ids = cache.get("trending_pack_ids", None)
+    trending_new_sound_ids = cache.get("trending_new_sound_ids", None)
+    trending_new_pack_ids = cache.get("trending_new_pack_ids", None)
     total_num_sounds = cache.get("total_num_sounds", 0)
     popular_searches = cache.get("popular_searches", None)
     top_donor_user_id = cache.get("top_donor_user_id", None)
@@ -213,7 +214,8 @@ def front_page(request):
         'rss_cache': rss_cache,
         'popular_searches': popular_searches,
         'trending_sound_ids': trending_sound_ids,
-        'trending_pack_ids': trending_pack_ids,
+        'trending_new_sound_ids': trending_new_sound_ids,
+        'trending_new_pack_ids': trending_new_pack_ids,
         'current_forum_threads': current_forum_threads,
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,

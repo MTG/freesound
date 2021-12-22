@@ -90,7 +90,7 @@
                     {% cache 300 bw_front_page_trending_sounds is_authenticated %}
                     <hr />
                     <section class="v-spacing-2">
-                        <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds during the last week">Trending sounds</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
                                 <div class="bw-carousel v-padding-bottom-4">
@@ -112,15 +112,41 @@
                     {% endcache %}
                 {% endif %}
 
-                {% if trending_pack_ids %}
-                    {% cache 300 bw_front_page_trending_packs is_authenticated %}
+                {% if trending_new_sound_ids %}
+                    {% cache 300 bw_front_page_trending_new_sounds is_authenticated %}
                     <hr />
                     <section class="v-spacing-2">
-                        <h3 class="v-spacing-4 v-spacing-top-4">Trending packs</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
                                 <div class="bw-carousel v-padding-bottom-4">
-                                    {% for pack_ids in trending_pack_ids|chunks:3 %}
+                                    {% for sound_ids in trending_new_sound_ids|chunks:3 %}
+                                        <div>
+                                            <div class="row no-margins">
+                                                {% for sound_id in sound_ids %}
+                                                    <div class="col-4">
+                                                        {% display_sound_small sound_id %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    {% endcache %}
+                {% endif %}
+
+                {% if trending_new_pack_ids %}
+                    {% cache 300 bw_front_page_trending_new_packs is_authenticated %}
+                    <hr />
+                    <section class="v-spacing-2">
+                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded pack created in the last week">Trending new packs</h3>
+                        <div class="bw-carousel-container">
+                            <div class="bw-carousel-wrapper">
+                                <div class="bw-carousel v-padding-bottom-4">
+                                    {% for pack_ids in trending_new_pack_ids|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for pack_id in pack_ids %}

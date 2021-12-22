@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import throttle from 'lodash.throttle'
 import playerSettings from './settings'
-import { formatAudioDuration, playAtTime } from './utils'
+import { formatAudioDuration, playAtTime, isTouchEnabledDevice } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator } from './audio-element'
 
@@ -308,6 +308,11 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
     playerControls.classList.add('bw-player__controls--minimal')
   }
 
+  if (isTouchEnabledDevice()){
+    // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
+    playerControls.classList.add('opacity-050')
+  }
+
   let startWithSpectrum = false;
   if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
     startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
@@ -332,8 +337,9 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
 /**
  *
  * @param {HTMLDivElement} parentNode
+ * @param {HTMLImgElement} playerImgNode
  */
-const createSetFavoriteButton = parentNode => {
+const createSetFavoriteButton = (parentNode, playerImgNode) => {
   const getIsFavorite = () => false // parentNode.dataset.favorite === 'true' // We always show the same button even if sound already bookmarked
   const favoriteButtonContainer = document.createElement('div')
   const favoriteButton = createControlButton('bookmark')
@@ -342,6 +348,17 @@ const createSetFavoriteButton = parentNode => {
     'bw-player__favorite',
     'stop-propagation'
   )
+  let startWithSpectrum = false;
+  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
+    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+  }
+  if (startWithSpectrum){
+    favoriteButtonContainer.classList.add('bw-player__controls-inverted')
+  }
+  if (isTouchEnabledDevice()){
+    // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
+    favoriteButtonContainer.classList.add('opacity-050')
+  }
   favoriteButtonContainer.setAttribute('data-toggle', `bookmark-modal-${ parentNode.dataset.soundId }`);
   favoriteButtonContainer.appendChild(
     getIsFavorite() ? unfavoriteButton : favoriteButton
@@ -372,7 +389,7 @@ const createPlayer = parentNode => {
   )
   const playerImgNode = playerImage.getElementsByTagName('img')[0]
   const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
-  const bookmarkButton = createSetFavoriteButton(parentNode)
+  const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
 
   parentNode.appendChild(playerImage)
   parentNode.appendChild(audioElement)

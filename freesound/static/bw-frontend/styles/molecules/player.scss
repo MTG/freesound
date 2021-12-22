@@ -49,8 +49,12 @@
 }
 
 .bw-player-control-btn {
+  color: $black;
   background-color: transparent;
   opacity: 0.7;
+  padding-right: 10px;
+  padding-left: 5px;
+
   i {
     font-weight: 900 !important;
   }
@@ -168,7 +172,7 @@
 .bw-player__favorite {
   position: absolute;
   top: 0;
-  right: -2px;
+  right: -7px;
   opacity: 0;
   transition: opacity 0.2s ease;
 }

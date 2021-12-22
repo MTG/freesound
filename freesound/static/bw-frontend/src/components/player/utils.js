@@ -1,4 +1,9 @@
 /* eslint-disable import/prefer-default-export */
+
+export const isTouchEnabledDevice = () => {
+  return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
+}
+
 /**
  * @param {number} value
  */

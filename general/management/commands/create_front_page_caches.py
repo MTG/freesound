@@ -18,14 +18,10 @@
 #     See AUTHORS file.
 #
 
-import json
 import logging
-import time
-from collections import defaultdict
 
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.db.models.functions import Greatest
 from django.template.loader import render_to_string
 from django.core.cache import cache
@@ -91,17 +87,14 @@ class Command(LoggingBaseCommand):
         cache.set("total_num_sounds", total_num_sounds, cache_time)
 
         # Calculate top donor
-        top_donor_data = defaultdict(int)
-        for username, amount in \
-                Donation.objects.filter(created__gt=last_week) \
-                        .exclude(user=None, is_anonymous=True) \
-                        .values_list('user__username', 'amount'):
-            top_donor_data[username] += amount
-        if top_donor_data:
-            top_donor_username = sorted(top_donor_data.items(), key=lambda x: x[1], reverse=True)[0][0]
-            top_donor = User.objects.get(username=top_donor_username)
-            cache.set("top_donor_user_id", top_donor.id, cache_time)
-        else:
-            cache.set("top_donor_user_id", None, cache_time)
+        try:
+            top_donor_user_id = Donation.objects \
+                .filter(created__gt=last_week) \
+                .exclude(user=None, is_anonymous=True) \
+                .values('user_id').annotate(total_donations=Sum('amount')) \
+                .order_by('-total_donations').values_list('user_id', flat=True)[0]
+        except IndexError:
+            top_donor_user_id = None
+        cache.set("top_donor_user_id", top_donor_user_id, cache_time)
 
         self.log_end()

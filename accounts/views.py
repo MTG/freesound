@@ -1033,7 +1033,7 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
-#@cache_page(60 * 60)
+@cache_page(60 * 60)
 def charts(request):
     """
     This view shows some general Freesound use statistics. Some of the queries can be a bit slow but the view is

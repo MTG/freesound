@@ -357,7 +357,8 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   }
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
-    favoriteButtonContainer.classList.add('opacity-050')
+    // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
+    //favoriteButtonContainer.classList.add('opacity-050')
   }
   favoriteButtonContainer.setAttribute('data-toggle', `bookmark-modal-${ parentNode.dataset.soundId }`);
   favoriteButtonContainer.appendChild(

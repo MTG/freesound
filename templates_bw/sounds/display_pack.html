@@ -10,7 +10,7 @@
         <div class="v-spacing-3 overfow-hidden">
             <div class="bw-carousel-container">
                 <div class="bw-carousel-wrapper">
-                    <div class="bw-carousel with-dots dots-distance-1">
+                    <div class="bw-carousel with-dots dots-distance-3">
                     {% comment %}get random sounds to show here so if cached we won't run this query{% endcomment %}
                     {% with pack.get_random_sounds_from_pack as sounds %}
                         {% for sound in sounds %}
@@ -22,7 +22,7 @@
                     </div>
                 </div>
             </div>
-            <h5 class="ellipsis line-height-percentage-150">
+            <h5 class="ellipsis line-height-percentage-150 v-spacing-top-3">
                 <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
             </h5>
             <div>

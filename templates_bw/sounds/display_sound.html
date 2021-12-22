@@ -13,7 +13,7 @@
         {% endif %}
         <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}">
             {% include "sounds/player.html" %}
-            <h5 class="ellipsis line-height-percentage-150">
+            <h5 class="ellipsis line-height-percentage-150 v-spacing-top-1">
                 <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename }}</a>
             </h5>
             <div>

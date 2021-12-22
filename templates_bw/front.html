@@ -44,12 +44,12 @@
                         <h3 class="v-spacing-4">Latest additions</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
-                                <div class="bw-carousel with-dots v-padding-bottom-4">
+                                <div class="bw-carousel with-dots dots-distance-1">
                                     {% for sounds in latest_sounds|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for sound in sounds %}
-                                                    <div class="col-4">
+                                                    <div class="col-4 no-padding-left padding-right-4">
                                                         {% display_sound sound.id %}
                                                     </div>
                                                 {% endfor %}
@@ -64,7 +64,7 @@
 
                 {% if popular_searches and enable_popular_searches %}
                     <hr />
-                    <section class="v-spacing-4">
+                    <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
@@ -89,16 +89,16 @@
                 {% if trending_sound_ids %}
                     {% cache 300 bw_front_page_trending_sounds is_authenticated %}
                     <hr />
-                    <section class="v-spacing-2">
+                    <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds during the last week">Trending sounds</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
-                                <div class="bw-carousel with-dots v-padding-bottom-4">
+                                <div class="bw-carousel with-dots dots-distance-1">
                                     {% for sound_ids in trending_sound_ids|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for sound_id in sound_ids %}
-                                                    <div class="col-4">
+                                                    <div class="col-4 no-padding-left padding-right-4">
                                                         {% display_sound_small sound_id %}
                                                     </div>
                                                 {% endfor %}
@@ -115,16 +115,16 @@
                 {% if trending_new_sound_ids %}
                     {% cache 300 bw_front_page_trending_new_sounds is_authenticated %}
                     <hr />
-                    <section class="v-spacing-2">
+                    <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
-                                <div class="bw-carousel with-dots v-padding-bottom-4">
+                                <div class="bw-carousel with-dots dots-distance-1">
                                     {% for sound_ids in trending_new_sound_ids|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for sound_id in sound_ids %}
-                                                    <div class="col-4">
+                                                    <div class="col-4 no-padding-left padding-right-4">
                                                         {% display_sound_small sound_id %}
                                                     </div>
                                                 {% endfor %}
@@ -141,16 +141,16 @@
                 {% if trending_new_pack_ids %}
                     {% cache 300 bw_front_page_trending_new_packs is_authenticated %}
                     <hr />
-                    <section class="v-spacing-2">
+                    <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded pack created in the last week">Trending new packs</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper">
-                                <div class="bw-carousel with-dots v-padding-bottom-4">
+                                <div class="bw-carousel with-dots dots-distance-1">
                                     {% for pack_ids in trending_new_pack_ids|chunks:3 %}
                                         <div>
                                             <div class="row no-margins">
                                                 {% for pack_id in pack_ids %}
-                                                    <div class="col-4">
+                                                    <div class="col-4 no-padding-left padding-right-4">
                                                         {% display_pack pack_id %}
                                                     </div>
                                                 {% endfor %}
@@ -167,7 +167,7 @@
                 {% if random_sound %}
                     {% cache 300 bw_front_page_random_sound is_authenticated %}
                     <hr />
-                    <section class="v-spacing-6">
+                    <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
                         {% with random_sound as sound %}
                             {% display_sound_big_no_info random_sound %}
@@ -251,9 +251,9 @@
 
             </main>
             <aside class="col-md-3">
-                <section class="v-spacing-7">
+                <section class="v-spacing-4">
                     <h4>Enjoying Freesound?</h4>
-                    <p class="text-grey v-spacing-2">Please consider donating some money</p>
+                    <p class="text-grey v-spacing-2">Please consider donating some money. It doesn't take a large donation to help us!</p>
                     <div class="between v-spacing-5 wrap">
                         <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
                         <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
@@ -271,7 +271,7 @@
                 </section>
                 <hr />
                 {% cache 300 bw_forum_threads %}
-                    <section class="v-padding-7">
+                    <section class="v-padding-4">
                         <h4 class="v-spacing-3">Hot forum threads</h4>
                         {% for forum in current_forum_threads %}
                             <article class="v-padding-2">
@@ -289,7 +289,12 @@
                             <a class="no-hover" href="{% url 'forums-hot-threads' %}"><button class="btn-inverse">More threads here</button></a>
                         </div>
                     </section>
+                    <hr />
                 {% endcache %}
+                <section class="v-padding-4">
+                    <div class="bw-front__freesound_labs_logo"></div>
+                    <p class="text-grey v-spacing-2">Freesound Labs is a directory of apps, hacks, projects, and research using Freesound. <a class="bw-link--grey" href="https://labs.freesound.org" target="_blank">Click here to learn more!</a></p>
+                </section>
             </aside>
         </div>
     </div>

@@ -93,6 +93,9 @@ carousels.forEach(carousel => {
     if (isTouchEnabledDevice()) {
       // For touch-enabled devices, make dots always visible to suggest carousel interaction
       dotIconsParent.classList.add('opacity-100')
+    } else {
+      // Make dot icons always visible even for non-touch devices as it looks more understandable
+      dotIconsParent.classList.add('opacity-100')
     }
     carousel.append(dotIconsParent)
   }

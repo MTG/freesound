@@ -981,6 +981,7 @@ def create_user_rank(uploaders, posters, commenters):
     return user_rank, sort_list
 
 
+@redirect_if_beastwhoosh('charts')
 def accounts(request):
     num_days = 14
     num_active_users = 10
@@ -1030,6 +1031,52 @@ def accounts(request):
         'logged_users': logged_users,
     }
     return render(request, 'accounts/accounts.html', tvars)
+
+
+def charts(request):
+    num_days = 14
+    num_active_users = 10
+    num_all_time_active_users = 10
+    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
+
+    # Most active users in last num_days, newest active users in last num_days and logged in users
+    latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id'))\
+        .order_by("-id__count")
+    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id'))\
+        .order_by("-id__count")
+    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id'))\
+        .order_by("-id__count")
+    user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters)
+    most_active_users = User.objects.select_related("profile")\
+        .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_active_users]])
+    most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
+    most_active_users_display = sorted(most_active_users_display,
+                                       key=lambda usr: user_rank[usr[0].id]['score'],
+                                       reverse=True)
+
+    # All time most active users (these queries are kind of slow, but page is cached)
+    all_time_uploaders = Profile.objects.extra(select={'id__count': 'num_sounds'})\
+        .order_by("-num_sounds").values("user", "id__count")[:num_all_time_active_users]
+    all_time_posters = Profile.objects.extra(select={'id__count': 'num_posts', 'author_id': 'user_id'})\
+        .order_by("-num_posts").values("author_id", "id__count")[:num_all_time_active_users]
+    # Performing a count(*) on Comment table is slow, we could add 'num_comments' to user profile
+    all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id'))\
+        .order_by("-id__count")[:num_all_time_active_users]
+    all_time_user_rank, all_time_sort_list = create_user_rank(all_time_uploaders, all_time_posters, all_time_commenters)
+    all_time_most_active_users = User.objects.select_related("profile")\
+        .filter(id__in=[u[1] for u in sorted(all_time_sort_list, reverse=True)[:num_all_time_active_users]])
+    all_time_most_active_users_display = [[u, all_time_user_rank[u.id]] for u in all_time_most_active_users]
+    all_time_most_active_users_display = sorted(all_time_most_active_users_display,
+                                                key=lambda usr: all_time_user_rank[usr[0].id]['score'],
+                                                reverse=True)
+
+    tvars = {
+        'num_days': num_days,
+        'most_active_users': most_active_users_display,
+        'all_time_most_active_users': all_time_most_active_users_display,
+    }
+    print tvars
+    return render(request, 'accounts/charts.html', tvars)
 
 
 @redirect_if_old_username_or_404

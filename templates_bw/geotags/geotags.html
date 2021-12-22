@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "simple_page.html" %}
 {% load bw_templatetags %}
 {% load absurl %}
 {% load staticfiles %}
@@ -14,85 +14,83 @@
         Map of sounds
     {% endif %}
 {% endblock %}
-
-{% block content %}
-    <div class="container">
-        <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
-            <div class="col-11 no-paddings">
-                <h1 class="line-height-percentage-140 ellipsis">
-                    {% if username %}
-                        Map of sounds for user <a href="{% url "account" username %}">{{ username }}</a>
-                    {% elif tag %}
-                        Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a>
-                    {% elif sound %}
-                        Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>
-                    {% else %}
-                        Map of sounds
-                    {% endif %}
-                </h1>
-            </div>
-            <div class="col-12 no-paddings v-spacing-top-negative-4 text-right text-grey">
-                <span id="indicator">Loading sounds... <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"></span>
-            </div>
-            <div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">
-                <div id="mapCanvas" style="height:700px; max-height: 700px;z-index: 0;"
-                     data-map-center-lat="{{ center_lat }}"
-                     data-map-center-lon="{{ center_lon }}"
-                     data-map-zoom="{{ zoom }}"
-                     data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
-                     data-map-username="{{ username }}"
-                     data-map-tag="{{ tag }}"
-                     data-geotags-url="{{ url }}"
-                     data-geotags-url-box="{% url "geotags-box-barray" %}"
-                     data-geotags-embed-base-url="{% absurl 'embed-geotags-box-iframe' %}">
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-7 v-spacing-top-2 middle">
-                     {% if not sound %}
-                    <div><a id="embedControlsLabel" href="javascript:void(0);">Embed this map</a></div>
-                    {% endif %}
-                </div>
-                {% if username or sound %}
-                    <div class="col-md-5 v-spacing-top-2 text-right">
-                        <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
-                    </div>
-                {% else %}
-                    <div class="{% if not tag %}offset-2 col-md-3 text-right{% else %}col-md-3{% endif %} v-spacing-top-3 middle">
-                        <input data-base-url="{% url "geotags" %}" id="tagFilter" type="search" name="t" class="bw-forums__input-search" placeholder="Filter by tag..." value="{% if tag %}{{ tag }}{% endif %}" />
-                    </div>
-                    {% if tag %}
-                        <div class="col-md-2 v-spacing-top-2 text-right ">
-                            <a class="no-hover" href="{% url "geotags" %}"><button class="btn-secondary btn-inverse">Clear filter</button></a>
-                        </div>
-                    {% endif %}
-                {% endif %}
-            </div>
-            {% if not sound %}
-            <div class="row">
-                <div class="col-md-12">
-                    <div id="embedControls" class="display-none w-100 login-page-form">
-                        <form class="w-50 v-spacing-top-2">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label for="embedWidthInput">Embed width</label> <input type="number" min="100" step="1" value="900" id="embedWidthInput"/>&nbsp;&nbsp;
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="embedHeightInput">Embed height</label> <input type="number" min="100" step="1" value="600" id="embedHeightInput"/>&nbsp
-                                </div>
-                            </div>
-                            <label for="embedClusterCheck">Show clusters in embed</label> <input class="bw-checkbox" type="checkbox" checked id="embedClusterCheck" />
-                        </form>
-                        <p>
-                            <textarea id="embedCode" readonly style="width:100%;height:60px;"></textarea>
-                        </p>
-                    </div>
-                </div>
-            </div>
+{% block page-title-custom %}
+    <div class="col-11 no-paddings">
+        <h1 class="line-height-percentage-140 ellipsis">
+            {% if username %}
+                Map of sounds for user <a href="{% url "account" username %}">{{ username }}</a>
+            {% elif tag %}
+                Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a>
+            {% elif sound %}
+                Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>
+            {% else %}
+                Map of sounds
             {% endif %}
+        </h1>
+    </div>
+    <div class="col-12 no-paddings v-spacing-top-negative-4 text-right text-grey">
+        <span id="indicator">Loading sounds... <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"></span>
+    </div>
+{% endblock %}
+
+{% block page-content %}
+    <div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">
+        <div id="mapCanvas" style="height:700px; max-height: 700px;z-index: 0;"
+             data-map-center-lat="{{ center_lat }}"
+             data-map-center-lon="{{ center_lon }}"
+             data-map-zoom="{{ zoom }}"
+             data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
+             data-map-username="{{ username }}"
+             data-map-tag="{{ tag }}"
+             data-geotags-url="{{ url }}"
+             data-geotags-url-box="{% url "geotags-box-barray" %}"
+             data-geotags-embed-base-url="{% absurl 'embed-geotags-box-iframe' %}">
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-md-7 v-spacing-top-2 middle">
+             {% if not sound %}
+            <div><a id="embedControlsLabel" href="javascript:void(0);">Embed this map</a></div>
+            {% endif %}
+        </div>
+        {% if username or sound %}
+            <div class="col-md-5 v-spacing-top-2 text-right">
+                <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
+            </div>
+        {% else %}
+            <div class="{% if not tag %}offset-2 col-md-3 text-right{% else %}col-md-3{% endif %} v-spacing-top-3 middle">
+                <input data-base-url="{% url "geotags" %}" id="tagFilter" type="search" name="t" class="bw-forums__input-search" placeholder="Filter by tag..." value="{% if tag %}{{ tag }}{% endif %}" />
+            </div>
+            {% if tag %}
+                <div class="col-md-2 v-spacing-top-2 text-right ">
+                    <a class="no-hover" href="{% url "geotags" %}"><button class="btn-secondary btn-inverse">Clear filter</button></a>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% if not sound %}
+    <div class="row">
+        <div class="col-md-12">
+            <div id="embedControls" class="display-none w-100 login-page-form">
+                <form class="w-50 v-spacing-top-2">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="embedWidthInput">Embed width</label> <input type="number" min="100" step="1" value="900" id="embedWidthInput"/>&nbsp;&nbsp;
+                        </div>
+                        <div class="col-md-6">
+                            <label for="embedHeightInput">Embed height</label> <input type="number" min="100" step="1" value="600" id="embedHeightInput"/>&nbsp
+                        </div>
+                    </div>
+                    <label for="embedClusterCheck">Show clusters in embed</label> <input class="bw-checkbox" type="checkbox" checked id="embedClusterCheck" />
+                </form>
+                <p>
+                    <textarea id="embedCode" readonly style="width:100%;height:60px;"></textarea>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 {% endblock %}
 
 {% block extrabody %}

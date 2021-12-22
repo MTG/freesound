@@ -42,7 +42,7 @@ from django.contrib.auth.views import LoginView, PasswordResetCompleteView, Pass
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Sum, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
@@ -51,7 +51,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
-from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import never_cache, cache_page
 from django.views.decorators.csrf import csrf_exempt
 from oauth2_provider.models import AccessToken
 
@@ -1033,13 +1033,18 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
+@cache_page(60 * 60)
 def charts(request):
+    """
+    This view shows some general Freesound use statistics. Some of the queries can be a bit slow but the view is
+    cached every 60 minutes so load time should be fast for most users. If this simple caching strategy is not good
+    enough, then we should move computation of statistics to a cron job.
+    """
     num_days = 14
-    num_active_users = 10
-    num_all_time_active_users = 10
+    num_items = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
 
-    # Most active users in last num_days, newest active users in last num_days and logged in users
+    # Most active users in last num_days
     latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id'))\
         .order_by("-id__count")
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id'))\
@@ -1048,34 +1053,58 @@ def charts(request):
         .order_by("-id__count")
     user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters)
     most_active_users = User.objects.select_related("profile")\
-        .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_active_users]])
+        .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_items]])
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
     most_active_users_display = sorted(most_active_users_display,
                                        key=lambda usr: user_rank[usr[0].id]['score'],
                                        reverse=True)
 
-    # All time most active users (these queries are kind of slow, but page is cached)
-    all_time_uploaders = Profile.objects.extra(select={'id__count': 'num_sounds'})\
-        .order_by("-num_sounds").values("user", "id__count")[:num_all_time_active_users]
-    all_time_posters = Profile.objects.extra(select={'id__count': 'num_posts', 'author_id': 'user_id'})\
-        .order_by("-num_posts").values("author_id", "id__count")[:num_all_time_active_users]
-    # Performing a count(*) on Comment table is slow, we could add 'num_comments' to user profile
-    all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id'))\
-        .order_by("-id__count")[:num_all_time_active_users]
-    all_time_user_rank, all_time_sort_list = create_user_rank(all_time_uploaders, all_time_posters, all_time_commenters)
-    all_time_most_active_users = User.objects.select_related("profile")\
-        .filter(id__in=[u[1] for u in sorted(all_time_sort_list, reverse=True)[:num_all_time_active_users]])
-    all_time_most_active_users_display = [[u, all_time_user_rank[u.id]] for u in all_time_most_active_users]
-    all_time_most_active_users_display = sorted(all_time_most_active_users_display,
-                                                key=lambda usr: all_time_user_rank[usr[0].id]['score'],
-                                                reverse=True)
+    # Newest active users
+    new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time) \
+                    .filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_items]
+    new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
+
+    # Top recent uploaders (by count and by length)
+    top_recent_uploaders_by_count = Sound.objects \
+        .filter(created__gte=last_time) \
+        .values('user_id').annotate(n_sounds=Count('user_id')) \
+        .order_by('-n_sounds')[0:num_items]
+    top_recent_uploaders_by_count_display = [
+        (user.profile.locations("avatar.M.url"), user.username, top_recent_uploaders_by_count[i]['n_sounds']) for
+        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count]))]
+
+    top_recent_uploaders_by_length = Sound.objects \
+         .filter(created__gte=last_time) \
+         .values('user_id').annotate(total_duration=Sum('duration')) \
+         .order_by('-total_duration')[0:num_items]
+    top_recent_uploaders_by_length_display = [
+        (user.profile.locations("avatar.M.url"), user.username, top_recent_uploaders_by_length[i]['total_duration']) for
+        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length]))]
+
+    # All time top uploaders (by count and by length)
+    all_time_top_uploaders_by_count = Sound.objects \
+        .values('user_id').annotate(n_sounds=Count('user_id')) \
+        .order_by('-n_sounds')[0:num_items]
+    all_time_top_uploaders_by_count_display = [
+        (user.profile.locations("avatar.M.url"), user.username, all_time_top_uploaders_by_count[i]['n_sounds']) for
+        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count]))]
+
+    all_time_top_uploaders_by_length = Sound.objects \
+         .values('user_id').annotate(total_duration=Sum('duration')) \
+         .order_by('-total_duration')[0:num_items]
+    all_time_top_uploaders_by_length_display = [
+        (user.profile.locations("avatar.M.url"), user.username, all_time_top_uploaders_by_length[i]['total_duration']) for
+        i, user in enumerate(User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length]))]
 
     tvars = {
         'num_days': num_days,
-        'most_active_users': most_active_users_display,
-        'all_time_most_active_users': all_time_most_active_users_display,
+        'recent_most_active_users': most_active_users_display,
+        'new_active_users': new_users_display,
+        'top_recent_uploaders_by_count': top_recent_uploaders_by_count_display,
+        'top_recent_uploaders_by_length': top_recent_uploaders_by_length_display,
+        'all_time_top_uploaders_by_count': all_time_top_uploaders_by_count_display,
+        'all_time_top_uploaders_by_length': all_time_top_uploaders_by_length_display
     }
-    print tvars
     return render(request, 'accounts/charts.html', tvars)
 
 

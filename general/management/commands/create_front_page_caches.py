@@ -67,7 +67,7 @@ class Command(LoggingBaseCommand):
         # Currently, this section is disabled in BW front page
 
         # Generate trending sounds cache (most downloaded sounds during last week)
-        trending_sound_ids = Download.objects.select_related('sound') \
+        trending_sound_ids = Download.objects \
             .filter(created__gte=last_week).exclude(sound__is_explicit=True) \
             .values('sound_id').annotate(n_downloads=Count('sound_id')) \
             .order_by('-n_downloads').values_list('sound_id', flat=True)[0:9]

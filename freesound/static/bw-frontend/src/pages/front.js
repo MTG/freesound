@@ -38,12 +38,14 @@ window.addEventListener('scroll', checkShouldShowSearchInNavbar)
 const randomSoundDetailsToggleLink = document.getElementById('randomSoundDetailsToggleLink');
 const randomSoundDetails = document.getElementById('randomSoundDetails');
 
-randomSoundDetailsToggleLink.addEventListener('click', () => {
-  if (randomSoundDetails.classList.contains('display-none')){
-      randomSoundDetails.classList.remove('display-none');
-      randomSoundDetailsToggleLink.innerText = "Hide details";
-  } else{
-      randomSoundDetails.classList.add('display-none');
-      randomSoundDetailsToggleLink.innerText = "Reveal details";
-  }
-});
+if (randomSoundDetailsToggleLink !== null){
+    randomSoundDetailsToggleLink.addEventListener('click', () => {
+      if (randomSoundDetails.classList.contains('display-none')){
+          randomSoundDetails.classList.remove('display-none');
+          randomSoundDetailsToggleLink.innerText = "Hide details";
+      } else{
+          randomSoundDetails.classList.add('display-none');
+          randomSoundDetailsToggleLink.innerText = "Reveal details";
+      }
+    });
+}

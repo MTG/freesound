@@ -958,8 +958,8 @@ def latest_content_type(scores):
 
 def create_user_rank(uploaders, posters, commenters):
     upload_weight = 1
-    post_weight = 0.7
-    comment_weight = 0.0
+    post_weight = 0.4
+    comment_weight = 0.05
     user_rank = {}
     for user in uploaders:
         user_rank[user['user']] = {'uploads': user['id__count'], 'posts': 0, 'comments': 0, 'score': 0}
@@ -1033,7 +1033,7 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
-@cache_page(60 * 60)
+#@cache_page(60 * 60)
 def charts(request):
     """
     This view shows some general Freesound use statistics. Some of the queries can be a bit slow but the view is
@@ -1054,15 +1054,19 @@ def charts(request):
     user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters)
     most_active_users = User.objects.select_related("profile")\
         .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_items]])
-    most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
+    most_active_users_display = [[u, user_rank[u.id]] for u in most_active_users]
     most_active_users_display = sorted(most_active_users_display,
                                        key=lambda usr: user_rank[usr[0].id]['score'],
                                        reverse=True)
 
     # Newest active users
-    new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time) \
-                    .filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_items]
-    new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
+    new_user_in_rank_ids = User.objects.filter(date_joined__gte=last_time, id__in=user_rank.keys())\
+        .values_list('id', flat=True)
+    new_user_objects = {user.id: user for user in
+                        User.objects.select_related("profile").filter(date_joined__gte=last_time)
+                            .filter(id__in=new_user_in_rank_ids)}
+    new_users_display = [(new_user_objects[user_id], user_rank[user_id]) for user_id in new_user_in_rank_ids]
+    new_users_display = sorted(new_users_display, key=lambda x: x[1]['score'], reverse=True)
 
     # Top recent uploaders (by count and by length)
     top_recent_uploaders_by_count = Sound.public \

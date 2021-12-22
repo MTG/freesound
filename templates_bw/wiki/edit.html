@@ -1,30 +1,26 @@
-{% extends "base.html" %}
+{% extends "simple_page.html" %}
 
 {% block title %}Editing - {{content.title}}{% endblock %}
+{% block page-title %}Editing - {{ name }}{% endblock %}
 
-{% block content %}
-    <div class="container">
-        <div class="bw-wiki navbar-space-filler v-spacing-3  v-spacing-top-3">
-            <h1>Editing - {{ name }}</h1>
-
-            {% if content %}
-            <ul class="v-spacing-4">
-                <li><strong>version</strong>: {{content.id}} - <a href="{% url "wiki-page-history" name %}">history and comparison</a></li>
-                <li><strong>previous edit date</strong>: {{content.created}}</li>
-                {% if content.author %}
-                <li><strong>previous author</strong>: {{content.author.username}}</li>
-                {% else %}
-                <li><strong>no previous author</strong></li>
-                {% endif %}
-            </ul>
+{% block page-content %}
+    <div class="bw-wiki">
+        {% if content %}
+        <ul class="v-spacing-4">
+            <li><strong>version</strong>: {{content.id}} - <a href="{% url "wiki-page-history" name %}">history and comparison</a></li>
+            <li><strong>previous edit date</strong>: {{content.created}}</li>
+            {% if content.author %}
+            <li><strong>previous author</strong>: {{content.author.username}}</li>
+            {% else %}
+            <li><strong>no previous author</strong></li>
             {% endif %}
-
-            <form method="post" action=".">{% csrf_token %}
-            {{ form }}
-            <div class="text-right">
-                <button class="btn-primary v-spacing-top-5">Save</button>
-            </div>
-            </form>
+        </ul>
+        {% endif %}
+        <form method="post" action=".">{% csrf_token %}
+        {{ form }}
+        <div class="text-right">
+            <button class="btn-primary v-spacing-top-5">Save</button>
         </div>
+        </form>
     </div>
 {% endblock %}

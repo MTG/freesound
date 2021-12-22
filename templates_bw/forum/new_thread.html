@@ -1,49 +1,45 @@
-{% extends "base.html" %}
+{% extends "simple_page.html" %}
 {% load bw_templatetags %}
 {% load staticfiles %}
 
 {% block title %}Forums - {{forum.name}} - New Thread{% endblock %}
+{% block page-title-custom %}{% endblock %}
 
-{% block content %}
-    <div class="container">
-        <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
-            <div class="row">
-                <div class="col-md-6">
-                    <ul class="navbar-forums-hot navbar-breadcrumb">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link nav-link" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
-                        </li>
-                        <li class="nav-item text-16">
-                            New thread
-                        </li>
-                  </ul>
-                </div>
-            </div>
-            <div class="divider-light v-spacing-top-1 v-spacing-5"></div>
-            <div class="v-spacing-top-5">
-                <form method="post" action="." class="bw-new-thread__form w-100 disable-on-submit">{% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-1 v-spacing-top-2">{% bw_user_avatar request.user.profile.locations.avatar.L.url request.user.username 75 %}</div>
-                            <div class="col-md-2 v-spacing-top-2">
-                                <h6 class="text-16 no-margins"><a href="">{{ request.user.username }}</a></h6>
-                                <p class="text-grey no-margins">{{ request.user.profile.num_sounds }} sound{{ request.user.profile.num_sounds|pluralize }}</p>
-                                <p class="text-grey no-margins">{{ request.user.profile.num_posts }} post{{ request.user.profile.num_posts|pluralize }}</p>
-                            </div>
-                            <div class="col-md-7 ">
-                                {{form.as_p}}
-                            </div>
-                    </div>
-                    <div class="row v-spacing-top-5">
-                        <div class="col-md-7 offset-3">
-                            <button class="btn-primary w-100">Create thread</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+{% block page-content %}
+    <div class="row">
+        <div class="col-md-6">
+            <ul class="navbar-forums-hot navbar-breadcrumb">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                </li>
+                <li class="nav-item text-16">
+                    New thread
+                </li>
+          </ul>
         </div>
     </div>
-
+    <div class="divider-light v-spacing-top-1 v-spacing-5"></div>
+    <div class="v-spacing-top-5">
+        <form method="post" action="." class="bw-new-thread__form w-100 disable-on-submit">{% csrf_token %}
+            <div class="row">
+                <div class="col-md-1 v-spacing-top-2">{% bw_user_avatar request.user.profile.locations.avatar.L.url request.user.username 75 %}</div>
+                    <div class="col-md-2 v-spacing-top-2">
+                        <h6 class="text-16 no-margins"><a href="">{{ request.user.username }}</a></h6>
+                        <p class="text-grey no-margins">{{ request.user.profile.num_sounds }} sound{{ request.user.profile.num_sounds|pluralize }}</p>
+                        <p class="text-grey no-margins">{{ request.user.profile.num_posts }} post{{ request.user.profile.num_posts|pluralize }}</p>
+                    </div>
+                    <div class="col-md-7 ">
+                        {{form.as_p}}
+                    </div>
+            </div>
+            <div class="row v-spacing-top-5">
+                <div class="col-md-7 offset-3">
+                    <button class="btn-primary w-100">Create thread</button>
+                </div>
+            </div>
+        </form>
+    </div>
 {% endblock %}

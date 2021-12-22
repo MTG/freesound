@@ -1,41 +1,37 @@
-{% extends "base.html" %}
+{% extends "simple_page.html" %}
 {% load bw_templatetags %}
 {% load display_forum_objects %}
 
 {% block title %}Forums{% endblock %}
+{% block page-title %}Freesound Forums{% endblock %}
 
-{% block content %}
-    <div class="container">
-        <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
-            <h1>Freesound Forums</h1>
-            <div class="divider-light v-spacing-top-4"></div>
-            <div class="row">
-                <div class="col-md-7 middle">
-                    <ul class="navbar-forums-hot">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#">Forums list</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'forums-hot-threads' %}">Hot threads</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-md-3 offset-md-2 middle">
-                    <form method="get" action="{% url "forums-search" %}">
-                        <input type="hidden" name="advanced_search"  value="0"/>
-                        <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in all forums..." />
-                    </form>
-                </div>
-            </div>
-            <div class="divider-light"></div>
-            <div class="v-spacing-top-4">
-                {% for forum in forums %}
-                    {% display_forum forum %}
-                    {% if not forloop.last %}
-                        <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
-                    {% endif %}
-                {% endfor %}
-            </div>
+{% block page-content %}
+    <div class="divider-light v-spacing-top-4"></div>
+    <div class="row">
+        <div class="col-md-7 middle">
+            <ul class="navbar-forums-hot">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Forums list</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'forums-hot-threads' %}">Hot threads</a>
+                </li>
+            </ul>
         </div>
+        <div class="col-md-3 offset-md-2 middle">
+            <form method="get" action="{% url "forums-search" %}">
+                <input type="hidden" name="advanced_search"  value="0"/>
+                <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in all forums..." />
+            </form>
+        </div>
+    </div>
+    <div class="divider-light"></div>
+    <div class="v-spacing-top-4">
+        {% for forum in forums %}
+            {% display_forum forum %}
+            {% if not forloop.last %}
+                <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+            {% endif %}
+        {% endfor %}
     </div>
 {% endblock %}

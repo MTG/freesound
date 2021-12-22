@@ -380,6 +380,10 @@ LOG_DOWNLOADS = False
 MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
+# Some BW settings
+ENABLE_QUERY_SUGGESTIONS = False
+ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
+
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls
@@ -467,11 +471,9 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
 
 
 # -------------------------------------------------------------------------------
-# SOLR and search settings
+# SOLR
 SOLR_URL = "http://search:8080/fs2/"
 SOLR_FORUM_URL = "http://search:8080/forum/"
-
-ENABLE_QUERY_SUGGESTIONS = False  # Only for BW
 DEFAULT_SEARCH_WEIGHTS = {
     'id': 4,
     'tag': 4,

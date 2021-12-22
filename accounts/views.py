@@ -1066,7 +1066,7 @@ def charts(request):
                         User.objects.select_related("profile").filter(date_joined__gte=last_time)
                             .filter(id__in=new_user_in_rank_ids)}
     new_users_display = [(new_user_objects[user_id], user_rank[user_id]) for user_id in new_user_in_rank_ids]
-    new_users_display = sorted(new_users_display, key=lambda x: x[1]['score'], reverse=True)
+    new_users_display = sorted(new_users_display, key=lambda x: x[1]['score'], reverse=True)[:num_items]
 
     # Top recent uploaders (by count and by length)
     top_recent_uploaders_by_count = Sound.public \

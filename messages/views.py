@@ -21,7 +21,7 @@
 import json
 from textwrap import wrap
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -179,7 +179,7 @@ def new_message(request, username=None, message_id=None):
 
 
 def quote_message_for_reply(body, username):
-    body = ''.join(BeautifulSoup(body).findAll(text=True))
+    body = ''.join(BeautifulSoup(body).find_all(text=True))
     body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
                         for line in body.split("\n")])
     body = "> --- " + username + " wrote:\n>\n" + body

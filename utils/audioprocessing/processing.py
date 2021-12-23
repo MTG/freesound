@@ -496,7 +496,7 @@ def convert_to_pcm(input_filename, output_filename):
     return True
 
 
-def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filename):
+def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filename, original_filesize_bytes):
     """
     converts a pcm wave file to two channel, 16 bit integer
     """
@@ -537,7 +537,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     if m is not None:
         bitdepth = float(m.group("bitdepth"))
 
-    bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
+    bitrate = (original_filesize_bytes * 8.0) / 1000.0 / duration if duration > 0 else 0
     bitrate = int(round(bitrate))
 
     return dict(duration=duration, channels=channels, samplerate=samplerate, bitrate=bitrate, bitdepth=bitdepth)

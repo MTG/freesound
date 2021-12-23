@@ -152,7 +152,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix="%i_" % self.sound.id, dir=tmp_directory)
                 # Close file handler as we don't use it from Python
                 os.close(fh)
-                info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
+                info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2, self.sound.filesize * 8)
             except IOError as e:
                 # Could not create tmp file
                 self.set_failure("could not create tmp_wavefile2 file", e)
@@ -171,7 +171,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     try:
                         tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory, force_use_ffmpeg=True)
                         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH,
-                                                                      tmp_wavefile, tmp_wavefile2)
+                                                                      tmp_wavefile, tmp_wavefile2, self.sound.filesize * 8)
                     except AudioProcessingException as e:
                         self.set_failure("re-run of stereofy with ffmpeg conversion has failed", str(e))
                         return False

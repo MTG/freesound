@@ -479,7 +479,7 @@ def convert_to_pcm_mock_fail(input_filename, output_filename):
     raise AudioProcessingException("failed converting to pcm")
 
 
-def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
+def stereofy_mock(stereofy_executble_path, input_filename, output_filename, original_filesize_bytes):
     return dict(
         duration=123.5,
         channels=2,
@@ -488,7 +488,7 @@ def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
         bitdepth=16)
 
 
-def stereofy_mock_fail(stereofy_executble_path, input_filename, output_filename):
+def stereofy_mock_fail(stereofy_executble_path, input_filename, output_filename, original_filesize_bytes):
     raise AudioProcessingException("stereofy has failed")
 
 

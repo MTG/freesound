@@ -152,7 +152,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix="%i_" % self.sound.id, dir=tmp_directory)
                 # Close file handler as we don't use it from Python
                 os.close(fh)
-                info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2, self.sound.filesize * 8)
+                info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
             except IOError as e:
                 # Could not create tmp file
                 self.set_failure("could not create tmp_wavefile2 file", e)
@@ -171,7 +171,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     try:
                         tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory, force_use_ffmpeg=True)
                         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH,
-                                                                      tmp_wavefile, tmp_wavefile2, self.sound.filesize * 8)
+                                                                      tmp_wavefile, tmp_wavefile2)
                     except AudioProcessingException as e:
                         self.set_failure("re-run of stereofy with ffmpeg conversion has failed", str(e))
                         return False
@@ -191,6 +191,12 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
             try:
                 if self.sound.type in ["mp3", "ogg", "m4a"]:
                     info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
+                    if info['duration'] > 0:
+                        info['bitrate'] = int(self.sound.filesize * 8 / info['duration'] / 1000)
+                    else:
+                        info['bitrate'] = 0
+                else:
+                    info['bitrate'] = 0
                 self.sound.set_audio_info_fields(**info)
             except Exception as e:  # Could not catch a more specific exception
                 self.set_failure("failed writting audio info fields to db", e)

@@ -479,16 +479,15 @@ def convert_to_pcm_mock_fail(input_filename, output_filename):
     raise AudioProcessingException("failed converting to pcm")
 
 
-def stereofy_mock(stereofy_executble_path, input_filename, output_filename, original_filesize_bytes):
+def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
     return dict(
         duration=123.5,
         channels=2,
         samplerate=44100,
-        bitrate=128,
         bitdepth=16)
 
 
-def stereofy_mock_fail(stereofy_executble_path, input_filename, output_filename, original_filesize_bytes):
+def stereofy_mock_fail(stereofy_executble_path, input_filename, output_filename):
     raise AudioProcessingException("stereofy has failed")
 
 
@@ -619,7 +618,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.duration, 123.5)  # Assert that info properties were set
         self.assertEqual(self.sound.channels, 2)
         self.assertEqual(self.sound.samplerate, 44100)
-        self.assertEqual(self.sound.bitrate, 128)
+        self.assertEqual(self.sound.bitrate, 0)
         self.assertEqual(self.sound.bitdepth, 0)  # This will be 0 because sound is mp3 and bitdepth is overwritten to 0
         # NOTE: after calling set_audio_info_fields processing will fail, but we're only interested in testing up to
         # this point for the present unit test

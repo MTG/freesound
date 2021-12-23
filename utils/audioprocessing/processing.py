@@ -496,7 +496,7 @@ def convert_to_pcm(input_filename, output_filename):
     return True
 
 
-def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filename, original_filesize_bytes):
+def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filename):
     """
     converts a pcm wave file to two channel, 16 bit integer
     """
@@ -537,10 +537,8 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     if m is not None:
         bitdepth = float(m.group("bitdepth"))
 
-    bitrate = (original_filesize_bytes * 8.0) / 1000.0 / duration if duration > 0 else 0
-    bitrate = int(round(bitrate))
-
-    return dict(duration=duration, channels=channels, samplerate=samplerate, bitrate=bitrate, bitdepth=bitdepth)
+    # NOTE: we do not return bitrate here as we compute it when storing audio info fields in the sound model
+    return dict(duration=duration, channels=channels, samplerate=samplerate, bitdepth=bitdepth)
 
 
 def convert_to_mp3(input_filename, output_filename, quality=70):

@@ -752,7 +752,7 @@ class Sound(SocialModel):
         return self.bitdepth not in [8, 16]
 
     def bitrate_warning(self):
-        return self.bitrate not in [32, 64, 96, 128, 160, 192, 224, 256, 320]
+        return self.bitrate not in settings.COMMON_BITRATES
 
     def channels_warning(self):
         return self.channels not in [1, 2]

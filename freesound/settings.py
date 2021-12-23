@@ -328,6 +328,8 @@ USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+LOSSY_FILE_EXTENSIONS = [ 'ogg', 'mp3', 'm4a']
+COMMON_BITRATES = [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
 # Allowed data file extensions for bulk upload
 ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']

@@ -189,10 +189,18 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
             # Fill audio information fields in Sound object
             try:
-                if self.sound.type in ["mp3", "ogg", "m4a"]:
+                if self.sound.type in settings.LOSSY_FILE_EXTENSIONS:
                     info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
                     if info['duration'] > 0:
-                        info['bitrate'] = int(self.sound.filesize * 8 / info['duration'] / 1000)
+                        raw_bitrate = int(round(self.sound.filesize * 8 / info['duration'] / 1000))
+                        # Here we post-process a bit the bitrate to account for small rounding errors
+                        # If we see computed bitrate is very close to a common bitrate, we quantize to that number
+                        differences_with_common_bitrates = [abs(cbt - raw_bitrate) for cbt in settings.COMMON_BITRATES]
+                        min_difference = min(differences_with_common_bitrates)
+                        if min_difference <= 2:
+                            info['bitrate'] = settings.COMMON_BITRATES[differences_with_common_bitrates.index(min_difference)]
+                        else:
+                            info['bitrate'] = raw_bitrate
                     else:
                         info['bitrate'] = 0
                 else:

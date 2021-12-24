@@ -10,30 +10,25 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="avatar-menu">
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'account' request.user.username %}">View profile</a>
+                    <a class="bw-link--black" href="{% url 'accounts-home' %}">Upload</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'accounts-attribution' %}">Attribution</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'accounts-home' %}">Manage uploads</a>
-                </li>
-                <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'bookmarks-for-user' request.user.username %}">Bookmarks</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'messages' %}">My messages
+                    <a class="bw-link--black" href="{% url 'messages' %}">Messages
                         {% if num_messages %}<span class="text-red">({{ num_messages }})</span>{% endif %}
                     </a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'accounts-edit' %}">Account settings</a>
+                    <a class="bw-link--black" href="{% url 'account' request.user.username %}">View your profile</a>
                 </li>
-                {% comment %}
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'donate' %}">Donate</a>
+                    <a class="bw-link--red" href="{% url 'accounts-edit' %}">Account settings</a>
                 </li>
-                {% endcomment %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--grey" href="{% url 'logout' %}?next=/?fend=bw">Logout</a>
                 </li>

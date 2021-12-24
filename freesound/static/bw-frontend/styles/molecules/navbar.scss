@@ -87,7 +87,7 @@ $navbar-height-mobile: 64px;
 .bw-nav__actions {
   display: none;
 
-  @include md-and-above {
+  @include lg-and-above {
     list-style: none;
     display: flex;
   }

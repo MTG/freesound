@@ -30,8 +30,8 @@
             </a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="{% url 'donors' %}">
-                Donors
+            <a class="bw-link--black" href="{% url 'donate' %}">
+                Donate
             </a>
         </li>
         <li class="bw-nav__action dropdown-item">
@@ -39,6 +39,7 @@
                 Help
             </a>
         </li>
+        {% comment %}
         <li class="bw-nav__action dropdown-item">
             <a class="bw-link--black" href="{% url 'wiki' %}developers/">
                 Developers
@@ -54,13 +55,9 @@
                 Freesound Labs
             </a>
         </li>
+        {% endcomment %}        
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-                Freesound t-Shirt
-            </a>
-        </li>
-        <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--ref" href="{{ next_path }}?&fend=ng">
+            <a class="bw-link--red" href="{{ next_path }}?&fend=ng">
                 Switch to old UI
             </a>
         </li>

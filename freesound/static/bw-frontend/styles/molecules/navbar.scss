@@ -85,19 +85,17 @@ $navbar-height-mobile: 64px;
 }
 
 .bw-nav__actions {
-  display: none;
-
-  @include lg-and-above {
-    list-style: none;
-    display: flex;
-  }
+  list-style: none;
+  display: flex;
 }
 
 .bw-nav__action {
   display: flex;
   align-items: center;
+  margin-left: 30px;
 
-  @include md-and-above {
+  @include lg-and-above {
+    margin-left: 0px;
     &:not(:last-child) {
       margin-right: 20px;
     }

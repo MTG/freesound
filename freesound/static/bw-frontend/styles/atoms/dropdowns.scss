@@ -13,7 +13,10 @@
   max-height: 350px;
   overflow: auto;
   padding: 3px 29px 27px 32px;
-  transform: translateX(-50%);
+  transform: translateX(-65%);
+  @include lg-and-above {
+    transform: translateX(-15%);
+  }
   z-index: get-z-index(dropdown);
   display: none;
   &.show {

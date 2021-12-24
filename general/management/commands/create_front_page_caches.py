@@ -91,13 +91,17 @@ class Command(LoggingBaseCommand):
 
         # Calculate top donor
         try:
-            top_donor_user_id = Donation.objects \
+            top_donor_user_data = Donation.objects \
                 .filter(created__gt=last_week) \
                 .exclude(user=None, is_anonymous=True) \
                 .values('user_id').annotate(total_donations=Sum('amount')) \
-                .order_by('-total_donations').values_list('user_id', flat=True)[0]
+                .order_by('-total_donations')[0]
+            top_donor_user_id = top_donor_user_data['user_id']
+            top_donor_donation_amount = '{:.2f} eur'.format(top_donor_user_data['total_donations'])
         except IndexError:
             top_donor_user_id = None
+            top_donor_donation_amount = None
         cache.set("top_donor_user_id", top_donor_user_id, cache_time)
+        cache.set("top_donor_donation_amount", top_donor_donation_amount, cache_time)
 
         self.log_end()

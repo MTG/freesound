@@ -191,6 +191,7 @@ def front_page(request):
     total_num_sounds = cache.get("total_num_sounds", 0)
     popular_searches = cache.get("popular_searches", None)
     top_donor_user_id = cache.get("top_donor_user_id", None)
+    top_donor_donation_amount = cache.get("top_donor_donation_amount", None)
     if popular_searches is not None:
         popular_searches = [(query_terms, '{0}?q={1}'.format(reverse('sounds-search'), query_terms))
                             for query_terms in popular_searches]
@@ -220,6 +221,7 @@ def front_page(request):
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,
         'top_donor_user_id': top_donor_user_id,
+        'top_donor_donation_amount': top_donor_donation_amount,
         'total_num_sounds': total_num_sounds,
         'is_authenticated': request.user.is_authenticated(),
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,

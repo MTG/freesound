@@ -17,3 +17,5 @@ $container-max-widths: (
   lg: $lg,
   xl: 1200px,
 );
+
+$displays: none, inline, inline-block, block, table, table-row, table-cell, flex, inline-flex !default;

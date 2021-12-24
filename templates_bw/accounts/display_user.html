@@ -42,8 +42,7 @@
             <a href="{% url 'account' user.username %}">{{ user.username }}</a>
             <br />
             <div class="text-light-grey">
-                {{ user.profile.num_sounds }} sound{{ user.profile.num_sounds|pluralize }}<span class="h-spacing-1 h-spacing-left-1">·</span>
-                {{ user.profile.num_posts }} post{{ user.profile.num_posts|pluralize }}
+                {{ donated_amount}}
             </div>
         </div>
     </div>

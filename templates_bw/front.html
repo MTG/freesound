@@ -250,8 +250,11 @@
                 {% endif %}
             </main>
             <aside class="col-lg-3">
+                <div class="v-spacing-4 d-lg-none">
+                    <hr />
+                </div>
                 <section class="v-spacing-4">
-                    <h4>Enjoying Freesound?</h4>
+                    <h4 class="v-spacing-1">Enjoying Freesound?</h4>
                     <p class="text-grey v-spacing-2">Please consider donating some money. It doesn't take a large donation to help us!</p>
                     <div class="no-paddings offset-3 col-6 offset-lg-2 col-lg-8 offset-xl-0 col-xl-12">
                         <div class="between v-spacing-2 wrap">
@@ -265,7 +268,7 @@
                         {% cache 300 bw_front_page_top_donor %}
                             <div class="text-center">
                                 <div class="v-spacing-1 h-spacing-2">Top donor this week:</div>
-                                {% display_user_top_donor top_donor_user_id %}
+                                {% display_user_top_donor top_donor_user_id top_donor_donation_amount %}
                             </div>
                         {% endcache %}
                     {% endif %}
@@ -273,7 +276,7 @@
                 <hr />
                 {% cache 300 bw_forum_threads %}
                     <section class="v-padding-4">
-                        <h4 class="v-spacing-3">Hot forum threads</h4>
+                        <h4 class="v-spacing-1">Hot forum threads</h4>
                         {% for forum in current_forum_threads %}
                             <article class="v-padding-2">
                                 <div class="v-spacing-1">
@@ -293,7 +296,7 @@
                     <hr />
                 {% endcache %}
                 <section class="v-padding-4">
-                    <div class="bw-front__freesound_labs_logo"></div>
+                    <div class="bw-front__freesound_labs_logo v-spacing-3"></div>
                     <p class="text-grey v-spacing-2">Freesound Labs is a directory of apps, hacks, projects, and research using Freesound. <a class="bw-link--grey" href="https://labs.freesound.org" target="_blank">Click here to learn more!</a></p>
                 </section>
             </aside>

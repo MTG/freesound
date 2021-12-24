@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="row bw-front__content">
-            <main class="col-md-9">
+            <main class="col-lg-9">
 
                 {% if rss_cache %}
                     {{ rss_cache }}
@@ -249,22 +249,24 @@
                     </section>
                 {% endif %}
             </main>
-            <aside class="col-md-3">
+            <aside class="col-lg-3">
                 <section class="v-spacing-4">
                     <h4>Enjoying Freesound?</h4>
                     <p class="text-grey v-spacing-2">Please consider donating some money. It doesn't take a large donation to help us!</p>
-                    <div class="between v-spacing-5 wrap">
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50">50€</a>
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0">Other</a>
+                    <div class="no-paddings offset-3 col-6 offset-lg-2 col-lg-8 offset-xl-0 col-xl-12">
+                        <div class="between v-spacing-2 wrap">
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50">50€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0">Other</a>
+                        </div>
                     </div>
                     {% if top_donor_user_id %}
                         {% cache 300 bw_front_page_top_donor %}
-                        <div class="h-spacing-left-3">
-                            <div class="v-spacing-1">Top donor this week:</div>
-                            {% display_user_top_donor top_donor_user_id %}
-                        </div>
+                            <div class="text-center">
+                                <div class="v-spacing-1 h-spacing-2">Top donor this week:</div>
+                                {% display_user_top_donor top_donor_user_id %}
+                            </div>
                         {% endcache %}
                     {% endif %}
                 </section>

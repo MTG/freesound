@@ -34,11 +34,11 @@
         </div>
     </div>
 {% elif size == 'top_donor' %}
-    <div class="middle">
+    <div class="middle center">
         <div class="h-spacing-2">
             {% bw_user_avatar user.profile.locations.avatar.M.url user.username 36 %}
         </div>
-        <div>
+        <div class="text-left">
             <a href="{% url 'account' user.username %}">{{ user.username }}</a>
             <br />
             <div class="text-light-grey">

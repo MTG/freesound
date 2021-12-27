@@ -26,7 +26,7 @@
         <div class="col-lg-8">
             <h1>{{ thread.title }}</h1>
         </div>
-        <div class="col-lg-4 text-right">
+        <div class="col-lg-4 text-lg-right v-spacing-2 v-spacing-top-4">
             {% if has_subscription %}
                 <a title="Unsubscribe to stop receiving email notifications" class="no-hover btn-secondary" href="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}">Unsubscribe</a>
             {% else %}

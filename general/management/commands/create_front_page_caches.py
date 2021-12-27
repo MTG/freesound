@@ -80,9 +80,6 @@ class Command(LoggingBaseCommand):
         trending_new_pack_ids = Pack.objects.select_related('user') \
             .filter(created__gte=last_week).exclude(is_deleted=True) \
             .order_by("-num_downloads").values_list('id', flat=True)[0:9]
-
-        trending_new_pack_ids = [trending_new_pack_ids[0], trending_new_pack_ids[0], trending_new_pack_ids[0],
-                                  trending_new_pack_ids[0], trending_new_pack_ids[0], trending_new_pack_ids[0]]
         cache.set("trending_new_pack_ids", list(trending_new_pack_ids), cache_time)
 
         # Add total number of sounds in Freesound to the cache

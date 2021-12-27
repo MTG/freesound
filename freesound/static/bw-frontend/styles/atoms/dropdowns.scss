@@ -4,23 +4,31 @@
 
 .dropdown-menu {
   background-color: $white;
+  text-align: right;
   position: absolute;
   top: calc(100% + 5px);
   right: 0;
   left: 0;
   box-shadow: $dropdown-shadow;
   width: 215px;
-  max-height: 350px;
+  max-height: 75vh;
   overflow: auto;
-  padding: 3px 29px 27px 32px;
-  transform: translateX(-65%);
-  @include lg-and-above {
-    transform: translateX(-15%);
-  }
+  padding: 0px 30px 30px 0px;
+  transform: translateX(-82%);
   z-index: get-z-index(dropdown);
   display: none;
   &.show {
     display: block;
+  }
+
+  @include md-and-above {
+    transform: translateX(-78%);
+  }
+
+  @include lg-and-above {
+    padding: 0px 30px 30px 30px;
+    text-align: left;
+    transform: translateX(-14%);
   }
 }
 

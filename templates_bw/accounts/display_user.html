@@ -13,10 +13,10 @@
     </div>
 {% elif size == 'follow_lists' %}
     <div class="row bw-follows middle">
-        <div class="col-md-1">
+        <div class="col-1">
             {% bw_user_avatar user.profile.locations.avatar.M.url user.username 50 %}
         </div>
-        <div class="col-md-8">
+        <div class="col-8">
             <div class="padding-left-3">
                 <div><a href="{% url 'account' user.username %}">{{ user.username | truncate_string:15 }}</a></div>
                 <div class="text-grey">
@@ -25,7 +25,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 text-right">
+        <div class="col-3 v-spacing-top-1 text-right">
             {% if is_followed_by_request_user %}
                 <a class="no-hover btn-primary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
             {% else %}

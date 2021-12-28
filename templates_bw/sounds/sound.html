@@ -74,7 +74,6 @@
 
                         <div class="middle v-spacing-top-2">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
 
-                        <!-- TODO: check after merge browser page -->
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
                                 {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username 40 %}

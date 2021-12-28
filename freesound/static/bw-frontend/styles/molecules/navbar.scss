@@ -199,11 +199,11 @@ $navbar-height-mobile: 64px;
 
 .navbar-forums-hot {
   list-style: none;
-  display: flex;
   padding-left: 0;
 
   .nav-item {
     margin-right: 24px;
+    display: inline-block;
 
     .nav-link {
       font-size: 16px;

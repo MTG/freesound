@@ -6,13 +6,17 @@
 
 <div class="bw-post">
     <div class="row">
-        <div class="col-2 col-lg-1 v-spacing-3">
-            {% bw_user_avatar post.author.profile.locations.avatar.L.url post.author.username 70 %}
-        </div>
-        <div class="col-7 col-lg-2">
-            <h6><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
-            <p class="text-grey no-margins">{{ post.author.profile.num_sounds }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
-            <p class="text-grey no-margins">{{ post.author.profile.num_posts }} post{{ post.author.profile.num_posts|pluralize }}</p>
+        <div class="col-9 col-lg-3 v-spacing-3">
+            <div class="row middle">
+                <div class="col-3 col-lg-4">
+                    {% bw_user_avatar post.author.profile.locations.avatar.L.url post.author.username 70 %}
+                </div>
+                <div class="col-8">
+                    <h6><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_sounds }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_posts }} post{{ post.author.profile.num_posts|pluralize }}</p>
+                </div>
+            </div>
         </div>
         <div class="col-lg-9">
             <div class="{% if show_action_icons %}between{% endif %}">

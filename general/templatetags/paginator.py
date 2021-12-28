@@ -31,6 +31,11 @@ def show_paginator(
     last page links in addition to those created by the object_list generic
     view.
     """
+
+    if paginator is None:
+        # If paginator object is None, don't go ahead as below calculations will fail. This can happen if show_paginator
+        # is called and no paginator object is present in view
+        return {}
  
     adjacent_pages = 3
     total_wanted = adjacent_pages * 2 + 1

@@ -6,7 +6,7 @@
     {% if player_size == 'small' %}
         {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
         {% if is_explicit %}
-            <div class="explicit-sound-blocker">
+            <div class="explicit-sound-blocker blocker-small">
                 <p><b>Warning</b>: this sound may be inappropriate for some users</p>
                 <button class="btn-primary">Show anyway</button>
             </div>
@@ -29,7 +29,7 @@
         {% comment %}This is the default player shown in search results and in places where the sound takes
         "full" width {% endcomment %}
         {% if is_explicit %}
-            <div class="explicit-sound-blocker w-100">
+            <div class="explicit-sound-blocker blocker-small w-100">
                 <p><b>Warning</b>: this sound may be inappropriate for some users</p>
                 <button class="btn-primary">Show anyway</button>
             </div>

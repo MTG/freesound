@@ -39,21 +39,20 @@
                 <div class="col-3">
                     {% include "sounds/player.html" %}
                 </div>
-                <div class="padding-left-3 w-100">
+                <div class="padding-left-3 w-75">
                     <div class="between">
                         <div>
                             <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:45 }}</a></h5>
                             <div class="middle">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
                         </div>
-                        <div class="text-grey">
+                        <div class="text-grey text-right">
                             {% if sound.similarity_state == 'OK' %}
                                 <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-content-url="{% url 'sound-similar' sound_user sound.id %}?ajax=1">
                                     {% bw_icon 'similar' %}
                                 </button>
-                                <span class="h-spacing-2"></span>
                             {% endif %}
                             {% if is_authenticated %}
-                                <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
+                                <button title="Save as favorite" class="btn-neutral h-spacing-left-2" data-toggle="bookmark-modal-{{ sound.id }}">
                                     {% bw_icon 'bookmark' %}
                                 </button>
                             {% endif %}
@@ -94,24 +93,31 @@
             </div>
             <div class="between v-spacing-top-2 v-spacing-3">
                 <div class="middle text-grey h-spacing-1">
-                    <div class="h-spacing-1">
-                        {% bw_user_avatar user_profile_locations.avatar.S.url sound_user 32 %}
+                    <div class="row no-gutters">
+                        <div class="col-12 col-lg-12 middle">
+                            <div class="h-spacing-1">
+                                {% bw_user_avatar user_profile_locations.avatar.S.url sound_user 32 %}
+                            </div>
+                            <a href="{% url 'account' sound_user %}">{{ sound_user | truncate_string:15 }}</a>
+                            <div class="text-light-grey h-spacing-left-1 d-none d-lg-block no-text-wrap">{{ sound.created|date:"F jS, Y" }}</div>
+                        </div>
+                        <div class="col-lg-4 d-lg-none text-light-grey">
+                            {{ sound.created|date:"F jS, Y" }}
+                        </div>
                     </div>
-                    <a href="{% url 'account' sound_user %}">{{ sound_user | truncate_string:15 }}</a>
-                    <span class="h-spacing-left-1 text-light-grey">{{ sound.created|date:"F jS, Y" }}</span>
                 </div>
-                <div class="middle text-light-grey bw_sound-info-extended">
+                <div class="middle text-light-grey bw_sound-info-extended right">
                     {% if sound.geotag_id %}
                     <div><span class="bw-icon-pin"></span>
-                        <span class="h-spacing-left-1 h-spacing-3">{{ sound.geotag_lat|floatformat:3 }}, {{ sound.geotag_lon|floatformat:3 }}</span></div>
+                        <span class="h-spacing-left-1">{{ sound.geotag_lat|floatformat:3 }}, {{ sound.geotag_lon|floatformat:3 }}</span></div>
                         {% comment %}In the span above we should put the textual name of the place where the sound was recorded
                         (if there is geotag). For now we'll put cooedinates{% endcomment %}
                     {% endif %}
-                    <div><span class="bw-icon-download"></span>
-                        <span class="h-spacing-left-1 h-spacing-3">{{ sound.num_downloads }}</span></div>
-                    <div><span class="bw-icon-comments"></span>
-                        <span class="h-spacing-left-1 h-spacing-3">{{ sound.num_comments }}</span></div>
-                    <div><span class="bw-icon-cc"></span>
+                    <div class="h-spacing-left-3"><span class="bw-icon-download"></span>
+                        <span class="h-spacing-left-1">{{ sound.num_downloads }}</span></div>
+                    <div class="h-spacing-left-3"><span class="bw-icon-comments"></span>
+                        <span class="h-spacing-left-1">{{ sound.num_comments }}</span></div>
+                    <div class="h-spacing-left-3"><span class="bw-icon-cc"></span>
                         <span class="h-spacing-left-1">{{ license_name }}</span></div>
                 </div>
             </div>

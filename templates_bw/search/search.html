@@ -36,7 +36,7 @@
 
                     <div>
                         <div class="divider-light"></div>
-                        <div class="padding-3 v-padding-2 between font-weight-bold">
+                        <div class="padding-3 v-padding-2 between font-weight-bold middle">
                             {% if not only_sounds_with_pack %}
                                 <div class="col-4">{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}</div>
                             {% else %}
@@ -55,7 +55,7 @@
                                 <a href="#" class="bw-link--grey-light" id="toggle_advanced_search_options"></a>
                             </div>
                             <div class="browse__search-overview-sorter">
-                                <span class="font-weight-normal text-light-grey">Sort by:</span>
+                                <span class="font-weight-normal text-light-grey d-none d-md-inline">Sort by:</span>
                                 <select name="s" id="sort-by">
                                     {% for option in sort_options %}
                                         <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
@@ -72,9 +72,9 @@
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Search in</span>
                                     </div>
-                                    <div class="row no-gutters">
-                                        <div class="col-5">
-                                            <ul class="bw-search__filter-value-list">
+                                    <div class="row no-gutters v-spacing-top-2">
+                                        <div class="col-md-5">
+                                            <ul class="bw-search__filter-value-list no-margins">
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
@@ -101,8 +101,8 @@
                                                 </li>
                                             </ul>
                                         </div>
-                                        <div class="col-5">
-                                            <ul class="bw-search__filter-value-list">
+                                        <div class="col-md-5">
+                                            <ul class="bw-search__filter-value-list no-margins">
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
@@ -183,7 +183,13 @@
             </div>
             <div class="row no-gutters">
 
-                    <aside class="col-sm-12 col-md-3">
+                    <div class="col-12 center v-spacing-top-negative-2 d-md-none">
+                        <div id="collapsable-text" data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" class="v-spacing-top-2 collapsable-text font-weight-bold text-light-grey">
+                            Show filters
+                        </div>
+                    </div>
+
+                    <aside class="col-md-4 col-lg-3 collapsable-block collapsable-block-close md-max-h-100" id="collapsable-filters">
                         {% if facets.license and facets.license|length > 1 %}
                             {% display_facet "license" facets.license "list" "Licenses" %}
                         {% endif %}
@@ -222,14 +228,19 @@
                             {% display_facet "username" facets.username "cloud" "Related users" %}
                         {% endif %}
                     </aside>
-                    <main class="col-sm-12 col-md-8 offset-md-1">
-                        <div class="v-spacing-3 v-spacing-top-1">
+
+                    <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>
+
+                    <main class="col-12 col-md-7 offset-md-1 col-lg-8 offset-lg-1">
+                        {% if filter_query_split %}
+                        <div class="v-spacing-3 v-spacing-top-2">
                             {% for filter in filter_query_split %}
                                 <a class="no-hover btn-inverse bw-search__active-filters-button" href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
                                     {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
                                 </a>
                             {% endfor %}
                         </div>
+                        {% endif %}
                         <div class="v-spacing-6">
                             {% if paginator.count > 0 %}
                                 {% for result in docs %}
@@ -274,5 +285,6 @@
         JS bits because we only display the error message{% endcomment %}
         <script src="{% static 'bw-frontend/dist/search.735996ae.js' %}"></script>
         <script src="{% static 'bw-frontend/dist/select.9252c69b.js' %}"></script>
+        <script src="{% static 'bw-frontend/dist/collapsableBlock.10cf5767.js' %}"></script>
     {% endif %}
 {% endblock %}

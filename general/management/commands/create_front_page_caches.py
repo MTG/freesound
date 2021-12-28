@@ -80,9 +80,6 @@ class Command(LoggingBaseCommand):
         trending_new_pack_ids = Pack.objects.select_related('user') \
             .filter(created__gte=last_week).exclude(is_deleted=True) \
             .order_by("-num_downloads").values_list('id', flat=True)[0:9]
-
-        trending_new_pack_ids = [trending_new_pack_ids[0], trending_new_pack_ids[0], trending_new_pack_ids[0],
-                                  trending_new_pack_ids[0], trending_new_pack_ids[0], trending_new_pack_ids[0]]
         cache.set("trending_new_pack_ids", list(trending_new_pack_ids), cache_time)
 
         # Add total number of sounds in Freesound to the cache
@@ -91,13 +88,17 @@ class Command(LoggingBaseCommand):
 
         # Calculate top donor
         try:
-            top_donor_user_id = Donation.objects \
+            top_donor_user_data = Donation.objects \
                 .filter(created__gt=last_week) \
                 .exclude(user=None, is_anonymous=True) \
                 .values('user_id').annotate(total_donations=Sum('amount')) \
-                .order_by('-total_donations').values_list('user_id', flat=True)[0]
+                .order_by('-total_donations')[0]
+            top_donor_user_id = top_donor_user_data['user_id']
+            top_donor_donation_amount = '{:.2f} eur'.format(top_donor_user_data['total_donations'])
         except IndexError:
             top_donor_user_id = None
+            top_donor_donation_amount = None
         cache.set("top_donor_user_id", top_donor_user_id, cache_time)
+        cache.set("top_donor_donation_amount", top_donor_donation_amount, cache_time)
 
         self.log_end()

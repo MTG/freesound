@@ -1,0 +1,20 @@
+<div class="divider-light v-spacing-top-4 v-spacing-2"></div>
+<div class="row middle">
+    <div class="col-6">
+        <ul class="navbar-forums-hot">
+            <li class="nav-item">
+                <a class="nav-link {% if forums.count %}active{% endif %}" href="{% url 'forums-forums' %}">Forums list</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if forums.count %}{% else %}active{% endif %}" href="{% url 'forums-hot-threads' %}">Hot threads</a>
+            </li>
+        </ul>
+    </div>
+    <div class="col-6 v-spacing-1 v-spacing-top-1">
+        <form method="get" action="{% url "forums-search" %}">
+            <input type="hidden" name="advanced_search"  value="0"/>
+            <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in all forums..." />
+        </form>
+    </div>
+</div>
+<div class="divider-light v-spacing-top-2"></div>

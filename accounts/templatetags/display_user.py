@@ -31,7 +31,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('accounts/display_user.html', takes_context=True)
-def display_user(context, user, size='small', comment_created=None):
+def display_user(context, user, size='small', comment_created=None, donated_amount=None):
     """This templatetag is used to display a user with some information next to it. It prepares some variables that
     are then passed to the display_user.html template to show user information.
 
@@ -43,6 +43,7 @@ def display_user(context, user, size='small', comment_created=None):
         size (str, optional): size or "flavour" of the player to display. Different pages might need to render users
           differently, so this parameter allows to choose that. Information about the contents of each
           size is given in the display_user.html template code.
+        donated_amount (str, optional): donation amount label (including currency name) displayed for "top_donor" size
 
     Returns:
         dict: dictionary with the variables needed for rendering the user with the display_user.html template
@@ -76,6 +77,7 @@ def display_user(context, user, size='small', comment_created=None):
             'request': request,
             'is_followed_by_request_user': is_followed_by_request_user,
             'comment_created': comment_created,
+            'donated_amount': donated_amount,
             'next_path': context['next_path'],
             'size': size,
         }
@@ -87,8 +89,8 @@ def display_user_follow_lists(context, user):
 
 
 @register.inclusion_tag('accounts/display_user.html', takes_context=True)
-def display_user_top_donor(context, user):
-    return display_user(context, user, size='top_donor')
+def display_user_top_donor(context, user, donated_amount):
+    return display_user(context, user, size='top_donor', donated_amount=donated_amount)
 
 
 @register.inclusion_tag('accounts/display_user.html', takes_context=True)

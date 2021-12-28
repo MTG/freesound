@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="row bw-front__content">
-            <main class="col-md-9">
+            <main class="col-lg-9">
 
                 {% if rss_cache %}
                     {{ rss_cache }}
@@ -155,11 +155,11 @@
                                     <div class="col-2 text-right">
                                         <div class="text-grey">
                                             {% if sound.similarity_state == 'OK' %}
-                                                <a class="no-hover btn-neutral" href="{% url 'sound-similar' sound.username sound.id %}" rel="nofollow" title="Find similar sounds">
+                                                <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
                                                     {% bw_icon 'similar' %}
-                                                </a>
+                                                </button>
+                                                <span class="h-spacing-2"></span>
                                             {% endif %}
-                                            <span class="h-spacing-2"></span>
                                             <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
                                                 {% bw_icon 'bookmark' %}
                                             </button>
@@ -189,7 +189,7 @@
                                             </a>
                                         </div>
                                         {% if sound.pack_id or sound.remix_group.all.count %}
-                                            <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                                            <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
                                         {% endif %}
                                     {% endif %}
                                     {% if sound.pack_id %}
@@ -197,7 +197,7 @@
                                             This sound is part of the pack <a href="{% url 'pack' sound.username sound.pack.id %}">{{ sound.pack.name}}</a>
                                         </div>
                                         {% if sound.remix_group.all.count %}
-                                            <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                                            <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
                                         {% endif %}
                                     {% endif %}
                                     {% if sound.remix_group.all.count %}
@@ -249,29 +249,34 @@
                     </section>
                 {% endif %}
             </main>
-            <aside class="col-md-3">
+            <aside class="col-lg-3">
+                <div class="v-spacing-4 d-lg-none">
+                    <hr />
+                </div>
                 <section class="v-spacing-4">
-                    <h4>Enjoying Freesound?</h4>
+                    <h4 class="v-spacing-1">Enjoying Freesound?</h4>
                     <p class="text-grey v-spacing-2">Please consider donating some money. It doesn't take a large donation to help us!</p>
-                    <div class="between v-spacing-5 wrap">
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50">50€</a>
-                        <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0">Other</a>
+                    <div class="no-paddings offset-3 col-6 offset-lg-2 col-lg-8 offset-xl-0 col-xl-12">
+                        <div class="between v-spacing-2 wrap">
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50">50€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0">Other</a>
+                        </div>
                     </div>
                     {% if top_donor_user_id %}
                         {% cache 300 bw_front_page_top_donor %}
-                        <div class="h-spacing-left-3">
-                            <div class="v-spacing-1">Top donor this week:</div>
-                            {% display_user_top_donor top_donor_user_id %}
-                        </div>
+                            <div class="text-center">
+                                <div class="v-spacing-1 h-spacing-2">Top donor this week:</div>
+                                {% display_user_top_donor top_donor_user_id top_donor_donation_amount %}
+                            </div>
                         {% endcache %}
                     {% endif %}
                 </section>
                 <hr />
                 {% cache 300 bw_forum_threads %}
                     <section class="v-padding-4">
-                        <h4 class="v-spacing-3">Hot forum threads</h4>
+                        <h4 class="v-spacing-1">Hot forum threads</h4>
                         {% for forum in current_forum_threads %}
                             <article class="v-padding-2">
                                 <div class="v-spacing-1">
@@ -291,7 +296,7 @@
                     <hr />
                 {% endcache %}
                 <section class="v-padding-4">
-                    <div class="bw-front__freesound_labs_logo"></div>
+                    <div class="bw-front__freesound_labs_logo v-spacing-3"></div>
                     <p class="text-grey v-spacing-2">Freesound Labs is a directory of apps, hacks, projects, and research using Freesound. <a class="bw-link--grey" href="https://labs.freesound.org" target="_blank">Click here to learn more!</a></p>
                 </section>
             </aside>

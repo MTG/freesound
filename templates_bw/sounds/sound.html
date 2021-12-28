@@ -41,20 +41,16 @@
     <div class="container">
         <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
             {% if is_explicit %}
-                <div class="explicit-sound-blocker w-100">
-                    <div class="row no-paddings">
-                        <div class="col-md-7 v-spacing-4 v-spacing-top-4">
-                            <h4>Content warning</h4>
-                            <p>This sound may be inappropriate for some users
-                                <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page
-                            </p>
-                            <button class="btn-primary">Show anyway</button>
-                        </div>
-                    </div>
+                <div class="explicit-sound-blocker">
+                    <h4>Content warning</h4>
+                    <p>This sound may be inappropriate for some users
+                        <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page
+                    </p>
+                    <button class="btn-primary">Show anyway</button>
                 </div>
             {% endif %}
             <div class="row no-gutters {% if is_explicit %}blur{% endif %}">
-                <div class="col-8">
+                <div class="col-md-8">
                     {% display_sound_big_no_info sound %}
                     <div class="bw-sound-page__information v-spacing-top-5">
                         <div class="row middle">
@@ -78,7 +74,6 @@
 
                         <div class="middle v-spacing-top-2">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
 
-                        <!-- TODO: check after merge browser page -->
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
                                 {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username 40 %}
@@ -105,7 +100,7 @@
                                     </a>
                                 </div>
                                 {% if sound.pack_id or sound.remix_group.all.count %}
-                                    <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                                    <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
                                 {% endif %}
                             {% endif %}
                             {% if sound.pack_id %}
@@ -113,7 +108,7 @@
                                    This sound is part of the pack <a href="{% url 'pack' username sound.pack.id %}">{{ sound.pack.name}}</a>
                                 </div>
                                 {% if sound.remix_group.all.count %}
-                                    <div class="text-grey h-spacing-left-1 h-spacing-1">·</div>
+                                    <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
                                 {% endif %}
                             {% endif %}
                             {% if sound.remix_group.all.count %}
@@ -143,106 +138,48 @@
                             </div>
                             <div class="divider-light v-spacing-top-4"></div>
                             <div class="v-spacing-top-4 row">
-                                <div class="col-md-2 text-center text-17">
+                                <div class="col-2 text-center text-17">
                                     <p class="text-grey no-margins">Type</p>
                                     <p class="no-margins">{{sound.get_type_display}} (.{{sound.type}})</p>
                                 </div>
-                                <div class="col-md-2 text-center text-17">
+                                <div class="col-2 text-center text-17">
                                     <p class="text-grey no-margins">Duration</p>
                                     <p class="no-margins">{{sound.duration|duration}}</p>
                                 </div>
-                                <div class="col-md-2 text-center text-17">
+                                <div class="col-2 text-center text-17">
                                     <p class="text-grey no-margins">Fliesize</p>
                                     <p class="no-margins">{{sound.filesize|filesizeformat}}</p>
                                 </div>
                                 {% if sound.bitdepth %}
-                                    <div class="col-md-2 text-center text-17">
+                                    <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Samplerate</p>
                                         <p class="no-margins">{{sound.samplerate}} Hz</p>
                                     </div>
-                                    <div class="col-md-2 text-center text-17">
+                                    <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Bitdepth</p>
                                         <p class="no-margins">{{sound.bitdepth}} bit</p>
                                     </div>
                                 {% else %}
-                                    <div class="col-md-2 text-center text-17">
+                                    <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Samplerate</p>
                                         <p class="no-margins">-</p>
                                     </div>
-                                    <div class="col-md-2 text-center text-17">
+                                    <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Bitrate</p>
                                         <p class="no-margins">{{sound.bitrate}} kbps</p>
                                     </div>
                                 {% endif %}
-                                <div class="col-md-2 text-center text-17">
+                                <div class="col-2 text-center text-17">
                                     <p class="text-grey no-margins">Channels</p>
                                     <p class="no-margins">{{sound.get_channels_display}}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="v-spacing-top-6">
-                        <div>
-                            <h6 class="text-26 no-margins ">Comments</h6>
-                            <a name="comments"></a>
-                            {% if request.user.is_authenticated %}
-                                <form method="POST" action=".#comments" class="disable-on-submit">{% csrf_token %}
-                                    <div class="row">
-                                        <div class="col-md-9">
-                                            <textarea name="comment" id="id_comment" class="v-spacing-top-4 bw-comments_textarea" placeholder="Write your comment here..."></textarea>
-                                            <div class="text-light-grey v-spacing-top-2">You can refer to a specific second of the sound using the syntax <i>#mm:ss</i> (e.g., use #1:34 to refer to 1 minute and 23 seconds).</div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button id="sound_comment_submit" class="v-spacing-top-5 btn-inverse text-14">Post comment</button>
-                                        </div>
-                                    </div>
-                                </form>
-                            {% else %}
-                                {% if not request.user.is_authenticated and page.object_list %}
-                                    <div class="v-spacing-top-4">
-                                        Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
-                                    </div>
-                                {% endif %}
-                            {% endif %}
-                            <div id="soundCommentsSection" class="v-spacing-top-5">
-                                {% if page.object_list %}
-                                    {% for comment in page.object_list %}
-                                        <div>
-                                            <div style="display: flex; justify-content: space-between;">
-                                                {% display_user_comment comment.user comment.created %}
-                                                <div class="text-right v-spacing-top-1">
-                                                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
-                                                    {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
-                                                        <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">Delete comment</a>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks }}</p>
-                                            {% if not forloop.last %}
-                                                <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
-                                            {% endif %}
-                                        </div>
-                                    {% endfor %}
-
-                                    <div>
-                                        {% bw_paginator paginator page current_page request "comments" %}
-                                    </div>
-
-                                {% else %}
-                                    <div class="text-grey">This sound has not been commented on yet, be the first to comment!</div>
-                                    {% if not request.user.is_authenticated %}
-                                        <div class="v-spacing-top-1">
-                                            Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <div class="col-3 offset-1">
+                <div class="col-md-3 offset-md-1">
+                    <div class="divider-light v-spacing-top-4 v-spacing-4 d-md-none"></div>
                     <div class="bw-sound__sidebar">
                         {% if display_random_link %}
                             <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-4" href="{% url 'sounds-random' %}">Get another random sound!</a>
@@ -353,29 +290,68 @@
 
                     </div>
                 </div>
-            </div>
-            {% comment %}
-            <div class="v-spacing-top-7">
-                <h6 class="text-26 no-margins">Similar sounds</h6>
-                <div class="row v-spacing-top-4">
-                    <div class="col-3">
-                        {{ players.smallPlayer('Tennis match', 'Marvin_Payne', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut.') }}
-                    </div>
-                    <div class="col-3">
-                        {{ players.smallPlayer('Maschine fun', 'giuband', 'Playing with drumming pads') }}
-                    </div>
-                    <div class="col-3">
-                        {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
-                    </div>
-                    <div class="col-3">
-                        {{ players.smallPlayer('Playing keyboards', 'arp123123', 'Testing arpeggiators') }}
+
+                <div class="col-md-8">
+                    <div class="v-spacing-top-6">
+                        <div>
+                            <h6 class="text-26 no-margins ">Comments</h6>
+                            <a name="comments"></a>
+                            {% if request.user.is_authenticated %}
+                                <form method="POST" action=".#comments" class="disable-on-submit">{% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            <textarea name="comment" id="id_comment" class="v-spacing-top-4 bw-comments_textarea" placeholder="Write your comment here..."></textarea>
+                                            <div class="text-light-grey v-spacing-top-2">You can refer to a specific second of the sound using the syntax <i>#mm:ss</i> (e.g., use #1:34 to refer to 1 minute and 23 seconds).</div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button id="sound_comment_submit" class="v-spacing-top-5 btn-inverse text-14">Post comment</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% else %}
+                                {% if not request.user.is_authenticated and page.object_list %}
+                                    <div class="v-spacing-top-4">
+                                        Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            <div id="soundCommentsSection" class="v-spacing-top-5">
+                                {% if page.object_list %}
+                                    {% for comment in page.object_list %}
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between;">
+                                                {% display_user_comment comment.user comment.created %}
+                                                <div class="text-right v-spacing-top-1">
+                                                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                                                    {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
+                                                        <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">Delete comment</a>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks }}</p>
+                                            {% if not forloop.last %}
+                                                <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+
+                                    <div>
+                                        {% bw_paginator paginator page current_page request "comments" %}
+                                    </div>
+
+                                {% else %}
+                                    <div class="text-grey">This sound has not been commented on yet, be the first to comment!</div>
+                                    {% if not request.user.is_authenticated %}
+                                        <div class="v-spacing-top-1">
+                                            Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="v-spacing-top-4 center">
-                    <button class="v-spacing-top-1 btn-secondary">More similar sounds</button>
-                </div>
             </div>
-            {% endcomment %}
         </div>
     </div>
 {% endblock %}

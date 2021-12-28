@@ -6,16 +6,20 @@
 
 <div class="bw-post">
     <div class="row">
-        <div class="col-md-1">
-            {% bw_user_avatar post.author.profile.locations.avatar.L.url post.author.username 70 %}
+        <div class="col-9 col-lg-3 v-spacing-3">
+            <div class="row middle">
+                <div class="col-3 col-lg-4">
+                    {% bw_user_avatar post.author.profile.locations.avatar.L.url post.author.username 70 %}
+                </div>
+                <div class="col-8">
+                    <h6><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_sounds }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_posts }} post{{ post.author.profile.num_posts|pluralize }}</p>
+                </div>
+            </div>
         </div>
-        <div class="col-md-2">
-            <h6><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
-            <p class="text-grey no-margins">{{ post.author.profile.num_sounds }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
-            <p class="text-grey no-margins">{{ post.author.profile.num_posts }} post{{ post.author.profile.num_posts|pluralize }}</p>
-        </div>
-        <div class="col-md-9">
-            <div class="between">
+        <div class="col-lg-9">
+            <div class="{% if show_action_icons %}between{% endif %}">
                 {% if show_post_location %}
                     <div class="v-spacing-1">
                         <span class="text-light-grey">Found in: </span>
@@ -23,7 +27,7 @@
                         > <a class="text-grey h-spacing-left-1" href="{% url "forums-thread" post.thread.forum.name_slug post.thread.id %}">{{ post.thread.title }}</a>
                     </div>
                 {% endif %}
-                <span class="text-grey text-14">{{post.created|timesince}} ago</span>
+                <div class="text-light-grey text-14">{{post.created|timesince}} ago</div>
                 {% if show_action_icons %}
                 <div class="text-14">
                     <span class="padding-right-2">

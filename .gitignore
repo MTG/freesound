@@ -27,6 +27,7 @@ see_last_email
 build_static.sh
 create_caches.sh
 run_tests.sh
+clear_cache.sh
 
 # BW fornt end
 .cache

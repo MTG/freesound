@@ -5,7 +5,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=1000, initial-scale=1">
+    <meta name="viewport" content="width=575, initial-scale=1">
     <meta name="theme-color" content="#000000">
     <title>Freesound - {% block title %}{% endblock %}</title>
     <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
@@ -47,7 +47,7 @@
     {% bw_plausible_scripts %}
     <script>
         document.cookie = "preferSpectrogram={{spectrogram_preference|yesno}}";
-        const siteWidth = 1000;
+        const siteWidth = 575;  // Minimum expected width. If screen is smaller, scale website.
         const scale = window.innerWidth / siteWidth;
         if (scale < 1){
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale);

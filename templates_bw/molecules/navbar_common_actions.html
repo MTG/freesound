@@ -1,68 +1,59 @@
-<li class="bw-nav__action">
+<li class="bw-nav__action d-none d-lg-flex">
     <a class="bw-link--grey font-weight-bold" href="{% url 'sounds' %}">Sounds</a>
 </li>
-<li class="bw-nav__action">
+<li class="bw-nav__action d-none d-lg-flex">
     <a class="bw-link--grey font-weight-bold" href="{% url 'packs' %}">Packs</a>
 </li>
-<li class="bw-nav__action">
+<li class="bw-nav__action d-none d-lg-flex">
     <a class="bw-link--grey font-weight-bold" href="{% url 'forums-forums' %}">Forum</a>
 </li>
-<li class="bw-nav__action">
+<li class="bw-nav__action d-none d-lg-flex">
     <a class="bw-link--grey font-weight-bold" href="{% url 'geotags' %}">Map</a>
 </li>
 <li class="bw-nav__action dropdown">
     <a class="bw-link--grey bw-nav__menu dropdown-toggle no-hover bw-icon-ellipsis" id="three-dots-menu" aria-haspopup="true"
        aria-expanded="false" data-toggle="dropdown"></a>
     <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
-        <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="{% url 'tags' %}">
-                Tags
-            </a>
+        <li class="bw-nav__action dropdown-item d-lg-none">
+            <a class="bw-link--black" href="{% url 'sounds' %}">Sounds</a>
+        </li>
+        <li class="bw-nav__action dropdown-item d-lg-none">
+            <a class="bw-link--black" href="{% url 'packs' %}">Packs</a>
+        </li>
+        <li class="bw-nav__action dropdown-item d-lg-none">
+            <a class="bw-link--black" href="{% url 'forums-forums' %}">Forum</a>
+        </li>
+        <li class="bw-nav__action dropdown-item d-lg-none">
+            <a class="bw-link--black" href="{% url 'geotags' %}">Map</a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="{% url 'sounds-random' %}">
-                Random sound
-            </a>
+            <a class="bw-link--black" href="{% url 'tags' %}">Tags</a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="{% url 'charts' %}">
-                Charts
-            </a>
+            <a class="bw-link--black" href="{% url 'sounds-random' %}">Random sound</a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="{% url 'donors' %}">
-                Donors
-            </a>
+            <a class="bw-link--black" href="{% url 'charts' %}">Charts</a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="{% url 'wiki' %}faq/">
-                Help
-            </a>
+            <a class="bw-link--black" href="{% url 'donate' %}">Donate</a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="{% url 'wiki' %}developers/">
-                Developers
-            </a>
+            <a class="bw-link--black" href="{% url 'wiki' %}faq/">Help</a>
+        </li>
+        {% comment %}
+        <li class="bw-nav__action dropdown-item">
+            <a class="bw-link--black" href="{% url 'wiki' %}developers/">Developers</a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="https://blog.freesound.org">
-                Freesound Blog
-            </a>
+            <a class="bw-link--black" href="https://blog.freesound.org">Freesound Blog</a>
         </li>
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="https://labs.freesound.org">
-                Freesound Labs
-            </a>
+            <a class="bw-link--black" href="https://labs.freesound.org">Freesound Labs</a>
         </li>
+        {% endcomment %}        
         <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--black" href="">
-                Freesound t-Shirt
-            </a>
-        </li>
-        <li class="bw-nav__action dropdown-item">
-            <a class="bw-link--ref" href="{{ next_path }}?&fend=ng">
-                Switch to old UI
-            </a>
+            <a class="bw-link--red" href="{{ next_path }}?&fend=ng">Switch to old UI</a>
         </li>
     </ul>
 </li>

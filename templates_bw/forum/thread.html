@@ -26,13 +26,13 @@
         <div class="col-lg-8">
             <h1>{{ thread.title }}</h1>
         </div>
-        <div class="col-lg-4 text-right">
+        <div class="col-lg-4 text-lg-right v-spacing-2 v-spacing-top-4">
             {% if has_subscription %}
                 <a title="Unsubscribe to stop receiving email notifications" class="no-hover btn-secondary" href="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}">Unsubscribe</a>
             {% else %}
                 <a title="Subscribe to receive email notifications" class="no-hover btn-inverse btn-profile-adapt" href="{% url "forums-thread-subscribe" forum.name_slug thread.id %}">Subscribe</a>
             {% endif %}
-            <a title="Post a reply" class="no-hover btn-inverse btn-profile-adapt" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
+            <a title="Post a reply" class="btn-primary" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
         </div>
     </div>
     {% if thread.last_post.id %}
@@ -48,7 +48,7 @@
         {% endfor %}
     </div>
     <div class="v-spacing-top-7 text-center">
-        <a class="no-hover" href="{% url "forums-reply" forum.name_slug thread.id %}"><button class="btn-inverse btn-profile-adapt"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</button></a>
+        <a class="btn-primary" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
     </div>
     <div class="v-spacing-top-4">
         {% bw_paginator paginator page current_page request "thread" %}

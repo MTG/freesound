@@ -71,10 +71,8 @@ $navbar-height-mobile: 64px;
   }
 
   .bw-nav--expanded & {
-    @include md-and-above {
-      width: 190px;
-      background-image: url('assets/logos/logo-text.svg');
-    }
+    width: 190px;
+    background-image: url('assets/logos/logo-text.svg');
   }
 }
 
@@ -85,19 +83,17 @@ $navbar-height-mobile: 64px;
 }
 
 .bw-nav__actions {
-  display: none;
-
-  @include md-and-above {
-    list-style: none;
-    display: flex;
-  }
+  list-style: none;
+  display: flex;
 }
 
 .bw-nav__action {
   display: flex;
   align-items: center;
+  margin-left: 25px;
 
-  @include md-and-above {
+  @include lg-and-above {
+    margin-left: 0px;
     &:not(:last-child) {
       margin-right: 20px;
     }
@@ -203,12 +199,11 @@ $navbar-height-mobile: 64px;
 
 .navbar-forums-hot {
   list-style: none;
-  display: flex;
   padding-left: 0;
-  margin: 32px 0;
 
   .nav-item {
     margin-right: 24px;
+    display: inline-block;
 
     .nav-link {
       font-size: 16px;

@@ -6,26 +6,7 @@
 {% block page-title %}Freesound Forums{% endblock %}
 
 {% block page-content %}
-    <div class="divider-light v-spacing-top-4"></div>
-    <div class="row">
-        <div class="col-md-7 middle">
-            <ul class="navbar-forums-hot">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'forums-forums' %}">Forums list</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="#">Hot threads</a>
-                </li>
-            </ul>
-        </div>
-        <div class="col-md-3 offset-md-2 middle">
-            <form method="get" action="{% url "forums-search" %}">
-                <input type="hidden" name="advanced_search"  value="0"/>
-                <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in all forums..." />
-            </form>
-        </div>
-    </div>
-    <div class="divider-light"></div>
+    {% include 'forum/main_forums_navbar.html' %}
     <div class="v-spacing-top-4">
         {% for thread in page.object_list %}
             {% display_thread thread %}

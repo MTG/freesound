@@ -81,7 +81,7 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="bw-profile__stats v-spacing-top-1">
+                <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
                     <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
                     <div><a id="user-followers-button" data-modal-activation-param="followers" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1&page={{ followers_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_followers_count user.id %}{{ followers.count }}{% endcache %} followers</a></div>
                     <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
@@ -99,12 +99,12 @@
         </div>
         <div class="divider-light"></div>
         <div class="row no-gutters">
-            <div class="col-8 v-spacing-top-4">
+            <div class="col-md-8 v-spacing-top-4">
                 <div class="bw-profile__tap_container bw-profile__tap_container__active" id="tapSounds">
                     {% for sounds_chunk in latest_sounds|chunks:3 %}
                         <div class="row no-margins">
                             {% for sound in sounds_chunk %}
-                                <div class="col-lg-4">
+                                <div class="col-4">
                                     {% display_sound_small sound %}
                                 </div>
                             {% endfor %}
@@ -125,7 +125,7 @@
                     {% for packs_chunk in latest_packs|chunks:3 %}
                         <div class="row no-margins">
                             {% for pack in packs_chunk %}
-                                <div class="col-lg-4">
+                                <div class="col-6 col-sm-4">
                                     {% display_pack pack %}
                                 </div>
                             {% endfor %}
@@ -146,7 +146,8 @@
                     downloaded
                 </div>
             </div>
-            <aside class="col-3 offset-1 bw-profile__sections">
+            <aside class="col-md-3 offset-md-1 bw-profile__sections">
+                <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
                 {% cache 43200 bw_user_profile_stats user.id %}
                 <section class="bw-profile__section_stats v-spacing-top-4">
                     <ol>
@@ -185,7 +186,7 @@
                 <div class="divider-light"></div>
                 <section id="latest_geotags" class="v-spacing-top-5" data-map-loaded="false">
                     <h5 class="padding-bottom-3">Latest geotags</h5>
-                    <div id="map_canvas" class="sidebar-map display-none" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
+                    <div id="map_canvas" class="sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
                     <div class="v-spacing-top-2 center">
                         <a class="no-hover" href="{% url "geotags-for-user" user.username %}">See all geotags by {{ user.username }}</a>
                     </div>

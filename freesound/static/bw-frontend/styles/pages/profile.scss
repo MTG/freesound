@@ -18,6 +18,7 @@
 
   &__stats {
     display: flex;
+    flex-wrap: wrap;
     font-size: 15px;
 
     a {

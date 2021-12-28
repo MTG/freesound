@@ -14,7 +14,7 @@
     <div class="container">
         <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
             <div class="row no-gutters">
-                <div class="col-8">
+                <div class="col-md-8">
                     <div class="bw-sound-page__information">
                         <div class="row middle">
                             <div class="col-10">
@@ -76,7 +76,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-3 offset-1">
+                <div class="col-md-3 offset-md-1">
+                    <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
                     <div class="bw-sound__sidebar">
                         <div>
                             <ol>
@@ -120,7 +121,7 @@
                         </div>
                         {% if pack.has_geotags %}<div id="pack_geotags" class="v-spacing-top-6" data-map-loaded="false">
                             <h5 class="padding-bottom-3">Geotags in this pack</h5>
-                            <div id="map_canvas" class="sidebar-map display-none" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
+                            <div id="map_canvas" class="sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
                         </div>{% endif %}
                     </div>
                 </div>

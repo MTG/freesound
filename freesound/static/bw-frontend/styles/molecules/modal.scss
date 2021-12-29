@@ -18,7 +18,11 @@
   }
 
   .modal-body {
-    padding: 0 56px;
+    padding: 0 20px;
+
+    @include lg-and-above {
+      padding: 0 56px;
+    }
 
     .modal_title {
       margin-bottom: 40px;

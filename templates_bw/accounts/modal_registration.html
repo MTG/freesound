@@ -4,6 +4,7 @@
 {% block aria-labelledby %}registerModalLabel{% endblock %}
 
 {% block body %}
+<div class="col-12">
     <div class="text-center">
         <h5 class="v-spacing-5">Join Freesound</h5>
         <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}" data-check-username-url="{% url 'check_username' %}">{% csrf_token %}
@@ -14,6 +15,7 @@
             <button type="submit" class="btn-primary v-spacing-top-3">Join</button>
         </form>
     </div>
+</div>
 {% endblock %}
 
 {% block extra %}

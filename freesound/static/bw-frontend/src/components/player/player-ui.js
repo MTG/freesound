@@ -287,12 +287,6 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     imageContainer.appendChild(progressIndicator)
     const progressStatus = createProgressStatus(parentNode, audioElement, playerSize, startWithSpectrum)
     imageContainer.appendChild(progressStatus)
-    audioElement.addEventListener('loadedmetadata', () => {
-      // If "loadedmetadata" event is received and valid duration value has been obtained, replace duration from data property with "real" duration from loaded file
-      if (audioElement.duration !== Infinity){
-        progressStatus.getElementsByClassName('bw-total__sound_duration')[0].innerHTML = formatAudioDuration(audioElement.duration, parentNode.dataset.showMilliseconds);
-      }
-    })
     imageContainer.addEventListener('click', evt => {
       const clickPosition = evt.offsetX
       const width = evt.target.clientWidth

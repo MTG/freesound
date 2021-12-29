@@ -93,7 +93,9 @@ const onPlayerTimeUpdate = (audioElement, parentNode) => {
         progressIndicator.innerHTML = `${playerSettings.showRemainingTime ? '-' : ''}${formatAudioDuration(progress, parentNode.dataset.showMilliseconds)}`  
       } else {
         // In small player we show the full duration while sound is not playing
-        progressIndicator.innerHTML = `${playerSettings.showRemainingTime ? '-' : ''}${formatAudioDuration(duration, parentNode.dataset.showMilliseconds)}`  
+        // Note that we use the duration property from the sound player element which comes from database and not from the actual loaded preview
+        // This is to avoid showing a different total duration once a preview is loaded
+        progressIndicator.innerHTML = `${playerSettings.showRemainingTime ? '-' : ''}${formatAudioDuration(parentNode.dataset.duration, parentNode.dataset.showMilliseconds)}`  
       }
     }
   }

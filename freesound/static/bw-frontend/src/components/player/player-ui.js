@@ -9,30 +9,80 @@ import { createAudioElement, setProgressIndicator } from './audio-element'
  *
  * @param {HTMLDivElement} parentNode
  * @param {HTMLAudioElement} audioElement
+ * @param {'small' | 'big'} playerSize
  */
-const createProgressIndicator = (parentNode, audioElement) => {
+const createProgressIndicator = (parentNode, audioElement, playerSize) => {
   const progressIndicatorContainer = document.createElement('div')
   progressIndicatorContainer.className =
     'bw-player__progress-indicator-container'
   const progressIndicator = document.createElement('div')
   progressIndicator.className = 'bw-player__progress-indicator'
+  if (playerSize === 'big'){
+    progressIndicator.classList.add('bw-player--big')
+  }
   progressIndicatorContainer.appendChild(progressIndicator)
   progressIndicatorContainer.addEventListener(
     'mousemove',
     throttle(evt => {
-      const progressPercentage =
-        evt.offsetX / progressIndicatorContainer.clientWidth
+      // Update playhead
+      const progressPercentage = evt.offsetX / progressIndicatorContainer.clientWidth
       setProgressIndicator(progressPercentage * 100, parentNode)
+
+      // Update selected time indicator (only in big players)
+      const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
+      if (progressBar !== undefined) { // progress bar is only there in big players
+        updateProgressBarIndicator(parentNode, audioElement, progressPercentage, progressBar)
+      }
     }),
     50
   )
   progressIndicatorContainer.addEventListener('mouseleave', () => {
+    // Update playhead
+    let audioDuration;
+    if (audioElement.readyState > 0){
+      audioDuration = audioElement.duration
+    } else {
+      audioDuration = parseFloat(parentNode.dataset.duration)
+    }
     setProgressIndicator(
-      ((100 * audioElement.currentTime) / audioElement.duration) % 100,
+      ((100 * audioElement.currentTime) / audioDuration) % 100,
       parentNode
     )
+
+    // Update selected time indicator (only in big players)
+    const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
+      if (progressBar !== undefined) { // progress bar is only there in big players
+        hideProgressBarIndicator(progressBar)
+      }
+
   })
   return progressIndicatorContainer
+}
+
+
+const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage, progressBar) => {
+  const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
+  const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
+  const progressBarIndicator = progressBar.getElementsByClassName('bw-player__progress-bar-indicator')[0]
+  const width = progressBarIndicator.parentElement.clientWidth - progressBarIndicator.clientWidth
+  progressBarIndicatorGhost.style.transform = `translateX(${width * progressPercentage}px)`
+  progressBarIndicatorGhost.style.opacity = 0.5
+  progressBarTime.style.transform = `translateX(calc(${width * progressPercentage}px - 50%))`
+  progressBarTime.style.opacity = 1
+  let audioDuration;
+  if (audioElement.readyState > 0){
+    audioDuration = audioElement.duration
+  } else {
+    audioDuration = parseFloat(parentNode.dataset.duration)
+  }
+  progressBarTime.innerHTML = formatAudioDuration(audioDuration * progressPercentage, true)
+}
+
+const hideProgressBarIndicator = (progressBar) => {
+  const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
+  const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
+  progressBarIndicatorGhost.style.opacity = 0
+  progressBarTime.style.opacity = 0
 }
 
 /**
@@ -52,43 +102,22 @@ const createProgressBar = (audioElement, duration) => {
   progressBar.appendChild(progressBarIndicator)
   progressBar.appendChild(progressBarIndicatorGhost)
   progressBar.appendChild(progressBarTime)
-  progressBar.addEventListener(
-    'mousemove',
-    throttle(evt => {
-      let audioDuration;
-      if (audioElement.readyState > 0){
-        audioDuration = audioElement.duration
-      } else {
-        audioDuration = duration
-      }
-      progressBarIndicatorGhost.style.transform = `translateX(${evt.offsetX}px)`
-      progressBarIndicatorGhost.style.opacity = 0.5
-      progressBarTime.style.transform = `translateX(calc(${evt.offsetX}px - 50%))`
-      progressBarTime.style.opacity = 1
-      progressBarTime.innerHTML = formatAudioDuration(
-        (audioDuration * evt.offsetX) / progressBar.clientWidth
-      )
-    }, 30)
-  )
-  progressBar.addEventListener('mouseleave', () => {
-    progressBarIndicatorGhost.style.opacity = 0
-    progressBarTime.style.opacity = 0
-  })
+  progressBar.style.pointerEvents = "none";  // Do that so mouse events are propagated to the progress indicator layer
   return progressBar
 }
 
 /**
- * @param {HTMLAudioElement} audioElement
+* @param {HTMLDivElement} parentNode
+* @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
  * @param {bool} startWithSpectrum
- * @param {number} durationDataProperty
  */
-const createProgressStatus = (audioElement, playerSize, startWithSpectrum, durationDataProperty) => {
+const createProgressStatus = (parentNode, audioElement, playerSize, startWithSpectrum) => {
   let { duration } = audioElement
   if ((duration === Infinity) || (isNaN(duration))){
     // Duration was not properly retrieved from audioElement. If given from data property, use that one.
-    if (durationDataProperty !== undefined){
-      duration = durationDataProperty
+    if (parentNode.dataset.duration !== undefined){
+      duration = parseFloat(parentNode.dataset.duration)
     }
   }
   const progressStatusContainer = document.createElement('div')
@@ -109,10 +138,8 @@ const createProgressStatus = (audioElement, playerSize, startWithSpectrum, durat
       progressStatusContainer.classList.add('bw-player__progress-container--inverted')
     }
   }
-  durationIndicator.innerHTML = `${
-    playerSettings.showRemainingTime ? '-' : ''
-  }${formatAudioDuration(duration)}`
-  progressIndicator.innerHTML = formatAudioDuration(0)
+  durationIndicator.innerHTML = `${playerSettings.showRemainingTime ? '-' : ''}${formatAudioDuration(duration, parentNode.dataset.showMilliseconds)}`
+  progressIndicator.innerHTML = formatAudioDuration(0, parentNode.dataset.showMilliseconds)
   progressStatus.appendChild(durationIndicator)
   progressStatus.appendChild(progressIndicator)
   if (playerSize === 'big') {
@@ -255,16 +282,15 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
       playerImage.src = waveform
     }
     playerImage.alt = title
-    const progressIndicator = createProgressIndicator(parentNode, audioElement)
+    const progressIndicator = createProgressIndicator(parentNode, audioElement, playerSize)
     imageContainer.appendChild(playerImage)
     imageContainer.appendChild(progressIndicator)
-    const progressStatus = createProgressStatus(audioElement, playerSize, startWithSpectrum, parseFloat(duration))
+    const progressStatus = createProgressStatus(parentNode, audioElement, playerSize, startWithSpectrum)
     imageContainer.appendChild(progressStatus)
     audioElement.addEventListener('loadedmetadata', () => {
-      // If "loadedmetadata" event is received and valid duration value has been obtained, replace duration from data
-      // property with "real" duration from loaded file
+      // If "loadedmetadata" event is received and valid duration value has been obtained, replace duration from data property with "real" duration from loaded file
       if (audioElement.duration !== Infinity){
-        progressStatus.getElementsByClassName('bw-total__sound_duration')[0].innerHTML = formatAudioDuration(audioElement.duration);
+        progressStatus.getElementsByClassName('bw-total__sound_duration')[0].innerHTML = formatAudioDuration(audioElement.duration, parentNode.dataset.showMilliseconds);
       }
     })
     imageContainer.addEventListener('click', evt => {

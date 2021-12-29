@@ -25,17 +25,20 @@ const formatMilliseconds = value => {
 
 /**
  * @param {number} duration
+ * @param {string} showMilliseconds
  */
-export const formatAudioDuration = duration => {
+export const formatAudioDuration = (duration, showMilliseconds) => {
   if ((duration === Infinity) || (isNaN(duration))){
-    return `?:?:?`
+    return `?:?`
   }
   const minutes = Math.floor(duration / 60)
   const seconds = Math.floor(duration % 60)
   const milliseconds = duration - Math.floor(duration)
-  return `${padSingleDigits(minutes)}:${padSingleDigits(
-    seconds
-  )}:${formatMilliseconds(milliseconds)}`
+  if (showMilliseconds === "true" || showMilliseconds === true){
+    return `${minutes}:${padSingleDigits(seconds)}.${formatMilliseconds(milliseconds)}`
+  } else {
+    return `${minutes}:${padSingleDigits(seconds)}`
+  }
 }
 
 

@@ -19,3 +19,5 @@ import './geotagPicker';
 import './afterDownloadModal';
 import './bookmarkSound';
 import './similarSoundsModal';
+import './cookieConsent';
+import './collapsableBlock';

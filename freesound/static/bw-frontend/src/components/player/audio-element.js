@@ -1,5 +1,5 @@
 import playerSettings from './settings'
-import { formatAudioDuration } from './utils'
+import { formatAudioDuration, getAudioElementDurationOrDurationProperty } from './utils'
 import { createIconElement } from '../../utils/icons'
 
 const useActionIcon = (parentNode, action) => {
@@ -44,7 +44,8 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
  * @param {HTMLDivElement} parentNode
  */
 const usePlayingAnimation = (audioElement, parentNode) => {
-  const { duration, currentTime } = audioElement
+  const { currentTime } = audioElement
+  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
   const progress = (currentTime / duration) * 100
   setProgressIndicator(progress, parentNode)
   if (!audioElement.paused) {
@@ -126,7 +127,7 @@ export const createAudioElement = parentNode => {
     usePlayingStatus(audioElement, parentNode);
     updatePlayerPositionTimer = setInterval(() => {
       onPlayerTimeUpdate(audioElement, parentNode)
-    }, 100)
+    }, 30)
   })
 
   audioElement.addEventListener('ended', () => {

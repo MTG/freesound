@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import throttle from 'lodash.throttle'
 import playerSettings from './settings'
-import { formatAudioDuration, playAtTime, isTouchEnabledDevice } from './utils'
+import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator } from './audio-element'
 
@@ -38,14 +38,9 @@ const createProgressIndicator = (parentNode, audioElement, playerSize) => {
   )
   progressIndicatorContainer.addEventListener('mouseleave', () => {
     // Update playhead
-    let audioDuration;
-    if (audioElement.readyState > 0){
-      audioDuration = audioElement.duration
-    } else {
-      audioDuration = parseFloat(parentNode.dataset.duration)
-    }
+    const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
     setProgressIndicator(
-      ((100 * audioElement.currentTime) / audioDuration) % 100,
+      ((100 * audioElement.currentTime) / duration) % 100,
       parentNode
     )
 
@@ -69,13 +64,8 @@ const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage
   progressBarIndicatorGhost.style.opacity = 0.5
   progressBarTime.style.transform = `translateX(calc(${width * progressPercentage}px - 50%))`
   progressBarTime.style.opacity = 1
-  let audioDuration;
-  if (audioElement.readyState > 0){
-    audioDuration = audioElement.duration
-  } else {
-    audioDuration = parseFloat(parentNode.dataset.duration)
-  }
-  progressBarTime.innerHTML = formatAudioDuration(audioDuration * progressPercentage, true)
+  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
+  progressBarTime.innerHTML = formatAudioDuration(duration * progressPercentage, true)
 }
 
 const hideProgressBarIndicator = (progressBar) => {
@@ -291,14 +281,8 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
       const clickPosition = evt.offsetX
       const width = evt.target.clientWidth
       const positionRatio = clickPosition / width
-      let time;
-      if (audioElement.readyState > 0) {
-        // If data is loaded, we can use duration property from the audioElement...
-        time = audioElement.duration * positionRatio
-      } else {
-        // If not loaded, we use the duration we pass as metadata
-        time = parseFloat(duration) * positionRatio
-      }
+      const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
+      const time = duration * positionRatio
       if (audioElement.paused) {
         // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
         playAtTime(audioElement, time)

@@ -65,10 +65,19 @@ export const playAtTime = (audioElement, timeInSeconds) => {
     // If player needs to load data, trigger data loading and then play at the required time
     audioElement.load();
     audioElement.addEventListener('loadeddata', () => {
-      if (audioElement.readyState > 0){
-        audioElement.currentTime = timeInSeconds;
-        audioElement.play();
-      }
+      audioElement.currentTime = timeInSeconds;
+      audioElement.play();
     });
   }
+}
+
+
+export const getAudioElementDurationOrDurationProperty = (audioElement, parentNode) => {
+  let audioDuration;
+    if (audioElement.readyState > 0){
+      audioDuration = audioElement.duration
+    } else {
+      audioDuration = parseFloat(parentNode.dataset.duration)
+    }
+    return audioDuration;
 }

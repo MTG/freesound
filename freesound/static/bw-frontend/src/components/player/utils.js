@@ -25,17 +25,20 @@ const formatMilliseconds = value => {
 
 /**
  * @param {number} duration
+ * @param {string} showMilliseconds
  */
-export const formatAudioDuration = duration => {
+export const formatAudioDuration = (duration, showMilliseconds) => {
   if ((duration === Infinity) || (isNaN(duration))){
-    return `?:?:?`
+    return `?:?`
   }
   const minutes = Math.floor(duration / 60)
   const seconds = Math.floor(duration % 60)
   const milliseconds = duration - Math.floor(duration)
-  return `${padSingleDigits(minutes)}:${padSingleDigits(
-    seconds
-  )}:${formatMilliseconds(milliseconds)}`
+  if (showMilliseconds === "true" || showMilliseconds === true){
+    return `${minutes}:${padSingleDigits(seconds)}.${formatMilliseconds(milliseconds)}`
+  } else {
+    return `${minutes}:${padSingleDigits(seconds)}`
+  }
 }
 
 
@@ -62,10 +65,19 @@ export const playAtTime = (audioElement, timeInSeconds) => {
     // If player needs to load data, trigger data loading and then play at the required time
     audioElement.load();
     audioElement.addEventListener('loadeddata', () => {
-      if (audioElement.readyState > 0){
-        audioElement.currentTime = timeInSeconds;
-        audioElement.play();
-      }
+      audioElement.currentTime = timeInSeconds;
+      audioElement.play();
     });
   }
+}
+
+
+export const getAudioElementDurationOrDurationProperty = (audioElement, parentNode) => {
+  let audioDuration;
+    if (audioElement.readyState > 0){
+      audioDuration = audioElement.duration
+    } else {
+      audioDuration = parseFloat(parentNode.dataset.duration)
+    }
+    return audioDuration;
 }

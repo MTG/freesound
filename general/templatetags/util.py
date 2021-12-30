@@ -46,7 +46,7 @@ def duration(value):
     duration_minutes = int(value/60)
     duration_seconds = int(value) % 60
     duration_miliseconds = int((value - int(value)) * 1000)
-    return "%02d:%02d:%03d" % (duration_minutes, duration_seconds, duration_miliseconds)
+    return "%d:%02d.%03d" % (duration_minutes, duration_seconds, duration_miliseconds)
 
 
 @register.filter

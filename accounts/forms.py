@@ -251,6 +251,7 @@ class RegistrationForm(forms.Form):
 class BwRegistrationForm(RegistrationForm):
 
     def __init__(self, *args, **kwargs):
+        kwargs.update(dict(auto_id='id_%s_registration'))
         kwargs.update(dict(label_suffix=''))
         super(BwRegistrationForm, self).__init__(*args, **kwargs)
 

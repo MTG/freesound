@@ -38,13 +38,17 @@
   top: 0;
   left: 0;
   transform: translateX(-100%);
-  border-right: 4px solid white;
+  border-right: 4px solid #e7e7e7;
   transition: opacity 0.2s ease;
   background: rgba(255, 255, 255, 0.4);
   pointer-events: none;
 
   .bw-player--playing & {
     opacity: 1;
+  }
+
+  &.bw-player--big {
+    height: 91%;
   }
 }
 
@@ -153,7 +157,9 @@
   flex-direction: row-reverse;
 
   span {
-    background-color: transparentize($white, 0.5);
+    :not(.bw-player__progress--big) {
+      background-color: transparentize($white, 0.5);
+    }
     padding: 2px;
     border-radius: 2px;
   }

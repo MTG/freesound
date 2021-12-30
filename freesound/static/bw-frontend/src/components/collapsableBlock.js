@@ -12,4 +12,7 @@ const handleCollapsable = () => {
     : showText;
 };
 
-collapsableText.addEventListener('click', handleCollapsable);
+if (collapsableText !== null){
+  collapsableText.addEventListener('click', handleCollapsable);
+}
+

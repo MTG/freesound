@@ -124,10 +124,19 @@ export const createAudioElement = parentNode => {
   let updatePlayerPositionTimer = undefined;
 
   audioElement.addEventListener('play', () => {
-    usePlayingStatus(audioElement, parentNode);
-    updatePlayerPositionTimer = setInterval(() => {
-      onPlayerTimeUpdate(audioElement, parentNode)
-    }, 30)
+    if (audioElement.readyState === 0){
+      audioElement.addEventListener('loadeddata', () => {
+        usePlayingStatus(audioElement, parentNode);
+        updatePlayerPositionTimer = setInterval(() => {
+          onPlayerTimeUpdate(audioElement, parentNode)
+        }, 30)
+      });
+    } else {
+      usePlayingStatus(audioElement, parentNode);
+      updatePlayerPositionTimer = setInterval(() => {
+        onPlayerTimeUpdate(audioElement, parentNode)
+      }, 30)
+    }
   })
 
   audioElement.addEventListener('ended', () => {

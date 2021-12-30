@@ -3,7 +3,30 @@ import throttle from 'lodash.throttle'
 import playerSettings from './settings'
 import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty } from './utils'
 import { createIconElement } from '../../utils/icons'
-import { createAudioElement, setProgressIndicator } from './audio-element'
+import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
+
+const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage) => {
+  const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
+  if (progressBar !== undefined) { // progress bar is only there in big players
+    const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
+    const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
+    const progressBarIndicator = progressBar.getElementsByClassName('bw-player__progress-bar-indicator')[0]
+    const width = progressBarIndicator.parentElement.clientWidth - progressBarIndicator.clientWidth
+    progressBarIndicatorGhost.style.transform = `translateX(${width * progressPercentage}px)`
+    progressBarIndicatorGhost.style.opacity = 0.5
+    progressBarTime.style.transform = `translateX(calc(${width * progressPercentage}px - 50%))`
+    progressBarTime.style.opacity = 1
+    const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
+    progressBarTime.innerHTML = formatAudioDuration(duration * progressPercentage, true)
+  }
+}
+
+const hideProgressBarIndicator = (progressBar) => {
+  const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
+  const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
+  progressBarIndicatorGhost.style.opacity = 0
+  progressBarTime.style.opacity = 0
+}
 
 /**
  *
@@ -29,10 +52,7 @@ const createProgressIndicator = (parentNode, audioElement, playerSize) => {
       setProgressIndicator(progressPercentage * 100, parentNode)
 
       // Update selected time indicator (only in big players)
-      const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
-      if (progressBar !== undefined) { // progress bar is only there in big players
-        updateProgressBarIndicator(parentNode, audioElement, progressPercentage, progressBar)
-      }
+      updateProgressBarIndicator(parentNode, audioElement, progressPercentage)
     }),
     50
   )
@@ -52,27 +72,6 @@ const createProgressIndicator = (parentNode, audioElement, playerSize) => {
 
   })
   return progressIndicatorContainer
-}
-
-
-const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage, progressBar) => {
-  const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
-  const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
-  const progressBarIndicator = progressBar.getElementsByClassName('bw-player__progress-bar-indicator')[0]
-  const width = progressBarIndicator.parentElement.clientWidth - progressBarIndicator.clientWidth
-  progressBarIndicatorGhost.style.transform = `translateX(${width * progressPercentage}px)`
-  progressBarIndicatorGhost.style.opacity = 0.5
-  progressBarTime.style.transform = `translateX(calc(${width * progressPercentage}px - 50%))`
-  progressBarTime.style.opacity = 1
-  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
-  progressBarTime.innerHTML = formatAudioDuration(duration * progressPercentage, true)
-}
-
-const hideProgressBarIndicator = (progressBar) => {
-  const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
-  const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
-  progressBarIndicatorGhost.style.opacity = 0
-  progressBarTime.style.opacity = 0
 }
 
 /**
@@ -181,6 +180,8 @@ const createStopButton = (audioElement, parentNode) => {
     audioElement.pause()
     audioElement.currentTime = 0
     setProgressIndicator(0, parentNode)
+    //updateProgressBarIndicator(parentNode, audioElement, 0)
+    onPlayerTimeUpdate(audioElement, parentNode)
     e.stopPropagation()
   })
   return stopButton

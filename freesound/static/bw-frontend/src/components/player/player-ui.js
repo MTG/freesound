@@ -21,11 +21,14 @@ const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage
   }
 }
 
-const hideProgressBarIndicator = (progressBar) => {
-  const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
-  const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
-  progressBarIndicatorGhost.style.opacity = 0
-  progressBarTime.style.opacity = 0
+export const hideProgressBarIndicator = (parentNode) => {
+  const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
+  if (progressBar !== undefined) { // progress bar is only there in big players
+    const progressBarIndicatorGhost = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--ghost')[0]
+    const progressBarTime = progressBar.getElementsByClassName('bw-player__progress-bar-indicator--time')[0]
+    progressBarIndicatorGhost.style.opacity = 0
+    progressBarTime.style.opacity = 0
+  }
 }
 
 /**
@@ -63,13 +66,8 @@ const createProgressIndicator = (parentNode, audioElement, playerSize) => {
       ((100 * audioElement.currentTime) / duration) % 100,
       parentNode
     )
-
     // Update selected time indicator (only in big players)
-    const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
-      if (progressBar !== undefined) { // progress bar is only there in big players
-        hideProgressBarIndicator(progressBar)
-      }
-
+    hideProgressBarIndicator(parentNode)
   })
   return progressIndicatorContainer
 }
@@ -180,7 +178,6 @@ const createStopButton = (audioElement, parentNode) => {
     audioElement.pause()
     audioElement.currentTime = 0
     setProgressIndicator(0, parentNode)
-    //updateProgressBarIndicator(parentNode, audioElement, 0)
     onPlayerTimeUpdate(audioElement, parentNode)
     e.stopPropagation()
   })
@@ -264,7 +261,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
   }
   if (playerSize !== 'minimal') {
     const startWithSpectrum = document.cookie.indexOf('preferSpectrogram=yes') > -1;
-    const {waveform, spectrum, title, duration} = parentNode.dataset
+    const {waveform, spectrum, title} = parentNode.dataset
     const playerImage = document.createElement('img')
     playerImage.className = 'bw-player__img'
     if (startWithSpectrum) {
@@ -281,15 +278,29 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     imageContainer.addEventListener('click', evt => {
       const clickPosition = evt.offsetX
       const width = evt.target.clientWidth
-      const positionRatio = clickPosition / width
+      let positionRatio = clickPosition / width
+      if (playerSize === "small"){
+        if (isTouchEnabledDevice() && positionRatio < 0.15) {
+          // In small player and touch device, quantize touches near the start of the sound to position-0
+          positionRatio = 0.0
+        } else if (positionRatio < 0.05){
+          // In small player but non-touch device, the quantization is less strict
+          positionRatio = 0.0
+        }
+      }
       const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
       const time = duration * positionRatio
       if (audioElement.paused) {
         // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
         playAtTime(audioElement, time)
       } else {
-        // If already playing, just change current time
+        // If already playing, just change current time and continue playing
         audioElement.currentTime = time
+      }
+      if (isTouchEnabledDevice()){
+        // In touch enabled devices hide the progress indicator here because otherwise it will remain visible as no
+        // mouseleave event is ever fired
+        hideProgressBarIndicator(parentNode)
       }
       evt.stopPropagation()
     })
@@ -333,8 +344,8 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
          createPlayButton(audioElement, playerSize),
          createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
          createRulerButton()]
-      : [createLoopButton(audioElement),
-         createPlayButton(audioElement, playerSize)]
+      : [createPlayButton(audioElement, playerSize),
+         createLoopButton(audioElement)]
   controls.forEach(el => playerControls.appendChild(el))
   return playerControls
 }

@@ -9,6 +9,10 @@
     margin-right: 0px;
   }
 
+  .select-dropdown__list {
+    max-height: 500px;
+  }
+
   &__button {
     background-color: $white;
     color: $black;

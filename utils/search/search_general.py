@@ -183,6 +183,11 @@ def search_prepare_parameters(request):
     if "pack" in filter_query:
         only_sounds_with_pack = False
 
+    # If the query is displaying only sounds with pack, also enable group by pack as this is needed to display
+    # results as packs
+    if only_sounds_with_pack:
+        grouping = "1"
+
     # Set default values
     id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
     tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']

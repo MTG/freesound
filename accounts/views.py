@@ -956,10 +956,10 @@ def latest_content_type(scores):
         return 'comment'
 
 
-def create_user_rank(uploaders, posters, commenters):
-    upload_weight = 1
-    post_weight = 0.4
-    comment_weight = 0.05
+def create_user_rank(uploaders, posters, commenters, weights=dict()):
+    upload_weight = weights.get('upload', 1)
+    post_weight = weights.get('post', 0.4)
+    comment_weight = weights.get('comment', 0.05)
     user_rank = {}
     for user in uploaders:
         user_rank[user['user']] = {'uploads': user['id__count'], 'posts': 0, 'comments': 0, 'score': 0}
@@ -1040,9 +1040,13 @@ def charts(request):
     cached every 60 minutes so load time should be fast for most users. If this simple caching strategy is not good
     enough, then we should move computation of statistics to a cron job.
     """
+    if not using_beastwhoosh(request):
+        return HttpResponseRedirect(reverse('accounts'))
+
     num_days = 14
     num_items = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
+    weights = settings.BW_CHARTS_ACTIVE_USERS_WEIGHTS
 
     # Most active users in last num_days
     latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id'))\
@@ -1051,7 +1055,7 @@ def charts(request):
         .order_by("-id__count")
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id'))\
         .order_by("-id__count")
-    user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters)
+    user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters, weights=weights)
     most_active_users = User.objects.select_related("profile")\
         .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_items]])
     most_active_users_display = [[u, user_rank[u.id]] for u in most_active_users]

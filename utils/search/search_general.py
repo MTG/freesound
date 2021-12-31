@@ -167,9 +167,9 @@ def search_prepare_parameters(request):
         current_page = 1
     sort_unformatted = request.GET.get("s", None)
 
-    if search_query == "":
-        # When making empty queries, automatically set sort to "created desc" as relevance score
-        # based sorting makes no sense
+    if search_query == "" and sort_unformatted is None:
+        # When making empty queries and no sorting is specified, automatically set sort to "created desc" as
+        # relevance score based sorting makes no sense
         sort_unformatted = "created desc"
     
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)

@@ -1101,6 +1101,7 @@ class RateSound(WriteRequiredGenericAPIView):
                 else:
                     SoundRating.objects.create(
                         user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
+                    Sound.objects.filter(id=sound_id).update(is_index_dirty=True)
                     return Response(data={'detail': 'Successfully rated sound %s.' % sound_id},
                                     status=status.HTTP_201_CREATED)
             except IntegrityError:

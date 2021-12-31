@@ -469,7 +469,7 @@ def convert_to_solr_document(sound):
     document = {}
 
     # Basic sound fields
-    keep_fields = ['username', 'created', 'is_explicit', 'avg_rating', 'is_remix', 'num_ratings', 'channels', 'md5',
+    keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5',
                       'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
     for key in keep_fields:
         document[key] = getattr(sound, key)
@@ -477,6 +477,10 @@ def convert_to_solr_document(sound):
     document["description"] = remove_control_chars(getattr(sound, "description"))
     document["tag"] = getattr(sound, "tag_array")
     document["license"] = getattr(sound, "license_name")
+    if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
+        document["avg_rating"] = getattr(sound, "avg_rating")
+    else:
+        document["avg_rating"] = 0
 
     if getattr(sound, "pack_id"):
         document["pack"] = remove_control_chars(getattr(sound, "pack_name"))

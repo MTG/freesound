@@ -1534,7 +1534,8 @@ class Download(models.Model):
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
+        Sound.objects.filter(id=download.sound_id).update(
+            is_index_dirty=True, num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
 
@@ -1544,7 +1545,8 @@ def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
         if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
+            Sound.objects.filter(id=download.sound_id).update(
+                is_index_dirty=True, num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
                 num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
 

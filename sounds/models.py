@@ -373,6 +373,7 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          geotags_geotag.location_name as geotag_name,
           ac_analsyis.analysis_data as ac_analysis,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
@@ -437,6 +438,7 @@ class SoundManager(models.Manager):
           sound.geotag_id,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          geotags_geotag.location_name as geotag_name,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
           ac_analsyis.analysis_data as ac_analysis,
@@ -1138,6 +1140,20 @@ class Sound(SocialModel):
         # NOTE: in BW we removed the display sound caches because DB queries are optimized and the caches are not
         # very useful (DB queries are also optimal in NG, but we never removed caching code). If we were to enable
         # them again, check old code of this function in the repository history.
+
+    def get_geotag_name(self):
+        if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:
+            if hasattr(self, 'geotag_name'):
+                name = self.geotag_name
+            else:
+                name = self.geotag.location_name
+            if name:
+                return name
+        if hasattr(self, 'geotag_lat'):
+            return '{:.3f}, {:.3f}'.format(self.geotag_lat, self.geotag_lon)
+        else:
+            return '{:.3f}, {:.3f}'.format(self.geotag.lat, self.geotag.lon)
+
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

@@ -109,7 +109,7 @@
                 <div class="middle text-light-grey bw_sound-info-extended right">
                     {% if sound.geotag_id %}
                     <div><span class="bw-icon-pin"></span>
-                        <span class="h-spacing-left-1">{{ sound.geotag_lat|floatformat:3 }}, {{ sound.geotag_lon|floatformat:3 }}</span></div>
+                        <span class="h-spacing-left-1" title="{{ sound.get_geotag_name }}">{{ sound.get_geotag_name|truncatechars:20 }}</span></div>
                         {% comment %}In the span above we should put the textual name of the place where the sound was recorded
                         (if there is geotag). For now we'll put cooedinates{% endcomment %}
                     {% endif %}

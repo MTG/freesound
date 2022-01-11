@@ -502,6 +502,7 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
+                    sound.geotag.should_update_information = True
                     sound.geotag.save()
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"],

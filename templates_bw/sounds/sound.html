@@ -98,7 +98,7 @@
                             {% if sound.geotag_id %}
                                 <div>
                                     <a href="{% url 'sound-geotag' sound.user.username sound.id %}">
-                                        {% bw_icon 'pin' %} {{ sound.geotag.get_location_name }}
+                                        {% bw_icon 'pin' %} {{ sound.get_geotag_name }}
                                     </a>
                                 </div>
                                 {% if sound.pack_id or sound.remix_group.all.count %}

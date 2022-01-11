@@ -118,6 +118,9 @@
         @media (max-width:750px) {
             max-width: 100% !important;
         }
+        @media (min-width:1100px) {
+          max-width: 1000px !important;
+      }
       }
     }
   }

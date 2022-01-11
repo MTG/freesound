@@ -1,0 +1,66 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Debug",
+				"type": "python",
+				"request": "attach",
+				"pathMappings": [
+				  {
+					"localRoot": "${workspaceFolder}",
+					"remoteRoot": "/code"
+				  }
+				],
+				"port": 3000,
+				"host": "127.0.0.1",
+			}
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "Run web and search",
+				"type": "shell",
+				"command": "docker-compose up web search",
+				"problemMatcher": []
+			},
+			{
+				"label": "Build static",
+				"type": "shell",
+				"command": "docker-compose run --rm web npm run build && docker-compose run --rm web python manage.py collectstatic --noinput",
+				"problemMatcher": []
+			},
+			{
+				"label": "Install static",
+				"type": "shell",
+				"command": "docker-compose run --rm web npm install",
+				"problemMatcher": []
+			},
+			{
+				"label": "Clear caches",
+				"type": "shell",
+				"command": "rm freesound-data/_cache/*",
+				"problemMatcher": []
+			},
+			{
+				"label": "Create caches",
+				"type": "shell",
+				"command": "docker-compose run --rm web python manage.py create_front_page_caches && docker-compose run --rm web python manage.py create_random_sounds && docker-compose run --rm web python manage.py generate_geotags_bytearray",
+				"problemMatcher": []
+			},
+			{
+				"label": "Run tests",
+				"type": "shell",
+				"command": "docker-compose run --rm web python manage.py test --settings=freesound.test_settings",
+				"problemMatcher": []
+			}
+		]
+	}
+}

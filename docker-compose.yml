@@ -33,6 +33,7 @@ services:
             - fswebhome:/home/fsweb
         ports:
             - 8000:8000
+            - 3000:3000  # needed for debugpy debugger (to connect with vscode)
         env_file:
             - environment
         environment:

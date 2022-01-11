@@ -15,6 +15,9 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 DISPLAY_DEBUG_TOOLBAR = False
 
+DEBUGGER_HOST = "0.0.0.0"
+DEBUGGER_PORT = 3000  # This port should match the one in docker compose
+
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
 
 default_url = 'postgres://postgres@db/postgres'

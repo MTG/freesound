@@ -72,6 +72,11 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
     avatar for Freesound 2 UI. Once we get rid of old UI code, this function can be modified as the locations
     decorator of the Profile model might return something different if user has no avatar.
     """
+    if len(username) > 1:
+        no_avatar_bg_color = settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1])) % len(settings.AVATAR_BG_COLORS)]
+    else:
+        no_avatar_bg_color = settings.AVATAR_BG_COLORS[ord(username[0]) % len(settings.AVATAR_BG_COLORS)]
+
     return {
         'size': size,
         'has_avatar': '_avatar.png' not in avatar_url,
@@ -79,8 +84,7 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
         'username': username,
         'font_size': int(size * 0.4),
         'extra_class': extra_class,
-        'no_avatar_bg_color': settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1]))
-                                                        % len(settings.AVATAR_BG_COLORS)]}
+        'no_avatar_bg_color': no_avatar_bg_color}
 
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)

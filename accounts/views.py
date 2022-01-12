@@ -1156,6 +1156,14 @@ def account(request, username):
                   or user.profile.get_total_downloads > 0  # user has downloads
                   or user.profile.num_sounds > 0)  # user has uploads
 
+    latest_geotags_static_image_url = None
+    if user.profile.has_geotags:
+        pins = [] # "pin-s+555555(42,21),pin-s+ff2600(67,42)"
+        for sound in Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)[0:10]:
+            pins.append('pin-s+ff2600({},{})'.format(sound.geotag.lon, sound.geotag.lat))
+        latest_geotags_static_image_url = "https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/static/{0}/auto/300x300@2x?padding=60%2C60%2C60%2C60&access_token={1}".format(','.join(pins), settings.MAPBOX_ACCESS_TOKEN)
+        print latest_geotags_static_image_url
+        
     tvars = {
         'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
@@ -1174,6 +1182,7 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
         'followers_modal_page': request.GET.get('followers', 1),  # BW only
         'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
+        'latest_geotags_static_image_url': latest_geotags_static_image_url,  # BW only
     }
     return render(request, 'accounts/account.html', tvars)
 

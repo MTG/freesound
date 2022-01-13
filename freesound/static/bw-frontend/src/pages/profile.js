@@ -1,4 +1,4 @@
-import {makeSoundsMap, makeStaticMap} from '../components/mapsMapbox';
+import {makeSoundsMapWithStaticMapFirst} from '../components/mapsMapbox';
 import {handleGenericModal, handleModal} from "../components/modal";
 
 // Latest sounds/Latest tags taps
@@ -93,44 +93,6 @@ if (followingTagsModalParam) {
   });
 }
 
-
 // User geotags map
 // Load the map only when user clicks on "load map" button (or when clicking on static map image if using static map images)
-const mapCanvas = document.getElementById('map_canvas');
-const staticMapWrapper = document.getElementById('static_map_wrapper');
-const latestGeotagsSection = document.getElementById('latest_geotags');
-const loadButtonWrapper = document.createElement('div');
-const loadMapButton = document.createElement('button');
-const loadMap = () => {
-  loadMapButton.disabled = true;
-  loadMapButton.innerText = 'Loading...'
-  if (latestGeotagsSection.getAttribute('data-map-loaded') !== 'true') {
-    makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
-      if (staticMapWrapper !== null){
-        staticMapWrapper.remove();
-      }
-      if (loadButtonWrapper !== null){
-        loadButtonWrapper.remove();
-      }
-      latestGeotagsSection.setAttribute('data-map-loaded', "true");
-      mapCanvas.style.display = 'block'; // Once map is ready, show geotags section
-    });
-  }
-}
-loadButtonWrapper.id = 'loadMapButtonWrapper';
-loadButtonWrapper.classList.add('middle', 'center', 'sidebar-map', 'border-radius-5', 'bg-navy-light-grey', 'w-100');
-loadMapButton.onclick = () => {loadMap()};
-loadMapButton.classList.add('btn-inverse');
-loadMapButton.innerText = 'Load map...';
-if (latestGeotagsSection !== null){
-  if (staticMapWrapper !== null){
-    makeStaticMap('static_map_wrapper', 300, 300, () => {
-      loadMapButton.style.backgroundColor = "white";
-      staticMapWrapper.appendChild(loadMapButton);
-      loadMap();
-    })
-  } else {
-    loadButtonWrapper.appendChild(loadMapButton);
-    latestGeotagsSection.insertBefore(loadButtonWrapper, mapCanvas);
-  }
-}
+makeSoundsMapWithStaticMapFirst('latest_geotags', 'map_canvas', 'static_map_wrapper')

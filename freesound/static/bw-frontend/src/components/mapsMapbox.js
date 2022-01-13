@@ -518,8 +518,8 @@ function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_la
     return map;
 }
 
-const makeStaticMap = (map_wrapper_element_id, width, height, onclick) => {
-    const mapWrapperElement = document.getElementById(map_wrapper_element_id);
+const makeStaticMap = (mapWrapperElementId, width, height, onclick) => {
+    const mapWrapperElement = document.getElementById(mapWrapperElementId);
     const token = mapboxgl.accessToken;
     const padding = 60;
     const pins = [];
@@ -534,4 +534,53 @@ const makeStaticMap = (map_wrapper_element_id, width, height, onclick) => {
     });
 }
 
-export {makeSoundsMap, makeGeotagEditMap, makeStaticMap};
+/**
+ * @param {string} mainWrapperElementId
+ * @param {string} mapCanvasId
+ * @param {string} staticMapWrapperElementId
+ */
+const makeSoundsMapWithStaticMapFirst = (mainWrapperElementId, mapCanvasId, staticMapWrapperElementId) => {
+    // Load the map only when user clicks on "load map" button (or when clicking on static map image if using static map images)
+    const mapCanvas = document.getElementById(mapCanvasId);
+    const staticMapWrapper = document.getElementById(staticMapWrapperElementId);
+    const mainWrapperElement = document.getElementById(mainWrapperElementId);
+    const loadButtonWrapper = document.createElement('div');
+
+    const loadMapButton = document.createElement('button');
+    const loadMap = () => {
+    loadMapButton.disabled = true;
+    loadMapButton.innerText = 'Loading...'
+    if (mainWrapperElement.getAttribute('data-map-loaded') !== 'true') {
+        makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
+        if (staticMapWrapper !== null){
+            staticMapWrapper.remove();
+        }
+        if (loadButtonWrapper !== null){
+            loadButtonWrapper.remove();
+        }
+        mainWrapperElement.setAttribute('data-map-loaded', "true");
+        mapCanvas.style.display = 'block'; // Once map is ready, show geotags section
+        });
+    }
+    }
+    loadButtonWrapper.id = 'loadMapButtonWrapper';
+    loadButtonWrapper.classList.add('middle', 'center', 'sidebar-map', 'border-radius-5', 'bg-navy-light-grey', 'w-100');
+    loadMapButton.onclick = () => {loadMap()};
+    loadMapButton.classList.add('btn-inverse');
+    loadMapButton.innerText = 'Load map...';
+    if (mainWrapperElement !== null){
+    if (staticMapWrapper !== null){
+        makeStaticMap('static_map_wrapper', 300, 300, () => {
+        loadMapButton.style.backgroundColor = "white";
+        staticMapWrapper.appendChild(loadMapButton);
+        loadMap();
+        })
+    } else {
+        loadButtonWrapper.appendChild(loadMapButton);
+        mainWrapperElement.insertBefore(loadButtonWrapper, mapCanvas);
+    }
+    }
+}
+
+
+export {makeSoundsMap, makeGeotagEditMap, makeSoundsMapWithStaticMapFirst};

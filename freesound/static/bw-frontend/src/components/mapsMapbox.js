@@ -5,7 +5,7 @@ import {createPlayer} from './player/player-ui'
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
 var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
 var MIN_INPUT_CHARACTERS_FOR_GEOCODER =  3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
-
+var MAP_MARKER_URL = '/media/images/map_marker.png';
 
 function setMaxZoomCenter(lat, lng, zoom) {
     window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels
@@ -321,7 +321,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 
 
             map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
-                map.loadImage('/media/images/map_marker.png', function(error, image) {
+                map.loadImage(MAP_MARKER_URL, function(error, image) {
                     map.addImage("custom-marker", image);
 
                     // Setup clustering
@@ -407,8 +407,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 }
 
 
-function makeGeotagEditMap(map_element_id, arrow_url, on_bounds_changed_callback,
-                           center_lat, center_lon, zoom, idx){
+function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_lat, center_lon, zoom, idx){
 
     /*
     This function is used to display the map used to add a geotag to a sound maps with sounds. It is used in the sound
@@ -479,7 +478,7 @@ function makeGeotagEditMap(map_element_id, arrow_url, on_bounds_changed_callback
     });
 
     map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
-        map.loadImage('/media/images/map_marker.png', function(error, image) {
+        map.loadImage(MAP_MARKER_URL, function(error, image) {
             map.addImage("custom-marker", image);
 
             // Add position marker
@@ -519,4 +518,20 @@ function makeGeotagEditMap(map_element_id, arrow_url, on_bounds_changed_callback
     return map;
 }
 
-export {makeSoundsMap, makeGeotagEditMap};
+const makeStaticMap = (map_wrapper_element_id, width, height, onclick) => {
+    const mapWrapperElement = document.getElementById(map_wrapper_element_id);
+    const token = mapboxgl.accessToken;
+    const padding = 60;
+    const pins = [];
+    JSON.parse(mapWrapperElement.dataset.pins).forEach( pin => {
+        pins.push(`url-https://freesound.org${MAP_MARKER_URL}(${pin.lon},${pin.lat})`)
+    });
+    const imageUrl = `https://api.mapbox.com/styles/v1/freesound/${FREESOUND_SATELLITE_STYLE_ID}/static/${encodeURIComponent(pins.join(','))}/auto/${width}x${height}?padding=${padding}%2C${padding}%2C${padding}%2C${padding}&access_token=${token}`;
+    mapWrapperElement.style.background = `url("${imageUrl}")`;
+    mapWrapperElement.style.backgroundSize = 'cover';
+    mapWrapperElement.addEventListener('click', () => {
+        onclick();
+    });
+}
+
+export {makeSoundsMap, makeGeotagEditMap, makeStaticMap};

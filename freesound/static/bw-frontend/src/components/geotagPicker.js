@@ -26,7 +26,7 @@ const showGeotagPickerHelpTool = refElementID => {
         wrapperElement.append(mapElement)
         wrapperElement.append(lowerButtonsElement)
         refElement.append(wrapperElement);
-        window.map = makeGeotagEditMap('geotag_picker_map', '{{media_url}}/images/arrow.png', showLatLonZoomFields);
+        window.map = makeGeotagEditMap('geotag_picker_map', showLatLonZoomFields);
     }
 }
 

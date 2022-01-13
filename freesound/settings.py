@@ -528,6 +528,7 @@ GRAYLOG_PASSWORD = ''
 # Mapbox
 
 MAPBOX_ACCESS_TOKEN = ''
+MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
 
 # -------------------------------------------------------------------------------
@@ -538,7 +539,7 @@ RECAPTCHA_PUBLIC_KEY = ''
 
 
 # -------------------------------------------------------------------------------
-# Mapbox
+# Akismet
 
 AKISMET_KEY = ''
 

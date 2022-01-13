@@ -1,4 +1,4 @@
-import {makeSoundsMap} from '../components/mapsMapbox';
+import {makeSoundsMapWithStaticMapFirst} from '../components/mapsMapbox';
 import {handleGenericModal, handleModal} from "../components/modal";
 
 // Latest sounds/Latest tags taps
@@ -93,31 +93,5 @@ if (followingTagsModalParam) {
   });
 }
 
-
 // User geotags map
-// Load the map only when user clicks on "load map" button
-const mapCanvas = document.getElementById('map_canvas');
-const latestGeotagsSection = document.getElementById('latest_geotags');
-const loadButtonWrapper = document.createElement('div');
-const loadMapButton = document.createElement('button');
-const loadMap = () => {
-  loadMapButton.disabled = true;
-  loadMapButton.innerText = 'Loading...'
-  if (latestGeotagsSection.getAttribute('data-map-loaded') !== 'true') {
-    makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
-      loadButtonWrapper.remove();
-      latestGeotagsSection.setAttribute('data-map-loaded', "true");
-      mapCanvas.style.display = 'block'; // Once map is ready, show geotags section
-    });
-  }
-}
-loadButtonWrapper.id = 'loadMapButtonWrapper';
-loadButtonWrapper.classList.add('middle', 'center', 'sidebar-map', 'border-radius-5', 'bg-navy-light-grey', 'w-100');
-loadMapButton.onclick = () => {loadMap()};
-loadMapButton.classList.add('btn-inverse');
-loadMapButton.innerText = 'Load map...';
-loadButtonWrapper.appendChild(loadMapButton);
-if (latestGeotagsSection !== null){
-  latestGeotagsSection.insertBefore(loadButtonWrapper, mapCanvas);
-}
-
+makeSoundsMapWithStaticMapFirst('latest_geotags', 'map_canvas', 'static_map_wrapper')

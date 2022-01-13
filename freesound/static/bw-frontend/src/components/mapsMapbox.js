@@ -5,7 +5,7 @@ import {createPlayer} from './player/player-ui'
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
 var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
 var MIN_INPUT_CHARACTERS_FOR_GEOCODER =  3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
-
+var MAP_MARKER_URL = '/media/images/map_marker.png';
 
 function setMaxZoomCenter(lat, lng, zoom) {
     window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels
@@ -321,7 +321,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 
 
             map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
-                map.loadImage('/media/images/map_marker.png', function(error, image) {
+                map.loadImage(MAP_MARKER_URL, function(error, image) {
                     map.addImage("custom-marker", image);
 
                     // Setup clustering
@@ -407,8 +407,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 }
 
 
-function makeGeotagEditMap(map_element_id, arrow_url, on_bounds_changed_callback,
-                           center_lat, center_lon, zoom, idx){
+function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_lat, center_lon, zoom, idx){
 
     /*
     This function is used to display the map used to add a geotag to a sound maps with sounds. It is used in the sound
@@ -479,7 +478,7 @@ function makeGeotagEditMap(map_element_id, arrow_url, on_bounds_changed_callback
     });
 
     map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
-        map.loadImage('/media/images/map_marker.png', function(error, image) {
+        map.loadImage(MAP_MARKER_URL, function(error, image) {
             map.addImage("custom-marker", image);
 
             // Add position marker
@@ -519,4 +518,69 @@ function makeGeotagEditMap(map_element_id, arrow_url, on_bounds_changed_callback
     return map;
 }
 
-export {makeSoundsMap, makeGeotagEditMap};
+const makeStaticMap = (mapWrapperElementId, width, height, onclick) => {
+    const mapWrapperElement = document.getElementById(mapWrapperElementId);
+    const token = mapboxgl.accessToken;
+    const padding = 60;
+    const pins = [];
+    JSON.parse(mapWrapperElement.dataset.pins).forEach( pin => {
+        pins.push(`url-https://freesound.org${MAP_MARKER_URL}(${pin.lon},${pin.lat})`)
+    });
+    const imageUrl = `https://api.mapbox.com/styles/v1/freesound/${FREESOUND_SATELLITE_STYLE_ID}/static/${encodeURIComponent(pins.join(','))}/auto/${width}x${height}?padding=${padding}%2C${padding}%2C${padding}%2C${padding}&access_token=${token}`;
+    mapWrapperElement.style.background = `url("${imageUrl}")`;
+    mapWrapperElement.style.backgroundSize = 'cover';
+    mapWrapperElement.addEventListener('click', () => {
+        onclick();
+    });
+}
+
+/**
+ * @param {string} mainWrapperElementId
+ * @param {string} mapCanvasId
+ * @param {string} staticMapWrapperElementId
+ */
+const makeSoundsMapWithStaticMapFirst = (mainWrapperElementId, mapCanvasId, staticMapWrapperElementId) => {
+    // Load the map only when user clicks on "load map" button (or when clicking on static map image if using static map images)
+    const mapCanvas = document.getElementById(mapCanvasId);
+    const staticMapWrapper = document.getElementById(staticMapWrapperElementId);
+    const mainWrapperElement = document.getElementById(mainWrapperElementId);
+    const loadButtonWrapper = document.createElement('div');
+
+    const loadMapButton = document.createElement('button');
+    const loadMap = () => {
+    loadMapButton.disabled = true;
+    loadMapButton.innerText = 'Loading...'
+    if (mainWrapperElement.getAttribute('data-map-loaded') !== 'true') {
+        makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
+        if (staticMapWrapper !== null){
+            staticMapWrapper.remove();
+        }
+        if (loadButtonWrapper !== null){
+            loadButtonWrapper.remove();
+        }
+        mainWrapperElement.setAttribute('data-map-loaded', "true");
+        mapCanvas.style.display = 'block'; // Once map is ready, show geotags section
+        });
+    }
+    }
+    loadButtonWrapper.id = 'loadMapButtonWrapper';
+    loadButtonWrapper.classList.add('middle', 'center', 'sidebar-map', 'border-radius-5', 'bg-navy-light-grey', 'w-100');
+    loadMapButton.onclick = () => {loadMap()};
+    loadMapButton.classList.add('btn-inverse');
+    loadMapButton.innerText = 'Load map...';
+    if (mainWrapperElement !== null){
+    if (staticMapWrapper !== null){
+        makeStaticMap('static_map_wrapper', 300, 300, () => {
+        loadMapButton.style.backgroundColor = "white";
+        staticMapWrapper.appendChild(loadMapButton);
+        loadMap();
+        })
+    } else {
+        loadButtonWrapper.appendChild(loadMapButton);
+        mainWrapperElement.insertBefore(loadButtonWrapper, mapCanvas);
+    }
+    }
+}
+
+
+export {makeSoundsMap, makeGeotagEditMap, makeSoundsMapWithStaticMapFirst};

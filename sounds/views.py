@@ -709,17 +709,22 @@ def pack(request, username, pack_id):
         messages.add_message(request, messages.INFO,
                              'Some sounds of this pack might <b>not have been moderated or processed</b> yet.')
 
+    is_following = None
+    geotags_in_pack_serialized = []
     if using_beastwhoosh(request):
         is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, pack.user)
-    else:
-        is_following = None
+        if pack.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
+            for sound in Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None):
+                geotags_in_pack_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
+            geotags_in_pack_serialized = json.dumps(geotags_in_pack_serialized)
 
     tvars = {
         'pack': pack,
         'num_sounds_ok': num_sounds_ok,
         'pack_sounds': pack_sounds,
         'min_num_ratings': settings.MIN_NUMBER_RATINGS,  # BW only
-        'is_following': is_following
+        'is_following': is_following,
+        'geotags_in_pack_serialized': geotags_in_pack_serialized  # BW only
     }
     if not using_beastwhoosh(request):
         tvars.update(paginator)

@@ -32,6 +32,12 @@
 				"problemMatcher": []
 			},
 			{
+				"label": "Docker compose build",
+				"type": "shell",
+				"command": "docker-compose build",
+				"problemMatcher": []
+			},
+			{
 				"label": "Build static",
 				"type": "shell",
 				"command": "docker-compose run --rm web npm run build && docker-compose run --rm web python manage.py collectstatic --noinput",
@@ -60,7 +66,22 @@
 				"type": "shell",
 				"command": "docker-compose run --rm web python manage.py test --settings=freesound.test_settings",
 				"problemMatcher": []
+			},
+			{
+				"label": "Migrate",
+				"type": "shell",
+				"command": "docker-compose run --rm web python manage.py migrate",
+				"problemMatcher": []
+			},
+			{
+				"label": "Make migrations",
+				"type": "shell",
+				"command": "docker-compose run --rm web python manage.py makemigrations",
+				"problemMatcher": []
 			}
 		]
+	},
+	"settings": {
+		"python.pythonPath": ".venv/bin/python"
 	}
 }

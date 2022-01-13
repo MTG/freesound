@@ -1156,6 +1156,13 @@ def account(request, username):
                   or user.profile.get_total_downloads > 0  # user has downloads
                   or user.profile.num_sounds > 0)  # user has uploads
 
+    last_geotags_serialized = []
+    if using_beastwhoosh(request):
+        if user.profile.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
+            for sound in Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)[0:10]:
+                last_geotags_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
+            last_geotags_serialized = json.dumps(last_geotags_serialized)
+
     tvars = {
         'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
@@ -1174,6 +1181,7 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
         'followers_modal_page': request.GET.get('followers', 1),  # BW only
         'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
+        'last_geotags_serialized': last_geotags_serialized,  # BW only
     }
     return render(request, 'accounts/account.html', tvars)
 

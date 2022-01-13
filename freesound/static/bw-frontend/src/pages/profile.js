@@ -94,5 +94,4 @@ if (followingTagsModalParam) {
 }
 
 // User geotags map
-// Load the map only when user clicks on "load map" button (or when clicking on static map image if using static map images)
 makeSoundsMapWithStaticMapFirst('latest_geotags', 'map_canvas', 'static_map_wrapper')

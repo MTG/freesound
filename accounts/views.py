@@ -1157,10 +1157,11 @@ def account(request, username):
                   or user.profile.num_sounds > 0)  # user has uploads
 
     last_geotags_serialized = []
-    if user.profile.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
-        for sound in Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)[0:10]:
-            last_geotags_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
-        last_geotags_serialized = json.dumps(last_geotags_serialized)
+    if using_beastwhoosh(request):
+        if user.profile.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
+            for sound in Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)[0:10]:
+                last_geotags_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
+            last_geotags_serialized = json.dumps(last_geotags_serialized)
 
     tvars = {
         'home': request.user == user if using_beastwhoosh(request) else False,

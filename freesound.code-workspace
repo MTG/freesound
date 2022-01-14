@@ -40,7 +40,7 @@
 			{
 				"label": "Build static",
 				"type": "shell",
-				"command": "docker-compose run --rm web npm run build && docker-compose run --rm web python manage.py collectstatic --noinput",
+				"command": "docker-compose run --rm web npm run build && docker-compose run --rm web python manage.py collectstatic --clear --noinput",
 				"problemMatcher": []
 			},
 			{
@@ -82,6 +82,6 @@
 		]
 	},
 	"settings": {
-		"python.pythonPath": ".venv/bin/python"
+		"python.defaultInterpreterPath": ".venv/bin/python"
 	}
 }

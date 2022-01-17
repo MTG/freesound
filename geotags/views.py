@@ -68,8 +68,9 @@ def geotags_barray(request, tag=None):
             log_map_load('tag-embed' if is_embed else 'tag', num_geotags, request)
         return HttpResponse(generated_bytearray, content_type='application/octet-stream')
     else:
-        cached_bytearray, num_geotags = cache.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
-        if cached_bytearray is not None:
+        all_geotags = cache.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
+        if isinstance(all_geotags, (list, tuple)) and len(all_geotags) == 2:
+            cached_bytearray, num_geotags = all_geotags
             log_map_load('all-embed' if is_embed else 'all', num_geotags, request)
             return HttpResponse(cached_bytearray, content_type='application/octet-stream')
         else:

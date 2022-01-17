@@ -110,7 +110,7 @@ def get_sound_of_the_day_id():
 
 @redirect_if_beastwhoosh('sounds-search', query_string='s=created+desc&g=1')
 def sounds(request):
-    latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)
+    latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)    
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
     last_week = get_n_weeks_back_datetime(n_weeks=1)
     popular_sounds = Sound.public.select_related('license', 'user') \

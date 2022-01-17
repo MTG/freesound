@@ -51,7 +51,10 @@ class Command(LoggingBaseCommand):
         rss_cache = render_to_string('rss_cache.html', {'rss_url': settings.FREESOUND_RSS})
         cache.set("rss_cache", rss_cache, cache_time)
         rss_cache_bw = render_to_string('molecules/news_cache.html', {'rss_url': settings.FREESOUND_RSS})
-        cache.set("rss_cache_bw", rss_cache_bw, cache_time)
+        if len(str(rss_cache_bw).strip()):
+            cache.set("rss_cache_bw", rss_cache_bw, cache_time)
+        else:
+            cache.set("rss_cache_bw", None, cache_time)
 
         # Generate popular searches cache
         popular_searches = ['wind', 'music', 'footsteps', 'woosh', 'explosion', 'scream', 'click', 'whoosh', 'piano',

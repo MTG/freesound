@@ -1,6 +1,7 @@
 {% load rss %}
 {% load util %}
 {% get_rss rss_url as rss %}
+{% if rss.entries %}
 <div class="v-spacing-6">
     <section class="border-grey-light">
         <div class="bw-carousel-container">
@@ -24,3 +25,4 @@
         </div>
     </section>
 </div>
+{% endif %}

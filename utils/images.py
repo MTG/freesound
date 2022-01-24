@@ -25,10 +25,10 @@ class ImageProcessingError(Exception):
 
 def extract_square(input_filename, output_filename, size):
     im = Image.open(input_filename)
-    
+
     if im.mode not in ('L', 'RGB'):
         im = im.convert('RGB')
-        
+
     #fill out and resize the image
     if im.size[0] < size and im.size[1] < size:
         if im.size[0] < im.size[1]:
@@ -38,7 +38,7 @@ def extract_square(input_filename, output_filename, size):
             ratio = im.size[0] / im.size[1] 
             im = im.resize((size,size / ratio), Image.ANTIALIAS)
         #fill out          
-        background = Image.new("RGBA", (size,size), (255, 255, 255, 0)) # use white for empty space  
+        background = Image.new("RGB", (size,size), (255, 255, 255)) # use white for empty space
         background.paste(im, ((size - im.size[0]) / 2, (size - im.size[1]) / 2))  
         background.save(output_filename)
         return

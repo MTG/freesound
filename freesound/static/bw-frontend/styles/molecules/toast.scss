@@ -4,7 +4,10 @@
   display: none;
   position: fixed;
   padding: 14px 14px;
-  width: 70%;
+  width: 100%;
+  @include md-and-above {
+    width: 70%;
+  }
   border-radius: 5px 5px 0 0;
   background-color: $black;
   color: $white;

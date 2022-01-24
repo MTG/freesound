@@ -71,10 +71,8 @@ $navbar-height-mobile: 64px;
   }
 
   .bw-nav--expanded & {
-    @include md-and-above {
-      width: 190px;
-      background-image: url('assets/logos/logo-text.svg');
-    }
+    width: 190px;
+    background-image: url('assets/logos/logo-text.svg');
   }
 }
 
@@ -85,19 +83,17 @@ $navbar-height-mobile: 64px;
 }
 
 .bw-nav__actions {
-  display: none;
-
-  @include md-and-above {
-    list-style: none;
-    display: flex;
-  }
+  list-style: none;
+  display: flex;
 }
 
 .bw-nav__action {
   display: flex;
   align-items: center;
+  margin-left: 25px;
 
-  @include md-and-above {
+  @include lg-and-above {
+    margin-left: 0px;
     &:not(:last-child) {
       margin-right: 20px;
     }
@@ -196,6 +192,55 @@ $navbar-height-mobile: 64px;
     .active {
       a {
         color: $black;
+      }
+    }
+  }
+}
+
+.navbar-forums-hot {
+  list-style: none;
+  padding-left: 0;
+
+  .nav-item {
+    margin-right: 24px;
+    display: inline-block;
+
+    .nav-link {
+      font-size: 16px;
+      color: $navy-grey;
+
+      &.active {
+        color: $black;
+      }
+
+      &:hover {
+        color: $black;
+      }
+
+      &.nav-link-black {
+        color: $black;
+      }
+    }
+
+    span {
+      margin-left: 16px;
+      color: $navy-grey;
+    }
+  }
+}
+
+.navbar-breadcrumb {
+  .nav-item {
+    margin: 0;
+
+    &:after {
+      content: '>';
+      margin: 0 12px;
+    }
+
+    &:last-child {
+      &:after {
+        display: none;
       }
     }
   }

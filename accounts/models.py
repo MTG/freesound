@@ -321,7 +321,7 @@ class Profile(SocialModel):
         except Exception as e:
             return False
 
-        return [{'name': tag, 'count': count} for tag, count in results.facets['tag']]
+        return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in results.facets['tag']]
 
     def is_trustworthy(self):
         """
@@ -548,6 +548,14 @@ class Profile(SocialModel):
             last_sound = lasts_sound_geotagged[0]
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
+
+    @property
+    def has_geotags(self):
+        # Returns whether or not the user has geotags
+        # This is used in the profile page to decide whether or not to show the geotags map. Doing this generates one
+        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a user (which would
+        # return empty query set if no geotags and indeed generate more queries).
+        return Sound.objects.filter(user=self.user).exclude(geotag=None).count() > 0
 
     @property
     def avg_rating(self):

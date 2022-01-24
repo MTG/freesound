@@ -1,13 +1,8 @@
-{% extends "base.html" %}
-{% load staticfiles %}
+{% extends "simple_page.html" %}
 
-{% block title %}Deleted pack{% endblock title %}
+{% block title %}Deleted pack{% endblock %}
+{% block page-title %}Deleted pack{% endblock %}
 
-{% block content %}
-    <div class="container">
-        <div class="navbar-space-filler v-spacing-7 padding-bottom-2 v-spacing-top-5">
-            <h5>Deleted pack</h5>
-            <p class="text-grey">This pack has been deleted.</p>
-        </div>
-    </div>
+{% block page-content %}
+    <p class="text-grey">This pack has been deleted.</p>
 {% endblock %}

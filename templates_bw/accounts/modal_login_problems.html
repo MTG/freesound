@@ -6,16 +6,18 @@
 {% block aria-labelledby %}forgottenPasswordModalLabel{% endblock %}
 
 {% block body %}
+<div class="col-12">
     <div class="text-center">
-        <h5>Problems logging in?</h5>
+        <h5 class="v-spacing-5">Problems logging in?</h5>
         <div class="text-grey v-spacing-top-negative-1 v-spacing-4">
             Enter your email or username below and we'll send you a link to help you login into your account.
         </div>
         <form id="problemsLoggingInModalForm" method="post" action="{% url 'problems-logging-in' %}">{% csrf_token %}
             {{ problems_logging_in_form }}
-            <button id="recovery-account" type="submit" class="btn btn-primary">Send me a link</button>
+            <button id="recovery-account" type="submit" class="btn-primary">Send me a link</button>
         </form>
     </div>
+</div>
 {% endblock %}
 
 {% block footer %}

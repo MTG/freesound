@@ -1,0 +1,20 @@
+{% extends "molecules/modal_base.html" %}
+
+{% block id %}confirmationModal{% endblock %}
+{% block aria-labelledby %}confirmationModalLabel{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h5 id="confirmationModalTitle">Default title</h5>
+        <div class="row">
+            <div class="col-4 offset-2">
+                <form id="confirmationModalAcceptSubmitForm" method="post" action="">{% csrf_token %}
+                    <button type="submit" class="btn-primary">Yes</button>
+                </form>
+            </div>
+            <div class="col-4">
+                <button class="btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}

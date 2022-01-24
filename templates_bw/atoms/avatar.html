@@ -1,9 +1,9 @@
 {% if has_avatar %}
     <div class="avatar" style="width:{{ size }}px;height:{{ size }}px;">
-        <img src="{{ avatar_url }}"  class="avatar" style="width:{{ size }}px;height:{{ size }}px;" />
+        <img src="{{ avatar_url }}"  class="avatar {{ extra_class }}" style="width:{{ size }}px;height:{{ size }}px;" />
     </div>
 {% else %}
-    <div class="no-avatar text-white opacity-080" style="background-color:rgb({{ no_avatar_bg_color.0 }}, {{ no_avatar_bg_color.1 }}, {{ no_avatar_bg_color.2 }});width:{{ size }}px;height:{{ size }}px;line-height:{{ size }}px;font-size:{{ font_size }}px;">
+    <div class="no-avatar text-white opacity-080 {{ extra_class }}" style="background-color:rgb({{ no_avatar_bg_color.0 }}, {{ no_avatar_bg_color.1 }}, {{ no_avatar_bg_color.2 }});width:{{ size }}px;height:{{ size }}px;line-height:{{ size }}px;font-size:{{ font_size }}px;">
         {{ username | slice:":1" | upper }}
     </div>
 {% endif %}

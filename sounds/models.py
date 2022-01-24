@@ -373,6 +373,7 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          geotags_geotag.location_name as geotag_name,
           ac_analsyis.analysis_data as ac_analysis,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
@@ -437,6 +438,7 @@ class SoundManager(models.Manager):
           sound.geotag_id,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          geotags_geotag.location_name as geotag_name,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
           ac_analsyis.analysis_data as ac_analysis,
@@ -752,7 +754,7 @@ class Sound(SocialModel):
         return self.bitdepth not in [8, 16]
 
     def bitrate_warning(self):
-        return self.bitrate not in [32, 64, 96, 128, 160, 192, 224, 256, 320]
+        return self.bitrate not in settings.COMMON_BITRATES
 
     def channels_warning(self):
         return self.channels not in [1, 2]
@@ -761,7 +763,7 @@ class Sound(SocialModel):
         return self.duration * 1000
 
     def rating_percent(self):
-        if self.num_ratings <= settings.MIN_NUMBER_RATINGS:
+        if self.num_ratings < settings.MIN_NUMBER_RATINGS:
             return 0
         return int(self.avg_rating*10)
 
@@ -1134,11 +1136,24 @@ class Sound(SocialModel):
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
-                for bw_player_size in ['small', 'middle', 'big_no_info', 'small_no_info']:
-                    for bw_request_user_is_author in [True, False]:
-                        invalidate_template_cache(
-                            "bw_display_sound",
-                            self.id, is_authenticated, is_explicit, bw_player_size, bw_request_user_is_author)
+
+        # NOTE: in BW we removed the display sound caches because DB queries are optimized and the caches are not
+        # very useful (DB queries are also optimal in NG, but we never removed caching code). If we were to enable
+        # them again, check old code of this function in the repository history.
+
+    def get_geotag_name(self):
+        if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:
+            if hasattr(self, 'geotag_name'):
+                name = self.geotag_name
+            else:
+                name = self.geotag.location_name
+            if name:
+                return name
+        if hasattr(self, 'geotag_lat'):
+            return '{:.3f}, {:.3f}'.format(self.geotag_lat, self.geotag_lon)
+        else:
+            return '{:.3f}, {:.3f}'.format(self.geotag.lat, self.geotag.lon)
+
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
@@ -1401,7 +1416,7 @@ class Pack(SocialModel):
     def get_pack_tags_bw(self):
         results = get_pack_tags(self)
         if results:
-            return [{'name': tag, 'count': count} for tag, count in results['tag']]
+            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in results['tag']]
         else:
             return []
 
@@ -1489,6 +1504,14 @@ class Pack(SocialModel):
         else:
             return ""
 
+    @property
+    def has_geotags(self):
+        # Returns whether or not the pack has geotags
+        # This is used in the pack page to decide whether or not to show the geotags map. Doing this generates one
+        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a pack (which would
+        # return empty query set if no geotags and indeed generate more queries).
+        return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
+
 
 class Flag(models.Model):
     sound = models.ForeignKey(Sound)
@@ -1527,7 +1550,8 @@ class Download(models.Model):
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
+        Sound.objects.filter(id=download.sound_id).update(
+            is_index_dirty=True, num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
 
@@ -1537,7 +1561,8 @@ def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
         if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
+            Sound.objects.filter(id=download.sound_id).update(
+                is_index_dirty=True, num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
                 num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
 

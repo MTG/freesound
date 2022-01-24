@@ -164,6 +164,11 @@ def search_prepare_parameters(request):
     except ValueError:
         current_page = 1
     sort_unformatted = request.GET.get("s", None)
+
+    if search_query == "" and sort_unformatted is None:
+        # When making empty queries and no sorting is specified, automatically set sort to "created desc" as
+        # relevance score based sorting makes no sense
+        sort_unformatted = "created desc"
     
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is through AJAX (for sources remix editing), do not collapse
@@ -175,6 +180,11 @@ def search_prepare_parameters(request):
     only_sounds_with_pack = request.GET.get("only_p", "0") == "1"  # By default, do not limit to sounds with pack
     if "pack" in filter_query:
         only_sounds_with_pack = False
+
+    # If the query is displaying only sounds with pack, also enable group by pack as this is needed to display
+    # results as packs
+    if only_sounds_with_pack:
+        grouping = "1"
 
     # Set default values
     id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']

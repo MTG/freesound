@@ -45,7 +45,7 @@ class SearchUtilsTest(TestCase):
             'username_weight': settings.DEFAULT_SEARCH_WEIGHTS['username'],
             'pack_tokenized_weight': settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
             'original_filename_weight': settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
-            'sort': [SEARCH_DEFAULT_SORT],
+            'sort': ['created desc'],  # Not using SEARCH_DEFAULT_SORT here because for the exceptional case of empty queries we use 'created desc'
             'sounds_per_page': settings.SOUNDS_PER_PAGE,
             'current_page': 1,
             'grouping': '1',
@@ -56,7 +56,7 @@ class SearchUtilsTest(TestCase):
 
         expected_extra_vars = {
             'advanced': '',
-            'sort_unformatted': None,
+            'sort_unformatted': 'created desc',  # Again, using 'created desc' as empty queries result in that sort option
             'filter_query_link_more_when_grouping_packs': '',
             'sort_options': SEARCH_SORT_OPTIONS_WEB,
             'cluster_id': '',

@@ -33,7 +33,7 @@ const customRegistrationSubmit = (event) => {
     req.open('POST', registerModalForm.action, true);
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
     req.onload = () => {
-        if (req.status >= 200 && req.status < 400) {
+        if (req.status >= 200 && req.status < 300) {
             if (req.responseText.indexOf('registerModalForm') === -1){
                 // Registration was successful, we should have received the redirect URL where we should redirect the
                 // user in the response
@@ -73,7 +73,7 @@ const checkUsernameAvailability = (username, baseURL, callback) => {
     const req = new XMLHttpRequest();
     req.open('GET', baseURL  + '?username=' + username, true);
     req.onload = () => {
-        if (req.status >= 200 && req.status < 400) {
+        if (req.status >= 200 && req.status < 300) {
             const data = JSON.parse(req.responseText);
             callback(data.result);
         }
@@ -90,7 +90,7 @@ const customProblemsLoggingInSubmit = (event) => {
     req.open('POST', problemsLoggingInForm.action, true);
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
     req.onload = () => {
-        if (req.status >= 200 && req.status < 400) {
+        if (req.status >= 200 && req.status < 300) {
             showToast('Check your email, we\'ve sent you a link');
         }
     };

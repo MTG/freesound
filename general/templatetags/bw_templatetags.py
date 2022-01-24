@@ -22,10 +22,13 @@ import math
 
 from django import template
 from django.conf import settings
+from django.template.defaultfilters import truncatewords_html
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from follow.follow_utils import is_user_following_tag
 from general.templatetags.paginator import show_paginator
+from general.templatetags.plausible import plausible_scripts
 from ratings.models import SoundRating
 
 register = template.Library()
@@ -51,29 +54,37 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
     else:
         opacity_class = 'opacity-' + str(int(math.ceil(pow(weight, 0.6) * 10) * 10)).zfill(3)
 
+    line_height_class = 'line-height-fs-3' if size < 4 else 'line-height-fs-1'
+
     return {'tag_name': tag_name,
             'size': size,
             'class_name': class_name,
+            'line_height_class': line_height_class,
             'url': url,
             'opacity_class': opacity_class}
 
 
 @register.inclusion_tag('atoms/avatar.html')
-def bw_user_avatar(avatar_url, username, size=40):
+def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
     """
     Displays a Beast Whoosh user avatar or no avatar if user has none
     We check if user has custom avatar by checking if the given avatar URL contains the filename of the default
     avatar for Freesound 2 UI. Once we get rid of old UI code, this function can be modified as the locations
     decorator of the Profile model might return something different if user has no avatar.
     """
+    if len(username) > 1:
+        no_avatar_bg_color = settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1])) % len(settings.AVATAR_BG_COLORS)]
+    else:
+        no_avatar_bg_color = settings.AVATAR_BG_COLORS[ord(username[0]) % len(settings.AVATAR_BG_COLORS)]
+
     return {
         'size': size,
         'has_avatar': '_avatar.png' not in avatar_url,
         'avatar_url':avatar_url,
         'username': username,
         'font_size': int(size * 0.4),
-        'no_avatar_bg_color': settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1]))
-                                                        % len(settings.AVATAR_BG_COLORS)]}
+        'extra_class': extra_class,
+        'no_avatar_bg_color': no_avatar_bg_color}
 
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
@@ -167,3 +178,9 @@ def user_following_tags(user, tags_slash):
         return is_user_following_tag(user, tags_slash)
     else:
         return False
+
+
+@register.inclusion_tag('molecules/plausible_scripts.html', takes_context=False)
+def bw_plausible_scripts():
+    return plausible_scripts()
+

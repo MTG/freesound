@@ -18,7 +18,9 @@
 
   &__stats {
     display: flex;
+    flex-wrap: wrap;
     font-size: 15px;
+    justify-content: center;
 
     a {
       color: $navy-grey;
@@ -72,7 +74,8 @@
   }
 
   &__section_stats {
-    padding-bottom: 32px;
+    
+    padding-bottom: 22px;
 
     ol {
       margin: 0;

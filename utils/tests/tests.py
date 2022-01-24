@@ -484,7 +484,6 @@ def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
         duration=123.5,
         channels=2,
         samplerate=44100,
-        bitrate=128,
         bitdepth=16)
 
 
@@ -619,7 +618,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.duration, 123.5)  # Assert that info properties were set
         self.assertEqual(self.sound.channels, 2)
         self.assertEqual(self.sound.samplerate, 44100)
-        self.assertEqual(self.sound.bitrate, 128)
+        self.assertEqual(self.sound.bitrate, 0)
         self.assertEqual(self.sound.bitdepth, 0)  # This will be 0 because sound is mp3 and bitdepth is overwritten to 0
         # NOTE: after calling set_audio_info_fields processing will fail, but we're only interested in testing up to
         # this point for the present unit test

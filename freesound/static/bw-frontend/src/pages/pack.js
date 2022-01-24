@@ -1,6 +1,6 @@
 import './page-polyfills';
 import {showToast} from '../components/toast';
-import {makeSoundsMap} from "../components/mapsMapbox";
+import {makeSoundsMapWithStaticMapFirst} from "../components/mapsMapbox";
 
 // Share pack button
 
@@ -29,9 +29,4 @@ toggleShareLinkElement.addEventListener('click',  toggleShareLink);
 shareLinkElement.style.display = "none"
 
 // Pack geotags map
-
-const mapCanvas = document.getElementById('map_canvas');
-const geotagsSection = document.getElementById('pack_geotags');
-makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
-  geotagsSection.style.display = 'block'; // Once map is ready, show geotags section
-});
+makeSoundsMapWithStaticMapFirst('pack_geotags', 'map_canvas', 'static_map_wrapper')

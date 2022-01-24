@@ -206,3 +206,31 @@
     </ol>
   </div>
 {% endmacro %}
+
+{% macro forumsHotNavbar(activePage) %}
+  <ul class="navbar-forums-hot">
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'hot'%} active {% endif %}" href="#">Hot threads</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'most'%} active {% endif %}" href="#">Most commented</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if activePage == 'list'%} active {% endif %}" href="#">Forums list</a>
+    </li>
+  </ul>
+{% endmacro %}
+
+{% macro forumsListsThreads(breadcrumb) %}
+  <ul class="navbar-forums-hot navbar-breadcrumb">
+    {% for bread in breadcrumb %}
+      <li class="nav-item">
+        {% if bread.url != '' %}
+          <a class="nav-link" href="{{ bread.url }}">{{ bread.name }}</a>
+        {% else %}
+          {{ bread.name }}
+        {% endif %}
+      </li>
+    {%- endfor %}
+  </ul>
+{% endmacro %}

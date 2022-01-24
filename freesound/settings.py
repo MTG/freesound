@@ -15,6 +15,9 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 DISPLAY_DEBUG_TOOLBAR = False
 
+DEBUGGER_HOST = "0.0.0.0"
+DEBUGGER_PORT = 3000  # This port should match the one in docker compose
+
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
 
 default_url = 'postgres://postgres@db/postgres'
@@ -23,6 +26,7 @@ DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=de
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -90,7 +94,8 @@ ADMIN_REORDER = (
         'accounts.UserFlag',
         'accounts.OldUsername',
         'accounts.EmailBounce',
-        'auth.Groups'
+        'auth.Groups',
+        'fsmessages.Message'
     )},
     {'app': 'sounds', 'models': (
         'sounds.Sound',
@@ -113,11 +118,7 @@ ADMIN_REORDER = (
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-
-
     'sites',
-
-
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -312,6 +313,7 @@ FREESOUND_RSS = ''
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
+FORUM_THREADS_PER_PAGE_BW = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 15
@@ -324,11 +326,15 @@ MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5  # BW only
 
+BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
+
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+LOSSY_FILE_EXTENSIONS = [ 'ogg', 'mp3', 'm4a']
+COMMON_BITRATES = [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
 # Allowed data file extensions for bulk upload
 ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
@@ -351,6 +357,11 @@ BASE_MAX_POSTS_PER_DAY = 5
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
+
+#Geotags  stuff
+# Cache key for storing "all geotags" bytearray
+ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
+USE_TEXTUAL_LOCATION_NAMES_IN_BW = True
 
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors
@@ -375,6 +386,10 @@ LOG_DOWNLOADS = False
 # Followers notifications
 MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
+# Some BW settings
+ENABLE_QUERY_SUGGESTIONS = False
+ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
 
 
 # -------------------------------------------------------------------------------
@@ -408,8 +423,8 @@ LOG_START_AND_END_COPYING_FILES = True
 DONATION_AMOUNT_REQUEST_PARAM = 'dda'
 
 # Stripe
-STRIPE_PUBLIC_KEY = ''
-STRIPE_PRIVATE_KEY = ''
+STRIPE_PUBLIC_KEY = 'pk_test_4w86cbKHcPs2G2kDqNdKd5u2'
+STRIPE_PRIVATE_KEY = 'sk_test_D4u7pcSnUSXtY4GAwDMmSFVZ'
 STRIPE_WEBHOOK_SECRET = ''
 
 # Paypal
@@ -463,11 +478,9 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
 
 
 # -------------------------------------------------------------------------------
-# SOLR and search settings
+# SOLR
 SOLR_URL = "http://search:8080/fs2/"
 SOLR_FORUM_URL = "http://search:8080/forum/"
-
-ENABLE_QUERY_SUGGESTIONS = False  # Only for BW
 DEFAULT_SEARCH_WEIGHTS = {
     'id': 4,
     'tag': 4,
@@ -515,6 +528,7 @@ GRAYLOG_PASSWORD = ''
 # Mapbox
 
 MAPBOX_ACCESS_TOKEN = ''
+MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
 
 # -------------------------------------------------------------------------------
@@ -525,7 +539,7 @@ RECAPTCHA_PUBLIC_KEY = ''
 
 
 # -------------------------------------------------------------------------------
-# Mapbox
+# Akismet
 
 AKISMET_KEY = ''
 
@@ -718,6 +732,11 @@ TEMPLATES = [
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
+
+# -------------------------------------------------------------------------------
+# Analytics
+PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
+PLAUSIBLE_SEPARATE_FRONTENDS = True
 
 
 # -------------------------------------------------------------------------------

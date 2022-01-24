@@ -14,6 +14,12 @@ const pages = [
   'editprofilepassword',
   'editprofilenotifications',
   'editprofilecloseaccount',
+  'forumshot',
+  'forummostcommented',
+  'forumlists',
+  'forumliststhread',
+  'forumthread',
+  'forumnewthread'
 ];
 
 const outDir = 'freesound/static/bw-frontend/dist';

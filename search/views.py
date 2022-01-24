@@ -36,7 +36,8 @@ import sounds
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
-from utils.frontend_handling import render
+from forum.models import Post
+from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
@@ -377,8 +378,10 @@ def search_forum(request):
                                 filter_query=filter_query,
                                 sort=sort)
 
-        query.set_group_field("thread_title_grouped")
-        query.set_group_options(group_limit=30)
+        if not using_beastwhoosh(request):
+            # Do not group by thread in beastwhoosh
+            query.set_group_field("thread_title_grouped")
+            query.set_group_options(group_limit=30)
 
         search_engine = SearchEngine(settings.SOLR_FORUM_URL)
 
@@ -416,6 +419,16 @@ def search_forum(request):
         'sort': sort,
         'results': results,
     }
+
+    if using_beastwhoosh(request):
+        if results:
+            posts = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
+                .filter(id__in=[d['id'] for d in results.docs])
+        else:
+            posts = []
+        tvars.update({
+            'posts': posts
+        })
 
     return render(request, 'search/search_forum.html', tvars)
 

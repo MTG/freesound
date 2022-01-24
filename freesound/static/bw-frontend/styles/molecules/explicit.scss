@@ -1,0 +1,27 @@
+.blur{
+    -webkit-filter: blur(3px);
+    filter: blur(3px);
+    pointer-events: none;
+}
+
+.explicit-sound-blocker{
+    position: absolute;
+    padding: 40px;
+    padding-top: 120px;
+    text-align: center;
+    z-index: 1;
+    top: 0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255,255,255,0.5);
+}
+
+.blocker-small {
+    padding: 0;
+    padding-top: 20px;
+    top: initial;
+    left: initial;
+    height: initial;
+    width: initial;
+}

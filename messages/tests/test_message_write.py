@@ -24,7 +24,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from messages.models import Message, MessageBody
-from messages.views import get_previously_contacted_usernames
+from messages.views import get_previously_contacted_usernames, quote_message_for_reply
 
 
 class RecaptchaPresenceInMessageForms(TestCase):
@@ -126,3 +126,45 @@ class UsernameLookup(TestCase):
                                self.sender2.username, self.sender.username],
                               response_json)
 
+
+class QuoteMessageTestCase(TestCase):
+    def test_oneline(self):
+        body = "This is a message"
+        username = "testuser"
+
+        new_body = quote_message_for_reply(body, username)
+        expected = "> --- testuser wrote:\n>\n> This is a message"
+        self.assertEqual(new_body, expected)
+
+    def test_manylines(self):
+        body = "This is a message\nwith multiple lines"
+        username = "testuser"
+
+        new_body = quote_message_for_reply(body, username)
+        expected = "> --- testuser wrote:\n>\n> This is a message\n> with multiple lines"
+        self.assertEqual(new_body, expected)
+
+
+    def test_alreadyquoted(self):
+        body = "This is a message\n> with already quoted lines"
+        username = "testuser"
+
+        new_body = quote_message_for_reply(body, username)
+        expected = "> --- testuser wrote:\n>\n> This is a message\n>> with already quoted lines"
+        self.assertEqual(new_body, expected)
+
+    def test_removetags(self):
+        body = '<span>This is a <b>message</b></span>\n<!--comment-->\n<a href="link">more</a>'
+        username = "testuser"
+
+        new_body = quote_message_for_reply(body, username)
+        expected = "> --- testuser wrote:\n>\n> This is a message\n> comment\n> more"
+        self.assertEqual(new_body, expected)
+
+    def test_wrap(self):
+        body = "A message that is more than 60 characters long. I need lots of text for the test"
+        username = "testuser"
+
+        new_body = quote_message_for_reply(body, username)
+        expected = "> --- testuser wrote:\n>\n> A message that is more than 60 characters long. I need lots\n> of text for the test"
+        self.assertEqual(new_body, expected)

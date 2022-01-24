@@ -37,7 +37,7 @@ from utils.cache import invalidate_template_cache
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.search.search_forum import add_post_to_search_engine
+from utils.search.search_forum import add_posts_to_search_engine_by_id
 from utils.text import text_may_be_spam, remove_control_chars
 
 
@@ -232,7 +232,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
-                    add_post_to_search_engine(post.id)
+                    add_posts_to_search_engine_by_id([post.id])
                     set_to_moderation = False
 
                 if form.cleaned_data["subscribe"]:
@@ -317,7 +317,7 @@ def new_thread(request, forum_name_slug):
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=post_body, thread=thread)
-                    add_post_to_search_engine(post.id)
+                    add_posts_to_search_engine_by_id([post.id])
                     set_to_moderation = False
 
                 # Add first post to thread (first post will always be the same)
@@ -450,7 +450,7 @@ def post_edit(request, post_id):
             if form.is_valid():
                 post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
-                add_post_to_search_engine(post.id)  # Update post in the search engine
+                add_posts_to_search_engine_by_id([post.id])
 
                 if form.cleaned_data["subscribe"]:
                     subscription, created = Subscription.objects.get_or_create(thread=post.thread,

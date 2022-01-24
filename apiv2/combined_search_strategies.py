@@ -21,7 +21,7 @@
 #
 
 from utils.similarity_utilities import api_search as similarity_api_search
-from utils.search.backend.pysolr.wrapper import SearchEngine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 from similarity.client import SimilarityException
 from search.views import search_prepare_query
 from exceptions import ServerErrorException, BadRequestException, NotFoundException
@@ -94,7 +94,7 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
         gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
         valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size) if (i/solr_filter_id_block_size) < solr_filter_id_max_pages]
         solr_ids = list()
-        search_engine = SearchEngine(settings.SOLR_URL)
+        search_engine = get_search_engine()
         for valid_ids_page in valid_ids_pages:
             page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, search_engine=search_engine)
             solr_ids += page_solr_ids
@@ -182,7 +182,7 @@ def merge_optimized(search_form, target_file=None, extra_parameters=None):
             valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size)]
             solr_ids = list()
             checked_gaia_ids = list()
-            search_engine = SearchEngine(settings.SOLR_URL)
+            search_engine = get_search_engine()
             for count, valid_ids_page in enumerate(valid_ids_pages):
                 page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, search_engine=search_engine)
                 solr_ids += page_solr_ids
@@ -314,7 +314,7 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
 
 def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=None, search_engine=None, offset=None):
     if not search_engine:
-        search_engine = SearchEngine(settings.SOLR_URL)
+        search_engine = get_search_engine()
 
     query_filter = search_form.cleaned_data['filter']
     if valid_ids:

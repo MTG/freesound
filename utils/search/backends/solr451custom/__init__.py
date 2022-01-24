@@ -17,14 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:
-#     See AUTHORS file.
+#     Bram de Jong
 #
 
-import itertools
-import json
 import math
 import re
-import types
 import urllib
 from datetime import date, datetime
 from socket import error
@@ -33,39 +30,11 @@ from xml.etree import cElementTree as ET
 
 import cjson
 import httplib
-import pysolr
 import urlparse
 
 from django.conf import settings
 from utils.text import remove_control_chars
-
-
-class Multidict(dict):
-    """A dictionary that represents a query string. If values in the dics are tuples, they are expanded.
-    None values are skipped and all values are utf-encoded. We need this because in solr, we can have multiple
-    fields with the same value, like facet.field
-
-    >>> [ (key, value) for (key,value) in Multidict({"a": 1, "b": (2,3,4), "c":None, "d":False}).items() ]
-    [('a', 1), ('b', 2), ('b', 3), ('b', 4), ('d', 'false')]
-    """
-    def items(self):
-        # generator that retuns all items
-        def all_items():
-            for (key, value) in dict.items(self):
-                if isinstance(value, tuple) or isinstance(value, list):
-                    for v in value:
-                        yield key, v
-                else:
-                    yield key, value
-
-        # generator that filters all items: drop (key, value) pairs with value=None and convert bools to lower case strings
-        for (key, value) in itertools.ifilter(lambda (key,value): value != None and value != "", all_items()):
-            if isinstance(value, bool):
-                value = unicode(value).lower()
-            else:
-                value = unicode(value).encode('utf-8')
-
-            yield (key, value)
+from utils.search import Multidict, SearchEngineBase, SearchEngineException, SERACH_INDEX_SOUNDS, SERACH_INDEX_FORUM
 
 
 class SolrQuery(object):
@@ -181,9 +150,9 @@ class SolrQuery(object):
         """
         try:
             if field not in self.params['facet.field']:
-                raise SolrException, "setting facet options for field that doesn't exist"
+                raise SearchEngineException, "setting facet options for field that doesn't exist"
         except KeyError:
-            raise SolrException, "you haven't defined any facet fields yet"
+            raise SearchEngineException, "you haven't defined any facet fields yet"
 
         self.params['f.%s.facet.limit' % field] = limit
         self.params['f.%s.facet.offset' % field] = offset
@@ -220,9 +189,9 @@ class SolrQuery(object):
         """
         try:
             if field not in self.params['facet.date']:
-                raise SolrException, "setting date facet options for field that doesn't exist"
+                raise SearchEngineException, "setting date facet options for field that doesn't exist"
         except KeyError:
-            raise SolrException, "you haven't defined any date facet fields yet"
+            raise SearchEngineException, "you haven't defined any date facet fields yet"
 
         self.params['f.%s.date.start' % field] = start
         self.params['f.%s.date.end' % field] = start
@@ -271,9 +240,9 @@ class SolrQuery(object):
         """
         try:
             if field not in self.params['hl.fl']:
-                raise SolrException, "setting highlighting options for field that doesn't exist"
+                raise SearchEngineException, "setting highlighting options for field that doesn't exist"
         except KeyError:
-            raise SolrException, "you haven't defined any highlighting fields yet"
+            raise SearchEngineException, "you haven't defined any highlighting fields yet"
 
         self.params['f.%s.hl.fl.snippets' % field] = snippets
         self.params['f.%s.hl.fragsize' % field] = fragment_size
@@ -284,14 +253,6 @@ class SolrQuery(object):
 
     def __unicode__(self):
         return urllib.urlencode(Multidict(self.params))
-
-    # pysolr
-    def as_dict(self):
-        params = {k: v for k, v in self.params.iteritems() if v is not None}
-        for k, v in params.iteritems():
-            if type(v) == types.BooleanType:
-                params[k] = json.dumps(v)
-        return params
 
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field
@@ -313,75 +274,178 @@ class SolrQuery(object):
         self.params['group.cache.percent'] = group_cache_percent
 
 
-def encode_value(value):
-    if isinstance(value, datetime):
-        value = value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-    elif isinstance(value, date):
-        value = value.strftime('%Y-%m-%dT00:00:00.000Z')
-    elif isinstance(value, bool):
-        if value:
-            value = 'true'
-        else:
-            value = 'false'
-    else:
-        value = unicode(value)
-    return value
+
+class BaseSolrAddEncoder(object):
+    """A Solr Add encoder has one method, called encode. This method will be called on whatever is
+    passed to the Solr add() method. It should return an XML compatible with the installed Solr schema.
+
+    >>> encoder = BaseSolrAddEncoder()
+    >>> encoder.encode([{"id": 5, "name": "guido", "tag":["python", "coder"], "status":"bdfl"}])
+    '<add><doc><field name="status">bdfl</field><field name="tag">python</field><field name="tag">coder</field><field name="id">5</field><field name="name">guido</field></doc></add>'
+    """
+    def encode(self, docs):
+        """Encodes a document as an XML tree. this particular one takes a dictionary and
+        translates the key value pairs to <field name="key">value<f/field>
+        """
+        message = ET.Element('add')
+
+        def add_basic_type(element, name, value):
+            """Converts python values to a form suitable for insertion into the xml
+            we send to solr and adds it to the doc XML.
+            """
+            if isinstance(value, datetime):
+                value = value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+            elif isinstance(value, date):
+                value = value.strftime('%Y-%m-%dT00:00:00.000Z')
+            elif isinstance(value, bool):
+                if value:
+                    value = 'true'
+                else:
+                    value = 'false'
+            else:
+                value = unicode(value)
+
+            field = ET.Element('field', name=name)
+            field.text = value
+            element.append(field)
+
+        for doc in docs:
+            d = ET.Element('doc')
+            for key, value in doc.items():
+                # handle lists, tuples, and other iterabes
+                if isinstance(value, (list, tuple)):
+                    for v in value:
+                        add_basic_type(d, key, v)
+                # handle strings and unicode
+                else:
+                    add_basic_type(d, key, value)
+            message.append(d)
+
+        return ET.tostring(message, "utf-8")
 
 
-def encode_list_dicts(list_dicts):
-    return [dict((k, encode_value(v)) for (k, v) in d.items()) for d in list_dicts]
 
-
-class SolrException(Exception):
+class SolrResponseDecoderException(Exception):
     pass
 
 
+class BaseSolrResponseDecoder(object):
+    """The BaseSolrResponseDecoder takes the Response object from urllib2 and decodes it"""
+
+
+class SolrJsonResponseDecoder(BaseSolrResponseDecoder):
+
+    def __init__(self):
+        # matches returned dates in JSON strings
+        self.date_match = re.compile("-?\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.?\d*[a-zA-Z]*")
+
+    def decode(self, response_object):
+        #return self._decode_dates(json.load(response_object))
+        return self._decode_dates(cjson.decode(unicode(response_object.read(),'utf-8'))) #@UndefinedVariable
+
+    def _decode_dates(self, d):
+        """Recursively decode date strings to datetime objects.
+        """
+        if isinstance(d, dict):
+            for key, value in d.items():
+                d[key] = self._decode_dates(value)
+        elif isinstance(d, list):
+            for index, value in enumerate(d):
+                d[index] = self._decode_dates(value)
+        elif isinstance(d, basestring):
+            if self.date_match.match(d):
+                try:
+                    d = datetime(*strptime(d[0:19], "%Y-%m-%dT%H:%M:%S")[0:6])
+                except:
+                    raise SolrResponseDecoderException, u"Response object has unknown date format: %s" % d
+        return d
+
+
 class Solr(object):
-    def __init__(self, url="http://localhost:8983/solr", verbose=False, persistent=False):
+    def __init__(self, url="http://localhost:8983/solr", verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder()):
         url_split = urlparse.urlparse(url)
 
         self.host = url_split.hostname
         self.port = url_split.port
         self.path = url_split.path.rstrip('/')
 
+        self.decoder = decoder
+        self.encoder = encoder
         self.verbose = verbose
-        self.persistent = persistent
 
-        # TODO: check if we need specific settings here when creating the Solr object from pysolr (e.g. always_commit, timeout, ...)
-        self.pysolr = pysolr.Solr(url)
+        self.persistent = persistent
 
         if self.persistent:
             self.conn = httplib.HTTPConnection(self.host, self.port)
 
+    def _request(self, query_string="", message=""):
+        if query_string != "":
+            path = '%s/select/?%s' % (self.path, query_string)
+        else:
+            path = '%s/update' % self.path
+
+        if self.verbose:
+            print "Connecting to Solr server: %s:%s" % (self.host, self.port)
+            print "\tPath:", path
+            print "\tSending data:", message
+
+        if self.persistent:
+            conn = self.conn
+        else:
+            conn = httplib.HTTPConnection(self.host, self.port)
+
+        if query_string:
+            conn.request('GET', path)
+        elif message:
+            conn.request('POST', path, message, {'Content-type': 'text/xml'})
+
+        response = conn.getresponse()
+
+        if response.status != 200:
+            raise SearchEngineException, response.reason
+
+        return response
+
     def select(self, query_string, raw=False):
-        try:
-            return self.pysolr.search(**query_string)
-        except pysolr.SolrError as e:
-            raise SolrException, str(e)
+        if raw:
+            return unicode(self._request(query_string=query_string).read())
+        else:
+            return self.decoder.decode(self._request(query_string=query_string))
 
     def add(self, docs):
+        encoded_docs = self.encoder.encode(docs)
         try:
-            self.pysolr.add(encode_list_dicts(docs))
-        except pysolr.SolrError as e:
-            raise SolrException, str(e)
+            self._request(message=encoded_docs)
+        except error as e:
+            raise SearchEngineException(e)
 
     def delete_by_id(self, id):
         try:
-            self.pysolr.delete(id=id)
-        except pysolr.SolrError as e:
-            raise SolrException, str(e)
+            self._request(message=u'<delete><id>%s</id></delete>' % unicode(id))
+        except error as e:
+            raise SearchEngineException(e)
 
     def delete_by_query(self, query):
         try:
-            self.pysolr.delete(q=query)
-        except pysolr.SolrError as e:
-            raise SolrException, str(e)
+            self._request(message=u'<delete><query>%s</query></delete>' % unicode(query))
+        except error as e:
+            raise SearchEngineException(e)
+
+    def commit(self, wait_flush=True, wait_searcher=True):
+        message = ET.Element('commit')
+        message.set("waitFlush", str(wait_flush).lower())
+        message.set("waitSearcher", str(wait_searcher).lower())
+        self._request(message=ET.tostring(message, "utf-8"))
+
+    def optimize(self, wait_flush=True, wait_searcher=True):
+        message = ET.Element('optimize')
+        message.set("waitFlush", str(wait_flush).lower())
+        message.set("waitSearcher", str(wait_searcher).lower())
+        self._request(message=ET.tostring(message, "utf-8"))
 
 
 class SolrResponseInterpreter(object):
     def __init__(self, response):
-        response = response.raw_response
-
         if "grouped" in response:
             if "thread_title_grouped" in response["grouped"].keys():
                 self.docs = response["grouped"]["thread_title_grouped"]["groups"]
@@ -499,63 +563,114 @@ class SolrResponseInterpreterPaginator(object):
                 }
 
 
-def convert_to_solr_document(sound):
-    document = {}
+class Solr451CustomSearchEngine(SearchEngineBase):
 
-    # Basic sound fields
-    keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5',
-                      'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
-    for key in keep_fields:
-        document[key] = getattr(sound, key)
-    document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
-    document["description"] = remove_control_chars(getattr(sound, "description"))
-    document["tag"] = getattr(sound, "tag_array")
-    document["license"] = getattr(sound, "license_name")
-    if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
-        document["avg_rating"] = getattr(sound, "avg_rating")
-    else:
-        document["avg_rating"] = 0
+    def __init__(self, index_name):
+        super(Solr451CustomSearchEngine, self).__init__(index_name)
 
-    if getattr(sound, "pack_id"):
-        document["pack"] = remove_control_chars(getattr(sound, "pack_name"))
-        document["grouping_pack"] = str(getattr(sound, "pack_id")) + "_" + remove_control_chars(getattr(sound, "pack_name"))
-    else:
-        document["grouping_pack"] = str(getattr(sound, "id"))
+        if self.index_name == SERACH_INDEX_SOUNDS:
+            url = settings.SOLR_URL
+        elif self.index_name == SERACH_INDEX_FORUM:
+            url = settings.SOLR_FORUM_URL
+        else:
+            raise SearchEngineException("No index with that name")
+        self.solr = Solr(url, verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder())
 
-    document["is_geotagged"] = False
-    if getattr(sound, "geotag_id"):
-        document["is_geotagged"] = True
-        if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
-            document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
-
-    document["bitdepth"] = getattr(sound, "bitdepth") if getattr(sound, "bitdepth") else 0
-    document["bitrate"] = getattr(sound, "bitrate") if getattr(sound, "bitrate") else 0
-    document["samplerate"] = int(getattr(sound, "samplerate")) if getattr(sound, "samplerate") else 0
-
-    document["comment"] = [remove_control_chars(comment_text) for comment_text in getattr(sound, "comments_array")]
-    document["comments"] = getattr(sound, "num_comments")
-    locations = sound.locations()
-    document["waveform_path_m"] = locations["display"]["wave"]["M"]["path"]
-    document["waveform_path_l"] = locations["display"]["wave"]["L"]["path"]
-    document["spectral_path_m"] = locations["display"]["spectral"]["M"]["path"]
-    document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
-    document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
-
-    # Audio Commons analysis
-    # NOTE: as the sound object here is the one returned by SoundManager.bulk_query_solr, it will have the Audio Commons
-    # descriptor fields under a property called 'ac_analysis'.
-    ac_analysis = getattr(sound, "ac_analysis")
-    if ac_analysis is not None:
-        # If analysis is present, index all existing analysis fields under Solr's dynamic fields "*_i", "*_d", "*_s"
-        # and "*_b" depending on the value's type. Also add Audio Commons prefix.
-        for key, value in ac_analysis.items():
-            suffix = settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
-            if suffix:
-                document['{0}{1}{2}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key, suffix)] = value
-
-    return document
-
+    def search(self, query):
+        return SolrResponseInterpreter(self.solr.select(unicode(query)))
     
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+    def return_paginator(self, results, num_per_page):
+        return SolrResponseInterpreterPaginator(results, num_per_page)
+
+    def add_to_index(self, docs):
+        self.solr.add(docs)
+
+    def remove_from_index(self, sound_id):
+        self.solr.delete_by_id(sound_id)
+
+    def remove_from_index_by_query(self, query):
+        self.solr.delete_by_query(query)
+
+    def remove_from_index_by_ids(self, document_ids):
+        sound_ids_query = ' OR '.join(['id:{0}'.format(document_id) for document_id in document_ids])
+        self.solr.delete_by_query(sound_ids_query)
+
+    def get_query_manager(self):
+        return SolrQuery()
+
+    def convert_sound_to_search_engine_document(self, sound):
+        document = {}
+
+        # Basic sound fields
+        keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5',
+                        'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
+        for key in keep_fields:
+            document[key] = getattr(sound, key)
+        document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
+        document["description"] = remove_control_chars(getattr(sound, "description"))
+        document["tag"] = getattr(sound, "tag_array")
+        document["license"] = getattr(sound, "license_name")
+        if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
+            document["avg_rating"] = getattr(sound, "avg_rating")
+        else:
+            document["avg_rating"] = 0
+
+        if getattr(sound, "pack_id"):
+            document["pack"] = remove_control_chars(getattr(sound, "pack_name"))
+            document["grouping_pack"] = str(getattr(sound, "pack_id")) + "_" + remove_control_chars(getattr(sound, "pack_name"))
+        else:
+            document["grouping_pack"] = str(getattr(sound, "id"))
+
+        document["is_geotagged"] = False
+        if getattr(sound, "geotag_id"):
+            document["is_geotagged"] = True
+            if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
+                document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
+
+        document["bitdepth"] = getattr(sound, "bitdepth") if getattr(sound, "bitdepth") else 0
+        document["bitrate"] = getattr(sound, "bitrate") if getattr(sound, "bitrate") else 0
+        document["samplerate"] = int(getattr(sound, "samplerate")) if getattr(sound, "samplerate") else 0
+
+        document["comment"] = [remove_control_chars(comment_text) for comment_text in getattr(sound, "comments_array")]
+        document["comments"] = getattr(sound, "num_comments")
+        locations = sound.locations()
+        document["waveform_path_m"] = locations["display"]["wave"]["M"]["path"]
+        document["waveform_path_l"] = locations["display"]["wave"]["L"]["path"]
+        document["spectral_path_m"] = locations["display"]["spectral"]["M"]["path"]
+        document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
+        document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
+
+        # Audio Commons analysis
+        # NOTE: as the sound object here is the one returned by SoundManager.bulk_query_solr, it will have the Audio Commons
+        # descriptor fields under a property called 'ac_analysis'.
+        ac_analysis = getattr(sound, "ac_analysis")
+        if ac_analysis is not None:
+            # If analysis is present, index all existing analysis fields under Solr's dynamic fields "*_i", "*_d", "*_s"
+            # and "*_b" depending on the value's type. Also add Audio Commons prefix.
+            for key, value in ac_analysis.items():
+                suffix = settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+                if suffix:
+                    document['{0}{1}{2}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key, suffix)] = value
+
+        return document
+
+    def convert_post_to_search_engine_document(self, post):
+        document = {
+            "id": post.id,
+            "thread_id": post.thread.id,
+            "thread_title": remove_control_chars(post.thread.title),
+            "thread_author": post.thread.author,
+            "thread_created": post.thread.created,
+
+            "forum_name": post.thread.forum.name,
+            "forum_name_slug": post.thread.forum.name_slug,
+
+            "post_author": post.author,
+            "post_created": post.created,
+            "post_body": remove_control_chars(post.body),
+
+            "num_posts": post.thread.num_posts,
+            "has_posts": False if post.thread.num_posts == 0 else True
+        }
+
+        return document

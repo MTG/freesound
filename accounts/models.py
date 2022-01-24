@@ -52,7 +52,7 @@ from ratings.models import SoundRating
 from sounds.models import DeletedSound, Sound, Pack, Download, PackDownload, BulkUploadProgress
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
-from utils.search.backend.pysolr.wrapper import SearchEngine, QueryManager, SearchEngineException
+from utils.search import get_search_engine, SearchEngineException
 
 
 class ResetEmailRequest(models.Model):
@@ -306,13 +306,13 @@ class Profile(SocialModel):
             self.save()
 
     def get_user_tags(self):
-        query = QueryManager()
+        search_engine = get_search_engine()
+        query = search_engine.get_query_manager()
         query.set_dismax_query('')
         filter_query = 'username:\"%s\"' % self.user.username
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)
-        search_engine = SearchEngine(settings.SOLR_URL)
 
         try:
             results = search_engine.search(query)

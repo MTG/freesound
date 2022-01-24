@@ -24,7 +24,7 @@ from follow.models import FollowingUserItem, FollowingQueryItem
 import sounds
 from utils.search.search_general import search_prepare_query, search_prepare_sort
 from django.conf import settings
-from utils.search.backend.pysolr.wrapper import SearchEngine
+from utils.search import get_search_engine
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 import urllib
 
@@ -67,7 +67,7 @@ def is_user_following_tag(user, slash_tag):
 
 def get_stream_sounds(user, time_lapse):
 
-    search_engine = SearchEngine(settings.SOLR_URL)
+    search_engine = get_search_engine()
 
     sort_str = search_prepare_sort("created desc", SEARCH_SORT_OPTIONS_WEB)
 

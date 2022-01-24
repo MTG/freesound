@@ -489,6 +489,7 @@ DEFAULT_SEARCH_WEIGHTS = {
     'pack_tokenized': 2,
     'original_filename': 2
 }
+SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine'
 
 
 # -------------------------------------------------------------------------------

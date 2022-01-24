@@ -184,13 +184,12 @@ class UserDelete(TestCase):
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
             target_sound.add_comment(user, "{0} comment {1}".format(username, i))
-        # Create threads and posts (use mock to avoid trying to index the posts to the search engine)
-        with mock.patch('forum.models.send_posts_to_search_engine'):
-            forum, _ = Forum.objects.get_or_create(name="Test forum")
-            self.forum = forum
-            thread = Thread.objects.create(author=user, title="Test thread by {}".format(username), forum=forum)
-            for i in range(0, 3):
-                Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
+        # Create threads and posts 
+        forum, _ = Forum.objects.get_or_create(name="Test forum")
+        self.forum = forum
+        thread = Thread.objects.create(author=user, title="Test thread by {}".format(username), forum=forum)
+        for i in range(0, 3):
+            Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
         # Create sounds and packs
         pack = Pack.objects.create(user=user, name="Test pack by {}".format(username))
         for i in range(0, 3):

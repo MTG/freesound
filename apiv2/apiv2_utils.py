@@ -49,7 +49,7 @@ from search.views import search_prepare_query
 from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search.backend.pysolr.wrapper import SearchEngine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
@@ -322,7 +322,7 @@ def api_search(
 
         # Standard text-based search
         try:
-            search_engine = SearchEngine(settings.SOLR_URL)
+            search_engine = get_search_engine()
             query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
                                          unquote(search_form.cleaned_data['filter'] or ""),
                                          search_form.cleaned_data['sort'],

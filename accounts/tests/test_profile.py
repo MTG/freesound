@@ -34,6 +34,7 @@ from django.urls import reverse
 from django.utils.http import int_to_base36
 
 import accounts.models
+import utils.search.backends.solr451custom
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
 from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
 from accounts.views import handle_uploaded_image
@@ -42,7 +43,10 @@ from sounds.models import Pack, Download, PackDownload
 from tags.models import TaggedItem
 from utils.mail import send_mail
 from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
-from utils.search.backend.pysolr.client import SolrResponseInterpreter
+# Below we import SolrResponseInterpreter because we're using them in the 
+# tests to process data returned from Solr. Ideally we should make this test agnostic of search backend and 
+# prepare fake search data as it would be afeter being processed by SolrResponseInterpreter.
+from utils.search.backends.solr451custom import SolrResponseInterpreter
 
 
 class ProfileGetUserTags(TestCase):
@@ -50,11 +54,10 @@ class ProfileGetUserTags(TestCase):
 
     def test_user_tagcloud_solr(self):
         user = User.objects.get(username="Anton")
-        mock_solr = mock.Mock()
-        # We need some special mocking here because the interpretation of the search engine response is done in the search method 
-        # of the search engine object (see utils.search.backend.pysolr.wrapper.py)
-        mocked_response = mock.Mock()
-        mocked_response.raw_response = {
+        mock_search_engine = mock.Mock()
+
+        conf = {
+            'search.return_value': SolrResponseInterpreter({
                 'facet_counts': {
                     'facet_ranges': {},
                     'facet_fields': {'tag': ['conversation', 1, 'dutch', 1, 'glas', 1, 'glass', 1, 'instrument', 2,
@@ -69,12 +72,10 @@ class ProfileGetUserTags(TestCase):
                                'facet': 'true', 'wt': 'json', 'f.tag.facet.mincount': '1', 'fl': 'id', 'qt': 'dismax'}
                 },
                 'response': {'start': 0, 'numFound': 48, 'docs': []}
-            }
-        conf = {
-            'search.return_value': SolrResponseInterpreter(mocked_response)
+            })
         }
-        mock_solr.return_value.configure_mock(**conf)
-        accounts.models.SearchEngine = mock_solr
+        mock_search_engine.return_value.configure_mock(**conf)
+        accounts.models.get_search_engine = mock_search_engine
         tag_names = [item["name"] for item in list(user.profile.get_user_tags())]
         used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
         non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
@@ -83,11 +84,10 @@ class ProfileGetUserTags(TestCase):
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
         self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
 
-        # Test solr not available return False
-        # TODO: check how to reproduce this with pysolr
-        # conf = {'select.side_effect': Exception}
-        # mock_solr.return_value.configure_mock(**conf)
-        # self.assertEqual(user.profile.get_user_tags(), False)
+        # Test search engine not available return False
+        conf = {'search.side_effect': Exception}
+        mock_search_engine.return_value.configure_mock(**conf)
+        self.assertEqual(user.profile.get_user_tags(), False)
 
 
 class UserEditProfile(TestCase):
@@ -402,7 +402,6 @@ class ProfilePostInForumTest(TestCase):
     def test_can_post_in_forum_unmoderated(self):
         """If you have an unmoderated post, you can't make another post"""
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="NM")
-
         can_post, reason = self.user.profile.can_post_in_forum()
         self.assertFalse(can_post)
         self.assertIn("you have previous posts", reason)

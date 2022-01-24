@@ -22,9 +22,10 @@ from django.test import TestCase
 from django.urls import reverse
 from sounds.models import Sound
 from utils.search.search_general import search_process_filter
-# We still import some things of the pysolr client here because we are testing specific things of the client.
-# TODO: Probably, we should create some tests inside the folder of each search backend and remove them from here.
-from utils.search.backend.pysolr.client import SolrResponseInterpreter, SolrResponseInterpreterPaginator
+# Below we import SolrResponseInterpreter and SolrResponseInterpreterPaginator because we're using them in the 
+# tests to process data returned from Solr. Ideally we should make this test agnostic of search backend and 
+# prepare fake search data as it would be afeter being processed by SolrResponseInterpreter and SolrResponseInterpreterPaginator
+from utils.search.backends.solr451custom import SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from utils.test_helpers import create_user_and_sounds
 import mock
 import copy
@@ -163,10 +164,9 @@ class SearchPageTests(TestCase):
             {'doclist': {'docs': [{'id': sound_id}], 'numFound': 1, 'start': 0}, 'groupValue': str(sound_id)}
             for sound_id in sound_ids
         ]
-        mocked_response = mock.Mock()
-        mocked_response.raw_response = copy.deepcopy(solr_select_returned_data)
-        results = SolrResponseInterpreter(mocked_response)
-        # NOTE: in the line abve, we need to deepcopy the dictionary of results because SolrResponseInterpreter changes
+        
+        results = SolrResponseInterpreter(copy.deepcopy(solr_select_returned_data))
+        # NOTE: in the line above, we need to deepcopy the dictionary of results because SolrResponseInterpreter changes
         # it and makes it break when run a second time. Ideally SolrResponseInterpreter should be fixed so that it does
         # not change its input parameter.
 

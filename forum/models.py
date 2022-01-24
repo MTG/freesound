@@ -35,7 +35,8 @@ from django.utils.encoding import smart_unicode
 import accounts
 from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
-from utils.search.search_forum import delete_post_from_search_engine, send_posts_to_search_engine
+from utils.search import SearchEngineException, get_search_engine_forum
+from utils.search.search_forum import delete_post_from_search_engine
 
 web_logger = logging.getLogger('web')
 
@@ -174,7 +175,10 @@ def index_posts_on_thread_update(sender, instance, **kwargs):
     If a thread is renamed, or moved from one Forum to another we need to update these fields in the search engine"""
     # Reload the thread because its num_posts may still be an F-expression
     instance.refresh_from_db()
-    send_posts_to_search_engine(instance.post_set.all())
+    try:
+        get_search_engine_forum().add_forum_posts_to_index(instance.post_set.all())
+    except SearchEngineException:
+        pass
 
 
 @receiver(post_delete, sender=Thread)

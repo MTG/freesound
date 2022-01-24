@@ -42,7 +42,7 @@ from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
     split_filter_query
-from utils.search.backend.pysolr.wrapper import SearchEngine, QueryManager, SearchEngineException
+from utils.search import get_search_engine, get_search_engine_forum, SearchEngineException
 
 
 search_logger = logging.getLogger("search")
@@ -350,7 +350,8 @@ def search_forum(request):
         if advanced_search == "1" and date_from != "" or date_to != "":
             filter_query = __add_date_range(filter_query, date_from, date_to)
 
-        query = QueryManager()
+        search_engine = get_search_engine_forum()
+        query = search_engine.get_query_manager()
         query.set_dismax_query(search_query, query_fields=[("thread_title", 4),
                                                            ("post_body", 3),
                                                            ("thread_author", 3),
@@ -382,8 +383,6 @@ def search_forum(request):
             # Do not group by thread in beastwhoosh
             query.set_group_field("thread_title_grouped")
             query.set_group_options(group_limit=30)
-
-        search_engine = SearchEngine(settings.SOLR_FORUM_URL)
 
         try:
             results = search_engine.search(query)
@@ -434,14 +433,14 @@ def search_forum(request):
 
 
 def get_pack_tags(pack_obj):
-    query = QueryManager()
-    query.set_dismax_query('')
-    filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
-    query.set_query_options(field_list=["id"], filter_query=filter_query)
-    query.add_facet_fields("tag")
-    query.set_facet_options("tag", limit=20, mincount=1)
     try:
-        search_engine = SearchEngine(settings.SOLR_URL)
+        search_engine = get_search_engine()
+        query = search_engine.get_query_manager()
+        query.set_dismax_query('')
+        filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        query.add_facet_fields("tag")
+        query.set_facet_options("tag", limit=20, mincount=1)
         results = search_engine.search(query)
     except (SearchEngineException, Exception) as e:
         #  TODO: do something here?

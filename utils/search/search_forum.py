@@ -23,56 +23,27 @@ from django.conf import settings
 
 import forum.models
 from utils.text import remove_control_chars
-from utils.search.backend.pysolr.wrapper import SearchEngine, SearchEngineException
+from utils.search import get_search_engine_forum, SearchEngineException
 
 search_logger = logging.getLogger("search")
+console_logger = logging.getLogger("console")
 
 
-def convert_to_search_engine_document(post):
-    document = {
-        "id": post.id,
-        "thread_id": post.thread.id,
-        "thread_title": remove_control_chars(post.thread.title),
-        "thread_author": post.thread.author,
-        "thread_created": post.thread.created,
-
-        "forum_name": post.thread.forum.name,
-        "forum_name_slug": post.thread.forum.name_slug,
-
-        "post_author": post.author,
-        "post_created": post.created,
-        "post_body": remove_control_chars(post.body),
-
-        "num_posts": post.thread.num_posts,
-        "has_posts": False if post.thread.num_posts == 0 else True
-    }
-
-    return document
-
-
-def send_posts_to_search_engine(posts):
-    search_logger.info("adding forum posts to solr index")
-    search_logger.info("creating XML")
-    documents = [convert_to_search_engine_document(p) for p in posts]
-    try:
-        search_logger.info("posting to search engine")
-        search_engine = SearchEngine(settings.SOLR_FORUM_URL)
-        search_engine.add_to_index(documents)
-    except SearchEngineException as e:
-        search_logger.error("failed to add posts to search engine index, reason: %s" % str(e))
-    search_logger.info("done")
-
-
-def add_post_to_search_engine(post_id):
-    """Add a forum post to search engine
+def add_posts_to_search_engine_by_id(post_ids):
+    """Add forum posts to search engine
     Arguments:
-        post_id (int): ID of a post object"""
+        post_ids (List[int]): IDs of the post objects to add"""
 
-    search_logger.info("adding single forum post to search engine index")
-    post = forum.models.Post.objects.select_related("thread", "author", "thread__author", "thread__forum").get(id=post_id)
-    send_posts_to_search_engine([post])
-
-
+    posts = forum.models.Post.objects.select_related("thread", "author", "thread__author", "thread__forum").filter(id__in=post_ids)
+    num_posts = posts.count()
+    try:
+        console_logger.info("Adding %d posts to solr index" % num_posts)
+        search_logger.info("Adding %d posts to solr index" % num_posts)
+        get_search_engine_forum().add_forum_posts_to_index(posts)
+    except SearchEngineException as e:
+        search_logger.error("Failed to add posts to search engine index, reason: %s" % str(e))
+    
+    
 def add_all_posts_to_search_engine(slice_size=4000):
     """Add all forum posts to the search engine
     Arguments:
@@ -83,14 +54,18 @@ def add_all_posts_to_search_engine(slice_size=4000):
     num_posts = posts.count()
     for i in range(0, num_posts, slice_size):
         posts_slice = posts[i:i+slice_size]
-        send_posts_to_search_engine(posts_slice)
+        num_posts = len(posts_slice)
+        try:
+            console_logger.info("Adding %d posts to solr index" % num_posts)
+            search_logger.info("Adding %d posts to solr index" % num_posts)
+            get_search_engine_forum().add_forum_posts_to_index(posts_slice)
+        except SearchEngineException as e:
+            search_logger.error("Failed to add posts to search engine index, reason: %s" % str(e))
 
 
 def delete_post_from_search_engine(post_id):
     search_logger.info("deleting post with id %d" % post_id)
     try:
-        search_engine = SearchEngine(settings.SOLR_FORUM_URL)
-        search_engine.remove_from_index(post_id)
-        # solr.commit()
+        get_search_engine_forum().remove_from_index(post_id)
     except SearchEngineException as e:
-        search_logger.error('could not delete post with id %s (%s).' % (post_id, e))
+        search_logger.error('Could not delete post with id %s (%s).' % (post_id, e))

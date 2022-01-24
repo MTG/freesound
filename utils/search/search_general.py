@@ -34,7 +34,7 @@ from search import forms
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 from utils.logging_filters import get_client_ip
 from utils.search.lucene_parser import parse_query_filter_string
-from utils.search.backend.pysolr.wrapper import SearchEngine, QueryManager, SearchEngineException, convert_to_search_engine_document
+from utils.search import SearchEngineException, get_search_engine
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
@@ -334,7 +334,8 @@ def search_prepare_query(search_query,
     Returns: (QueryManager): the query object corresponding to the user submitted query.
 
     """
-    query = QueryManager()
+    search_engine = get_search_engine()
+    query = search_engine.get_query_manager()
 
     # Set field weights and scoring function
     field_weights = []
@@ -461,7 +462,7 @@ def perform_solr_query(q, current_page):
     This util function performs the query to Solr and returns needed parameters to continue with the view.
     The main reason to have this util function is to facilitate mocking in unit tests for this view.
     """
-    search_engine = SearchEngine(settings.SOLR_URL)
+    search_engine = get_search_engine()
     results = search_engine.search(q)
     paginator = search_engine.return_paginator(results, settings.SOUNDS_PER_PAGE)
     page = paginator.page(current_page)
@@ -469,8 +470,8 @@ def perform_solr_query(q, current_page):
 
 
 def add_sounds_to_search_engine(sounds):
-    search_engine = SearchEngine(settings.SOLR_URL)
-    documents = [convert_to_search_engine_document(s) for s in sounds]
+    search_engine = get_search_engine()
+    documents = [search_engine.convert_sound_to_search_engine_document(s) for s in sounds]
     console_logger.info("Adding %d sounds to solr index" % len(documents))
     search_logger.info("Adding %d sounds to solr index" % len(documents))
     search_engine.add_to_index(documents)
@@ -495,16 +496,20 @@ def add_all_sounds_to_search_engine(sound_queryset, slice_size=1000, mark_index_
         try:
             sound_ids = all_sound_ids[i:i+slice_size]
             sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)
+            num_sounds = sounds_qs.count()
             if delete_if_existing:
                 delete_sounds_from_search_engine(sound_ids=sound_ids)
-            add_sounds_to_search_engine(sounds_qs)
+
+            console_logger.info("Adding %d sounds to solr index" % num_sounds)
+            search_logger.info("Adding %d sounds to solr index" % num_sounds)
+            get_search_engine().add_sounds_to_index(sounds_qs)
 
             if mark_index_clean:
                 console_logger.info("Marking sounds as clean.")
                 sounds.models.Sound.objects.filter(pk__in=sound_ids).update(is_index_dirty=False)
             num_correctly_indexed_sounds += len(sound_ids)
         except SearchEngineException as e:
-            console_logger.error("failed to add sound batch to solr index, reason: %s", str(e))
+            console_logger.error("Failed to add sound batch to solr index, reason: %s", str(e))
             raise
 
     return num_correctly_indexed_sounds
@@ -514,7 +519,7 @@ def get_all_sound_ids_from_search_engine(limit=False):
     search_logger.info("getting all sound ids from solr.")
     if not limit:
         limit = 99999999999999
-    search_engine = SearchEngine(settings.SOLR_URL)
+    search_engine = get_search_engine()
     solr_ids = []
     solr_count = None
     PAGE_SIZE = 2000
@@ -530,7 +535,7 @@ def get_all_sound_ids_from_search_engine(limit=False):
 
 
 def check_if_sound_exists_in_search_egnine(sound):
-    search_engine = SearchEngine(settings.SOLR_URL)
+    search_engine = get_search_engine()
     response = search_engine.search(search_prepare_query(
             '', 'id:%i' % sound.id, search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), 1, 1))
     return response.num_found > 0
@@ -541,8 +546,8 @@ def get_random_sound_from_search_engine():
     This is used for random sound browsing. We filter explicit sounds,
     but otherwise don't have any other restrictions on sound attributes
     """
-    search_engine = SearchEngine(settings.SOLR_URL)
-    query = QueryManager()
+    search_engine = get_search_engine()
+    query = search_engine.get_query_manager()
     rand_key = random.randint(1, 10000000)
     sort = ['random_%d asc' % rand_key]
     filter_query = 'is_explicit:0'
@@ -561,7 +566,7 @@ def get_random_sound_from_search_engine():
 def delete_sound_from_search_engine(sound_id):
     search_logger.info("deleting sound with id %d" % sound_id)
     try:
-        SearchEngine(settings.SOLR_URL).remove_from_index(sound_id)
+        get_search_engine().remove_from_index(sound_id)
     except (SearchEngineException, socket.error) as e:
         search_logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
 
@@ -577,7 +582,7 @@ def delete_sounds_from_search_engine(sound_ids):
                  count + 1,
                  int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
                  len(range_ids)))
-            SearchEngine(settings.SOLR_URL).remove_documents_by_ids(range_ids)
+            get_search_engine().remove_from_index_by_ids(range_ids)
             
         except (SearchEngineException, socket.error) as e:
             search_logger.error('could not delete solr sounds chunk %i of %i' %

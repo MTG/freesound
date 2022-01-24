@@ -24,7 +24,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from forum.models import Post
-from utils.search.backend.pysolr.wrapper import SearchEngine, QueryManager
+from utils.search import get_search_engine
 
 console_logger = logging.getLogger('console')
 
@@ -42,8 +42,8 @@ class Command(BaseCommand):
         LIMIT = None
         SLICE_SIZE = 500
         search_engine_post_ids = []
-        search_engine = SearchEngine(url=settings.SOLR_FORUM_URL)
-        query = QueryManager()
+        search_engine = get_search_engine()
+        query = search_engine.get_query_manager()
         query.set_dismax_query("")  # Query to get ALL forums
 
         console_logger.info("Retrieving ids from %i to %i"%(0,SLICE_SIZE))

@@ -54,13 +54,10 @@ def send_posts_to_search_engine(posts):
     search_logger.info("adding forum posts to solr index")
     search_logger.info("creating XML")
     documents = [convert_to_search_engine_document(p) for p in posts]
-
     try:
         search_logger.info("posting to search engine")
         search_engine = SearchEngine(settings.SOLR_FORUM_URL)
         search_engine.add_to_index(documents)
-
-        # solr.commit()
     except SearchEngineException as e:
         search_logger.error("failed to add posts to search engine index, reason: %s" % str(e))
     search_logger.info("done")

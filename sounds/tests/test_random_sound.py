@@ -50,20 +50,20 @@ class RandomSoundViewTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.views.get_random_sound_from_search_engine')
+    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view(self, random_sound):
         """ Get a sound from solr and redirect to it. """
         users, packs, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
 
         # We only use the ID field from solr
-        random_sound.return_value = {'id': sound.id}
+        random_sound.return_value = sound.id
 
         response = self.client.get(reverse('sounds-random'))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
 
-    @mock.patch('sounds.views.get_random_sound_from_search_engine')
+    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view_bad_solr(self, random_sound):
         """ Solr may send us a sound id which no longer exists (index hasn't been updated).
         In this case, use the database access """
@@ -77,7 +77,7 @@ class RandomSoundViewTestCase(TestCase):
         sound.save()
 
         # We only use the ID field from solr
-        random_sound.return_value = {'id': sound.id+100}
+        random_sound.return_value = sound.id+100
 
         # Even though solr returns sound.id+100, we find we are redirected to the db sound, because
         # we call Sound.objects.random
@@ -85,7 +85,7 @@ class RandomSoundViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
 
-    @mock.patch('sounds.views.get_random_sound_from_search_engine')
+    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view_no_solr(self, random_sound):
         """ If solr is down, get a random sound from the database and redirect to it. """
         users, packs, sounds = create_user_and_sounds(num_sounds=1)
@@ -98,7 +98,7 @@ class RandomSoundViewTestCase(TestCase):
         sound.save()
 
         # Returned if there is an issue accessing solr
-        random_sound.return_value = {}
+        random_sound.return_value = 0
 
         # we find the sound due to Sound.objects.random
         response = self.client.get(reverse('sounds-random'))

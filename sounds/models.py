@@ -51,7 +51,6 @@ from comments.models import Comment
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
-from search.views import get_pack_tags
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment

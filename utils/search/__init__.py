@@ -20,7 +20,6 @@
 
 import importlib
 import itertools
-import logging
 
 from django.conf import settings
 
@@ -118,9 +117,6 @@ class SearchResults(object):
                 }
 
             q_time (int, optional): time that it took to execute the query in the backend, in ms
-
-
-
         """
         self.docs = docs if docs is not None else list()
         self.facets = facets if facets is not None else list()
@@ -130,6 +126,9 @@ class SearchResults(object):
         self.start = start
         self.num_rows = num_rows
         self.q_time = q_time
+
+    def __str__(self):
+        return '<SearchResults with {} results found>'.format(self.num_found)
 
 
 class SearchResultsPaginator(object):
@@ -177,9 +176,6 @@ class SearchEngineBase(object):
     # Many of the methods here should probably be removed from main SearchEngine API as the endpoints are only
     # application-specific
 
-    def search(self, query):
-        raise NotImplementedError
-
     def add_to_index(self, docs):
         raise NotImplementedError
 
@@ -206,7 +202,57 @@ class SearchEngineBase(object):
         documents = [self.convert_sound_to_search_engine_document(s) for s in sounds]
         self.add_to_index(documents)
 
-    def search_sounds(self):
+    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, num_sounds=10,
+                      sorting=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False, facets=None,
+                      only_sounds_with_pack=False, only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+        """Search for sounds that match specific criteria and return them in a SearchResults object
+
+        Args:
+            textual_query (str, optional): the textual query
+            query_fields (List[str] or Dict{str: int}, optional): a list of the fields that should be matched when
+            querying. Field weights can also be specified if a dict is passed with keys as field names and values as
+            weights. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
+                    query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
+                    query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
+            query_filter (str, optional): filter expression following lucene filter syntax
+            offset (int, optional): offset for the returned results
+            num_sounds (int, optional): number of sounds to return
+            sorting (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
+            group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
+                by pack, only 1 sound per pack will be returned, together with additional information about the number
+                of other sounds in the pack that would be i the same group.
+            facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
+                information is required. Facets should be specified as a dictionary with the "db" field names to be
+                included in the faceting as keys, and a dictionary as values with optional specific parameters for
+                every field facet. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
+                    {
+                        settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
+                        settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
+                        settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30}
+                    }
+                Supported individual facet options include:
+                    - limit: the number of items returned per facet
+            only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
+            only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
+            group_counts_as_one_in_facets (bool, optional): whether only one result from a group should be counted
+                when computing facets or all should be taken into account. This is used to reduce the influence of
+                large groups in facets. We use it for computing the main tag cloud and avoiding a large packs of sounds
+                with the same tags to largely influence the general tag cloud (only one sound of the pack will be
+                counted)
+
+        Returns:
+            SearchResults: SearchResults object containing the results of the query
+        """
+        raise NotImplementedError
+
+    def get_random_sound_id(self):
+        """ Return the id of a random sound from the search engine.
+        This is used for random sound browsing. We filter explicit sounds,
+        but otherwise don't have any other restrictions on sound attributes.
+
+        Returns:
+            int: the ID of the selected random sound (or 0 if there were errors)
+        """
         raise NotImplementedError
 
     # Forum search related methods
@@ -226,13 +272,29 @@ class SearchEngineBase(object):
 
     # Other "application" methods
 
-    def get_user_tags(self, username, pack_name):
+    def get_user_tags(self, username):
+        """Retrieves the tags used by a user and their counts
+
+        Args:
+            username: name of the user for which we want to know tags and counts
+
+        Returns:
+            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags used by the user.
+                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
+        """
         raise NotImplementedError
 
-    def get_pack_tags(self, pack_name):
-        raise NotImplementedError
+    def get_pack_tags(self, username, pack_name):
+        """Retrieves the tags in the sounds of a pack and their counts
 
-    def get_random_document(self):  # To be moved above
+        Args:
+            username: name of the user who owns the pack
+            pack_name: name of the pack for which tags and counts should be retrieved
+
+        Returns:
+            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags in the pack.
+                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
+        """
         raise NotImplementedError
 
 

@@ -19,14 +19,12 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.search import SearchEngineException, get_search_engine
 from similarity.client import SimilarityException
-from search.views import search_prepare_query
 from exceptions import ServerErrorException, BadRequestException, NotFoundException
 from urllib import unquote
-from django.conf import settings
 
 
 def merge_all(search_form, target_file=None, extra_parameters=None):
@@ -333,15 +331,19 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         n_page_requests = 1
         # Iterate over solr result pages
         while (len(solr_ids) < solr_count or solr_count == None) and n_page_requests <= max_pages:
-            query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
-                                         unquote(query_filter or ""),
-                                         search_form.cleaned_data['sort'],
-                                         current_page,
-                                         page_size,
-                                         grouping=False,
-                                         include_facets=False,
-                                         offset=offset)
-            result = search_engine.search(query)
+            # We need to convert the sort parameter to standard sorting options from
+            # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
+            # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
+            processed_sort = API_SORT_OPTIONS_MAP[search_form.cleaned_data['sort'][0]]
+            result = search_engine.search_sounds(
+                textual_query=unquote(search_form.cleaned_data['query'] or ""),
+                query_filter=unquote(query_filter or ""),
+                sorting = processed_sort,
+                offset = (current_page - 1) * page_size,
+                num_sounds = page_size,
+                group_by_pack=False
+
+            )
             solr_ids += [element['id'] for element in result.docs]
             solr_count = result.num_found
 

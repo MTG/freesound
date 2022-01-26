@@ -21,6 +21,7 @@
 #
 
 import math
+import random
 import re
 import urllib
 from datetime import date, datetime
@@ -693,9 +694,6 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             raise SearchEngineException("No index with that name")
         self.solr = Solr(url, verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder())
 
-    def search(self, query):
-        return SolrResponseInterpreter(self.solr.select(unicode(query)))
-
     def add_to_index(self, docs):
         self.solr.add(docs)
 
@@ -791,40 +789,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, num_sounds=10,
                       sorting=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False, facets=None,
-                      only_sounds_with_pack=False, only_sounds_within_ids=False):
-        """
-
-        Args:
-            textual_query (str, optional): the textual query
-            query_fields (List[str] or Dict{str: int}, optional): a list of the fields that should be matched when
-            querying. Field weights can also be specified if a dict is passed with keys as field names and values as
-            weights. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
-                    query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
-                    query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
-            query_filter (str, optional): filter expression following lucene filter syntax
-            offset (int, optional): offset for the returned results
-            num_sounds (int, optional): number of sounds to return
-            sorting (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
-            group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
-                by pack, only 1 sound per pack will be returned, together with additional information about the number
-                of other sounds in the pack that would be i the same group.
-            facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
-                information is required. Facets should be specified as a dictionary with the "db" field names to be
-                included in the faceting as keys, and a dictionary as values with optional specific parameters for
-                every field facet. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
-                    {
-                        settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
-                        settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
-                        settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30}
-                    }
-                Supported individual facet options include:
-                    - limit: the number of items returned per facet
-            only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
-            only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
-
-        Returns:
-
-        """
+                      only_sounds_with_pack=False, only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
 
         query = SolrQuery()
 
@@ -876,22 +841,27 @@ class Solr451CustomSearchEngine(SearchEngineBase):
                 group_format='grouped',
                 group_main=False,
                 group_num_groups=True,
-                group_cache_percent=0)
+                group_cache_percent=0,
+                group_truncate=group_counts_as_one_in_facets)
 
         # Do the query!
-        # Note we don't to try/except here as we expect this to be dealt with at upper level
-        return SolrResponseInterpreter(self.solr.select(unicode(query)))
+        # Note1: we don't to try/except here as we expect this to be dealt with at upper level
+        # Note2: we create a SearchResults with the same members as SolrResponseInterpreter. This would not be strictly
+        # needed because SearchResults and SolrResponseInterpreter are virtually the same, but we do it in this way to
+        # conform to SearchEngine.search_sounds definition which must return SearchResults
+        results = SolrResponseInterpreter(self.solr.select(unicode(query)))
+        return SearchResults(
+            docs=results.docs,
+            num_found=results.num_found,
+            start=results.start,
+            num_rows=results.num_rows,
+            non_grouped_number_of_matches=results.non_grouped_number_of_matches,
+            facets=results.facets,
+            highlighting=results.highlighting,
+            q_time=results.q_time
+        )
 
     def get_user_tags(self, username):
-        """Retrieves the tags used by a user and their counts
-
-        Args:
-            username: name of the user for which we want to know tags and counts
-
-        Returns:
-            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags used by the user.
-                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
-        """
         try:
             query = SolrQuery()
             query.set_dismax_query('')
@@ -905,16 +875,6 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             return []
 
     def get_pack_tags(self, username, pack_name):
-        """Retrieves the tags in the sounds of a pack and their counts
-
-        Args:
-            username: name of the user who owns the pack
-            pack_name: name of the pack for which tags and counts should be retrieved
-
-        Returns:
-            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags in the pack.
-                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
-        """
         try:
             query = SolrQuery()
             query.set_dismax_query('')
@@ -926,3 +886,19 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             return results.facets['tag']
         except (SearchEngineException, Exception) as e:
             return []
+
+    def get_random_sound_id(self):
+        query = SolrQuery()
+        rand_key = random.randint(1, 10000000)
+        sort = ['random_%d asc' % rand_key]
+        filter_query = 'is_explicit:0'
+        query.set_query("*:*")
+        query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
+        try:
+            response = SolrResponseInterpreter(self.solr.select(unicode(query)))
+            docs = response.docs
+            if docs:
+                return int(docs[0]['id'])
+        except (SearchEngineException, Exception) as e:
+            pass
+        return 0

@@ -40,9 +40,9 @@ from forum.models import Post
 from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search.search_general import search_prepare_query, perform_search_engine_query, search_prepare_parameters, \
+from utils.search.search_general import perform_search_engine_query, search_prepare_parameters, \
     split_filter_query
-from utils.search import get_search_engine, get_search_engine_forum, SearchEngineException, SearchResultsPaginator
+from utils.search import get_search_engine_forum, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
 
@@ -61,7 +61,7 @@ def search(request):
     url_query_params_string = request.META['QUERY_STRING']
 
     # get sound ids of the requested cluster when applying a clustering facet
-    # the list of ids is used to create a Solr query with filter by ids in search_prepare_query()
+    # the list of ids is used later on to create a Solr query with filter by ids in
     cluster_id = request.GET.get('cluster_id')
 
     if settings.ENABLE_SEARCH_RESULTS_CLUSTERING and cluster_id:
@@ -429,22 +429,6 @@ def search_forum(request):
         })
 
     return render(request, 'search/search_forum.html', tvars)
-
-
-def get_pack_tags(pack_obj):
-    try:
-        search_engine = get_search_engine()
-        query = search_engine.get_query_manager()
-        query.set_dismax_query('')
-        filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
-        query.set_query_options(field_list=["id"], filter_query=filter_query)
-        query.add_facet_fields("tag")
-        query.set_facet_options("tag", limit=20, mincount=1)
-        results = search_engine.search(query)
-    except (SearchEngineException, Exception) as e:
-        #  TODO: do something here?
-        return False
-    return results.facets
 
 
 def __add_date_range(filter_query, date_from, date_to):

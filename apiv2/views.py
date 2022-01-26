@@ -143,8 +143,8 @@ class TextSearch(GenericAPIView):
                 sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
-                        pack_id =  more_from_pack_data[sid][1]['group_name'][:more_from_pack_data[sid][1]['group_name'].find("_")]
-                        pack_name = more_from_pack_data[sid][1]['group_name'][more_from_pack_data[sid][1]['group_name'].find("_")+1:]
+                        pack_id =  more_from_pack_data[sid][1][:more_from_pack_data[sid][1].find("_")]
+                        pack_name = more_from_pack_data[sid][1][more_from_pack_data[sid][1].find("_")+1:]
                         sound['more_from_same_pack'] = search_form.construct_link(
                             reverse('apiv2-sound-text-search'),
                             page=1,

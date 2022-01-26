@@ -41,11 +41,11 @@ from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.utils import formatting
 
 import combined_search_strategies
+from apiv2.forms import API_SORT_OPTIONS_MAP
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2.exceptions import RequiresHttpsException, UnauthorizedException, ServerErrorException, BadRequestException, \
     NotFoundException
 from examples import examples
-from search.views import search_prepare_query
 from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
@@ -322,19 +322,20 @@ def api_search(
 
         # Standard text-based search
         try:
-            search_engine = get_search_engine()
-            query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
-                                         unquote(search_form.cleaned_data['filter'] or ""),
-                                         search_form.cleaned_data['sort'],
-                                         search_form.cleaned_data['page'],
-                                         search_form.cleaned_data['page_size'],
-                                         grouping=search_form.cleaned_data['group_by_pack'],
-                                         include_facets=False)
-
-            result = search_engine.search(query)
+            # We need to convert the sort parameter to standard sorting options from
+            # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
+            # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
+            processed_sort = API_SORT_OPTIONS_MAP[search_form.cleaned_data['sort'][0]]
+            result = get_search_engine().search_sounds(
+                textual_query=unquote(search_form.cleaned_data['query'] or ""),
+                query_filter=unquote(search_form.cleaned_data['filter'] or ""),
+                sorting = processed_sort,
+                offset = (search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
+                num_sounds = search_form.cleaned_data['page_size'],
+                group_by_pack=search_form.cleaned_data['group_by_pack']
+            )
             solr_ids = [element['id'] for element in result.docs]
             solr_count = result.num_found
-
             more_from_pack_data = None
             if search_form.cleaned_data['group_by_pack']:
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds

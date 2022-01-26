@@ -533,26 +533,9 @@ def check_if_sound_exists_in_search_egnine(sound):
     return response.num_found > 0
 
 
-def get_random_sound_from_search_engine():
-    """ Get a random sound from solr.
-    This is used for random sound browsing. We filter explicit sounds,
-    but otherwise don't have any other restrictions on sound attributes
-    """
-    search_engine = get_search_engine()
-    query = search_engine.get_query_manager()
-    rand_key = random.randint(1, 10000000)
-    sort = ['random_%d asc' % rand_key]
-    filter_query = 'is_explicit:0'
-    query.set_query("*:*")
-    query.set_query_options(start=0, rows=1, field_list=["*"], filter_query=filter_query, sort=sort)
-    try:
-        response = search_engine.search(query)
-        docs = response.docs
-        if docs:
-            return docs[0]
-    except (SearchEngineException, socket.error):
-        pass
-    return {}
+def get_random_sound_id_from_search_engine():
+    # We use this helper function as it facilitates unit testing
+    return get_search_engine().get_random_sound()
 
 
 def delete_sound_from_search_engine(sound_id):

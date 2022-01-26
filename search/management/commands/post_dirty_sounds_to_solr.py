@@ -22,7 +22,8 @@ import logging
 
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
-from utils.search.search_general import add_all_sounds_to_search_engine, delete_sound_from_search_engine, check_if_sound_exists_in_search_egnine
+from utils.search import get_search_engine
+from utils.search.search_general import add_all_sounds_to_search_engine, delete_sound_from_search_engine
 
 console_logger = logging.getLogger("console")
 
@@ -58,8 +59,9 @@ class Command(LoggingBaseCommand):
         sounds_dirty_to_remove = \
             Sound.objects.filter(is_index_dirty=True).exclude(moderation_state='OK', processing_state='OK')
         n_deleted_sounds = 0
+        search_engine = get_search_engine()
         for sound in sounds_dirty_to_remove:
-            if check_if_sound_exists_in_search_egnine(sound):
+            if csearch_engine.sound_exists_in_index(sound):
                 # We need to know if the sound exists in solr so that besides deleting it (which could be accomplished
                 # by simply using delete_sound_from_solr), we know whether we have to change is_index_dirty state. If
                 # we do not change it, then we would try to delete the sound at every attempt.

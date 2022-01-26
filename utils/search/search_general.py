@@ -444,13 +444,14 @@ def perform_search_engine_query(q, current_page):
         offset = (q['current_page'] - 1) * q['sounds_per_page']
     else:
         offset = q['offset']
+
     results = get_search_engine().search_sounds(
         textual_query=q['search_query'],
         query_fields=q['field_weights'],
         query_filter=q['filter_query'],
         offset=offset,
         num_sounds=q['sounds_per_page'],
-        sorting=q['sort'],
+        sorting=q['sort'],  # TODO: should be expecting unified sort option names, not "solr" names
         group_by_pack=q['grouping'] == '1',  # TODO: should do other checks here?
         facets=q['facets'],
         only_sounds_with_pack=q['only_sounds_with_pack'],
@@ -508,7 +509,7 @@ def add_all_sounds_to_search_engine(sound_queryset, slice_size=1000, mark_index_
 
 
 def get_all_sound_ids_from_search_engine(limit=False):
-    search_logger.info("getting all sound ids from solr.")
+    search_logger.info("getting all sound ids from search engine.")
     if not limit:
         limit = 99999999999999
     search_engine = get_search_engine()
@@ -517,20 +518,13 @@ def get_all_sound_ids_from_search_engine(limit=False):
     PAGE_SIZE = 2000
     current_page = 1
     while (len(solr_ids) < solr_count or solr_count is None) and len(solr_ids) < limit:
-        response = search_engine.search(search_prepare_query(
-                '', '', search_prepare_sort("Date added (newest first)"), current_page, PAGE_SIZE,
-                include_facets=False))
+        response = search_engine.search_sounds(sorting=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+                                               offset=(current_page - 1) * PAGE_SIZE,
+                                               num_sounds=PAGE_SIZE)
         solr_ids += [element['id'] for element in response.docs]
         solr_count = response.num_found
         current_page += 1
     return sorted(solr_ids)
-
-
-def check_if_sound_exists_in_search_egnine(sound):
-    search_engine = get_search_engine()
-    response = search_engine.search(search_prepare_query(
-            '', 'id:%i' % sound.id, search_prepare_sort("Date added (newest first)"), 1, 1))
-    return response.num_found > 0
 
 
 def get_random_sound_id_from_search_engine():

@@ -35,7 +35,7 @@ import forum
 import sounds
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
-from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
+from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
 from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
@@ -196,7 +196,7 @@ def clustering_facet(request):
     # if yes, filter sounds from clusters
     query_params, _, extra_vars = search_prepare_parameters(request)
     if extra_vars['has_facet_filter']:
-        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params)
         results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered]
                    for cluster in results]
 
@@ -267,7 +267,7 @@ def clustered_graph(request):
         links = graph['links']
         graph['nodes'] = []
         graph['links'] = []
-        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params)
         for node in nodes:
             if int(node['id']) in sound_ids_filtered:
                 graph['nodes'].append(node)

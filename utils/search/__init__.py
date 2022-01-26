@@ -246,12 +246,23 @@ class SearchEngineBase(object):
         raise NotImplementedError
 
     def get_random_sound_id(self):
-        """ Return the id of a random sound from the search engine.
+        """Return the id of a random sound from the search engine.
         This is used for random sound browsing. We filter explicit sounds,
         but otherwise don't have any other restrictions on sound attributes.
 
         Returns:
             int: the ID of the selected random sound (or 0 if there were errors)
+        """
+        raise NotImplementedError
+
+    def sound_exists_in_index(self, sound):
+        """Check if a sound is indexed in the search engine
+
+        Args:
+            sound (sounds.models.Sound): Sound object to check if indexed
+
+        Returns:
+            bool: whether the sound is indexed in the search engine
         """
         raise NotImplementedError
 

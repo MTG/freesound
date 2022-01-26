@@ -704,8 +704,8 @@ class Solr451CustomSearchEngine(SearchEngineBase):
         self.solr.delete_by_query(query)
 
     def remove_from_index_by_ids(self, document_ids):
-        sound_ids_query = ' OR '.join(['id:{0}'.format(document_id) for document_id in document_ids])
-        self.solr.delete_by_query(sound_ids_query)
+        ids_query = ' OR '.join(['id:{0}'.format(document_id) for document_id in document_ids])
+        self.solr.delete_by_query(ids_query)
 
     def get_query_manager(self):
         return SolrQuery()
@@ -789,7 +789,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, num_sounds=10,
                       sorting=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False, facets=None,
-                      only_sounds_with_pack=False, only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+                      only_sounds_with_pack=False, clustering=False, group_counts_as_one_in_facets=False):
 
         query = SolrQuery()
 
@@ -902,3 +902,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
         except (SearchEngineException, Exception) as e:
             pass
         return 0
+
+    def sound_exists_in_index(self, sound):
+        response = self.search_sounds(query_filter='id:{}'.format(sound.id), offset=0, num_sounds=1)
+        return response.num_found > 0

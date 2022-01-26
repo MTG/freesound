@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+from django.conf import settings
 from django.core.cache import caches
 
 from clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
@@ -30,7 +30,7 @@ from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 cache_clustering = caches["clustering"]
 
 
-def get_sound_ids_from_solr_query(query_params):
+def get_sound_ids_from_search_engine_query(query_params):
     """Performs Solr query and returns results as a list of sound ids.
 
     This method performs a single query to Solr with a very big page size argument so all results are 
@@ -43,16 +43,30 @@ def get_sound_ids_from_solr_query(query_params):
     Returns
         List[int]: list containing the ids of the retrieved sounds.
     """
-    # We set include_facets to False in order to reduce the amount of data that Solr will return.
+    # We set include_facets to False in order to reduce the amount of data that search engine will return.
     query_params.update({
         'current_page': 1,
         'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING,
-        'include_facets': False,
     })
-    query = search_prepare_query(**query_params)
-    _, _, _, _, docs = perform_search_engine_query(query, query_params['current_page'])
 
+    # TODO: avoid doing this translation once search_prepare_parameters returns parameter names compatible with
+    # search_sounds
+    adapted_query_params = {
+        'search_query': query_params['search_query'],
+        'field_weights': query_params['field_weights'],
+        'filter_query': query_params['filter_query'],
+        'current_page': query_params['current_page'],
+        'sounds_per_page': query_params['sounds_per_page'],
+        'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        'grouping': '1',
+        'only_sounds_with_pack': False,
+        'facets': None,
+        'in_ids': query_params.get('in_ids', False)
+    }
+
+    _, _, _, _, docs = perform_search_engine_query(adapted_query_params, query_params['current_page'])
     resultids = [d.get("id") for d in docs]
+
     return resultids
 
 
@@ -77,9 +91,10 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     # done on the non faceted filtered results. Without that, people directly requesting a facet filtered
     # page would have a clustering performed on filtered results.
     query_params['filter_query'] = extra_vars['filter_query_non_facets']
-    cache_key = 'cluster-results-{search_query}-{filter_query}-{sort}-{tag_weight}-{username_weight}-{id_weight}-' \
-                '{description_weight}-{pack_tokenized_weight}-{original_filename_weight}-{grouping}'.format(**query_params) \
-                .replace(' ', '')
+    field_weights_str = str(query_params['field_weights'])
+    query_params['field_weights_str'] = field_weights_str
+    cache_key = 'cluster-results-{search_query}-{filter_query}-{sort}-{field_weights_str}--{grouping}'\
+        .format(**query_params).replace(' ', '')
 
     cache_key += '-{}'.format(features)
     cache_key_hashed = hash_cache_key(cache_key)
@@ -99,7 +114,7 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
 
     else:
         # if not in cache, query solr and perform clustering
-        sound_ids = get_sound_ids_from_solr_query(query_params)
+        sound_ids = get_sound_ids_from_search_engine_query(query_params)
 
         # launch clustering with celery async task
         cluster_sounds.delay(cache_key_hashed, sound_ids, features)

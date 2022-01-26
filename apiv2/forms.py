@@ -56,7 +56,7 @@ SEARCH_SORT_OPTIONS_API = [
         ("rating_asc", "avg_rating asc")
     ]
 
-SEARCH_DEFAULT_SORT = "score desc"
+SEARCH_SOUNDS_SORT_DEFAULT = "score desc"
 
 
 def my_quote(s):
@@ -116,8 +116,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 sort_option = option[1]
                 self.original_url_sort_value = option[0]
         if not sort_option:
-            sort_option = SEARCH_DEFAULT_SORT
-            self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
+            sort_option = SEARCH_SOUNDS_SORT_DEFAULT
+            self.original_url_sort_value = SEARCH_SOUNDS_SORT_DEFAULT.split(' ')[0]
         if sort_option == "avg_rating desc":
             sort = [sort_option, "num_ratings desc"]
         elif sort_option == "avg_rating asc":
@@ -163,7 +163,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&filter=%s' % my_quote(self.cleaned_data['filter'])
         else:
             link += '&filter=%s' % my_quote(filt)
-        if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_DEFAULT_SORT.split(' ')[0]:
+        if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_SOUNDS_SORT_DEFAULT.split(' ')[0]:
             link += '&sort=%s' % self.original_url_sort_value
         if self.cleaned_data['descriptors_filter']:
                 link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']

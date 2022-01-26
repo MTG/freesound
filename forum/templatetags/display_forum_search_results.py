@@ -10,14 +10,14 @@ register = template.Library()
 
 # TODO: do we need takes_context???
 @register.inclusion_tag('forum/display_forum_result.html', takes_context=True)
-def display_forum_result(context, post, highlight):
+def display_forum_search_results(context, results_docs, highlight):
     results = []
-    for thd in post:
+    for thd in results_docs:
         # highlight is dict, so not ordered. below we much results to highlighted results
         # TODO: find an efficient way to do this... maybe try except keyerror will be faster
         posts = []
-        first_doc = thd['doclist']['docs']
-        for p in first_doc:
+        first_docs = thd['group_docs']
+        for p in first_docs:
             # highlighted result
             if str(p['id']) in highlight:
                 posts.append({'post_id': p['id'],
@@ -31,16 +31,16 @@ def display_forum_result(context, post, highlight):
                                                       'Date: ' + str(p['post_created'])])})
 
         results.append({
-                        'thread_id': first_doc[0]['thread_id'],
-                        'thread_title': first_doc[0]['thread_title'],
-                        'forum_name': first_doc[0]['forum_name'],
-                        'forum_name_slug': first_doc[0]['forum_name_slug'],
-                        'post_id': first_doc[0]['id'],
+                        'thread_id': first_docs[0]['thread_id'],
+                        'thread_title': first_docs[0]['thread_title'],
+                        'forum_name': first_docs[0]['forum_name'],
+                        'forum_name_slug': first_docs[0]['forum_name_slug'],
+                        'post_id': first_docs[0]['id'],
                         'posts': posts,
-                        'thread_info': ' - '.join(['Forum: ' + first_doc[0]['forum_name'],
-                                                   'Thread by: ' + first_doc[0]['thread_author'],
-                                                   'Posts: ' + str(first_doc[0]['num_posts']),
-                                                   'Date: ' + str(first_doc[0]['thread_created'])]),
+                        'thread_info': ' - '.join(['Forum: ' + first_docs[0]['forum_name'],
+                                                   'Thread by: ' + first_docs[0]['thread_author'],
+                                                   'Posts: ' + str(first_docs[0]['num_posts']),
+                                                   'Date: ' + str(first_docs[0]['thread_created'])]),
                         })
 
     return { 'results': results }

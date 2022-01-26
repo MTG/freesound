@@ -25,7 +25,6 @@ import sounds
 from utils.search.search_general import search_prepare_query, search_prepare_sort
 from django.conf import settings
 from utils.search import get_search_engine
-from search.forms import SEARCH_SORT_OPTIONS_WEB
 import urllib
 
 SOLR_QUERY_LIMIT_PARAM = 3
@@ -69,7 +68,7 @@ def get_stream_sounds(user, time_lapse):
 
     search_engine = get_search_engine()
 
-    sort_str = search_prepare_sort("created desc", SEARCH_SORT_OPTIONS_WEB)
+    sort_str = search_prepare_sort("Date added (newest first)")
 
     #
     # USERS FOLLOWING

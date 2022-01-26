@@ -156,7 +156,7 @@ class SearchPageTests(TestCase):
     fixtures = ['licenses', 'users', 'sounds_with_tags']
 
     def setUp(self):
-        # Generate a fake solr response data to mock perform_solr_query function
+        # Generate a fake solr response data to mock perform_search_engine_query function
         self.NUM_RESULTS = 15
         sound_ids = list(Sound.objects.filter(
             moderation_state="OK", processing_state="OK").values_list('id', flat=True)[:self.NUM_RESULTS])
@@ -172,12 +172,12 @@ class SearchPageTests(TestCase):
 
         paginator = SolrResponseInterpreterPaginator(results, self.NUM_RESULTS)
         page = paginator.page(1)  # Get first page
-        self.perform_solr_query_response = \
+        self.perform_search_engine_query_response = \
             (results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs)
 
-    @mock.patch('search.views.perform_solr_query')
-    def test_search_page_response_ok(self, perform_solr_query):
-        perform_solr_query.return_value = self.perform_solr_query_response
+    @mock.patch('search.views.perform_search_engine_query')
+    def test_search_page_response_ok(self, perform_search_engine_query):
+        perform_search_engine_query.return_value = self.perform_search_engine_query_response
 
         # 200 response on sound search page access
         resp = self.client.get(reverse('sounds-search'))
@@ -185,17 +185,17 @@ class SearchPageTests(TestCase):
         self.assertEqual(resp.context['error_text'], None)
         self.assertEqual(len(resp.context['docs']), self.NUM_RESULTS)
 
-    @mock.patch('search.views.perform_solr_query')
-    def test_search_page_num_queries(self, perform_solr_query):
-        perform_solr_query.return_value = self.perform_solr_query_response
+    @mock.patch('search.views.perform_search_engine_query')
+    def test_search_page_num_queries(self, perform_search_engine_query):
+        perform_search_engine_query.return_value = self.perform_search_engine_query_response
 
         # Check that we perform one single query to get all sounds' information and don't do one extra query per sound
         with self.assertNumQueries(1):
             self.client.get(reverse('sounds-search'))
 
-    @mock.patch('search.views.perform_solr_query')
-    def test_search_page_with_filters(self, perform_solr_query):
-        perform_solr_query.return_value = self.perform_solr_query_response
+    @mock.patch('search.views.perform_search_engine_query')
+    def test_search_page_with_filters(self, perform_search_engine_query):
+        perform_search_engine_query.return_value = self.perform_search_engine_query_response
 
         # 200 response on sound search page access
         resp = self.client.get(reverse('sounds-search'), {"f": 'grouping_pack:"Clutter" tag:"acoustic-guitar"'})

@@ -339,8 +339,7 @@ def api_search(
             if search_form.cleaned_data['group_by_pack']:
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                 more_from_pack_data = dict([
-                    (int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']])
-                    for element in result.docs
+                    (int(group['id']), [group['n_more_in_group'], group['group_name']]) for group in result.docs
                 ])
 
             return solr_ids, solr_count, None, more_from_pack_data, None, None, None
@@ -351,6 +350,7 @@ def api_search(
                                               'names are correct)' % e.message, resource=resource)
             raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
         except Exception as e:
+            print e
             raise ServerErrorException(
                 msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
 

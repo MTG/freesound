@@ -9,7 +9,7 @@ if __name__ == "__main__":
     if '--settings=freesound.test_settings' not in sys.argv:
         from django.conf import settings
         if settings.DEBUG:
-            if os.environ.get('RUN_MAIN') or os.environ.get('WERKZEUG_RUN_MAIN'):
+            if (os.environ.get('RUN_MAIN') or os.environ.get('WERKZEUG_RUN_MAIN')) and not os.environ.get('DISABLE_DEBUGPY'):
                 import debugpy
                 debugpy.listen((settings.DEBUGGER_HOST, settings.DEBUGGER_PORT))
                 print('Debugger ready and listening at http://{}:{}/'.format(settings.DEBUGGER_HOST, settings.DEBUGGER_PORT))

@@ -143,17 +143,18 @@ class TextSearch(GenericAPIView):
                 sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
+                        pack_id =  more_from_pack_data[sid][1]['group_name'][:more_from_pack_data[sid][1]['group_name'].find("_")]
+                        pack_name = more_from_pack_data[sid][1]['group_name'][more_from_pack_data[sid][1]['group_name'].find("_")+1:]
                         sound['more_from_same_pack'] = search_form.construct_link(
                             reverse('apiv2-sound-text-search'),
                             page=1,
-                            filt='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]),
-                                                            more_from_pack_data[sid][2]),
+                            filt='grouping_pack:"%i_%s"' % (int(pack_id), pack_name),
                             group_by_pack='0')
                         sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
             except KeyError:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.
-                # In that case sounds are are set to null
+                # In that case sounds are set to null
                 sounds.append(None)
         response_data['results'] = sounds
 

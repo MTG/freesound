@@ -40,10 +40,9 @@ from forum.models import Post
 from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
+from utils.search.search_general import search_prepare_query, perform_search_engine_query, search_prepare_parameters, \
     split_filter_query
-from utils.search import get_search_engine, get_search_engine_forum, SearchEngineException
-
+from utils.search import get_search_engine, get_search_engine_forum, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
 
@@ -70,6 +69,8 @@ def search(request):
     else:
         in_ids = []
     query_params.update({'in_ids': in_ids})
+
+    query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
 
     filter_query_split = split_filter_query(query_params['filter_query'], extra_vars['parsed_filters'], cluster_id)
 
@@ -104,11 +105,9 @@ def search(request):
         'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else ""
     }))
 
-    query = search_prepare_query(**query_params)
-
     try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query,
-                                                                                          query_params['current_page'])
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_search_engine_query(
+            query_params, query_params['current_page'])
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
@@ -131,11 +130,11 @@ def search(request):
         })
 
     except SearchEngineException as e:
-        search_logger.warning('Search error: query: %s error %s' % (query, e))
+        search_logger.warning('Search error: query: %s error %s' % (str(query_params), e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
-    except Exception as e:
-        search_logger.error('Could probably not connect to Solr - %s' % e)
-        tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
+    #except Exception as e:
+    #    search_logger.error('Could probably not connect to Solr - %s' % e)
+    #    tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', tvars)
@@ -386,7 +385,7 @@ def search_forum(request):
 
         try:
             results = search_engine.search(query)
-            paginator = search_engine.return_paginator(results, settings.SOUNDS_PER_PAGE)
+            paginator = SearchResultsPaginator(results, settings.SOUNDS_PER_PAGE)
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False

@@ -31,42 +31,22 @@ from pyparsing import ParseException
 
 import sounds
 from search import forms
-from search.forms import SEARCH_SORT_OPTIONS_WEB
 from utils.logging_filters import get_client_ip
 from utils.search.lucene_parser import parse_query_filter_string
-from utils.search import SearchEngineException, get_search_engine
+from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
+from utils.search.backends.solr451custom import SOLR_DYNAMIC_FIELDS_SUFFIX_MAP
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
 
 
-def search_prepare_sort(sort, options):
-    """Creates sort list for ordering by rating.
-
-    Order by rating, then by number of ratings.
-    
-    Args:
-        sort (str): sort url query parameter.
-        options (List[Tuple(str)]): list containing 2-element tuples with the ordering option names
-        and their corresponding fields in the database. 
-
-    Returns:
-        List[str]: list containing the sorting parameters.
-    """
-    if sort in [x[1] for x in options]:
-        if sort == "avg_rating desc":
-            sort = [sort, "num_ratings desc"]
-        elif  sort == "avg_rating asc":
-            sort = [sort, "num_ratings asc"]
-        else:
-            sort = [sort]
-    else:
-        sort = [forms.SEARCH_DEFAULT_SORT]
-    return sort
+def search_prepare_sort(sort_unformatted):
+    from utils.search.backends.solr451custom import search_process_sort
+    return search_process_sort(sort_unformatted)
 
 
 def search_process_filter(filter_query):
-    """Process the filter to replace humnan-readable Audio Commons descriptor names.
+    """Process the filter to replace humanan-readable Audio Commons descriptor names.
 
     Used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i).
     The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) 
@@ -82,7 +62,7 @@ def search_process_filter(filter_query):
     """
     for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
         filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
-                                            .format(name, settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
+                                            .format(name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
     return filter_query
 
 
@@ -187,12 +167,12 @@ def search_prepare_parameters(request):
         grouping = "1"
 
     # Set default values
-    id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
-    tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
-    description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
-    username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
-    pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
-    original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
+    id_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID]
+    tag_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
+    description_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION]
+    username_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_USER_NAME]
+    pack_tokenized_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_PACK_NAME]
+    original_filename_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_NAME]
 
     # Parse advanced search options
     advanced = request.GET.get("advanced", "")
@@ -216,8 +196,9 @@ def search_prepare_parameters(request):
             'a_username': a_username,
         })
 
-        # If none is selected use all (so other filter can be appleid)
-        if a_tag or a_filename or a_description or a_packname or a_soundid or a_username != "" :
+        # If none is selected use all (so other filter can be applied)
+        if a_tag != "" or a_filename != "" or a_description != "" or a_packname != "" or a_soundid != "" \
+                or a_username != "":
 
             # Initialize all weights to 0
             id_weight = 0
@@ -229,20 +210,32 @@ def search_prepare_parameters(request):
 
             # Set the weights of selected checkboxes
             if a_soundid != "":
-                id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
+                id_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID]
             if a_tag != "":
-                tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
+                tag_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
             if a_description != "":
-                description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
+                description_weight = \
+                    settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION]
             if a_username != "":
-                username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
+                username_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_USER_NAME]
             if a_packname != "":
-                pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
+                pack_tokenized_weight = \
+                    settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_PACK_NAME]
             if a_filename != "":
-                original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
+                original_filename_weight =\
+                    settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_NAME]
 
-    sort_options = SEARCH_SORT_OPTIONS_WEB
-    sort = search_prepare_sort(sort_unformatted, sort_options)
+    field_weights = {
+        settings.SEARCH_SOUNDS_FIELD_ID: id_weight,
+        settings.SEARCH_SOUNDS_FIELD_TAGS: tag_weight,
+        settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: description_weight,
+        settings.SEARCH_SOUNDS_FIELD_USER_NAME: username_weight,
+        settings.SEARCH_SOUNDS_FIELD_PACK_NAME: pack_tokenized_weight,
+        settings.SEARCH_SOUNDS_FIELD_NAME: original_filename_weight
+    }
+
+    sort_options = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB]
+    sort = search_prepare_sort(sort_unformatted)
 
     # parse query filter string and remove empty value fields
     parsing_error = False
@@ -262,12 +255,7 @@ def search_prepare_parameters(request):
         'sort': sort,
         'current_page': current_page,
         'sounds_per_page': settings.SOUNDS_PER_PAGE,
-        'id_weight': id_weight,
-        'tag_weight': tag_weight,
-        'description_weight': description_weight,
-        'username_weight': username_weight,
-        'pack_tokenized_weight': pack_tokenized_weight,
-        'original_filename_weight': original_filename_weight,
+        'field_weights': field_weights,
         'grouping': grouping,
         'only_sounds_with_pack': only_sounds_with_pack,
     }
@@ -298,12 +286,7 @@ def search_prepare_query(search_query,
                          sort,
                          current_page,
                          sounds_per_page,
-                         id_weight=settings.DEFAULT_SEARCH_WEIGHTS['id'],
-                         tag_weight=settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-                         description_weight=settings.DEFAULT_SEARCH_WEIGHTS['description'],
-                         username_weight=settings.DEFAULT_SEARCH_WEIGHTS['username'],
-                         pack_tokenized_weight=settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-                         original_filename_weight=settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
+                         field_weights,
                          grouping=False,
                          include_facets=True,
                          grouping_pack_limit=1,
@@ -311,19 +294,14 @@ def search_prepare_query(search_query,
                          only_sounds_with_pack=False,
                          in_ids=[]):
     """Create the Solr query object given the query parameters.
-    
+
     Args:
         search_query (str): query string.
         filter_query (str): query filter string.
         sort (str): sort option string.
         current_page (int): requested page of the results.
         sounds_per_page (int): number of sounds per page.
-        id_weight (int): id weight for the query.
-        tag_weight (int): tag weight for the query.
-        description_weight (int): description weight for the query.
-        username_weight (int): username weight for the query.
-        pack_tokenized_weight (int): pack weight for the query.
-        original_filename_weight (int): filename weight for the query.
+        field_weights (Dict{str:int}): weights for the fields to match
         grouping (bool): only show one (or more) sounds for each pack.
         include_facets (bool): include facets or no.
         grouping_pack_limit (int): number of sounds showed for each pack.
@@ -341,7 +319,7 @@ def search_prepare_query(search_query,
     field_weights = []
     for weight, weight_str in [(id_weight, "id"),
                                (tag_weight, "tag"),
-                               (description_weight, "description"), 
+                               (description_weight, "description"),
                                (username_weight, "username"),
                                (pack_tokenized_weight, "pack_tokenized"),
                                (original_filename_weight, "original_filename")]:
@@ -363,8 +341,8 @@ def search_prepare_query(search_query,
         filter_query += ' pack:*'  # Add a filter so that only sounds with packs are returned
 
     # Process filter for clustering.
-    # When applying clustering facet, a in_ids argument is passed. We check if fliters exsit and in this case 
-    # add a AND rule with the ids in order to combine facet and cluster facets. If no filter exist, we just 
+    # When applying clustering facet, a in_ids argument is passed. We check if fliters exsit and in this case
+    # add a AND rule with the ids in order to combine facet and cluster facets. If no filter exist, we just
     # add the filter by id.
     if in_ids:
         if filter_query:
@@ -457,14 +435,28 @@ def remove_facet_filters(parsed_filters):
     return filter_query, has_facet_filter
 
 
-def perform_solr_query(q, current_page):
+def perform_search_engine_query(q, current_page):
     """
-    This util function performs the query to Solr and returns needed parameters to continue with the view.
+    This util function performs the query to the search engine and returns needed parameters to continue with the view.
     The main reason to have this util function is to facilitate mocking in unit tests for this view.
     """
-    search_engine = get_search_engine()
-    results = search_engine.search(q)
-    paginator = search_engine.return_paginator(results, settings.SOUNDS_PER_PAGE)
+    if not 'offset' in q:
+        offset = (q['current_page'] - 1) * q['sounds_per_page']
+    else:
+        offset = q['offset']
+    results = get_search_engine().search_sounds(
+        textual_query=q['search_query'],
+        query_fields=q['field_weights'],
+        query_filter=q['filter_query'],
+        offset=offset,
+        num_sounds=q['sounds_per_page'],
+        sorting=q['sort'],
+        group_by_pack=q['grouping'] == '1',  # TODO: should do other checks here?
+        facets=q['facets'],
+        only_sounds_with_pack=q['only_sounds_with_pack'],
+        only_sounds_within_ids=q['in_ids'])
+
+    paginator = SearchResultsPaginator(results, settings.SOUNDS_PER_PAGE)
     page = paginator.page(current_page)
     return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
@@ -526,7 +518,7 @@ def get_all_sound_ids_from_search_engine(limit=False):
     current_page = 1
     while (len(solr_ids) < solr_count or solr_count is None) and len(solr_ids) < limit:
         response = search_engine.search(search_prepare_query(
-                '', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE,
+                '', '', search_prepare_sort("Date added (newest first)"), current_page, PAGE_SIZE,
                 include_facets=False))
         solr_ids += [element['id'] for element in response.docs]
         solr_count = response.num_found
@@ -537,7 +529,7 @@ def get_all_sound_ids_from_search_engine(limit=False):
 def check_if_sound_exists_in_search_egnine(sound):
     search_engine = get_search_engine()
     response = search_engine.search(search_prepare_query(
-            '', 'id:%i' % sound.id, search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), 1, 1))
+            '', 'id:%i' % sound.id, search_prepare_sort("Date added (newest first)"), 1, 1))
     return response.num_found > 0
 
 

@@ -34,7 +34,130 @@ import urlparse
 
 from django.conf import settings
 from utils.text import remove_control_chars
-from utils.search import Multidict, SearchEngineBase, SearchEngineException, SERACH_INDEX_SOUNDS, SERACH_INDEX_FORUM
+from utils.search import Multidict, SearchEngineBase, SearchEngineException, SERACH_INDEX_SOUNDS, SERACH_INDEX_FORUM, \
+    SearchResults
+
+
+SOLR_URL = "http://search:8080/fs2/"
+SOLR_FORUM_URL = "http://search:8080/forum/"
+
+# Mapping from db sound field names to solr sound field names
+FIELD_NAMES_MAP = {
+    settings.SEARCH_SOUNDS_FIELD_ID: 'id',
+    settings.SEARCH_SOUNDS_FIELD_NAME: 'original_filename',
+    settings.SEARCH_SOUNDS_FIELD_TAGS: 'tag',
+    settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
+    settings.SEARCH_SOUNDS_FIELD_USER_NAME: 'username',
+    settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack_tokenized',
+    settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: 'grouping_pack',
+    settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: 'samplerate',
+    settings.SEARCH_SOUNDS_FIELD_BITRATE: 'bitrate',
+    settings.SEARCH_SOUNDS_FIELD_BITDEPTH: 'bitdepth',
+    settings.SEARCH_SOUNDS_FIELD_TYPE: 'type',
+    settings.SEARCH_SOUNDS_FIELD_CHANNELS: 'channels',
+    settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: 'license'
+}
+
+# Map "web" sorting options to solr sorting options
+SORT_OPTIONS_MAP = {
+    settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC: "score desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST: "duration desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST: "duration asc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST: "created desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST: "created asc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST: "num_downloads desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST: "num_downloads asc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST: "avg_rating desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST: "avg_rating asc"
+}
+
+# Map of suffixes used for each type of dynamic fields defined in our Solr schema
+# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
+# and '*_s' (for string)
+SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
+    float: '_d',
+    int: '_i',
+    bool: '_b',
+    str: '_s',
+    unicode: '_s',
+}
+
+SOLR_SOUND_FACET_DEFAULT_OPTIONS = {
+    'limit': 5,
+    'sort': True,
+    'mincount': 1,
+    'count_missing': False
+}
+
+SOLR_PACK_GROUPING_OPTIONS = {
+    'field': settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING,
+    'limit': 1,
+}
+
+
+def search_process_filter(query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
+    """Process the filter to make a number of adjustments
+
+        1) Replace human-readable Audio Commons descriptor names to dynamic solr field names.
+        2) If only sounds with pack should be returned, add such a filter.
+        3) Add filter for sound IDs if only_sounds_within_ids is passed.
+
+    Used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i).
+    The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
+    and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names so Solr can
+    treat the types properly. Now we automatically append the suffices to the filter names so users do not
+    need to deal with that.
+
+    Args:
+        query_filter (str): query filter string.
+        only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
+        only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
+
+    Returns:
+        str: processed filter query string.
+    """
+    # Replace Audio Commons descriptor names
+    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
+        query_filter = query_filter.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
+                                            .format(name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
+
+    # If we only want sounds with packs and there is no pack filter, add one
+    if only_sounds_with_pack and not 'pack:' in query_filter:
+        query_filter += ' pack:*'
+
+    # When applying clustering facet, the "only_sounds_within_ids" argument is passed and we must filter our query
+    # to the sounds in that list of IDs.
+    if only_sounds_within_ids:
+        sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+        if query_filter:
+            query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+        else:
+            query_filter = '({})'.format(sounds_within_ids_filter)
+
+    return query_filter
+
+
+def search_process_sort(sort):
+    """Translates sorting criteria to solr sort criteria and add extra criteria if sorting by ratings.
+
+    If order by rating, when rating is the same sort also by number of ratings.
+
+    Args:
+        sort (str): sorting criteria as defined in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB.
+
+    Returns:
+        List[str]: list containing the sorting field names list for the search engine.
+    """
+    if sort in [sort_web_name for sort_web_name, sort_field_name in SORT_OPTIONS_MAP.items()]:
+        if sort == "avg_rating desc":
+            sort = [SORT_OPTIONS_MAP[sort], "num_ratings desc"]
+        elif sort == "avg_rating asc":
+            sort = [SORT_OPTIONS_MAP[sort], "num_ratings asc"]
+        else:
+            sort = [SORT_OPTIONS_MAP[sort]]
+    else:
+        sort = [SORT_OPTIONS_MAP[settings.SEARCH_SOUNDS_SORT_DEFAULT]]
+    return sort
 
 
 class SolrQuery(object):
@@ -362,7 +485,7 @@ class SolrJsonResponseDecoder(BaseSolrResponseDecoder):
 
 
 class Solr(object):
-    def __init__(self, url="http://localhost:8983/solr", verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder()):
+    def __init__(self, url, verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder()):
         url_split = urlparse.urlparse(url)
 
         self.host = url_split.hostname
@@ -448,27 +571,23 @@ class SolrResponseInterpreter(object):
     def __init__(self, response):
         if "grouped" in response:
             if "thread_title_grouped" in response["grouped"].keys():
-                self.docs = response["grouped"]["thread_title_grouped"]["groups"]
-                self.start = response["responseHeader"]["params"]["start"]
-                self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
-                self.num_found = response["grouped"]["thread_title_grouped"]["ngroups"]
-                self.non_grouped_number_of_matches = response["grouped"]["thread_title_grouped"]["matches"]
+                grouping_field = "thread_title_grouped"
             elif "grouping_pack" in response["grouped"].keys():
-                #self.docs = response["grouped"]["pack"]["groups"]
-                self.docs = [{
-                                 'id': group['doclist']['docs'][0]['id'],
-                                 'more_from_pack':group['doclist']['numFound']-1,
-                                 'pack_name':group['groupValue'][group['groupValue'].find("_")+1:],
-                                 'pack_id':group['groupValue'][:group['groupValue'].find("_")],
-                                 'other_ids': [doc['id'] for doc in group['doclist']['docs'][1:]]
-                             } for group in response["grouped"]["grouping_pack"]["groups"] if group['groupValue'] != None ]
-                self.start = response["responseHeader"]["params"]["start"]
-                self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
-                self.num_found = response["grouped"]["grouping_pack"]["ngroups"]#["matches"]#
-                self.non_grouped_number_of_matches = response["grouped"]["grouping_pack"]["matches"]
+                grouping_field = "grouping_pack"
+
+            self.docs = [{
+                'id': group['doclist']['docs'][0]['id'],
+                'n_more_in_group': group['doclist']['numFound'] - 1,
+                'group_docs': group['doclist']['docs'],
+                'group_name': group['groupValue']
+            } for group in response["grouped"][grouping_field]["groups"] if group['groupValue'] is not None]
+            self.start = int(response["responseHeader"]["params"]["start"])
+            self.num_rows = len(self.docs)
+            self.num_found = response["grouped"][grouping_field]["ngroups"]
+            self.non_grouped_number_of_matches = response["grouped"][grouping_field]["matches"]
         else:
             self.docs = response["response"]["docs"]
-            self.start = response["response"]["start"]
+            self.start = int(response["response"]["start"])
             self.num_rows = len(self.docs)
             self.num_found = response["response"]["numFound"]
             self.non_grouped_number_of_matches = -1
@@ -480,7 +599,7 @@ class SolrResponseInterpreter(object):
             self.facets = {}
 
         """Facets are given in a list: [facet, number, facet, number, None, number] where the last one
-        is the mising field count. Converting all of them to a dict for easier usage:
+        is the missing field count. Converting all of them to a dict for easier usage:
         {facet:number, facet:number, ..., None:number}
         """
         for facet, fields in self.facets.items():
@@ -544,23 +663,21 @@ class SolrResponseInterpreterPaginator(object):
     def __init__(self, interpreter, num_per_page):
         self.num_per_page = num_per_page
         self.interpreter = interpreter
-
         self.count = interpreter.num_found
-
         self.num_pages = interpreter.num_found / num_per_page + int(interpreter.num_found % num_per_page != 0)
-
         self.page_range = range(1, self.num_pages + 1)
 
     def page(self, page_num):
         has_next = page_num < self.num_pages
         has_previous = page_num > 1 and page_num <= self.num_pages
-        return {'object_list': self.interpreter.docs,
-                'has_next': has_next,
-                'has_previous': has_previous,
-                'has_other_pages': has_next or has_previous,
-                'next_page_number': page_num + 1,
-                'previous_page_number': page_num - 1
-                }
+        return {
+            'object_list': self.interpreter.docs,
+            'has_next': has_next,
+            'has_previous': has_previous,
+            'has_other_pages': has_next or has_previous,
+            'next_page_number': page_num + 1,
+            'previous_page_number': page_num - 1
+        }
 
 
 class Solr451CustomSearchEngine(SearchEngineBase):
@@ -569,18 +686,15 @@ class Solr451CustomSearchEngine(SearchEngineBase):
         super(Solr451CustomSearchEngine, self).__init__(index_name)
 
         if self.index_name == SERACH_INDEX_SOUNDS:
-            url = settings.SOLR_URL
+            url = SOLR_URL
         elif self.index_name == SERACH_INDEX_FORUM:
-            url = settings.SOLR_FORUM_URL
+            url = SOLR_FORUM_URL
         else:
             raise SearchEngineException("No index with that name")
         self.solr = Solr(url, verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder())
 
     def search(self, query):
         return SolrResponseInterpreter(self.solr.select(unicode(query)))
-    
-    def return_paginator(self, results, num_per_page):
-        return SolrResponseInterpreterPaginator(results, num_per_page)
 
     def add_to_index(self, docs):
         self.solr.add(docs)
@@ -674,3 +788,141 @@ class Solr451CustomSearchEngine(SearchEngineBase):
         }
 
         return document
+
+    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, num_sounds=10,
+                      sorting=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False, facets=None,
+                      only_sounds_with_pack=False, only_sounds_within_ids=False):
+        """
+
+        Args:
+            textual_query (str, optional): the textual query
+            query_fields (List[str] or Dict{str: int}, optional): a list of the fields that should be matched when
+            querying. Field weights can also be specified if a dict is passed with keys as field names and values as
+            weights. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
+                    query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
+                    query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
+            query_filter (str, optional): filter expression following lucene filter syntax
+            offset (int, optional): offset for the returned results
+            num_sounds (int, optional): number of sounds to return
+            sorting (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
+            group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
+                by pack, only 1 sound per pack will be returned, together with additional information about the number
+                of other sounds in the pack that would be i the same group.
+            facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
+                information is required. Facets should be specified as a dictionary with the "db" field names to be
+                included in the faceting as keys, and a dictionary as values with optional specific parameters for
+                every field facet. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
+                    {
+                        settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
+                        settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
+                        settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30}
+                    }
+                Supported individual facet options include:
+                    - limit: the number of items returned per facet
+            only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
+            only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
+
+        Returns:
+
+        """
+
+        query = SolrQuery()
+
+        # Process search fields: replace "db" field names by solr field names and set default weights if needed
+        if query_fields is None:
+            # If no fields provided, use the default
+            query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
+        if type(query_fields) == list:
+            query_fields = [FIELD_NAMES_MAP[field] for field in query_fields]
+        elif type(query_fields) == dict:
+            # Also remove fields with weight <= 0
+            query_fields = [(FIELD_NAMES_MAP[field], weight) for field, weight in query_fields.items() if weight > 0]
+
+        # Set main query options
+        query.set_dismax_query(textual_query, query_fields=query_fields)
+
+        # Process filter
+        query_filter = search_process_filter(query_filter,
+                                             only_sounds_within_ids=only_sounds_within_ids,
+                                             only_sounds_with_pack=only_sounds_with_pack)
+
+        # Set other query options
+        query.set_query_options(start=offset,
+                                rows=num_sounds,
+                                field_list=["id"],  # We only want the sound IDs of the results as we load data from DB
+                                filter_query=query_filter,
+                                sort=search_process_sort(sorting))
+
+        # Configure facets
+        if facets is not None:
+            facet_fields = [FIELD_NAMES_MAP[field_name] for field_name, _ in facets.items()]
+            query.add_facet_fields(*facet_fields)
+            query.set_facet_options_default(**SOLR_SOUND_FACET_DEFAULT_OPTIONS)
+            for field_name, extra_options in facets.items():
+                query.set_facet_options(FIELD_NAMES_MAP[field_name], **extra_options)
+
+        # Configure grouping
+        if group_by_pack:
+            query.set_group_field(group_field="grouping_pack")
+            query.set_group_options(
+                group_func=None,
+                group_query=None,
+                group_rows=10,  # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
+                group_start=0,
+                group_limit=1, # This is the number of documents that will be returned for each group.
+                group_offset=0,
+                group_sort=None,
+                group_sort_ingroup=None,
+                group_format='grouped',
+                group_main=False,
+                group_num_groups=True,
+                group_cache_percent=0)
+
+        # Do the query!
+        # Note we don't to try/except here as we expect this to be dealt with at upper level
+        return SolrResponseInterpreter(self.solr.select(unicode(query)))
+
+    def get_user_tags(self, username):
+        """Retrieves the tags used by a user and their counts
+
+        Args:
+            username: name of the user for which we want to know tags and counts
+
+        Returns:
+            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags used by the user.
+                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
+        """
+        try:
+            query = SolrQuery()
+            query.set_dismax_query('')
+            filter_query = 'username:\"%s\"' % username
+            query.set_query_options(field_list=["id"], filter_query=filter_query)
+            query.add_facet_fields("tag")
+            query.set_facet_options("tag", limit=10, mincount=1)
+            results = SolrResponseInterpreter(self.solr.select(unicode(query)))
+            return results.facets['tag']
+        except SearchEngineException:
+            return []
+
+    def get_pack_tags(self, username, pack_name):
+        """Retrieves the tags in the sounds of a pack and their counts
+
+        Args:
+            username: name of the user who owns the pack
+            pack_name: name of the pack for which tags and counts should be retrieved
+
+        Returns:
+            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags in the pack.
+                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
+        """
+        try:
+            query = SolrQuery()
+            query.set_dismax_query('')
+            filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
+            query.set_query_options(field_list=["id"], filter_query=filter_query)
+            query.add_facet_fields("tag")
+            query.set_facet_options("tag", limit=20, mincount=1)
+            results = SolrResponseInterpreter(self.solr.select(unicode(query)))
+            return results.facets['tag']
+        except (SearchEngineException, Exception) as e:
+            return []

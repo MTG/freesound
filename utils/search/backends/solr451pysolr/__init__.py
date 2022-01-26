@@ -37,6 +37,9 @@ from django.conf import settings
 from utils.text import remove_control_chars
 from utils.search import Multidict, SearchEngineBase, SearchEngineException, SERACH_INDEX_SOUNDS, SERACH_INDEX_FORUM
 
+SOLR_URL = "http://search:8080/fs2/"
+SOLR_FORUM_URL = "http://search:8080/forum/"
+
 
 class SolrQuery(object):
     """A wrapper around a lot of Solr query funcionality.
@@ -315,13 +318,11 @@ class SolrResponseInterpreter(object):
                 self.num_found = response["grouped"]["thread_title_grouped"]["ngroups"]
                 self.non_grouped_number_of_matches = response["grouped"]["thread_title_grouped"]["matches"]
             elif "grouping_pack" in response["grouped"].keys():
-                #self.docs = response["grouped"]["pack"]["groups"]
                 self.docs = [{
                                  'id': group['doclist']['docs'][0]['id'],
-                                 'more_from_pack':group['doclist']['numFound']-1,
+                                 'n_more_in_group':group['doclist']['numFound']-1,
                                  'pack_name':group['groupValue'][group['groupValue'].find("_")+1:],
-                                 'pack_id':group['groupValue'][:group['groupValue'].find("_")],
-                                 'other_ids': [doc['id'] for doc in group['doclist']['docs'][1:]]
+                                 'pack_id':group['groupValue'][:group['groupValue'].find("_")]
                              } for group in response["grouped"]["grouping_pack"]["groups"] if group['groupValue'] != None ]
                 self.start = response["responseHeader"]["params"]["start"]
                 self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
@@ -427,9 +428,9 @@ class Solr451PySolrSearchEngine(SearchEngineBase):
         super(Solr451PySolrSearchEngine, self).__init__(index_name)
         
         if self.index_name == SERACH_INDEX_SOUNDS:
-            url = settings.SOLR_URL
+            url = SOLR_URL
         elif self.index_name == SERACH_INDEX_FORUM:
-            url = settings.SOLR_FORUM_URL
+            url = SOLR_FORUM_URL
         else:
             raise SearchEngineException("No index with that name")
         # TODO: check if we need specific settings here when creating the Solr object from pysolr (e.g. always_commit, timeout, ...)
@@ -440,9 +441,6 @@ class Solr451PySolrSearchEngine(SearchEngineBase):
             return SolrResponseInterpreter(self.pysolr.search(**query.as_dict()))
         except pysolr.SolrError as e:
             raise SearchEngineException, str(e)
-    
-    def return_paginator(self, results, num_per_page):
-        return SolrResponseInterpreterPaginator(results, num_per_page)
 
     def add_to_index(self, docs):
         try:

@@ -58,6 +58,7 @@ from tickets.models import Ticket, Queue, TicketComment
 from utils.cache import invalidate_template_cache
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
+from utils.search import get_search_engine
 from utils.search.search_general import delete_sound_from_search_engine
 from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
@@ -1406,19 +1407,17 @@ class Pack(SocialModel):
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
     def get_pack_tags(self):
-        pack_tags = get_pack_tags(self)
-        if pack_tags is not False:
-            tags = [t[0] for t in pack_tags['tag']]
+        pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+        if pack_tags_counts:
+            tags = [tag for tag, count  in pack_tags_counts]
             return {'tags': tags, 'num_tags': len(tags)}
         else:
             return -1
 
     def get_pack_tags_bw(self):
-        results = get_pack_tags(self)
-        if results:
-            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in results['tag']]
-        else:
-            return []
+        pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+        return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+                for tag, count in pack_tags_counts]
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)

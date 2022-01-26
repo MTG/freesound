@@ -27,7 +27,7 @@ from django.urls import reverse
 
 import sounds.models
 from follow import follow_utils
-from search.views import perform_solr_query
+from search.views import perform_search_engine_query
 from tags.models import Tag, FS1Tag
 from utils.search import SearchEngineException, get_search_engine
 
@@ -79,7 +79,7 @@ def tags(request, multiple_tags=None):
     non_grouped_number_of_results = 0
     paginator = None
     try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query, current_page)
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_search_engine_query(query, current_page)
         tags = [dict(name=f[0], count=f[1]) for f in facets["tag"]]
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)

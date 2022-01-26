@@ -23,7 +23,7 @@ from django.core.cache import caches
 from clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
 from tasks import cluster_sounds
 from utils.encryption import create_hash
-from utils.search.search_general import search_prepare_query, perform_solr_query, \
+from utils.search.search_general import search_prepare_query, perform_search_engine_query, \
     search_prepare_parameters
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
@@ -50,7 +50,7 @@ def get_sound_ids_from_solr_query(query_params):
         'include_facets': False,
     })
     query = search_prepare_query(**query_params)
-    _, _, _, _, docs = perform_solr_query(query, query_params['current_page'])
+    _, _, _, _, docs = perform_search_engine_query(query, query_params['current_page'])
 
     resultids = [d.get("id") for d in docs]
     return resultids

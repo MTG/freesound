@@ -465,30 +465,71 @@ AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
      ('sharpness', float),
      ('reverb', bool)]  # Used when running load_audiocommons_analysis_data and when parsing filters
 
-# Map of suffixes used for each type of dynamic fields defined in our Solr schema
-# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
-# and '*_s' (for string)
-SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
-    float: '_d',
-    int: '_i',
-    bool: '_b',
-    str: '_s',
-    unicode: '_s',
-}
-
-
 # -------------------------------------------------------------------------------
-# SOLR
-SOLR_URL = "http://search:8080/fs2/"
-SOLR_FORUM_URL = "http://search:8080/forum/"
-DEFAULT_SEARCH_WEIGHTS = {
-    'id': 4,
-    'tag': 4,
-    'description': 3,
-    'username': 1,
-    'pack_tokenized': 2,
-    'original_filename': 2
+# Search engine
+
+# Define the names of some of the indexed sound fields which are to be used later
+SEARCH_SOUNDS_FIELD_ID = 'sound_id'
+SEARCH_SOUNDS_FIELD_NAME = 'name'
+SEARCH_SOUNDS_FIELD_TAGS = 'tags'
+SEARCH_SOUNDS_FIELD_DESCRIPTION = 'description'
+SEARCH_SOUNDS_FIELD_USER_NAME = 'username'
+SEARCH_SOUNDS_FIELD_PACK_NAME = 'packname'
+SEARCH_SOUNDS_FIELD_PACK_GROUPING = 'pack_grouping'
+SEARCH_SOUNDS_FIELD_SAMPLERATE = 'samplerate'
+SEARCH_SOUNDS_FIELD_BITRATE = 'bitrate'
+SEARCH_SOUNDS_FIELD_BITDEPTH = 'bitdepth'
+SEARCH_SOUNDS_FIELD_TYPE = 'type'
+SEARCH_SOUNDS_FIELD_CHANNELS = 'channels'
+SEARCH_SOUNDS_FIELD_LICENSE_NAME = 'license'
+
+# Default weights for fields to match
+SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
+    SEARCH_SOUNDS_FIELD_ID: 4,
+    SEARCH_SOUNDS_FIELD_TAGS: 4,
+    SEARCH_SOUNDS_FIELD_DESCRIPTION: 3,
+    SEARCH_SOUNDS_FIELD_USER_NAME: 1,
+    SEARCH_SOUNDS_FIELD_PACK_NAME: 2,
+    SEARCH_SOUNDS_FIELD_NAME: 2
 }
+
+
+SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC = "Automatic by relevance"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST = "Duration (long first)"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST = "Duration (short first)"
+SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST = "Date added (newest first)"
+SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST = "Date added (oldest first)"
+SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST = "Downloads (most first)"
+SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST = "Downloads (least first)"
+SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST = "Rating (highest first)"
+SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST = "Rating (lowest first)"
+
+SEARCH_SOUNDS_SORT_OPTIONS_WEB = [
+    SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+    SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST,
+]
+SEARCH_SOUNDS_SORT_DEFAULT = "Automatic by relevance"
+
+
+SEARCH_SOUNDS_DEFAULT_FACETS = {
+    SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
+    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
+    SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30},
+    SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30},
+    SEARCH_SOUNDS_FIELD_BITRATE: {},
+    SEARCH_SOUNDS_FIELD_BITDEPTH: {},
+    SEARCH_SOUNDS_FIELD_TYPE: {'limit': 6},  # Set after the number of choices in sounds.models.Sound.SOUND_TYPE_CHOICES
+    SEARCH_SOUNDS_FIELD_CHANNELS: {},
+    SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
+}
+
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine'
 
 

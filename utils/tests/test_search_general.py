@@ -26,7 +26,6 @@ from django.utils.http import urlquote_plus
 from utils.search.search_general import search_prepare_parameters, split_filter_query, \
     search_prepare_query, remove_facet_filters
 from utils.search.lucene_parser import parse_query_filter_string
-from search.forms import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_WEB
 
 
 class SearchUtilsTest(TestCase):
@@ -39,13 +38,8 @@ class SearchUtilsTest(TestCase):
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
         expected_default_query_params = {
-            'id_weight': settings.DEFAULT_SEARCH_WEIGHTS['id'],
-            'tag_weight': settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-            'description_weight': settings.DEFAULT_SEARCH_WEIGHTS['description'],
-            'username_weight': settings.DEFAULT_SEARCH_WEIGHTS['username'],
-            'pack_tokenized_weight': settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-            'original_filename_weight': settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
-            'sort': ['created desc'],  # Not using SEARCH_DEFAULT_SORT here because for the exceptional case of empty queries we use 'created desc'
+            'field_weigths': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS,
+            'sort': ['created desc'],  # Not using SEARCH_SOUNDS_SORT_DEFAULT here because for the exceptional case of empty queries we use 'created desc'
             'sounds_per_page': settings.SOUNDS_PER_PAGE,
             'current_page': 1,
             'grouping': '1',
@@ -58,7 +52,7 @@ class SearchUtilsTest(TestCase):
             'advanced': '',
             'sort_unformatted': 'created desc',  # Again, using 'created desc' as empty queries result in that sort option
             'filter_query_link_more_when_grouping_packs': '',
-            'sort_options': SEARCH_SORT_OPTIONS_WEB,
+            'sort_options': settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB,
             'cluster_id': '',
             'filter_query_non_facets': '',
             'has_facet_filter': False,
@@ -78,8 +72,8 @@ class SearchUtilsTest(TestCase):
 
         expected_default_query_params = {
             'id_weight': 0,
-            'tag_weight': settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-            'description_weight': settings.DEFAULT_SEARCH_WEIGHTS['description'],
+            'tag_weight': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS['tag'],
+            'description_weight': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS['description'],
             'username_weight': 0,
             'pack_tokenized_weight': 0,
             'original_filename_weight': 0,
@@ -96,7 +90,7 @@ class SearchUtilsTest(TestCase):
             'advanced': u'1',
             'sort_unformatted': u'duration desc',
             'filter_query_link_more_when_grouping_packs': u'duration:[1+TO+10]+is_geotagged:1',
-            'sort_options': SEARCH_SORT_OPTIONS_WEB,
+            'sort_options': settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB,
             'cluster_id': '',
             'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
             'has_facet_filter': False,

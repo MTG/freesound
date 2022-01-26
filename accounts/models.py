@@ -306,22 +306,14 @@ class Profile(SocialModel):
             self.save()
 
     def get_user_tags(self):
-        search_engine = get_search_engine()
-        query = search_engine.get_query_manager()
-        query.set_dismax_query('')
-        filter_query = 'username:\"%s\"' % self.user.username
-        query.set_query_options(field_list=["id"], filter_query=filter_query)
-        query.add_facet_fields("tag")
-        query.set_facet_options("tag", limit=10, mincount=1)
-
         try:
-            results = search_engine.search(query)
+            search_engine = get_search_engine()
+            tags_counts = search_engine.get_user_tags(self.user.username)
         except SearchEngineException as e:
             return False
         except Exception as e:
             return False
-
-        return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in results.facets['tag']]
+        return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in tags_counts]
 
     def is_trustworthy(self):
         """

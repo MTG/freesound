@@ -73,7 +73,7 @@ def search(request):
     query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
 
     filter_query_split = split_filter_query(query_params['filter_query'], extra_vars['parsed_filters'], cluster_id)
-
+    print '\n\n\n', query_params['sort']
     tvars = {
         'error_text': None,
         'filter_query': query_params['filter_query'],
@@ -83,8 +83,7 @@ def search(request):
         'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
-        'sort_unformatted': extra_vars['sort_unformatted'],
-        'sort_options': extra_vars['sort_options'],
+        'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
         'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
         'current_page': query_params['current_page'],
         'url_query_params_string': url_query_params_string,
@@ -100,7 +99,7 @@ def search(request):
         'filter': query_params['filter_query'],
         'username': request.user.username,
         'page': query_params['current_page'],
-        'sort': query_params['sort'][0],
+        'sort': query_params['sort'],
         'group_by_pack': query_params['grouping'],
         'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else ""
     }))

@@ -40,13 +40,8 @@ search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
 
 
-def search_prepare_sort(sort_unformatted):
-    from utils.search.backends.solr451custom import search_process_sort
-    return search_process_sort(sort_unformatted)
-
-
 def search_process_filter(filter_query):
-    """Process the filter to replace humanan-readable Audio Commons descriptor names.
+    """Process the filter to replace human-readable Audio Commons descriptor names.
 
     Used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i).
     The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) 
@@ -143,12 +138,12 @@ def search_prepare_parameters(request):
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
-    sort_unformatted = request.GET.get("s", None)
+    sort = request.GET.get("s", None)
 
-    if search_query == "" and sort_unformatted is None:
+    if search_query == "" and sort is None:
         # When making empty queries and no sorting is specified, automatically set sort to "created desc" as
         # relevance score based sorting makes no sense
-        sort_unformatted = "created desc"
+        sort = settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
     
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is through AJAX (for sources remix editing), do not collapse
@@ -234,9 +229,6 @@ def search_prepare_parameters(request):
         settings.SEARCH_SOUNDS_FIELD_NAME: original_filename_weight
     }
 
-    sort_options = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB]
-    sort = search_prepare_sort(sort_unformatted)
-
     # parse query filter string and remove empty value fields
     parsing_error = False
     try:
@@ -262,15 +254,12 @@ def search_prepare_parameters(request):
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
-
     # These variables are not used for querying the sound collection
     # We keep them separated in order to facilitate the distinction between variables used for performing
     # the Solr query and these extra ones needed for rendering the search template page
     extra_vars = {
         'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
-        'sort_unformatted': sort_unformatted,
         'advanced': advanced,
-        'sort_options': sort_options,
         'cluster_id': cluster_id,
         'filter_query_non_facets': filter_query_non_facets,
         'has_facet_filter': has_facet_filter,

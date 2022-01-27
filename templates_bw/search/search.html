@@ -58,7 +58,7 @@
                                 <span class="font-weight-normal text-light-grey d-none d-md-inline">Sort by:</span>
                                 <select name="s" id="sort-by">
                                     {% for option in sort_options %}
-                                        <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
+                                        <option value="{{option.1}}"{% ifequal option.1 sort %}selected="selected"{% endifequal %}>{{option.0}}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -249,13 +249,13 @@
                                             {% display_sound_middle result.sound %}
                                             {% if result.n_more_in_group %}
                                                 <p class="text-grey text-right v-spacing-top-negative-2">
-                                                    {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                    {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
                                                 </p>
                                             {% endif %}
                                         {% else %}
                                             {% display_pack_big result.sound.pack_id %}
                                             <p class="text-grey text-right v-spacing-top-negative-2">
-                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
+                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
                                             </p>
                                         {% endif %}
                                         {% if not forloop.last %}

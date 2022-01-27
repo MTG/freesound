@@ -15,7 +15,7 @@ app = Celery('freesound')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load tasks from only the clustering app.
-app.autodiscover_tasks('clustering', related_name='tasks')
+app.autodiscover_tasks( settings.INSTALLED_APPS)
 
 
 @app.task(bind=True)

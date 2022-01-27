@@ -126,8 +126,8 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
     if only_sounds_with_pack and not 'pack:' in query_filter:
         query_filter += ' pack:*'
 
-    # When applying clustering facet, the "only_sounds_within_ids" argument is passed and we must filter our query
-    # to the sounds in that list of IDs.
+    # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
+    # our query to the sounds in that list of IDs.
     if only_sounds_within_ids:
         sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
         if query_filter:
@@ -789,7 +789,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, num_sounds=10,
                       sorting=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False, facets=None,
-                      only_sounds_with_pack=False, clustering=False, group_counts_as_one_in_facets=False):
+                      only_sounds_with_pack=False, only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
 
         query = SolrQuery()
 

@@ -338,9 +338,9 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             result = search_engine.search_sounds(
                 textual_query=unquote(search_form.cleaned_data['query'] or ""),
                 query_filter=unquote(query_filter or ""),
-                sorting = processed_sort,
-                offset = (current_page - 1) * page_size,
-                num_sounds = page_size,
+                sort=processed_sort,
+                offset=(current_page - 1) * page_size,
+                num_sounds=page_size,
                 group_by_pack=False
 
             )
@@ -355,5 +355,4 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         raise ServerErrorException(msg='Search server error: %s' % e.message)
     except Exception as e:
         raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
-
     return solr_ids, solr_count

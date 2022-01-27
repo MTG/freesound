@@ -329,9 +329,9 @@ def api_search(
             result = get_search_engine().search_sounds(
                 textual_query=unquote(search_form.cleaned_data['query'] or ""),
                 query_filter=unquote(search_form.cleaned_data['filter'] or ""),
-                sorting = processed_sort,
-                offset = (search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
-                num_sounds = search_form.cleaned_data['page_size'],
+                sort=processed_sort,
+                offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
+                num_sounds=search_form.cleaned_data['page_size'],
                 group_by_pack=search_form.cleaned_data['group_by_pack']
             )
             solr_ids = [element['id'] for element in result.docs]

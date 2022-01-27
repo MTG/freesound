@@ -787,9 +787,10 @@ class Solr451CustomSearchEngine(SearchEngineBase):
 
         return document
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, num_sounds=10,
-                      sorting=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False, facets=None,
-                      only_sounds_with_pack=False, only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
+                      num_sounds=10, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False,
+                      facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
+                      group_counts_as_one_in_facets=False):
 
         query = SolrQuery()
 
@@ -812,11 +813,13 @@ class Solr451CustomSearchEngine(SearchEngineBase):
                                              only_sounds_with_pack=only_sounds_with_pack)
 
         # Set other query options
+        if current_page is not None:
+            offset = (current_page - 1) * num_sounds
         query.set_query_options(start=offset,
                                 rows=num_sounds,
                                 field_list=["id"],  # We only want the sound IDs of the results as we load data from DB
                                 filter_query=query_filter,
-                                sort=search_process_sort(sorting))
+                                sort=search_process_sort(sort))
 
         # Configure facets
         if facets is not None:

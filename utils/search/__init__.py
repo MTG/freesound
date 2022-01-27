@@ -202,9 +202,10 @@ class SearchEngineBase(object):
         documents = [self.convert_sound_to_search_engine_document(s) for s in sounds]
         self.add_to_index(documents)
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, num_sounds=10,
-                      sorting=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False, facets=None,
-                      only_sounds_with_pack=False, only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
+                      num_sounds=10, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False,
+                      facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
+                      group_counts_as_one_in_facets=False):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -212,12 +213,14 @@ class SearchEngineBase(object):
             query_fields (List[str] or Dict{str: int}, optional): a list of the fields that should be matched when
             querying. Field weights can also be specified if a dict is passed with keys as field names and values as
             weights. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
-                    query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
-                    query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
+                query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
+                query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
             query_filter (str, optional): filter expression following lucene filter syntax
             offset (int, optional): offset for the returned results
+            current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
+                set offset like offset=current_page*num_sounds
             num_sounds (int, optional): number of sounds to return
-            sorting (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
+            sort (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
             group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
                 by pack, only 1 sound per pack will be returned, together with additional information about the number
                 of other sounds in the pack that would be i the same group.

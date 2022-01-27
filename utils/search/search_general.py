@@ -20,115 +20,34 @@
 
 import logging
 import math
-import random
 import socket
-import json
 
-import re
 from django.conf import settings
 from django.utils.http import urlquote_plus
 from pyparsing import ParseException
 
 import sounds
-from search import forms
-from utils.logging_filters import get_client_ip
-from utils.search.lucene_parser import parse_query_filter_string
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
-from utils.search.backends.solr451custom import SOLR_DYNAMIC_FIELDS_SUFFIX_MAP
+from utils.search.lucene_parser import parse_query_filter_string
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
 
 
-def search_process_filter(filter_query):
-    """Process the filter to replace human-readable Audio Commons descriptor names.
-
-    Used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i).
-    The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer) 
-    and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names so Solr can 
-    treat the types properly. Now we automatically append the suffices to the filter names so users do not 
-    need to deal with that.
-
-    Args:
-        filter_query (str): query filter string.
-
-    Returns:
-        str: processed filter query string.
-    """
-    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
-        filter_query = filter_query.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
-                                            .format(name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
-    return filter_query
-
-
-def split_filter_query(filter_query, parsed_filters, cluster_id):
-    """Pre-process parsed search filter parameters and returns the filters' information.
-
-    This function is used in the search template to display the filter and the link when removing them.
-    The cluster ID is provided seprated from the parsed filters in order to keep clustering explicitly 
-    separated from the rest of the filters.
-
-    Args:
-        filter_query (str): query filter string.
-        parsed_filters (List[List[str]]): parsed query filter.
-        cluster_id (str): cluster filter string.
-
-    Returns:
-        List[dict]: list of dictionaries containing the filter name and the url when removing the filter.
-    """
-    # Generate array with information of filters
-    filter_query_split = []
-    if parsed_filters:
-        for filter_list_str in parsed_filters:
-            # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
-            filter_name = filter_list_str[0]
-            if filter_name != "duration" and filter_name != "is_geotagged":
-                valid_filter = True
-                filter_str = ''.join(filter_list_str)
-                filter_display = ''.join(filter_list_str).replace('"', '')
-                if filter_name == "grouping_pack":
-                    filter_value = filter_list_str[-1].rstrip('"')
-                    # If pack does not contain "_" then it's not a valid pack filter
-                    if "_" in filter_value:
-                        filter_display = "pack:"+ ''.join(filter_value.split("_")[1:])
-                    else:
-                        valid_filter = False
-                
-                if valid_filter:
-                    filter = {
-                        'name': filter_display,
-                        'remove_url': urlquote_plus(filter_query.replace(filter_str, '')),
-                        'cluster_id': cluster_id,
-                    }
-                    filter_query_split.append(filter)
-
-    # add cluster filter information
-    if settings.ENABLE_SEARCH_RESULTS_CLUSTERING:
-        if cluster_id and cluster_id.isdigit():
-            filter_query_split.append({
-                'name': "Cluster #" + cluster_id,
-                'remove_url': urlquote_plus(filter_query),
-                'cluster_id': '',
-            })
-
-    return filter_query_split
-
-
 def search_prepare_parameters(request):
-    """Parses and pre-process search input parameters from the request object and returns them as a dict.
+    """Parses and pre-process search input parameters from the search view request object and returns them as a dict.
 
-    From the request object, it constructs all the parameters needed for building the Solr query 
-    object. Additionally, other variables are returned for logging purpose, and for building the search
-    view context variables.
-
-    This functions also make easier the replication of the Solr query from the clustering engine.
+    From the request object, it constructs a dict with query parameters which will be compatible with
+    utils.search.SearchEngine.search_sounds(...) parameters. Additionally, other variables are returned which
+    are used for logging purpose and for building the search view context variables.
 
     Args:
-        request (HttpRequest): request associated with the search query submited by the user.
-    
+        request (HttpRequest): request associated with the search query submitted by the user.
+
     Returns:
-        Tuple(dict, dict, dict): 3-element tuple containing the query parameters needed for building the Solr 
-        query, the advanced search params to be logged and some extra parameters needed in the search view. 
+        Tuple(dict, dict, dict): 3-element tuple containing the query parameters compatible with the search_sounds,
+            method from SearchEngine, the search params used for logging, and some extra parameters needed in
+            the search view.
     """
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "").strip().lstrip()
@@ -144,12 +63,13 @@ def search_prepare_parameters(request):
         # When making empty queries and no sorting is specified, automatically set sort to "created desc" as
         # relevance score based sorting makes no sense
         sort = settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
-    
+
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is through AJAX (for sources remix editing), do not collapse
-    grouping = request.GET.get("g", "1")  # Group by default
+    group_by_pack = request.GET.get("g", "1") == "1"  # Group by default
+
     if "pack" in filter_query or request.GET.get("ajax", "") == "1":
-        grouping = False
+        group_by_pack = False
 
     # If the query is filtered by pack, do not add the "only sounds with pack" filter (makes no sense)
     only_sounds_with_pack = request.GET.get("only_p", "0") == "1"  # By default, do not limit to sounds with pack
@@ -159,7 +79,7 @@ def search_prepare_parameters(request):
     # If the query is displaying only sounds with pack, also enable group by pack as this is needed to display
     # results as packs
     if only_sounds_with_pack:
-        grouping = "1"
+        group_by_pack = True
 
     # Set default values
     id_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID]
@@ -217,7 +137,7 @@ def search_prepare_parameters(request):
                 pack_tokenized_weight = \
                     settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_PACK_NAME]
             if a_filename != "":
-                original_filename_weight =\
+                original_filename_weight = \
                     settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_NAME]
 
     field_weights = {
@@ -242,17 +162,17 @@ def search_prepare_parameters(request):
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
     query_params = {
-        'search_query': search_query,
-        'filter_query': filter_query,
+        'textual_query': search_query,
+        'query_filter': filter_query,
         'sort': sort,
         'current_page': current_page,
-        'sounds_per_page': settings.SOUNDS_PER_PAGE,
-        'field_weights': field_weights,
-        'grouping': grouping,
+        'num_sounds': settings.SOUNDS_PER_PAGE,
+        'query_fields': field_weights,
+        'group_by_pack': group_by_pack,
         'only_sounds_with_pack': only_sounds_with_pack,
     }
 
-    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+    filter_query_link_more_when_grouping_packs = filter_query.replace(' ', '+')
 
     # These variables are not used for querying the sound collection
     # We keep them separated in order to facilitate the distinction between variables used for performing
@@ -270,114 +190,57 @@ def search_prepare_parameters(request):
     return query_params, advanced_search_params_dict, extra_vars
 
 
-def search_prepare_query(search_query,
-                         filter_query,
-                         sort,
-                         current_page,
-                         sounds_per_page,
-                         field_weights,
-                         grouping=False,
-                         include_facets=True,
-                         grouping_pack_limit=1,
-                         offset=None,
-                         only_sounds_with_pack=False,
-                         in_ids=[]):
-    """Create the Solr query object given the query parameters.
+def split_filter_query(filter_query, parsed_filters, cluster_id):
+    """Pre-process parsed search filter parameters and returns the filters' information.
+
+    This function is used in the search template to display the filter and the link when removing them.
+    The cluster ID is provided separated from the parsed filters in order to keep clustering explicitly
+    separated from the rest of the filters.
 
     Args:
-        search_query (str): query string.
         filter_query (str): query filter string.
-        sort (str): sort option string.
-        current_page (int): requested page of the results.
-        sounds_per_page (int): number of sounds per page.
-        field_weights (Dict{str:int}): weights for the fields to match
-        grouping (bool): only show one (or more) sounds for each pack.
-        include_facets (bool): include facets or no.
-        grouping_pack_limit (int): number of sounds showed for each pack.
-        offset (int): a numerical offset.
-        only_sounds_with_pack (bool): include only sound from pack or no.
-        in_ids (list): list of sound ids for cluster filter facet.
+        parsed_filters (List[List[str]]): parsed query filter.
+        cluster_id (str): cluster filter string.
 
-    Returns: (QueryManager): the query object corresponding to the user submitted query.
-
+    Returns:
+        List[dict]: list of dictionaries containing the filter name and the url when removing the filter.
     """
-    search_engine = get_search_engine()
-    query = search_engine.get_query_manager()
+    # Generate array with information of filters
+    filter_query_split = []
+    if parsed_filters:
+        for filter_list_str in parsed_filters:
+            # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
+            filter_name = filter_list_str[0]
+            if filter_name != "duration" and filter_name != "is_geotagged":
+                valid_filter = True
+                filter_str = ''.join(filter_list_str)
+                filter_display = ''.join(filter_list_str).replace('"', '')
+                if filter_name == "grouping_pack":
+                    filter_value = filter_list_str[-1].rstrip('"')
+                    # If pack does not contain "_" then it's not a valid pack filter
+                    if "_" in filter_value:
+                        filter_display = "pack:"+ ''.join(filter_value.split("_")[1:])
+                    else:
+                        valid_filter = False
+                
+                if valid_filter:
+                    filter = {
+                        'name': filter_display,
+                        'remove_url': urlquote_plus(filter_query.replace(filter_str, '')),
+                        'cluster_id': cluster_id,
+                    }
+                    filter_query_split.append(filter)
 
-    # Set field weights and scoring function
-    field_weights = []
-    for weight, weight_str in [(id_weight, "id"),
-                               (tag_weight, "tag"),
-                               (description_weight, "description"),
-                               (username_weight, "username"),
-                               (pack_tokenized_weight, "pack_tokenized"),
-                               (original_filename_weight, "original_filename")]:
-        if weight != 0:
-            field_weights.append((weight_str, weight))
+    # add cluster filter information
+    if settings.ENABLE_SEARCH_RESULTS_CLUSTERING:
+        if cluster_id and cluster_id.isdigit():
+            filter_query_split.append({
+                'name': "Cluster #" + cluster_id,
+                'remove_url': urlquote_plus(filter_query),
+                'cluster_id': '',
+            })
 
-    query.set_dismax_query(search_query,
-                           query_fields=field_weights,)
-
-    # Set start and rows parameters (offset and size)
-    if not offset:
-        start = (current_page - 1) * sounds_per_page
-    else:
-        start = offset
-
-    # Process filter
-    filter_query = search_process_filter(filter_query)
-    if only_sounds_with_pack and not 'pack:' in filter_query:
-        filter_query += ' pack:*'  # Add a filter so that only sounds with packs are returned
-
-    # Process filter for clustering.
-    # When applying clustering facet, a in_ids argument is passed. We check if fliters exsit and in this case
-    # add a AND rule with the ids in order to combine facet and cluster facets. If no filter exist, we just
-    # add the filter by id.
-    if in_ids:
-        if filter_query:
-            if len(in_ids) == 1:
-                filter_query += ' AND id:{}'.format(in_ids[0])
-            else:
-                filter_query += ' AND (id:'
-                filter_query += ' OR id:'.join(in_ids)
-                filter_query += ')'
-        else:
-            if len(in_ids) == 1:
-                filter_query += 'id:{}'.format(in_ids[0])
-            else:
-                filter_query += 'id:'
-                filter_query += ' OR id:'.join(in_ids)
-
-    # Set all options
-    query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
-
-    # Specify query factes
-    if include_facets:
-        query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
-        query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
-        query.set_facet_options("type", limit=len(sounds.models.Sound.SOUND_TYPE_CHOICES))
-        query.set_facet_options("tag", limit=30)
-        query.set_facet_options("username", limit=30)
-        query.set_facet_options("grouping_pack", limit=10)
-        query.set_facet_options("license", limit=10)
-
-    # Add groups
-    if grouping:
-        query.set_group_field(group_field="grouping_pack")
-        query.set_group_options(
-            group_func=None,
-            group_query=None,
-            group_rows=10,
-            group_start=0,
-            group_limit=grouping_pack_limit,  # This is the number of documents that will be returned for each group. By default only 1 is returned.
-            group_offset=0,
-            group_sort=None,
-            group_sort_ingroup=None,
-            group_format='grouped',
-            group_main=False,
-            group_num_groups=True,
-            group_cache_percent=0)
-    return query
+    return filter_query_split
 
 
 def remove_facet_filters(parsed_filters):
@@ -388,7 +251,7 @@ def remove_facet_filters(parsed_filters):
     because clustering has to be done on the results of a search without applying facet filters (we want
     to have the clustering facet behaving as a traditional facet, meaning that the clustering should not 
     be re-triggered when applying new facet filters on the results).
-    Addtionaly, it returns a boolean that indicates if a facet filter was present in the query.
+    Additionally, it returns a boolean that indicates if a facet filter was present in the query.
 
     Args:
         parsed_filters (List[List[str]]): parsed query filter.
@@ -424,30 +287,29 @@ def remove_facet_filters(parsed_filters):
     return filter_query, has_facet_filter
 
 
-def perform_search_engine_query(q, current_page):
-    """
+def perform_search_engine_query(query_params):
+    """Perform a query in the search engine given some query parameters and get the paginated results
+
     This util function performs the query to the search engine and returns needed parameters to continue with the view.
     The main reason to have this util function is to facilitate mocking in unit tests for this view.
+
+    Args:
+        query_params (dict): query parameters dictionary with parameters following the specification of search_sounds
+            function from utils.search.SearchEngine.
+
+    Returns:
+        int: number of search results (for grouped queries, returns the total number of matches regardless of grouping)
+        dict: facets information as defined in utils.search.SearchResults (see docs)
+        SearchResultsPaginator: paginator object for the selected page according to query_params
+        dict: some data about the selected page used later in templates, etc.
+        list[dict]: list of dictionary with information about the matched results as defined in
+            utils.search.SearchResults (see docs)
+
+    Note that some of returned information is redundant. At some point this could be optimized and simplified.
     """
-    if not 'offset' in q:
-        offset = (q['current_page'] - 1) * q['sounds_per_page']
-    else:
-        offset = q['offset']
-
-    results = get_search_engine().search_sounds(
-        textual_query=q['search_query'],
-        query_fields=q['field_weights'],
-        query_filter=q['filter_query'],
-        offset=offset,
-        num_sounds=q['sounds_per_page'],
-        sorting=q['sort'],  # TODO: should be expecting unified sort option names, not "solr" names
-        group_by_pack=q['grouping'] == '1',  # TODO: should do other checks here?
-        facets=q['facets'],
-        only_sounds_with_pack=q['only_sounds_with_pack'],
-        only_sounds_within_ids=q['in_ids'])
-
+    results = get_search_engine().search_sounds(**query_params)
     paginator = SearchResultsPaginator(results, settings.SOUNDS_PER_PAGE)
-    page = paginator.page(current_page)
+    page = paginator.page(query_params['current_page'])
     return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
 
 

@@ -45,25 +45,9 @@ def get_sound_ids_from_search_engine_query(query_params):
     # We set include_facets to False in order to reduce the amount of data that search engine will return.
     query_params.update({
         'current_page': 1,
-        'sounds_per_page': MAX_RESULTS_FOR_CLUSTERING,
+        'num_sounds': MAX_RESULTS_FOR_CLUSTERING,
     })
-
-    # TODO: avoid doing this translation once search_prepare_parameters returns parameter names compatible with
-    # search_sounds
-    adapted_query_params = {
-        'search_query': query_params['search_query'],
-        'field_weights': query_params['field_weights'],
-        'filter_query': query_params['filter_query'],
-        'current_page': query_params['current_page'],
-        'sounds_per_page': query_params['sounds_per_page'],
-        'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-        'grouping': '1',
-        'only_sounds_with_pack': False,
-        'facets': None,
-        'in_ids': query_params.get('in_ids', False)
-    }
-
-    _, _, _, _, docs = perform_search_engine_query(adapted_query_params, query_params['current_page'])
+    _, _, _, _, docs = perform_search_engine_query(query_params)
     resultids = [d.get("id") for d in docs]
 
     return resultids
@@ -77,7 +61,7 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     worker. 
 
     Args:
-        request (HttpRequest): request associated with the search query submited by the user.
+        request (HttpRequest): request associated with the search query submitted by the user.
         features (str): name of the features to be used for clustering. The available features are defined in the 
             clustering settings file.
 
@@ -89,12 +73,10 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     # We change filter_query to filter_query_non_facets in order to ensure that the clustering is always
     # done on the non faceted filtered results. Without that, people directly requesting a facet filtered
     # page would have a clustering performed on filtered results.
-    query_params['filter_query'] = extra_vars['filter_query_non_facets']
-    field_weights_str = str(query_params['field_weights'])
-    query_params['field_weights_str'] = field_weights_str
-    cache_key = 'cluster-results-{search_query}-{filter_query}-{sort}-{field_weights_str}--{grouping}'\
+    query_params['query_filter'] = extra_vars['filter_query_non_facets']
+    cache_key = 'cluster-results-{textual_query}-{query_filter}-{sort}-{group_by_pack}'\
         .format(**query_params).replace(' ', '')
-
+    cache_key += '-{}'.format(str(query_params['query_fields']))
     cache_key += '-{}'.format(features)
     cache_key_hashed = hash_cache_key(cache_key)
 

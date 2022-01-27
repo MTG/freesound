@@ -68,18 +68,18 @@ def search(request):
         in_ids = _get_ids_in_cluster(request, cluster_id)
     else:
         in_ids = []
-    query_params.update({'in_ids': in_ids})
+    query_params.update({'only_sounds_within_ids': in_ids})
 
     query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
 
-    filter_query_split = split_filter_query(query_params['filter_query'], extra_vars['parsed_filters'], cluster_id)
-    print '\n\n\n', query_params['sort']
+    filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
+
     tvars = {
         'error_text': None,
-        'filter_query': query_params['filter_query'],
+        'filter_query': query_params['query_filter'],
         'filter_query_split': filter_query_split,
-        'search_query': query_params['search_query'],
-        'grouping': query_params['grouping'],
+        'search_query': query_params['textual_query'],
+        'grouping': "1" if query_params['group_by_pack'] else "",
         'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
@@ -95,18 +95,17 @@ def search(request):
 
     search_logger.info(u'Search (%s)' % json.dumps({
         'ip': get_client_ip(request),
-        'query': query_params['search_query'],
-        'filter': query_params['filter_query'],
+        'query': query_params['textual_query'],
+        'filter': query_params['query_filter'],
         'username': request.user.username,
         'page': query_params['current_page'],
         'sort': query_params['sort'],
-        'group_by_pack': query_params['grouping'],
+        'group_by_pack': query_params['group_by_pack'],
         'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else ""
     }))
 
     try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_search_engine_query(
-            query_params, query_params['current_page'])
+        non_grouped_number_of_results, facets, paginator, page, docs = perform_search_engine_query(query_params)
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}

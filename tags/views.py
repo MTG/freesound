@@ -65,14 +65,14 @@ def tags(request, multiple_tags=None):
             query_filter=query_filter,
             offset=(current_page- 1) * settings.SOUNDS_PER_PAGE,
             num_sounds=settings.SOUNDS_PER_PAGE,
-            sorting=settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST,
             group_by_pack=True,
             facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
             group_counts_as_one_in_facets=False,
         ))
 
         page = paginator.page(current_page)
-        non_grouped_number_of_results = results.non_grouped_number_of_matches
+        non_grouped_number_of_results = results.non_grouped_number_of_results
         facets = results.facets
         docs = results.docs
 

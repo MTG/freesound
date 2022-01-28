@@ -35,7 +35,7 @@ from django.utils.encoding import smart_unicode
 import accounts
 from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
-from utils.search import SearchEngineException, get_search_engine_forum
+from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_post_from_search_engine
 
 web_logger = logging.getLogger('web')
@@ -176,7 +176,7 @@ def index_posts_on_thread_update(sender, instance, **kwargs):
     # Reload the thread because its num_posts may still be an F-expression
     instance.refresh_from_db()
     try:
-        get_search_engine_forum().add_forum_posts_to_index(instance.post_set.all())
+        get_search_engine().add_forum_posts_to_index(instance.post_set.all())
     except SearchEngineException:
         pass
 

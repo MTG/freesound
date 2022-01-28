@@ -61,7 +61,7 @@ class Command(LoggingBaseCommand):
         n_deleted_sounds = 0
         search_engine = get_search_engine()
         for sound in sounds_dirty_to_remove:
-            if csearch_engine.sound_exists_in_index(sound):
+            if search_engine.sound_exists_in_index(sound):
                 # We need to know if the sound exists in solr so that besides deleting it (which could be accomplished
                 # by simply using delete_sound_from_solr), we know whether we have to change is_index_dirty state. If
                 # we do not change it, then we would try to delete the sound at every attempt.

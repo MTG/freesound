@@ -23,7 +23,7 @@ from django.conf import settings
 
 import forum.models
 from utils.text import remove_control_chars
-from utils.search import get_search_engine_forum, SearchEngineException
+from utils.search import get_search_engine, SearchEngineException
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
@@ -39,7 +39,7 @@ def add_posts_to_search_engine_by_id(post_ids):
     try:
         console_logger.info("Adding %d posts to solr index" % num_posts)
         search_logger.info("Adding %d posts to solr index" % num_posts)
-        get_search_engine_forum().add_forum_posts_to_index(posts)
+        get_search_engine().add_forum_posts_to_index(posts)
     except SearchEngineException as e:
         search_logger.error("Failed to add posts to search engine index, reason: %s" % str(e))
     
@@ -58,7 +58,7 @@ def add_all_posts_to_search_engine(slice_size=4000):
         try:
             console_logger.info("Adding %d posts to solr index" % num_posts)
             search_logger.info("Adding %d posts to solr index" % num_posts)
-            get_search_engine_forum().add_forum_posts_to_index(posts_slice)
+            get_search_engine().add_forum_posts_to_index(posts_slice)
         except SearchEngineException as e:
             search_logger.error("Failed to add posts to search engine index, reason: %s" % str(e))
 
@@ -66,6 +66,6 @@ def add_all_posts_to_search_engine(slice_size=4000):
 def delete_post_from_search_engine(post_id):
     search_logger.info("deleting post with id %d" % post_id)
     try:
-        get_search_engine_forum().remove_from_index(post_id)
+        get_search_engine().remove_forum_posts_from_index([post_id])
     except SearchEngineException as e:
         search_logger.error('Could not delete post with id %s (%s).' % (post_id, e))

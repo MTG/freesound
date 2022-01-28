@@ -379,7 +379,7 @@ def get_random_sound_id_from_search_engine():
 def delete_sound_from_search_engine(sound_id):
     search_logger.info("deleting sound with id %d" % sound_id)
     try:
-        get_search_engine().remove_from_index(sound_id)
+        get_search_engine().remove_sounds_from_index([sound_id])
     except (SearchEngineException, socket.error) as e:
         search_logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
 
@@ -395,7 +395,7 @@ def delete_sounds_from_search_engine(sound_ids):
                  count + 1,
                  int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
                  len(range_ids)))
-            get_search_engine().remove_from_index_by_ids(range_ids)
+            get_search_engine().remove_sounds_from_index(range_ids)
             
         except (SearchEngineException, socket.error) as e:
             search_logger.error('could not delete solr sounds chunk %i of %i' %

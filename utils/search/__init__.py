@@ -19,13 +19,14 @@
 #
 
 import importlib
-import itertools
 
 from django.conf import settings
 
 
-SERACH_INDEX_SOUNDS = 'search_index_sounds'
-SERACH_INDEX_FORUM = 'search_index_forum'
+def get_search_engine():
+    module_name, class_name = settings.SEARCH_ENGINE_BACKEND_CLASS.rsplit('.', 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, class_name)()
 
 
 class SearchResults(object):
@@ -168,43 +169,38 @@ class SearchEngineException(Exception):
 
 class SearchEngineBase(object):
 
-    index_name = None
-
-    def __init__(self, index_name):
-        self.index_name = index_name
-
-    # Many of the methods here should probably be removed from main SearchEngine API as the endpoints are only
-    # application-specific
-
-    def add_to_index(self, docs):
-        raise NotImplementedError
-
-    def remove_from_index(self, document_id):
-        raise NotImplementedError
-
-    def remove_from_index_by_query(self, query):
-        raise NotImplementedError
-
-    def remove_from_index_by_ids(self, document_ids):
-        raise NotImplementedError
-
-    def get_query_manager(self):
-        raise NotImplementedError
-
     # Sound search related methods
 
-    def convert_sound_to_search_engine_document(self, sound):
+    def add_sounds_to_index(self, sound_objects):
+        """Indexes the provided sound objects in the search index
+
+        Args:
+            sound_objects (list[sounds.models.Sound]): Sound objects of the sounds to index
+        """
         raise NotImplementedError
 
-    def add_sounds_to_index(self, sounds):
-        if self.index_name != SERACH_INDEX_SOUNDS:
-            raise SearchEngineException("Trying to add sounds to non-sounds index")
-        documents = [self.convert_sound_to_search_engine_document(s) for s in sounds]
-        self.add_to_index(documents)
+    def remove_sounds_from_index(self, sound_objects_or_ids):
+        """Removes sounds from the search index
+
+        Args:
+            sound_objects_or_ids (list[sounds.models.Sound] or list[int]):  Sound objects or sound IDs to remove
+        """
+        raise NotImplementedError
+
+    def sound_exists_in_index(self, sound_object_or_id):
+        """Check if a sound is indexed in the search engine
+
+        Args:
+            sound_object_or_id (list[sounds.models.Sound] or list[int]): Sound object or sound ID to check if indexed
+
+        Returns:
+            bool: whether the sound is indexed in the search engine
+        """
+        raise NotImplementedError
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
-                      num_sounds=10, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC, group_by_pack=False,
-                      facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
+                      num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+                      group_by_pack=False, facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
                       group_counts_as_one_in_facets=False):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
@@ -258,33 +254,43 @@ class SearchEngineBase(object):
         """
         raise NotImplementedError
 
-    def sound_exists_in_index(self, sound):
-        """Check if a sound is indexed in the search engine
-
-        Args:
-            sound (sounds.models.Sound): Sound object to check if indexed
-
-        Returns:
-            bool: whether the sound is indexed in the search engine
-        """
-        raise NotImplementedError
 
     # Forum search related methods
 
-    def convert_post_to_search_engine_document(self, post):
+    def add_forum_posts_to_index(self, forum_post_objects):
+        """Indexes the provided forum post objects in the search index
+
+        Args:
+            forum_post_objects (list[forum.models.Post]): Post objects of the forum posts to index
+        """
         raise NotImplementedError
 
-    def add_forum_posts_to_index(self, forum_posts):
-        if self.index_name != SERACH_INDEX_FORUM:
-            raise SearchEngineException("Trying to add forum posts to non-posts index")
-        documents = [self.convert_post_to_search_engine_document(p) for p in forum_posts]        
-        self.add_to_index(documents)
+    def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
+        """Removes forum posts from the search index
 
-    def search_posts(self):
+        Args:
+            forum_post_objects_or_ids (list[forum.models.Post] or list[int]):  Post objects or post IDs to remove
+        """
+        raise NotImplementedError
+
+    def forum_post_exists_in_index(self, forum_post_object_or_id):
+        """Check if a sound is indexed in the search engine
+
+        Args:
+            forum_post_object_or_id (list[forum.models.Post] or list[int]): Post object or post ID to check if indexed
+
+        Returns:
+            bool: whether the post is indexed in the search engine
+        """
         raise NotImplementedError
 
 
-    # Other "application" methods
+    def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,
+                           num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+        raise NotImplementedError
+
+
+    # Tag clouds methods
 
     def get_user_tags(self, username):
         """Retrieves the tags used by a user and their counts
@@ -312,41 +318,3 @@ class SearchEngineBase(object):
         raise NotImplementedError
 
 
-class Multidict(dict):
-    """A dictionary that represents a query string. If values in the dics are tuples, they are expanded.
-    None values are skipped and all values are utf-encoded. We need this because in solr, we can have multiple
-    fields with the same value, like facet.field
-
-    >>> [ (key, value) for (key,value) in Multidict({"a": 1, "b": (2,3,4), "c":None, "d":False}).items() ]
-    [('a', 1), ('b', 2), ('b', 3), ('b', 4), ('d', 'false')]
-    """
-    def items(self):
-        # generator that retuns all items
-        def all_items():
-            for (key, value) in dict.items(self):
-                if isinstance(value, tuple) or isinstance(value, list):
-                    for v in value:
-                        yield key, v
-                else:
-                    yield key, value
-
-        # generator that filters all items: drop (key, value) pairs with value=None and convert bools to lower case strings
-        for (key, value) in itertools.ifilter(lambda (key,value): value != None and value != "", all_items()):
-            if isinstance(value, bool):
-                value = unicode(value).lower()
-            else:
-                value = unicode(value).encode('utf-8')
-
-            yield (key, value)
-
-
-def get_search_engine():
-    module_name, class_name = settings.SEARCH_ENGINE_BACKEND_CLASS.rsplit('.', 1)
-    module = importlib.import_module(module_name)
-    return getattr(module, class_name)(index_name=SERACH_INDEX_SOUNDS)
-
-
-def get_search_engine_forum():
-    module_name, class_name = settings.SEARCH_ENGINE_BACKEND_CLASS.rsplit('.', 1)
-    module = importlib.import_module(module_name)
-    return getattr(module, class_name)(index_name=SERACH_INDEX_FORUM)

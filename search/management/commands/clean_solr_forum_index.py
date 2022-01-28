@@ -43,13 +43,9 @@ class Command(BaseCommand):
         SLICE_SIZE = 500
         search_engine_post_ids = []
         search_engine = get_search_engine()
-        query = search_engine.get_query_manager()
-        query.set_dismax_query("")  # Query to get ALL forums
 
         console_logger.info("Retrieving ids from %i to %i"%(0,SLICE_SIZE))
-        query.set_query_options(field_list=["id"], rows = SLICE_SIZE, start = 0)
-        # results = SolrResponseInterpreter(solr.select(unicode(query)))
-        results = search_engine.search(query)
+        results = search_engine.search_forum_posts(num_posts=SLICE_SIZE, offset=0)
         search_engine_post_ids += list_of_dicts_to_list_of_ids(results.docs)
         total_num_documents = results.num_found
 
@@ -61,9 +57,7 @@ class Command(BaseCommand):
 
         for i in range(SLICE_SIZE, number_of_documents,SLICE_SIZE):
             console_logger.info("Retrieving ids from %i to %i"%(i,i+SLICE_SIZE-1))
-            query.set_query_options(field_list=["id"], rows = SLICE_SIZE, start = i)
-            # results = SolrResponseInterpreter(solr.select(unicode(query)))
-            results = search_engine.search(query)
+            results = search_engine.search_forum_posts(num_posts=SLICE_SIZE, offset=i)
             search_engine_post_ids += list_of_dicts_to_list_of_ids(results.docs)
 
         search_engine_post_ids = sorted(list(set(search_engine_post_ids)))
@@ -80,8 +74,8 @@ class Command(BaseCommand):
                 pass
             else:
                 # Post does not exist in the Db or is not properly moderated and processed
-                console_logger.info("\n\t - Deleting forum with id %i from the search engine index" % id)
-                search_engine.remove_from_index(id)
+                console_logger.info("\n\t - Deleting post with id %i from the search engine index" % id)
+                search_engine.remove_forum_posts_from_index([id])
                 n_deleted += 1
 
         console_logger.info("\n\nDONE! %i forums deleted from the search engine index (it may take some minutes to actually see "

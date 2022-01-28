@@ -42,7 +42,7 @@ from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_general import perform_search_engine_query, search_prepare_parameters, \
     split_filter_query
-from utils.search import get_search_engine_forum, SearchEngineException, SearchResultsPaginator
+from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
 
@@ -347,48 +347,20 @@ def search_forum(request):
         if advanced_search == "1" and date_from != "" or date_to != "":
             filter_query = __add_date_range(filter_query, date_from, date_to)
 
-        search_engine = get_search_engine_forum()
-        query = search_engine.get_query_manager()
-        query.set_dismax_query(search_query, query_fields=[("thread_title", 4),
-                                                           ("post_body", 3),
-                                                           ("thread_author", 3),
-                                                           ("post_author", 3),
-                                                           ("forum_name", 2)])
-        query.set_highlighting_options_default(field_list=["post_body"],
-                                               fragment_size=200,
-                                               alternate_field="post_body",  # TODO: revise this param
-                                               require_field_match=False,
-                                               pre="<strong>",
-                                               post="</strong>")
-        query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE,
-                                rows=settings.SOUNDS_PER_PAGE,
-                                field_list=["id",
-                                            "forum_name",
-                                            "forum_name_slug",
-                                            "thread_id",
-                                            "thread_title",
-                                            "thread_author",
-                                            "thread_created",
-                                            "post_body",
-                                            "post_author",
-                                            "post_created",
-                                            "num_posts"],
-                                filter_query=filter_query,
-                                sort=sort)
-
-        if not using_beastwhoosh(request):
-            # Do not group by thread in beastwhoosh
-            query.set_group_field("thread_title_grouped")
-            query.set_group_options(group_limit=30)
-
         try:
-            results = search_engine.search(query)
-            paginator = SearchResultsPaginator(results, settings.SOUNDS_PER_PAGE)
+            results = get_search_engine().search_forum_posts(
+                textual_query=search_query,
+                query_filter=filter_query,
+                num_posts=settings.FORUM_POSTS_PER_PAGE,
+                current_page=current_page,
+                group_by_thread=not using_beastwhoosh(request))
+
+            paginator = SearchResultsPaginator(results, settings.FORUM_POSTS_PER_PAGE)
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            search_logger.warning("search error: query: %s error %s" % (query, e))
+            search_logger.warning("search error: query: %s error %s" % (search_query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:

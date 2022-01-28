@@ -35,7 +35,7 @@ import urlparse
 
 from django.conf import settings
 from utils.text import remove_control_chars
-from utils.search import Multidict, SearchEngineBase, SearchEngineException, SERACH_INDEX_SOUNDS, SERACH_INDEX_FORUM
+from utils.search import Multidict, SearchEngineBase, SearchEngineException, SEARCH_INDEX_SOUNDS, SEARCH_INDEX_FORUM
 
 SOLR_URL = "http://search:8080/fs2/"
 SOLR_FORUM_URL = "http://search:8080/forum/"
@@ -427,9 +427,9 @@ class Solr451PySolrSearchEngine(SearchEngineBase):
     def __init__(self, index_name):
         super(Solr451PySolrSearchEngine, self).__init__(index_name)
         
-        if self.index_name == SERACH_INDEX_SOUNDS:
+        if self.index_name == SEARCH_INDEX_SOUNDS:
             url = SOLR_URL
-        elif self.index_name == SERACH_INDEX_FORUM:
+        elif self.index_name == SEARCH_INDEX_FORUM:
             url = SOLR_FORUM_URL
         else:
             raise SearchEngineException("No index with that name")

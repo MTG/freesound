@@ -309,11 +309,12 @@ class Profile(SocialModel):
         try:
             search_engine = get_search_engine()
             tags_counts = search_engine.get_user_tags(self.user.username)
+            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in
+                    tags_counts]
         except SearchEngineException as e:
             return False
         except Exception as e:
             return False
-        return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in tags_counts]
 
     def is_trustworthy(self):
         """

@@ -52,11 +52,11 @@
             {% if pack.description %}
                 <div class="text-black v-spacing-top-2">{{ pack.description|striptags|safe|truncatewords_html:20 }}</div>
             {% endif %}
-            {% with pack.get_pack_tags as tags %}
-                {% if tags != -1 %}
+            {% with pack.get_pack_tags_bw as tags %}
+                {% if tags %}
                     <div class=" v-spacing-top-2">
-                    {% for tag in tags.tags|slice:":5" %}
-                        {% bw_tag tag %}
+                    {% for tag in tags|slice:":5" %}
+                        {% bw_tag tag.name %}
                     {% endfor %}
                     </div>
                 {% endif %}

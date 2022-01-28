@@ -55,28 +55,23 @@ class ProfileGetUserTags(TestCase):
     def test_user_tagcloud_solr(self):
         user = User.objects.get(username="Anton")
         mock_search_engine = mock.Mock()
-
         conf = {
-            'search.return_value': SolrResponseInterpreter({
-                'facet_counts': {
-                    'facet_ranges': {},
-                    'facet_fields': {'tag': ['conversation', 1, 'dutch', 1, 'glas', 1, 'glass', 1, 'instrument', 2,
-                                             'laughter', 1, 'sine-like', 1, 'struck', 1, 'tone', 1, 'water', 1]},
-                    'facet_dates': {},
-                    'facet_queries': {}
-                },
-                'responseHeader': {
-                    'status': 0,
-                    'QTime': 4,
-                    'params': {'fq': 'username:\"Anton\"', 'facet.field': 'tag', 'f.tag.facet.limit': '10',
-                               'facet': 'true', 'wt': 'json', 'f.tag.facet.mincount': '1', 'fl': 'id', 'qt': 'dismax'}
-                },
-                'response': {'start': 0, 'numFound': 48, 'docs': []}
-            })
+            'get_user_tags.return_value': [
+                ('conversation', 1),
+                ('dutch', 1),
+                ('glas', 1),
+                ('glass', 1),
+                ('instrument', 2),
+                ('laughter', 1),
+                ('sine-like', 1),
+                ('struck', 1),
+                ('tone', 1),
+                ('water', 1)
+            ]
         }
         mock_search_engine.return_value.configure_mock(**conf)
         accounts.models.get_search_engine = mock_search_engine
-        tag_names = [item["name"] for item in list(user.profile.get_user_tags())]
+        tag_names = [item['name'] for item in user.profile.get_user_tags()]
         used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
         non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
 
@@ -85,7 +80,7 @@ class ProfileGetUserTags(TestCase):
         self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
 
         # Test search engine not available return False
-        conf = {'search.side_effect': Exception}
+        conf = {'get_user_tags.side_effect': Exception}
         mock_search_engine.return_value.configure_mock(**conf)
         self.assertEqual(user.profile.get_user_tags(), False)
 

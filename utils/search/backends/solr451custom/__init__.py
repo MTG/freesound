@@ -905,8 +905,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
                 group_truncate=group_counts_as_one_in_facets)
 
         # Do the query!
-        # Note1: we don't to try/except here as we expect this to be dealt with at upper level
-        # Note2: we create a SearchResults with the same members as SolrResponseInterpreter. This would not be strictly
+        # Note: we create a SearchResults with the same members as SolrResponseInterpreter. This would not be strictly
         # needed because SearchResults and SolrResponseInterpreter are virtually the same, but we do it in this way to
         # conform to SearchEngine.search_sounds definition which must return SearchResults
         results = SolrResponseInterpreter(self.get_sounds_index().select(unicode(query)))
@@ -996,8 +995,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             query.set_group_options(group_limit=30)
 
         # Do the query!
-        # Note1: we don't to try/except here as we expect this to be dealt with at upper level
-        # Note2: we create a SearchResults with the same members as SolrResponseInterpreter. This would not be strictly
+        # Note: we create a SearchResults with the same members as SolrResponseInterpreter. This would not be strictly
         # needed because SearchResults and SolrResponseInterpreter are virtually the same, but we do it in this way to
         # conform to SearchEngine.search_sounds definition which must return SearchResults
         results = SolrResponseInterpreter(self.get_forum_index().select(unicode(query)))
@@ -1015,27 +1013,21 @@ class Solr451CustomSearchEngine(SearchEngineBase):
     # Tag clouds methods
 
     def get_user_tags(self, username):
-        try:
-            query = SolrQuery()
-            query.set_dismax_query('')
-            filter_query = 'username:\"%s\"' % username
-            query.set_query_options(field_list=["id"], filter_query=filter_query)
-            query.add_facet_fields("tag")
-            query.set_facet_options("tag", limit=10, mincount=1)
-            results = SolrResponseInterpreter(self.get_sounds_index().select(unicode(query)))
-            return results.facets['tag']
-        except SearchEngineException:
-            return []
+        query = SolrQuery()
+        query.set_dismax_query('')
+        filter_query = 'username:\"%s\"' % username
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        query.add_facet_fields("tag")
+        query.set_facet_options("tag", limit=10, mincount=1)
+        results = SolrResponseInterpreter(self.get_sounds_index().select(unicode(query)))
+        return results.facets['tag']
 
     def get_pack_tags(self, username, pack_name):
-        try:
-            query = SolrQuery()
-            query.set_dismax_query('')
-            filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
-            query.set_query_options(field_list=["id"], filter_query=filter_query)
-            query.add_facet_fields("tag")
-            query.set_facet_options("tag", limit=20, mincount=1)
-            results = SolrResponseInterpreter(self.get_sounds_index().select(unicode(query)))
-            return results.facets['tag']
-        except (SearchEngineException, Exception) as e:
-            return []
+        query = SolrQuery()
+        query.set_dismax_query('')
+        filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        query.add_facet_fields("tag")
+        query.set_facet_options("tag", limit=20, mincount=1)
+        results = SolrResponseInterpreter(self.get_sounds_index().select(unicode(query)))
+        return results.facets['tag']

@@ -130,9 +130,9 @@ def search(request):
     except SearchEngineException as e:
         search_logger.warning('Search error: query: %s error %s' % (str(query_params), e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
-    #except Exception as e:
-    #    search_logger.error('Could probably not connect to Solr - %s' % e)
-    #    tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
+    except Exception as e:
+        search_logger.error('Could probably not connect to Solr - %s' % e)
+        tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', tvars)

@@ -12,15 +12,15 @@
 <a href="{% url "pack-downloaders" pack.user.username pack.id %}">Downloaded {{pack.num_downloads}} times.</a>
 <br>Tags of sounds inside the pack:
 {% with pack.get_pack_tags as tags %}
-    {% if tags == -1 %}
-            Tag information is not available right now.
-    {% else %}
+    {% if tags %}
         {% for tag in tags.tags %}
             <a href="{% url "tags" tag %}" class="tags" >{{ tag }}</a>
         {% endfor %}
         {% if tags.num_tags == 20 %}
             <span class="dots">...</span>
         {% endif %}
+    {% else %}
+        Tag information is not available right now.
     {% endif %}
 {% endwith %}
 </p>

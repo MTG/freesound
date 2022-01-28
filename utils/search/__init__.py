@@ -207,10 +207,10 @@ class SearchEngineBase(object):
         Args:
             textual_query (str, optional): the textual query
             query_fields (List[str] or Dict{str: int}, optional): a list of the fields that should be matched when
-            querying. Field weights can also be specified if a dict is passed with keys as field names and values as
-            weights. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
-                query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
-                query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
+                querying. Field weights can also be specified if a dict is passed with keys as field names and values as
+                weights. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
+                    query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
+                    query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
             query_filter (str, optional): filter expression following lucene filter syntax
             offset (int, optional): offset for the returned results
             current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
@@ -287,6 +287,24 @@ class SearchEngineBase(object):
 
     def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,
                            num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+        """Search for forum posts that match specific criteria and return them in a SearchResults object
+
+        Args:
+            textual_query (str, optional): the textual query
+            query_filter (str, optional): filter expression following lucene filter syntax
+            offset (int, optional): offset for the returned results
+            current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
+                set offset like offset=current_page*num_sounds
+            num_posts (int, optional): number of forum posts to return
+            group_by_thread (bool, optional): whether the search results should be grouped by forum post thread. When
+                grouped by thread, all matching results per every thread will be returned following the structure
+                defined in SearchResults. Note that this is different than the group_by_pack option of search_sounds,
+                with which only 1 result is returned per group.
+
+        Returns:
+            SearchResults: SearchResults object containing the results of the query
+
+        """
         raise NotImplementedError
 
 

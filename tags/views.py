@@ -27,9 +27,9 @@ from django.urls import reverse
 
 import sounds.models
 from follow import follow_utils
-from search.views import perform_search_engine_query
 from tags.models import Tag, FS1Tag
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
+from utils.search.search_general import perform_search_engine_query
 
 search_logger = logging.getLogger("search")
 
@@ -60,7 +60,7 @@ def tags(request, multiple_tags=None):
         else:
             query_filter = "*:*"
 
-        results = get_search_engine().search_sounds(
+        results, paginator = perform_search_engine_query(dict(
             textual_query='',
             query_filter=query_filter,
             offset=(current_page- 1) * settings.SOUNDS_PER_PAGE,
@@ -69,10 +69,8 @@ def tags(request, multiple_tags=None):
             group_by_pack=True,
             facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
             group_counts_as_one_in_facets=False,
-        )
-        # missing group_truncate=True)  # Sets how many results from the same group are taken into account for computing the facets ?
+        ))
 
-        paginator = SearchResultsPaginator(results, settings.SOUNDS_PER_PAGE)
         page = paginator.page(current_page)
         non_grouped_number_of_results = results.non_grouped_number_of_matches
         facets = results.facets
@@ -89,10 +87,10 @@ def tags(request, multiple_tags=None):
 
     except SearchEngineException as e:
         error = True
-        search_logger.warning('Search error: query: %s error %s' % (query, e))
-    #except Exception as e:
-    #    error = True
-    #    search_logger.error('Could probably not connect to Solr - %s' % e)
+        search_logger.warning('Search error: %s' % e)
+    except Exception as e:
+        error = True
+        search_logger.error('Could probably not connect to Solr - %s' % e)
 
     slash_tag = "/".join(multiple_tags)
 

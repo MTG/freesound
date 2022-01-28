@@ -30,7 +30,7 @@ SERACH_INDEX_FORUM = 'search_index_forum'
 
 class SearchResults(object):
 
-    def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_matches=-1,
+    def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
                  facets=None, highlighting=None, q_time=-1):
         """
         Class that holds the results of a search query. It must contain the fields defined below.
@@ -95,7 +95,7 @@ class SearchResults(object):
             start (int): offset of the search results query (Eg: return matched documents starting at 15)
             num_rows (int): number of results per "page"
             num_found (int): total number of matches found
-            non_grouped_number_of_matches (int, optional):  total number of non-grouped matches found (it will be
+            non_grouped_number_of_results (int, optional):  total number of non-grouped matches found (it will be
                 the same as num_found for queries which did not group results)
             facets (Dict{str:List[Tuple(str,int)]}, optional): data structure including information about the facets
                 calculated by the search engine. The keys of the main dictionary correspond to the field names of each
@@ -121,7 +121,7 @@ class SearchResults(object):
         self.docs = docs if docs is not None else list()
         self.facets = facets if facets is not None else list()
         self.highlighting = highlighting if highlighting is not None else list()
-        self.non_grouped_number_of_matches = non_grouped_number_of_matches
+        self.non_grouped_number_of_results = non_grouped_number_of_results
         self.num_found = num_found
         self.start = start
         self.num_rows = num_rows

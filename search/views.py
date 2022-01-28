@@ -105,8 +105,8 @@ def search(request):
     }))
 
     try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_search_engine_query(query_params)
-        resultids = [d.get("id") for d in docs]
+        results, paginator = perform_search_engine_query(query_params)
+        resultids = [d.get("id") for d in results.docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
         for s in resultsounds:
@@ -115,16 +115,16 @@ def search(request):
         # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
         # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
         # in docs that have not been loaded in allsounds.
-        docs = [doc for doc in docs if doc["id"] in allsounds]
+        docs = [doc for doc in results.docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
         tvars.update({
             'paginator': paginator,
-            'page': page,
+            'page': paginator.page(query_params['current_page']),
             'docs': docs,
-            'facets': facets,
-            'non_grouped_number_of_results': non_grouped_number_of_results,
+            'facets': results.facets,
+            'non_grouped_number_of_results': results.non_grouped_number_of_results,
         })
 
     except SearchEngineException as e:

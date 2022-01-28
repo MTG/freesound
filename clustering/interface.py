@@ -47,8 +47,8 @@ def get_sound_ids_from_search_engine_query(query_params):
         'current_page': 1,
         'num_sounds': MAX_RESULTS_FOR_CLUSTERING,
     })
-    _, _, _, _, docs = perform_search_engine_query(query_params)
-    resultids = [d.get("id") for d in docs]
+    results, _ = perform_search_engine_query(query_params)
+    resultids = [d.get("id") for d in results.docs]
 
     return resultids
 

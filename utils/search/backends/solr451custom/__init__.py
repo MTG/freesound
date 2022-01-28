@@ -585,13 +585,13 @@ class SolrResponseInterpreter(object):
             self.start = int(response["responseHeader"]["params"]["start"])
             self.num_rows = len(self.docs)
             self.num_found = response["grouped"][grouping_field]["ngroups"]
-            self.non_grouped_number_of_matches = response["grouped"][grouping_field]["matches"]
+            self.non_grouped_number_of_results = response["grouped"][grouping_field]["matches"]
         else:
             self.docs = response["response"]["docs"]
             self.start = int(response["response"]["start"])
             self.num_rows = len(self.docs)
             self.num_found = response["response"]["numFound"]
-            self.non_grouped_number_of_matches = -1
+            self.non_grouped_number_of_results = -1
 
         self.q_time = response["responseHeader"]["QTime"]
         try:
@@ -858,7 +858,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             num_found=results.num_found,
             start=results.start,
             num_rows=results.num_rows,
-            non_grouped_number_of_matches=results.non_grouped_number_of_matches,
+            non_grouped_number_of_results=results.non_grouped_number_of_results,
             facets=results.facets,
             highlighting=results.highlighting,
             q_time=results.q_time

@@ -298,19 +298,12 @@ def perform_search_engine_query(query_params):
             function from utils.search.SearchEngine.
 
     Returns:
-        int: number of search results (for grouped queries, returns the total number of matches regardless of grouping)
-        dict: facets information as defined in utils.search.SearchResults (see docs)
-        SearchResultsPaginator: paginator object for the selected page according to query_params
-        dict: some data about the selected page used later in templates, etc.
-        list[dict]: list of dictionary with information about the matched results as defined in
-            utils.search.SearchResults (see docs)
-
-    Note that some of returned information is redundant. At some point this could be optimized and simplified.
+        utils.search.SearchResults: search results object with query results from the search engine
+        utils.search.SearchResultsPaginator: paginator object for the selected page according to query_params
     """
     results = get_search_engine().search_sounds(**query_params)
-    paginator = SearchResultsPaginator(results, settings.SOUNDS_PER_PAGE)
-    page = paginator.page(query_params['current_page'])
-    return results.non_grouped_number_of_matches, results.facets, paginator, page, results.docs
+    paginator = SearchResultsPaginator(results, query_params['num_sounds'])
+    return results, paginator
 
 
 def add_sounds_to_search_engine(sounds):

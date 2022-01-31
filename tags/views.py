@@ -29,7 +29,7 @@ import sounds.models
 from follow import follow_utils
 from tags.models import Tag, FS1Tag
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
-from utils.search.search_general import perform_search_engine_query
+from utils.search.search_sounds import perform_search_engine_query
 
 search_logger = logging.getLogger("search")
 

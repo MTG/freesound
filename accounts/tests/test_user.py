@@ -232,8 +232,8 @@ class UserDelete(TestCase):
         self.assertTrue(Sound.objects.filter(user__id=user.id)[0].is_index_dirty)
 
     @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_user_delete_include_sounds(self, delete_sound_from_search_engine, delete_sound_from_gaia):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_user_delete_include_sounds(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
         # This should set user's attribute deleted_user to True and anonymize it
         # Sounds and Packs should be deleted (creating DeletedSound objects), but other user content should be preserved
         user = self.create_user_and_content()
@@ -258,13 +258,12 @@ class UserDelete(TestCase):
         self.assertFalse(Sound.objects.filter(user__id=user.id).exists())
         self.assertTrue(DeletedSound.objects.filter(user__id=user.id).exists())
 
-        calls = [mock.call(i) for i in user_sound_ids]
-        delete_sound_from_search_engine.assert_has_calls(calls, any_order=True)
-        delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
+        delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in user_sound_ids], any_order=True)
+        delete_sound_from_gaia.assert_has_calls([mock.call(i) for i in user_sound_ids], any_order=True)
 
     @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_user_delete_sounds_and_user_object(self, delete_sound_from_search_engine, delete_sound_from_gaia):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_user_delete_sounds_and_user_object(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
         # This should delete all user content, including the User object, and create a DeletedUser object. This will
         # create DeletedSound objects.
         user = self.create_user_and_content()
@@ -282,14 +281,13 @@ class UserDelete(TestCase):
         self.assertTrue(DeletedSound.objects.filter(user__id=user.id).exists())
         self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
 
-        calls = [mock.call(i) for i in user_sound_ids]
-        delete_sound_from_search_engine.assert_has_calls(calls, any_order=True)
-        delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
+        delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in user_sound_ids], any_order=True)
+        delete_sound_from_gaia.assert_has_calls([mock.call(i) for i in user_sound_ids], any_order=True)
 
     @skipIf(True, "This tests a method that should never be called")
     @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_user_full_delete(self, delete_sound_from_search_engine, delete_sound_from_gaia):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_user_full_delete(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
         # This should delete all user content, including the User object and without creating DeletedUser. It does
         # create however DeletedSound objects.
         user = self.create_user_and_content()
@@ -312,7 +310,7 @@ class UserDelete(TestCase):
         self.assertTrue(DeletedSound.objects.filter(user__id=user.id).exists())
 
         calls = [mock.call(i) for i in user_sound_ids]
-        delete_sound_from_search_engine.assert_has_calls(calls, any_order=True)
+        delete_sounds_from_search_engine.assert_has_calls(calls, any_order=True)
         delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
 
 
@@ -408,9 +406,9 @@ class UserDelete(TestCase):
             self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, reason)
 
     @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    @mock.patch('forum.models.delete_post_from_search_engine')
-    def test_delete_user_with_count_fields_out_of_sync(self, delete_post_from_search_engine, delete_sound_from_search_engine,
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    @mock.patch('forum.models.delete_posts_from_search_engine')
+    def test_delete_user_with_count_fields_out_of_sync(self, delete_posts_from_search_engine, delete_sounds_from_search_engine,
                                                        delete_sound_from_gaia):
         # Test that deleting a user work properly even when the profile count fields (num_sounds, num_posts,
         # num_sound_downloads and num_pack_downloads) are out of sync. This is a potential issue because if the

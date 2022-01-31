@@ -36,7 +36,7 @@ import accounts
 from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
-from utils.search.search_forum import delete_post_from_search_engine
+from utils.search.search_forum import delete_posts_from_search_engine
 
 web_logger = logging.getLogger('web')
 
@@ -285,7 +285,7 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
     the only post in a thread, also delete the thread.
     """
     post = instance
-    delete_post_from_search_engine(post.id)
+    delete_posts_from_search_engine([post.id])
     if post.moderation_state == "NM":
         # If the first post is NM and there are subsequent posts in this thread then
         # we won't correctly set thread.first_post. This won't happen in regular use,

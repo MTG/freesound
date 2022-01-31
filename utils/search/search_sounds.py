@@ -23,6 +23,8 @@ import math
 import socket
 
 from django.conf import settings
+from django.db.models import QuerySet
+from django.db.models.query import RawQuerySet
 from django.utils.http import urlquote_plus
 from pyparsing import ParseException
 
@@ -247,7 +249,7 @@ def remove_facet_filters(parsed_filters):
     """Process query filter string to keep only non facet filters
 
     Fact filters correspond to the filters that can be applied using one of the displayed facet in
-    the search interface. It is useful for being able to combine classic facet filters and clustering
+    the search interface. This method is useful for being able to combine classic facet filters and clustering
     because clustering has to be done on the results of a search without applying facet filters (we want
     to have the clustering facet behaving as a traditional facet, meaning that the clustering should not 
     be re-triggered when applying new facet filters on the results).
@@ -306,97 +308,69 @@ def perform_search_engine_query(query_params):
     return results, paginator
 
 
-def add_sounds_to_search_engine(sounds):
-    search_engine = get_search_engine()
-    documents = [search_engine.convert_sound_to_search_engine_document(s) for s in sounds]
-    console_logger.info("Adding %d sounds to solr index" % len(documents))
-    search_logger.info("Adding %d sounds to solr index" % len(documents))
-    search_engine.add_to_index(documents)
+def add_sounds_to_search_engine(sound_objects):
+    """Add the Sounds from the queryset to the search engine
 
+    Args:
+        sound_objects (list[sounds.models.Sound]): list (or queryset) of Sound objects to index
 
-def add_all_sounds_to_search_engine(sound_queryset, slice_size=1000, mark_index_clean=False, delete_if_existing=False):
+    Returns:
+        int: number of sounds added to the index
     """
-    Add all sounds from the sound_queryset to the Solr index.
-    :param QuerySet sound_queryset: queryset of Sound objects.
-    :param int slice_size: sounds are indexed iteratively in chunks of this size.
-    :param bool mark_index_clean: if True, set 'is_index_dirty=False' for the indexed sounds' objects.
-    :param bool delete_if_existing: if True, delete sounds from Solr index before (re-)indexing them. This is used
-    because our sounds include dynamic fields which otherwise might not be properly updated when adding a sound that
-    already exists in the Solr index.
-    :return int: number of correctly indexed sounds
+    if isinstance(sound_objects, RawQuerySet):
+        num_sounds = len(list(sound_objects))
+    else:
+        num_sounds = len(sound_objects)
+    try:
+        search_logger.info("Adding %d sounds to the search engine" % num_sounds)
+        get_search_engine().add_sounds_to_index(sound_objects)
+        return num_sounds
+    except SearchEngineException as e:
+        search_logger.error("Failed to add sounds to search engine index: %s" % str(e))
+        return 0
+
+
+def delete_sounds_from_search_engine(sound_ids):
+    """Delete sounds from the search engine
+
+    Args:
+        sound_ids (list[int]): IDs of the sounds to delete
     """
-    num_correctly_indexed_sounds = 0
-    all_sound_ids = sound_queryset.values_list('id', flat=True).all()
-    n_slices = int(math.ceil(float(len(all_sound_ids))/slice_size))
-    for i in range(0, len(all_sound_ids), slice_size):
-        console_logger.info("Adding sounds to solr, slice %i of %i", (i/slice_size) + 1, n_slices)
-        try:
-            sound_ids = all_sound_ids[i:i+slice_size]
-            sounds_qs = sounds.models.Sound.objects.bulk_query_solr(sound_ids)
-            num_sounds = sounds_qs.count()
-            if delete_if_existing:
-                delete_sounds_from_search_engine(sound_ids=sound_ids)
-
-            console_logger.info("Adding %d sounds to solr index" % num_sounds)
-            search_logger.info("Adding %d sounds to solr index" % num_sounds)
-            get_search_engine().add_sounds_to_index(sounds_qs)
-
-            if mark_index_clean:
-                console_logger.info("Marking sounds as clean.")
-                sounds.models.Sound.objects.filter(pk__in=sound_ids).update(is_index_dirty=False)
-            num_correctly_indexed_sounds += len(sound_ids)
-        except SearchEngineException as e:
-            console_logger.error("Failed to add sound batch to solr index, reason: %s", str(e))
-            raise
-
-    return num_correctly_indexed_sounds
+    search_logger.info("Deleting %d sounds from search engine" % len(sound_ids))
+    try:
+        get_search_engine().remove_sounds_from_index(sound_ids)
+    except SearchEngineException as e:
+        search_logger.error("Could not delete sounds: %s" % str(e))
 
 
-def get_all_sound_ids_from_search_engine(limit=False):
-    search_logger.info("getting all sound ids from search engine.")
-    if not limit:
-        limit = 99999999999999
+def get_all_sound_ids_from_search_engine(page_size=2000):
+    """Retrieves the list of all sound IDs currently indexed in the search engine
+
+    Args:
+        page_size: number of sound IDs to retrieve per search engine query
+
+    Returns:
+        list[int]: list of sound IDs indexed in the search engine
+    """
+    search_logger.info("Getting all sound ids from search engine")
     search_engine = get_search_engine()
     solr_ids = []
     solr_count = None
-    PAGE_SIZE = 2000
     current_page = 1
-    while (len(solr_ids) < solr_count or solr_count is None) and len(solr_ids) < limit:
-        response = search_engine.search_sounds(sorting=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
-                                               offset=(current_page - 1) * PAGE_SIZE,
-                                               num_sounds=PAGE_SIZE)
-        solr_ids += [element['id'] for element in response.docs]
-        solr_count = response.num_found
-        current_page += 1
+    try:
+        while len(solr_ids) < solr_count or solr_count is None:
+            response = search_engine.search_sounds(query_filter="*:*",
+                                                   sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+                                                   offset=(current_page - 1) * page_size,
+                                                   num_sounds=page_size)
+            solr_ids += [element['id'] for element in response.docs]
+            solr_count = response.num_found
+            current_page += 1
+    except SearchEngineException as e:
+        search_logger.error("Could retrieve all sound IDs from search engine: %s" % str(e))
     return sorted(solr_ids)
 
 
 def get_random_sound_id_from_search_engine():
-    # We use this helper function as it facilitates unit testing
+    # This helper function is only used to facilitate unit testing
     return get_search_engine().get_random_sound()
-
-
-def delete_sound_from_search_engine(sound_id):
-    search_logger.info("deleting sound with id %d" % sound_id)
-    try:
-        get_search_engine().remove_sounds_from_index([sound_id])
-    except (SearchEngineException, socket.error) as e:
-        search_logger.error('could not delete sound with id %s (%s).' % (sound_id, e))
-
-
-def delete_sounds_from_search_engine(sound_ids):
-    solr_max_boolean_clause = 1000  # This number is specified in solrconfig.xml
-    for count, i in enumerate(range(0, len(sound_ids), solr_max_boolean_clause)):
-        range_ids = sound_ids[i:i+solr_max_boolean_clause]
-        try:
-            search_logger.info(
-                "deleting %i sounds from search engine [%i of %i, %i sounds]" %
-                (len(sound_ids),
-                 count + 1,
-                 int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause)),
-                 len(range_ids)))
-            get_search_engine().remove_sounds_from_index(range_ids)
-            
-        except (SearchEngineException, socket.error) as e:
-            search_logger.error('could not delete solr sounds chunk %i of %i' %
-                                (count + 1, int(math.ceil(float(len(sound_ids)) / solr_max_boolean_clause))))

@@ -40,7 +40,7 @@ from forum.models import Post
 from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search.search_general import perform_search_engine_query, search_prepare_parameters, \
+from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
     split_filter_query
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
 

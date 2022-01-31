@@ -127,8 +127,8 @@ class ChangeSoundOwnerTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_change_sound_owner(self, delete_sound_from_search_engine):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_change_sound_owner(self, delete_sounds_from_search_engine):
         # Prepare some content
         userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
         userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
@@ -174,16 +174,15 @@ class ChangeSoundOwnerTestCase(TestCase):
         userA.profile.delete_user(delete_user_object_from_db=True)
         sound = Sound.objects.get(id=target_sound_id)
         self.assertItemsEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
-        calls = [mock.call(i) for i in remaining_sound_ids]
-        delete_sound_from_search_engine.assert_has_calls(calls)  # All other sounds by the user were deleted
+        delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in remaining_sound_ids], any_order=True)
 
 
 class ProfileNumSoundsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_moderation_and_processing_state_changes(self, delete_sound_from_search_engine):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_moderation_and_processing_state_changes(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         self.assertEqual(user.profile.num_sounds, 0)  # Sound not yet moderated or processed
@@ -197,15 +196,15 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(user.profile.num_sounds, 1)  # Sound reprocessed second time and again set as ok
         sound.change_processing_state("FA")
         self.assertEqual(user.profile.num_sounds, 0)  # Sound failed processing
-        delete_sound_from_search_engine.assert_called_once_with(sound.id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound.id])
         sound.change_processing_state("OK")
         self.assertEqual(user.profile.num_sounds, 1)  # Sound processed again as ok
         sound.change_moderation_state("DE")
         self.assertEqual(user.profile.num_sounds, 0)  # Sound unmoderated
-        self.assertEqual(delete_sound_from_search_engine.call_count, 2) # Sound deleted once when going to FA, once when DE
+        self.assertEqual(delete_sounds_from_search_engine.call_count, 2) # Sound deleted once when going to FA, once when DE
 
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_sound_delete(self, delete_sound_from_search_engine):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_sound_delete(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         sound_id = sound.id
@@ -217,17 +216,17 @@ class ProfileNumSoundsTestCase(TestCase):
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
         self.assertEqual(Comment.objects.count(), 0)
-        delete_sound_from_search_engine.assert_called_once_with(sound_id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound_id])
 
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_deletedsound_creation(self, delete_sound_from_search_engine):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_deletedsound_creation(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         sound_id = sound.id
         sound.delete()
-        delete_sound_from_search_engine.assert_called_once_with(sound_id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound_id])
 
         self.assertEqual(DeletedSound.objects.filter(sound_id=sound_id).exists(), True)
         ds = DeletedSound.objects.get(sound_id=sound_id)
@@ -258,8 +257,8 @@ class PackNumSoundsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_create_and_delete_sounds(self, delete_sound_from_search_engine):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_create_and_delete_sounds(self, delete_sounds_from_search_engine):
         N_SOUNDS = 5
         user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
         pack = packs[0]
@@ -272,7 +271,7 @@ class PackNumSoundsTestCase(TestCase):
         sound_to_delete = sounds[0]
         sound_to_delete_id = sound_to_delete.id
         sound_to_delete.delete()
-        delete_sound_from_search_engine.assert_called_once_with(sound_to_delete_id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound_to_delete_id])
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, N_SOUNDS - 1)  # Check num_sounds on delete sound
 
     def test_edit_sound(self):
@@ -341,8 +340,8 @@ class SoundViewsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_search_engine')
-    def test_delete_sound_view(self, delete_sound_from_search_engine):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_delete_sound_view(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
         sound = sounds[0]
         sound_id = sound.id
@@ -370,7 +369,7 @@ class SoundViewsTestCase(TestCase):
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertRedirects(resp, reverse('accounts-home'))
-        delete_sound_from_search_engine.assert_called_once_with(sound.id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound.id])
 
     def test_embed_iframe(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)

@@ -828,7 +828,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
         documents = [convert_sound_to_search_engine_document(s) for s in sound_objects]
         self.get_sounds_index().add(documents)
 
-    def remove_sounds_from_index(self, sound_objects_or_ids, ):
+    def remove_sounds_from_index(self, sound_objects_or_ids):
         for sound_object_or_id in sound_objects_or_ids:
             if type(sound_object_or_id) != Sound:
                 sound_id = sound_object_or_id

@@ -23,7 +23,7 @@ from django.core.cache import caches
 from clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
 from tasks import cluster_sounds
 from utils.encryption import create_hash
-from utils.search.search_general import perform_search_engine_query, search_prepare_parameters
+from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 cache_clustering = caches["clustering"]

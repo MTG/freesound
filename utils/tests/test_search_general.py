@@ -23,7 +23,7 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
 from django.utils.http import urlquote_plus
-from utils.search.search_general import search_prepare_parameters, split_filter_query, remove_facet_filters
+from utils.search.search_sounds import search_prepare_parameters, split_filter_query, remove_facet_filters
 from utils.search.lucene_parser import parse_query_filter_string
 
 

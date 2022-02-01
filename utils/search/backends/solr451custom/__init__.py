@@ -674,9 +674,8 @@ class Solr(object):
         except error as e:
             raise SearchEngineException(e)
 
-    def commit(self, wait_flush=True, wait_searcher=True):
+    def commit(self, wait_searcher=True):
         message = ET.Element('commit')
-        message.set("waitFlush", str(wait_flush).lower())
         message.set("waitSearcher", str(wait_searcher).lower())
         self._request(message=ET.tostring(message, "utf-8"))
 
@@ -827,6 +826,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
     def add_sounds_to_index(self, sound_objects):
         documents = [convert_sound_to_search_engine_document(s) for s in sound_objects]
         self.get_sounds_index().add(documents)
+        self.get_sounds_index().commit()
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
         for sound_object_or_id in sound_objects_or_ids:
@@ -835,6 +835,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             else:
                 sound_id = sound_object_or_id.id
             self.get_sounds_index().delete_by_id(sound_id)
+        self.get_sounds_index().commit()
 
     def sound_exists_in_index(self, sound_object_or_id):
         if type(sound_object_or_id) != Sound:
@@ -941,6 +942,7 @@ class Solr451CustomSearchEngine(SearchEngineBase):
     def add_forum_posts_to_index(self, forum_post_objects):
         documents = [convert_post_to_search_engine_document(p) for p in forum_post_objects]
         self.get_forum_index().add(documents)
+        self.get_forum_index().commit()
 
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         for post_object_or_id in forum_post_objects_or_ids:
@@ -949,9 +951,10 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             else:
                 post_id = post_object_or_id.id
             self.get_forum_index().delete_by_id(post_id)
+        self.get_forum_index().commit()
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
-        if type(forum_post_object_or_id) != Sound:
+        if type(forum_post_object_or_id) != Post:
             post_id = forum_post_object_or_id
         else:
             post_id = forum_post_object_or_id.id

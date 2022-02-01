@@ -23,8 +23,16 @@ import importlib
 from django.conf import settings
 
 
-def get_search_engine():
-    module_name, class_name = settings.SEARCH_ENGINE_BACKEND_CLASS.rsplit('.', 1)
+def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS):
+    """Return SearchEngine class instance to carry out search engine actions
+
+    Args:
+        backend_class: path to the search engine backend class (defaults to settings.SEARCH_ENGINE_BACKEND_CLASS)
+
+    Returns:
+        utils.search.SearchEngineBase: search engine backend class instance
+    """
+    module_name, class_name = backend_class.rsplit('.', 1)
     module = importlib.import_module(module_name)
     return getattr(module, class_name)()
 
@@ -120,8 +128,8 @@ class SearchResults(object):
             q_time (int, optional): time that it took to execute the query in the backend, in ms
         """
         self.docs = docs if docs is not None else list()
-        self.facets = facets if facets is not None else list()
-        self.highlighting = highlighting if highlighting is not None else list()
+        self.facets = facets if facets is not None else dict()
+        self.highlighting = highlighting if highlighting is not None else dict()
         self.non_grouped_number_of_results = non_grouped_number_of_results
         self.num_found = num_found
         self.start = start
@@ -168,6 +176,8 @@ class SearchEngineException(Exception):
 
 
 class SearchEngineBase(object):
+
+    # Test subclasses of SearchEngineBase with the test_search_engine_backend management command
 
     # Sound search related methods
 

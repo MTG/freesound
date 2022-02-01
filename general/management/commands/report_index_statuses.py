@@ -32,7 +32,8 @@ class Command(LoggingBaseCommand):
     help = "This command checks the status of the solr and gaia index compared to the fs database. Reports about " \
            "sounds which are missing in gaia and solr and sounds that are in gaia or solr but not in fs dataset. " \
            "Moreover, it changes the status of the sounds in fs dataset that are not in gaia or solr so the next " \
-           "time the indexes are updated (running similarity_update and post_dirty_sounds_to_solr) they are indexed."
+           "time the indexes are updated (running similarity_update and post_dirty_sounds_to_search_engine) they " \
+           "are indexed."
 
     def add_arguments(self, parser):
         parser.add_argument(

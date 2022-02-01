@@ -23,7 +23,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
-from search.management.commands.post_dirty_sounds_to_solr import send_sounds_to_search_engine
+from search.management.commands.post_dirty_sounds_to_search_engine import send_sounds_to_search_engine
 from utils.search.search_sounds import add_sounds_to_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
 
 console_logger = logging.getLogger("console")

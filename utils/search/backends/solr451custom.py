@@ -757,7 +757,12 @@ class Solr451CustomSearchEngine(SearchEngineBase):
     def add_sounds_to_index(self, sound_objects):
         documents = [convert_sound_to_search_engine_document(s) for s in sound_objects]
         self.get_sounds_index().add(documents)
-        self.get_sounds_index().commit()
+        if settings.DEBUG:
+            # Sending the commit message generates server errors in production, we should investigate that... it could
+            # be related with a different version of solr running locally. In any case, this line was added only
+            # recently together with the refactoring of search engine backends so that we could force committing while
+            # testing, but it is not needed in production
+            self.get_sounds_index().commit()
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
         for sound_object_or_id in sound_objects_or_ids:
@@ -766,7 +771,12 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             else:
                 sound_id = sound_object_or_id.id
             self.get_sounds_index().delete_by_id(sound_id)
-        self.get_sounds_index().commit()
+        if settings.DEBUG:
+            # Sending the commit message generates server errors in production, we should investigate that... it could
+            # be related with a different version of solr running locally. In any case, this line was added only
+            # recently together with the refactoring of search engine backends so that we could force committing while
+            # testing, but it is not needed in production
+            self.get_sounds_index().commit()
 
     def sound_exists_in_index(self, sound_object_or_id):
         if type(sound_object_or_id) != Sound:
@@ -870,7 +880,12 @@ class Solr451CustomSearchEngine(SearchEngineBase):
     def add_forum_posts_to_index(self, forum_post_objects):
         documents = [convert_post_to_search_engine_document(p) for p in forum_post_objects]
         self.get_forum_index().add(documents)
-        self.get_forum_index().commit()
+        if settings.DEBUG:
+            # Sending the commit message generates server errors in production, we should investigate that... it could
+            # be related with a different version of solr running locally. In any case, this line was added only
+            # recently together with the refactoring of search engine backends so that we could force committing while
+            # testing, but it is not needed in production
+            self.get_forum_index().commit()
 
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         for post_object_or_id in forum_post_objects_or_ids:
@@ -879,7 +894,12 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             else:
                 post_id = post_object_or_id.id
             self.get_forum_index().delete_by_id(post_id)
-        self.get_forum_index().commit()
+        if settings.DEBUG:
+            # Sending the commit message generates server errors in production, we should investigate that... it could
+            # be related with a different version of solr running locally. In any case, this line was added only
+            # recently together with the refactoring of search engine backends so that we could force committing while
+            # testing, but it is not needed in production
+            self.get_forum_index().commit()
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
         if type(forum_post_object_or_id) != Post:

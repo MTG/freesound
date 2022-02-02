@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 import os
-import base64
-import json
 import requests
 from django.conf import settings
 
@@ -20,6 +18,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load tasks from only the clustering app.
 app.autodiscover_tasks()
+# Maybe app.autodiscover_tasks( settings.INSTALLED_APPS) is needed?
 
 
 def get_queues_task_counts():
@@ -48,4 +47,3 @@ def get_queues_task_counts():
 
     data = sorted(data, key=lambda x: x[0])
     return data
-

@@ -22,11 +22,9 @@
 
 from follow.models import FollowingUserItem, FollowingQueryItem
 import sounds
-from utils.search.search_general import search_prepare_query, search_prepare_sort
-from django.conf import settings
-from utils.search.solr import Solr, SolrResponseInterpreter
-from search.forms import SEARCH_SORT_OPTIONS_WEB
+from utils.search import get_search_engine
 import urllib
+from django.conf import settings
 
 SOLR_QUERY_LIMIT_PARAM = 3
 
@@ -67,9 +65,7 @@ def is_user_following_tag(user, slash_tag):
 
 def get_stream_sounds(user, time_lapse):
 
-    solr = Solr(settings.SOLR_URL)
-
-    sort_str = search_prepare_sort("created desc", SEARCH_SORT_OPTIONS_WEB)
+    search_engine = get_search_engine()
 
     #
     # USERS FOLLOWING
@@ -82,27 +78,24 @@ def get_stream_sounds(user, time_lapse):
 
         filter_str = "username:" + user_following.username + " created:" + time_lapse
 
-        query = search_prepare_query(
-            "",
-            filter_str,
-            sort_str,
-            1,
-            SOLR_QUERY_LIMIT_PARAM,
-            grouping=False,
-            include_facets=False
+        result = search_engine.search_sounds(
+            textual_query='',
+            query_filter=filter_str,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+            offset=0,
+            num_sounds=SOLR_QUERY_LIMIT_PARAM,
+            group_by_pack=False,
         )
-
-        result = SolrResponseInterpreter(solr.select(unicode(query)))
 
         if result.num_rows != 0:
 
             more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.quote(filter_str), urllib.quote(sort_str[0])]
+            more_url_params = [urllib.quote(filter_str), urllib.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
 
             # this is the same link but for the email has to be "quoted"
-            more_url = u"?f=" + filter_str + u"&s=" + sort_str[0]
+            more_url = u"?f=" + filter_str + u"&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
@@ -126,27 +119,24 @@ def get_stream_sounds(user, time_lapse):
 
         tag_filter_str = tag_filter_query + " created:" + time_lapse
 
-        query = search_prepare_query(
-            "",
-            tag_filter_str,
-            sort_str,
-            1,
-            SOLR_QUERY_LIMIT_PARAM,
-            grouping=False,
-            include_facets=False
+        result = search_engine.search_sounds(
+            textual_query='',
+            query_filter=tag_filter_str,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+            offset=0,
+            num_sounds=SOLR_QUERY_LIMIT_PARAM,
+            group_by_pack=False,
         )
-
-        result = SolrResponseInterpreter(solr.select(unicode(query)))
 
         if result.num_rows != 0:
 
             more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.quote(tag_filter_str), urllib.quote(sort_str[0])]
+            more_url_params = [urllib.quote(tag_filter_str), urllib.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
 
             # this is the same link but for the email has to be "quoted"
-            more_url = u"?f=" + tag_filter_str + u"&s=" + sort_str[0]
+            more_url = u"?f=" + tag_filter_str + u"&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
@@ -160,6 +150,6 @@ def get_stream_sounds(user, time_lapse):
 def build_time_lapse(date_from, date_to):
     date_from = date_from.strftime("%Y-%m-%d")
     date_to = date_to.strftime("%Y-%m-%d")
-    time_lapse = "[%sT00:00:00Z TO %sT23:59:59.999Z]" % (date_from, date_to)
+    time_lapse = '["%sT00:00:00Z" TO "%sT23:59:59.999Z"]' % (date_from, date_to)
     return time_lapse
 

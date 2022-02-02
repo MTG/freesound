@@ -19,7 +19,6 @@
 #
 
 from django import forms
-#from django.forms import ModelForm, TextInput, Select
 from bookmarks.models import BookmarkCategory, Bookmark
 
 class BookmarkCategoryForm(forms.ModelForm):
@@ -32,7 +31,11 @@ class BookmarkCategoryForm(forms.ModelForm):
         }
 
 class BookmarkForm(forms.ModelForm):
-    new_category_name = forms.CharField(max_length=128, help_text="<br>If you want a new category, don't select one above, set its new name here.", required=False)
+    new_category_name = forms.CharField(
+        max_length=128,
+        help_text="<br>If you want a new category, don't select one above, set its new name here.",
+        required=False)
+    use_last_category = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
 
     class Meta:
         model = Bookmark
@@ -41,25 +44,45 @@ class BookmarkForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class':'name_widget'}),
         }
     
-    def save(self):
-        
-        try:
-            bookmark = Bookmark(user=self.instance.user,sound=self.instance.sound)
-            
+    def save(self, *args, **kwargs):
+        bookmark = Bookmark(user=self.instance.user,sound=self.instance.sound)
+        if not self.cleaned_data['use_last_category']:
             if not self.cleaned_data['category']:
                 if self.cleaned_data['new_category_name'] != "":
-                    category = BookmarkCategory(user=self.instance.user, name=self.cleaned_data['new_category_name'])
+                    category = \
+                        BookmarkCategory(user=self.instance.user, name=self.cleaned_data['new_category_name'])
                     category.save()
                     bookmark.category = category
                     self.cleaned_data['category'] = category
             else:
                 bookmark.category = self.cleaned_data['category']
-            
-            if self.cleaned_data['name'] != "":
-                bookmark.name = self.cleaned_data['name']
-            
-            bookmark.save()
-            return True
-        
-        except:
-            return False
+        else:
+            try:
+                last_user_bookmark = \
+                    Bookmark.objects.filter(user=self.instance.user).order_by('-created')[0]
+                # If user has a previous bookmark, use the same category (or use none if no category used in last
+                # bookmark)
+                bookmark.category = last_user_bookmark.category
+            except IndexError:
+                # This is first bookmark of the user
+                pass
+
+        if self.cleaned_data['name'] != "":
+            BookmarkCategory(user=self.instance.user, name=self.cleaned_data['new_category_name'])
+            bookmark.name = self.cleaned_data['name']
+
+        bookmark.save()
+        return bookmark
+
+
+class BwBookmarkForm(BookmarkForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwBookmarkForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = False
+        self.fields['name'].widget.attrs['placeholder'] = "Name for the bookmark"
+        self.fields['category'].label = False
+        self.fields['new_category_name'].label = False
+        self.fields['new_category_name'].widget.attrs['placeholder'] = \
+            "New category name (only if no category selected above)"
+        self.fields['new_category_name'].help_text = None

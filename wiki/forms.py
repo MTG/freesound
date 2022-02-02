@@ -29,3 +29,15 @@ class ContentForm(forms.ModelForm):
     class Meta:
         model = models.Content
         exclude = ('author', 'page', 'created')
+
+
+class BwContentForm(ContentForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BwContentForm, self).__init__(*args, **kwargs)
+        self.fields['title'].label = False
+        self.fields['title'].widget.attrs['placeholder'] = 'Title of the page'
+        self.fields['body'].label = False
+        self.fields['body'].widget.attrs['placeholder'] = 'Contents of the page. ' \
+                                                          'You can use Markdown formatting and HTML.'
+

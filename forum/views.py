@@ -17,25 +17,27 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+import datetime
 import re
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect, Http404, \
-    HttpResponsePermanentRedirect
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse
 from django.db import transaction
 
 from accounts.models import DeletedUser
-from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
+from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
+from utils.cache import invalidate_template_cache
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.search.search_forum import add_post_to_solr, delete_post_from_solr
+from utils.search.search_forum import add_posts_to_search_engine
 from utils.text import text_may_be_spam, remove_control_chars
 
 
@@ -87,7 +89,8 @@ class last_action(object):
 
 @last_action
 def forums(request):
-    forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
+    forums = Forum.objects.select_related(
+        'last_post', 'last_post__author', 'last_post__author__profile', 'last_post__thread').all()
     tvars = {'forums': forums}
     return render(request, 'forum/index.html', tvars)
 
@@ -101,7 +104,10 @@ def forum(request, forum_name_slug):
 
     tvars = {'forum': forum}
     paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
-                         .select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)
+                         .select_related('last_post', 'last_post__author', 'last_post__author__profile',
+                                         'author', 'author__profile', 'first_post', 'forum'),
+                         settings.FORUM_THREADS_PER_PAGE if not using_beastwhoosh(request) else
+                         settings.FORUM_THREADS_PER_PAGE_BW)
     tvars.update(paginator)
 
     return render(request, 'forum/threads.html', tvars)
@@ -111,9 +117,12 @@ def forum(request, forum_name_slug):
 @transaction.atomic()
 def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
-    thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
+    thread = get_object_or_404(Thread.objects.select_related('last_post', 'last_post__author'),
+                               forum=forum, id=thread_id, first_post__moderation_state="OK")
 
-    paginator = paginate(request, Post.objects.select_related('author', 'author__profile').filter(
+    paginator = paginate(request, Post.objects.select_related(
+        'author', 'author__profile', 'thread', 'thread__forum',
+    ).filter(
         thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE)
 
     has_subscription = False
@@ -132,6 +141,7 @@ def thread(request, forum_name_slug, thread_id):
 
     tvars = {'thread': thread,
              'forum': forum,
+             'post_counter_offset': settings.FORUM_POSTS_PER_PAGE * (paginator['current_page'] - 1),  # Only used in BW
              'has_subscription': has_subscription}
     tvars.update(paginator)
     return render(request, 'forum/thread.html', tvars)
@@ -146,6 +156,35 @@ def latest_posts(request):
     tvars = {'hide_search': hide_search}
     tvars.update(paginator)
     return render(request, 'forum/latest_posts.html', tvars)
+
+
+def get_hot_threads(n=None, days=15):
+    if not settings.DEBUG:
+        last_days_filter = datetime.datetime.today() - datetime.timedelta(days=days)
+    else:
+        # If in DEBUG mode we won't have recent posts, so we modify the filter to match all existing threads
+        last_days_filter = Post.objects.order_by('created').first().created
+    return Thread.objects.filter(first_post__moderation_state="OK",
+                                 last_post__moderation_state="OK",
+                                 last_post__created__gte=last_days_filter) \
+               .order_by('-last_post__created') \
+               .select_related('author',
+                               'forum',
+                               'last_post',
+                               'last_post__author',
+                               'last_post__thread',
+                               'last_post__thread__forum')[:n]
+
+
+def hot_threads(request):
+    if not using_beastwhoosh(request):
+        # "hot threads" is a BW only page, if on NG, redirect to "latest posts"
+        return HttpResponseRedirect(reverse('forums-latest-posts'))
+
+    paginator = paginate(request, get_hot_threads(), settings.FORUM_THREADS_PER_PAGE_BW)
+    tvars = {}
+    tvars.update(paginator)
+    return render(request, 'forum/hot_threads.html', tvars)
 
 
 @last_action
@@ -177,9 +216,10 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                        .order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
+    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
 
     if request.method == 'POST':
-        form = PostReplyForm(request, quote, request.POST)
+        form = FromToUse(request, quote, request.POST)
 
         if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
@@ -188,11 +228,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(
                         author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
-                    # DO NOT add the post to solr, only do it when it is moderated
+                    # DO NOT add the post to the search engine, only do it when it is moderated
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
-                    add_post_to_solr(post.id)
+                    add_posts_to_search_engine([post])
                     set_to_moderation = False
 
                 if form.cleaned_data["subscribe"]:
@@ -200,6 +240,12 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     if not subscription.is_active:
                         subscription.is_active = True
                         subscription.save()
+                else:
+                    # If "subscribe" not in form, then remove subscription (if any is existing)
+                    Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
+
+                # Invalidate the thread common commenters cache as it could have changed
+                invalidate_template_cache('bw_thread_common_commenters', thread.id)
 
                 # figure out if there are active subscriptions in this thread
                 if not set_to_moderation:
@@ -226,10 +272,10 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                                                                  "approved by moderators")
                     return HttpResponseRedirect(post.thread.get_absolute_url())
     else:
+        initial = {'subscribe': thread.is_user_subscribed(request.user)}
         if quote:
-            form = PostReplyForm(request, quote, {'body': quote})
-        else:
-            form = PostReplyForm(request, quote)
+            initial.update({'body': quote})
+        form = FromToUse(request, quote, initial=initial)
 
     if not user_can_post_in_forum:
         messages.add_message(request, messages.INFO, user_can_post_message)
@@ -251,9 +297,10 @@ def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
+    FormToUse = BwNewThreadForm if using_beastwhoosh(request) else NewThreadForm
 
     if request.method == 'POST':
-        form = NewThreadForm(request.POST)
+        form = FormToUse(request.POST)
         if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 post_title = form.cleaned_data["title"]
@@ -266,11 +313,11 @@ def new_thread(request, forum_name_slug):
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(author=request.user, body=post_body, thread=thread,
                                                moderation_state="NM")
-                    # DO NOT add the post to solr, only do it when it is moderated
+                    # DO NOT add the post to the search engine, only do it when it is moderated
                     set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=post_body, thread=thread)
-                    add_post_to_solr(post.id)
+                    add_posts_to_search_engine([post])
                     set_to_moderation = False
 
                 # Add first post to thread (first post will always be the same)
@@ -291,14 +338,14 @@ def new_thread(request, forum_name_slug):
                                                                  "approved by moderators")
                     return HttpResponseRedirect(post.thread.forum.get_absolute_url())
     else:
-        form = NewThreadForm()
+        form = FormToUse()
 
     if not user_can_post_in_forum:
         messages.add_message(request, messages.INFO, user_can_post_message)
 
     if user_is_blocked_for_spam_reports:
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
-                                                     "has been temporaly blocked after multiple spam reports")
+                                                     "has been temporarily blocked after multiple spam reports")
 
     tvars = {'forum': forum,
              'form': form}
@@ -349,6 +396,7 @@ def old_topic_link_redirect(request):
 
 @login_required
 def post_delete(request, post_id):
+    # NOTE: this view is not used in beast whoosh because we use JS modal for confirmation of deletion
     post = get_object_or_404(Post, id=post_id)
     if post.author == request.user or request.user.has_perm('forum.delete_post'):
         tvars = {'post': post}
@@ -362,16 +410,29 @@ def post_delete_confirm(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
         if post.author == request.user or request.user.has_perm('forum.delete_post'):
+            # Delete post and save reference to thread, forum and creation date (it will be used later to
+            # decide to what post redirect after deletion)
+            deleted_post_created = post.created
             thread = post.thread
             forum = thread.forum
             post.delete()
+
+            # Invalidate the thread common commenters cache as it could have changed
+            invalidate_template_cache('bw_thread_common_commenters', thread.id)
+
             # If the post was the only post in the thread, redirect to the forum
             try:
                 thread.refresh_from_db()
             except Thread.DoesNotExist:
                 return redirect('forums-forum', forum_name_slug=forum.name_slug)
+
+            # Otherwise redirect to the previous post in the thread (if not previous posts, redirect to last post)
             try:
-                return redirect('forums-post', thread.forum.name_slug, thread.id, thread.last_post.id)
+                previous_posts = thread.post_set.filter(created__lte=deleted_post_created).order_by('-created')
+                if previous_posts.count():
+                    return redirect('forums-post', thread.forum.name_slug, thread.id, previous_posts[0].id)
+                else:
+                    return redirect('forums-post', thread.forum.name_slug, thread.id, thread.last_post_id)
             except (Post.DoesNotExist, Thread.DoesNotExist, AttributeError):
                 return HttpResponseRedirect(reverse('forums-forums'))
 
@@ -382,19 +443,43 @@ def post_delete_confirm(request, post_id):
 @transaction.atomic()
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
+    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
     if post.author == request.user or request.user.has_perm('forum.change_post'):
         if request.method == 'POST':
-            form = PostReplyForm(request, '', request.POST)
+            form = FromToUse(request, '', request.POST)
             if form.is_valid():
                 post.body = remove_control_chars(form.cleaned_data['body'])
                 post.save()
-                add_post_to_solr(post.id)  # Update post in solr
+                add_posts_to_search_engine([post])
+
+                if form.cleaned_data["subscribe"]:
+                    subscription, created = Subscription.objects.get_or_create(thread=post.thread,
+                                                                               subscriber=request.user)
+                    if not subscription.is_active:
+                        subscription.is_active = True
+                        subscription.save()
+                else:
+                    # If "subscribe" not in form, then remove subscription (if any is existing)
+                    Subscription.objects.filter(thread=post.thread, subscriber=request.user).delete()
+
                 return HttpResponseRedirect(
                     reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:
-            form = PostReplyForm(request, '', {'body': post.body})
-        tvars = {'form': form}
-        return render(request, 'forum/post_edit.html', tvars)
+            initial = {
+                'subscribe': post.thread.is_user_subscribed(request.user),
+                'body': post.body
+            }
+            form = FromToUse(request, '', initial=initial)
+
+        latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum') \
+                           .order_by('-created') \
+                           .filter(thread=post.thread, moderation_state="OK", created__lt=post.created)[0:15]
+        tvars = {'forum': post.thread.forum,
+                 'thread': post.thread,
+                 'form': form,
+                 'latest_posts': latest_posts,
+                 'editing': True}
+        return render(request, 'forum/reply.html', tvars)
     else:
         raise Http404
 
@@ -412,6 +497,10 @@ def moderate_posts(request):
                 if action == "Approve":
                     post.moderation_state = "OK"
                     post.save()
+
+                    # Invalidate the thread common commenters cache as it could have changed
+                    invalidate_template_cache('bw_thread_common_commenters', post.thread.id)
+
                 elif action == "Delete User":
                     try:
                         deletion_reason = DeletedUser.DELETION_REASON_SPAMMER

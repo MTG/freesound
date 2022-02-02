@@ -1,0 +1,58 @@
+{% extends "simple_page.html" %}
+{% load staticfiles %}
+{% load bw_templatetags %}
+{% load display_user %}
+
+{% block title %}Donations{% endblock %}
+{% block page-title %}List of donations{% endblock %}
+
+{% block page-content %}
+    <div class="bw-donate">
+        {% regroup object_list by created|date:"F, Y" as donations %}
+        {% for donation_m in donations %}
+            <h3 class="text-red v-spacing-top-4">{{donation_m.grouper}}</h3>
+            <div class="row v-spacing-top-4">
+            {% for donation in donation_m.list%}
+                <div class="col-md-4 col-lg-2 v-spacing-2">
+                    <div class="row middle">
+                        <div class="col-md-3 col-1">
+                            {% if donation.is_anonymous %}
+                                {% bw_user_avatar "_avatar.png" "anonymous"  %}
+                            {% else %}
+                                {% if donation.user %}
+                                    {% bw_user_avatar donation.user.profile.locations.avatar.XL.url donation.user.username %}
+                                {% else %}
+                                    {% bw_user_avatar "_avatar.png" donation.display_name %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8 col-11 padding-left-3">
+                            {% if donation.is_anonymous %}
+                                <div class="ellipsis text-grey">
+                                    {{donation.display_name}}
+                                </div>
+                            {% else %}
+                                {% if donation.user %}
+                                    <div class="ellipsis">
+                                        <a href="{% url "account" donation.user.username %}">{{ donation.user.username }}</a>
+                                    </div>
+                                {% else %}
+                                    <div class="ellipsis">
+                                        {{donation.display_name}}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            {% if donation.display_amount %}
+                                <div class="ellipsis text-light-grey">{{donation.amount}} {{donation.currency|lower}}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endfor %}
+        <div class="v-spacing-top-5 v-spacing-5">
+            {% bw_paginator page_obj.paginator page_obj page_obj.number request "donations" %}
+        </div>
+    </div>
+{% endblock %}

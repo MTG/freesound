@@ -21,7 +21,7 @@
 import json
 from textwrap import wrap
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -163,10 +163,7 @@ def new_message(request, username=None, message_id=None):
                     raise Http404
                 
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
-                body = ''.join(BeautifulSoup(body).findAll(text=True))
-                body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
-                                  for line in body.split("\n")])
-                body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
+                body = quote_message_for_reply(body, message.user_from.username)
 
                 subject = "re: " + message.subject
                 to = message.user_from.username
@@ -179,6 +176,14 @@ def new_message(request, username=None, message_id=None):
 
     tvars = {'form': form}
     return render(request, 'messages/new.html', tvars)
+
+
+def quote_message_for_reply(body, username):
+    body = ''.join(BeautifulSoup(body).find_all(text=True))
+    body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
+                        for line in body.split("\n")])
+    body = "> --- " + username + " wrote:\n>\n" + body
+    return body
 
 
 def get_previously_contacted_usernames(user):

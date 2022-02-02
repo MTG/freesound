@@ -1,5 +1,5 @@
 import playerSettings from './settings'
-import { formatAudioDuration } from './utils'
+import { formatAudioDuration, getAudioElementDurationOrDurationProperty } from './utils'
 import { createIconElement } from '../../utils/icons'
 
 const useActionIcon = (parentNode, action) => {
@@ -11,6 +11,7 @@ const useActionIcon = (parentNode, action) => {
   )
   bwPlayBtn.replaceChild(actionIcon, playerStatusIcon)
 }
+
 
 /**
  * @param {number} progressPercentage
@@ -27,17 +28,15 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
   if (progressIndicator) {
     const progressIndicatorRightBorderSize = progressIndicator.offsetWidth - progressIndicator.clientWidth
     const width = progressIndicator.parentElement.clientWidth - progressIndicatorRightBorderSize
-    progressIndicator.style.transform = `translateX(${-width + ((width *
-        progressPercentage) /
-        100)}px)`
+    progressIndicator.style.transform = `translateX(${-width + ((width * progressPercentage) / 100)}px)`
   }
 
   if (progressBarIndicator) {
     const width = progressBarIndicator.parentElement.clientWidth - progressBarIndicator.clientWidth
-    progressBarIndicator.style.transform = `translateX(${(width *
-      progressPercentage) /
-      100}px)`
+    progressBarIndicator.style.transform = `translateX(${(width * progressPercentage) / 100}px)`
   }
+
+
 }
 
 /**
@@ -45,7 +44,8 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
  * @param {HTMLDivElement} parentNode
  */
 const usePlayingAnimation = (audioElement, parentNode) => {
-  const { duration, currentTime } = audioElement
+  const { currentTime } = audioElement
+  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
   const progress = (currentTime / duration) * 100
   setProgressIndicator(progress, parentNode)
   if (!audioElement.paused) {
@@ -68,28 +68,39 @@ const usePlayingStatus = (audioElement, parentNode) => {
 const removePlayingStatus = (parentNode, audioElement) => {
   parentNode.classList.remove('bw-player--playing')
   useActionIcon(parentNode, 'play')
-  const didReachTheEnd = audioElement.duration === audioElement.currentTime
+  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode)
+  const didReachTheEnd = duration <= audioElement.currentTime
   if (didReachTheEnd) {
     setTimeout(() => setProgressIndicator(0, parentNode), 100)
   }
 }
 
-const onPlayerTimeUpdate = (audioElement, parentNode) => {
-  const { duration, currentTime } = audioElement
-  const didReachTheEnd = duration === currentTime
+export const onPlayerTimeUpdate = (audioElement, parentNode) => {
+  const { currentTime } = audioElement
+  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode)
+  const didReachTheEnd = duration <= currentTime
   // reset progress at the end of playback
   const timeElapsed = didReachTheEnd ? 0 : currentTime
-  const progress = playerSettings.showRemainingTime
-    ? duration - timeElapsed
-    : timeElapsed
-
+  const progress = playerSettings.showRemainingTime ? duration - timeElapsed: timeElapsed
   const progressStatus = parentNode.getElementsByClassName('bw-player__progress')
   if (progressStatus.length > 0){
-    // only show remaining time if progressStatus elements are found (e.g. in minimal player these elements are not included)
-    const progressIndicator = [...progressStatus[0].childNodes][1]
-    progressIndicator.innerHTML = `${
-      playerSettings.showRemainingTime ? '-' : ''
-    }${formatAudioDuration(progress)}`
+    const progressIndicators = [...progressStatus[0].childNodes]
+    if (parentNode.dataset.size === 'big') {
+      // Big player, we update the indicator on the left with current progress
+      const progressIndicatorLeft = progressIndicators[1]
+      progressIndicatorLeft.innerHTML = `${playerSettings.showRemainingTime ? '-' : ''}${formatAudioDuration(progress, parentNode.dataset.showMilliseconds)}`
+    } else {
+      // Small player, we update the indicator with current progress
+      const progressIndicator = progressIndicators[0]
+      if (!audioElement.paused){
+        progressIndicator.innerHTML = `${playerSettings.showRemainingTime ? '-' : ''}${formatAudioDuration(progress, parentNode.dataset.showMilliseconds)}`  
+      } else {
+        // In small player we show the full duration while sound is not playing
+        // Note that we use the duration property from the sound player element which comes from database and not from the actual loaded preview
+        // This is to avoid showing a different total duration once a preview is loaded
+        progressIndicator.innerHTML = `${playerSettings.showRemainingTime ? '-' : ''}${formatAudioDuration(parentNode.dataset.duration, parentNode.dataset.showMilliseconds)}`  
+      }
+    }
   }
 }
 
@@ -115,13 +126,27 @@ export const createAudioElement = parentNode => {
   let updatePlayerPositionTimer = undefined;
 
   audioElement.addEventListener('play', () => {
-    usePlayingStatus(audioElement, parentNode);
-    updatePlayerPositionTimer = setInterval(() => {
-      onPlayerTimeUpdate(audioElement, parentNode)
-  }, 100);
-
+    if (audioElement.readyState === 0){
+      audioElement.addEventListener('loadeddata', () => {
+        usePlayingStatus(audioElement, parentNode);
+        updatePlayerPositionTimer = setInterval(() => {
+          onPlayerTimeUpdate(audioElement, parentNode)
+        }, 30)
+      });
+    } else {
+      usePlayingStatus(audioElement, parentNode);
+      updatePlayerPositionTimer = setInterval(() => {
+        onPlayerTimeUpdate(audioElement, parentNode)
+      }, 30)
+    }
   })
+
+  audioElement.addEventListener('ended', () => {
+    onPlayerTimeUpdate(audioElement, parentNode);
+  })
+
   audioElement.addEventListener('pause', () => {
+    onPlayerTimeUpdate(audioElement, parentNode);
     removePlayingStatus(parentNode, audioElement)
     if (updatePlayerPositionTimer !== undefined){
       clearInterval(updatePlayerPositionTimer);

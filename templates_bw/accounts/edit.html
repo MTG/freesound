@@ -28,7 +28,7 @@
         {% comment %}The form below is used to delete the avatar with a single button click{% endcomment %}
         <form  class="display-inline-block" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
             <input type="hidden" name="image-remove" value="1">
-            <button class="btn-inverse h-spacing-left-2 font-weight-semi-bold" {% if not profile.has_avatar %}disabled{% endif %}>Delete avatar</button>
+            <button class="btn-inverse h-spacing-left-2" {% if not profile.has_avatar %}disabled{% endif %}>Delete avatar</button>
         </form>
     </div>
     {% if has_old_avatar %}

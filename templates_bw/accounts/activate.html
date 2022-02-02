@@ -1,25 +1,19 @@
-{% extends "base.html" %}
-{% load staticfiles %}
+{% extends "simple_page.html" %}
 
-{% block title %}Activation succeeded{% endblock %}
+{% block title %}User activation{% endblock %}
+{% block page-title %}{% if all_ok %}Activation succeeded{% else %}User activation{% endif %}{% endblock %}
 
-{% block content %}
-    <div class="container">
-        <div class="navbar-space-filler v-spacing-7 padding-bottom-2 v-spacing-top-5">
-            {% if all_ok %}
-                <h5>Activation succeeded</h5>
-                <p>Your account has been activated. You may go ahead and log in now.</p>
-                <button class="btn btn-primary" data-toggle="modal" data-target="#loginModal">Log in</button>
-            {% else %}
-                <h5>Activation succeeded</h5>
-                {% if user_does_not_exist %}
-                    <p>We're sorry but the user you are trying to activate does not exist anymore! Please register again...</p>
-                    <button class="btn btn-secondary" data-toggle="modal" data-target="#registerModal">Join</button>
-                {% endif %}
-                {% if decode_error %}
-                    <p>We're sorry but we can't find that activation key in the database. Try copy-pasting the link that we sent you instead of clicking it...</p>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
+{% block page-content %}
+    {% if all_ok %}
+        <p class="text-grey v-spacing-3">Your account has been activated. You may go ahead and log in now.</p>
+        <button class="btn-primary" data-toggle="modal" data-target="#loginModal">Log in</button>
+    {% else %}
+        {% if user_does_not_exist %}
+            <p class="text-grey v-spacing-3">We're sorry but the user you are trying to activate does not exist anymore! Please register again...</p>
+            <button class="btn-secondary" data-toggle="modal" data-target="#registerModal">Join</button>
+        {% endif %}
+        {% if decode_error %}
+            <p class="text-grey v-spacing-3">We're sorry but we can't find that activation key in the database. Try copy-pasting the link that we sent you instead of clicking it...</p>
+        {% endif %}
+    {% endif %}
 {% endblock %}

@@ -20,7 +20,7 @@ def get_formatted_examples_for_view(view_name):
                 output += '  %s%s\n' % (base_url, urllib.quote(element, safe='?/=&",:()'))
                 #output += '  curl -H "Authorization: Token {{token}}" \'%s%s\'\n' % (base_url, element)
             else:
-                output += '  %s\n' % (element % base_url[:-1].replace('http', 'https'))
+                output += '  %s\n' % (element % base_url[:-1].replace('http:', 'https:'))
 
     return output
 

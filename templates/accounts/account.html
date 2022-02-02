@@ -338,17 +338,27 @@
 
     {% endif %}
 
+    {% if user.profile.has_geotags %}
     <div id="latest_geotags" class="content_box">
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
-        <div id="map_canvas"></div>
-        <script type="text/javascript">
-            make_sounds_map('{% url "geotags-for-user-latest-barray" user.username %}', 'map_canvas', function(){
-                $('#latest_geotags').show(); // Once map is ready, show geotags section
-            });
-        </script>
-        <p><a href="{% url "geotags-for-user" user.username %}">more...</a></p>
+        <p id="map_load_trigger"><a href="javascript:void(0);" onclick="triggerLoadMap()">Load map...</a></p>
+        <div id="map_loading_indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif" style="display: none;"></div>
+        <div id="map_wrapper" style="display: none;">
+            <div id="map_canvas"></div>
+            <script type="text/javascript">
+                function triggerLoadMap() {
+                    $('#map_loading_indicator').show();
+                    make_sounds_map('{% url "geotags-for-user-latest-barray" user.username %}', 'map_canvas', function(){
+                        $('#map_load_trigger').hide();
+                        $('#map_wrapper').show();
+                        $('#map_loading_indicator').hide(); // Once map is ready, hide the loading indicator
+                    });
+                }
+            </script>
+            <p><a href="{% url "geotags-for-user" user.username %}">more...</a></p>
+        </div>
     </div><!-- #latest_geotags -->
-
+    {% endif %}
 
     {% if latest_packs %}
     <div id="latest_packs" class="content_box">

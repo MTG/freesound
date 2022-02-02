@@ -30,7 +30,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small'):
+def display_sound(context, sound, player_size='small', show_bookmark=None):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -40,8 +40,10 @@ def display_sound(context, sound, player_size='small'):
         sound (int or Sound): sound ID or Sound object of the sound that will be shown. If no sound exists for the
           given ID, the display_sound.html will be rendered with empty HTML.
         player_size (str, optional): size of the player to display. This parameter only applies to BW interface.
-          Must be one of ['small' (default), 'big_no_info', 'small_no_info']. Information about the contents of each
+          See functions below and template file for available sizes. Information about the contents of each
           size is given in the display_sound.html template code.
+        show_bookmark (bool, optional): whether or not to show the bookmark button (BW frontend only). If set to None
+          it will be decided based on player size and other properties.
 
     Returns:
         dict: dictionary with the variables needed for rendering the sound with the display_sound.html template
@@ -114,8 +116,11 @@ def display_sound(context, sound, player_size='small'):
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
             'is_authenticated': request.user.is_authenticated(),
+            'show_bookmark_button': show_bookmark if show_bookmark is not None else
+            (player_size == 'small' or player_size == 'small_no_info') and request.user.is_authenticated(),  # Only BW
             'request_user_is_author': request.user.is_authenticated() and sound_obj.user_id == request.user.id,
             'player_size': player_size,
+            'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
             'min_num_ratings': settings.MIN_NUMBER_RATINGS,
         }
 
@@ -124,16 +129,17 @@ def display_sound(context, sound, player_size='small'):
 def display_sound_small(context, sound):
     return display_sound(context, sound, player_size='small')
 
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_bookmark(context, sound):
+    return display_sound(context, sound, player_size='small', show_bookmark=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
     return display_sound(context, sound, player_size='middle')
 
-
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info(context, sound):
     return display_sound(context, sound, player_size='big_no_info')
-
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
@@ -142,3 +148,7 @@ def display_sound_small_no_info(context, sound):
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_minimal(context, sound):
     return display_sound(context, sound, player_size='minimal')
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_infowindow(context, sound):
+    return display_sound(context, sound, player_size='infowindow')

@@ -36,7 +36,7 @@
 
                     <div>
                         <div class="divider-light"></div>
-                        <div class="padding-3 v-padding-2 between font-weight-bold">
+                        <div class="padding-3 v-padding-2 between font-weight-bold middle">
                             {% if not only_sounds_with_pack %}
                                 <div class="col-4">{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results }}{% else %}{{ paginator.count }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}</div>
                             {% else %}
@@ -55,10 +55,10 @@
                                 <a href="#" class="bw-link--grey-light" id="toggle_advanced_search_options"></a>
                             </div>
                             <div class="browse__search-overview-sorter">
-                                <span class="font-weight-normal text-light-grey">Sort by:</span>
+                                <span class="font-weight-normal text-light-grey d-none d-md-inline">Sort by:</span>
                                 <select name="s" id="sort-by">
                                     {% for option in sort_options %}
-                                        <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
+                                        <option value="{{option.1}}"{% ifequal option.1 sort %}selected="selected"{% endifequal %}>{{option.0}}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -72,9 +72,9 @@
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Search in</span>
                                     </div>
-                                    <div class="row no-gutters">
-                                        <div class="col-5">
-                                            <ul class="bw-search__filter-value-list">
+                                    <div class="row no-gutters v-spacing-top-2">
+                                        <div class="col-md-5">
+                                            <ul class="bw-search__filter-value-list no-margins">
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
@@ -101,8 +101,8 @@
                                                 </li>
                                             </ul>
                                         </div>
-                                        <div class="col-5">
-                                            <ul class="bw-search__filter-value-list">
+                                        <div class="col-md-5">
+                                            <ul class="bw-search__filter-value-list no-margins">
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
@@ -137,7 +137,7 @@
                                         <span>Duration</span>
                                     </div>
                                     <div class="bw-search__filter-tags-list bw-search__filter-duration">
-                                        <input id="filter_duration_min" class="bw-search_input-duration" type="time" value="0" /> - <input id="filter_duration_max" class="bw-search_input-duration" type="time" value="*" /> <span>seconds</span>
+                                        <input id="filter_duration_min" class="bw-search_input-duration" type="text" value="0" /> - <input id="filter_duration_max" class="bw-search_input-duration" type="text" value="*" /> <span>seconds</span>
                                     </div>
                                 </div>
 
@@ -182,8 +182,14 @@
                 </form>
             </div>
             <div class="row no-gutters">
-                {% if paginator.count > 0 %}
-                    <aside class="col-sm-12 col-md-3">
+
+                    <div class="col-12 center v-spacing-top-negative-2 d-md-none">
+                        <div id="collapsable-text" data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" class="v-spacing-top-2 collapsable-text font-weight-bold text-light-grey">
+                            Show filters
+                        </div>
+                    </div>
+
+                    <aside class="col-md-4 col-lg-3 collapsable-block collapsable-block-close md-max-h-100" id="collapsable-filters">
                         {% if facets.license and facets.license|length > 1 %}
                             {% display_facet "license" facets.license "list" "Licenses" %}
                         {% endif %}
@@ -222,50 +228,52 @@
                             {% display_facet "username" facets.username "cloud" "Related users" %}
                         {% endif %}
                     </aside>
-                    <main class="col-sm-12 col-md-8 offset-md-1">
-                        <div class="v-spacing-3 v-spacing-top-1">
+
+                    <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>
+
+                    <main class="col-12 col-md-7 offset-md-1 col-lg-8 offset-lg-1">
+                        {% if filter_query_split %}
+                        <div class="v-spacing-3 v-spacing-top-2">
                             {% for filter in filter_query_split %}
-                                <a class="no-hover" href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
-                                    <button class="btn-inverse bw-search__active-filters-button">
-                                        {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
-                                    </button>
+                                <a class="no-hover btn-inverse bw-search__active-filters-button" href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
+                                    {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
                                 </a>
                             {% endfor %}
                         </div>
-
+                        {% endif %}
                         <div class="v-spacing-6">
-                            {% for result in docs %}
-                                <div class="bw-search__result">
-                                    {% if not only_sounds_with_pack %}
-                                        {% display_sound_middle result.sound %}
-                                        {% if result.more_from_pack %}
+                            {% if paginator.count > 0 %}
+                                {% for result in docs %}
+                                    <div class="bw-search__result">
+                                        {% if not only_sounds_with_pack %}
+                                            {% display_sound_middle result.sound %}
+                                            {% if result.n_more_in_group %}
+                                                <p class="text-grey text-right v-spacing-top-negative-2">
+                                                    {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                </p>
+                                            {% endif %}
+                                        {% else %}
+                                            {% display_pack_big result.sound.pack_id %}
                                             <p class="text-grey text-right v-spacing-top-negative-2">
-                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.more_from_pack}} more result{{ result.more_from_pack|pluralize }} from the same pack</a> {{ result.pack_name|truncate_string:35 }}
+                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
                                             </p>
                                         {% endif %}
-                                    {% else %}
-                                        {% display_pack_big result.pack_id %}
-                                        <p class="text-grey text-right v-spacing-top-negative-2">
-                                            {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.more_from_pack|add:1}} result{{ result.more_from_pack|add:1|pluralize }} from this pack</a>
-                                        </p>
-                                    {% endif %}
-                                    {% if not forloop.last %}
-                                        <div class="divider-light"></div>
-                                    {% endif %}
+                                        {% if not forloop.last %}
+                                            <div class="divider-light"></div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="v-spacing-7 v-spacing-top-6 w-100">
+                                    <h5>No results... &#128543</h5>
+                                    <p class="text-grey v-spacing-2">Please try another query or change the filters</p>
                                 </div>
-                            {% endfor %}
+                            {% endif %}
                         </div>
-
                         <div class="v-spacing-6">
                             {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
                         </div>
                     </main>
-                {% else %}
-                    <div class="v-spacing-7 v-spacing-top-6 w-100" style="text-align: center;">
-                        <h5>No results... &#128543</h5>
-                        <p class="text-grey v-spacing-2">Please try another query or change the filters</p>
-                    </div>
-                {% endif %}
             </div>
         {% endif %}
     </div>

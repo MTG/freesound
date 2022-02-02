@@ -61,7 +61,10 @@ def display_pack(context, pack, size='small'):
 
     request = context.get('request')
     if using_beastwhoosh(request):
-        user_profile_locations = pack_obj[0].user.profile.locations()
+        try:
+            user_profile_locations = pack_obj[0].user.profile.locations()
+        except IndexError:
+            user_profile_locations = None
     else:
         user_profile_locations = None
 

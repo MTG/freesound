@@ -46,7 +46,7 @@ def delete(request, comment_id):
     messages.success(request, 'Comment deleted.')
     next = request.GET.get("next")
     page = request.GET.get("page")
-    return HttpResponseRedirect(next+"?page="+page)
+    return HttpResponseRedirect(next+"?page="+page + "#comments")
 
 
 @redirect_if_old_username_or_404

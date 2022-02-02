@@ -52,19 +52,18 @@ from freesound.celery import app as celery_app
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
-from search.views import get_pack_tags
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
 from utils.cache import invalidate_template_cache
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
-from utils.search.search_general import delete_sound_from_solr
+from utils.search import get_search_engine, SearchEngineException
+from utils.search.search_sounds import delete_sounds_from_search_engine
 from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 from utils.text import slugify
 
-search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 sentry_logger = logging.getLogger('sentry')
@@ -374,7 +373,7 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
-          ac_analysis.analysis_data as ac_analysis,
+          geotags_geotag.location_name as geotag_name,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -438,6 +437,7 @@ class SoundManager(models.Manager):
           sound.geotag_id,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
+          geotags_geotag.location_name as geotag_name,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
           ac_analsyis.analysis_data as ac_analysis,
@@ -756,7 +756,7 @@ class Sound(SocialModel):
         return self.bitdepth not in [8, 16]
 
     def bitrate_warning(self):
-        return self.bitrate not in [32, 64, 96, 128, 160, 192, 224, 256, 320]
+        return self.bitrate not in settings.COMMON_BITRATES
 
     def channels_warning(self):
         return self.channels not in [1, 2]
@@ -765,7 +765,7 @@ class Sound(SocialModel):
         return self.duration * 1000
 
     def rating_percent(self):
-        if self.num_ratings <= settings.MIN_NUMBER_RATINGS:
+        if self.num_ratings < settings.MIN_NUMBER_RATINGS:
             return 0
         return int(self.avg_rating*10)
 
@@ -1125,12 +1125,12 @@ class Sound(SocialModel):
     def analyze_new(self, method="fs-essentia-extractor_1", force=False, high_priority=False):
         sound = Sound.objects.get(id=self.id)
         SoundAnalysis.objects.get_or_create(sound=sound, analyzer=method, is_queued=True)
-        celery_app.send_task(method, kwargs={'sound_id': self.id, 'sound_path': self.locations('path'), 
+        celery_app.send_task(method, kwargs={'sound_id': self.id, 'sound_path': self.locations('path'),
                     'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=method)
         sounds_logger.info("Send sound with id {} to analyzer {}".format(self.id, method))
 
     def delete_from_indexes(self):
-        delete_sound_from_solr(self.id)
+        delete_sounds_from_search_engine([self.id])
         delete_sound_from_gaia(self.id)
 
     def invalidate_template_caches(self):
@@ -1145,11 +1145,24 @@ class Sound(SocialModel):
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
-                for bw_player_size in ['small', 'middle', 'big_no_info', 'small_no_info']:
-                    for bw_request_user_is_author in [True, False]:
-                        invalidate_template_cache(
-                            "bw_display_sound",
-                            self.id, is_authenticated, is_explicit, bw_player_size, bw_request_user_is_author)
+
+        # NOTE: in BW we removed the display sound caches because DB queries are optimized and the caches are not
+        # very useful (DB queries are also optimal in NG, but we never removed caching code). If we were to enable
+        # them again, check old code of this function in the repository history.
+
+    def get_geotag_name(self):
+        if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:
+            if hasattr(self, 'geotag_name'):
+                name = self.geotag_name
+            else:
+                name = self.geotag.location_name
+            if name:
+                return name
+        if hasattr(self, 'geotag_lat'):
+            return '{:.3f}, {:.3f}'.format(self.geotag_lat, self.geotag_lon)
+        else:
+            return '{:.3f}, {:.3f}'.format(self.geotag.lat, self.geotag.lon)
+
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
@@ -1402,18 +1415,23 @@ class Pack(SocialModel):
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
     def get_pack_tags(self):
-        pack_tags = get_pack_tags(self)
-        if pack_tags is not False:
-            tags = [t[0] for t in pack_tags['tag']]
+        try:
+            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+            tags = [tag for tag, count in pack_tags_counts]
             return {'tags': tags, 'num_tags': len(tags)}
-        else:
-            return -1
+        except SearchEngineException as e:
+            return False
+        except Exception as e:
+            return False
 
     def get_pack_tags_bw(self):
-        results = get_pack_tags(self)
-        if results:
-            return [{'name': tag, 'count': count} for tag, count in results['tag']]
-        else:
+        try:
+            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+                    for tag, count in pack_tags_counts]
+        except SearchEngineException as e:
+            return []
+        except Exception as e:
             return []
 
     def remove_sounds_from_pack(self):
@@ -1500,6 +1518,14 @@ class Pack(SocialModel):
         else:
             return ""
 
+    @property
+    def has_geotags(self):
+        # Returns whether or not the pack has geotags
+        # This is used in the pack page to decide whether or not to show the geotags map. Doing this generates one
+        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a pack (which would
+        # return empty query set if no geotags and indeed generate more queries).
+        return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
+
 
 class Flag(models.Model):
     sound = models.ForeignKey(Sound)
@@ -1538,7 +1564,8 @@ class Download(models.Model):
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
+        Sound.objects.filter(id=download.sound_id).update(
+            is_index_dirty=True, num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
 
@@ -1548,7 +1575,8 @@ def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
         if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
+            Sound.objects.filter(id=download.sound_id).update(
+                is_index_dirty=True, num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
                 num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
 
@@ -1653,7 +1681,7 @@ class SoundAnalysis(models.Model):
             except IOError:
                 pass
         return None
-    
+
     def __str__(self):
         return str(self.id)
 

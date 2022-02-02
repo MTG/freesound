@@ -18,13 +18,14 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import BaseCommand
-from utils.search.search_forum import add_all_posts_to_solr
+from django import template
+from django.conf import settings
+
+register = template.Library()
 
 
-class Command(BaseCommand):
-    args = ''
-    help = 'Take all posts and send them to Solr'
-
-    def handle(self, *args, **options):
-        add_all_posts_to_solr()
+@register.inclusion_tag('templatetags/plausible_scripts.html', takes_context=False)
+def plausible_scripts():
+    aggregate_pageviews = settings.PLAUSIBLE_AGGREGATE_PAGEVIEWS
+    separate_frontends = settings.PLAUSIBLE_SEPARATE_FRONTENDS
+    return {'aggregate_pageviews': aggregate_pageviews, 'separate_frontends': separate_frontends}

@@ -15,6 +15,9 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 DISPLAY_DEBUG_TOOLBAR = False
 
+DEBUGGER_HOST = "0.0.0.0"
+DEBUGGER_PORT = 3000  # This port should match the one in docker compose
+
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
 
 default_url = 'postgres://postgres@db/postgres'
@@ -23,6 +26,7 @@ DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=de
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -90,7 +94,8 @@ ADMIN_REORDER = (
         'accounts.UserFlag',
         'accounts.OldUsername',
         'accounts.EmailBounce',
-        'auth.Groups'
+        'auth.Groups',
+        'fsmessages.Message'
     )},
     {'app': 'sounds', 'models': (
         'sounds.Sound',
@@ -113,11 +118,7 @@ ADMIN_REORDER = (
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-
-
     'sites',
-
-
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -312,6 +313,7 @@ FREESOUND_RSS = ''
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
+FORUM_THREADS_PER_PAGE_BW = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 15
@@ -324,11 +326,15 @@ MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5  # BW only
 
+BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
+
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+LOSSY_FILE_EXTENSIONS = [ 'ogg', 'mp3', 'm4a']
+COMMON_BITRATES = [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
 # Allowed data file extensions for bulk upload
 ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
@@ -351,6 +357,11 @@ BASE_MAX_POSTS_PER_DAY = 5
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
+
+#Geotags  stuff
+# Cache key for storing "all geotags" bytearray
+ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
+USE_TEXTUAL_LOCATION_NAMES_IN_BW = True
 
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors
@@ -375,6 +386,10 @@ LOG_DOWNLOADS = False
 # Followers notifications
 MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
+# Some BW settings
+ENABLE_QUERY_SUGGESTIONS = False
+ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
 
 
 # -------------------------------------------------------------------------------
@@ -408,8 +423,8 @@ LOG_START_AND_END_COPYING_FILES = True
 DONATION_AMOUNT_REQUEST_PARAM = 'dda'
 
 # Stripe
-STRIPE_PUBLIC_KEY = ''
-STRIPE_PRIVATE_KEY = ''
+STRIPE_PUBLIC_KEY = 'pk_test_4w86cbKHcPs2G2kDqNdKd5u2'
+STRIPE_PRIVATE_KEY = 'sk_test_D4u7pcSnUSXtY4GAwDMmSFVZ'
 STRIPE_WEBHOOK_SECRET = ''
 
 # Paypal
@@ -450,32 +465,74 @@ AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
      ('sharpness', float),
      ('reverb', bool)]  # Used when running load_audiocommons_analysis_data and when parsing filters
 
-# Map of suffixes used for each type of dynamic fields defined in our Solr schema
-# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
-# and '*_s' (for string)
-SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
-    float: '_d',
-    int: '_i',
-    bool: '_b',
-    str: '_s',
-    unicode: '_s',
-}
-
-
 # -------------------------------------------------------------------------------
-# SOLR and search settings
-SOLR_URL = "http://search:8080/fs2/"
-SOLR_FORUM_URL = "http://search:8080/forum/"
+# Search engine
 
-ENABLE_QUERY_SUGGESTIONS = False  # Only for BW
-DEFAULT_SEARCH_WEIGHTS = {
-    'id': 4,
-    'tag': 4,
-    'description': 3,
-    'username': 1,
-    'pack_tokenized': 2,
-    'original_filename': 2
+# Define the names of some of the indexed sound fields which are to be used later
+SEARCH_SOUNDS_FIELD_ID = 'sound_id'
+SEARCH_SOUNDS_FIELD_NAME = 'name'
+SEARCH_SOUNDS_FIELD_TAGS = 'tags'
+SEARCH_SOUNDS_FIELD_DESCRIPTION = 'description'
+SEARCH_SOUNDS_FIELD_USER_NAME = 'username'
+SEARCH_SOUNDS_FIELD_PACK_NAME = 'packname'
+SEARCH_SOUNDS_FIELD_PACK_GROUPING = 'pack_grouping'
+SEARCH_SOUNDS_FIELD_SAMPLERATE = 'samplerate'
+SEARCH_SOUNDS_FIELD_BITRATE = 'bitrate'
+SEARCH_SOUNDS_FIELD_BITDEPTH = 'bitdepth'
+SEARCH_SOUNDS_FIELD_TYPE = 'type'
+SEARCH_SOUNDS_FIELD_CHANNELS = 'channels'
+SEARCH_SOUNDS_FIELD_LICENSE_NAME = 'license'
+
+# Default weights for fields to match
+SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
+    SEARCH_SOUNDS_FIELD_ID: 4,
+    SEARCH_SOUNDS_FIELD_TAGS: 4,
+    SEARCH_SOUNDS_FIELD_DESCRIPTION: 3,
+    SEARCH_SOUNDS_FIELD_USER_NAME: 1,
+    SEARCH_SOUNDS_FIELD_PACK_NAME: 2,
+    SEARCH_SOUNDS_FIELD_NAME: 2
 }
+
+
+SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC = "Automatic by relevance"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST = "Duration (long first)"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST = "Duration (short first)"
+SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST = "Date added (newest first)"
+SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST = "Date added (oldest first)"
+SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST = "Downloads (most first)"
+SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST = "Downloads (least first)"
+SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST = "Rating (highest first)"
+SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST = "Rating (lowest first)"
+
+SEARCH_SOUNDS_SORT_OPTIONS_WEB = [
+    SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+    SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST,
+]
+SEARCH_SOUNDS_SORT_DEFAULT = "Automatic by relevance"
+
+
+SEARCH_SOUNDS_DEFAULT_FACETS = {
+    SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
+    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
+    SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30},
+    SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30},
+    SEARCH_SOUNDS_FIELD_BITRATE: {},
+    SEARCH_SOUNDS_FIELD_BITDEPTH: {},
+    SEARCH_SOUNDS_FIELD_TYPE: {'limit': 6},  # Set after the number of choices in sounds.models.Sound.SOUND_TYPE_CHOICES
+    SEARCH_SOUNDS_FIELD_CHANNELS: {},
+    SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
+}
+
+SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine'
+SOLR_SOUNDS_URL = "http://search:8080/fs2/"
+SOLR_FORUM_URL = "http://search:8080/forum/"
 
 
 # -------------------------------------------------------------------------------
@@ -515,6 +572,7 @@ GRAYLOG_PASSWORD = ''
 # Mapbox
 
 MAPBOX_ACCESS_TOKEN = ''
+MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
 
 # -------------------------------------------------------------------------------
@@ -525,7 +583,7 @@ RECAPTCHA_PUBLIC_KEY = ''
 
 
 # -------------------------------------------------------------------------------
-# Mapbox
+# Akismet
 
 AKISMET_KEY = ''
 
@@ -718,6 +776,11 @@ TEMPLATES = [
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
+
+# -------------------------------------------------------------------------------
+# Analytics
+PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
+PLAUSIBLE_SEPARATE_FRONTENDS = True
 
 
 # -------------------------------------------------------------------------------

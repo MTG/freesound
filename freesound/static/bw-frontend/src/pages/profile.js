@@ -1,4 +1,4 @@
-import {makeSoundsMap} from '../components/mapsMapbox';
+import {makeSoundsMapWithStaticMapFirst} from '../components/mapsMapbox';
 import {handleGenericModal, handleModal} from "../components/modal";
 
 // Latest sounds/Latest tags taps
@@ -9,7 +9,7 @@ const tapsElements = document.getElementsByClassName('bw-profile__tap_container'
 const cleanActiveClass = () => {
   taps.forEach(tap => tap.classList.remove('active'));
   tapsElements.forEach(tapElement =>
-    tapElement.classList.remove('bw-profile__tap_container__active')
+      tapElement.classList.remove('bw-profile__tap_container__active')
   );
 };
 
@@ -71,32 +71,27 @@ const followingTagsModalParam = urlParams.get(userFollowTagsButton.dataset.modal
 
 if (followersModalParam) {
   handleGenericModal(userFollowersButton.dataset.modalContentUrl, () => {
-      setFollowModalUrlParamToCurrentPage(userFollowersButton.dataset.modalActivationParam);
-    }, () => {
-      removeFollowModalUrlParams();
-    });
+    setFollowModalUrlParamToCurrentPage(userFollowersButton.dataset.modalActivationParam);
+  }, () => {
+    removeFollowModalUrlParams();
+  });
 }
 
 if (followingModalParam) {
   handleGenericModal(userFollowUsersButton.dataset.modalContentUrl, () => {
-      setFollowModalUrlParamToCurrentPage(userFollowUsersButton.dataset.modalActivationParam);
-    }, () => {
-      removeFollowModalUrlParams();
-    });
+    setFollowModalUrlParamToCurrentPage(userFollowUsersButton.dataset.modalActivationParam);
+  }, () => {
+    removeFollowModalUrlParams();
+  });
 }
 
 if (followingTagsModalParam) {
   handleGenericModal(userFollowTagsButton.dataset.modalContentUrl, () => {
-      setFollowModalUrlParamToCurrentPage(userFollowTagsButton.dataset.modalActivationParam);
-    }, () => {
-      removeFollowModalUrlParams();
-    });
+    setFollowModalUrlParamToCurrentPage(userFollowTagsButton.dataset.modalActivationParam);
+  }, () => {
+    removeFollowModalUrlParams();
+  });
 }
 
-
 // User geotags map
-const mapCanvas = document.getElementById('map_canvas');
-const latestGeotagsSection = document.getElementById('latest_geotags');
-makeSoundsMap(mapCanvas.dataset.geotagsUrl, 'map_canvas', () => {
-  latestGeotagsSection.style.display = 'block'; // Once map is ready, show geotags section
-});
+makeSoundsMapWithStaticMapFirst('latest_geotags', 'map_canvas', 'static_map_wrapper')

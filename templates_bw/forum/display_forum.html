@@ -1,0 +1,27 @@
+{% load bw_templatetags %}
+
+<div class="bw-threads">
+    <div class="row middle">
+        <div class="col-2 col-md-1">
+            {% if forum.last_post.created > request.last_action_time and forum.last_post.author != request.user %}
+                <div class="forum-icon-round new-posts-notification"></div>
+            {% else %}
+                <div class="forum-icon-round"></div>
+            {% endif %}
+        </div>
+        <div class="col-10 col-md-4">
+            <h6><a href="{{ forum.get_absolute_url }}">{{ forum.name }}</a></h6>
+            <p>{{ forum.num_threads }} thread{{ forum.num_threads|pluralize }} · {{ forum.num_posts }} repl{{ forum.num_posts|pluralize:"y,ies" }}</p>
+        </div>
+        {% if forum.last_post %}
+            <div class="col-md-4 offset-md-1 d-none d-md-block">
+                <p class="bw-threads__last_thread padding-bottom-px-1"><a class="text-black" href="{% url "forums-thread" forum.name_slug forum.last_post.thread.id %}">{{ forum.last_post.thread.title }}</a></p>
+                <p class="text-left"><a href="{% url "forums-post" forum.name_slug forum.last_post.thread.id forum.last_post.id %}">Latest reply</a> {{ forum.last_post.created|timesince }} ago</p>
+            </div>
+            <div class="col-md-2 text-center d-none d-md-block">
+                <div class="inline-block padding-bottom-1">{% bw_user_avatar forum.last_post.author.profile.locations.avatar.M.url forum.last_post.author.username 30 %}</div>
+                <p>by <a href="{% url "account" forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a></p>
+            </div>
+        {% endif %}
+    </div>
+</div>

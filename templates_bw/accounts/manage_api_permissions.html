@@ -32,7 +32,7 @@
                     <div class="row no-gutters v-spacing-top-2">
                         <div class="col-4">{{ token.client_name }}</div>
                         <div class="col-4"><a href="{% url "account" token.developer %}">{{ token.developer }}</a></div>
-                        <div class="col-4"><a class="no-hover" href="{% url "revoke-permission" token.client_id %}"><button class="btn-primary">Revoke</button></a></div>
+                        <div class="col-4"><a class="no-hover btn-primary" href="{% url "revoke-permission" token.client_id %}">Revoke</a></div>
                     </div>
                 {% endfor %}
             </div>

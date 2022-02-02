@@ -7,10 +7,10 @@
 {% cache 3600 bw_display_pack pack.0.id size %}
 {% with pack.0 as pack %}
     {% if size == 'small' %}
-        <div class="v-spacing-3 overfow-hidden">
+        <div class="v-spacing-3">
             <div class="bw-carousel-container">
                 <div class="bw-carousel-wrapper">
-                    <div class="bw-carousel with-dots dots-distance-1">
+                    <div class="bw-carousel with-dots dots-distance-02">
                     {% comment %}get random sounds to show here so if cached we won't run this query{% endcomment %}
                     {% with pack.get_random_sounds_from_pack as sounds %}
                         {% for sound in sounds %}
@@ -22,16 +22,16 @@
                     </div>
                 </div>
             </div>
-            <h5 class="v-spacing-top-1">
-                <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name|truncate_string:20 }}</a>
+            <h5 class="ellipsis line-height-percentage-150 v-spacing-top-1">
+                <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
             </h5>
-            <div class="v-spacing-top-1">
+            <div class="overflow-hidden">
                 <a href="{% url "account" pack.user.username %}">{{ pack.user.username|truncate_string:15 }}</a> <span class="text-grey h-spacing-left-1 h-spacing-1">·</span><span class="text-grey">{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</span>
                 <br><span class="text-grey">{{ pack.created|timesince }} ago</span>
             </div>
             {% if pack.description %}
                 <div class="v-spacing-top-1 text-grey">
-                    {{ pack.description|striptags|safe|truncatewords:10 }}
+                    {{ pack.description|striptags|safe|truncatewords_html:10 }}
                 </div>
             {% endif %}
         </div>
@@ -46,17 +46,17 @@
                     {% endfor %}
                 </div>
             {% endwith %}
-            <h5 class="v-spacing-top-1 overflow-hidden">
-                <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name|truncate_string:65 }}</a>
+            <h5 class="v-spacing-top-1">
+                <a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
             </h5>
             {% if pack.description %}
-                <div class="text-black v-spacing-top-2">{{ pack.description|striptags|safe|truncatewords:20 }}</div>
+                <div class="text-black v-spacing-top-2">{{ pack.description|striptags|safe|truncatewords_html:20 }}</div>
             {% endif %}
-            {% with pack.get_pack_tags as tags %}
-                {% if tags != -1 %}
+            {% with pack.get_pack_tags_bw as tags %}
+                {% if tags %}
                     <div class=" v-spacing-top-2">
-                    {% for tag in tags.tags|slice:":5" %}
-                        {% bw_tag tag %}
+                    {% for tag in tags|slice:":5" %}
+                        {% bw_tag tag.name %}
                     {% endfor %}
                     </div>
                 {% endif %}

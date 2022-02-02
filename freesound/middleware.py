@@ -18,12 +18,17 @@
 #     See AUTHORS file.
 #
 
+import json
+import logging
+
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 
 from utils.onlineusers import cache_online_users
+
+web_logger = logging.getLogger('web')
 
 
 class OnlineUsersHandler(object):
@@ -70,8 +75,12 @@ class FrontendPreferenceHandler(object):
         The 'render' method will use this session variable to display the new/old frontend
         """
         if request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME, None):
-            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = \
-                request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
+            selected_ui = request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
+            current_ui = request.session.get(settings.FRONTEND_SESSION_PARAM_NAME, None)
+            if selected_ui != current_ui:
+                web_logger.info('Frontend activation (%s)' % json.dumps({'name': selected_ui,
+                                                                         'username': request.user.username}))
+            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = selected_ui
         response = self.get_response(request)
         return response
 

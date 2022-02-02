@@ -13,7 +13,7 @@
 
 {% block content %}
     <div class="container">
-        <div class="row navbar-space-filler v-spacing-top-6 v-spacing-6 bw-profile__hero">
+        <div class="row navbar-space-filler v-spacing-top-6 v-spacing-4 bw-profile__hero">
             <div>
                 {% bw_user_avatar user.profile.locations.avatar.XL.url user.username 100 %}
             </div>
@@ -22,16 +22,16 @@
             </div>
             <div class="v-spacing-top-3">
                 {% if home %}
-                    <button class="btn-inverse btn-profile-adapt">Manage uploads</button>
-                    <a class="no-hover" href="{% url 'accounts-edit' %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Edit profile</button></a>
+                    <a class="no-hover btn-inverse btn-profile-adapt" href="#">Manage uploads</a>
+                    <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Edit profile</a>
                 {% else %}
                     {% if not user.profile.is_deleted_user %}
                         {% if show_unfollow_button %}
-                            <a class="no-hover" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}"><button class="btn-secondary">Unfollow</button></a>
+                            <a class="no-hover btn-secondary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
                         {% else %}
-                            <a class="no-hover" href="{% url 'follow-user' user.username %}?next={{ next_path }}"><button class="btn-inverse btn-profile-adapt">Follow</button></a>
+                            <a class="no-hover btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
                         {% endif %}
-                        <a class="no-hover" href="{% url "messages-new" user.username %}"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Message</button></a>
+                        <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
                     {% endif %}
                 {% endif %}
                 {% if perms.tickets.can_moderate or request.user.is_staff %}
@@ -81,7 +81,7 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="bw-profile__stats v-spacing-top-3">
+                <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
                     <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
                     <div><a id="user-followers-button" data-modal-activation-param="followers" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1&page={{ followers_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_followers_count user.id %}{{ followers.count }}{% endcache %} followers</a></div>
                     <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
@@ -99,7 +99,7 @@
         </div>
         <div class="divider-light"></div>
         <div class="row no-gutters">
-            <div class="col-8 v-spacing-top-4">
+            <div class="col-md-8 v-spacing-top-4">
                 <div class="bw-profile__tap_container bw-profile__tap_container__active" id="tapSounds">
                     {% for sounds_chunk in latest_sounds|chunks:3 %}
                         <div class="row no-margins">
@@ -117,7 +117,7 @@
                     {% endfor %}
                     {% if latest_sounds %}
                         <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1"><button class="btn btn-primary">See all sounds by {{ user.username }}</button></a>
+                            <a class="no-hover btn-primary" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1">See all sounds by {{ user.username }}</a>
                         </div>
                     {% endif %}
                 </div>
@@ -125,7 +125,7 @@
                     {% for packs_chunk in latest_packs|chunks:3 %}
                         <div class="row no-margins">
                             {% for pack in packs_chunk %}
-                                <div class="col-4">
+                                <div class="col-6 col-sm-4">
                                     {% display_pack pack %}
                                 </div>
                             {% endfor %}
@@ -138,7 +138,7 @@
                     {% endfor %}
                     {% if latest_packs %}
                         <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1&only_p=1"><button class="btn btn-primary">See all packs by {{ user.username }}</button></a>
+                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1&only_p=1"><button class="btn-primary">See all packs by {{ user.username }}</button></a>
                         </div>
                     {% endif %}
                 </div>
@@ -146,9 +146,10 @@
                     downloaded
                 </div>
             </div>
-            <aside class="col-3 offset-1 bw-profile__sections">
+            <aside class="col-md-3 offset-md-1 bw-profile__sections">
+                <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
                 {% cache 43200 bw_user_profile_stats user.id %}
-                <section class="bw-profile__section_stats v-spacing-top-7">
+                <section class="bw-profile__section_stats v-spacing-top-4">
                     <ol>
                         <li class="v-spacing-3">
                             {% bw_icon 'wave' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=created+desc&g=1"><span class="text-21">{{ user.profile.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
@@ -177,19 +178,22 @@
                     <section class="v-spacing-top-5 padding-bottom-5">
                         <h5 class="padding-bottom-3">Most used tags</h5>
                         {% for tag in tags|add_sizes:"count:0.1:1.0" %}
-                            {% bw_tag tag.name 1 '' tag.get_browse_tag_url tag.size %}
+                            {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
                         {% endfor %}
                     </section>
                 {% endif %}
-
+                {% if user.profile.has_geotags %}
                 <div class="divider-light"></div>
-                <section id="latest_geotags" class="v-spacing-top-5 display-none">
+                <section id="latest_geotags" class="v-spacing-top-5" data-map-loaded="false">
                     <h5 class="padding-bottom-3">Latest geotags</h5>
-                    <div id="map_canvas" class="sidebar-map" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
+                    {% if last_geotags_serialized %}
+                        <div id="static_map_wrapper"  class="sidebar-map w-100 middle center cursor-pointer" data-pins="{{ last_geotags_serialized }}"></div>
+                    {% endif %}
+                    <div id="map_canvas" class="sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
                     <div class="v-spacing-top-2 center">
                         <a class="no-hover" href="{% url "geotags-for-user" user.username %}">See all geotags by {{ user.username }}</a>
                     </div>
-                </section>
+                </section>{% endif %}
             </aside>
         </div>
     </div>

@@ -207,6 +207,11 @@
 .bw-icon-quote:before {
   content: '\e935';
 }
+.bw-icon-quote-reverse:before {
+  display: inline-block;
+  transform: rotate(180deg);
+  content: '\e935';
+}
 .bw-icon-radio:before {
   content: '\e936';
 }

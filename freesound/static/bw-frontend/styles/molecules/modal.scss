@@ -18,9 +18,13 @@
   }
 
   .modal-body {
-    padding: 0 56px;
+    padding: 0 20px;
 
-    h5 {
+    @include lg-and-above {
+      padding: 0 56px;
+    }
+
+    .modal_title {
       margin-bottom: 40px;
       font-size: 24px;
     }
@@ -28,6 +32,10 @@
     form {
       display: flex;
       flex-direction: column;
+
+      .select-dropdown {
+        margin-bottom: 15px;
+      }
 
       input {
         height: 48px;
@@ -61,7 +69,7 @@
 
   .modal-footer {
     border: 0;
-    padding: 0 56px 56px;
+    padding: 0 56px 26px;
     flex-direction: column;
 
     button {
@@ -82,8 +90,8 @@
   }
 
   .modal-extra-info {
-    position: absolute;
-    top: calc(78vh + 2.5rem);
+    position: relative;
+    top: 45px;
     left: auto;
     right: auto;
     width: 100%;
@@ -100,13 +108,19 @@
   position: relative;
 }
 
-@for $i from 6 through 10 {
+@for $i from 6 through 9 {
   $value1: $i * 10;
   $value2: $i / 10;
   .modal-width-#{$value1} {
     .modal-wrapper {
       .modal-dialog {
         max-width: 100% * $value2 !important;
+        @media (max-width:750px) {
+            max-width: 100% !important;
+        }
+        @media (min-width:1100px) {
+          max-width: 1000px !important;
+      }
       }
     }
   }

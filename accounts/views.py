@@ -42,7 +42,7 @@ from django.contrib.auth.views import LoginView, PasswordResetCompleteView, Pass
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Sum, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
@@ -51,7 +51,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
-from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import never_cache, cache_page
 from django.views.decorators.csrf import csrf_exempt
 from oauth2_provider.models import AccessToken
 
@@ -956,10 +956,10 @@ def latest_content_type(scores):
         return 'comment'
 
 
-def create_user_rank(uploaders, posters, commenters):
-    upload_weight = 1
-    post_weight = 0.7
-    comment_weight = 0.0
+def create_user_rank(uploaders, posters, commenters, weights=dict()):
+    upload_weight = weights.get('upload', 1)
+    post_weight = weights.get('post', 0.4)
+    comment_weight = weights.get('comment', 0.05)
     user_rank = {}
     for user in uploaders:
         user_rank[user['user']] = {'uploads': user['id__count'], 'posts': 0, 'comments': 0, 'score': 0}
@@ -981,6 +981,7 @@ def create_user_rank(uploaders, posters, commenters):
     return user_rank, sort_list
 
 
+@redirect_if_beastwhoosh('charts')
 def accounts(request):
     num_days = 14
     num_active_users = 10
@@ -1032,6 +1033,101 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
+@cache_page(60 * 60)
+def charts(request):
+    """
+    This view shows some general Freesound use statistics. Some of the queries can be a bit slow but the view is
+    cached every 60 minutes so load time should be fast for most users. If this simple caching strategy is not good
+    enough, then we should move computation of statistics to a cron job.
+    """
+    if not using_beastwhoosh(request):
+        return HttpResponseRedirect(reverse('accounts'))
+
+    num_days = 14
+    num_items = 10
+    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
+    weights = settings.BW_CHARTS_ACTIVE_USERS_WEIGHTS
+
+    # Most active users in last num_days
+    latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id'))\
+        .order_by("-id__count")
+    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id'))\
+        .order_by("-id__count")
+    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id'))\
+        .order_by("-id__count")
+    user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters, weights=weights)
+    most_active_users = User.objects.select_related("profile")\
+        .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_items]])
+    most_active_users_display = [[u, user_rank[u.id]] for u in most_active_users]
+    most_active_users_display = sorted(most_active_users_display,
+                                       key=lambda usr: user_rank[usr[0].id]['score'],
+                                       reverse=True)
+
+    # Newest active users
+    new_user_in_rank_ids = User.objects.filter(date_joined__gte=last_time, id__in=user_rank.keys())\
+        .values_list('id', flat=True)
+    new_user_objects = {user.id: user for user in
+                        User.objects.select_related("profile").filter(date_joined__gte=last_time)
+                            .filter(id__in=new_user_in_rank_ids)}
+    new_users_display = [(new_user_objects[user_id], user_rank[user_id]) for user_id in new_user_in_rank_ids]
+    new_users_display = sorted(new_users_display, key=lambda x: x[1]['score'], reverse=True)[:num_items]
+
+    # Top recent uploaders (by count and by length)
+    top_recent_uploaders_by_count = Sound.public \
+        .filter(created__gte=last_time) \
+        .values('user_id').annotate(n_sounds=Count('user_id')) \
+        .order_by('-n_sounds')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])}
+    top_recent_uploaders_by_count_display = [
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['n_sounds']) for item in top_recent_uploaders_by_count]
+
+    top_recent_uploaders_by_length = Sound.public \
+         .filter(created__gte=last_time) \
+         .values('user_id').annotate(total_duration=Sum('duration')) \
+         .order_by('-total_duration')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])}
+    top_recent_uploaders_by_length_display = [
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['total_duration']) for item in top_recent_uploaders_by_length]
+
+    # All time top uploaders (by count and by length)
+    all_time_top_uploaders_by_count = Sound.public \
+        .values('user_id').annotate(n_sounds=Count('user_id')) \
+        .order_by('-n_sounds')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])}
+    all_time_top_uploaders_by_count_display = [
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['n_sounds']) for item in all_time_top_uploaders_by_count]
+
+    all_time_top_uploaders_by_length = Sound.public \
+         .values('user_id').annotate(total_duration=Sum('duration')) \
+         .order_by('-total_duration')[0:num_items]
+    user_objects = {user.id: user for user in
+                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])}
+    all_time_top_uploaders_by_length_display = [
+        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
+         user_objects[item['user_id']].username,
+         item['total_duration']) for item in all_time_top_uploaders_by_length]
+
+    tvars = {
+        'num_days': num_days,
+        'recent_most_active_users': most_active_users_display,
+        'new_active_users': new_users_display,
+        'top_recent_uploaders_by_count': top_recent_uploaders_by_count_display,
+        'top_recent_uploaders_by_length': top_recent_uploaders_by_length_display,
+        'all_time_top_uploaders_by_count': all_time_top_uploaders_by_count_display,
+        'all_time_top_uploaders_by_length': all_time_top_uploaders_by_length_display
+    }
+    return render(request, 'accounts/charts.html', tvars)
+
+
 @redirect_if_old_username_or_404
 def account(request, username):
     user = request.parameter_user
@@ -1060,6 +1156,13 @@ def account(request, username):
                   or user.profile.get_total_downloads > 0  # user has downloads
                   or user.profile.num_sounds > 0)  # user has uploads
 
+    last_geotags_serialized = []
+    if using_beastwhoosh(request):
+        if user.profile.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
+            for sound in Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)[0:10]:
+                last_geotags_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
+            last_geotags_serialized = json.dumps(last_geotags_serialized)
+
     tvars = {
         'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
@@ -1078,6 +1181,7 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
         'followers_modal_page': request.GET.get('followers', 1),  # BW only
         'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
+        'last_geotags_serialized': last_geotags_serialized,  # BW only
     }
     return render(request, 'accounts/account.html', tvars)
 

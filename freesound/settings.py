@@ -531,6 +531,8 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
 }
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine'
+SOLR_SOUNDS_URL = "http://search:8080/fs2/"
+SOLR_FORUM_URL = "http://search:8080/forum/"
 
 
 # -------------------------------------------------------------------------------

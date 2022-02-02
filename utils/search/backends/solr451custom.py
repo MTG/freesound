@@ -40,8 +40,8 @@ from sounds.models import Sound
 from utils.text import remove_control_chars
 from utils.search import SearchEngineBase, SearchEngineException, SearchResults
 
-SOLR_SOUNDS_URL = "http://search:8080/fs2/"
-SOLR_FORUM_URL = "http://search:8080/forum/"
+SOLR_SOUNDS_URL = settings.SOLR_SOUNDS_URL
+SOLR_FORUM_URL = settings.SOLR_FORUM_URL
 
 # Mapping from db sound field names to solr sound field names
 FIELD_NAMES_MAP = {

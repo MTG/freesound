@@ -81,7 +81,7 @@ def get_stream_sounds(user, time_lapse):
         result = search_engine.search_sounds(
             textual_query='',
             query_filter=filter_str,
-            sorting=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
             num_sounds=SOLR_QUERY_LIMIT_PARAM,
             group_by_pack=False,
@@ -122,7 +122,7 @@ def get_stream_sounds(user, time_lapse):
         result = search_engine.search_sounds(
             textual_query='',
             query_filter=tag_filter_str,
-            sorting=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
             num_sounds=SOLR_QUERY_LIMIT_PARAM,
             group_by_pack=False,
@@ -150,6 +150,6 @@ def get_stream_sounds(user, time_lapse):
 def build_time_lapse(date_from, date_to):
     date_from = date_from.strftime("%Y-%m-%d")
     date_to = date_to.strftime("%Y-%m-%d")
-    time_lapse = "[%sT00:00:00Z TO %sT23:59:59.999Z]" % (date_from, date_to)
+    time_lapse = '["%sT00:00:00Z" TO "%sT23:59:59.999Z"]' % (date_from, date_to)
     return time_lapse
 

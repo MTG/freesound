@@ -19,16 +19,12 @@
 #
 
 import logging
-import math
-import socket
 
 from django.conf import settings
-from django.db.models import QuerySet
 from django.db.models.query import RawQuerySet
 from django.utils.http import urlquote_plus
 from pyparsing import ParseException
 
-import sounds
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
 from utils.search.lucene_parser import parse_query_filter_string
 

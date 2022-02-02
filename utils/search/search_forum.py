@@ -22,6 +22,7 @@ import logging
 from utils.search import get_search_engine, SearchEngineException
 
 search_logger = logging.getLogger("search")
+console_logger = logging.getLogger("console")
 
 
 def add_posts_to_search_engine(post_objects):
@@ -35,10 +36,12 @@ def add_posts_to_search_engine(post_objects):
     """
     num_posts = len(post_objects)
     try:
+        console_logger.info("Adding %d posts to search engine" % num_posts)
         search_logger.info("Adding %d posts to search engine" % num_posts)
         get_search_engine().add_forum_posts_to_index(post_objects)
         return num_posts
     except SearchEngineException as e:
+        console_logger.error("Failed to add posts to search engine index: %s" % str(e))
         search_logger.error("Failed to add posts to search engine index: %s" % str(e))
         return 0
 
@@ -49,10 +52,12 @@ def delete_posts_from_search_engine(post_ids):
     Args:
         post_ids (list[int]): IDs of the forum posts to delete
     """
+    console_logger.info("Deleting %d forum posts from search engine" % len(post_ids))
     search_logger.info("Deleting %d forum posts from search engine" % len(post_ids))
     try:
         get_search_engine().remove_forum_posts_from_index(post_ids)
     except SearchEngineException as e:
+        console_logger.error("Could not delete forum posts: %s" % str(e))
         search_logger.error("Could not delete forum posts: %s" % str(e))
 
 
@@ -65,7 +70,7 @@ def get_all_post_ids_from_search_engine(page_size=2000):
     Returns:
         list[int]: list of forum IDs indexed in the search engine
     """
-    search_logger.info("Getting all forum post ids from search engine")
+    console_logger.info("Getting all forum post ids from search engine")
     search_engine = get_search_engine()
     solr_ids = []
     solr_count = None
@@ -78,5 +83,5 @@ def get_all_post_ids_from_search_engine(page_size=2000):
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:
-        search_logger.error("Could retrieve all forum post IDs from search engine: %s" % str(e))
+        console_logger.error("Could retrieve all forum post IDs from search engine: %s" % str(e))
     return sorted(solr_ids)

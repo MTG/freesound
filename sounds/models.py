@@ -63,7 +63,6 @@ from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 from utils.text import slugify
 
-search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 sentry_logger = logging.getLogger('sentry')

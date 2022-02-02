@@ -87,7 +87,7 @@ def tags(request, multiple_tags=None):
 
     except SearchEngineException as e:
         error = True
-        search_logger.warning('Search error: %s' % e)
+        search_logger.error('Search error: %s' % e)
     except Exception as e:
         error = True
         search_logger.error('Could probably not connect to Solr - %s' % e)

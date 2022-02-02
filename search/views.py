@@ -53,7 +53,7 @@ def search(request):
 
     # check if there was a filter parsing error
     if extra_vars['parsing_error']:
-        search_logger.warning('Query filter parsing error. filter: %s' % (request.GET.get("f", "")))
+        search_logger.error('Query filter parsing error. filter: %s' % (request.GET.get("f", "")))
         extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
         return render(request, 'search/search.html', extra_vars)
 
@@ -128,7 +128,7 @@ def search(request):
         })
 
     except SearchEngineException as e:
-        search_logger.warning('Search error: query: %s error %s' % (str(query_params), e))
+        search_logger.error('Search error: query: %s error %s' % (str(query_params), e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
         search_logger.error('Could probably not connect to Solr - %s' % e)
@@ -360,7 +360,7 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            search_logger.warning("search error: query: %s error %s" % (search_query, e))
+            error.warning("Search error: query: %s error %s" % (search_query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:

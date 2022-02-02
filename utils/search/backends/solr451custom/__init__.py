@@ -729,75 +729,6 @@ class SolrResponseInterpreter(object):
         except KeyError:
             self.highlighting = {}
 
-    def display(self):
-        print "Solr response:"
-        print "\tGlobal parameters:"
-        print "\t\t%d docs found in %d ms" % (self.num_found, self.q_time)
-        print "\t\treturning %d docs starting from row %d" % (self.num_rows, self.start)
-        print
-        print "\tFaceting:"
-        print "\t\tNr facets:", len(self.facets)
-        print "\t\t\t%s" % "\n\t\t\t".join(["%s with %d entries" % (k, len(v)) for (k, v) in self.facets.items()])
-        print
-        print "\tHighlighting"
-        print "\t\tNr highlighted docs:", len(self.highlighting)
-        print
-        print "\tDocuments:"
-        print "\t\tNr docs found:", self.num_rows
-        if self.num_rows > 0:
-            print "\t\tPrinting one doc:"
-            self.pp(self.docs[0], 3)
-
-    def pp(self, d, indent=0):
-        """A pretty print for general data. Tried pprint but just couldn't get it right
-        """
-        i = "\t" * indent
-        if isinstance(d, dict):
-            print i, "{"
-            for (k, v) in d.items():
-                self.pp(k, indent + 1)
-                print ":"
-                self.pp(v, indent + 2)
-                print
-            print i, "}",
-        elif isinstance(d, tuple):
-            print i, "("
-            for v in d:
-                self.pp(v, indent + 1)
-                print
-            print i, ")",
-        elif isinstance(d, list):
-            print i, "["
-            for v in d:
-                self.pp(v, indent + 1)
-                print
-            print i, "]",
-        elif isinstance(d, basestring):
-            print i, "\"%s\"" % d,
-        else:
-            print i, d,
-
-
-class SolrResponseInterpreterPaginator(object):
-    def __init__(self, interpreter, num_per_page):
-        self.num_per_page = num_per_page
-        self.interpreter = interpreter
-        self.count = interpreter.num_found
-        self.num_pages = interpreter.num_found / num_per_page + int(interpreter.num_found % num_per_page != 0)
-        self.page_range = range(1, self.num_pages + 1)
-
-    def page(self, page_num):
-        has_next = page_num < self.num_pages
-        has_previous = page_num > 1 and page_num <= self.num_pages
-        return {
-            'object_list': self.interpreter.docs,
-            'has_next': has_next,
-            'has_previous': has_previous,
-            'has_other_pages': has_next or has_previous,
-            'next_page_number': page_num + 1,
-            'previous_page_number': page_num - 1
-        }
-
 
 class Solr451CustomSearchEngine(SearchEngineBase):
     sounds_index = None
@@ -928,13 +859,10 @@ class Solr451CustomSearchEngine(SearchEngineBase):
         filter_query = 'is_explicit:0'
         query.set_query("*:*")
         query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
-        try:
-            response = SolrResponseInterpreter(self.get_sounds_index().select(unicode(query)))
-            docs = response.docs
-            if docs:
-                return int(docs[0]['id'])
-        except (SearchEngineException, Exception) as e:
-            pass
+        response = SolrResponseInterpreter(self.get_sounds_index().select(unicode(query)))
+        docs = response.docs
+        if docs:
+            return int(docs[0]['id'])
         return 0
 
     # Forum posts methods

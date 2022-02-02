@@ -201,7 +201,7 @@ class SearchEngineBase(object):
         """Check if a sound is indexed in the search engine
 
         Args:
-            sound_object_or_id (list[sounds.models.Sound] or list[int]): Sound object or sound ID to check if indexed
+            sound_object_or_id (sounds.models.Sound or int): Sound object or sound ID to check if indexed
 
         Returns:
             bool: whether the sound is indexed in the search engine
@@ -287,7 +287,7 @@ class SearchEngineBase(object):
         """Check if a sound is indexed in the search engine
 
         Args:
-            forum_post_object_or_id (list[forum.models.Post] or list[int]): Post object or post ID to check if indexed
+            forum_post_object_or_id (forum.models.Post or int): Post object or post ID to check if indexed
 
         Returns:
             bool: whether the post is indexed in the search engine

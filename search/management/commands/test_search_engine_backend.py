@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+import datetime
 import logging
 import os
 import time
@@ -49,7 +49,9 @@ def save_query_results(results, query_data, elapsed_time, query_type):
         base_dir = os.path.join(settings.DATA_PATH, 'search_backend_tests')
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
-        global_output_file = open(os.path.join(base_dir, 'test_results_{}.txt'.format(global_backend_name)), 'w')
+        date_label = datetime.datetime.today().strftime('%Y%m%d_%H%M')
+        global_output_file = open(os.path.join(base_dir, '{}_test_results_{}.txt'
+                                               .format(date_label, global_backend_name)), 'w')
         global_output_file.write('TESTING SEARCH ENGINE BACKEND: {}\n'.format(global_backend_name))
 
     global_output_file.write('\n* QUERY {}: {} (took {:.2f} seconds)\n'.format(query_type, str(query_data), elapsed_time))
@@ -263,6 +265,10 @@ class Command(BaseCommand):
             assert_and_continue(page_2_num_sounds_5_ids == offset_0_ids[5:],
                                 'Unexpected num_sounds/offset/current_page behaviour')
 
+            # Test empty query returns results
+            results = run_sounds_query_and_save_results(search_engine, dict(textual_query=''))
+            assert_and_continue(results.num_found > 0, 'Empty query returned no results')
+
             # Test sort parameter (only use sounds within test_sound_ids to make sure these were indexed "correctly")
             # This also tests parameter only_sounds_within_ids
             for sort_option_web in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB:
@@ -369,17 +375,17 @@ class Command(BaseCommand):
                 assert_and_continue(not search_engine.forum_post_exists_in_index(post),
                                     'Post ID {} should not be in the search index'.format(post.id))
 
-            # Index the sounds again
+            # Index the posts again
             search_engine.add_forum_posts_to_index(posts)
 
-            # Check that sounds are indexed (test with sound object and with ID)
+            # Check that posts are indexed (test with sound object and with ID)
             for post in posts:
                 assert_and_continue(search_engine.forum_post_exists_in_index(post),
                                     'Post ID {} should be in the search index'.format(post.id))
                 assert_and_continue(search_engine.forum_post_exists_in_index(post.id),
                                     'Post ID {} should be in the search index'.format(post.id))
 
-            # Remove some sounds form the ones just indexed and check they do not exist
+            # Remove some posts form the ones just indexed and check they do not exist
             removed_posts_by_post_object = posts[0:3]
             search_engine.remove_forum_posts_from_index(removed_posts_by_post_object)
             for post in removed_posts_by_post_object:
@@ -391,13 +397,13 @@ class Command(BaseCommand):
                 assert_and_continue(not search_engine.forum_post_exists_in_index(pid),
                                     'Post ID {} should not be in the search index'.format(pid))
 
-            # Check that all sounds which were not removed are still in the index
+            # Check that all posts which were not removed are still in the index
             remaining_posts = posts[6:]
             for post in remaining_posts:
                 assert_and_continue(search_engine.forum_post_exists_in_index(post),
                                     'Post ID {} should be in search index'.format(post.id))
 
-            # Re-index all sounds to leave index in "correct" state
+            # Re-index all posts to leave index in "correct" state
             search_engine.add_forum_posts_to_index(posts)
 
             # Test num_posts/offset/current_page parameters
@@ -434,6 +440,10 @@ class Command(BaseCommand):
                     assert_and_continue(result1["thread_created"] >= result2["thread_created"],
                                         'Wrong sorting in query results')
 
+            # Test empty query returns results
+            results = run_forum_query_and_save_results(search_engine, dict(textual_query=''))
+            assert_and_continue(results.num_found > 0, 'Empty query returned no results')
+
             # Test group by threads
             results = run_forum_query_and_save_results(search_engine, dict())
             for result in results.docs:
@@ -441,10 +451,10 @@ class Command(BaseCommand):
                 assert_and_continue('group_name' in result, 'No group_name field in doc from results')
                 assert_and_continue('group_docs' in result, 'No group_docs field in doc from results')
                 assert_and_continue('n_more_in_group' in result, 'No n_more_in_group field in doc from results')
-                group_posts = Post.objects.filter(id__in=[r['id'] for r in result['group_docs']])
-                first_post_thread = group_posts[0].thread
-                for post in group_posts:
-                    assert_and_continue(post.thread == first_post_thread, 'Different threads in thread group')
+
+                first_post_thread = result["group_docs"][0]["thread_title"]
+                for doc in result["group_docs"]:
+                    assert_and_continue(doc["thread_title"] == first_post_thread, 'Different threads in thread group')
 
             # Test highlighting in results
             results = run_forum_query_and_save_results(search_engine, dict(textual_query="microphone"))

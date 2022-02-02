@@ -177,7 +177,7 @@ def convert_sound_to_search_engine_document(sound):
         # If analysis is present, index all existing analysis fields under Solr's dynamic fields "*_i", "*_d", "*_s"
         # and "*_b" depending on the value's type. Also add Audio Commons prefix.
         for key, value in ac_analysis.items():
-            suffix = settings.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+            suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
             if suffix:
                 document['{0}{1}{2}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key, suffix)] = value
 

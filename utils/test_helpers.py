@@ -68,7 +68,7 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
         num_packs (int): N packs in which the sounds above will be grouped.
         user (User): user owner of the created sounds (if not provided, a new user will be created).
         count_offset (int): start counting sounds at X.
-        tags (str): string of tags to be added to the sounds (all sounds will have the same tags).
+        tags (str or None): string of tags to be added to the sounds (all sounds will have the same tags).
         processing_state (str): processing state of the created sounds.
         moderation_state (str): moderation state of the created sounds.
         type (str): type of the sounds to be created (e.g. 'wav').

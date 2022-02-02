@@ -30,7 +30,7 @@
        {% endcomment %}
        <select name="s">
             {% for option in sort_options %}
-            <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
+            <option value="{{option.1}}"{% ifequal option.1 sort %}selected="selected"{% endifequal %}>{{option.0}}</option>
             {% endfor %}
        </select>
 
@@ -47,7 +47,7 @@
 <p id="filter_query_display">
 
 {% for filter in filter_query_split %}
-    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}&s={{sort_unformatted}}&cluster_id={{ filter.cluster_id }}" title="remove this filter">{{ filter.name }}</a>
+    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}" title="remove this filter">{{ filter.name }}</a>
 {% endfor %}
 
 </p>
@@ -447,9 +447,8 @@
 
             {% for result in docs %}
                 {% display_sound result.sound %}
-
-                {% if result.more_from_pack %}
-                        <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>
+                {% if result.n_more_in_group %}
+                    <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize  }}</a> in the same pack "{{ result.sound.pack_name|truncate_string:35 }}"</div>
                 {% endif %}
             {% endfor %}
 

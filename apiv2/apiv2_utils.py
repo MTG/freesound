@@ -41,15 +41,15 @@ from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.utils import formatting
 
 import combined_search_strategies
+from apiv2.forms import API_SORT_OPTIONS_MAP
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2.exceptions import RequiresHttpsException, UnauthorizedException, ServerErrorException, BadRequestException, \
     NotFoundException
 from examples import examples
-from search.views import search_prepare_query
 from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
+from utils.search import SearchEngineException, get_search_engine
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
@@ -322,35 +322,36 @@ def api_search(
 
         # Standard text-based search
         try:
-            solr = Solr(settings.SOLR_URL)
-            query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
-                                         unquote(search_form.cleaned_data['filter'] or ""),
-                                         search_form.cleaned_data['sort'],
-                                         search_form.cleaned_data['page'],
-                                         search_form.cleaned_data['page_size'],
-                                         grouping=search_form.cleaned_data['group_by_pack'],
-                                         include_facets=False)
-
-            result = SolrResponseInterpreter(solr.select(unicode(query)))
+            # We need to convert the sort parameter to standard sorting options from
+            # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
+            # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
+            processed_sort = API_SORT_OPTIONS_MAP[search_form.cleaned_data['sort'][0]]
+            result = get_search_engine().search_sounds(
+                textual_query=unquote(search_form.cleaned_data['query'] or ""),
+                query_filter=unquote(search_form.cleaned_data['filter'] or ""),
+                sort=processed_sort,
+                offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
+                num_sounds=search_form.cleaned_data['page_size'],
+                group_by_pack=search_form.cleaned_data['group_by_pack']
+            )
             solr_ids = [element['id'] for element in result.docs]
             solr_count = result.num_found
-
             more_from_pack_data = None
             if search_form.cleaned_data['group_by_pack']:
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                 more_from_pack_data = dict([
-                    (int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']])
-                    for element in result.docs
+                    (int(group['id']), [group['n_more_in_group'], group['group_name']]) for group in result.docs
                 ])
 
             return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
-        except SolrException as e:
+        except SearchEngineException as e:
             if search_form.cleaned_data['filter'] is not None:
                 raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field '
                                               'names are correct)' % e.message, resource=resource)
             raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
         except Exception as e:
+            print e
             raise ServerErrorException(
                 msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
 

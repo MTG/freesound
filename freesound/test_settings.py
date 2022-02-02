@@ -34,6 +34,7 @@ LOGGING = None  # Avoid logging clutter when running tests
 
 SOLR_URL = "http://fakehost:8080/fs2/"  # Avoid making accidental queries to "real" search server if running
 SOLR_FORUM_URL = "http://fakehost:8080/forum/"  # Avoid making accidental requests to "real" search server if running
+SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine' # Test with our own custom search engine functions
 SIMILARITY_ADDRESS = 'fakehost' # Avoid making accidental requests to "real" similarity server if running
 TAGRECOMMENDATION_ADDRESS = 'fakehost'  # Avoid making accidental requests to "real" tag rec server if running
 GEARMAN_JOB_SERVERS = ["fakehost:4730"]  # Avoid making accidental requests to "real" workers if running

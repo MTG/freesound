@@ -23,10 +23,8 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
 from django.utils.http import urlquote_plus
-from utils.search.search_general import search_prepare_parameters, split_filter_query, \
-    search_prepare_query, remove_facet_filters
+from utils.search.search_sounds import search_prepare_parameters, split_filter_query, remove_facet_filters
 from utils.search.lucene_parser import parse_query_filter_string
-from search.forms import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_WEB
 
 
 class SearchUtilsTest(TestCase):
@@ -39,26 +37,19 @@ class SearchUtilsTest(TestCase):
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
         expected_default_query_params = {
-            'id_weight': settings.DEFAULT_SEARCH_WEIGHTS['id'],
-            'tag_weight': settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-            'description_weight': settings.DEFAULT_SEARCH_WEIGHTS['description'],
-            'username_weight': settings.DEFAULT_SEARCH_WEIGHTS['username'],
-            'pack_tokenized_weight': settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-            'original_filename_weight': settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
-            'sort': ['created desc'],  # Not using SEARCH_DEFAULT_SORT here because for the exceptional case of empty queries we use 'created desc'
-            'sounds_per_page': settings.SOUNDS_PER_PAGE,
+            'query_fields': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS,
+            'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+            'num_sounds': settings.SOUNDS_PER_PAGE,
             'current_page': 1,
-            'grouping': '1',
-            'filter_query': '',
-            'search_query': '',
+            'group_by_pack': True,
+            'query_filter': '',
+            'textual_query': '',
             'only_sounds_with_pack': False,
         }
 
         expected_extra_vars = {
             'advanced': '',
-            'sort_unformatted': 'created desc',  # Again, using 'created desc' as empty queries result in that sort option
             'filter_query_link_more_when_grouping_packs': '',
-            'sort_options': SEARCH_SORT_OPTIONS_WEB,
             'cluster_id': '',
             'filter_query_non_facets': '',
             'has_facet_filter': False,
@@ -72,31 +63,33 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_with_query_params(self):
         # "dog" query, search only in tags and descriptions, duration from 1-10 sec, only geotag, sort by duration, no group by pack
-        url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=duration+desc&advanced=1&a_tag=1&a_description=1&g='
+        url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=Duration+(long+first)&advanced=1&a_tag=1&a_description=1&g='
         request = self.factory.get(reverse('sounds-search')+url_query_str)
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
         expected_default_query_params = {
-            'id_weight': 0,
-            'tag_weight': settings.DEFAULT_SEARCH_WEIGHTS['tag'],
-            'description_weight': settings.DEFAULT_SEARCH_WEIGHTS['description'],
-            'username_weight': 0,
-            'pack_tokenized_weight': 0,
-            'original_filename_weight': 0,
-            'sort': [u'duration desc'],
-            'sounds_per_page': settings.SOUNDS_PER_PAGE,
+            'query_fields': {
+                settings.SEARCH_SOUNDS_FIELD_ID: 0,
+                settings.SEARCH_SOUNDS_FIELD_TAGS:
+                    settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS],
+                settings.SEARCH_SOUNDS_FIELD_DESCRIPTION:
+                    settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION],
+                settings.SEARCH_SOUNDS_FIELD_USER_NAME: 0,
+                settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 0,
+                settings.SEARCH_SOUNDS_FIELD_NAME: 0
+            },
+            'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST,
+            'num_sounds': settings.SOUNDS_PER_PAGE,
             'current_page': 1,
-            'grouping': u'',
-            'filter_query': u'duration:[1 TO 10] is_geotagged:1',
-            'search_query': u'dog',
+            'group_by_pack': False,
+            'query_filter': u'duration:[1 TO 10] is_geotagged:1',
+            'textual_query': u'dog',
             'only_sounds_with_pack': False,
         }
 
         expected_extra_vars = {
             'advanced': u'1',
-            'sort_unformatted': u'duration desc',
             'filter_query_link_more_when_grouping_packs': u'duration:[1+TO+10]+is_geotagged:1',
-            'sort_options': SEARCH_SORT_OPTIONS_WEB,
             'cluster_id': '',
             'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
             'has_facet_filter': False,
@@ -157,7 +150,7 @@ class SearchUtilsTest(TestCase):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()
         request = self.factory.get(reverse('sounds-search')+u'?q=Æ æ ¿ É')
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-        self.assertEqual(query_params['search_query'], u'\xc6 \xe6 \xbf \xc9')
+        self.assertEqual(query_params['textual_query'], u'\xc6 \xe6 \xbf \xc9')
 
     def test_split_filter_query_duration_and_facet(self):
         # We check that the combination of a duration filter and a facet filter (CC Attribution) works correctly.
@@ -321,45 +314,3 @@ class SearchUtilsTest(TestCase):
                       filter_query_split[cluster_facet_dict_idx]['name'])
         self.assertIn(expected_filter_query_split[1]['remove_url'],
                       filter_query_split[cluster_facet_dict_idx]['remove_url'])
-
-    def test_search_prepare_query(self):
-        # we test that some query parameters get correctly setted in the Solr query object.
-        query_params = {
-            'search_query': u'cat',
-            'filter_query': u'duration:[1 TO 10] is_geotagged:1',
-            'sort': [u'duration desc'],
-            'current_page': 1,
-            'sounds_per_page': settings.SOUNDS_PER_PAGE,
-            'id_weight': 10,
-            'tag_weight': 0,
-            'description_weight': 0,
-            'username_weight': 0,
-            'pack_tokenized_weight': 0,
-            'original_filename_weight': 0,
-            'grouping': True,
-            'in_ids': [],
-        }
-
-        query = search_prepare_query(**query_params)
-
-        self.assertEqual(query.params['q'], 'cat')
-        self.assertEqual(query.params['qf'], 'id^10')
-        self.assertEqual(query.params['fq'], 'duration:[1 TO 10] is_geotagged:1')
-        self.assertTrue(query.params['group'])
-        self.assertEqual(query.params['sort'], 'duration desc')
-        self.assertEqual(query.params['rows'], settings.SOUNDS_PER_PAGE)
-
-    def test_search_prepare_query_cluster_filter(self):
-        # we test that a cluster filter correctly combines existing filters and a filter by id.
-        query_params = {
-            'search_query': u'cat',
-            'filter_query': u'duration:[1 TO 10] is_geotagged:1',
-            'sort': [u'duration desc'],
-            'current_page': 1,
-            'sounds_per_page': settings.SOUNDS_PER_PAGE,
-            'in_ids': ["1", "2", "3"],
-        }
-
-        query = search_prepare_query(**query_params)
-        self.assertEqual(query.params['fq'], "duration:[1 TO 10] is_geotagged:1 AND (id:1 OR id:2 OR id:3)")
-        

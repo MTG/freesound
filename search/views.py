@@ -35,15 +35,14 @@ import forum
 import sounds
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
-from clustering.interface import cluster_sound_results, get_sound_ids_from_solr_query
+from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
 from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search.search_general import search_prepare_query, perform_solr_query, search_prepare_parameters, \
+from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
     split_filter_query
-from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
-    SolrResponseInterpreterPaginator, SolrException
+from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
 
@@ -62,28 +61,29 @@ def search(request):
     url_query_params_string = request.META['QUERY_STRING']
 
     # get sound ids of the requested cluster when applying a clustering facet
-    # the list of ids is used to create a Solr query with filter by ids in search_prepare_query()
+    # the list of ids is used later on to create a Solr query with filter by ids in
     cluster_id = request.GET.get('cluster_id')
 
     if settings.ENABLE_SEARCH_RESULTS_CLUSTERING and cluster_id:
         in_ids = _get_ids_in_cluster(request, cluster_id)
     else:
         in_ids = []
-    query_params.update({'in_ids': in_ids})
+    query_params.update({'only_sounds_within_ids': in_ids})
 
-    filter_query_split = split_filter_query(query_params['filter_query'], extra_vars['parsed_filters'], cluster_id)
+    query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
+
+    filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
 
     tvars = {
         'error_text': None,
-        'filter_query': query_params['filter_query'],
+        'filter_query': query_params['query_filter'],
         'filter_query_split': filter_query_split,
-        'search_query': query_params['search_query'],
-        'grouping': query_params['grouping'],
+        'search_query': query_params['textual_query'],
+        'grouping': "1" if query_params['group_by_pack'] else "",
         'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
-        'sort_unformatted': extra_vars['sort_unformatted'],
-        'sort_options': extra_vars['sort_options'],
+        'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
         'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
         'current_page': query_params['current_page'],
         'url_query_params_string': url_query_params_string,
@@ -95,21 +95,18 @@ def search(request):
 
     search_logger.info(u'Search (%s)' % json.dumps({
         'ip': get_client_ip(request),
-        'query': query_params['search_query'],
-        'filter': query_params['filter_query'],
+        'query': query_params['textual_query'],
+        'filter': query_params['query_filter'],
         'username': request.user.username,
         'page': query_params['current_page'],
-        'sort': query_params['sort'][0],
-        'group_by_pack': query_params['grouping'],
+        'sort': query_params['sort'],
+        'group_by_pack': query_params['group_by_pack'],
         'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else ""
     }))
 
-    query = search_prepare_query(**query_params)
-
     try:
-        non_grouped_number_of_results, facets, paginator, page, docs = perform_solr_query(query,
-                                                                                          query_params['current_page'])
-        resultids = [d.get("id") for d in docs]
+        results, paginator = perform_search_engine_query(query_params)
+        resultids = [d.get("id") for d in results.docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
         for s in resultsounds:
@@ -118,20 +115,20 @@ def search(request):
         # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
         # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
         # in docs that have not been loaded in allsounds.
-        docs = [doc for doc in docs if doc["id"] in allsounds]
+        docs = [doc for doc in results.docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
         tvars.update({
             'paginator': paginator,
-            'page': page,
+            'page': paginator.page(query_params['current_page']),
             'docs': docs,
-            'facets': facets,
-            'non_grouped_number_of_results': non_grouped_number_of_results,
+            'facets': results.facets,
+            'non_grouped_number_of_results': results.non_grouped_number_of_results,
         })
 
-    except SolrException as e:
-        search_logger.warning('Search error: query: %s error %s' % (query, e))
+    except SearchEngineException as e:
+        search_logger.warning('Search error: query: %s error %s' % (str(query_params), e))
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
         search_logger.error('Could probably not connect to Solr - %s' % e)
@@ -197,7 +194,7 @@ def clustering_facet(request):
     # if yes, filter sounds from clusters
     query_params, _, extra_vars = search_prepare_parameters(request)
     if extra_vars['has_facet_filter']:
-        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params)
         results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered]
                    for cluster in results]
 
@@ -268,7 +265,7 @@ def clustered_graph(request):
         links = graph['links']
         graph['nodes'] = []
         graph['links'] = []
-        sound_ids_filtered = get_sound_ids_from_solr_query(query_params)
+        sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params)
         for node in nodes:
             if int(node['id']) in sound_ids_filtered:
                 graph['nodes'].append(node)
@@ -350,53 +347,24 @@ def search_forum(request):
         if advanced_search == "1" and date_from != "" or date_to != "":
             filter_query = __add_date_range(filter_query, date_from, date_to)
 
-        query = SolrQuery()
-        query.set_dismax_query(search_query, query_fields=[("thread_title", 4),
-                                                           ("post_body", 3),
-                                                           ("thread_author", 3),
-                                                           ("post_author", 3),
-                                                           ("forum_name", 2)])
-        query.set_highlighting_options_default(field_list=["post_body"],
-                                               fragment_size=200,
-                                               alternate_field="post_body",  # TODO: revise this param
-                                               require_field_match=False,
-                                               pre="<strong>",
-                                               post="</strong>")
-        query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE,
-                                rows=settings.SOUNDS_PER_PAGE,
-                                field_list=["id",
-                                            "forum_name",
-                                            "forum_name_slug",
-                                            "thread_id",
-                                            "thread_title",
-                                            "thread_author",
-                                            "thread_created",
-                                            "post_body",
-                                            "post_author",
-                                            "post_created",
-                                            "num_posts"],
-                                filter_query=filter_query,
-                                sort=sort)
-
-        if not using_beastwhoosh(request):
-            # Do not group by thread in beastwhoosh
-            query.set_group_field("thread_title_grouped")
-            query.set_group_options(group_limit=30)
-
-        solr = Solr(settings.SOLR_FORUM_URL)
-
         try:
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+            results = get_search_engine().search_forum_posts(
+                textual_query=search_query,
+                query_filter=filter_query,
+                num_posts=settings.FORUM_POSTS_PER_PAGE,
+                current_page=current_page,
+                group_by_thread=not using_beastwhoosh(request))
+
+            paginator = SearchResultsPaginator(results, settings.FORUM_POSTS_PER_PAGE)
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
-        except SolrException as e:
-            search_logger.warning("search error: query: %s error %s" % (query, e))
+        except SearchEngineException as e:
+            search_logger.warning("search error: query: %s error %s" % (search_query, e))
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            search_logger.error("Could probably not connect to Solr - %s" % e)
+            search_logger.error("Could probably not connect to the search engine - %s" % e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 
@@ -431,22 +399,6 @@ def search_forum(request):
         })
 
     return render(request, 'search/search_forum.html', tvars)
-
-
-def get_pack_tags(pack_obj):
-    query = SolrQuery()
-    query.set_dismax_query('')
-    filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
-    query.set_query_options(field_list=["id"], filter_query=filter_query)
-    query.add_facet_fields("tag")
-    query.set_facet_options("tag", limit=20, mincount=1)
-    try:
-        solr = Solr(settings.SOLR_URL)
-        results = SolrResponseInterpreter(solr.select(unicode(query)))
-    except (SolrException, Exception) as e:
-        #  TODO: do something here?
-        return False
-    return results.facets
 
 
 def __add_date_range(filter_query, date_from, date_to):

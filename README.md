@@ -86,8 +86,8 @@ Below are instructions for setting up a local Freesound installation for develop
 13. Build the search index so you can, well, search
 
         # Open a new terminal window so the services started in the previous step keep running
-        docker-compose run --rm web python manage.py reindex_solr
-        docker-compose run --rm web python manage.py reindex_solr_forum
+        docker-compose run --rm web python manage.py reindex_search_engine_sounds
+        docker-compose run --rm web python manage.py reindex_search_engine_forum
 
 After following the steps you'll have a fully functional Freesound installation up and running, including the search, sound similarity and audio processing features (and more!). As a sort of *bonus step*, you can run Django's shell plus command like this:
 

@@ -19,14 +19,12 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search
-from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
+from utils.search import SearchEngineException, get_search_engine
 from similarity.client import SimilarityException
-from search.views import search_prepare_query
 from exceptions import ServerErrorException, BadRequestException, NotFoundException
 from urllib import unquote
-from django.conf import settings
 
 
 def merge_all(search_form, target_file=None, extra_parameters=None):
@@ -94,9 +92,9 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
         gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
         valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size) if (i/solr_filter_id_block_size) < solr_filter_id_max_pages]
         solr_ids = list()
-        solr = Solr(settings.SOLR_URL)
+        search_engine = get_search_engine()
         for valid_ids_page in valid_ids_pages:
-            page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, solr=solr)
+            page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, search_engine=search_engine)
             solr_ids += page_solr_ids
 
         if gaia_count <= solr_filter_id_block_size * solr_filter_id_max_pages:
@@ -182,9 +180,9 @@ def merge_optimized(search_form, target_file=None, extra_parameters=None):
             valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size)]
             solr_ids = list()
             checked_gaia_ids = list()
-            solr = Solr(settings.SOLR_URL)
+            search_engine = get_search_engine()
             for count, valid_ids_page in enumerate(valid_ids_pages):
-                page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, solr=solr)
+                page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, search_engine=search_engine)
                 solr_ids += page_solr_ids
                 checked_gaia_ids += valid_ids_page
                 if len(solr_ids) >= num_requested_results:
@@ -312,9 +310,9 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
     return gaia_ids, gaia_count, distance_to_target_data, note
 
 
-def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=None, solr=None, offset=None):
-    if not solr:
-        solr = Solr(settings.SOLR_URL)
+def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=None, search_engine=None, offset=None):
+    if not search_engine:
+        search_engine = get_search_engine()
 
     query_filter = search_form.cleaned_data['filter']
     if valid_ids:
@@ -333,15 +331,19 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         n_page_requests = 1
         # Iterate over solr result pages
         while (len(solr_ids) < solr_count or solr_count == None) and n_page_requests <= max_pages:
-            query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
-                                         unquote(query_filter or ""),
-                                         search_form.cleaned_data['sort'],
-                                         current_page,
-                                         page_size,
-                                         grouping=False,
-                                         include_facets=False,
-                                         offset=offset)
-            result = SolrResponseInterpreter(solr.select(unicode(query)))
+            # We need to convert the sort parameter to standard sorting options from
+            # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
+            # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
+            processed_sort = API_SORT_OPTIONS_MAP[search_form.cleaned_data['sort'][0]]
+            result = search_engine.search_sounds(
+                textual_query=unquote(search_form.cleaned_data['query'] or ""),
+                query_filter=unquote(query_filter or ""),
+                sort=processed_sort,
+                offset=(current_page - 1) * page_size,
+                num_sounds=page_size,
+                group_by_pack=False
+
+            )
             solr_ids += [element['id'] for element in result.docs]
             solr_count = result.num_found
 
@@ -349,9 +351,8 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             current_page += 1
             n_page_requests += 1
 
-    except SolrException as e:
+    except SearchEngineException as e:
         raise ServerErrorException(msg='Search server error: %s' % e.message)
     except Exception as e:
         raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
-
     return solr_ids, solr_count

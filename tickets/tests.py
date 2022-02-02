@@ -160,12 +160,12 @@ class TicketTestsFromQueue(TicketTests):
             'action': action, 'message': u'', 'ticket': self.ticket.id,
             'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
     def test_delete_ticket_from_queue(self, delete_sound_solr):
         resp = self._perform_action(u'Delete')
 
         self.assertEqual(resp.status_code, 200)
-        delete_sound_solr.assert_called_once_with(self.sound.id)
+        delete_sound_solr.assert_called_once_with([self.sound.id])
 
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)

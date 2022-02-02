@@ -113,17 +113,42 @@ def view_function(request, username, ...):
 
 ### About Django database migrations
 
-We should aim to minimise the amount of downtime due to database migrations. This means that instead of doing complex data migration in a migration file, we should consider doing a basic migration, copying data in a management command, and then using the data. This may require that we do multiple releases to get all data populated and the site using this data.
+We should aim to minimise the amount of downtime due to database migrations. This means that instead of doing complex 
+data migration in a migration file, we should consider doing a basic migration, copying data in a management command, 
+and then using the data. This may require that we do multiple releases to get all data populated and the site using 
+this data.
 
-For tables that have lots of rows, **adding a column** with a default value takes a long time. Adding this column as nullable is much faster. We can create a second migration to make the column not null once it is populated.
+For tables that have lots of rows, **adding a column** with a default value takes a long time. Adding this column as 
+nullable is much faster. We can create a second migration to make the column not null once it is populated.
 
 ### Adding new fields to the user Profile model
 
-When adding new fields to the `accounts.Profile` model, we should make sure that we also take care of these new fields in the `accounts.Profile.delete_user` method (which anonymizes a user account).
+When adding new fields to the `accounts.Profile` model, we should make sure that we also take care of these new fields 
+in the `accounts.Profile.delete_user` method (which anonymizes a user account).
 
 ### Adding new fields to the user Sound model
 
-When adding new fields to the `sounds.Sound` mode, we should make sure that we handle this fields correctly when creating `DeletedSound` objects in the `sounds-models.on_delete_sound` function triggered by the `pre_delete` signal of the `Sound` model.
+When adding new fields to the `sounds.Sound` mode, we should make sure that we handle this fields correctly when 
+creating `DeletedSound` objects in the `sounds-models.on_delete_sound` function triggered by the `pre_delete` 
+signal of the `Sound` model.
+
+### Search Engine Backends
+
+The way in which Freesound communicates with a search engine to search for sounds and forum posts is abstracted through
+the utils.search.SearchEngineBase class. Freesound can use different search engines as long a *backend class* is
+implemented as a subclass of the abstract utils.search.SearchEngineBase. The API of this class is defined in way
+that tries to be agnostic of the actual search engine backend being used. Since Freesound 2 (2011), we have used
+Solr as the search engine, and have written custom backend classes to interact with it. The search backend class used
+by Freesound is defined in settings.SEARCH_ENGINE_BACKEND_CLASS.
+
+If a new search engine backend class is to be implemented, it must closely follow the API defined in the 
+utils.search.SearchEngineBase docstrings. There is a Django management command that can be used in order to test
+the implementation of a search backend. You can run it like:
+
+    docker-compose run --rm web python manage.py test_search_engine_backend -fsw --backend utils.search.backends.solr451custom.Solr451CustomSearchEngine
+
+Please read carefully the documentation of the management command to better understand how it works and how is it
+doing the testing.
 
 
 ### Considerations when updating Django version
@@ -144,7 +169,8 @@ Check for warnings of the form `RemovedInDjango110Warning` (TODO: Make tests fai
 
 #### Upgrade
 
-If the upgrade requires a database migration for django models, indicate this in the pull request. Include an estimate of the time required to perform this migration by first running the migration on fs-test
+If the upgrade requires a database migration for django models, indicate this in the pull request. Include an estimate 
+of the time required to perform this migration by first running the migration on fs-test
 
 #### Validation
 

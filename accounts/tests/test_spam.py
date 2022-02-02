@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import mock
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
@@ -122,7 +124,7 @@ class ReportSpamOffensive(TestCase):
 
     def test_report_forum_post(self):
         thread = Thread.objects.create(author=self.spammer, title="Span thread",
-                                       forum=Forum.objects.create(name="Test forum"))
+                                    forum=Forum.objects.create(name="Test forum"))
         object = Post.objects.create(author=self.spammer, thread=thread, body="Spam post post body")
         self.__test_report_object('FP', object)
 
@@ -151,7 +153,7 @@ class ReportSpamOffensive(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertEqual(UserFlag.objects.count(), i + 1)
             self.assertEqual(len(mail.outbox), 0)  # No email sent
-
+    
     def test_report_multiple_objects(self):
         # Make spammy objects
         sound = Sound.objects.first()

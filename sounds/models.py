@@ -51,14 +51,14 @@ from comments.models import Comment
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
-from search.views import get_pack_tags
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
 from utils.cache import invalidate_template_cache
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
-from utils.search.search_general import delete_sound_from_solr
+from utils.search import get_search_engine, SearchEngineException
+from utils.search.search_sounds import delete_sounds_from_search_engine
 from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 from utils.text import slugify
@@ -1121,7 +1121,7 @@ class Sound(SocialModel):
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def delete_from_indexes(self):
-        delete_sound_from_solr(self.id)
+        delete_sounds_from_search_engine([self.id])
         delete_sound_from_gaia(self.id)
 
     def invalidate_template_caches(self):
@@ -1406,18 +1406,23 @@ class Pack(SocialModel):
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
     def get_pack_tags(self):
-        pack_tags = get_pack_tags(self)
-        if pack_tags is not False:
-            tags = [t[0] for t in pack_tags['tag']]
+        try:
+            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+            tags = [tag for tag, count in pack_tags_counts]
             return {'tags': tags, 'num_tags': len(tags)}
-        else:
-            return -1
+        except SearchEngineException as e:
+            return False
+        except Exception as e:
+            return False
 
     def get_pack_tags_bw(self):
-        results = get_pack_tags(self)
-        if results:
-            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in results['tag']]
-        else:
+        try:
+            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+                    for tag, count in pack_tags_counts]
+        except SearchEngineException as e:
+            return []
+        except Exception as e:
             return []
 
     def remove_sounds_from_pack(self):

@@ -43,6 +43,7 @@ psycopg2==2.7.3.2
 pycrypto==2.6.1
 PyJWT==1.4.2
 pyparsing==2.4.7
+pysolr==3.9.0
 pysndfile==1.4.3
 python-cjson==1.1.0
 python-memcached==1.53
@@ -50,7 +51,6 @@ pytz==2020.1
 PyYAML==3.11
 raven==6.10.0
 recaptcha-client==1.0.6
-redis==3.2.0
 redis==3.2.0
 sentry-sdk==0.14.4
 Sphinx==1.6.3

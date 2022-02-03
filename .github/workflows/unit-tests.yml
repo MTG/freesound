@@ -36,7 +36,7 @@ jobs:
       continue-on-error: true
 
     - name: Pull docker images
-      run: docker-compose pull --ignore-pull-failures
+      run: docker-compose -f docker-compose.travis.yml pull
 
     - uses: satackey/action-docker-layer-caching@v0.0.11
       continue-on-error: true

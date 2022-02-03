@@ -374,6 +374,7 @@ class SoundManager(models.Manager):
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
           geotags_geotag.location_name as geotag_name,
+          ac_analysis.analysis_data as ac_analysis,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -440,7 +441,7 @@ class SoundManager(models.Manager):
           geotags_geotag.location_name as geotag_name,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
-          ac_analsyis.analysis_data as ac_analysis,
+          ac_analysis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -454,8 +455,8 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
-                                                         AND ac_analsyis.extractor = %s)
+          LEFT JOIN sounds_soundanalysis ac_analysis ON (sound.id = ac_analysis.sound_id 
+                                                         AND ac_analysis.analyzer_version = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
         WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,

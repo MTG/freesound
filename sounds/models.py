@@ -1684,7 +1684,7 @@ class SoundAnalysis(models.Model):
         return None
 
     def __str__(self):
-        return str(self.id)
+        return 'Analysis of sound {} with {} v{}'.format(self.sound_id, self.analyzer) 
 
     class Meta:
         unique_together = (("sound", "analyzer", "analyzer_version")) # one sounds.SoundAnalysis object per sound<>analyzer<>version combination

@@ -151,6 +151,18 @@ Please read carefully the documentation of the management command to better unde
 doing the testing.
 
 
+### Notes about the "external analyzers"
+
+The new analysis pipeline includes the use of external audio analyzers implemented in a code repository at 
+https://github.com/mtg/freesound-audio-analyzers. The docker compose file has defined services for the external
+analyzers which depend on docker images having been previously built from the freesound-audio-analyzers repository.
+To build these images you simply need to checkout the code repository and run `make`. Once the images are built,
+Freesound can be run including the external analyzer services by running `docker-compose --profile ext_analyzers up`
+
+The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ console can be accessed at port `15672`
+(e.g. `http://localhost:15672`) and using `guest` as both username and password.
+
+
 ### Considerations when updating Django version
 
 #### Preparation

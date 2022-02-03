@@ -130,6 +130,7 @@ services:
 
     # New analysis worker (celery worker) for the Audio Commons extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer1:
+        profiles: ["ext_analyzers"]
         image: ac-extractor_1
         volumes:
             - ./freesound-data/:/freesound-data
@@ -140,6 +141,7 @@ services:
 
     # New analysis worker (celery worker) for the Audioset-vggish extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer2:
+        profiles: ["ext_analyzers"]
         image: audioset-vggish-extractor_1
         volumes:
             - ./freesound-data/:/freesound-data
@@ -150,6 +152,7 @@ services:
 
     # New analysis worker (celery worker) for the Essentia extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer3:
+        profiles: ["ext_analyzers"]
         image: fs-essentia-extractor_1
         volumes:
             - ./freesound-data/:/freesound-data

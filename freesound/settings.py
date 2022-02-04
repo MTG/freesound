@@ -437,6 +437,12 @@ PAYPAL_SIGNATURE = ''
 
 
 # -------------------------------------------------------------------------------
+# New Analysis options
+ANALYSIS_MAX_DATA_KEYS_TO_STORE_IN_DB = 50
+
+
+
+# -------------------------------------------------------------------------------
 # AudioCommons analysis settings
 
 AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV3'  # This will be used for indexing sounds and returning analysis output

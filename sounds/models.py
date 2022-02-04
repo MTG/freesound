@@ -1125,10 +1125,22 @@ class Sound(SocialModel):
 
     def analyze_new(self, method="fs-essentia-extractor_1", force=False, high_priority=False):
         sound = Sound.objects.get(id=self.id)
-        SoundAnalysis.objects.get_or_create(sound=sound, analyzer=method, is_queued=True)
-        celery_app.send_task(method, kwargs={'sound_id': self.id, 'sound_path': self.locations('path'),
-                    'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=method)
-        sounds_logger.info("Send sound with id {} to analyzer {}".format(self.id, method))
+        sa, created = SoundAnalysis.objects.get_or_create(sound=sound, analyzer=method)
+        if not sa.is_queued or force:
+            # Only send to queue if not already in queue
+            sa.num_analysis_attempts += 1
+            sa.is_queued = True
+            sa.save(update_fields=['num_analysis_attempts', 'is_queued'])
+            sound_path = self.locations('path')
+            if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+                sound_path = self.locations("preview.LQ.mp3.path")
+            celery_app.send_task(method, kwargs={'sound_id': self.id, 'sound_path': sound_path,
+                        'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=method)
+            sounds_logger.info("Sending sound with id {} to analyzer {}".format(self.id, method))
+        else:
+            sounds_logger.info("Not sending sound with id {} to analyzer {} as is already queued"
+                               .format(self.id, method))
+        return sa
 
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
@@ -1647,20 +1659,26 @@ class SoundAnalysis(models.Model):
         )
 
     sound = models.ForeignKey(Sound, related_name='analyses')
-    created = models.DateTimeField(auto_now_add=True)
-    analyzer = models.CharField(db_index=True, max_length=255)
-    analyzer_version = models.CharField(db_index=True, max_length=255)
-    analysis_filename = models.CharField(max_length=255, null=True)
+    created = models.DateTimeField(auto_now=True)
+    analyzer = models.CharField(db_index=True, max_length=255)  # Analyzer name including version
     analysis_data = JSONField(null=True)
     analysis_status = models.CharField(null=True, db_index=True, max_length=2, choices=STATUS_CHOICES)
+    num_analysis_attempts = models.IntegerField(default=0)
     is_queued = models.BooleanField(default=False)
 
     @property
     def analysis_filepath(self):
-        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_PATH
+        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_NEW_PATH
         and under a sound ID folder structure like sounds and other sound-related files."""
-        id_folder = str(self.id / 1000)
-        return os.path.join(settings.ANALYSIS_PATH, id_folder, "%s" % self.analysis_filename)
+        id_folder = str(self.sound_id / 1000)
+        return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}.json".format(self.sound_id, self.analyzer))
+
+    @property
+    def analysis_logs_filepath(self):
+        """Returns the absolute path of the analysis log file, which should be placed in the ANALYSIS_NEW_PATH
+        and under a sound ID folder structure like sounds and other sound-related files."""
+        id_folder = str(self.sound_id / 1000)
+        return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}.log".format(self.sound_id, self.analyzer))
 
     def set_analysis_status(self, status):
         """
@@ -1672,19 +1690,30 @@ class SoundAnalysis(models.Model):
         self.analysis_status = status
         self.save(update_fields=['analysis_status'])
 
-    def get_analysis(self):
+    def get_analysis_data(self):
         """Returns the contents of the analysis"""
-        if self.analysis_data:
-            return self.analysis_data
-        elif self.analysis_filename:
-            try:
-                return json.load(open(self.analysis_filepath))
-            except IOError:
-                pass
+        if self.analysis_status == "OK":
+            if self.analysis_data:
+                return self.analysis_data
+            else:
+                try:
+                    return json.load(open(self.analysis_filepath))
+                except IOError:
+                    pass
         return None
 
+    def get_analysis_logs(self):
+        """Returns the logs of the analysis"""
+        try:
+            fid = open(self.analysis_logs_filepath)
+            file_contents = fid.read()
+            fid.close()
+            return file_contents
+        except IOError:
+            return 'No logs available...'
+
     def __str__(self):
-        return 'Analysis of sound {} with {} v{}'.format(self.sound_id, self.analyzer) 
+        return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)
 
     class Meta:
-        unique_together = (("sound", "analyzer", "analyzer_version")) # one sounds.SoundAnalysis object per sound<>analyzer<>version combination
+        unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination

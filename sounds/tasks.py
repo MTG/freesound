@@ -29,64 +29,54 @@ from sounds.models import Sound, SoundAnalysis
 workers_logger = logging.getLogger("workers")
 
 
-class WorkerException(Exception):
-    """
-    Exception raised by the worker if:
-    i) the analysis/processing function takes longer than the timeout specified in settings.WORKER_TIMEOUT
-    ii) the check for free disk space  before running the analysis/processing function fails
-    """
-    pass
+def should_store_analysis_data_in_db(analysis_data):
 
+    def count_dict_keys_recursive(dictionary, counter=0):
+        for each_key in dictionary:
+            if isinstance(dictionary[each_key], dict):
+                # Recursive call
+                counter = count_dict_keys_recursive(dictionary[each_key], counter + 1)
+            else:
+                counter += 1
+        return counter
 
-def check_if_free_space(directory=settings.ANALYSIS_NEW_PATH,
-                        min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
-    """
-    Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
-    volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
-    :param str directory: path of the directory whose volume will be checked for free space
-    :param float min_disk_space_percentage: free disk space percentage to check against
-    :raises WorkerException: if available percentage of free space is below the threshold
-    """
-    stats = os.statvfs(directory)
-    percentage_free = stats.f_bfree * 1.0 / stats.f_blocks
-    if percentage_free < min_disk_space_percentage:
-        raise WorkerException("Disk is running out of space, "
-                              "aborting task as there might not be enough space for temp files")
+    return count_dict_keys_recursive(analysis_data) <= settings.ANALYSIS_MAX_DATA_KEYS_TO_STORE_IN_DB
 
 
 @task(name="process_analysis_results")
-def process_analysis_results(sound_id, analyzer, analysis_filename, status, exception=None):
-    workers_logger.info("Processing analysis results of sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
-        sound_id, analyzer, status, analysis_filename))
+def process_analysis_results(sound_id, analyzer, status, exception=None):
+    workers_logger.info("Processing analysis results of sound {} (analyzer: {}, analysis status: {})."
+        .format(sound_id, analyzer, status))
     start_time = time.time()
 
     try:
-        check_if_free_space()
         # Analysis happens in a different celery worker, here we just save the results in a SoundAnalysis object
-        sound = Sound.objects.get(id=sound_id)
-        a = SoundAnalysis.objects.get(sound=sound, analyzer=analyzer)
-        # Update status
-        a.set_analysis_status(status)
-        # Set is_queued to false, as the analysis has finished
+        a = SoundAnalysis.objects.get(sound_id=sound_id, analyzer=analyzer)
+
+        # Update status and queued fields. No need to update "created" as it is done automatically by Django
+        a.analysis_status = status
         a.is_queued = False
         if exception:
-            a.save(update_fields=['is_queued'])
-            workers_logger.error("Done processing. Analysis of sound {} failed (analyzer: {}, analysis status: {}, exception: {}).".format(
-                sound_id, analyzer, status, exception))
+            a.save(update_fields=['analysis_status', 'is_queued', 'created'])
+            workers_logger.error("Done processing. Analysis of sound {} FAILED (analyzer: {}, analysis status: {}, "
+                                 "exception: {}).".format(sound_id, analyzer, status, exception))
         else:
-            # If the results of the analysis are not huge, these can be directly stored in DB using the analysis_data field
-            # (this depends on the analyzer, right now we just save the path of the json file where the results are)
-            a.analysis_filename = analysis_filename
-            a.save(update_fields=['analysis_filename', 'is_queued'])
-            workers_logger.info("Done processing analysis results for sound {} (analyzer: {}, analysis status: {}, analysis filename: {}).".format(
-                sound_id, analyzer, status, analysis_filename))
-    except Sound.DoesNotExist as e:
-        workers_logger.error("Failed to analyze a sound that does not exist (sound_id: {}, analyzer:{}, error: {})".format(
-            sound_id, analyzer, str(e)))
-    except WorkerException as e:
-        workers_logger.error("WorkerException while analyzing sound (sound_id: {}, analyzer: {}, error: {}, 'work_time': {})".format(
-            sound_id, analyzer, str(e), round(time.time() - start_time)))
+            # If the results of the analysis are not huge, these can be directly stored in DB using the analysis_data
+            # field.
+            analysis_data = a.get_analysis_data()
+            if should_store_analysis_data_in_db(analysis_data):
+                a.analysis_data = a.get_analysis_data()
+                a.save(update_fields=['analysis_status', 'analysis_data', 'is_queued', 'created'])
+            else:
+                a.save(update_fields=['analysis_status', 'is_queued', 'created'])
+
+            workers_logger.info("Done processing. Analysis results for sound {} OK (analyzer: {}, analysis status: {})."
+                                .format(sound_id, analyzer, status))
+
+    except SoundAnalysis.DoesNotExist as e:
+        workers_logger.error("Can't save analysis results as SoundAnalysis object does not exist"
+                             " (sound_id: {}, analyzer:{}, error: {})".format(sound_id, analyzer, e))
 
     except Exception as e:
-        workers_logger.error("Unexpected error while analyzing sound (sound_id: {}, analyzer: {}, error: {}, 'work_time': {})".format(
-            sound_id, analyzer, str(e), round(time.time() - start_time)))
+        workers_logger.error("Unexpected error while saving analysis results (sound_id: {}, analyzer: {}, error: {}, "
+                             "'work_time': {})".format(sound_id, analyzer, str(e), round(time.time() - start_time)))

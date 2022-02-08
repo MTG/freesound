@@ -99,6 +99,7 @@ ADMIN_REORDER = (
     )},
     {'app': 'sounds', 'models': (
         'sounds.Sound',
+        {'model': 'sounds.SoundAnalysis', 'label': 'Sound analyses'},
         'sounds.Pack',
         'sounds.DeletedSound',
         'sounds.License',

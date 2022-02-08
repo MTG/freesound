@@ -1130,7 +1130,7 @@ class Sound(SocialModel):
             # Only send to queue if not already in queue
             sa.num_analysis_attempts += 1
             sa.is_queued = True
-            sa.save(update_fields=['num_analysis_attempts', 'is_queued'])
+            sa.save(update_fields=['num_analysis_attempts', 'is_queued', 'created'])
             sound_path = self.locations('path')
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
                 sound_path = self.locations("preview.LQ.mp3.path")
@@ -1665,6 +1665,7 @@ class SoundAnalysis(models.Model):
     analysis_status = models.CharField(null=True, db_index=True, max_length=2, choices=STATUS_CHOICES)
     num_analysis_attempts = models.IntegerField(default=0)
     is_queued = models.BooleanField(default=False)
+    analysis_time = models.FloatField(default=0)
 
     @property
     def analysis_filepath(self):
@@ -1711,6 +1712,9 @@ class SoundAnalysis(models.Model):
             return file_contents
         except IOError:
             return 'No logs available...'
+
+    def re_run_analysis(self):
+        self.sound.analyze_new(method=self.analyzer, force=True)
 
     def __str__(self):
         return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)

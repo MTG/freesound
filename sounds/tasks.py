@@ -44,7 +44,7 @@ def should_store_analysis_data_in_db(analysis_data):
 
 
 @task(name="process_analysis_results")
-def process_analysis_results(sound_id, analyzer, status, exception=None):
+def process_analysis_results(sound_id, analyzer, status, analysis_time, exception=None):
     workers_logger.info("Processing analysis results of sound {} (analyzer: {}, analysis status: {})."
         .format(sound_id, analyzer, status))
     start_time = time.time()
@@ -55,9 +55,10 @@ def process_analysis_results(sound_id, analyzer, status, exception=None):
 
         # Update status and queued fields. No need to update "created" as it is done automatically by Django
         a.analysis_status = status
+        a.analysis_time = analysis_time
         a.is_queued = False
         if exception:
-            a.save(update_fields=['analysis_status', 'is_queued', 'created'])
+            a.save(update_fields=['analysis_status', 'is_queued', 'created', 'analysis_time'])
             workers_logger.error("Done processing. Analysis of sound {} FAILED (analyzer: {}, analysis status: {}, "
                                  "exception: {}).".format(sound_id, analyzer, status, exception))
         else:
@@ -66,9 +67,9 @@ def process_analysis_results(sound_id, analyzer, status, exception=None):
             analysis_data = a.get_analysis_data()
             if should_store_analysis_data_in_db(analysis_data):
                 a.analysis_data = a.get_analysis_data()
-                a.save(update_fields=['analysis_status', 'analysis_data', 'is_queued', 'created'])
+                a.save(update_fields=['analysis_status', 'analysis_data', 'is_queued', 'created', 'analysis_time'])
             else:
-                a.save(update_fields=['analysis_status', 'is_queued', 'created'])
+                a.save(update_fields=['analysis_status', 'is_queued', 'created', 'analysis_time'])
 
             workers_logger.info("Done processing. Analysis results for sound {} OK (analyzer: {}, analysis status: {})."
                                 .format(sound_id, analyzer, status))

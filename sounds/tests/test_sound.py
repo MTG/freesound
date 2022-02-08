@@ -43,7 +43,8 @@ from sounds.models import Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
 from utils.encryption import encrypt
 from utils.filesystem import create_directories
-from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory, \
+    override_analysis_new_path_with_temp_directory
 
 
 class CommentSoundsTestCase(TestCase):
@@ -1023,33 +1024,33 @@ class SoundAnalysisModel(TestCase):
 
     fixtures = ['licenses']
 
-    @override_analysis_path_with_temp_directory
+    @override_analysis_new_path_with_temp_directory
     def test_get_analysis(self):
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
         analysis_data = {'descriptor1': 0.56, 'descirptor2': 1.45, 'descriptor3': 'label'}
 
         # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
-        sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data)
+        sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data,
+                                          analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 1)
-        self.assertEqual(sa.get_analysis().keys(), analysis_data.keys())
-        self.assertEqual(sa.get_analysis()['descriptor1'], 0.56)
+        self.assertEqual(sa.get_analysis_data().keys(), analysis_data.keys())
+        self.assertEqual(sa.get_analysis_data()['descriptor1'], 0.56)
 
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
-        analysis_filename = '%i_testextractor_out.json'
-        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
+        analysis_filename = '%i-TestExtractor2.json' % sound.id
+        sound_analysis_folder = os.path.join(settings.ANALYSIS_NEW_PATH, str(sound.id / 1000))
         create_directories(sound_analysis_folder)
         json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
-        sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_filename=analysis_filename)
+        sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 2)
-        self.assertEqual(sa2.get_analysis().keys(), analysis_data.keys())
-        self.assertEqual(sa2.get_analysis()['descriptor1'], 0.56)
+        self.assertEqual(sa2.get_analysis_data().keys(), analysis_data.keys())
+        self.assertEqual(sa2.get_analysis_data()['descriptor1'], 0.56)
 
         # Create an analysis object which references a non-existing file. Check that get_analysis returns None.
-        sa3 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor3",
-                                           analysis_filename='non_existing_file.json')
+        sa3 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor3", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 3)
-        self.assertEqual(sa3.get_analysis(), None)
+        self.assertEqual(sa3.get_analysis_data(), None)
 
 
 class SoundEditDeletePermissionTestCase(TestCase):

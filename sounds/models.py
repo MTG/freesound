@@ -456,7 +456,7 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           LEFT JOIN sounds_soundanalysis ac_analysis ON (sound.id = ac_analysis.sound_id 
-                                                         AND ac_analysis.analyzer_version = %s)
+                                                         AND ac_analysis.analyzer = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
         WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,

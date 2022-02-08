@@ -1721,3 +1721,20 @@ class SoundAnalysis(models.Model):
 
     class Meta:
         unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination
+
+def on_delete_sound_analysis(sender, instance, **kwargs):
+    # Right before deleting a SoundAnalysis object, delete also the associated log and analysis files (if any)
+    try:
+        if os.path.exists(instance.analysis_logs_filepath):
+            os.remove(instance.analysis_logs_filepath)
+    except Exception as e:
+        pass
+
+    try:
+        if os.path.exists(instance.analysis_filepath):
+            os.remove(instance.analysis_filepath)
+    except Exception as e:
+        pass
+
+pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
+

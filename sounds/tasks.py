@@ -45,10 +45,23 @@ def should_store_analysis_data_in_db(analysis_data):
 
 @task(name="process_analysis_results")
 def process_analysis_results(sound_id, analyzer, status, analysis_time, exception=None):
-    workers_logger.info("Processing analysis results of sound {} (analyzer: {}, analysis status: {})."
-        .format(sound_id, analyzer, status))
-    start_time = time.time()
+    """Process the results of the analysis of a file and update the SoundAnalysis object accordingly.
 
+    This is a celery task that gets called by the analysis workers when they finish the analysis job. This task checks
+    the results and updates the corresponding SoundAnalysis object to update the status, modification date, analysis
+    time, analysis data, etc...
+
+    Args:
+        sound_id (int): ID of the sound that has been analyzed
+        analyzer (str): name of the analyzer that was used to analyze the sound
+        status (str): status after the analysis job has finished. Should be one of "OK" for ok analysis, "FA" for
+            failed analysis, or "SK" for analysis that were skipped (e.g. because a file was too long or some other
+            reason decided by the analyzer).
+        analysis_time (float): the time it took in seconds for the analyzer to carry out the analysis task
+        exception (str): error message in case there was an error
+    """
+    workers_logger.info("Processing sound analysis results"
+                        " (sound_id: {}, analyzer:{}, status: {})".format(sound_id, analyzer, status))
     try:
         # Analysis happens in a different celery worker, here we just save the results in a SoundAnalysis object
         a = SoundAnalysis.objects.get(sound_id=sound_id, analyzer=analyzer)
@@ -65,19 +78,19 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
             # If the results of the analysis are not huge, these can be directly stored in DB using the analysis_data
             # field.
             analysis_data = a.get_analysis_data()
-            if should_store_analysis_data_in_db(analysis_data):
+            if analysis_data and should_store_analysis_data_in_db(analysis_data):
                 a.analysis_data = a.get_analysis_data()
                 a.save(update_fields=['analysis_status', 'analysis_data', 'is_queued', 'created', 'analysis_time'])
             else:
                 a.save(update_fields=['analysis_status', 'is_queued', 'created', 'analysis_time'])
 
-            workers_logger.info("Done processing. Analysis results for sound {} OK (analyzer: {}, analysis status: {})."
-                                .format(sound_id, analyzer, status))
+            workers_logger.info("Done processing sound analysis results"
+                                " (sound_id: {}, analyzer:{}, status: {})".format(sound_id, analyzer, status))
 
     except SoundAnalysis.DoesNotExist as e:
-        workers_logger.error("Can't save analysis results as SoundAnalysis object does not exist"
+        workers_logger.error("Can't process analysis results as SoundAnalysis object does not exist"
                              " (sound_id: {}, analyzer:{}, error: {})".format(sound_id, analyzer, e))
 
     except Exception as e:
-        workers_logger.error("Unexpected error while saving analysis results (sound_id: {}, analyzer: {}, error: {}, "
-                             "'work_time': {})".format(sound_id, analyzer, str(e), round(time.time() - start_time)))
+        workers_logger.error("Unexpected error while processing analysis results"
+                             " (sound_id: {}, analyzer: {}, error: {})".format(sound_id, analyzer, e))

@@ -204,7 +204,7 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
                     'num_analysis_attempts', 'analysis_time')
     ordering = ('-created',)
     list_filter = ('is_queued', 'analyzer', 'analysis_status')
-    search_fields = ('=sound_id',)
+    search_fields = ('=sound__id',)
     actions = ('re_run_analysis',)
     change_actions = ('re_run_analysis',)
     readonly_fields = []

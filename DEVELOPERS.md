@@ -160,7 +160,7 @@ To build these images you simply need to checkout the code repository and run `m
 Freesound can be run including the external analyzer services by running `docker-compose --profile ext_analyzers up`
 
 The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ console can be accessed at port `15672`
-(e.g. `http://localhost:15672`) and using `guest` as both username and password.
+(e.g. `http://localhost:15672/rabbitmq-admin`) and using `guest` as both username and password.
 
 
 ### Considerations when updating Django version

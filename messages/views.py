@@ -122,11 +122,11 @@ def new_message(request, username=None, message_id=None):
         form_class = MessageReplyFormWithCaptcha
     
     if request.method == 'POST':
-        form = form_class(request.POST)
+        form = form_class(request, request.POST)
 
         if request.user.profile.is_blocked_for_spam_reports():
             messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account "
-                                                         "has been temporaly blocked after multiple spam reports")
+                                                         "has been temporally blocked after multiple spam reports")
         else:
             if form.is_valid():
                 user_from = request.user
@@ -154,7 +154,6 @@ def new_message(request, username=None, message_id=None):
 
                 return HttpResponseRedirect(reverse("messages"))
     else:
-        form = form_class(request.POST)
         if message_id:
             try:
                 message = Message.objects.get(id=message_id)
@@ -168,11 +167,13 @@ def new_message(request, username=None, message_id=None):
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                form = form_class(initial={"to": to, "subject": subject, "body": body})
+                form = form_class(request, initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
                 pass
         elif username:
-            form = form_class(initial={"to": username})
+            form = form_class(request, initial={"to": username})
+        else:
+            form = form_class(request)
 
     tvars = {'form': form}
     return render(request, 'messages/new.html', tvars)

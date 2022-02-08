@@ -23,6 +23,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from utils.forms import CaptchaWidget, HtmlCleaningCharField
+from utils.spam import is_spam
 
 
 class ManualUserField(forms.CharField):
@@ -40,6 +41,10 @@ class MessageReplyForm(forms.Form):
     subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size': '80'}))
     body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
 
+    def __init__(self, request, *args, **kwargs):
+        self.request = request  # This is used by MessageReplyFormWithCaptcha to be able to call is_spam function
+        super(MessageReplyForm, self).__init__(*args, **kwargs)
+
 
 class MessageReplyFormWithCaptcha(MessageReplyForm):
     recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
@@ -50,3 +55,10 @@ class MessageReplyFormWithCaptcha(MessageReplyForm):
             if not captcha_response:
                 raise forms.ValidationError("Captcha is not correct")
         return captcha_response
+
+    def clean_body(self):
+        body = self.cleaned_data['body']
+        if is_spam(self.request, body):
+            raise forms.ValidationError("Your message was considered spam. If your message is not spam and the "
+                                        "check keeps failing, please contact the admins.")
+        return body

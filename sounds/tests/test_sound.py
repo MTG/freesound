@@ -1050,7 +1050,7 @@ class SoundAnalysisModel(TestCase):
         # Create an analysis object which references a non-existing file. Check that get_analysis returns None.
         sa3 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor3", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 3)
-        self.assertEqual(sa3.get_analysis_data(), None)
+        self.assertEqual(sa3.get_analysis_data(), {})
 
 
 class SoundEditDeletePermissionTestCase(TestCase):

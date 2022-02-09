@@ -29,20 +29,6 @@ from sounds.models import Sound, SoundAnalysis
 workers_logger = logging.getLogger("workers")
 
 
-def should_store_analysis_data_in_db(analysis_data):
-
-    def count_dict_keys_recursive(dictionary, counter=0):
-        for each_key in dictionary:
-            if isinstance(dictionary[each_key], dict):
-                # Recursive call
-                counter = count_dict_keys_recursive(dictionary[each_key], counter + 1)
-            else:
-                counter += 1
-        return counter
-
-    return count_dict_keys_recursive(analysis_data) <= settings.ANALYSIS_MAX_DATA_KEYS_TO_STORE_IN_DB
-
-
 @task(name="process_analysis_results")
 def process_analysis_results(sound_id, analyzer, status, analysis_time, exception=None):
     """Process the results of the analysis of a file and update the SoundAnalysis object accordingly.
@@ -70,20 +56,15 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         a.analysis_status = status
         a.analysis_time = analysis_time
         a.last_analyzer_finished = datetime.datetime.now()
+        a.save(update_fields=['analysis_status', 'last_analyzer_finished', 'analysis_time'])
         if exception:
-            a.save(update_fields=['analysis_status', 'last_analyzer_finished', 'analysis_time'])
             workers_logger.error("Done processing. Analysis of sound {} FAILED (analyzer: {}, analysis status: {}, "
                                  "exception: {}).".format(sound_id, analyzer, status, exception))
         else:
-            # If the results of the analysis are not huge, these can be directly stored in DB using the analysis_data
-            # field.
-            analysis_data = a.get_analysis_data()
-            if analysis_data and should_store_analysis_data_in_db(analysis_data):
-                a.analysis_data = a.get_analysis_data()
-                a.save(update_fields=['analysis_status', 'analysis_data', 'last_analyzer_finished', 'analysis_time'])
-            else:
-                a.save(update_fields=['analysis_status', 'last_analyzer_finished', 'analysis_time'])
-
+            # Load analysis output to database field (following configuration  in settings.ANALYZERS_CONFIGURATION)
+            a.load_analysis_data_from_file_to_db()
+            # Set sound to index dirty so that the sound gets reindexed with updated analysis fields
+            a.sound.mark_index_dirty(commit=True)
             workers_logger.info("Done processing sound analysis results"
                                 " (sound_id: {}, analyzer:{}, status: {})".format(sound_id, analyzer, status))
 

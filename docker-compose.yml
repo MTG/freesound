@@ -131,33 +131,33 @@ services:
     # New analysis worker (celery worker) for the Audio Commons extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer1:
         profiles: ["ext_analyzers"]
-        image: ac-extractor_1
+        image: ac-extractor_v1
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=4 -l info -Q ac-extractor_1
+        command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v1
         depends_on:
             - rabbit
 
     # New analysis worker (celery worker) for the Audioset-vggish extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer2:
         profiles: ["ext_analyzers"]
-        image: audioset-vggish-extractor_1
+        image: audioset-vggish-extractor_v1
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=4 -l info -Q audioset-vggish-extractor_1
+        command: celery -A main worker --concurrency=1 -l info -Q audioset-vggish-extractor_v1
         depends_on:
             - rabbit
 
     # New analysis worker (celery worker) for the Essentia extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer3:
         profiles: ["ext_analyzers"]
-        image: fs-essentia-extractor_1
+        image: fs-essentia-extractor_v1
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=4 -l info -Q fs-essentia-extractor_1
+        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_v1
         depends_on:
             - rabbit
 

@@ -439,38 +439,41 @@ PAYPAL_SIGNATURE = ''
 
 # -------------------------------------------------------------------------------
 # New Analysis options
-ANALYSIS_MAX_DATA_KEYS_TO_STORE_IN_DB = 50
 
+AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v1'
+FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_v1'
+AUDIOSET_EXTRACTOR_NAME = 'audioset-vggish-extractor_v1'
 
-
-# -------------------------------------------------------------------------------
-# AudioCommons analysis settings
-
-AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV3'  # This will be used for indexing sounds and returning analysis output
-AUDIOCOMMONS_DESCRIPTOR_PREFIX = 'ac_'
-AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
-    [('loudness', float),
-     ('dynamic_range', float),
-     ('temporal_centroid', float),
-     ('log_attack_time', float),
-     ('single_event', bool),
-     ('tonality', str),
-     ('tonality_confidence', float),
-     ('loop', bool),
-     ('tempo', int),
-     ('tempo_confidence', float),
-     ('note_midi', int),
-     ('note_name', str),
-     ('note_frequency', float),
-     ('note_confidence', float),
-     ('brightness', float),
-     ('depth', float),
-     ('hardness', float),
-     ('roughness', float),
-     ('boominess', float),
-     ('warmth', float),
-     ('sharpness', float),
-     ('reverb', bool)]  # Used when running load_audiocommons_analysis_data and when parsing filters
+ANALYZERS_CONFIGURATION = {
+    AUDIOCOMMONS_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('loudness', 'ac_loudness', float),
+            ('dynamic_range', 'ac_dynamic_range', float),
+            ('temporal_centroid', 'ac_temporal_centroid', float),
+            ('log_attack_time', 'ac_log_attack_time', float),
+            ('single_event', 'ac_single_event', bool),
+            ('tonality', 'ac_tonality', str),
+            ('tonality_confidence', 'ac_tonality_confidence', float),
+            ('loop', 'ac_loop', bool),
+            ('tempo', 'ac_tempo', int),
+            ('tempo_confidence', 'ac_tempo_confidence', float),
+            ('note_midi', 'ac_note_midi', int),
+            ('note_name', 'ac_note_name', str),
+            ('note_frequency', 'ac_note_frequency', float),
+            ('note_confidence', 'ac_note_confidence', float),
+            ('brightness', 'ac_brightness', float),
+            ('depth', 'ac_depth', float),
+            ('hardness', 'ac_hardness', float),
+            ('roughness', 'ac_roughness', float),
+            ('boominess', 'ac_boominess', float),
+            ('warmth', 'ac_warmth', float),
+            ('sharpness', 'ac_sharpness', float),
+            ('reverb', 'ac_reverb', bool)
+        ]
+    },
+    FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
+    AUDIOSET_EXTRACTOR_NAME: {},
+}
 
 # -------------------------------------------------------------------------------
 # Search engine

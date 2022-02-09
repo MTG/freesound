@@ -179,7 +179,7 @@ def convert_sound_to_search_engine_document(sound):
         for key, value in ac_analysis.items():
             suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
             if suffix:
-                document['{0}{1}{2}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key, suffix)] = value
+                document['{0}{1}'.format(key, suffix)] = value
 
     return document
 
@@ -208,15 +208,15 @@ def convert_post_to_search_engine_document(post):
 def search_process_filter(query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
     """Process the filter to make a number of adjustments
 
-        1) Replace human-readable Audio Commons descriptor names to dynamic solr field names.
+        1) Add type suffix to human-readable audio analyzer descriptor names (needed for dynamic solr field names).
         2) If only sounds with pack should be returned, add such a filter.
         3) Add filter for sound IDs if only_sounds_within_ids is passed.
 
-    Used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo -> ac_tempo_i).
-    The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
-    and '*_s' (for string). At indexing time we append these suffixes to the ac descirptor names so Solr can
-    treat the types properly. Now we automatically append the suffices to the filter names so users do not
-    need to deal with that.
+    Step 1) is used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo ->
+    ac_tempo_i). The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float),
+    '*_i' (for integer) and '*_s' (for string). At indexing time, we append these suffixes to the analyzer
+    descriptor names that need to be indexed so Solr can treat the types properly. Now we automatically append the
+    suffices to the filter names so users do not need to deal with that and Solr understands recognizes the field name.
 
     Args:
         query_filter (str): query filter string.
@@ -226,10 +226,14 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
     Returns:
         str: processed filter query string.
     """
-    # Replace Audio Commons descriptor names
-    for name, t in settings.AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES:
-        query_filter = query_filter.replace('ac_{0}:'.format(name), 'ac_{0}{1}:'
-                                            .format(name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[t]))
+    # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
+    for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
+        if 'descriptors_map' in analyzer_data:
+            descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
+            for _, db_descriptor_key, descriptor_type in descriptors_map:
+                query_filter = query_filter.replace('{0}:'.format(db_descriptor_key),
+                                                    '{0}{1}:'.format(db_descriptor_key,
+                                                                     SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
 
     # If we only want sounds with packs and there is no pack filter, add one
     if only_sounds_with_pack and not 'pack:' in query_filter:

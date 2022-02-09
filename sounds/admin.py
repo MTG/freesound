@@ -212,7 +212,7 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return list(self.readonly_fields) + \
                [field.name for field in obj._meta.fields] + \
-               [field.name for field in obj._meta.many_to_many] + ['analysis_logs', 'analysis_data_full']
+               [field.name for field in obj._meta.many_to_many] + ['analysis_logs', 'analysis_data_file']
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -236,10 +236,10 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     analysis_logs.admin_order_field = 'Analysis logs'
     analysis_logs.short_description = 'Analysis logs'
 
-    def analysis_data_full(self, obj):
-        return obj.get_analysis_data()
-    analysis_data_full.admin_order_field = 'Analysis data full'
-    analysis_data_full.short_description = 'Analysis data full'
+    def analysis_data_file(self, obj):
+        return obj.get_analysis_data_from_file()
+    analysis_data_file.admin_order_field = 'Analysis data file'
+    analysis_data_file.short_description = 'Analysis data file'
 
 
 

@@ -21,6 +21,7 @@
 #
 
 import datetime
+import glob
 import json
 import logging
 import math
@@ -1678,18 +1679,12 @@ class SoundAnalysis(models.Model):
 
     @property
     def analysis_filepath_base(self):
-        """Returns the absolute path of the output analysis file without the extension, which could be '.json' or
-        '.yaml'. The file should be in the ANALYSIS_NEW_PATH and under a sound ID folder structure like sounds and
-        other sound-related files."""
+        """Returns the absolute path of the analysis files related with this SoundAnalysis object. Related files will
+         include analysis output but also logs. The base filepath should be complemented with the extension, which
+         could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
+         the ANALYSIS_NEW_PATH and under a sound ID folder structure like sounds and other sound-related files."""
         id_folder = str(self.sound_id / 1000)
         return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
-
-    @property
-    def analysis_logs_filepath(self):
-        """Returns the absolute path of the analysis log file, which should be placed in the ANALYSIS_NEW_PATH
-        and under a sound ID folder structure like sounds and other sound-related files."""
-        id_folder = str(self.sound_id / 1000)
-        return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}.log".format(self.sound_id, self.analyzer))
 
     def load_analysis_data_from_file_to_db(self):
         """This method checks the analysis output data which has been written to a file, and loads it to the
@@ -1749,7 +1744,7 @@ class SoundAnalysis(models.Model):
     def get_analysis_logs(self):
         """Returns the logs of the analysis"""
         try:
-            fid = open(self.analysis_logs_filepath)
+            fid = open(self.analysis_filepath_base + '.log')
             file_contents = fid.read()
             fid.close()
             return file_contents
@@ -1767,16 +1762,9 @@ class SoundAnalysis(models.Model):
 
 def on_delete_sound_analysis(sender, instance, **kwargs):
     # Right before deleting a SoundAnalysis object, delete also the associated log and analysis files (if any)
-    try:
-        if os.path.exists(instance.analysis_logs_filepath):
-            os.remove(instance.analysis_logs_filepath)
-    except Exception as e:
-        pass
-
-    for extension in ['.json', '.yaml']:
+    for filepath in glob.glob(instance.analysis_filepath_base + '*'):
         try:
-            if os.path.exists(instance.analysis_filepath_base + extension):
-                os.remove(instance.analysis_filepath + extension)
+            os.remove(filepath)
         except Exception as e:
             pass
 

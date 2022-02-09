@@ -1126,10 +1126,11 @@ class Sound(SocialModel):
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
-    def analyze_new(self, analyzer, force=False, high_priority=False):
+    def analyze_new(self, analyzer, force=False, high_priority=False, verbose=True):
         if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
             # If specified analyzer is not one of the analyzers configured, do nothing
-            sounds_logger.info("Not sending sound {} to unknown analyzer {}".format(self.id, analyzer))
+            if verbose:
+                sounds_logger.info("Not sending sound {} to unknown analyzer {}".format(self.id, analyzer))
             return None
 
         sa, created = SoundAnalysis.objects.get_or_create(sound=self, analyzer=analyzer)
@@ -1145,10 +1146,11 @@ class Sound(SocialModel):
                 sound_path = self.locations("preview.LQ.mp3.path")
             celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
                         'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=analyzer)
-            sounds_logger.info("Sending sound {} to analyzer {}".format(self.id, analyzer))
+            if verbose:
+                sounds_logger.info("Sending sound {} to analyzer {}".format(self.id, analyzer))
         else:
-            sounds_logger.info("Not sending sound {} to analyzer {} as is already queued"
-                               .format(self.id, analyzer))
+            if verbose:
+                sounds_logger.info("Not sending sound {} to analyzer {} as is already queued".format(self.id, analyzer))
         return sa
 
     def delete_from_indexes(self):
@@ -1751,8 +1753,8 @@ class SoundAnalysis(models.Model):
         except IOError:
             return 'No logs available...'
 
-    def re_run_analysis(self):
-        self.sound.analyze_new(self.analyzer, force=True)
+    def re_run_analysis(self, verbose=True):
+        self.sound.analyze_new(self.analyzer, force=True, verbose=verbose)
 
     def __str__(self):
         return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)

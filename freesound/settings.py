@@ -441,8 +441,7 @@ PAYPAL_SIGNATURE = ''
 # New Analysis options
 
 AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v1'
-FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_v1'
-AUDIOSET_EXTRACTOR_NAME = 'audioset-vggish-extractor_v1'
+FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
@@ -472,7 +471,6 @@ ANALYZERS_CONFIGURATION = {
         ]
     },
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
-    AUDIOSET_EXTRACTOR_NAME: {},
 }
 
 # -------------------------------------------------------------------------------

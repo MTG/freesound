@@ -26,6 +26,7 @@ import logging
 import math
 import os
 import random
+import yaml
 import zlib
 
 import gearman
@@ -1676,11 +1677,12 @@ class SoundAnalysis(models.Model):
     analysis_time = models.FloatField(default=0)
 
     @property
-    def analysis_filepath(self):
-        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_NEW_PATH
-        and under a sound ID folder structure like sounds and other sound-related files."""
+    def analysis_filepath_base(self):
+        """Returns the absolute path of the output analysis file without the extension, which could be '.json' or
+        '.yaml'. The file should be in the ANALYSIS_NEW_PATH and under a sound ID folder structure like sounds and
+        other sound-related files."""
         id_folder = str(self.sound_id / 1000)
-        return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}.json".format(self.sound_id, self.analyzer))
+        return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
 
     @property
     def analysis_logs_filepath(self):
@@ -1721,11 +1723,19 @@ class SoundAnalysis(models.Model):
         self.save(update_fields=['analysis_data'])
 
     def get_analysis_data_from_file(self):
-        """Returns the analysis data as stored in file or returns empty dict if no file exists"""
-        try:
-            return json.load(open(self.analysis_filepath))
-        except IOError:
-            return {}
+        """Returns the analysis data as stored in file or returns empty dict if no file exists. It tries
+        extensions .json and .yaml as these are the supported formats for analysis results"""
+        if os.path.exists(self.analysis_filepath_base + '.json'):
+            try:
+                return json.load(open(self.analysis_filepath_base + '.json'))
+            except Exception:
+                pass
+        if os.path.exists(self.analysis_filepath_base + '.yaml'):
+            try:
+                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CLoader)
+            except Exception:
+                pass
+        return {}
 
     def get_analysis_data(self):
         """Returns the output of the analysis, either returning them from the DB or from a file in disk"""
@@ -1763,11 +1773,12 @@ def on_delete_sound_analysis(sender, instance, **kwargs):
     except Exception as e:
         pass
 
-    try:
-        if os.path.exists(instance.analysis_filepath):
-            os.remove(instance.analysis_filepath)
-    except Exception as e:
-        pass
+    for extension in ['.json', '.yaml']:
+        try:
+            if os.path.exists(instance.analysis_filepath_base + extension):
+                os.remove(instance.analysis_filepath + extension)
+        except Exception as e:
+            pass
 
 pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
 

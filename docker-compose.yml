@@ -153,11 +153,11 @@ services:
     # New analysis worker (celery worker) for the Essentia extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer3:
         profiles: ["ext_analyzers"]
-        image: fs-essentia-extractor_v1
+        image: fs-essentia-extractor_legacy
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_v1
+        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
         depends_on:
             - rabbit
 

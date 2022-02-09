@@ -1684,16 +1684,6 @@ class SoundAnalysis(models.Model):
         id_folder = str(self.sound_id / 1000)
         return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}.log".format(self.sound_id, self.analyzer))
 
-    def set_analysis_status(self, status):
-        """
-        Updates self.analysis_status field of the SoundAnalysis object and saves to DB without updating other
-        fields. This function is used in cases when two instances of the same SoundAnalysis object could be edited by
-        two processes in parallel and we want to avoid possible field overwrites.
-        :param str status: new state to which self.analysis_state should be set
-        """
-        self.analysis_status = status
-        self.save(update_fields=['analysis_status'])
-
     def get_analysis_data(self):
         """Returns the contents of the analysis"""
         if self.analysis_status == "OK":

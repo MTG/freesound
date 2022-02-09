@@ -120,7 +120,7 @@ class Command(BaseCommand):
                         if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer).exclude(analysis_status="QU").exists():
                             console_logger.info(
                                 "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
-                            s.analyze_new(method=analyzer)
+                            s.analyze_new(analyzer)
                 if options['include_skipped']:
                     console_logger.info("Analyzing all sounds whose analysis was skipped (marked as 'SK')...")
                     for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="SK")):
@@ -128,7 +128,7 @@ class Command(BaseCommand):
                             break
                         console_logger.info(
                             "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
-                        a.sound.analyze_new(method=analyzer)
+                        a.sound.analyze_new(analyzer)
                 if options['include_failed']:
                     console_logger.info("Analyzing all sounds whose analysis failed (marked as 'FA')...")
                     for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="FA")):
@@ -136,7 +136,7 @@ class Command(BaseCommand):
                             break
                         console_logger.info(
                             "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
-                        a.sound.analyze_new(method=analyzer)
+                        a.sound.analyze_new(analyzer)
                 if options['include_ok']:
                     console_logger.info("Analyzing all sounds whose analysis was successful (marked as 'OK')...")
                     for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="OK")):
@@ -144,4 +144,4 @@ class Command(BaseCommand):
                             break
                         console_logger.info(
                             "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
-                        a.sound.analyze_new(method=analyzer)
+                        a.sound.analyze_new(analyzer)

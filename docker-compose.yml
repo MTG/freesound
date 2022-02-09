@@ -135,7 +135,7 @@ services:
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v1
+        command: celery -A main worker --concurrency=2 -l info -Q ac-extractor_v1
         depends_on:
             - rabbit
 
@@ -146,7 +146,7 @@ services:
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=1 -l info -Q audioset-vggish-extractor_v1
+        command: celery -A main worker --concurrency=2 -l info -Q audioset-vggish-extractor_v1
         depends_on:
             - rabbit
 
@@ -157,7 +157,7 @@ services:
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
+        command: celery -A main worker --concurrency=2 -l info -Q fs-essentia-extractor_legacy
         depends_on:
             - rabbit
 

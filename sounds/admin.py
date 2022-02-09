@@ -200,10 +200,10 @@ admin.site.register(BulkUploadProgress, BulkUploadProgressAdmin)
 
 
 class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
-    list_display = ('analyzer', 'sound_id', 'created', 'is_queued', 'analysis_status',
+    list_display = ('analyzer', 'sound_id',  'analysis_status', 'last_sent_to_queue', 'last_analyzer_finished',
                     'num_analysis_attempts', 'analysis_time')
-    ordering = ('-created',)
-    list_filter = ('is_queued', 'analyzer', 'analysis_status')
+    ordering = ('-last_sent_to_queue',)
+    list_filter = ('analyzer', 'analysis_status')
     search_fields = ('=sound__id',)
     actions = ('re_run_analysis',)
     change_actions = ('re_run_analysis',)

@@ -1126,11 +1126,13 @@ class Sound(SocialModel):
     def analyze_new(self, method="fs-essentia-extractor_1", force=False, high_priority=False):
         sound = Sound.objects.get(id=self.id)
         sa, created = SoundAnalysis.objects.get_or_create(sound=sound, analyzer=method)
-        if not sa.is_queued or force:
+        if not sa.analysis_status == "QU" or force:
             # Only send to queue if not already in queue
             sa.num_analysis_attempts += 1
-            sa.is_queued = True
-            sa.save(update_fields=['num_analysis_attempts', 'is_queued', 'created'])
+            sa.analysis_status = "QU"
+            sa.analysis_time = 0
+            sa.last_sent_to_queue = datetime.datetime.now()
+            sa.save(update_fields=['num_analysis_attempts', 'analysis_status', 'last_sent_to_queue', 'analysis_time'])
             sound_path = self.locations('path')
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
                 sound_path = self.locations("preview.LQ.mp3.path")
@@ -1653,18 +1655,19 @@ class SoundAnalysis(models.Model):
     or for other extractors as well, but for the current use case that wouldn't be needed.
     """
     STATUS_CHOICES = (
+            ("QU", 'Queued'),
             ("OK", 'Ok'),
             ("SK", 'Skipped'),
             ("FA", 'Failed'),
         )
 
     sound = models.ForeignKey(Sound, related_name='analyses')
-    created = models.DateTimeField(auto_now=True)
+    last_sent_to_queue = models.DateTimeField()
+    last_analyzer_finished = models.DateTimeField(null=True)
     analyzer = models.CharField(db_index=True, max_length=255)  # Analyzer name including version
     analysis_data = JSONField(null=True)
-    analysis_status = models.CharField(null=True, db_index=True, max_length=2, choices=STATUS_CHOICES)
+    analysis_status = models.CharField(null=False, default="QU", db_index=True, max_length=2, choices=STATUS_CHOICES)
     num_analysis_attempts = models.IntegerField(default=0)
-    is_queued = models.BooleanField(default=False)
     analysis_time = models.FloatField(default=0)
 
     @property

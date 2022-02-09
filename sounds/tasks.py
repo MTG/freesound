@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+import datetime
 import logging
 import os
 import time
@@ -69,9 +69,9 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         # Update status and queued fields. No need to update "created" as it is done automatically by Django
         a.analysis_status = status
         a.analysis_time = analysis_time
-        a.is_queued = False
+        a.last_analyzer_finished = datetime.datetime.now()
         if exception:
-            a.save(update_fields=['analysis_status', 'is_queued', 'created', 'analysis_time'])
+            a.save(update_fields=['analysis_status', 'last_analyzer_finished', 'analysis_time'])
             workers_logger.error("Done processing. Analysis of sound {} FAILED (analyzer: {}, analysis status: {}, "
                                  "exception: {}).".format(sound_id, analyzer, status, exception))
         else:
@@ -80,9 +80,9 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
             analysis_data = a.get_analysis_data()
             if analysis_data and should_store_analysis_data_in_db(analysis_data):
                 a.analysis_data = a.get_analysis_data()
-                a.save(update_fields=['analysis_status', 'analysis_data', 'is_queued', 'created', 'analysis_time'])
+                a.save(update_fields=['analysis_status', 'analysis_data', 'last_analyzer_finished', 'analysis_time'])
             else:
-                a.save(update_fields=['analysis_status', 'is_queued', 'created', 'analysis_time'])
+                a.save(update_fields=['analysis_status', 'last_analyzer_finished', 'analysis_time'])
 
             workers_logger.info("Done processing sound analysis results"
                                 " (sound_id: {}, analyzer:{}, status: {})".format(sound_id, analyzer, status))

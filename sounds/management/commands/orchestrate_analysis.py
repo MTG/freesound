@@ -117,13 +117,13 @@ class Command(BaseCommand):
                         if i >= options['max_per_analyzer']:
                             break
                         # if the combination sound-analyzer does not exist, trigger analysis
-                        if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer, is_queued=False).exists():
+                        if not SoundAnalysis.objects.filter(sound=s, analyzer=analyzer).exclude(analysis_status="QU").exists():
                             console_logger.info(
                                 "Triggering analysis of sound {0} with analyzer {1}.".format(s.id, analyzer))
                             s.analyze_new(method=analyzer)
                 if options['include_skipped']:
                     console_logger.info("Analyzing all sounds whose analysis was skipped (marked as 'SK')...")
-                    for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="SK", is_queued=False)):
+                    for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="SK")):
                         if i >= options['max_per_analyzer']:
                             break
                         console_logger.info(
@@ -131,7 +131,7 @@ class Command(BaseCommand):
                         a.sound.analyze_new(method=analyzer)
                 if options['include_failed']:
                     console_logger.info("Analyzing all sounds whose analysis failed (marked as 'FA')...")
-                    for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="FA", is_queued=False)):
+                    for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="FA")):
                         if i >= options['max_per_analyzer']:
                             break
                         console_logger.info(
@@ -139,7 +139,7 @@ class Command(BaseCommand):
                         a.sound.analyze_new(method=analyzer)
                 if options['include_ok']:
                     console_logger.info("Analyzing all sounds whose analysis was successful (marked as 'OK')...")
-                    for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="OK", is_queued=False)):
+                    for i, a in enumerate(SoundAnalysis.objects.filter(analyzer=analyzer, analysis_status="OK")):
                         if i >= options['max_per_analyzer']:
                             break
                         console_logger.info(

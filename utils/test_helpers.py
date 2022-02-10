@@ -136,6 +136,9 @@ override_avatars_path_with_temp_directory = \
 override_analysis_path_with_temp_directory = \
     partial(override_path_with_temp_directory, settings_path_name='ANALYSIS_PATH')
 
+override_analysis_new_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='ANALYSIS_NEW_PATH')
+
 override_sounds_path_with_temp_directory = \
     partial(override_path_with_temp_directory, settings_path_name='SOUNDS_PATH')
 

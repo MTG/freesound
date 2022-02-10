@@ -28,7 +28,7 @@ from django.template.defaultfilters import truncatechars
 from django.urls import reverse
 from django_object_actions import DjangoObjectActions
 
-from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress
+from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis
 
 
 class LicenseAdmin(admin.ModelAdmin):
@@ -197,3 +197,51 @@ class BulkUploadProgressAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'created', 'progress_type', 'sounds_valid')
 admin.site.register(BulkUploadProgress, BulkUploadProgressAdmin)
+
+
+class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
+    list_display = ('analyzer', 'sound_id',  'analysis_status', 'last_sent_to_queue', 'last_analyzer_finished',
+                    'num_analysis_attempts', 'analysis_time')
+    ordering = ('-last_sent_to_queue',)
+    list_filter = ('analyzer', 'analysis_status')
+    search_fields = ('=sound__id',)
+    actions = ('re_run_analysis',)
+    change_actions = ('re_run_analysis',)
+    readonly_fields = []
+
+    def get_readonly_fields(self, request, obj=None):
+        return list(self.readonly_fields) + \
+               [field.name for field in obj._meta.fields] + \
+               [field.name for field in obj._meta.many_to_many] + ['analysis_logs', 'analysis_data_file']
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def re_run_analysis(self, request, queryset_or_object):
+        if type(queryset_or_object) == SoundAnalysis:
+            queryset_or_object.re_run_analysis()
+            messages.add_message(request, messages.INFO,
+                                 'Sound {} was sent to re-analyze with analyzer {}.'
+                                 .format(queryset_or_object.sound_id, queryset_or_object.analyzer))
+        else:
+            for sound_analysis in queryset_or_object:
+                sound_analysis.re_run_analysis()
+            messages.add_message(request, messages.INFO,
+                                 '{} sounds were send to re-analyze.'.format(queryset_or_object.count()))
+    re_run_analysis.label = 'Re-run analysis'
+    re_run_analysis.short_description = 'Re-run analysis with same analyzer'
+
+    def analysis_logs(self, obj):
+        return obj.get_analysis_logs()
+    analysis_logs.admin_order_field = 'Analysis logs'
+    analysis_logs.short_description = 'Analysis logs'
+
+    def analysis_data_file(self, obj):
+        return obj.get_analysis_data_from_file()
+    analysis_data_file.admin_order_field = 'Analysis data file'
+    analysis_data_file.short_description = 'Analysis data file'
+
+
+
+
+admin.site.register(SoundAnalysis, SoundAnalysisAdmin)

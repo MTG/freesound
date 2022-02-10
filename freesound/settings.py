@@ -99,6 +99,7 @@ ADMIN_REORDER = (
     )},
     {'app': 'sounds', 'models': (
         'sounds.Sound',
+        {'model': 'sounds.SoundAnalysis', 'label': 'Sound analyses'},
         'sounds.Pack',
         'sounds.DeletedSound',
         'sounds.License',
@@ -437,33 +438,44 @@ PAYPAL_SIGNATURE = ''
 
 
 # -------------------------------------------------------------------------------
-# AudioCommons analysis settings
+# New Analysis options
+ORCHESTRATE_ANALYSIS_MAX_JOBS_PER_QUEUE_DEFAULT = 500
+ORCHESTRATE_ANALYSIS_MAX_NUM_ANALYSIS_ATTEMPTS = 3
+ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2 # in hours
+ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
 
-AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV3'  # This will be used for indexing sounds and returning analysis output
-AUDIOCOMMONS_DESCRIPTOR_PREFIX = 'ac_'
-AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
-    [('loudness', float),
-     ('dynamic_range', float),
-     ('temporal_centroid', float),
-     ('log_attack_time', float),
-     ('single_event', bool),
-     ('tonality', str),
-     ('tonality_confidence', float),
-     ('loop', bool),
-     ('tempo', int),
-     ('tempo_confidence', float),
-     ('note_midi', int),
-     ('note_name', str),
-     ('note_frequency', float),
-     ('note_confidence', float),
-     ('brightness', float),
-     ('depth', float),
-     ('hardness', float),
-     ('roughness', float),
-     ('boominess', float),
-     ('warmth', float),
-     ('sharpness', float),
-     ('reverb', bool)]  # Used when running load_audiocommons_analysis_data and when parsing filters
+AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v1'
+FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
+
+ANALYZERS_CONFIGURATION = {
+    AUDIOCOMMONS_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('loudness', 'ac_loudness', float),
+            ('dynamic_range', 'ac_dynamic_range', float),
+            ('temporal_centroid', 'ac_temporal_centroid', float),
+            ('log_attack_time', 'ac_log_attack_time', float),
+            ('single_event', 'ac_single_event', bool),
+            ('tonality', 'ac_tonality', str),
+            ('tonality_confidence', 'ac_tonality_confidence', float),
+            ('loop', 'ac_loop', bool),
+            ('tempo', 'ac_tempo', int),
+            ('tempo_confidence', 'ac_tempo_confidence', float),
+            ('note_midi', 'ac_note_midi', int),
+            ('note_name', 'ac_note_name', str),
+            ('note_frequency', 'ac_note_frequency', float),
+            ('note_confidence', 'ac_note_confidence', float),
+            ('brightness', 'ac_brightness', float),
+            ('depth', 'ac_depth', float),
+            ('hardness', 'ac_hardness', float),
+            ('roughness', 'ac_roughness', float),
+            ('boominess', 'ac_boominess', float),
+            ('warmth', 'ac_warmth', float),
+            ('sharpness', 'ac_sharpness', float),
+            ('reverb', 'ac_reverb', bool)
+        ]
+    },
+    FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
+}
 
 # -------------------------------------------------------------------------------
 # Search engine
@@ -803,12 +815,19 @@ if SENTRY_DSN:
 
 # -------------------------------------------------------------------------------
 # Celery
+RABBITMQ_USER = "guest"
+RABBITMQ_PASS = "guest"
+RABBITMQ_HOST = 'rabbit'
+RABBITMQ_PORT = '5672'
+RABBITMQ_API_PORT = '15672'
 
-CELERY_BROKER_URL = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
+CELERY_BROKER_URL = 'amqp://{}:{}@{}:{}//'.format(RABBITMQ_USER, RABBITMQ_PASS, RABBITMQ_HOST, RABBITMQ_PORT)
 CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
+
 
 # -------------------------------------------------------------------------------
 # Extra Freesound settings
@@ -824,6 +843,7 @@ PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
+ANALYSIS_NEW_PATH = os.path.join(DATA_PATH, "analysis_new/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
 

@@ -21,7 +21,6 @@
 import datetime
 import json
 
-import gearman
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -30,6 +29,7 @@ from django.db import transaction
 from django.db.models import Count, Min, Q, F
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from general.tasks import whitelist_user
 
 from models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
@@ -150,7 +150,7 @@ def ticket(request, ticket_key):
                     notification = ticket.NOTIFICATION_APPROVED
 
                 elif sound_action == 'Whitelist':
-                    _whitelist_gearman([ticket.id])  # async job should take care of whitelisting
+                    whitelist_user.delay(ticket_ids=[ticket.id])  # async job should take care of whitelisting
                     comment += 'whitelisted all sounds from user {}'.format(ticket.sender)
                     notification = ticket.NOTIFICATION_WHITELISTED
 
@@ -404,12 +404,6 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
         return redirect("tickets-moderation-home")
 
 
-def _whitelist_gearman(ticket_ids):
-    gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-    gm_client.submit_job("whitelist_user", json.dumps(ticket_ids),
-                         wait_until_complete=False, background=True)
-
-
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def moderation_assigned(request, user_id):
@@ -485,7 +479,7 @@ def moderation_assigned(request, user_id):
 
             elif action == "Whitelist":
                 ticket_ids = list(tickets.values_list('id',flat=True))
-                _whitelist_gearman(ticket_ids)
+                whitelist_user.delay(ticket_ids=ticket_ids)  # async job should take care of whitelisting
                 notification = Ticket.NOTIFICATION_WHITELISTED
 
                 users = set(tickets.values_list('sender__username', flat=True))

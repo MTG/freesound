@@ -54,44 +54,6 @@ class Command(BaseCommand):
         workers_logger.info('Started worker with tasks: %s' % ', '.join(registered_tasks))
         gm_worker.work()
 
-    def task_whitelist_user(self, gearman_worker, gearman_job):
-        task_name = 'whitelist_user'
-        tickets = json.loads(gearman_job.data)
-        workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({
-            'task_name': task_name, 'n_tickets': len(tickets)}))
-        start_time = time.time()
-        count_done = 0
-        for ticket_id in tickets:
-            ticket = Ticket.objects.get(id=ticket_id)
-            whitelist_user = ticket.sender
-            if not whitelist_user.profile.is_whitelisted:
-                local_start_time = time.time()
-                whitelist_user.profile.is_whitelisted = True
-                whitelist_user.profile.save()
-                pending_tickets = Ticket.objects.filter(sender=whitelist_user)\
-                                                .exclude(status=TICKET_STATUS_CLOSED)
-                # Set all sounds to OK and the tickets to closed
-                for pending_ticket in pending_tickets:
-                    if pending_ticket.sound:
-                        pending_ticket.sound.change_moderation_state("OK")
-
-                    # This could be done with a single update, but there's a chance
-                    # we lose a sound that way (a newly created ticket who's sound
-                    # is not set to OK, but the ticket is closed).
-                    pending_ticket.status = TICKET_STATUS_CLOSED
-                    pending_ticket.save()
-
-                workers_logger.info("Whitelisted user (%s)" % json.dumps(
-                    {'user_id': whitelist_user.id,
-                     'username': whitelist_user.username,
-                     'work_time': round(time.time() - local_start_time)}))
-
-            count_done = count_done + 1
-
-        workers_logger.info("Finished whitelisting users from tickets (%s)" % json.dumps(
-            {'task_name': task_name, 'n_tickets': len(tickets), 'work_time': round(time.time() - start_time)}))
-        return 'true' if len(tickets) == count_done else 'false'
-
     def task_delete_user(self, gearman_worker, gearman_job):
         data = json.loads(gearman_job.data)
         user = User.objects.get(id=data['user_id'])

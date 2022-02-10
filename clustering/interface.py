@@ -21,7 +21,7 @@ from django.conf import settings
 from django.core.cache import caches
 
 from clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
-from tasks import cluster_sounds
+from freesound.celery import app as celery_app
 from utils.encryption import create_hash
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
@@ -98,7 +98,11 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
         sound_ids = get_sound_ids_from_search_engine_query(query_params)
 
         # launch clustering with celery async task
-        cluster_sounds.delay(cache_key_hashed, sound_ids, features)
+        celery_app.send_task('cluster_sounds', kwargs={
+            'cache_key_hashed': cache_key_hashed,
+            'sound_ids': sound_ids,
+            'features': features
+        }, queue='clustering')
 
         return {'finished': False, 'error': False}
 

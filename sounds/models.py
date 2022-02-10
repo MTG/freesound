@@ -21,10 +21,13 @@
 #
 
 import datetime
+import glob
 import json
 import logging
+import math
 import os
 import random
+import yaml
 import zlib
 
 import gearman
@@ -48,6 +51,7 @@ from django.utils.text import Truncator
 import accounts.models
 from apiv2.models import ApiV2Client
 from comments.models import Comment
+from freesound.celery import app as celery_app
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
@@ -373,7 +377,7 @@ class SoundManager(models.Manager):
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
           geotags_geotag.location_name as geotag_name,
-          ac_analsyis.analysis_data as ac_analysis,
+          ac_analysis.analysis_data as ac_analysis,
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -392,12 +396,12 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
-                                                         AND ac_analsyis.extractor = %s)
+          LEFT JOIN sounds_soundanalysis ac_analysis ON (sound.id = ac_analysis.sound_id 
+                                                         AND ac_analysis.analyzer = %s)
         WHERE
           sound.id IN %s """
         return self.raw(query, [ContentType.objects.get_for_model(Sound).id,
-                                settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                                settings.AUDIOCOMMONS_ANALYZER_NAME,
                                 tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
@@ -440,7 +444,7 @@ class SoundManager(models.Manager):
           geotags_geotag.location_name as geotag_name,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
-          ac_analsyis.analysis_data as ac_analysis,
+          ac_analysis.analysis_data as ac_analysis,
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -454,12 +458,12 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
-                                                         AND ac_analsyis.extractor = %s)
+          LEFT JOIN sounds_soundanalysis ac_analysis ON (sound.id = ac_analysis.sound_id 
+                                                         AND ac_analysis.analyzer = %s)
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
         WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,
-                        "'%s'" % settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+                        "'%s'" % settings.AUDIOCOMMONS_ANALYZER_NAME,
                         where, )
         if order_by:
             query = "%s ORDER BY %s" % (query, order_by)
@@ -714,6 +718,9 @@ class Sound(SocialModel):
                     url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
                         id_folder, self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)
                 )
+            ),
+            analysis_new=dict(
+                path=os.path.join(settings.ANALYSIS_NEW_PATH, id_folder)
             )
         )
 
@@ -1118,6 +1125,33 @@ class Sound(SocialModel):
                 'sound_id': self.id
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
+
+    def analyze_new(self, analyzer, force=False, high_priority=False, verbose=True):
+        if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
+            # If specified analyzer is not one of the analyzers configured, do nothing
+            if verbose:
+                sounds_logger.info("Not sending sound {} to unknown analyzer {}".format(self.id, analyzer))
+            return None
+
+        sa, created = SoundAnalysis.objects.get_or_create(sound=self, analyzer=analyzer)
+        if not sa.analysis_status == "QU" or force or created:
+            # Only send to queue if not already in queue
+            sa.num_analysis_attempts += 1
+            sa.analysis_status = "QU"
+            sa.analysis_time = 0
+            sa.last_sent_to_queue = datetime.datetime.now()
+            sa.save(update_fields=['num_analysis_attempts', 'analysis_status', 'last_sent_to_queue', 'analysis_time'])
+            sound_path = self.locations('path')
+            if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+                sound_path = self.locations("preview.LQ.mp3.path")
+            celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
+                        'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=analyzer)
+            if verbose:
+                sounds_logger.info("Sending sound {} to analyzer {}".format(self.id, analyzer))
+        else:
+            if verbose:
+                sounds_logger.info("Not sending sound {} to analyzer {} as is already queued".format(self.id, analyzer))
+        return sa
 
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
@@ -1629,29 +1663,112 @@ class SoundAnalysis(models.Model):
     instead of AudioCommonsAnalysis) so that we can use it in the future for standard Essentia analysis
     or for other extractors as well, but for the current use case that wouldn't be needed.
     """
+    STATUS_CHOICES = (
+            ("QU", 'Queued'),
+            ("OK", 'Ok'),
+            ("SK", 'Skipped'),
+            ("FA", 'Failed'),
+        )
+
     sound = models.ForeignKey(Sound, related_name='analyses')
-    created = models.DateTimeField(auto_now_add=True)
-    extractor = models.CharField(db_index=True, max_length=255)
-    analysis_filename = models.CharField(max_length=255, null=True)
+    last_sent_to_queue = models.DateTimeField(auto_now_add=True)
+    last_analyzer_finished = models.DateTimeField(null=True)
+    analyzer = models.CharField(db_index=True, max_length=255)  # Analyzer name including version
     analysis_data = JSONField(null=True)
+    analysis_status = models.CharField(null=False, default="QU", db_index=True, max_length=2, choices=STATUS_CHOICES)
+    num_analysis_attempts = models.IntegerField(default=0)
+    analysis_time = models.FloatField(default=0)
 
     @property
-    def analysis_filepath(self):
-        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_PATH
-        and under a sound ID folder structure like sounds and other sound-related files."""
-        id_folder = str(self.id / 1000)
-        return os.path.join(settings.ANALYSIS_PATH, id_folder, "%s" % self.analysis_filename)
+    def analysis_filepath_base(self):
+        """Returns the absolute path of the analysis files related with this SoundAnalysis object. Related files will
+         include analysis output but also logs. The base filepath should be complemented with the extension, which
+         could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
+         the ANALYSIS_NEW_PATH and under a sound ID folder structure like sounds and other sound-related files."""
+        id_folder = str(self.sound_id / 1000)
+        return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
 
-    def get_analysis(self):
-        """Returns the contents of the analysis"""
-        if self.analysis_data:
-            return self.analysis_data
-        elif self.analysis_filename:
+    def load_analysis_data_from_file_to_db(self):
+        """This method checks the analysis output data which has been written to a file, and loads it to the
+        database using the SoundAnalysis.analysis_data field. The loading of the data into DB only happens if a
+        data mapping for the current analyzer has been specified in the Django settings. Note that for some analyzers
+        we don't actually want the data to be loaded in the DB as it would take a lot of space."""
+
+        def value_is_valid(value):
+            # Postgres JSON data field can not store float values of nan or inf. Ideally these values should have never
+            # been outputted by the analyzers in the first place, but it can happen. We use this function here and skip
+            # indexing key/value pairs where the value is not valid for Postgres JSON data fields.
+            if type(value) == float:
+                return not math.isinf(value) and not math.isnan(value)
+            return True
+
+        if self.analysis_status == "OK" and \
+            'descriptors_map' in settings.ANALYZERS_CONFIGURATION.get(self.analyzer, {}):
+            analysis_results = self.get_analysis_data_from_file()
+            if analysis_results:
+                descriptors_map = settings.ANALYZERS_CONFIGURATION[self.analyzer]['descriptors_map']
+                analysis_data_for_db = {}
+                for file_descriptor_key_path, db_descriptor_key, _ in descriptors_map:
+                    # TODO: here we could implement support for nested keys in the analysis file, maybe by accessing
+                    # TODO: nested keys with dot notation (e.g. "key1.nested_key2")
+                    value = analysis_results[file_descriptor_key_path]
+                    if value_is_valid(value):
+                        analysis_data_for_db[db_descriptor_key] = value
+                self.analysis_data = analysis_data_for_db
+            else:
+                self.analysis_data = None
+        self.save(update_fields=['analysis_data'])
+
+    def get_analysis_data_from_file(self):
+        """Returns the analysis data as stored in file or returns empty dict if no file exists. It tries
+        extensions .json and .yaml as these are the supported formats for analysis results"""
+        if os.path.exists(self.analysis_filepath_base + '.json'):
             try:
-                return json.load(open(self.analysis_filepath))
-            except IOError:
+                return json.load(open(self.analysis_filepath_base + '.json'))
+            except Exception:
                 pass
-        return None
+        if os.path.exists(self.analysis_filepath_base + '.yaml'):
+            try:
+                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CLoader)
+            except Exception:
+                pass
+        return {}
+
+    def get_analysis_data(self):
+        """Returns the output of the analysis, either returning them from the DB or from a file in disk"""
+        if self.analysis_status == "OK":
+            if self.analysis_data:
+                return self.analysis_data
+            else:
+                return self.get_analysis_data_from_file()
+        return {}
+
+    def get_analysis_logs(self):
+        """Returns the logs of the analysis"""
+        try:
+            fid = open(self.analysis_filepath_base + '.log')
+            file_contents = fid.read()
+            fid.close()
+            return file_contents
+        except IOError:
+            return 'No logs available...'
+
+    def re_run_analysis(self, verbose=True):
+        self.sound.analyze_new(self.analyzer, force=True, verbose=verbose)
+
+    def __str__(self):
+        return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)
 
     class Meta:
-        unique_together = (("sound", "extractor"),)
+        unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination
+
+def on_delete_sound_analysis(sender, instance, **kwargs):
+    # Right before deleting a SoundAnalysis object, delete also the associated log and analysis files (if any)
+    for filepath in glob.glob(instance.analysis_filepath_base + '*'):
+        try:
+            os.remove(filepath)
+        except Exception as e:
+            pass
+
+pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
+

@@ -826,6 +826,8 @@ CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
+
 
 # -------------------------------------------------------------------------------
 # Extra Freesound settings

@@ -18,7 +18,6 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load tasks from only the clustering app.
 app.autodiscover_tasks()
-# Maybe app.autodiscover_tasks( settings.INSTALLED_APPS) is needed?
 
 
 def get_queues_task_counts():

@@ -161,13 +161,13 @@ services:
         depends_on:
             - rabbit
 
-    # Process analysis results worker (celery worker)
-    worker_process_analysis_results:
+    # Process all celery async tasks (celery worker)
+    worker_celery_async_tasks:
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
         init: true
-        command: celery -A freesound worker -l info -Q process_analysis_results
+        command: celery -A freesound worker -l info -Q async_tasks_queue
         volumes:
             - .:/code
             - ./freesound-data/:/freesound-data
@@ -236,3 +236,4 @@ services:
         depends_on:
             - db
             - gearmand
+    

@@ -171,11 +171,10 @@ class TicketTestsFromQueue(TicketTests):
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)
         self.assertIsNone(self.ticket.sound)
 
-    @mock.patch('tickets.views._whitelist_gearman')
-    def test_whitelist_from_queue(self, _whitelist_gearman):
+    @mock.patch('general.tasks.whitelist_user.delay')
+    def test_whitelist_from_queue(self, whitelist_task):
         self._perform_action(u'Whitelist')
-
-        _whitelist_gearman.assert_called_once_with([self.ticket.id])
+        whitelist_task.assert_called_once_with(ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
         self.ticket.refresh_from_db()

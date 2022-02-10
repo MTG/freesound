@@ -79,6 +79,7 @@ def whitelist_user(ticket_ids):
         {'task_name': WHITELIST_USER_TASK_NAME, 'n_tickets': len(ticket_ids), 'work_time': round(time.time() - start_time)}))
 
 
+'''
 @task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def delete_user(user_id, deletion_action, deletion_reason):
     try:
@@ -154,7 +155,7 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
             {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
-    
+'''
 
 @task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def bulk_describe(bulk_upload_progress_object_id):

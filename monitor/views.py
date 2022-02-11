@@ -47,8 +47,10 @@ def get_queues_status(request):
         gearman_status = gm_admin_client.get_status()
     except gearman.errors.ServerUnavailable:
         gearman_status = list()
-
-    celery_task_counts = get_queues_task_counts()
+    try:
+        celery_task_counts = get_queues_task_counts()
+    except Exception:
+        celery_task_counts = []
 
     return render(request, 'monitor/queues_status.html',
                   {'gearman_status': gearman_status, 'celery_task_counts': celery_task_counts})

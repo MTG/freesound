@@ -43,7 +43,7 @@ services:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
-            - rabbit
+            - rabbitmq
             - redis
 
     # Search server
@@ -101,7 +101,7 @@ services:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
 
     # Celery broker (queue manager)
-    rabbit:
+    rabbitmq:
         hostname: rabbit
         image: rabbitmq:3.9.1-management
         ports:
@@ -122,7 +122,7 @@ services:
             - .:/code
             - ./freesound-data/clustering_index:/freesound-data/clustering_index
         depends_on:
-            - rabbit
+            - rabbitmq
             - redis
         environment:
             - ENV_CELERY_WORKER=1
@@ -137,7 +137,7 @@ services:
         init: true
         command: celery -A main worker --concurrency=2 -l info -Q ac-extractor_v1
         depends_on:
-            - rabbit
+            - rabbitmq
 
     # New analysis worker (celery worker) for the Audioset-vggish extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer2:
@@ -148,7 +148,7 @@ services:
         init: true
         command: celery -A main worker --concurrency=2 -l info -Q audioset-vggish-extractor_v1
         depends_on:
-            - rabbit
+            - rabbitmq
 
     # New analysis worker (celery worker) for the Essentia extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer3:
@@ -159,7 +159,7 @@ services:
         init: true
         command: celery -A main worker --concurrency=2 -l info -Q fs-essentia-extractor_legacy
         depends_on:
-            - rabbit
+            - rabbitmq
 
     # Process all celery async tasks (celery worker)
     worker_celery_async_tasks:
@@ -177,7 +177,7 @@ services:
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
         depends_on:
             - db
-            - rabbit
+            - rabbitmq
 
     # Gearman (processing, async tasks and old anaylsis job manager)
     gearmand:

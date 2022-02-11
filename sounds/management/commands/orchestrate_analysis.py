@@ -20,7 +20,6 @@
 import datetime
 import glob
 import logging
-import random
 
 import os
 import time
@@ -100,11 +99,18 @@ class Command(LoggingBaseCommand):
         # is not an issue as here we only need an approximate number of messages in queue to avoid adding too many
         # objects to it. Later we deal with SoundAnalysis objects that are stuck with "QU" status but that are no
         # longer in the celery/rabbitmq queue
-        queues_status = get_queues_task_counts()
-        queues_status_dict = {item[0]: item[1] for item in queues_status}
+        try:
+            queues_status = get_queues_task_counts()
+            queues_status_dict = {item[0]: item[1] for item in queues_status}
+        except Exception:
+            queues_status_dict = None
+
         for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
             console_logger.info(analyzer_name)
-            num_jobs_in_queue = queues_status_dict.get(analyzer_name, None)
+            if queues_status_dict is not None:
+                num_jobs_in_queue = queues_status_dict.get(analyzer_name, 0)
+            else:
+                num_jobs_in_queue = None
             if num_jobs_in_queue is None:
                 # If we don't get information about the queue, it is better not to add anything to it so do nothing
                 data_to_log[analyzer_name]['just_sent'] = 0
@@ -128,13 +134,14 @@ class Command(LoggingBaseCommand):
                         missing_sounds = Sound.objects.none()
                     else:
                         sounds_with_sa_object = list(
-                            SoundAnalysis.objects.filter(analyzer=analyzer_name).values_list('id', flat=True))
+                            SoundAnalysis.objects.filter(analyzer=analyzer_name).values_list('sound_id', flat=True))
                         missing_sounds = Sound.objects.exclude(id__in=sounds_with_sa_object) \
                                                       .order_by('id')[:num_jobs_to_add]
                     num_missing_sounds_to_add = missing_sounds.count()
                     data_to_log[analyzer_name]['just_sent'] = num_missing_sounds_to_add
-                    console_logger.info('- Will add {} new jobs from sounds that have not been analyzed'
-                                        .format(num_missing_sounds_to_add))
+                    console_logger.info('- Will add {} new jobs from sounds that have not been analyzed '
+                                        '(first 5 sounds {})'.format(num_missing_sounds_to_add,
+                                                                     str([s.id for s in missing_sounds[0:5]])))
                     if not options['dry_run']:
                         for sound in missing_sounds:
                             sound.analyze_new(analyzer_name, verbose=False)
@@ -147,8 +154,9 @@ class Command(LoggingBaseCommand):
                             analyzer=analyzer_name, analysis_status="FA",
                             num_analysis_attempts__lt=options['max_num_analysis_attempts'])[:num_jobs_to_add]
                         data_to_log[analyzer_name]['just_sent_fa'] = ssaa.count()
-                        console_logger.info('- Will add {} new jobs from sounds that previously failed analysis'
-                                            .format(ssaa.count()))
+                        console_logger.info('- Will add {} new jobs from sounds that previously failed analysis '
+                                            '(first 5 sounds: {})'.format(ssaa.count(),
+                                                                          str([sa.sound_id for sa in ssaa[0:5]])))
                         if not options['dry_run']:
                             for sa in ssaa:
                                 sa.re_run_analysis(verbose=False)

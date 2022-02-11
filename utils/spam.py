@@ -34,6 +34,11 @@ def is_spam(request, comment):
     if request.user.profile.is_trustworthy():
         return False
 
+    # Hardcoded checks
+    for spam_chunk in settings.SPAM_BLACKLIST:
+        if spam_chunk in comment:
+            return True
+
     # Akismet check
     domain = "https://%s" % Site.objects.get_current().domain
     api = Akismet(key=settings.AKISMET_KEY, blog_url=domain)

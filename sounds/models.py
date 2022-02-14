@@ -1711,9 +1711,10 @@ class SoundAnalysis(models.Model):
                 for file_descriptor_key_path, db_descriptor_key, _ in descriptors_map:
                     # TODO: here we could implement support for nested keys in the analysis file, maybe by accessing
                     # TODO: nested keys with dot notation (e.g. "key1.nested_key2")
-                    value = analysis_results[file_descriptor_key_path]
-                    if value_is_valid(value):
-                        analysis_data_for_db[db_descriptor_key] = value
+                    if file_descriptor_key_path in analysis_results:
+                        value = analysis_results[file_descriptor_key_path]
+                        if value_is_valid(value):
+                            analysis_data_for_db[db_descriptor_key] = value
                 self.analysis_data = analysis_data_for_db
             else:
                 self.analysis_data = None

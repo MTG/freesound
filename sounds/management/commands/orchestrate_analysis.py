@@ -188,13 +188,17 @@ class Command(LoggingBaseCommand):
         wav_files_in_analysis_path = glob.glob(settings.ANALYSIS_NEW_PATH + '**/*.wav')
         files_to_remove = []
         for filepath in wav_files_in_analysis_path:
-            datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y")
-            modification_time = datetime.datetime.strptime(time.ctime(os.path.getmtime(filepath)), "%c")
-            date_cutoff = \
-                datetime.datetime.now() - datetime.timedelta(
-                    hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK)
-            if modification_time < date_cutoff:
-                files_to_remove.append(filepath)
+            try:
+                datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y")
+                modification_time = datetime.datetime.strptime(time.ctime(os.path.getmtime(filepath)), "%c")
+                date_cutoff = \
+                    datetime.datetime.now() - datetime.timedelta(
+                        hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK)
+                if modification_time < date_cutoff:
+                    files_to_remove.append(filepath)
+            except OSError:
+                # This can happen if the wav file was a tmp file that was renamed while command runs
+                pass
         data_to_log['converted_files_to_remove'] = len(files_to_remove)
         console_logger.info('Will remove {} converted PCM files because of them being in disk for '
                             'too long'.format(len(files_to_remove)))

@@ -22,6 +22,7 @@ import glob
 import logging
 
 import os
+import json
 import time
 
 from django.conf import settings
@@ -32,6 +33,7 @@ from utils.management_commands import LoggingBaseCommand
 
 
 console_logger = logging.getLogger("console")
+commands_logger = logging.getLogger('commands')
 
 
 class Command(LoggingBaseCommand):
@@ -109,6 +111,7 @@ class Command(LoggingBaseCommand):
             console_logger.info(analyzer_name)
             if queues_status_dict is not None:
                 num_jobs_in_queue = queues_status_dict.get(analyzer_name, 0)
+                data_to_log[analyzer_name]['in_rabbitmq_queue'] = num_jobs_in_queue
             else:
                 num_jobs_in_queue = None
             if num_jobs_in_queue is None:
@@ -160,6 +163,14 @@ class Command(LoggingBaseCommand):
                         if not options['dry_run']:
                             for sa in ssaa:
                                 sa.re_run_analysis(verbose=False)
+            if analyzer_name in data_to_log:
+                # Log ata to graylog in a way that we can make plots and show stats
+                analyzer_data_to_log = {key: value for key, value in data_to_log[analyzer_name].items()}
+                analyzer_data_to_log.update({
+                    'analyzer': analyzer_name,
+                    'percentage_completed': '{:.2f}'.format((analyzer_data_to_log['OK'] + analyzer_data_to_log['SK'] + analyzer_data_to_log['FA']) * 100.0/n_sounds)
+                })
+                commands_logger.info('Orchestrate analysis analyzer update ({0})'.format(json.dumps(analyzer_data_to_log)))
             console_logger.info('')
 
         # Now revise SoundAnalysis objects that have been stuck in QU status for some time and set them to Failed

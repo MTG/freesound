@@ -173,7 +173,7 @@ class Command(LoggingBaseCommand):
                 analyzer_data_to_log = {key: value for key, value in data_to_log[analyzer_name].items()}
                 analyzer_data_to_log.update({
                     'analyzer': analyzer_name,
-                    'percentage_completed': '{:.2f}'.format((analyzer_data_to_log['OK'] + analyzer_data_to_log['SK'] + analyzer_data_to_log['FA']) * 100.0/n_sounds)
+                    'percentage_completed': (analyzer_data_to_log['OK'] + analyzer_data_to_log['SK'] + analyzer_data_to_log['FA']) * 100.0/n_sounds
                 })
                 commands_logger.info('Orchestrate analysis analyzer update ({0})'.format(json.dumps(analyzer_data_to_log)))
             console_logger.info('')

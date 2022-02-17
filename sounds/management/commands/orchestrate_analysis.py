@@ -54,8 +54,13 @@ class Command(LoggingBaseCommand):
         parser.add_argument(
             '--only-failed',
             action="store_true",
-            help="With these option the command will not schedule any missing analysis sounds but will only"
+            help="With these option the command will not schedule any missing analysis sounds but will only "
                  "re-trigger failed jobs (if number of attempts is below --max-num-analysis-attempts).")
+        parser.add_argument(
+            '--remove-converted-pcm',
+            action="store_true",
+            help="With these option the command will remove old converted PCM files that have been in disk for "
+                 "more than settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK hours.")
         parser.add_argument(
             '--max-num-analysis-attempts',
             dest='max_num_analysis_attempts',
@@ -196,29 +201,30 @@ class Command(LoggingBaseCommand):
         # files in disk in case we need to re-analyze a file or analyze a file with different analyzers in a short
         # period of time and so we can reuse the converted file. However old files can be safely deleted and will
         # be recreated if needbe.
-        wav_files_in_analysis_path = glob.glob(settings.ANALYSIS_NEW_PATH + '**/*.wav')
-        files_to_remove = []
-        for filepath in wav_files_in_analysis_path:
-            try:
-                datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y")
-                modification_time = datetime.datetime.strptime(time.ctime(os.path.getmtime(filepath)), "%c")
-                date_cutoff = \
-                    datetime.datetime.now() - datetime.timedelta(
-                        hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK)
-                if modification_time < date_cutoff:
-                    files_to_remove.append(filepath)
-            except OSError:
-                # This can happen if the wav file was a tmp file that was renamed while command runs
-                pass
-        data_to_log['converted_files_to_remove'] = len(files_to_remove)
-        console_logger.info('Will remove {} converted PCM files because of them being in disk for '
-                            'too long'.format(len(files_to_remove)))
-        if not options['dry_run']:
-            for filepath in files_to_remove:
+        if options['remove_converted_pcm']:
+            wav_files_in_analysis_path = glob.glob(settings.ANALYSIS_NEW_PATH + '**/*.wav')
+            files_to_remove = []
+            for filepath in wav_files_in_analysis_path:
                 try:
-                    os.remove(filepath)
-                except:
+                    datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y")
+                    modification_time = datetime.datetime.strptime(time.ctime(os.path.getmtime(filepath)), "%c")
+                    date_cutoff = \
+                        datetime.datetime.now() - datetime.timedelta(
+                            hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK)
+                    if modification_time < date_cutoff:
+                        files_to_remove.append(filepath)
+                except OSError:
+                    # This can happen if the wav file was a tmp file that was renamed while command runs
                     pass
+            data_to_log['converted_files_to_remove'] = len(files_to_remove)
+            console_logger.info('Will remove {} converted PCM files because of them being in disk for '
+                                'too long'.format(len(files_to_remove)))
+            if not options['dry_run']:
+                for filepath in files_to_remove:
+                    try:
+                        os.remove(filepath)
+                    except:
+                        pass
 
         console_logger.info('')
         self.log_end(data_to_log)

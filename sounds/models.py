@@ -1126,7 +1126,7 @@ class Sound(SocialModel):
             }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
-    def analyze_new(self, analyzer, force=False, high_priority=False, verbose=True):
+    def analyze_new(self, analyzer, force=False, verbose=True):
         if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
             # If specified analyzer is not one of the analyzers configured, do nothing
             if verbose:

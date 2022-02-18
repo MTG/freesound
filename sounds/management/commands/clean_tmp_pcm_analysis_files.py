@@ -70,7 +70,7 @@ class Command(LoggingBaseCommand):
             for filepath in files_to_remove:
                 try:
                     os.remove(filepath)
-                except:
-                    pass
+                except Exception as e:
+                    console_logger.info('Error deleting file {}: {}'.format(filepath, e))
 
         self.log_end(data_to_log)

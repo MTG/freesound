@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../freesound-deploy"
+		},
+		{
+			"path": "../freesound-audio-analyzers"
 		}
 	],
 	"launch": {

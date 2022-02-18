@@ -27,8 +27,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from accounts.admin import DELETE_SPAMMER_USER_ACTION_NAME
-from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
+from general.tasks import DELETE_SPAMMER_USER_ACTION_NAME, FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
     DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from sounds.models import BulkUploadProgress
 from tickets import TICKET_STATUS_CLOSED

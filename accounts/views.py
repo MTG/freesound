@@ -57,7 +57,7 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
     BwDeleteUserForm, UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
@@ -1346,12 +1346,8 @@ def delete(request):
                                                triggered_deletion_action=delete_action,
                                                triggered_deletion_reason=delete_reason)
 
-            # Submit deletion job to gearman so the user is deleted asynchronously
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': request.user.id, 'action': delete_action,
-                                             'deletion_reason': delete_reason}),
-                                 wait_until_complete=False, background=True)
+            # Trigger async task so user gets deleted asynchronously
+            tasks.delete_user.delay(user_id=request.user.id, deletion_action=delete_action, deletion_reason=delete_reason)
 
             # Show a message to the user that the account will be deleted shortly
             messages.add_message(request, messages.INFO,

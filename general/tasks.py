@@ -26,9 +26,6 @@ from celery.decorators import task
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from accounts.admin import DELETE_SPAMMER_USER_ACTION_NAME
-from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
-    DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from sounds.models import BulkUploadProgress, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
@@ -40,6 +37,11 @@ DELETE_USER_TASK_NAME = 'delete_user'
 VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME = "validate_bulk_describe_csv"
 BULK_DESCRIBE_TASK_NAME = "bulk_describe"
 PROCESS_ANALYSIS_RESULTS_TASK_NAME = "process_analysis_results"
+
+DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
+FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
+DELETE_USER_DELETE_SOUNDS_ACTION_NAME = 'delete_user_delete_sounds'
+DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
 
 @task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -79,7 +81,6 @@ def whitelist_user(ticket_ids):
         {'task_name': WHITELIST_USER_TASK_NAME, 'n_tickets': len(ticket_ids), 'work_time': round(time.time() - start_time)}))
 
 
-'''
 @task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def delete_user(user_id, deletion_action, deletion_reason):
     try:
@@ -137,7 +138,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
             {'task_name': deletion_action, 'user_id': user.id, 'username': user.username,
                 'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
-'''
+
 @task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def validate_bulk_describe_csv(bulk_upload_progress_object_id):
     workers_logger.info("Starting validation of BulkUploadProgress (%s)" % json.dumps(

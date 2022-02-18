@@ -35,7 +35,7 @@ from django.test.utils import override_settings
 from django.test.utils import patch_logger
 from django.urls import reverse
 
-from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserDeletionRequest
 from comments.models import Comment
@@ -314,7 +314,7 @@ class UserDelete(TestCase):
         delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
 
 
-    @mock.patch('gearman.GearmanClient.submit_job')
+    @mock.patch('general.tasks.delete_user.delay')
     def test_user_delete_include_sounds_using_web_form(self, submit_job):
         # Test user's option to delete user account including the sounds
 
@@ -329,8 +329,7 @@ class UserDelete(TestCase):
         # Test gearman job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
                     'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
-        submit_job.assert_called_once_with("delete_user", data,
-                                           wait_until_complete=False, background=True)
+        submit_job.assert_called_once_with(user_id=user.id, deletion_action=DELETE_USER_DELETE_SOUNDS_ACTION_NAME, deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)
 
         # Test UserDeletionRequest object is created with status "tr" (Deletion action was triggered)
         self.assertTrue(UserDeletionRequest.objects.filter(
@@ -343,7 +342,7 @@ class UserDelete(TestCase):
         # Check loaded page contains message about user deletion
         self.assertIn(resp.content, 'Your user account will be deleted in a few moments')
 
-    @mock.patch('gearman.GearmanClient.submit_job')
+    @mock.patch('general.tasks.delete_user.delay')
     def test_user_delete_keep_sounds_using_web_form(self, submit_job):
         # Test user's option to delete user account but preserving the sounds
 
@@ -358,9 +357,8 @@ class UserDelete(TestCase):
         # Test gearman job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
                            'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
-        submit_job.assert_called_once_with("delete_user", data,
-                                           wait_until_complete=False, background=True)
-
+        submit_job.assert_called_once_with(user_id=user.id, deletion_action=DELETE_USER_KEEP_SOUNDS_ACTION_NAME, deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)
+        
         # Test UserDeletionRequest object is created with status "tr" (Deletion action was triggered)
         self.assertTrue(UserDeletionRequest.objects.filter(
             user_from=user, user_to=user,
@@ -450,7 +448,7 @@ class UserDelete(TestCase):
         user.profile.delete_user(remove_sounds=True, delete_user_object_from_db=True)
 
     @override_settings(CHECK_ASYNC_DELETED_USERS_HOURS_BACK=0)
-    @mock.patch('gearman.GearmanClient.submit_job')
+    @mock.patch('general.tasks.delete_user.delay')
     def test_check_async_deleted_users_command(self, submit_job):
 
         def delete_user_using_web_view(user):

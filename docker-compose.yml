@@ -161,8 +161,8 @@ services:
         depends_on:
             - rabbitmq
 
-    # Process all celery async tasks (celery worker)
-    worker_celery_async_tasks:
+    # Process all celery async tasks
+    worker_async_tasks:
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
@@ -218,22 +218,3 @@ services:
         depends_on:
             - db
             - gearmand
-
-    # Async tasks worker (gearman worker)
-    worker_async_tasks:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: python manage.py gm_worker_async_tasks
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
-        environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - gearmand
-    

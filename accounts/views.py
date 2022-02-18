@@ -68,6 +68,7 @@ from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
 from forum.models import Post
+from general import tasks
 from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
@@ -625,8 +626,7 @@ def describe(request):
 
             bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
                                                      original_csv_filename=f.name)
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("validate_bulk_describe_csv", str(bulk.id), wait_until_complete=False, background=True)
+            tasks.validate_bulk_describe_csv.delay(bulk_upload_progress_object_id=bulk.id)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
             if "delete" in request.POST:
@@ -1286,8 +1286,7 @@ def bulk_describe(request, bulk_id):
         # If action is "start" and CSV is validated, mark BulkUploadProgress as "stared" and start describing sounds
         bulk.progress_type = 'S'
         bulk.save()
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
+        tasks.bulk_describe.delay(bulk_upload_progress_object_id=bulk.id)
 
     elif request.GET.get('action', False) == 'delete' and bulk.progress_type in ['N', 'V']:
         # If action is "delete", delete BulkUploadProgress object and go back to describe page

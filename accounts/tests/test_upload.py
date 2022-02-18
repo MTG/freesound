@@ -188,7 +188,7 @@ class BulkDescribe(TestCase):
 
     @override_csv_path_with_temp_directory
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
-    @mock.patch('gearman.GearmanClient.submit_job')
+    @mock.patch('general.tasks.validate_bulk_describe_csv.delay')
     def test_upload_csv(self, submit_job):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
@@ -204,8 +204,7 @@ class BulkDescribe(TestCase):
         self.assertEqual(os.path.exists(bulk.csv_path), True)
 
         # Test gearman job is triggered
-        submit_job.assert_called_once_with("validate_bulk_describe_csv", str(bulk.id),
-                                           wait_until_complete=False, background=True)
+        submit_job.assert_called_once_with(bulk_upload_progress_object_id=bulk.id)
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_view_permissions(self):
@@ -242,7 +241,7 @@ class BulkDescribe(TestCase):
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertIn('The uploaded data file has not yet been validated', resp.content)
 
-    @mock.patch('gearman.GearmanClient.submit_job')
+    @mock.patch('general.tasks.bulk_describe.delay')
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_finished_validation(self, submit_job):
         # Test that when BulkUploadProgress has finished validation we show correct info to users
@@ -261,7 +260,7 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=start')
         self.assertEqual(resp.status_code, 200)
-        submit_job.assert_called_once_with("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
+        submit_job.assert_called_once_with(bulk_upload_progress_object_id=bulk.id)
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_description_in_progress(self):

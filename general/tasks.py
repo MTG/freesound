@@ -137,7 +137,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
             {'task_name': deletion_action, 'user_id': user.id, 'username': user.username,
                 'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
-
+'''
 @task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def validate_bulk_describe_csv(bulk_upload_progress_object_id):
     workers_logger.info("Starting validation of BulkUploadProgress (%s)" % json.dumps(
@@ -155,7 +155,7 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
             {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
-'''
+
 
 @task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def bulk_describe(bulk_upload_progress_object_id):

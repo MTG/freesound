@@ -42,9 +42,9 @@ class Command(LoggingBaseCommand):
     settings.ANALYZERS_CONFIGURATION and send jobs to the analysis workers if needed. If there are already
     many pending analysis jobs in a specific queue, it will not tigger new ones. This command is expected to be run 
     periodically so that we send jobs to the analysis workers in a controlled way. Also this command is useful to
-    clean some tmp analysis files that are not needed (converted files), and to re-trigger sound which failed
-    analysis or analysis jobs for which the workers could never communicate an ending (for example if a worker
-    was killed because of too much memory usage, this command will re-trigger analysis and clean the status)."""
+    re-trigger sounds which failed analysis or analysis jobs for which the workers could never communicate an ending 
+    (for example if a worker was killed because of too much memory usage, this command will re-trigger analysis and 
+    clean the status)."""
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -56,11 +56,6 @@ class Command(LoggingBaseCommand):
             action="store_true",
             help="With these option the command will not schedule any missing analysis sounds but will only "
                  "re-trigger failed jobs (if number of attempts is below --max-num-analysis-attempts).")
-        parser.add_argument(
-            '--remove-converted-pcm',
-            action="store_true",
-            help="With these option the command will remove old converted PCM files that have been in disk for "
-                 "more than settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK hours.")
         parser.add_argument(
             '--max-num-analysis-attempts',
             dest='max_num_analysis_attempts',
@@ -196,35 +191,6 @@ class Command(LoggingBaseCommand):
                             'too long'.format(ssaa.count()))
         if not options['dry_run']:
             ssaa.update(analysis_status="FA")
-
-        # Now remove pcm conversion files which are left in disk and have not been used for a while. We keep these
-        # files in disk in case we need to re-analyze a file or analyze a file with different analyzers in a short
-        # period of time and so we can reuse the converted file. However old files can be safely deleted and will
-        # be recreated if needbe.
-        if options['remove_converted_pcm']:
-            wav_files_in_analysis_path = glob.glob(settings.ANALYSIS_NEW_PATH + '**/*.wav')
-            files_to_remove = []
-            for filepath in wav_files_in_analysis_path:
-                try:
-                    datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y")
-                    modification_time = datetime.datetime.strptime(time.ctime(os.path.getmtime(filepath)), "%c")
-                    date_cutoff = \
-                        datetime.datetime.now() - datetime.timedelta(
-                            hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK)
-                    if modification_time < date_cutoff:
-                        files_to_remove.append(filepath)
-                except OSError:
-                    # This can happen if the wav file was a tmp file that was renamed while command runs
-                    pass
-            data_to_log['converted_files_to_remove'] = len(files_to_remove)
-            console_logger.info('Will remove {} converted PCM files because of them being in disk for '
-                                'too long'.format(len(files_to_remove)))
-            if not options['dry_run']:
-                for filepath in files_to_remove:
-                    try:
-                        os.remove(filepath)
-                    except:
-                        pass
 
         console_logger.info('')
         self.log_end(data_to_log)

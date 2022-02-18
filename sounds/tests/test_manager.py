@@ -70,7 +70,6 @@ class SoundManagerQueryMethods(TestCase):
         # Check that all fields for each sound are retrieved with one query
         with self.assertNumQueries(1):
             for sound in Sound.objects.bulk_query_solr(sound_ids=self.sound_ids):
-                print dir(sound)
                 for field in self.fields_to_check_bulk_query_solr:
                     self.assertTrue(hasattr(sound, field), True)
 

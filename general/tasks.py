@@ -29,6 +29,8 @@ from django.contrib.auth.models import User
 from sounds.models import BulkUploadProgress, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
+from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
+    FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm
 
 workers_logger = logging.getLogger("workers")
 
@@ -37,6 +39,7 @@ DELETE_USER_TASK_NAME = 'delete_user'
 VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME = "validate_bulk_describe_csv"
 BULK_DESCRIBE_TASK_NAME = "bulk_describe"
 PROCESS_ANALYSIS_RESULTS_TASK_NAME = "process_analysis_results"
+SOUND_PROCESSING_TASK_NAME = "process_sound"
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -226,3 +229,42 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         workers_logger.error("Finished processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'error': str(e), 'work_time': round(time.time() - start_time)}))
+
+
+@task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
+def task_process_sound(sound_id, skip_previews=False, skip_displays=False):
+    """ Process a sound and generate the mp3/ogg preview files and the waveform/spectrogram displays
+
+    Args:
+        sound_id (int): ID of the sound to process
+        skip_previews (bool): set to True for skipping the computation of previews
+        skip_displays (bool): set to True for skipping the computation of images
+    """
+    set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
+    workers_logger.info("Starting processing of sound (%s)" % json.dumps({
+        'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id}))
+    start_time = time.time()
+    try:
+        check_if_free_space()
+        result = FreesoundAudioProcessor(sound_id=sound_id) \
+            .process(skip_displays=skip_displays, skip_previews=skip_previews)
+        if result:
+            workers_logger.info("Finished processing of sound (%s)" % json.dumps(
+                {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'result': 'success',
+                 'work_time': round(time.time() - start_time)}))
+        else:
+            workers_logger.info("Finished processing of sound (%s)" % json.dumps(
+                {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'result': 'failure',
+                 'work_time': round(time.time() - start_time)}))
+
+    except WorkerException as e:
+        workers_logger.error("WorkerException while processing sound (%s)" % json.dumps(
+            {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+             'work_time': round(time.time() - start_time)}))
+
+    except Exception as e:
+        workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
+            {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+             'work_time': round(time.time() - start_time)}))
+
+    cancel_timeout_alarm()

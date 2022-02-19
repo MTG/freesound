@@ -30,7 +30,6 @@ from django.apps import apps
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.urls import reverse
-from gearman.errors import ServerUnavailable
 
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
@@ -226,8 +225,8 @@ def create_sound(user,
 
             if sound.pack:
                 sound.pack.process()
-        except ServerUnavailable:
-            pass
+        except Exception as e:
+            sound_logger.info('Error sending sound to process and analyze: %s' % str(e))
 
     # Log
     if sound.uploaded_with_apiv2_client is not None:

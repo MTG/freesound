@@ -31,6 +31,7 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
     FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm
+from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
 
 
 workers_logger = logging.getLogger("workers")
@@ -41,6 +42,7 @@ VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME = "validate_bulk_describe_csv"
 BULK_DESCRIBE_TASK_NAME = "bulk_describe"
 PROCESS_ANALYSIS_RESULTS_TASK_NAME = "process_analysis_results"
 SOUND_PROCESSING_TASK_NAME = "process_sound"
+SOUND_ANALYSIS_OLD_TASK_NAME = "analyze_sound_old"
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -276,5 +278,36 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
         workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+
+    cancel_timeout_alarm()
+
+
+@task(name=SOUND_ANALYSIS_OLD_TASK_NAME, queue=settings.CELERY_SOUND_ANALYSIS_OLD_QUEUE_NAME)
+def analyze_sound_old(sound_id):
+    set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
+    workers_logger.info("Starting analysis of sound (%s)" % json.dumps(
+        {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id}))
+    start_time = time.time()
+    try:
+        check_if_free_space()
+        result = FreesoundAudioAnalyzer(sound_id=sound_id).analyze()
+        if result:
+            workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
+                {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'result': 'success',
+                    'work_time': round(time.time() - start_time)}))
+        else:
+            workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
+                {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'result': 'failure',
+                    'work_time': round(time.time() - start_time)}))
+
+    except WorkerException as e:
+        workers_logger.error("WorkerException while analyzing sound (%s)" % json.dumps(
+            {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+                'work_time': round(time.time() - start_time)}))
+
+    except Exception as e:
+        workers_logger.error("Unexpected error while analyzing sound (%s)" % json.dumps(
+            {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+                'work_time': round(time.time() - start_time)}))
 
     cancel_timeout_alarm()

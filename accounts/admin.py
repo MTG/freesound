@@ -23,7 +23,6 @@
 import json
 import logging
 
-import gearman
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages

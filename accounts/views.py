@@ -28,7 +28,6 @@ import os
 import tempfile
 import uuid
 
-import gearman
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -814,7 +813,7 @@ def describe_sounds(request):
         # In the future if django-workers do not write to the db this might be changed
         try:
             for s in sounds_to_process:
-                s.process_and_analyze(high_priority=True)
+                s.process_and_analyze()
         except Exception as e:
             sounds_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
         for p in dirty_packs:

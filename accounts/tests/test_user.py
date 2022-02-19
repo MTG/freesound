@@ -326,7 +326,7 @@ class UserDelete(TestCase):
             reverse('accounts-delete'),
             {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
 
-        # Test gearman job is triggered
+        # Test job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
                     'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
         submit_job.assert_called_once_with(user_id=user.id, deletion_action=DELETE_USER_DELETE_SOUNDS_ACTION_NAME, deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)
@@ -354,7 +354,7 @@ class UserDelete(TestCase):
             reverse('accounts-delete'),
             {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
 
-        # Test gearman job is triggered
+        # Test job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
                            'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
         submit_job.assert_called_once_with(user_id=user.id, deletion_action=DELETE_USER_KEEP_SOUNDS_ACTION_NAME, deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)

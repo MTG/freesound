@@ -1,15 +1,3 @@
-<h3>gearman status</h3>
-<table style="min-width:500px;">
-{% for item in gearman_status %}
-    {% if forloop.counter0 == 0 %}
-        <tr><td></td><td>queued</td><td>running</td><td>N workers</td></tr>
-    {% endif %}
-    <tr><td><b>{{ item.task }}</b></td><td>{{ item.queued }}</td><td>{{ item.running }}</td><td>{{ item.workers }}</td></tr>
-{% empty %}
-    <p>No information available...</p>
-{% endfor %}
-</table>
-
 <h3>rabbitmq status</h3>
 <table style="min-width:500px;">
 {% for item in celery_task_counts %}

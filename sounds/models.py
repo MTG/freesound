@@ -1095,30 +1095,28 @@ class Sound(SocialModel):
         self.process(force=force, high_priority=high_priority)
         self.analyze(force=force, high_priority=high_priority)
 
-    def process(self, force=False, skip_previews=False, skip_displays=False):
+    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
         """
         Trigger processing of the sound if analysis_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
         Processing code generates the file previews and display images as well as fills some audio fields
         of the Sound model.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
         if force or self.processing_state != "OK":
             self.set_processing_ongoing_state("QU")
-            tasks.process_sound(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
+            tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
 
     def analyze(self, force=False, high_priority=False):
         """
-        Trigger analysis of the sound if analysis_state is not "OK" or force=True. 'high_priority' argument can be
-        set to True to send the processing job with high priority to the gearman job server. Analysis code runs
+        Trigger analysis of the sound if analysis_state is not "OK" or force=True. Analysis code runs
         Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.analysis_state != "OK":
             self.set_analysis_state("QU")
-            gm_client.submit_job("analyze_sound", json.dumps({
-                'sound_id': self.id
-            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
+            tasks.analyze_sound_old.delay(sound_id=self.id)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     def analyze_new(self, analyzer, force=False, verbose=True):

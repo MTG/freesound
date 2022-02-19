@@ -203,7 +203,7 @@ class BulkDescribe(TestCase):
         # Test really file exists
         self.assertEqual(os.path.exists(bulk.csv_path), True)
 
-        # Test gearman job is triggered
+        # Test job is triggered
         submit_job.assert_called_once_with(bulk_upload_progress_object_id=bulk.id)
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)

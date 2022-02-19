@@ -28,7 +28,6 @@ import os
 import tempfile
 import uuid
 
-import gearman
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -57,7 +56,7 @@ from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from accounts.admin import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
     BwDeleteUserForm, UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
@@ -68,6 +67,7 @@ from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
 from forum.models import Post
+from general import tasks
 from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
@@ -625,8 +625,7 @@ def describe(request):
 
             bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
                                                      original_csv_filename=f.name)
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("validate_bulk_describe_csv", str(bulk.id), wait_until_complete=False, background=True)
+            tasks.validate_bulk_describe_csv.delay(bulk_upload_progress_object_id=bulk.id)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
             if "delete" in request.POST:
@@ -814,7 +813,7 @@ def describe_sounds(request):
         # In the future if django-workers do not write to the db this might be changed
         try:
             for s in sounds_to_process:
-                s.process_and_analyze(high_priority=True)
+                s.process_and_analyze()
         except Exception as e:
             sounds_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
         for p in dirty_packs:
@@ -1286,8 +1285,7 @@ def bulk_describe(request, bulk_id):
         # If action is "start" and CSV is validated, mark BulkUploadProgress as "stared" and start describing sounds
         bulk.progress_type = 'S'
         bulk.save()
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("bulk_describe", str(bulk.id), wait_until_complete=False, background=True)
+        tasks.bulk_describe.delay(bulk_upload_progress_object_id=bulk.id)
 
     elif request.GET.get('action', False) == 'delete' and bulk.progress_type in ['N', 'V']:
         # If action is "delete", delete BulkUploadProgress object and go back to describe page
@@ -1347,12 +1345,8 @@ def delete(request):
                                                triggered_deletion_action=delete_action,
                                                triggered_deletion_reason=delete_reason)
 
-            # Submit deletion job to gearman so the user is deleted asynchronously
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("delete_user",
-                                 json.dumps({'user_id': request.user.id, 'action': delete_action,
-                                             'deletion_reason': delete_reason}),
-                                 wait_until_complete=False, background=True)
+            # Trigger async task so user gets deleted asynchronously
+            tasks.delete_user.delay(user_id=request.user.id, deletion_action=delete_action, deletion_reason=delete_reason)
 
             # Show a message to the user that the account will be deleted shortly
             messages.add_message(request, messages.INFO,

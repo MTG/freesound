@@ -30,7 +30,6 @@ import random
 import yaml
 import zlib
 
-import gearman
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -52,6 +51,7 @@ import accounts.models
 from apiv2.models import ApiV2Client
 from comments.models import Comment
 from freesound.celery import app as celery_app
+from general import tasks
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
@@ -1088,8 +1088,8 @@ class Sound(SocialModel):
         """
         Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
         other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
-        state and analysis state of the sound. 'high_priority' can be set to True to send the processing and/or
-        analysis jobs with high priority to the gearman job server.
+        state and analysis state of the sound.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
         self.process(force=force, high_priority=high_priority)
         self.analyze(force=force, high_priority=high_priority)
@@ -1098,35 +1098,27 @@ class Sound(SocialModel):
         """
         Trigger processing of the sound if analysis_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
-        'high_priority' argument can be set to True to send the processing job with high priority to the gearman job
-        server. Processing code generates the file previews and display images as well as fills some audio fields
+        Processing code generates the file previews and display images as well as fills some audio fields
         of the Sound model.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
             self.set_processing_ongoing_state("QU")
-            gm_client.submit_job("process_sound", json.dumps({
-                'sound_id': self.id,
-                'skip_previews': skip_previews,
-                'skip_displays': skip_displays
-            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
+            tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
 
     def analyze(self, force=False, high_priority=False):
         """
-        Trigger analysis of the sound if analysis_state is not "OK" or force=True. 'high_priority' argument can be
-        set to True to send the processing job with high priority to the gearman job server. Analysis code runs
+        Trigger analysis of the sound if analysis_state is not "OK" or force=True. Analysis code runs
         Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.analysis_state != "OK":
             self.set_analysis_state("QU")
-            gm_client.submit_job("analyze_sound", json.dumps({
-                'sound_id': self.id
-            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
+            tasks.analyze_sound_old.delay(sound_id=self.id)
             sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
-    def analyze_new(self, analyzer, force=False, high_priority=False, verbose=True):
+    def analyze_new(self, analyzer, force=False, verbose=True):
         if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
             # If specified analyzer is not one of the analyzers configured, do nothing
             if verbose:

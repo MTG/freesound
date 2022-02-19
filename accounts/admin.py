@@ -23,7 +23,6 @@
 import json
 import logging
 
-import gearman
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
@@ -41,11 +40,7 @@ from django_object_actions import DjangoObjectActions
 
 from accounts.forms import username_taken_by_other_user
 from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserDeletionRequest, EmailBounce
-
-DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
-FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
-DELETE_USER_DELETE_SOUNDS_ACTION_NAME = 'delete_user_delete_sounds'
-DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
+from general import tasks
 
 web_logger = logging.getLogger("web")
 
@@ -188,7 +183,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            delete_action = DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+            delete_action = tasks.DELETE_USER_KEEP_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
 
@@ -199,12 +194,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                triggered_deletion_action=delete_action,
                                                triggered_deletion_reason=delete_reason)
 
-            # Submit gearman job so user gets deleted asynchronously
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("delete_user",
-                                 json.dumps(
-                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
-                                 wait_until_complete=False, background=True)
+            # Trigger async task so user gets deleted asynchronously
+            tasks.delete_user.delay(user_id=obj.id, deletion_action=delete_action, deletion_reason=delete_reason)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,
@@ -224,7 +215,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_include_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME
+            delete_action = tasks.DELETE_USER_DELETE_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
 
@@ -235,12 +226,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                triggered_deletion_action=delete_action,
                                                triggered_deletion_reason=delete_reason)
 
-            # Submit gearman job so user gets deleted asynchronously
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("delete_user",
-                                 json.dumps(
-                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
-                                 wait_until_complete=False, background=True)
+            # Trigger async task so user gets deleted asynchronously
+            tasks.delete_user.delay(user_id=obj.id, deletion_action=delete_action, deletion_reason=delete_reason)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,
@@ -266,7 +253,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def delete_spammer(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            delete_action = DELETE_SPAMMER_USER_ACTION_NAME
+            delete_action = tasks.DELETE_SPAMMER_USER_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_SPAMMER
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
 
@@ -277,12 +264,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                triggered_deletion_action=delete_action,
                                                triggered_deletion_reason=delete_reason)
 
-            # Submit gearman job so user gets deleted asynchronously
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("delete_user",
-                                 json.dumps(
-                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
-                                 wait_until_complete=False, background=True)
+            # Trigger async task so user gets deleted asynchronously
+            tasks.delete_user.delay(user_id=obj.id, deletion_action=delete_action, deletion_reason=delete_reason)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,
@@ -307,7 +290,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def full_delete(self, request, obj):
         username = obj.username
         if request.method == "POST":
-            delete_action = FULL_DELETE_USER_ACTION_NAME
+            delete_action = tasks.FULL_DELETE_USER_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
             web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
 
@@ -318,12 +301,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                                                triggered_deletion_action=delete_action,
                                                triggered_deletion_reason=delete_reason)
 
-            # Submit gearman job so user gets deleted asynchronously
-            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-            gm_client.submit_job("delete_user",
-                                 json.dumps(
-                                     {'user_id': obj.id, 'action': delete_action, 'deletion_reason': delete_reason}),
-                                 wait_until_complete=False, background=True)
+            # Trigger async task so user gets deleted asynchronously
+            tasks.delete_user.delay(user_id=obj.id, deletion_action=delete_action, deletion_reason=delete_reason)
 
             # Show message to admin user
             messages.add_message(request, messages.INFO,

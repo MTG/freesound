@@ -23,15 +23,16 @@ import logging
 import time
 
 from celery.decorators import task
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from accounts.admin import DELETE_SPAMMER_USER_ACTION_NAME
-from accounts.admin import FULL_DELETE_USER_ACTION_NAME, DELETE_USER_DELETE_SOUNDS_ACTION_NAME, \
-    DELETE_USER_KEEP_SOUNDS_ACTION_NAME
-from sounds.models import BulkUploadProgress, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
+from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
+    FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm
+from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
+
 
 workers_logger = logging.getLogger("workers")
 
@@ -40,6 +41,13 @@ DELETE_USER_TASK_NAME = 'delete_user'
 VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME = "validate_bulk_describe_csv"
 BULK_DESCRIBE_TASK_NAME = "bulk_describe"
 PROCESS_ANALYSIS_RESULTS_TASK_NAME = "process_analysis_results"
+SOUND_PROCESSING_TASK_NAME = "process_sound"
+SOUND_ANALYSIS_OLD_TASK_NAME = "analyze_sound_old"
+
+DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
+FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
+DELETE_USER_DELETE_SOUNDS_ACTION_NAME = 'delete_user_delete_sounds'
+DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
 
 @task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -79,7 +87,6 @@ def whitelist_user(ticket_ids):
         {'task_name': WHITELIST_USER_TASK_NAME, 'n_tickets': len(ticket_ids), 'work_time': round(time.time() - start_time)}))
 
 
-'''
 @task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def delete_user(user_id, deletion_action, deletion_reason):
     try:
@@ -140,6 +147,9 @@ def delete_user(user_id, deletion_action, deletion_reason):
 
 @task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def validate_bulk_describe_csv(bulk_upload_progress_object_id):
+    # Import BulkUploadProgress model from apps to avoid circular dependency
+    BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
+
     workers_logger.info("Starting validation of BulkUploadProgress (%s)" % json.dumps(
         {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id}))
     start_time = time.time()
@@ -155,10 +165,13 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
             {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
-'''
+
 
 @task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def bulk_describe(bulk_upload_progress_object_id):
+    # Import BulkUploadProgress model from apps to avoid circular dependency
+    BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
+
     workers_logger.info("Starting describing sounds of BulkUploadProgress (%s)" % json.dumps(
         {'task_name': BULK_DESCRIBE_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id}))
     start_time = time.time()
@@ -196,6 +209,9 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         analysis_time (float): the time it took in seconds for the analyzer to carry out the analysis task
         exception (str): error message in case there was an error
     """
+    # Import SoundAnalysis model from apps to avoid circular dependency
+    SoundAnalysis = apps.get_model('sounds.SoundAnalysis')
+
     workers_logger.info("Starting processing analysis results (%s)" % json.dumps(
         {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status}))
     start_time = time.time()
@@ -225,3 +241,73 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         workers_logger.error("Finished processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'error': str(e), 'work_time': round(time.time() - start_time)}))
+
+
+@task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
+def process_sound(sound_id, skip_previews=False, skip_displays=False):
+    """ Process a sound and generate the mp3/ogg preview files and the waveform/spectrogram displays
+
+    Args:
+        sound_id (int): ID of the sound to process
+        skip_previews (bool): set to True for skipping the computation of previews
+        skip_displays (bool): set to True for skipping the computation of images
+    """
+    set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
+    workers_logger.info("Starting processing of sound (%s)" % json.dumps({
+        'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id}))
+    start_time = time.time()
+    try:
+        check_if_free_space()
+        result = FreesoundAudioProcessor(sound_id=sound_id) \
+            .process(skip_displays=skip_displays, skip_previews=skip_previews)
+        if result:
+            workers_logger.info("Finished processing of sound (%s)" % json.dumps(
+                {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'result': 'success',
+                 'work_time': round(time.time() - start_time)}))
+        else:
+            workers_logger.info("Finished processing of sound (%s)" % json.dumps(
+                {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'result': 'failure',
+                 'work_time': round(time.time() - start_time)}))
+
+    except WorkerException as e:
+        workers_logger.error("WorkerException while processing sound (%s)" % json.dumps(
+            {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+             'work_time': round(time.time() - start_time)}))
+
+    except Exception as e:
+        workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
+            {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+             'work_time': round(time.time() - start_time)}))
+
+    cancel_timeout_alarm()
+
+
+@task(name=SOUND_ANALYSIS_OLD_TASK_NAME, queue=settings.CELERY_SOUND_ANALYSIS_OLD_QUEUE_NAME)
+def analyze_sound_old(sound_id):
+    set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
+    workers_logger.info("Starting analysis of sound (%s)" % json.dumps(
+        {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id}))
+    start_time = time.time()
+    try:
+        check_if_free_space()
+        result = FreesoundAudioAnalyzer(sound_id=sound_id).analyze()
+        if result:
+            workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
+                {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'result': 'success',
+                    'work_time': round(time.time() - start_time)}))
+        else:
+            workers_logger.info("Finished analysis of sound (%s)" % json.dumps(
+                {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'result': 'failure',
+                    'work_time': round(time.time() - start_time)}))
+
+    except WorkerException as e:
+        workers_logger.error("WorkerException while analyzing sound (%s)" % json.dumps(
+            {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+                'work_time': round(time.time() - start_time)}))
+
+    except Exception as e:
+        workers_logger.error("Unexpected error while analyzing sound (%s)" % json.dumps(
+            {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+                'work_time': round(time.time() - start_time)}))
+
+    cancel_timeout_alarm()

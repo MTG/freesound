@@ -603,8 +603,6 @@ AKISMET_KEY = ''
 # -------------------------------------------------------------------------------
 # Processing and analysis settings
 
-GEARMAN_JOB_SERVERS = ["gearmand:4730"]
-
 STEREOFY_PATH = '/usr/local/bin/stereofy'
 
 # Min free disk space percentage for worker (worker will raise exception if not enough free disk space is available)
@@ -818,6 +816,8 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
+CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
+CELERY_SOUND_ANALYSIS_OLD_QUEUE_NAME = 'sound_analysis_old_queue'
 
 
 # -------------------------------------------------------------------------------

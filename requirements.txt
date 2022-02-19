@@ -28,7 +28,6 @@ djangorestframework-yaml==1.0.3
 djangorestframework==3.9.4
 feedparser==5.1.3
 freezegun==0.3.11
-gearman==2.0.2
 graypy==0.2.12
 gunicorn==19.9.0
 ipaddress==1.0.23

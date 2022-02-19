@@ -111,7 +111,25 @@ services:
             - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
             - ./freesound-data/rabbitmq:/var/lib/rabbitmq/mnesia/
 
-    # Clustering worker (celery worker)
+    # Worker for async tasks and sound processing
+    worker_celery:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+        env_file:
+            - environment
+        environment:
+            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+        depends_on:
+            - db
+            - rabbitmq
+
+    # Clustering worker (not using the previous one as this has some specific requirements)
     worker_clustering:
         build:
             context: ./
@@ -135,7 +153,7 @@ services:
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=2 -l info -Q ac-extractor_v1
+        command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v1
         depends_on:
             - rabbitmq
 
@@ -146,7 +164,7 @@ services:
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=2 -l info -Q audioset-vggish-extractor_v1
+        command: celery -A main worker --concurrency=1 -l info -Q audioset-vggish-extractor_v1
         depends_on:
             - rabbitmq
 
@@ -157,83 +175,7 @@ services:
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=2 -l info -Q fs-essentia-extractor_legacy
+        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
         depends_on:
             - rabbitmq
 
-    # Process all celery async tasks (celery worker)
-    worker_celery_async_tasks:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: celery -A freesound worker -l info -Q async_tasks_queue
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
-        environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - rabbitmq
-
-    # Gearman (processing, async tasks and old anaylsis job manager)
-    gearmand:
-        image: artefactual/gearmand
-
-    # Processing worker (gearman worker)
-    worker_processing:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: python manage.py gm_worker_processing --queue process_sound
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
-        environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - gearmand
-
-    # Old analysis worker (gearman worker)
-    worker_analysis:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: python manage.py gm_worker_processing --queue analyze_sound
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
-        environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - gearmand
-
-    # Async tasks worker (gearman worker)
-    worker_async_tasks:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: python manage.py gm_worker_async_tasks
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
-        environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - gearmand
-    

@@ -18,20 +18,68 @@
 #     See AUTHORS file.
 #
 
-import logging
 import os
+import signal
+import logging
 import tempfile
 
+from django.apps import apps
 from django.conf import settings
 
 import color_schemes
 import utils.audioprocessing.processing as audioprocessing
-from sounds.models import Sound
 from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 
 console_logger = logging.getLogger("console")
+
+
+class WorkerException(Exception):
+    """
+    Exception raised by the worker if:
+    i) the analysis/processing function takes longer than the timeout specified in settings.WORKER_TIMEOUT
+    ii) the check for free disk space  before running the analysis/processing function fails
+    """
+    pass
+
+
+def set_timeout_alarm(time, msg):
+    """
+    Sets a timeout alarm which raises a WorkerException after a number of seconds.
+    :param float time: seconds until WorkerException is raised
+    :param str msg: message to add to WorkerException when raised
+    :raises WorkerException: when timeout is reached
+    """
+
+    def alarm_handler(signum, frame):
+        raise WorkerException(msg)
+
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(time)
+
+
+def cancel_timeout_alarm():
+    """
+    Cancels an exsting timeout alarm (or does nothing if no alarm was set).
+    """
+    signal.alarm(0)
+
+
+def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
+                        min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
+    """
+    Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
+    volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
+    :param str directory: path of the directory whose volume will be checked for free space
+    :param float min_disk_space_percentage: free disk space percentage to check against
+    :raises WorkerException: if available percentage of free space is below the threshold
+    """
+    stats = os.statvfs(directory)
+    percentage_free = stats.f_bfree * 1.0 / stats.f_blocks
+    if percentage_free < min_disk_space_percentage:
+        raise WorkerException("Disk is running out of space, "
+                              "aborting task as there might not be enough space for temp files")
 
 
 class FreesoundAudioProcessorBase(object):
@@ -62,6 +110,8 @@ class FreesoundAudioProcessorBase(object):
         self.log_error(logging_message)
 
     def get_sound_object(self, sound_id):
+        # Import Sound model from apps to avoid circular dependency
+        Sound = apps.get_model('sounds.Sound')
         try:
             return Sound.objects.get(id=sound_id)
         except Sound.DoesNotExist:

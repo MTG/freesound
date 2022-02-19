@@ -23,14 +23,15 @@ import logging
 import time
 
 from celery.decorators import task
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from sounds.models import BulkUploadProgress, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
     FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm
+
 
 workers_logger = logging.getLogger("workers")
 
@@ -144,6 +145,9 @@ def delete_user(user_id, deletion_action, deletion_reason):
 
 @task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def validate_bulk_describe_csv(bulk_upload_progress_object_id):
+    # Import BulkUploadProgress model from apps to avoid circular dependency
+    BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
+
     workers_logger.info("Starting validation of BulkUploadProgress (%s)" % json.dumps(
         {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id}))
     start_time = time.time()
@@ -163,6 +167,9 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
 
 @task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def bulk_describe(bulk_upload_progress_object_id):
+    # Import BulkUploadProgress model from apps to avoid circular dependency
+    BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
+
     workers_logger.info("Starting describing sounds of BulkUploadProgress (%s)" % json.dumps(
         {'task_name': BULK_DESCRIBE_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id}))
     start_time = time.time()
@@ -200,6 +207,9 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         analysis_time (float): the time it took in seconds for the analyzer to carry out the analysis task
         exception (str): error message in case there was an error
     """
+    # Import SoundAnalysis model from apps to avoid circular dependency
+    SoundAnalysis = apps.get_model('sounds.SoundAnalysis')
+
     workers_logger.info("Starting processing analysis results (%s)" % json.dumps(
         {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status}))
     start_time = time.time()
@@ -232,7 +242,7 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
 
 
 @task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
-def task_process_sound(sound_id, skip_previews=False, skip_displays=False):
+def process_sound(sound_id, skip_previews=False, skip_displays=False):
     """ Process a sound and generate the mp3/ogg preview files and the waveform/spectrogram displays
 
     Args:

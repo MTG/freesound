@@ -23,11 +23,11 @@ import signal
 import logging
 import tempfile
 
+from django.apps import apps
 from django.conf import settings
 
 import color_schemes
 import utils.audioprocessing.processing as audioprocessing
-from sounds.models import Sound
 from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
@@ -110,6 +110,8 @@ class FreesoundAudioProcessorBase(object):
         self.log_error(logging_message)
 
     def get_sound_object(self, sound_id):
+        # Import Sound model from apps to avoid circular dependency
+        Sound = apps.get_model('sounds.Sound')
         try:
             return Sound.objects.get(id=sound_id)
         except Sound.DoesNotExist:

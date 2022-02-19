@@ -30,7 +30,8 @@ CACHES = {
     }
 }
 
-LOGGING = None  # Avoid logging clutter when running tests
+from logger import LOGGING
+LOGGING['handlers']['stdout']['class'] = 'logging.NullHandler'
 
 SOLR_URL = "http://fakehost:8080/fs2/"  # Avoid making accidental queries to "real" search server if running
 SOLR_FORUM_URL = "http://fakehost:8080/forum/"  # Avoid making accidental requests to "real" search server if running

@@ -52,6 +52,7 @@ import accounts.models
 from apiv2.models import ApiV2Client
 from comments.models import Comment
 from freesound.celery import app as celery_app
+from general import tasks
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
@@ -1094,22 +1095,16 @@ class Sound(SocialModel):
         self.process(force=force, high_priority=high_priority)
         self.analyze(force=force, high_priority=high_priority)
 
-    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
+    def process(self, force=False, skip_previews=False, skip_displays=False):
         """
         Trigger processing of the sound if analysis_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
-        'high_priority' argument can be set to True to send the processing job with high priority to the gearman job
-        server. Processing code generates the file previews and display images as well as fills some audio fields
+        Processing code generates the file previews and display images as well as fills some audio fields
         of the Sound model.
         """
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
             self.set_processing_ongoing_state("QU")
-            gm_client.submit_job("process_sound", json.dumps({
-                'sound_id': self.id,
-                'skip_previews': skip_previews,
-                'skip_displays': skip_displays
-            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
+            tasks.process_sound(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
 
     def analyze(self, force=False, high_priority=False):

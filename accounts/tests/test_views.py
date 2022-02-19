@@ -168,8 +168,7 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('user-following-tags', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
 
-    @mock.patch('gearman.GearmanClient.submit_job')
-    def test_sounds_response(self, submit_job):
+    def test_sounds_response(self):
         # 200 response on sounds page access
         resp = self.client.get(reverse('sounds'))
         self.assertEqual(resp.status_code, 200)

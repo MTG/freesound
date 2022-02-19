@@ -104,8 +104,10 @@ class Command(LoggingBaseCommand):
         try:
             queues_status = get_queues_task_counts()
             queues_status_dict = {item[0]: item[1] for item in queues_status}
+            consumers_per_queue_dict = {item[3]: item[1] for item in queues_status}
         except Exception:
             queues_status_dict = None
+            consumers_per_queue_dict = {}
 
         for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
             console_logger.info(analyzer_name)
@@ -119,14 +121,16 @@ class Command(LoggingBaseCommand):
                 data_to_log[analyzer_name]['just_sent'] = 0
                 console_logger.info('- Not adding any jobs as queue information could not be retrieved')
             else:
-                max_num_in_jobs_for_analyzer = settings.ANALYZERS_CONFIGURATION[analyzer_name]\
+                max_num_jobs_for_analyzer = settings.ANALYZERS_CONFIGURATION[analyzer_name]\
                     .get('max_jobs_in_queue', settings.ORCHESTRATE_ANALYSIS_MAX_JOBS_PER_QUEUE_DEFAULT)
-                num_jobs_to_add = max_num_in_jobs_for_analyzer - num_jobs_in_queue
+                num_consumers_in_queue = consumers_per_queue_dict.get(analyzer_name, 1)
+                max_num_jobs_in_queue = max(1, num_consumers_in_queue) * max_num_jobs_for_analyzer
+                num_jobs_to_add = max_num_jobs_in_queue - num_jobs_in_queue
                 if num_jobs_to_add <= 0:
                     data_to_log[analyzer_name]['just_sent'] = 0
                     console_logger.info('- Not adding any jobs as queue already has more than '
                                         'the maximum allowed jobs (has {} jobs, max is {})'
-                                        .format(num_jobs_in_queue, max_num_in_jobs_for_analyzer))
+                                        .format(num_jobs_in_queue, max_num_jobs_in_queue))
                 else:
                     # First add sounds from the pool of sounds that have never been analyzed with the selected
                     # analyzer.

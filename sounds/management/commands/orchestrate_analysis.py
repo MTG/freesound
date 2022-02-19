@@ -104,7 +104,7 @@ class Command(LoggingBaseCommand):
         try:
             queues_status = get_queues_task_counts()
             queues_status_dict = {item[0]: item[1] for item in queues_status}
-            consumers_per_queue_dict = {item[3]: item[1] for item in queues_status}
+            consumers_per_queue_dict = {item[0]: item[3] for item in queues_status}
         except Exception:
             queues_status_dict = None
             consumers_per_queue_dict = {}

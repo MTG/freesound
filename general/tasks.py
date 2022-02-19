@@ -252,6 +252,9 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
         skip_previews (bool): set to True for skipping the computation of previews
         skip_displays (bool): set to True for skipping the computation of images
     """
+    # Import Sound model from apps to avoid circular dependency
+    Sound = apps.get_model('sounds.Sound')
+
     set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
     workers_logger.info("Starting processing of sound (%s)" % json.dumps({
         'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id}))
@@ -270,11 +273,23 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
                  'work_time': round(time.time() - start_time)}))
 
     except WorkerException as e:
+        try:
+            sound = Sound.objects.get(id=sound_id)
+            sound.set_processing_ongoing_state("FI")
+            sound.change_processing_state("FA", processing_log=str(e))
+        except Sound.DoesNotExist:
+            pass
         workers_logger.error("WorkerException while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
 
     except Exception as e:
+        try:
+            sound = Sound.objects.get(id=sound_id)
+            sound.set_processing_ongoing_state("FI")
+            sound.change_processing_state("FA", processing_log=str(e))
+        except Sound.DoesNotExist:
+            pass
         workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
@@ -284,6 +299,9 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
 
 @task(name=SOUND_ANALYSIS_OLD_TASK_NAME, queue=settings.CELERY_SOUND_ANALYSIS_OLD_QUEUE_NAME)
 def analyze_sound_old(sound_id):
+    # Import Sound model from apps to avoid circular dependency
+    Sound = apps.get_model('sounds.Sound')
+
     set_timeout_alarm(settings.WORKER_TIMEOUT, 'Analysis of sound %s timed out' % sound_id)
     workers_logger.info("Starting analysis of sound (%s)" % json.dumps(
         {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id}))
@@ -301,11 +319,19 @@ def analyze_sound_old(sound_id):
                     'work_time': round(time.time() - start_time)}))
 
     except WorkerException as e:
+        try:
+            Sound.objects.get(id=sound_id).set_analysis_state('FA')
+        except Sound.DoesNotExist:
+            pass
         workers_logger.error("WorkerException while analyzing sound (%s)" % json.dumps(
             {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
 
     except Exception as e:
+        try:
+            Sound.objects.get(id=sound_id).set_analysis_state('FA')
+        except Sound.DoesNotExist:
+            pass
         workers_logger.error("Unexpected error while analyzing sound (%s)" % json.dumps(
             {'task_name': SOUND_ANALYSIS_OLD_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
                 'work_time': round(time.time() - start_time)}))

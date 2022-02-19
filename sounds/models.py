@@ -30,7 +30,6 @@ import random
 import yaml
 import zlib
 
-import gearman
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -1089,8 +1088,8 @@ class Sound(SocialModel):
         """
         Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
         other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
-        state and analysis state of the sound. 'high_priority' can be set to True to send the processing and/or
-        analysis jobs with high priority to the gearman job server.
+        state and analysis state of the sound.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
         self.process(force=force, high_priority=high_priority)
         self.analyze(force=force, high_priority=high_priority)

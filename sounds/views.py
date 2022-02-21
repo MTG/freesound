@@ -109,7 +109,7 @@ def get_sound_of_the_day_id():
     return random_sound
 
 
-@redirect_if_beastwhoosh('sounds-search', query_string='s=created+desc&g=1')
+@redirect_if_beastwhoosh('sounds-search', query_string='s=Date+added+(newest+first)&g=1')
 def sounds(request):
     latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)    
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
@@ -170,7 +170,7 @@ def random(request):
         reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
-@redirect_if_beastwhoosh('sounds-search', query_string='s=created+desc&g=1&only_p=1')
+@redirect_if_beastwhoosh('sounds-search', query_string='s=Date+added+(newest+first)&g=1&only_p=1')
 def packs(request):
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
@@ -736,7 +736,7 @@ def pack(request, username, pack_id):
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=created+desc&g=1&only_p=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
 
     user = request.parameter_user
     order = request.GET.get("order", "name")
@@ -754,7 +754,7 @@ def packs_for_user(request, username):
 @redirect_if_old_username_or_404
 def for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=created+desc&g=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
 
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)

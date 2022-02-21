@@ -83,7 +83,7 @@
          $.param({
             "q": $("#search-q").val(),
             "f":"username:\"{{user.username}}\"",
-            "s":"created+desc",
+            "s":"Date+added+(newest+first)",
             "ajax": 1}),
             function(){makePlayer('.player');removePackSounds();appendLinks();}
         );

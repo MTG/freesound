@@ -70,7 +70,7 @@
                             {% endfor %}
                             {% if pack_sounds %}
                                 <div class="v-spacing-top-4 text-center">
-                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=created+desc&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
+                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
                                 </div>
                             {% endif %}
                         </div>
@@ -82,7 +82,7 @@
                         <div>
                             <ol>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'wave' 'text-grey text-opacity-050' %}<a href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=created+desc&g=1" class="bw-link--black  no-hover"><span class="text-21">{{ pack.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
+                                    {% bw_icon 'wave' 'text-grey text-opacity-050' %}<a href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" class="bw-link--black  no-hover"><span class="text-21">{{ pack.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
                                 </li>
                                 <li class="v-spacing-3">
                                     {% bw_icon 'play' 'text-light-grey' %} <span class="text-21">{{ pack.get_total_pack_sounds_length|duration_hours }}</span> <span class="text-grey text-17">hours of audio</span>

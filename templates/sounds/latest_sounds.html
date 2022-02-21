@@ -15,6 +15,6 @@
     {% empty %}
       <p>No sounds in the database!
     {% endfor %}
-    <p class="more_button" ><a href="{% url 'sounds-search' %}?q=&f=&s=created+desc">more...</a></p>
+    <p class="more_button" ><a href="{% url 'sounds-search' %}?q=&f=&s=Date+added+(newest+first)">more...</a></p>
 </div>
 {% endcache %}

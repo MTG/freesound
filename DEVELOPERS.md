@@ -180,18 +180,34 @@ available analyzers are exposed as workers that can consume tasks from their que
 included in the analyzers). If several workers are instantiated for a single analyzer, then the queue for that analyzer will 
 be consumed at a faster rate, but there'll still be only one queue per analyzer.
 
-When an analyzer finishes an analysis job, it is supposed to write the analsyis reesults in a file stored in a specific location
-(this is explained in https://github.com/mtg/freesound-audio-analyzers). Also, when an analysis job is finished, the analyzer
-will trigger another Celery task called `process_analysis_results` which will collect the analysis results and update the Freesound
-database to reflect that.
+Analysis jobs can be manuallt triggered using the `analyze_new(analyzer_name)` method of Freesound `Sound` objects. When a job
+is triggered, it will be added to the corresponding Celery/RabbitMQ queue, and a `SoundAnalysis` object will be created in the
+database. That object will be used to store the state of the analysis job as well as the results when the job finishes. Only one
+`SoundAnalysis` object can exist per pair of sound ID <> analyzer name. If an analysis job for an analyzer is triggered for a
+sound that has already been analyzed with that analyzer, the already existing `SoundAnalysis` object will be updated.
 
+When an analyzer finishes an analysis job, it is supposed to write the analsyis results into a file stored in a specific location
+within `freesound-data`folder (this is explained in https://github.com/mtg/freesound-audio-analyzers). Also, when an analysis job 
+is finished, the analyzer will trigger another Celery task called `process_analysis_results` which will collect the analysis results 
+and update the corresponding `SoundAnalysis` object in the Freesound database to reflect that. If an analyzer failed to process a sound,
+that will also be reflected in the `SoundAnalysis` object by setting a status of `Failed`. The analysis logs stored are accessible through the
+`SoundAnalysis` object and will hopefully show deatils about the anlaysis errors. If the analyzer has defined
+a `descriptors_map` property in `settings.ANALYZERS_CONFIGURATION[analyzer_name]`, then the mapping will be used to load some of the
+analysis results from the analysis output file and store them directly in the Freesound database (the `SoundAnalysis` object has a
+JSON field to store `analysis_data`). Analysis results stored in the database can be easily used for indexing sounds and filtering 
+them with the search engine and the Freesound API (for a "how to" see implementation examples for analyzer `ac-extractor_v3`).
 
+It is not advised to add more than a *few thousands* of jobs in the Celery/RabbitMQ queue (we've experienced problems with that although
+we never furthe investigated). For this reason, if we want to, e.g. analyze the whole Freesound with a new analyzer, we won't simply
+iterate over all sounds and call `analyze_new(new_analyzer_name)`. Instead, the new analysis pipeline adds a management command named
+`orchestrate_analysis` (in the sounds app) which is run at every hour will handle the triggering of analysis jobs. The idea is that
+we define which analyzers we want available in Freesound using `settings.ANALYZERS_CONFIGURATION`, and then `orchestrate_analysis` takes
+care of continuously checking the current analysis status of all sounds, and triggering jobs for pairs of sound<>analyzer that are missing.
+That command will also take care of re-sending analysis jobs that have failed (with a maximum number of re-trials) and also logging all this
+information to that we can easily keep track of the whole analysis status.
 
-- SoundAnalysis objects
-
-- exceptions/errors
-- - orchestrate analysis
-
+The Freesound admin pages for `SoundAnalysis` objects have been configured to be useful for dealing with the analysis of sounds, checking 
+analysis logs, filtering by state and even re-triggering analysis jobs.
 
 
 #### Running new analysis pipeline in local development

@@ -50,10 +50,6 @@ Returns:
 Prefer to create a pull request for all changes. This allows us to keep a record of the changes 
 that were made, and allow feedback if necessary
 
-*Merging and deployment process (for admins only)*
-When PRs are merged, we add the [merged] label to the ticket that it solves. This allows us to make a list of 
-changes for release notes or other documentation. Once the release has been made we finally close the tickets.
-
 
 ## Specific notes
 
@@ -121,16 +117,19 @@ this data.
 For tables that have lots of rows, **adding a column** with a default value takes a long time. Adding this column as 
 nullable is much faster. We can create a second migration to make the column not null once it is populated.
 
+
 ### Adding new fields to the user Profile model
 
 When adding new fields to the `accounts.Profile` model, we should make sure that we also take care of these new fields 
 in the `accounts.Profile.delete_user` method (which anonymizes a user account).
+
 
 ### Adding new fields to the user Sound model
 
 When adding new fields to the `sounds.Sound` mode, we should make sure that we handle this fields correctly when 
 creating `DeletedSound` objects in the `sounds-models.on_delete_sound` function triggered by the `pre_delete` 
 signal of the `Sound` model.
+
 
 ### Search Engine Backends
 
@@ -151,16 +150,63 @@ Please read carefully the documentation of the management command to better unde
 doing the testing.
 
 
-### Notes about the "external analyzers"
+### Freesound analysis pipeline
+
+In February 2022 we released a refactoring of the analysis pipeline that allows us to more easily incorporate new audio 
+analysis algorithms in Freesound and to schedule the analysis of the whole collection of sounds. The new analysis pipeline 
+is currecntly working in parallell with the older analysis pipeline therefore it has not yet replaced it, but at some point 
+it will completely replace it. In this section there is an explanation about how the new analysis pipeline works and how it 
+should be setup for local development. 
+
+First of all, a clarification about what "analysis" and "processing" mean in the context of Freesound:
+
+* `processing`: sound files are *processed* to generate the mp3/ogg previews and the waveform/spectrogram
+images. `processing` also extracts some information from the audio files (like duration, number of channels) which is used
+to populate the database.
+
+* `analysis`: sound files are *analyzed* to extract low/mid/high-level audio features which can be later used
+for different Freesound features. 
+
+Before the analysis refactoring, analysis consisted in running the [Freesound Essentia extractor](https://essentia.upf.edu), 
+the extractor features were used to populate the similarity search index. The new analysis pipeline adds support for adding 
+extra analyzers beside Essentia's extractor. The code for the different audio analyzers is no longer in the main Freesound
+repository but here: https://github.com/mtg/freesound-audio-analyzers. In order to create an analyzer that is compatible with
+Freesound, it needs to be created following the specification and instructions of that repository. As a sumamry, new analyzers
+need to be dockerized and incorporate a Python script which implements a simple API for analyzing sounds. That script also
+takes care of logging in the Freesound infrastructure.
+
+The new analysis pipeline uses job queues based on Celery/RabbitMQ. There is one job queue for every avialable analyzer. The 
+available analyzers are exposed as workers that can consume tasks from their queues (this is also done by the Python script
+included in the analyzers). If several workers are instantiated for a single analyzer, then the queue for that analyzer will 
+be consumed at a faster rate, but there'll still be only one queue per analyzer.
+
+When an analyzer finishes an analysis job, it is supposed to write the analsyis reesults in a file stored in a specific location
+(this is explained in https://github.com/mtg/freesound-audio-analyzers). Also, when an analysis job is finished, the analyzer
+will trigger another Celery task called `process_analysis_results` which will collect the analysis results and update the Freesound
+database to reflect that.
+
+
+
+- SoundAnalysis objects
+
+- exceptions/errors
+- - orchestrate analysis
+
+
+
+#### Running new analysis pipeline in local development
 
 The new analysis pipeline includes the use of external audio analyzers implemented in a code repository at 
-https://github.com/mtg/freesound-audio-analyzers. The docker compose file has defined services for the external
-analyzers which depend on docker images having been previously built from the freesound-audio-analyzers repository.
-To build these images you simply need to checkout the code repository and run `make`. Once the images are built,
-Freesound can be run including the external analyzer services by running `docker-compose --profile ext_analyzers up`
+https://github.com/mtg/freesound-audio-analyzers. The docker compose of the main Freesound repository has defined 
+services for the external analyzers which depend on docker images having been previously built from the 
+`freesound-audio-analyzers` repository. To build these images you simply need to checkout the code repository and run 
+`make`. Once the images are built, Freesound can be run including the external analyzer services by of the docker compose 
+file by running `docker-compose --profile ext_analyzers up`
 
 The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ console can be accessed at port `15672`
-(e.g. `http://localhost:15672/rabbitmq-admin`) and using `guest` as both username and password.
+(e.g. `http://localhost:15672/rabbitmq-admin`) and using `guest` as both username and password. Also, accessing 
+`http://localhost:8000/monitor` will show a summary of the state of different analysis job queues (as well as queues
+for Freesound async tasks other than analysis).
 
 
 ### Considerations when updating Django version
@@ -200,6 +246,7 @@ After doing all the changes follow this list as a guideline to check if things a
 - check that cross-site embeds work
 - ...
 - Check that CORS headers are working, by using a javascript app
+
 
 ### New developer onboarding (for admins)
 

@@ -149,11 +149,11 @@ services:
     # New analysis worker (celery worker) for the Audio Commons extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer1:
         profiles: ["ext_analyzers"]
-        image: ac-extractor_v1
+        image: ac-extractor_v3
         volumes:
             - ./freesound-data/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v1
+        command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v3
         depends_on:
             - rabbitmq
 

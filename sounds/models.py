@@ -1137,7 +1137,7 @@ class Sound(SocialModel):
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
                 sound_path = self.locations("preview.LQ.mp3.path")
             celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
-                        'analysis_folder': self.locations('analysis_new.path'), 'metadata':{}}, queue=analyzer)
+                        'analysis_folder': self.locations('analysis_new.path'), 'metadata':json.dumps({'duration': self.duration})}, queue=analyzer)
             if verbose:
                 sounds_logger.info("Sending sound {} to analyzer {}".format(self.id, analyzer))
         else:

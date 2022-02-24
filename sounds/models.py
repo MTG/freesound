@@ -1687,6 +1687,10 @@ class SoundAnalysis(models.Model):
         we don't actually want the data to be loaded in the DB as it would take a lot of space."""
 
         def value_is_valid(value):
+            # By convention in the analyzer's code, if descriptors have a value of None, these should not be loaded/indexed
+            # by Freesound, therefore these should not be considered valid.
+            if value is None:
+                return False
             # Postgres JSON data field can not store float values of nan or inf. Ideally these values should have never
             # been outputted by the analyzers in the first place, but it can happen. We use this function here and skip
             # indexing key/value pairs where the value is not valid for Postgres JSON data fields.

@@ -447,6 +447,7 @@ ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
 
 AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
+AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
@@ -476,6 +477,11 @@ ANALYZERS_CONFIGURATION = {
         ]
     },
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
+    AUDIOSET_YAMNET_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('classes', 'classes', str)
+        ]
+    },
 }
 
 # -------------------------------------------------------------------------------

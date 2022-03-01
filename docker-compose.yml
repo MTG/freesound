@@ -146,7 +146,7 @@ services:
             - ENV_CELERY_WORKER=1
             - FS_USER_ID=$FS_USER_ID_FROM_ENV
 
-    # New analysis worker (celery worker) for the Audio Commons extractor - needs image to be built from freesound-audio-analyzers repository
+    # Audio Commons extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer1:
         profiles: ["ext_analyzers"]
         image: ac-extractor_v3
@@ -157,19 +157,8 @@ services:
         depends_on:
             - rabbitmq
 
-    # New analysis worker (celery worker) for the Audioset-vggish extractor - needs image to be built from freesound-audio-analyzers repository
+    # Essentia extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer2:
-        profiles: ["ext_analyzers"]
-        image: audioset-vggish-extractor_v1
-        volumes:
-            - ./freesound-data/:/freesound-data
-        init: true
-        command: celery -A main worker --concurrency=1 -l info -Q audioset-vggish-extractor_v1
-        depends_on:
-            - rabbitmq
-
-    # New analysis worker (celery worker) for the Essentia extractor - needs image to be built from freesound-audio-analyzers repository
-    worker_analyzer3:
         profiles: ["ext_analyzers"]
         image: fs-essentia-extractor_legacy
         volumes:
@@ -179,3 +168,14 @@ services:
         depends_on:
             - rabbitmq
 
+    # Audioset-YAMNet extractor - needs image to be built from freesound-audio-analyzers repository
+    # Note this worker must be run with --pool=threads in order for tensorflow predictions to work inside celery
+    worker_analyzer3:
+        profiles: [ "ext_analyzers" ]
+        image: audioset-yamnet_v1
+        volumes:
+            - ./freesound-data/:/freesound-data
+        init: true
+        command: celery -A main worker --pool=threads --concurrency=1 -l info -Q audioset-yamnet_v1
+        depends_on:
+            - rabbitmq

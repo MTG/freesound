@@ -98,7 +98,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis',
                   'analysis_frames',
                   'analysis_stats',
-                  'ac_analysis',
+                  'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
                   'analyzers_output'
                   )
 

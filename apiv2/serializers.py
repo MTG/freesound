@@ -99,6 +99,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis_frames',
                   'analysis_stats',
                   'ac_analysis',
+                  'analyzers_output'
                   )
 
     url = serializers.SerializerMethodField()
@@ -188,7 +189,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                                           request_is_secure=self.context['request'].is_secure()),
         }
 
-
     analysis = serializers.SerializerMethodField()
     def get_analysis(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
@@ -259,6 +259,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_ac_analysis(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
 
+    analyzers_output = serializers.SerializerMethodField()
+    def get_analyzers_output(self, obj):
+        raise NotImplementedError  # Should be implemented in subclasses
+
 
 class SoundListSerializer(AbstractSoundSerializer):
 
@@ -278,9 +282,22 @@ class SoundListSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         # Get ac analysis data form the object itself as it will have been included in the Sound
         # by SoundManager.bulk_query
-        if obj.ac_analysis:
-            return obj.ac_analysis
-        return None
+        query_select_name = \
+            settings.ANALYZERS_CONFIGURATION[settings.AUDIOCOMMONS_ANALYZER_NAME]['query_select_name']
+        return getattr(obj, query_select_name, None)
+
+    def get_analyzers_output(self, obj):
+        # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.
+        # Analysis data will have been included in the Sound object by SoundManager.bulk_query.
+        # Note that audio commons analyzer data can also be obtained with the ac_analysis field name but all
+        # other analyzers' output is only accessible via analyzers_output field. This is kept like that
+        # for legacy reasons.
+        analyzers_output = {}
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'query_select_name' in analyzer_info:
+                query_select_name = analyzer_info['query_select_name']
+                analyzers_output[analyzer_name] = getattr(obj, query_select_name, None)
+        return analyzers_output
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -309,10 +326,10 @@ class SoundSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         # Retrieve analysis data already loaded in the provided object of get it from related SoundAnalysis object
         # corresponding to the Audio Commons extractor.
-
-        if hasattr(obj, 'ac_analysis'):
-            if obj.ac_analysis is not None:
-                return obj.ac_analysis
+        query_select_name = \
+            settings.ANALYZERS_CONFIGURATION[settings.AUDIOCOMMONS_ANALYZER_NAME]['query_select_name']
+        if hasattr(obj, query_select_name):
+            return getattr(obj, query_select_name)
         else:
             # No ac analysis data already loaded in the object, load it with an extra query
             try:
@@ -321,8 +338,29 @@ class SoundSerializer(AbstractSoundSerializer):
             except SoundAnalysis.DoesNotExist:
                 # Do nothing, will lead to end of the method returning None
                 pass
-
         return None
+
+    def get_analyzers_output(self, obj):
+        # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.
+        # Analysis data will have been included in the Sound object by SoundManager.bulk_query,
+        # otherwise it is loaded from db. Note that audio commons analyzer data can also be
+        # obtained with the ac_analysis field name but all other analyzers' output is only accessible
+        # via analyzers_output field. This is kept like that for legacy reasons.
+        analyzers_output = {}
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'query_select_name' in analyzer_info:
+                query_select_name = analyzer_info['query_select_name']
+                if hasattr(obj, query_select_name):
+                    analyzers_output[analyzer_name] = getattr(obj, query_select_name)
+                else:
+                    # Retrieve the analysis data from the db
+                    try:
+                        analyzers_output[analyzer_name] = obj.analyses\
+                            .get(analyzer=analyzer_name, analysis_status="OK").analysis_data
+                    except SoundAnalysis.DoesNotExist:
+                        # Do nothing, will return None for this analyzer
+                        analyzers_output[analyzer_name] = None
+        return analyzers_output
 
 
 ##################

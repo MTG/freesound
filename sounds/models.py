@@ -346,6 +346,27 @@ class SoundManager(models.Manager):
         else:
             return None
 
+    def get_analyzers_data_select_sql(self):
+        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data is selected
+        in the bulk query"""
+        analyzers_select_section_parts = []
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'query_select_name' in analyzer_info:
+                analyzers_select_section_parts.append("{0}.analysis_data as {0},"
+                                                      .format(analyzer_info['query_select_name']))
+        return "\n          ".join(analyzers_select_section_parts)
+
+    def get_analyzers_data_left_join_sql(self):
+        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data can be left joined
+        in the bulk query"""
+        analyzers_left_join_section_parts = []
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'query_select_name' in analyzer_info:
+                analyzers_left_join_section_parts.append(
+                    "LEFT JOIN sounds_soundanalysis {0} ON (sound.id = {0}.sound_id AND {0}.analyzer = '{1}')"
+                        .format(analyzer_info['query_select_name'], analyzer_name))
+        return "\n          ".join(analyzers_left_join_section_parts)
+
     def bulk_query_solr(self, sound_ids):
         """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
         of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
@@ -377,7 +398,7 @@ class SoundManager(models.Manager):
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
           geotags_geotag.location_name as geotag_name,
-          ac_analysis.analysis_data as ac_analysis,
+          %s
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -396,13 +417,12 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN sounds_soundanalysis ac_analysis ON (sound.id = ac_analysis.sound_id 
-                                                         AND ac_analysis.analyzer = %s)
-        WHERE
-          sound.id IN %s """
-        return self.raw(query, [ContentType.objects.get_for_model(Sound).id,
-                                settings.AUDIOCOMMONS_ANALYZER_NAME,
-                                tuple(sound_ids)])
+          %s
+        """ % (self.get_analyzers_data_select_sql(),
+               ContentType.objects.get_for_model(Sound).id,
+               self.get_analyzers_data_left_join_sql())
+        query += "WHERE sound.id IN %s"
+        return self.raw(query, [tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
         """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or
@@ -444,7 +464,7 @@ class SoundManager(models.Manager):
           geotags_geotag.location_name as geotag_name,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
-          ac_analysis.analysis_data as ac_analysis,
+          %s
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -458,12 +478,11 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN sounds_soundanalysis ac_analysis ON (sound.id = ac_analysis.sound_id 
-                                                         AND ac_analysis.analyzer = %s)
-          LEFT OUTER JOIN sounds_remixgroup_sounds
-               ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,
-                        "'%s'" % settings.AUDIOCOMMONS_ANALYZER_NAME,
+          %s
+          LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
+        WHERE %s """ % (self.get_analyzers_data_select_sql(),
+                        ContentType.objects.get_for_model(Sound).id,
+                        self.get_analyzers_data_left_join_sql(),
                         where, )
         if order_by:
             query = "%s ORDER BY %s" % (query, order_by)

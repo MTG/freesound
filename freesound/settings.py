@@ -481,7 +481,7 @@ ANALYZERS_CONFIGURATION = {
     AUDIOSET_YAMNET_ANALYZER_NAME: {
         'query_select_name': 'yamnet_analysis',
         'descriptors_map': [
-            ('classes', 'classes', str)
+            ('classes', 'yamnet_class', list)
         ]
     },
 }

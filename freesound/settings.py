@@ -451,7 +451,6 @@ AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
-        'query_select_name': 'ac_analysis',  # db field name used in bulk_query_id/bulk_query_solr for this analyzer
         'descriptors_map': [
             ('loudness', 'ac_loudness', float),
             ('dynamic_range', 'ac_dynamic_range', float),
@@ -479,7 +478,6 @@ ANALYZERS_CONFIGURATION = {
     },
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
     AUDIOSET_YAMNET_ANALYZER_NAME: {
-        'query_select_name': 'yamnet_analysis',
         'descriptors_map': [
             ('classes', 'yamnet_class', list)
         ]

@@ -351,9 +351,9 @@ class SoundManager(models.Manager):
         in the bulk query"""
         analyzers_select_section_parts = []
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'query_select_name' in analyzer_info:
+            if 'descriptors_map' in analyzer_info:
                 analyzers_select_section_parts.append("{0}.analysis_data as {0},"
-                                                      .format(analyzer_info['query_select_name']))
+                                                      .format(analyzer_name.replace('-', '_')))
         return "\n          ".join(analyzers_select_section_parts)
 
     def get_analyzers_data_left_join_sql(self):
@@ -361,10 +361,10 @@ class SoundManager(models.Manager):
         in the bulk query"""
         analyzers_left_join_section_parts = []
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'query_select_name' in analyzer_info:
+            if 'descriptors_map' in analyzer_info:
                 analyzers_left_join_section_parts.append(
                     "LEFT JOIN sounds_soundanalysis {0} ON (sound.id = {0}.sound_id AND {0}.analyzer = '{1}')"
-                        .format(analyzer_info['query_select_name'], analyzer_name))
+                        .format(analyzer_name.replace('-', '_'), analyzer_name))
         return "\n          ".join(analyzers_left_join_section_parts)
 
     def bulk_query_solr(self, sound_ids):

@@ -282,8 +282,7 @@ class SoundListSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         # Get ac analysis data form the object itself as it will have been included in the Sound
         # by SoundManager.bulk_query
-        query_select_name = \
-            settings.ANALYZERS_CONFIGURATION[settings.AUDIOCOMMONS_ANALYZER_NAME]['query_select_name']
+        query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
         return getattr(obj, query_select_name, None)
 
     def get_analyzers_output(self, obj):
@@ -294,8 +293,8 @@ class SoundListSerializer(AbstractSoundSerializer):
         # for legacy reasons.
         analyzers_output = {}
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'query_select_name' in analyzer_info:
-                query_select_name = analyzer_info['query_select_name']
+            if 'descriptors_map' in analyzer_info:
+                query_select_name = analyzer_name.replace('-', '_')
                 analysis_data = getattr(obj, query_select_name, None)
                 if analysis_data is not None:
                     analyzers_output.update(analysis_data)
@@ -328,8 +327,7 @@ class SoundSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         # Retrieve analysis data already loaded in the provided object of get it from related SoundAnalysis object
         # corresponding to the Audio Commons extractor.
-        query_select_name = \
-            settings.ANALYZERS_CONFIGURATION[settings.AUDIOCOMMONS_ANALYZER_NAME]['query_select_name']
+        query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
         if hasattr(obj, query_select_name):
             return getattr(obj, query_select_name)
         else:
@@ -350,8 +348,8 @@ class SoundSerializer(AbstractSoundSerializer):
         # via analyzers_output field. This is kept like that for legacy reasons.
         analyzers_output = {}
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'query_select_name' in analyzer_info:
-                query_select_name = analyzer_info['query_select_name']
+            if 'descriptors_map' in analyzer_info:
+                query_select_name = analyzer_name.replace('-', '_')
                 if hasattr(obj, query_select_name):
                     analysis_data = getattr(obj, query_select_name)
                 else:

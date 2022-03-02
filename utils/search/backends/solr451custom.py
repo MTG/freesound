@@ -172,8 +172,8 @@ def convert_sound_to_search_engine_document(sound):
 
     # Analyzer's output
     for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-        if 'query_select_name' in analyzer_info:
-            query_select_name = analyzer_info['query_select_name']
+        if 'descriptors_map' in analyzer_info:
+            query_select_name = analyzer_name.replace('-', '_')
             analysis_data = getattr(sound, query_select_name, None)
             if analysis_data is not None:
                 # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on

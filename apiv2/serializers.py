@@ -296,7 +296,9 @@ class SoundListSerializer(AbstractSoundSerializer):
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'query_select_name' in analyzer_info:
                 query_select_name = analyzer_info['query_select_name']
-                analyzers_output[analyzer_name] = getattr(obj, query_select_name, None)
+                analysis_data = getattr(obj, query_select_name, None)
+                if analysis_data is not None:
+                    analyzers_output.update(analysis_data)
         return analyzers_output
 
 
@@ -351,15 +353,15 @@ class SoundSerializer(AbstractSoundSerializer):
             if 'query_select_name' in analyzer_info:
                 query_select_name = analyzer_info['query_select_name']
                 if hasattr(obj, query_select_name):
-                    analyzers_output[analyzer_name] = getattr(obj, query_select_name)
+                    analysis_data = getattr(obj, query_select_name)
                 else:
                     # Retrieve the analysis data from the db
                     try:
-                        analyzers_output[analyzer_name] = obj.analyses\
-                            .get(analyzer=analyzer_name, analysis_status="OK").analysis_data
+                        analysis_data = obj.analyses.get(analyzer=analyzer_name, analysis_status="OK").analysis_data
                     except SoundAnalysis.DoesNotExist:
-                        # Do nothing, will return None for this analyzer
-                        analyzers_output[analyzer_name] = None
+                        analysis_data = None
+                if analysis_data is not None:
+                    analyzers_output.update(analysis_data)
         return analyzers_output
 
 

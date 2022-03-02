@@ -74,14 +74,15 @@ SORT_OPTIONS_MAP = {
 }
 
 # Map of suffixes used for each type of dynamic fields defined in our Solr schema
-# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
-# and '*_s' (for string)
+# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
+# '*_s' (for string) and '*_ls' (for lists of strings)
 SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
     float: '_d',
     int: '_i',
     bool: '_b',
     str: '_s',
     unicode: '_s',
+    list: '_ls',
 }
 
 SOLR_SOUND_FACET_DEFAULT_OPTIONS = {
@@ -169,18 +170,21 @@ def convert_sound_to_search_engine_document(sound):
     document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
     document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
 
-    # Audio Commons analysis
-    # NOTE: as the sound object here is the one returned by SoundManager.bulk_query_solr, it will have the Audio Commons
-    # descriptor fields under a property called 'ac_analysis'.
-    ac_analysis = getattr(sound, "ac_analysis")
-    if ac_analysis is not None:
-        # If analysis is present, index all existing analysis fields under Solr's dynamic fields "*_i", "*_d", "*_s"
-        # and "*_b" depending on the value's type. Also add Audio Commons prefix.
-        for key, value in ac_analysis.items():
-            suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
-            if suffix:
-                document['{0}{1}'.format(key, suffix)] = value
-
+    # Analyzer's output
+    for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+        if 'descriptors_map' in analyzer_info:
+            query_select_name = analyzer_name.replace('-', '_')
+            analysis_data = getattr(sound, query_select_name, None)
+            if analysis_data is not None:
+                # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
+                # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
+                for key, value in analysis_data.items():
+                    if type(value) == list:
+                        # Make sure that the list is formed by strings
+                        value = ['{}'.format(item) for item in value]
+                    suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+                    if suffix:
+                        document['{0}{1}'.format(key, suffix)] = value
     return document
 
 

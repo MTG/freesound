@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from django.conf import settings
 from django.test import TestCase
 
 from sounds.models import Sound, Pack
@@ -32,14 +33,19 @@ class SoundManagerQueryMethods(TestCase):
                                      'avg_rating', 'num_ratings', 'description', 'moderation_state', 'processing_state',
                                      'processing_ongoing_state', 'similarity_state', 'created', 'num_downloads',
                                      'num_comments', 'pack_id', 'duration', 'pack_name', 'license_id', 'license_name',
-                                     'license_deed_url', 'geotag_id', 'remixgroup_id', 'ac_analysis', 'tag_array']
+                                     'license_deed_url', 'geotag_id', 'remixgroup_id', 'tag_array'] \
+                                    + [analyzer_name.replace('-', '_') for analyzer_name, analyzer_info
+                                       in settings.ANALYZERS_CONFIGURATION.items()
+                                       if 'descriptors_map' in analyzer_info]
 
     fields_to_check_bulk_query_solr = ['username', 'user_id', 'id', 'type', 'original_filename', 'is_explicit',
                                        'filesize', 'md5', 'channels', 'avg_rating', 'num_ratings', 'description',
                                        'created', 'num_downloads', 'num_comments', 'duration', 'pack_id', 'geotag_id',
                                        'bitrate', 'bitdepth', 'samplerate', 'pack_name', 'license_name', 'geotag_lat',
-                                       'geotag_lon', 'ac_analysis', 'is_remix', 'was_remixed', 'tag_array',
-                                       'comments_array']
+                                       'geotag_lon', 'is_remix', 'was_remixed', 'tag_array', 'comments_array'] \
+                                      + [analyzer_name.replace('-', '_') for analyzer_name, analyzer_info
+                                         in settings.ANALYZERS_CONFIGURATION.items()
+                                         if 'descriptors_map' in analyzer_info]
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=1, tags="tag1 tag2 tag3")

@@ -479,7 +479,7 @@ ANALYZERS_CONFIGURATION = {
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
     AUDIOSET_YAMNET_ANALYZER_NAME: {
         'descriptors_map': [
-            ('classes', 'classes', str)
+            ('classes', 'yamnet_class', list)
         ]
     },
 }

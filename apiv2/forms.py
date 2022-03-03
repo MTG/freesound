@@ -81,6 +81,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
     query = forms.CharField(required=False, label='query')
     page = forms.CharField(required=False, label='page')
     filter = forms.CharField(required=False, label='filter')
+    weights = forms.CharField(required=False, label='weights')
     sort = forms.CharField(required=False, label='sort')
     fields = forms.CharField(required=False, label='fields')
     descriptors = forms.CharField(required=False, label='descriptors')

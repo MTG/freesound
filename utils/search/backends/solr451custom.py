@@ -209,6 +209,38 @@ def convert_post_to_search_engine_document(post):
     return document
 
 
+def add_solr_suffix_to_dynamic_fieldname(fieldname):
+    """Add the corresponding SOLR dynamic field suffix to the given fieldname. If the fieldname does not correspond
+    to a dynamic field, leave it unchanged. See docstring in 'add_solr_suffix_to_dynamic_fieldnames_in_filter' for
+    more information"""
+    dynamic_fields_map = {}
+    for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
+        if 'descriptors_map' in analyzer_data:
+            descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
+            for _, db_descriptor_key, descriptor_type in descriptors_map:
+                dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
+                    db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+    return dynamic_fields_map.get(fieldname, fieldname)
+
+
+
+def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
+    """Processes a filter string containing field names and replaces the occurrences of fieldnames that match with
+    descriptor names from the descriptors_map of different configured analyzers with updated fieldnames with
+    the required SOLR dynamic field suffix. This is needed because fields from analyzers are indexed as dynamic
+    fields which need to end with a specific suffi that SOLR uses to learn about the type of the field and how it
+    should treat it.
+    """
+    for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
+        if 'descriptors_map' in analyzer_data:
+            descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
+            for _, db_descriptor_key, descriptor_type in descriptors_map:
+                query_filter = query_filter.replace(
+                    '{0}:'.format(db_descriptor_key),'{0}{1}:'.format(
+                        db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
+    return query_filter
+
+
 def search_process_filter(query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
     """Process the filter to make a number of adjustments
 
@@ -231,13 +263,7 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
         str: processed filter query string.
     """
     # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
-    for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
-        if 'descriptors_map' in analyzer_data:
-            descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
-            for _, db_descriptor_key, descriptor_type in descriptors_map:
-                query_filter = query_filter.replace('{0}:'.format(db_descriptor_key),
-                                                    '{0}{1}:'.format(db_descriptor_key,
-                                                                     SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
+    query_filter = add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
 
     # If we only want sounds with packs and there is no pack filter, add one
     if only_sounds_with_pack and not 'pack:' in query_filter:
@@ -806,10 +832,11 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             # If no fields provided, use the default
             query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
         if type(query_fields) == list:
-            query_fields = [FIELD_NAMES_MAP[field] for field in query_fields]
+            query_fields = [add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)) for field in query_fields]
         elif type(query_fields) == dict:
             # Also remove fields with weight <= 0
-            query_fields = [(FIELD_NAMES_MAP[field], weight) for field, weight in query_fields.items() if weight > 0]
+            query_fields = [(add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)), weight) 
+                for field, weight in query_fields.items() if weight > 0]
 
         # Set main query options
         query.set_dismax_query(textual_query, query_fields=query_fields)

@@ -54,7 +54,8 @@ class SearchUtilsTest(TestCase):
             'filter_query_non_facets': '',
             'has_facet_filter': False,
             'parsed_filters': [],
-            'parsing_error': False
+            'parsing_error': False,
+            'raw_weights_parameter': '',
         }
 
         self.assertDictEqual(query_params, expected_default_query_params)
@@ -95,6 +96,7 @@ class SearchUtilsTest(TestCase):
             'has_facet_filter': False,
             'parsed_filters': [[u'duration', ':', '[', u'1', ' TO ', u'10', ']'], [u'is_geotagged', ':', u'1']],
             'parsing_error': False,
+            'raw_weights_parameter': ''
         }
 
         expected_advanced_search_params_dict = {

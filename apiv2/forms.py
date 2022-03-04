@@ -176,6 +176,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&filter=%s' % my_quote(self.cleaned_data['filter'])
         else:
             link += '&filter=%s' % my_quote(filt)
+        if self.cleaned_data['weights'] is not None:
+            link += '&weights=%s' % self.cleaned_data['weights']
         if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_SOUNDS_SORT_DEFAULT_API.split(' ')[0]:
             link += '&sort=%s' % self.original_url_sort_value
         if self.cleaned_data['descriptors_filter']:

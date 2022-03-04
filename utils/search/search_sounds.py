@@ -148,7 +148,8 @@ def search_prepare_parameters(request):
     }
 
     # if query param 'w' is present, override field weights
-    custom_field_weights = parse_weights_parameter(request.GET.get("w", ""))
+    weights_parameter = request.GET.get("w", "")
+    custom_field_weights = parse_weights_parameter(weights_parameter)
     if custom_field_weights is not None:
         field_weights = custom_field_weights
    
@@ -187,7 +188,8 @@ def search_prepare_parameters(request):
         'filter_query_non_facets': filter_query_non_facets,
         'has_facet_filter': has_facet_filter,
         'parsed_filters': parsed_filters,
-        'parsing_error': parsing_error
+        'parsing_error': parsing_error,
+        'raw_weights_parameter': weights_parameter
     }
 
     return query_params, advanced_search_params_dict, extra_vars

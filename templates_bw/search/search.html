@@ -30,6 +30,7 @@
                             <div></div>
                             <input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Start browsing here" class="bw-search__input" autocomplete="off" />
                             <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" />
+                            <input id="weights" type="hidden" name="w" value="{{weights}}" />
                             <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                         </div>
                     </div>
@@ -235,7 +236,7 @@
                         {% if filter_query_split %}
                         <div class="v-spacing-3 v-spacing-top-2">
                             {% for filter in filter_query_split %}
-                                <a class="no-hover btn-inverse bw-search__active-filters-button" href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
+                                <a class="no-hover btn-inverse bw-search__active-filters-button" href=".?g={{grouping}}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
                                     {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
                                 </a>
                             {% endfor %}
@@ -249,13 +250,13 @@
                                             {% display_sound_middle result.sound %}
                                             {% if result.n_more_in_group %}
                                                 <p class="text-grey text-right v-spacing-top-negative-2">
-                                                    {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                    {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
                                                 </p>
                                             {% endif %}
                                         {% else %}
                                             {% display_pack_big result.sound.pack_id %}
                                             <p class="text-grey text-right v-spacing-top-negative-2">
-                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
+                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
                                             </p>
                                         {% endif %}
                                         {% if not forloop.last %}

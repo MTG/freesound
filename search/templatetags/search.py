@@ -29,7 +29,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('search/facet.html', takes_context=True)
-def display_facet(context, flt, facet, type, title=""):
+def display_facet(context, flt, facet, facet_type, title=""):
     facet = annotate_tags([dict(name=f[0], count=f[1]) for f in facet if f[0] != "0"],
                           sort="name", small_size=0.7, large_size=2.0)
 
@@ -56,12 +56,13 @@ def display_facet(context, flt, facet, type, title=""):
 
         element['params'] = u'{0} {1}:"{2}"'.format(filter_query, flt, urlquote_plus(element['name']))
         element['id'] = u'{0}--{1}'.format(flt, urlquote_plus(element['name']))
-        element['add_filter_url'] = u'.?g={0}&only_p={1}&q={2}&f={3}&s={4}'.format(
+        element['add_filter_url'] = u'.?g={0}&only_p={1}&q={2}&f={3}&s={4}&w={5}'.format(
             context['grouping'],
             context['only_sounds_with_pack'],
             context['search_query'],
             element['params'],
-            context['sort']
+            context['sort'] if context['sort'] is not None else '',
+            context['weights'] or ''
         )
         filtered_facet.append(element)
 
@@ -75,7 +76,7 @@ def display_facet(context, flt, facet, type, title=""):
 
     context.update({
         "facet": filtered_facet,
-        "type": type,
+        "type": facet_type,
         "filter": flt,
         "title": title
     })

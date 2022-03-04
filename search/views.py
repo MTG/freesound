@@ -88,7 +88,8 @@ def search(request):
         'current_page': query_params['current_page'],
         'url_query_params_string': url_query_params_string,
         'cluster_id': extra_vars['cluster_id'],
-        'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING
+        'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING,
+        'weights': extra_vars['raw_weights_parameter']
     }
 
     tvars.update(advanced_search_params_dict)

@@ -79,7 +79,7 @@ def search_prepare_parameters(request):
     if only_sounds_with_pack:
         group_by_pack = True
 
-    # Set default values
+    # Set default values for field weights
     id_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID]
     tag_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
     description_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION]
@@ -147,6 +147,12 @@ def search_prepare_parameters(request):
         settings.SEARCH_SOUNDS_FIELD_NAME: original_filename_weight
     }
 
+    # if query param 'w' is present, override field weights
+    weights_parameter = request.GET.get("w", "")
+    custom_field_weights = parse_weights_parameter(weights_parameter)
+    if custom_field_weights is not None:
+        field_weights = custom_field_weights
+   
     # parse query filter string and remove empty value fields
     parsing_error = False
     try:
@@ -182,10 +188,35 @@ def search_prepare_parameters(request):
         'filter_query_non_facets': filter_query_non_facets,
         'has_facet_filter': has_facet_filter,
         'parsed_filters': parsed_filters,
-        'parsing_error': parsing_error
+        'parsing_error': parsing_error,
+        'raw_weights_parameter': weights_parameter
     }
 
     return query_params, advanced_search_params_dict, extra_vars
+
+
+def parse_weights_parameter(weights_param):
+    """param weights can be used to specify custom field weights with this format 
+    w=field_name1:integer_weight1,field_name2:integrer_weight2, eg: w=name:4,tags:1
+    ideally, field names should any of those specified in settings.SEARCH_SOUNDS_FIELD_*
+    so the search engine can implement ways to translate the "web names" to "search engine"
+    names if needed.
+    """
+    parsed_field_weights = {}
+    if weights_param:
+        for part in weights_param.split(','):
+            if ':' in part:
+                try:
+                    field_name = part.split(':')[0]
+                    weight = int(part.split(':')[1])
+                    parsed_field_weights[field_name] = weight
+                except Exception as e:
+                    # If format is wrong, ignore parameter
+                    pass
+    if len(parsed_field_weights):
+        return parsed_field_weights
+    else:
+        return None
 
 
 def split_filter_query(filter_query, parsed_filters, cluster_id):

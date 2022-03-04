@@ -22,6 +22,7 @@
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.search import SearchEngineException, get_search_engine
+from utils.search.search_sounds import parse_weights_parameter
 from similarity.client import SimilarityException
 from exceptions import ServerErrorException, BadRequestException, NotFoundException
 from urllib import unquote
@@ -338,6 +339,7 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             result = search_engine.search_sounds(
                 textual_query=unquote(search_form.cleaned_data['query'] or ""),
                 query_filter=unquote(query_filter or ""),
+                query_fields=parse_weights_parameter(search_form.cleaned_data['weights']),
                 sort=processed_sort,
                 offset=(current_page - 1) * page_size,
                 num_sounds=page_size,

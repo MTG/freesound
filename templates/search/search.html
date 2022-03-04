@@ -25,6 +25,7 @@
 
        <input id="query_input" type="text" name="q" value="{{search_query}}" size="30" />
        <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
+       <input id="weights" type="hidden" name="w" value="{{weights}}" />
        {% comment %}
        <span class="advanced_search_options">Sort results by </span>
        {% endcomment %}
@@ -47,7 +48,7 @@
 <p id="filter_query_display">
 
 {% for filter in filter_query_split %}
-    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}" title="remove this filter">{{ filter.name }}</a>
+    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}" title="remove this filter">{{ filter.name }}</a>
 {% endfor %}
 
 </p>

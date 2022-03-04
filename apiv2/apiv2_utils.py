@@ -50,6 +50,7 @@ from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.search import SearchEngineException, get_search_engine
+from utils.search.search_sounds import parse_weights_parameter
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
@@ -329,6 +330,7 @@ def api_search(
             result = get_search_engine().search_sounds(
                 textual_query=unquote(search_form.cleaned_data['query'] or ""),
                 query_filter=unquote(search_form.cleaned_data['filter'] or ""),
+                query_fields=parse_weights_parameter(search_form.cleaned_data['weights']),
                 sort=processed_sort,
                 offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
                 num_sounds=search_form.cleaned_data['page_size'],

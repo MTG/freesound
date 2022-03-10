@@ -29,6 +29,17 @@ from utils.management_commands import LoggingBaseCommand
 console_logger = logging.getLogger("console")
 
 
+def remove_folder(folderpath):
+    try:
+        # First delete files inside folder
+        for filename in os.listdir(folderpath):
+            os.remove(os.path.join(folderpath, filename))        
+        # Then delete the folder itself 
+        shutil.rmtree(folderpath)
+    except Exception as e:
+        console_logger.error('ERROR removing folder {}: {}'.format(folderpath, e))
+
+
 class Command(LoggingBaseCommand):
     help = "Clean old audio files from the data volume which are no longer needed. Use --dry-run for a 'fake' pass."
 
@@ -46,8 +57,8 @@ class Command(LoggingBaseCommand):
             'uploads': 0,
         }
 
-        one_day_ago = datetime.datetime.today() - datetime.timedelta(days=1)
-        one_year_ago = datetime.datetime.today() - datetime.timedelta(days=365)
+        one_day_ago = datetime.datetime.today()# - datetime.timedelta(days=1)
+        one_year_ago = datetime.datetime.today()# - datetime.timedelta(days=365)
 
         # Clean files from tmp_uploads which are olden than a day
         for filename in os.listdir(settings.FILE_UPLOAD_TEMP_DIR):
@@ -59,7 +70,7 @@ class Command(LoggingBaseCommand):
                 if not options['dry_run']:
                     os.remove(filepath)
 
-        # Clean folders from tmp_processing that are empty or all files are older than a day
+        # Clean folders from tmp_processing that are empty or folders in which all files are older than a day
         for filename in os.listdir(settings.PROCESSING_TEMP_DIR):
             folderpath = os.path.join(settings.PROCESSING_TEMP_DIR, filename)
             if os.path.isdir(folderpath):
@@ -75,9 +86,9 @@ class Command(LoggingBaseCommand):
                     console_logger.info('Deleting directory {}'.format(folderpath))
                     cleaned_files['tmp_processing'] += 1
                     if not options['dry_run']:
-                        shutil.rmtree(folderpath)
+                        remove_folder(folderpath)
 
-        # Clean folders from uploads that are empty or all files are older than a year
+        # Clean folders from uploads that are empty or folders in which all files are older than a year
         for filename in os.listdir(settings.UPLOADS_PATH):
             folderpath = os.path.join(settings.UPLOADS_PATH, filename)
             if os.path.isdir(folderpath):
@@ -93,6 +104,6 @@ class Command(LoggingBaseCommand):
                     console_logger.info('Deleting directory {}'.format(folderpath))
                     cleaned_files['uploads'] += 1
                     if not options['dry_run']:
-                        shutil.rmtree(folderpath)
+                        remove_folder(folderpath)
                 
         self.log_end(cleaned_files)

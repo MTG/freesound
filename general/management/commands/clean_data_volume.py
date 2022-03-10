@@ -57,8 +57,8 @@ class Command(LoggingBaseCommand):
             'uploads': 0,
         }
 
-        one_day_ago = datetime.datetime.today()# - datetime.timedelta(days=1)
-        one_year_ago = datetime.datetime.today()# - datetime.timedelta(days=365)
+        one_day_ago = datetime.datetime.today() - datetime.timedelta(days=1)
+        one_year_ago = datetime.datetime.today() - datetime.timedelta(days=365)
 
         # Clean files from tmp_uploads which are olden than a day
         for filename in os.listdir(settings.FILE_UPLOAD_TEMP_DIR):

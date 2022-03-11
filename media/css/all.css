@@ -19,6 +19,7 @@ address,caption,cite,code,dfn,em,strong,th,var {
 
 fieldset,img {
     border: 0;
+    max-width: 100%;
 }
 
 caption,th {

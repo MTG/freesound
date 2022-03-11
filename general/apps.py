@@ -20,5 +20,6 @@ class GeneralConfig(AppConfig):
         create_directories(settings.UPLOADS_PATH)
         create_directories(settings.CSV_PATH)
         create_directories(settings.ANALYSIS_PATH)
+        create_directories(settings.ANALYSIS_NEW_PATH)
         create_directories(settings.FILE_UPLOAD_TEMP_DIR)
         create_directories(settings.PROCESSING_TEMP_DIR)

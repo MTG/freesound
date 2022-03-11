@@ -853,7 +853,7 @@ UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 ANALYSIS_NEW_PATH = os.path.join(DATA_PATH, "analysis_new/")
-FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
+FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")  # This is a Django setting https://docs.djangoproject.com/en/4.0/ref/settings/#file-upload-temp-dir
 PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)

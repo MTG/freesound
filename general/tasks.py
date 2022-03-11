@@ -43,6 +43,7 @@ BULK_DESCRIBE_TASK_NAME = "bulk_describe"
 PROCESS_ANALYSIS_RESULTS_TASK_NAME = "process_analysis_results"
 SOUND_PROCESSING_TASK_NAME = "process_sound"
 SOUND_ANALYSIS_OLD_TASK_NAME = "analyze_sound_old"
+MOVE_UPLOADED_SOUND_TO_UPLOADS_DIR_TASK_NAME = "move_uploaded_sound"
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -191,6 +192,12 @@ def bulk_describe(bulk_upload_progress_object_id):
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
 
+
+@task(name=MOVE_UPLOADED_SOUND_TO_UPLOADS_DIR_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+def move_uploaded_sounds(user_id, upload_tmp_filename):
+    # TODO: copy the files to the /uploads desctination
+    # TODO: remove the file from tmp folder
+    
 
 @task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def process_analysis_results(sound_id, analyzer, status, analysis_time, exception=None):

@@ -1194,7 +1194,7 @@ def handle_uploaded_file(user_id, f):
     dest_path = os.path.join(dest_directory, os.path.basename(f.name))
     upload_logger.info("handling file upload and saving to {}".format(dest_path))
     starttime = time.time()
-    if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYTING and isinstance(f, TemporaryUploadedFile):
+    if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
         # TemporaryUploadedFile which has already been streamed in disk, so we only need to move the already existing
         # file instead of copying it

@@ -26,6 +26,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 import uuid
 
 from django.conf import settings
@@ -40,6 +41,7 @@ from django.contrib.auth.views import LoginView, PasswordResetCompleteView, Pass
     PasswordChangeView, PasswordChangeDoneView
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import transaction
 from django.db.models import Count, Sum, Q
 from django.db.models.expressions import Value
@@ -1186,21 +1188,35 @@ def account(request, username):
 
 
 def handle_uploaded_file(user_id, f):
-    # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
-    directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
-    upload_logger.info("\thandling file upload")
-    create_directories(directory, exist_ok=True)
-    path = os.path.join(directory, os.path.basename(f.name))
-    try:
-        upload_logger.info("\topening file: %s", path)
-        destination = open(path.encode("utf-8"), 'wb')
-        for chunk in f.chunks():
-            destination.write(chunk)
-        upload_logger.info("file upload done")
-        copy_uploaded_file_to_mirror_locations(path)
-    except Exception as e:
-        upload_logger.warning("failed writing file error: %s", str(e))
-        return False
+    # Move or copy the uploaded file from the temporary folder created by Django to the /uploads path
+    dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
+    create_directories(dest_directory, exist_ok=True)
+    dest_path = os.path.join(dest_directory, os.path.basename(f.name))
+    upload_logger.info("handling file upload and saving to {}".format(dest_path))
+    starttime = time.time()
+    if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYTING and isinstance(f, TemporaryUploadedFile):
+        # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
+        # TemporaryUploadedFile which has already been streamed in disk, so we only need to move the already existing
+        # file instead of copying it
+        try:
+            os.rename(f.temporary_file_path(), dest_path)
+        except Exception as e:
+            upload_logger.warning("failed moving TemporaryUploadedFile error: %s", str(e))
+            return False
+    else:
+        # Small files will be of type InMemoryUploadedFile instead of TemporaryUploadedFile and will be initially
+        # stored in memory, so we need to copy them to the destination
+        try:
+            destination = open(dest_path.encode("utf-8"), 'wb')
+            for chunk in f.chunks():
+                destination.write(chunk)
+        except Exception as e:
+            upload_logger.warning("failed writing uploaded file error: %s", str(e))
+            return False
+
+    # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
+    copy_uploaded_file_to_mirror_locations(dest_path)
+    upload_logger.info("handling file upload done, took {:.2f} seconds".format(time.time() - starttime))
     return True
 
 

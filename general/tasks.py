@@ -22,6 +22,7 @@ import json
 import logging
 import time
 
+import os
 from celery.decorators import task
 from django.apps import apps
 from django.conf import settings
@@ -32,7 +33,8 @@ from tickets.models import Ticket
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
     FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm
 from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
-
+from utils.filesystem import create_directories
+from utils.mirror_files import copy_uploaded_file_to_mirror_locations
 
 workers_logger = logging.getLogger("workers")
 
@@ -194,10 +196,17 @@ def bulk_describe(bulk_upload_progress_object_id):
 
 
 @task(name=MOVE_UPLOADED_SOUND_TO_UPLOADS_DIR_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def move_uploaded_sounds(user_id, upload_tmp_filename):
-    # TODO: copy the files to the /uploads desctination
-    # TODO: remove the file from tmp folder
-    
+def move_uploaded_sounds(user_id, upload_tmp_filepath):
+    dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
+    create_directories(dest_directory, exist_ok=True)
+    dest_path = os.path.join(dest_directory, os.path.basename(upload_tmp_filepath))
+    try:
+        os.rename(upload_tmp_filepath, dest_path)
+        copy_uploaded_file_to_mirror_locations(dest_path)
+    except Exception as e:
+        # Log exception
+        pass
+
 
 @task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def process_analysis_results(sound_id, analyzer, status, analysis_time, exception=None):

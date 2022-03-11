@@ -1186,22 +1186,29 @@ def account(request, username):
 
 
 def handle_uploaded_file(user_id, f):
-    # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
-    directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
-    upload_logger.info("\thandling file upload")
-    create_directories(directory, exist_ok=True)
-    path = os.path.join(directory, os.path.basename(f.name))
-    try:
-        upload_logger.info("\topening file: %s", path)
-        destination = open(path.encode("utf-8"), 'wb')
-        for chunk in f.chunks():
-            destination.write(chunk)
-        upload_logger.info("file upload done")
-        copy_uploaded_file_to_mirror_locations(path)
-    except Exception as e:
-        upload_logger.warning("failed writing file error: %s", str(e))
-        return False
-    return True
+    if isinstance(f, TemporaryUploadedFile):
+        tmp_file_rename = os.path.join(os.path.split(f.temporary_file_path())[0], os.path.basename(f.name))
+        os.rename(f.temporary_file_path(), tmp_file_rename)
+        move_uploaded_sounds.delay(user_id, tmp_file_rename)
+        return True
+    else:
+        # InMemoryUploadedFile, write directly to destination as we used to do before these changes
+        directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
+        upload_logger.info("\thandling file upload")
+        create_directories(directory, exist_ok=True)
+        path = os.path.join(directory, os.path.basename(f.name))
+        try:
+            upload_logger.info("\topening file: %s", path)
+            destination = open(path.encode("utf-8"), 'wb')
+            for chunk in f.chunks():
+                destination.write(chunk)
+            upload_logger.info("file upload done")
+            copy_uploaded_file_to_mirror_locations(path)
+        except Exception as e:
+            upload_logger.warning("failed writing file error: %s", str(e))
+            return False
+        return True
+
 
 
 @csrf_exempt

@@ -160,9 +160,10 @@ USE_I18N = False
 REDIS_HOST = 'redis'
 REDIS_PORT = 6379
 API_MONITORING_REDIS_STORE_ID = 0
-CACHE_REDIS_STORE_ID = 1
+CLUSTERING_CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
 CELERY_BROKER_REDIS_STORE_ID = 3
+CDN_MAP_STORE_ID = 4
 
 CACHES = {
     'default': {
@@ -175,9 +176,16 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    'cdn_map': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CDN_MAP_STORE_ID),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
     'clustering': {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CACHE_REDIS_STORE_ID),
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CLUSTERING_CACHE_REDIS_STORE_ID),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -385,6 +393,10 @@ BULK_UPLOAD_MIN_SOUNDS = 40
 
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
+
+# Use external CDN for downloading sounds if sounds exist in the CDN
+USE_CDN = False
+CDN_TEMPLATE_URL = 'https://cdn.freesound.org/sounds/{}/{}?filename={}'
 
 # Followers notifications
 MAX_EMAILS_PER_COMMAND_RUN = 5000

@@ -30,7 +30,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 from django.db.models.functions import Greatest
@@ -70,6 +70,7 @@ from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
 
 web_logger = logging.getLogger('web')
+cache_cdn_map = caches["cdn_map"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -364,6 +365,13 @@ def sound_download(request, username, sound_id):
             Download.objects.create(user=request.user, sound=sound, license_id=sound.license_id)
             sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
+
+    if settings.USE_CDN:
+        cdn_filename = cache_cdn_map.get(str(sound_id), None)
+        if cdn_filename is not None:
+            # If USE_CDN option is on and we find an URL for that sound in the CDN, then we redirect to that one
+            cdn_url = settings.CDN_TEMPLATE_URL.format(int(int(sound_id)/1000), cdn_filename, sound.friendly_filename())
+            return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
 

@@ -548,6 +548,7 @@ def edit(request):
         'image_form': image_form,
         'has_granted_permissions': has_granted_permissions,
         'has_old_avatar': has_old_avatar,
+        'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED,
         'activePage': 'profile',  # For BW account settings sidebar
     }
     return render(request, 'accounts/edit.html', tvars)
@@ -669,7 +670,13 @@ def describe(request):
     else:
         csv_form = BulkDescribeForm(prefix='bulk')
         form = FileChoiceForm(files, prefix='sound')
-    tvars = {'form': form, 'file_structure': file_structure, 'n_files': len(files), 'csv_form': csv_form}
+    tvars = {
+        'form': form,
+        'file_structure': file_structure,
+        'n_files': len(files),
+        'csv_form': csv_form,
+        'describe_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
+    }
     return render(request, 'accounts/describe.html', tvars)
 
 
@@ -1283,7 +1290,8 @@ def upload(request, no_flash=False):
         'errors': errors,
         'no_flash': no_flash,
         'max_file_size': settings.UPLOAD_MAX_FILE_SIZE_COMBINED,
-        'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024)))
+        'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024))),
+        'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
     }
     return render(request, 'accounts/upload.html', tvars)
 

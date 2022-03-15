@@ -26,13 +26,20 @@
 <div id="sidebar">
     <div id="edit_avatar" class="content_box">
         <h3>Edit your avatar</h3>
-        <form method="post" action="." enctype="multipart/form-data">{% csrf_token %}
-            {% if profile.has_avatar %}
-            <p>Current:<br/><img src="{{profile.locations.avatar.XL.url}}" /></p>
-            {% endif %}
-            {{image_form.as_p}}
-            <input type="submit" value="Save avatar" />
-        </form>
+        {% if uploads_enabled %}
+            <form method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+                {% if profile.has_avatar %}
+                <p>Current:<br/><img src="{{profile.locations.avatar.XL.url}}" /></p>
+                {% endif %}
+                {{image_form.as_p}}
+                <input type="submit" value="Save avatar" />
+            </form>
+        {% else %}
+            <ul class="messages">
+                <li>We're deeply sorry but uploading avatars is <b>temporarily disabled</b>.
+                We'll enable it again as soon as possible.</li>
+            </ul>
+        {% endif %}
     </div><!-- #edit_avatar -->
 
     {% if has_granted_permissions %}

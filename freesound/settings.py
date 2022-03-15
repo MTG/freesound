@@ -384,6 +384,9 @@ MIN_NUMBER_RATINGS = 3
 # Buffer size for CRC computation
 CRC_BUFFER_SIZE = 4096
 
+# Enable/disable uploading files (sounds, avatars, CSV)
+UPLOADS_ENABLED = True
+
 # Maximum combined file size for uploading files. This is set in nginx configuration
 UPLOAD_MAX_FILE_SIZE_COMBINED = 1024 * 1024 * 1024  # 1 GB
 MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING = True

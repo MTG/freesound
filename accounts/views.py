@@ -1191,7 +1191,7 @@ def handle_uploaded_file(user_id, f):
     # Move or copy the uploaded file from the temporary folder created by Django to the /uploads path
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     create_directories(dest_directory, exist_ok=True)
-    dest_path = os.path.join(dest_directory, os.path.basename(f.name))
+    dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
     upload_logger.info("handling file upload and saving to {}".format(dest_path))
     starttime = time.time()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
@@ -1208,7 +1208,7 @@ def handle_uploaded_file(user_id, f):
         # Small files will be of type InMemoryUploadedFile instead of TemporaryUploadedFile and will be initially
         # stored in memory, so we need to copy them to the destination
         try:
-            destination = open(dest_path.encode("utf-8"), 'wb')
+            destination = open(dest_path, 'wb')
             for chunk in f.chunks():
                 destination.write(chunk)
         except Exception as e:

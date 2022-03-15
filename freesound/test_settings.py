@@ -27,6 +27,9 @@ CACHES = {
     },
     'clustering': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'cdn_map': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 

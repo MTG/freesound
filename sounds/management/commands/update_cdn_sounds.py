@@ -93,9 +93,7 @@ class Command(LoggingBaseCommand):
                         console_logger.info('Adding sound to the CDN [{}/{}] - {}'.format(count + 1, total, sound_id))
 
                         # Check if sound already exists in the expected remote location    
-                        result = c.run('ls {}'.format(dst_sound_path), hide=True)
-                        sound_exists = 'No such file or directory' not in result.stdout
-                        symlink_exists = None
+                        sound_exists = c.run('ls {}'.format(dst_sound_path), hide=True, warn=True).exited == 0
                         if not sound_exists:
                             # Copy file to remote, make intermediate folders if needed
                             c.run('mkdir -p {}'.format(os.path.dirname(dst_sound_path)))

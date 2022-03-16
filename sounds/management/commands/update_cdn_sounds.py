@@ -56,6 +56,7 @@ class Command(LoggingBaseCommand):
         delete_already_existing = options['d']       
         limit = options['limit'] 
         num_added = 0
+        num_failed = 0
 
         if delete_already_existing:
             cache_cdn_map.clear()
@@ -104,18 +105,29 @@ class Command(LoggingBaseCommand):
                             # NOTE: for some reason c.put has permission issues and can't put files as fsweb (fsweb can't write to sounds
                             # folder in /home/fsweb). We need to use scp as root to be able to copy files and then use sudo mv from fsweb user.
                             # If we fix fsweb permissions in CDN, then we can simply use c.put(src_sound_path, dst_sound_path)
-                        
-                        # Make symlink (remove previously existing symlinks for that sound if any already exists)
-                        c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  '{}-*'.format(sound_id))), hide=True, warn=True)
-                        random_uuid = str(uuid.uuid4())
-                        symlink_name = '{}-{}'.format(sound_id, random_uuid)
-                        dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  symlink_name)
-                        c.run('mkdir -p {}'.format(os.path.dirname(dst_symlink_path)))
-                        c.run('ln -s {} {}'.format(dst_sound_path, dst_symlink_path))
-                        
-                        # Fill cache
-                        cache_cdn_map.set(str(sound_id), symlink_name, timeout=None)  # No expiration
-                        num_added += 1
 
-        console_logger.info('Done! Added {} items to cache'.format(num_added))
-        self.log_end({'added_to_cache': num_added})
+                        # Make symlink (remove previously existing symlinks for that sound if any already exists)
+                        # Before making the symlink, check again that sound exists, otherwise don't make it as there were problems copying sound
+                        sound_exists = c.run('ls {}'.format(dst_sound_path), hide=True, warn=True).exited == 0
+                        if sound_exists:
+                            c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  '{}-*'.format(sound_id))), hide=True, warn=True)
+                            random_uuid = str(uuid.uuid4())
+                            symlink_name = '{}-{}'.format(sound_id, random_uuid)
+                            dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  symlink_name)
+                            c.run('mkdir -p {}'.format(os.path.dirname(dst_symlink_path)))
+                            c.run('ln -s {} {}'.format(dst_sound_path, dst_symlink_path))
+
+                            # Fill cache
+                            # Before filling the cache, make sure symlink exists (has been cretated successfully), otherwise do not fill the cache
+                            # as there were problems creating the symlink
+                            symlink_exists = c.run('ls {}'.format(dst_symlink_path), hide=True, warn=True).exited == 0
+                            if symlink_exists:
+                                cache_cdn_map.set(str(sound_id), symlink_name, timeout=None)  # No expiration
+                                num_added += 1
+                            else:
+                                num_failed += 1
+                        else:
+                            num_failed += 1
+
+        console_logger.info('Done! Added {} items to cache ({} failed)'.format(num_added, num_failed))
+        self.log_end({'added_to_cache': num_added, 'failed_adding_to_cache': num_failed})

@@ -32,8 +32,8 @@ from utils.management_commands import LoggingBaseCommand
 console_logger = logging.getLogger('console')
 cache_cdn_map = caches["cdn_map"]
 cdn_host = 'fsweb@cdn.freesound.org'
-cdn_sounds_dir = '/home/freesound/sounds'
-cdn_symlinks_dir = '/home/freesound/symlinks'
+cdn_sounds_dir = '/home/fsweb/sounds'
+cdn_symlinks_dir = '/home/fsweb/symlinks'
 
 
 class Command(LoggingBaseCommand):
@@ -90,27 +90,28 @@ class Command(LoggingBaseCommand):
                         src_sound_path = sound.locations('path')
                         folder_id = str(sound.id//1000)
                         dst_sound_path = os.path.join(cdn_sounds_dir, folder_id,  os.path.basename(src_sound_path))
+                        console_logger.info('Adding sound to the CDN [{}/{}] - {}'.format(count + 1, total, sound_id))
 
                         # Check if sound already exists in the expected remote location    
-                        result = c.run('file {}'.format(dst_sound_path), hide=True)
-                        if 'No such file or directory' in result.stdout:
-                            console_logger.info('Adding sound to the CDN [{}/{}] - {}'.format(count + 1, total, sound_id))
-                            
+                        result = c.run('ls {}'.format(dst_sound_path), hide=True)
+                        sound_exists = 'No such file or directory' not in result.stdout
+                        symlink_exists = None
+                        if not sound_exists:
                             # Copy file to remote, make intermediate folders if needed
                             c.run('mkdir -p {}'.format(os.path.dirname(dst_sound_path)))
                             c.put(src_sound_path, dst_sound_path)
                         
-                            # Make symlink         
-                            random_uuid = str(uuid.uuid4())   
-                            dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  random_uuid)
-                            c.run('mkdir -p {}'.format(os.path.dirname(dst_symlink_path)))
-                            c.run('ln -s {} {}'.format(dst_sound_path, dst_symlink_path))
+                        # Make symlink (remove previously existing symlinks for that sound if any already exists)
+                        c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  '{}-*'.format(sound_id))), hide=True)
+                        random_uuid = str(uuid.uuid4())
+                        symlink_name = '{}-{}'.format(sound_id, random_uuid)
+                        dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  symlink_name)
+                        c.run('mkdir -p {}'.format(os.path.dirname(dst_symlink_path)))
+                        c.run('ln -s {} {}'.format(dst_sound_path, dst_symlink_path))
                         
-                            # Fill cache
-                            cache_cdn_map.set(str(sound_id), random_uuid, timeout=None)  # No expiration
-                            num_added += 1
-                        else:
-                            console_logger.info('Adding sound to the CDN [{}/{}] - {} - SKIPPED'.format(count + 1, total, sound_id))
+                        # Fill cache
+                        cache_cdn_map.set(str(sound_id), symlink_name, timeout=None)  # No expiration
+                        num_added += 1
 
         console_logger.info('Done! Added {} items to cache'.format(num_added))
         self.log_end({'added_to_cache': num_added})

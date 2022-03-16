@@ -99,8 +99,8 @@ class Command(LoggingBaseCommand):
                             # Copy file to remote, make intermediate folders if needed
                             c.run('mkdir -p {}'.format(os.path.dirname(dst_sound_path)))
                             tmp_dst_sound_path = os.path.join(tmp_dest_sound_dir, os.path.basename(src_sound_path))
-                            os.system('scp -o StrictHostKeyChecking=no {} root@cdn.freesound.org:{}'.format(src_sound_path, tmp_dst_sound_path))
-                            os.system('ssh serverb sudo mv {} {}'.format(tmp_dst_sound_path, dst_sound_path))
+                            os.system('scp -o StrictHostKeyChecking=no {} {}:{}'.format(src_sound_path, cdn_host, tmp_dst_sound_path))
+                            os.system('ssh {} sudo mv {} {}'.format(cdn_host, tmp_dst_sound_path, dst_sound_path))
                             # NOTE: for some reason c.put has permission issues and can't put files as fsweb (fsweb can't write to sounds
                             # folder in /home/fsweb). We need to use scp as root to be able to copy files and then use sudo mv from fsweb user.
                             # If we fix fsweb permissions in CDN, then we can simply use c.put(src_sound_path, dst_sound_path)

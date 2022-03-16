@@ -103,7 +103,7 @@ class Command(LoggingBaseCommand):
                             #c.put(src_sound_path, dst_sound_path)
                         
                         # Make symlink (remove previously existing symlinks for that sound if any already exists)
-                        c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  '{}-*'.format(sound_id))), hide=True)
+                        c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  '{}-*'.format(sound_id))), hide=True, warn=True)
                         random_uuid = str(uuid.uuid4())
                         symlink_name = '{}-{}'.format(sound_id, random_uuid)
                         dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  symlink_name)

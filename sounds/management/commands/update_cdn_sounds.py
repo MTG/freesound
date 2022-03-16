@@ -34,6 +34,7 @@ cache_cdn_map = caches["cdn_map"]
 cdn_host = 'fsweb@cdn.freesound.org'
 cdn_sounds_dir = '/home/fsweb/sounds'
 cdn_symlinks_dir = '/home/fsweb/symlinks'
+tmp_dest_sound_dir =  '/home/fsweb/tmp/'
 
 
 class Command(LoggingBaseCommand):
@@ -97,10 +98,12 @@ class Command(LoggingBaseCommand):
                         if not sound_exists:
                             # Copy file to remote, make intermediate folders if needed
                             c.run('mkdir -p {}'.format(os.path.dirname(dst_sound_path)))
-                            os.system('scp -o StrictHostKeyChecking=no {} root@cdn.freesound.org:{}'.format(src_sound_path, dst_sound_path))
-                            # NOTE: for some reason c.put below has permission issues and can't put files as fsweb. We need to use scp as root to be able to copy files
-                            # That means that the ssh public key for copying files also needs to be added to root user in the CDN
-                            #c.put(src_sound_path, dst_sound_path)
+                            tmp_dst_sound_path = os.path.join(tmp_dest_sound_dir, os.path.basename(src_sound_path))
+                            os.system('scp -o StrictHostKeyChecking=no {} root@cdn.freesound.org:{}'.format(src_sound_path, tmp_dst_sound_path))
+                            os.system('ssh serverb sudo mv {} {}'.format(tmp_dst_sound_path, dst_sound_path))
+                            # NOTE: for some reason c.put has permission issues and can't put files as fsweb (fsweb can't write to sounds
+                            # folder in /home/fsweb). We need to use scp as root to be able to copy files and then use sudo mv from fsweb user.
+                            # If we fix fsweb permissions in CDN, then we can simply use c.put(src_sound_path, dst_sound_path)
                         
                         # Make symlink (remove previously existing symlinks for that sound if any already exists)
                         c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  '{}-*'.format(sound_id))), hide=True, warn=True)

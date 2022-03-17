@@ -18,13 +18,27 @@
 #     See AUTHORS file.
 #
 
+import os
+
 from django.http import HttpResponse,Http404
 from django.conf import settings
 from wsgiref.util import FileWrapper
 
-import os
 
-def sendfile(path, attachment_name, secret_url = None):
+def prepare_sendfile_arguments_for_sound_download(sound):
+    sound_path = sound.locations("path")
+    sound_friendly_filename = sound.friendly_filename()
+    sound_sendfile_url = sound.locations("sendfile_url")
+
+    if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+        sound_path = sound.locations("preview.LQ.mp3.path")
+        sound_friendly_filename = '{0}.{1}'.format(sound_friendly_filename[:sound_friendly_filename.rfind('.')], 'mp3')
+        sound_sendfile_url = '{0}.{1}'.format(sound_sendfile_url[:sound_sendfile_url.rfind('.')], 'mp3')
+
+    return sound_path, sound_friendly_filename, sound_sendfile_url
+
+
+def sendfile(path, attachment_name, secret_url=None):
     if not os.path.exists(path):
         raise Http404
     
@@ -35,7 +49,7 @@ def sendfile(path, attachment_name, secret_url = None):
         response = HttpResponse()
         response['X-Accel-Redirect'] = secret_url
 
-    response['Content-Type']="application/octet-stream"
+    response['Content-Type'] = "application/octet-stream"
     response['Content-Disposition'] = "attachment; filename=\"%s\"" % attachment_name
     
     return response

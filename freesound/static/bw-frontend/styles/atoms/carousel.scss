@@ -1,0 +1,92 @@
+.bw-carousel-container {
+  position: relative;
+
+  &:hover > .bw-carousel-icon {
+    opacity: 1;
+  }
+}
+
+.bw-carousel-wrapper {
+  overflow: hidden;
+}
+
+.bw-carousel {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+}
+
+.bw-carousel-icon {
+  position: absolute;
+  top: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  background: $white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.carousel-right {
+  transform: translateX(50%) translateY(-50%);
+  right: 0px;
+}
+
+.carousel-left {
+  transform: rotate(-180deg) translateY(50%) translateX(50%);
+  left: 0;
+}
+
+.carousel-nav-hidden {
+  display: none;
+}
+
+.carousel__dot-icons {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  font-size: 0.5em;
+  opacity: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 5%;
+
+  .bw-carousel-container:hover > & {
+    opacity: 1;
+  }
+
+  &.dots-distance-0 {
+    bottom: -1px;
+  }
+
+  &.dots-distance-1 {
+    bottom: -10px;
+  }
+
+  &.dots-distance-2 {
+    bottom: -20px;
+  }
+
+  &.dots-distance-3 {
+    bottom: -30px;
+  }
+
+  &.dots-distance-4 {
+    bottom: -40px;
+  }
+
+  > * {
+    margin-left: 4px;
+    margin-right: 4px;
+    opacity: 0.2;
+    cursor: pointer;
+
+    &:hover,
+    &.active-point {
+      opacity: 1;
+    }
+  }
+}

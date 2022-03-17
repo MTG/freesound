@@ -24,17 +24,17 @@ import pprint
 from collections import defaultdict
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
 from django.db.models import Count, Avg, Value
 from django.db.models.functions import Coalesce
 
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, PackDownload
+from sounds.models import Sound, Pack
+from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = "This command checks if 'count' properties of Profiles, Sounds and Packs and in sync with the actual " \
            "number of existing objects (e.g. if pack.num_sounds equals pack.sounds.all().count(). If the number" \
            "does not match, it updates the corresponding object (unless the option -n is provided)"
@@ -55,6 +55,7 @@ class Command(BaseCommand):
                  '(to save time).')
 
     def handle(self,  *args, **options):
+        self.log_start()
 
         def report_progress(message, total, count):
             if count % 10000 == 0:
@@ -179,11 +180,19 @@ class Command(BaseCommand):
             user_profile = user.profile
             real_num_posts = user.real_num_posts
             if real_num_posts != user_profile.num_posts:
-                mismatches_report['User.num_posts'] += 1
-                mismatches_object_ids['User.num_posts'].append(user.id)
-                user_profile.num_posts = real_num_posts
-                if not options['no-changes']:
-                    user_profile.save()
+                # Only moderated posts shoud count in profile.num_posts, therore the fact that we reach this part of the
+                # code does not mean profile.num_posts is wrong because the difference between real_num_posts and
+                # profile.num_posts could be due to unmoderated posts being wrongly counted in the annotated query
+                # Ideally we should filter out unmoderated post in the annotated Count(), but it is easier to do the
+                # check here as this is a case that will rarely happen and filtering in an annotation is complex without
+                # writting custom SQL.
+                real_num_moderated_posts = user.posts.exclude(moderation_state="NM").count()
+                if real_num_moderated_posts != user_profile.num_posts:
+                    mismatches_report['User.num_posts'] += 1
+                    mismatches_object_ids['User.num_posts'].append(user.id)
+                    user_profile.num_posts = real_num_moderated_posts
+                    if not options['no-changes']:
+                        user_profile.save()
             report_progress('Checking number of posts in %i users... %.2f%%', total, count)
 
         if not options['skip-downloads']:
@@ -229,3 +238,5 @@ class Command(BaseCommand):
         console_logger.info("Number of mismatched counts: ")
         console_logger.info('\n' + pprint.pformat(mismatches_report))
         console_logger.info('\n' + pprint.pformat(mismatches_object_ids))
+
+        self.log_end(mismatches_report)

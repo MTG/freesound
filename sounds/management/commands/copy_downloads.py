@@ -18,15 +18,16 @@
 #     See AUTHORS file.
 #
 
-import time
 import datetime
 import logging
+import time
+
 from django.core.management.base import BaseCommand
-from sounds.models import Download, PackDownload, PackDownloadSound
 from django.db import transaction
 
+from sounds.models import Download, PackDownload, PackDownloadSound
 
-logger = logging.getLogger("console")
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
@@ -54,7 +55,7 @@ class Command(BaseCommand):
 
         # This command will copy all the Downloads to the new models, it can be executed multiple
         # times and it will continue from the last period.
-        logger.info('Copy Downloads to new PackDownload')
+        console_logger.info('Copy Downloads to new PackDownload')
 
         sleep_time = float(options['sleep'])
         td = datetime.timedelta(days=1)
@@ -99,8 +100,8 @@ class Command(BaseCommand):
                         pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
                     PackDownloadSound.objects.bulk_create(pds, batch_size=1000)
 
-            logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(),
-                                                                            start_date.strftime("%Y-%m-%d")))
+            console_logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(),
+                                                                                    start_date.strftime("%Y-%m-%d")))
             start_date += td
             time.sleep(sleep_time)
-        logger.info('Copy Downloads to new PackDownload finished')
+        console_logger.info('Copy Downloads to new PackDownload finished')

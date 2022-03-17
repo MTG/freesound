@@ -1,0 +1,109 @@
+.text-red {
+  color: $red;
+}
+
+.text-red-important {
+  color: $red!important;
+}
+
+.text-grey {
+  color: $navy-grey;
+}
+
+.text-light-grey {
+  color: $navy-light-grey;
+}
+
+.text-black {
+  color: $black;
+}
+
+.text-white {
+  color: $white;
+}
+
+.text-yellow-rating {
+  color: $yellow-rating;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+@each $breakpoint in map-keys($grid-breakpoints) {
+  @include media-breakpoint-up($breakpoint) {
+    $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+
+    .text#{$infix}-left   { text-align: left !important; }
+    .text#{$infix}-right  { text-align: right !important; }
+    .text#{$infix}-center { text-align: center !important; }
+  }
+}
+
+.text-opacity-050 {
+  opacity: 0.5;
+}
+
+.caps {
+  text-transform: uppercase;
+}
+
+.font-weight-normal {
+  font-weight: normal;
+}
+
+.font-weight-semi-bold {
+  font-weight: 600;
+}
+
+.font-weight-bold {
+  font-weight: bold;
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-text-wrap {
+  white-space: nowrap;
+}
+
+.no-letter-spacing {
+  letter-spacing: 0;
+}
+
+@for $i from 14 through 50 {
+  .text-#{$i} {
+    font-size: #{$i}px;
+  }
+}
+
+@for $i from 14 through 50 {
+  .line-height-#{$i} {
+    line-height: #{$i}px;
+  }
+}
+
+@for $i from 1 through 8 {
+  .line-height-fs-#{$i} {
+    line-height: #{$i};
+  }
+}
+
+@for $i from 0 through 10 {
+  $value1: $i * 10 + 100;
+  $value2: ($i * 10 + 100) / 100;
+  .line-height-percentage-#{$value1} {
+    line-height: #{$value2};
+  }
+}

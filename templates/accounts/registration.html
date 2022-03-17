@@ -3,11 +3,11 @@
 {% block title %}registration{% endblock %}
 
 {% block section_content %}
-<style> label[for=id_accepted_tos] {display: inline} #username_check, #check_success, #spinner { display:none; color: #bd2d33; font-style: italic; } #check_success {color:green;}</style>
+<style> label:not([for=id_accepted_tos]) {display: block} #username_check, #check_success, #spinner { display:none; color: #bd2d33; font-style: italic; } #check_success {color:green;}</style>
 <script type="text/javascript">
     $(function () {
         $("#id_username").focus()
-            $('#id_username').parent().append('<div id="spinner"> Checking...<img src="{{ media_url }}images/indicator.gif" /></div><div id="username_check">Sorry, this username is already being used by someone else.</div><div id="check_success">Username is available</div>');
+            $('#id_username').parent().append('<div id="spinner"> Checking...<img src="{{ media_url }}images/indicator.gif" /></div><div id="username_check">Sorry, this username is not valid or is already being used by someone else.</div><div id="check_success">Username is available</div>');
             $("#id_username").focusout(function(){
             if ($("#id_username").val()) {
                 $('#spinner').show();
@@ -56,6 +56,11 @@
         <p>
             {{ form.email1.label_tag }}{{ form.email1 }}
             <span class="helptext">{{ form.email1.help_text }}</span>
+        </p>
+        {{ form.email2.errors }}
+        <p>
+            {{ form.email2.label_tag }}{{ form.email2 }}
+            <span class="helptext">{{ form.email2.help_text }}</span>
         </p>
         {{ form.password1.errors }}
         <p>

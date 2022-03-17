@@ -10,4 +10,6 @@ Good news! your sound {{sound.original_filename}} has been selected as the rando
 To see the random sound of the day, please visit:
 <https://freesound.org>
 
+{% include "email_opt_out_text.txt" %}
+
 {% endblock %}

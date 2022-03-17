@@ -22,30 +22,29 @@
 
 
 import datetime
+import json
 import logging
+import os
 from collections import OrderedDict
 from urllib import quote
 
 import jwt
-import os
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
+from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, throttle_classes, permission_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from rest_framework import status
 
 import utils.sound_upload
-from accounts.forms import RegistrationForm
-from accounts.views import handle_uploaded_file, send_activation
+from accounts.views import handle_uploaded_file
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
     UnauthorizedException, ServerErrorException, OtherException, APIException
@@ -60,18 +59,18 @@ from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequi
     OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, \
     ApiSearchPaginator, get_sounds_descriptors, prepend_base, get_formatted_examples_for_view
 from bookmarks.models import Bookmark, BookmarkCategory
+from comments.models import Comment
 from geotags.models import GeoTag
+from ratings.models import SoundRating
 from similarity.client import Similarity
 from sounds.models import Sound, Pack, License
-from comments.models import Comment
-from ratings.models import SoundRating
-from utils.cache import invalidate_template_cache
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.nginxsendfile import sendfile
+from utils.frontend_handling import render, using_beastwhoosh
+from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
-logger = logging.getLogger("api")
+api_logger = logging.getLogger("api")
 resources_doc_filename = 'resources_apiv2.html'
 
 
@@ -93,14 +92,14 @@ class TextSearch(GenericAPIView):
                   get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('search'))
+        api_logger.info(self.log_message('search'))
 
         # Validate search form and check page 0
         search_form = SoundTextSearchFormAPI(request.query_params)
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
         if search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None:
-            raise BadRequestException(msg='At lesast one request parameter from Text Search should be included '
+            raise BadRequestException(msg='At least one request parameter from Text Search should be included '
                                           'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
@@ -144,17 +143,18 @@ class TextSearch(GenericAPIView):
                 sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
+                        pack_id =  more_from_pack_data[sid][1][:more_from_pack_data[sid][1].find("_")]
+                        pack_name = more_from_pack_data[sid][1][more_from_pack_data[sid][1].find("_")+1:]
                         sound['more_from_same_pack'] = search_form.construct_link(
                             reverse('apiv2-sound-text-search'),
                             page=1,
-                            filt='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]),
-                                                            more_from_pack_data[sid][2]),
+                            filt='grouping_pack:"%i_%s"' % (int(pack_id), pack_name),
                             group_by_pack='0')
                         sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
             except KeyError:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.
-                # In that case sounds are are set to null
+                # In that case sounds are set to null
                 sounds.append(None)
         response_data['results'] = sounds
 
@@ -177,7 +177,7 @@ class ContentSearch(GenericAPIView):
     analysis_file = None
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('content_search'))
+        api_logger.info(self.log_message('content_search'))
 
         # Validate search form and check page 0
         search_form = SoundContentSearchFormAPI(request.query_params)
@@ -186,7 +186,7 @@ class ContentSearch(GenericAPIView):
         if not search_form.cleaned_data['target'] and \
                 not search_form.cleaned_data['descriptors_filter'] and \
                 not self.analysis_file:
-            raise BadRequestException(msg='At lesast one parameter from Content Search should be included '
+            raise BadRequestException(msg='At least one parameter from Content Search should be included '
                                           'in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
@@ -272,7 +272,7 @@ class CombinedSearch(GenericAPIView):
     merging_strategy = 'merge_optimized'  # 'filter_both', 'merge_all'
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('combined_search'))
+        api_logger.info(self.log_message('combined_search'))
 
         # Validate search form and check page 0
         search_form = SoundCombinedSearchFormAPI(request.query_params)
@@ -398,7 +398,7 @@ class SoundInstance(RetrieveAPIView):
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
+        api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
         return super(SoundInstance, self).get(request, *args, **kwargs)
 
 
@@ -416,7 +416,7 @@ class SoundAnalysis(GenericAPIView):
         descriptors = []
         if request.query_params.get('descriptors', False):
             descriptors = request.query_params['descriptors'].split(',')
-        logger.info(self.log_message('sound:%i analysis' % (int(sound_id))))
+        api_logger.info(self.log_message('sound:%i analysis' % (int(sound_id))))
         response_data = get_sounds_descriptors([sound_id],
                                                 descriptors,
                                                 request.query_params.get('normalized', '0') == '1',
@@ -439,7 +439,7 @@ class SimilarSounds(GenericAPIView):
     def get(self, request,  *args, **kwargs):
 
         sound_id = self.kwargs['pk']
-        logger.info(self.log_message('sound:%i similar_sounds' % (int(sound_id))))
+        api_logger.info(self.log_message('sound:%i similar_sounds' % (int(sound_id))))
 
         # Validate search form and check page 0
         similarity_sound_form = SimilarityFormAPI(request.query_params)
@@ -505,7 +505,7 @@ class SoundComments(ListAPIView):
                   get_formatted_examples_for_view('SoundComments', 'apiv2-sound-comments', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('sound:%i comments' % (int(self.kwargs['pk']))))
+        api_logger.info(self.log_message('sound:%i comments' % (int(self.kwargs['pk']))))
         return super(SoundComments, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -523,16 +523,15 @@ class DownloadSound(DownloadAPIView):
 
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
-        logger.info(self.log_message('sound:%i download' % (int(sound_id))))
+        api_logger.info(self.log_message('sound:%i download' % (int(sound_id))))
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-
-        if not os.path.exists(sound.locations('path')):
+        sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
+        if not os.path.exists(sound_path):
             raise NotFoundException(resource=self)
-
-        return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+        return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
 class DownloadLink(DownloadAPIView):
@@ -543,7 +542,7 @@ class DownloadLink(DownloadAPIView):
 
     def get(self, request, *args, **kwargs):
         sound_id = kwargs['pk']
-        logger.info(self.log_message('sound:%i get_download_link' % (int(sound_id))))
+        api_logger.info(self.log_message('sound:%i get_download_link' % (int(sound_id))))
 
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
@@ -554,7 +553,7 @@ class DownloadLink(DownloadAPIView):
             'user_id': self.user.id,
             'sound_id': sound.id,
             'client_id': self.client_id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.API_DOWNLOAD_TOKEN_LIFETIME),
         }, settings.SECRET_KEY, algorithm='HS256')
         download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token]),
                                      request_is_secure=request.is_secure())
@@ -579,7 +578,7 @@ class UserInstance(RetrieveAPIView):
     queryset = User.objects.filter(is_active=True)
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('user:%s instance' % (self.kwargs['username'])))
+        api_logger.info(self.log_message('user:%s instance' % (self.kwargs['username'])))
         return super(UserInstance, self).get(request, *args, **kwargs)
 
 
@@ -595,7 +594,7 @@ class UserSounds(ListAPIView):
                   get_formatted_examples_for_view('UserSounds', 'apiv2-user-sound-list', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('user:%s sounds' % (self.kwargs['username'])))
+        api_logger.info(self.log_message('user:%s sounds' % (self.kwargs['username'])))
         return super(UserSounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -622,7 +621,7 @@ class UserPacks(ListAPIView):
                   get_formatted_examples_for_view('UserPacks', 'apiv2-user-packs', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('user:%s packs' % (self.kwargs['username'])))
+        api_logger.info(self.log_message('user:%s packs' % (self.kwargs['username'])))
         return super(UserPacks, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -647,7 +646,7 @@ class UserBookmarkCategories(ListAPIView):
                   get_formatted_examples_for_view('UserBookmarkCategories', 'apiv2-user-bookmark-categories', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('user:%s bookmark_categories' % (self.kwargs['username'])))
+        api_logger.info(self.log_message('user:%s bookmark_categories' % (self.kwargs['username'])))
         return super(UserBookmarkCategories, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -677,7 +676,7 @@ class UserBookmarkCategorySounds(ListAPIView):
                                                   max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
+        api_logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
                                      % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
         return super(UserBookmarkCategorySounds, self).get(request, *args, **kwargs)
 
@@ -717,7 +716,7 @@ class PackInstance(RetrieveAPIView):
                   get_formatted_examples_for_view('PackInstance', 'apiv2-pack-instance', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('pack:%i instance' % (int(kwargs['pk']))))
+        api_logger.info(self.log_message('pack:%i instance' % (int(kwargs['pk']))))
         return super(PackInstance, self).get(request, *args, **kwargs)
 
 
@@ -732,7 +731,7 @@ class PackSounds(ListAPIView):
                   get_formatted_examples_for_view('PackSounds', 'apiv2-pack-sound-list', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('pack:%i sounds' % (int(kwargs['pk']))))
+        api_logger.info(self.log_message('pack:%i sounds' % (int(kwargs['pk']))))
         return super(PackSounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -759,7 +758,7 @@ class DownloadPack(DownloadAPIView):
 
     def get(self, request,  *args, **kwargs):
         pack_id = kwargs['pk']
-        logger.info(self.log_message('pack:%i download' % (int(pack_id))))
+        api_logger.info(self.log_message('pack:%i download' % (int(pack_id))))
         try:
             pack = Pack.objects.get(id=pack_id, is_deleted=False)
         except Pack.DoesNotExist:
@@ -791,7 +790,7 @@ class UploadSound(WriteRequiredGenericAPIView):
                   get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
 
     def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('upload_sound'))
+        api_logger.info(self.log_message('upload_sound'))
         serializer = UploadAndDescribeAudioFileSerializer(data=request.data)
         is_providing_description = serializer.is_providing_description(serializer.initial_data)
         if serializer.is_valid():
@@ -883,7 +882,7 @@ class PendingUploads(OauthRequiredAPIView):
                   get_formatted_examples_for_view('PendingUploads', 'apiv2-uploads-pending', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('pending_uploads'))
+        api_logger.info(self.log_message('pending_uploads'))
 
         # Look for sounds pending description
         file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
@@ -935,7 +934,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
                   get_formatted_examples_for_view('DescribeSound', 'apiv2-uploads-describe', max=5))
 
     def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('describe_sound'))
+        api_logger.info(self.log_message('describe_sound'))
         file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
         filenames = [file_instance.name for file_id, file_instance in files.items()]
         serializer = SoundDescriptionSerializer(data=request.data, context={'not_yet_described_audio_files': filenames})
@@ -983,7 +982,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
             raise UnauthorizedException(msg='Not authorized. The sound you\'re trying to edit is not owned by '
                                             'the OAuth2 logged in user.', resource=self)
 
-        logger.info(self.log_message('sound:%s edit_description' % sound_id))
+        api_logger.info(self.log_message('sound:%s edit_description' % sound_id))
         serializer = EditSoundDescriptionSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
@@ -1052,7 +1051,7 @@ class BookmarkSound(WriteRequiredGenericAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-        logger.info(self.log_message('sound:%s create_bookmark' % sound_id))
+        api_logger.info(self.log_message('sound:%s create_bookmark' % sound_id))
         serializer = CreateBookmarkSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
@@ -1091,7 +1090,7 @@ class RateSound(WriteRequiredGenericAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-        logger.info(self.log_message('sound:%s create_rating' % sound_id))
+        api_logger.info(self.log_message('sound:%s create_rating' % sound_id))
         serializer = CreateRatingSerializer(data=request.data)
         if serializer.is_valid():
             try:
@@ -1103,6 +1102,7 @@ class RateSound(WriteRequiredGenericAPIView):
                 else:
                     SoundRating.objects.create(
                         user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
+                    Sound.objects.filter(id=sound_id).update(is_index_dirty=True)
                     return Response(data={'detail': 'Successfully rated sound %s.' % sound_id},
                                     status=status.HTTP_201_CREATED)
             except IntegrityError:
@@ -1129,7 +1129,7 @@ class CommentSound(WriteRequiredGenericAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-        logger.info(self.log_message('sound:%s create_comment' % sound_id))
+        api_logger.info(self.log_message('sound:%s create_comment' % sound_id))
         serializer = CreateCommentSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
@@ -1164,9 +1164,10 @@ def download_from_token(request, token):
         sound = Sound.objects.get(id=token_contents.get('sound_id', None))
     except Sound.DoesNotExist:
         raise NotFoundException
-    if not os.path.exists(sound.locations('path')):
+    sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
+    if not os.path.exists(sound_path):
         raise NotFoundException
-    return sendfile(sound.locations('path'), sound.friendly_filename(), sound.locations('sendfile_url'))
+    return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
 class Me(OauthRequiredAPIView):
@@ -1180,7 +1181,7 @@ class Me(OauthRequiredAPIView):
                   % resources_doc_filename)
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('me'))
+        api_logger.info(self.log_message('me'))
         if self.user:
             response_data = UserSerializer(self.user, context=self.get_serializer_context()).data
             response_data.update({
@@ -1201,7 +1202,7 @@ class AvailableAudioDescriptors(GenericAPIView):
                % (prepend_base('/docs/api'), '%s#available-audio-descriptors' % resources_doc_filename)
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('available_audio_descriptors'))
+        api_logger.info(self.log_message('available_audio_descriptors'))
         try:
             descriptor_names = Similarity.get_descriptor_names()
             del descriptor_names['all']
@@ -1229,7 +1230,7 @@ class FreesoundApiV2Resources(GenericAPIView):
                % (prepend_base('/docs/api'), 'index.html')
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('api_root'))
+        api_logger.info(self.log_message('api_root'))
         api_index = [
             {'Search resources': OrderedDict(sorted(dict({
                     '01 Text Search': prepend_base(
@@ -1349,8 +1350,8 @@ def create_apiv2_key(request):
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
             form = ApiV2ClientForm()
-            logger.info('%s <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
-                        ('new_credential', None, request.user.username, None, api_client.client_id))
+            api_logger.info('new_credential <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
+                            (None, request.user.username, None, api_client.client_id))
     else:
         form = ApiV2ClientForm()
 
@@ -1421,12 +1422,21 @@ def monitor_api_credential(request, key):
             day_limit = limit_rates[1].split('/')[0]
         except IndexError:
             day_limit = 0
+        n_days = int(request.GET.get('n_days', 30))
+        usage_history = client.get_usage_history(n_days_back=n_days)
         tvars = {
-                'client': client,
-                'limit': day_limit
-                }
-        messages.add_message(request, messages.INFO, "This functionality is still in beta state. The number of requests"
-                                                     " shown here might not be 100% accurate.")
+            'n_days': n_days,
+            'n_days_options': [
+                (30, '1 month'),
+                (93, '3 months'),
+                (182, '6 months'),
+                (365, '1 year')
+            ], 'client': client,
+            'data': json.dumps([(str(date), count) for date, count in usage_history]),
+            'total_in_range': sum([count for _, count in usage_history]),
+            'total_in_range_above_5000': sum([count - 5000 for _, count in usage_history if count > 5000]),
+            'limit': day_limit
+        }
         return render(request, 'api/monitor_api_credential.html', tvars)
     except ApiV2Client.DoesNotExist:
         raise Http404
@@ -1489,8 +1499,14 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render(request, 'api/manage_permissions.html',
-                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False})
+    return render(request, 'accounts/manage_api_permissions.html' if using_beastwhoosh(request)
+                            else 'api/manage_permissions.html', {
+        'user': request.user,
+        'tokens': tokens,
+        'grants': grants,
+        'show_expiration_date': False,
+        'activePage': 'api',  # BW only
+    })
 
 
 @login_required
@@ -1504,6 +1520,7 @@ def revoke_permission(request, client_id):
     for grant in grants:
         grant.delete()
 
+    messages.add_message(request, messages.INFO, "Permission has been successfully revoked")
     return HttpResponseRedirect(reverse("access-tokens"))
 
 
@@ -1527,19 +1544,3 @@ def permission_granted(request):
 
     return render(request, template,
         {'code': code, 'app_name': app_name, 'logout_next': logout_next})
-
-
-def minimal_registration(request):
-    """View for registration using minimal template"""
-
-    if request.method == "POST":
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            send_activation(user)
-            return render(request, 'api/minimal_registration_done.html')
-    else:
-        form = RegistrationForm()
-
-    tvars = {'form': form}
-    return render(request, 'api/minimal_registration.html', tvars)

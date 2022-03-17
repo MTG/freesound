@@ -19,13 +19,17 @@
 #
 import urllib
 
+import json
+import logging
+
 from django.conf import settings
-from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.contrib import messages
 
-from sounds.models import Sound
 from utils.onlineusers import cache_online_users
+
+web_logger = logging.getLogger('web')
 
 
 def dont_redirect(path):
@@ -64,20 +68,9 @@ class BulkChangeLicenseHandler(object):
                 and dont_redirect(request.get_full_path()):
 
             user = request.user
-            cache_key = "has-old-license-%s" % user.id
-            cache_info = cache.get(cache_key)
+            if user.profile.has_old_license:
+                return HttpResponseRedirect(reverse("bulk-license-change"))
 
-            if cache_info is None or 0 or not isinstance(cache_info, (list, tuple)):
-                has_old_license = user.profile.has_old_license
-                has_sounds = Sound.objects.filter(user=user).exists()
-                cache.set(cache_key, [has_old_license, has_sounds], 2592000)  # 30 days cache
-                if has_old_license and has_sounds:
-                    return HttpResponseRedirect(reverse("bulk-license-change"))
-            else:
-                has_old_license = cache_info[0]
-                has_sounds = cache_info[1]
-                if has_old_license and has_sounds:
-                    return HttpResponseRedirect(reverse("bulk-license-change"))
         response = self.get_response(request)
         return response
 
@@ -92,16 +85,22 @@ class FrontendPreferenceHandler(object):
         The 'render' method will use this session variable to display the new/old frontend
         """
         if request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME, None):
-            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = \
-                request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
+            selected_ui = request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
+            current_ui = request.session.get(settings.FRONTEND_SESSION_PARAM_NAME, None)
+            if selected_ui != current_ui:
+                web_logger.info('Frontend activation (%s)' % json.dumps({'name': selected_ui,
+                                                                         'username': request.user.username}))
+            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = selected_ui
         response = self.get_response(request)
         return response
 
 
 class TosAcceptanceHandler(object):
     """Checks if the user has accepted the updates to the Terms
-    of Service due to the GDPR (May 2018).
-    This replaces the agreement to the original ToS (2013, 2fd543f3a)
+    of Service in 2022. This replaces the agreement to the original ToS (2013, 2fd543f3a).
+    When users agree with the new terms of service, they also agree on updating the
+    CC licenses to 4.0. There is no need to add a new tos_acceptance field
+    as we will simply reuse the same field used for 2013.
     """
 
     def __init__(self, get_response):
@@ -113,19 +112,38 @@ class TosAcceptanceHandler(object):
                 and dont_redirect(request.get_full_path()):
 
             user = request.user
-            cache_key = 'has-accepted-tos2018-%s' % user.id
-            cache_info = cache.get(cache_key)
+            if not user.profile.accepted_tos:
+                return HttpResponseRedirect(reverse("tos-acceptance"))
 
-            if not cache_info:
-                has_accepted_tos = hasattr(user, 'gdpracceptance')
-                if not has_accepted_tos:
-                    url = '%s?%s' % (reverse('tos-acceptance'), urllib.urlencode({'next': request.get_full_path()}))
-                    return HttpResponseRedirect(url)
-                else:
-                    cache.set(cache_key, 'yes', 2592000)  # 30 days cache
-            else:
-                # If there is cache it means the terms has been accepted
-                pass
+        response = self.get_response(request)
+        return response
+
+
+class UpdateEmailHandler(object):
+    message = "We have identified that some emails that we have sent to you didn't go through, thus it appears that " \
+              "your email address is not valid. Please update your email address to a working one to continue using " \
+              "Freesound"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated \
+                and 'tosacceptance' not in request.get_full_path() \
+                and 'logout' not in request.get_full_path() \
+                and 'tos_api' not in request.get_full_path() \
+                and 'tos_web' not in request.get_full_path() \
+                and 'contact' not in request.get_full_path() \
+                and 'bulklicensechange' not in request.get_full_path() \
+                and 'resetemail' not in request.get_full_path() \
+                and not request.get_full_path().startswith(settings.MEDIA_URL):
+                # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
+
+            user = request.user
+
+            if not user.profile.email_is_valid():
+                messages.add_message(request, messages.INFO, self.message)
+                return HttpResponseRedirect(reverse("accounts-email-reset"))
 
         response = self.get_response(request)
         return response

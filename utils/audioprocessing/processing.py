@@ -21,27 +21,18 @@
 #
 
 from __future__ import print_function
-from PIL import Image, ImageDraw
-from color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
+
 import math
-import numpy
 import os
 import re
-import signal
 import subprocess
-try:
-    from utils.audioprocessing import get_sound_type
-except ImportError:
-    # If this import fails it means that 'processing.py' is not being imported form the Django app  This is the case
-    # when running 'wav2png.py' as a command line tool. To make it work properly, we add the containing folder to the
-    # system path and in this way 'get_sound_type' can be imported from the 'audioprocessing' module,
-    import sys
-    sys.path.append('../')
-    from audioprocessing import get_sound_type
-try:
-    import scikits.audiolab as audiolab
-except ImportError:
-    print("WARNING: audiolab is not installed so wav2png will not work")
+
+import numpy
+import pysndfile
+from PIL import Image, ImageDraw
+
+from color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
+from utils.audioprocessing import get_sound_type
 
 
 class AudioProcessingException(Exception):
@@ -49,9 +40,10 @@ class AudioProcessingException(Exception):
 
 
 class TestAudioFile(object):
-    """A class that mimics audiolab.sndfile but generates noise instead of reading
+    """A class that mimics pysndfile.PySndfile but generates noise instead of reading
     a wave file. Additionally it can be told to have a "broken" header and thus crashing
     in the middle of the file. Also useful for testing ultra-short files of 20 samples."""
+
     def __init__(self, num_frames, has_broken_header=False):
         self.seekpoint = 0
         self.nframes = num_frames
@@ -69,14 +61,14 @@ class TestAudioFile(object):
         num_frames_left = self.num_frames - self.seekpoint
         will_read = num_frames_left if num_frames_left < frames_to_read else frames_to_read
         self.seekpoint += will_read
-        return numpy.random.random(will_read)*2 - 1
+        return numpy.random.random(will_read) * 2 - 1
 
 
 def get_max_level(filename):
     max_value = 0
     buffer_size = 4096
-    audio_file = audiolab.Sndfile(filename, 'r')
-    n_samples_left = audio_file.nframes
+    audio_file = pysndfile.PySndfile(filename, 'r')
+    n_samples_left = audio_file.frames()
 
     while n_samples_left:
         to_read = min(buffer_size, n_samples_left)
@@ -88,8 +80,8 @@ def get_max_level(filename):
             break
 
         # convert to mono by selecting left channel only
-        if audio_file.channels > 1:
-            samples = samples[:,0]
+        if audio_file.channels() > 1:
+            samples = samples[:, 0]
 
         max_value = max(max_value, numpy.abs(samples).max())
 
@@ -105,10 +97,13 @@ class AudioProcessor(object):
     The audio processor processes chunks of audio an calculates the spectrac centroid and the peak
     samples in that chunk of audio.
     """
+
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
         max_level = get_max_level(input_filename)
 
-        self.audio_file = audiolab.Sndfile(input_filename, 'r')
+        self.audio_file = pysndfile.PySndfile(input_filename, 'r')
+        self.nframes = self.audio_file.frames()
+        self.samplerate = self.audio_file.samplerate()
         self.fft_size = fft_size
         self.window = window_function(self.fft_size)
         self.spectrum_range = None
@@ -122,7 +117,7 @@ class AudioProcessor(object):
         fft = numpy.fft.rfft(numpy.ones(fft_size) * self.window)
         max_fft = (numpy.abs(fft)).max()
         # set the scale to normalized audio and normalized FFT
-        self.scale = 1.0/max_level/max_fft if max_level > 0 else 1
+        self.scale = 1.0 / max_level / max_fft if max_level > 0 else 1
 
     def read(self, start, size, resize_if_less=False):
         """ read size samples starting at start, if resize_if_less is True and less than size
@@ -139,18 +134,18 @@ class AudioProcessor(object):
             else:
                 self.audio_file.seek(0)
 
-                add_to_start = -start # remember: start is negative!
+                add_to_start = -start  # remember: start is negative!
                 to_read = size + start
 
-                if to_read > self.audio_file.nframes:
-                    add_to_end = to_read - self.audio_file.nframes
-                    to_read = self.audio_file.nframes
+                if to_read > self.nframes:
+                    add_to_end = to_read - self.nframes
+                    to_read = self.nframes
         else:
             self.audio_file.seek(start)
 
             to_read = size
-            if start + to_read >= self.audio_file.nframes:
-                to_read = self.audio_file.nframes - start
+            if start + to_read >= self.nframes:
+                to_read = self.nframes - start
                 add_to_end = size - to_read
 
         try:
@@ -160,8 +155,8 @@ class AudioProcessor(object):
             return numpy.zeros(size) if resize_if_less else numpy.zeros(2)
 
         # convert to mono by selecting left channel only
-        if self.audio_file.channels > 1:
-            samples = samples[:,0]
+        if self.audio_file.channels() > 1:
+            samples = samples[:, 0]
 
         if resize_if_less and (add_to_start > 0 or add_to_end > 0):
             if add_to_start > 0:
@@ -176,15 +171,15 @@ class AudioProcessor(object):
     def spectral_centroid(self, seek_point, spec_range=110.0):
         """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
 
-        samples = self.read(seek_point - self.fft_size/2, self.fft_size, True)
+        samples = self.read(seek_point - self.fft_size / 2, self.fft_size, True)
 
         samples *= self.window
         fft = numpy.fft.rfft(samples)
-        spectrum = self.scale * numpy.abs(fft) # normalized abs(FFT) between 0 and 1
+        spectrum = self.scale * numpy.abs(fft)  # normalized abs(FFT) between 0 and 1
         length = numpy.float64(spectrum.shape[0])
 
         # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]
-        db_spectrum = ((20*(numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range)/spec_range
+        db_spectrum = ((20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range) / spec_range
 
         energy = spectrum.sum()
         spectral_centroid = 0
@@ -195,12 +190,13 @@ class AudioProcessor(object):
             if self.spectrum_range is None:
                 self.spectrum_range = numpy.arange(length)
 
-            spectral_centroid = (spectrum * self.spectrum_range).sum() / (energy * (length - 1)) * self.audio_file.samplerate * 0.5
+            spectral_centroid = (spectrum * self.spectrum_range).sum() / (energy * (length - 1)) * self.samplerate * 0.5
 
             # clip > log10 > scale between 0 and 1
-            spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (self.higher_log - self.lower_log)
+            spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (
+                        self.higher_log - self.lower_log)
 
-        return (spectral_centroid, db_spectrum)
+        return spectral_centroid, db_spectrum
 
     def peaks(self, start_seek, end_seek):
         """ read all samples between start_seek and end_seek, then find the minimum and maximum peak
@@ -219,12 +215,12 @@ class AudioProcessor(object):
         if start_seek < 0:
             start_seek = 0
 
-        if end_seek > self.audio_file.nframes:
-            end_seek = self.audio_file.nframes
+        if end_seek > self.nframes:
+            end_seek = self.nframes
 
         if end_seek <= start_seek:
             samples = self.read(start_seek, 1)
-            return (samples[0], samples[0])
+            return samples[0], samples[0]
 
         if block_size > end_seek - start_seek:
             block_size = end_seek - start_seek
@@ -258,7 +254,7 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     palette = []
 
     for i in range(num_colors):
-        index = (i * (len(colors) - 1))/(num_colors - 1.0)
+        index = (i * (len(colors) - 1)) / (num_colors - 1.0)
         index_int = int(index)
         alpha = index - float(index_int)
 
@@ -284,6 +280,7 @@ class WaveformImage(object):
     Given peaks and spectral centroids from the AudioProcessor, this class will construct
     a wavefile image which can be saved as PNG.
     """
+
     def __init__(self, image_width, image_height, color_scheme):
         if image_height % 2 == 0:
             print("WARNING: Height is not uneven, images look much better at uneven height")
@@ -309,9 +306,9 @@ class WaveformImage(object):
         y1 = self.image_height * 0.5 - peaks[0] * (self.image_height - 4) * 0.5
         y2 = self.image_height * 0.5 - peaks[1] * (self.image_height - 4) * 0.5
 
-        line_color = self.color_lookup[int(spectral_centroid*255.0)]
+        line_color = self.color_lookup[int(spectral_centroid * 255.0)]
 
-        if self.previous_y != None:
+        if self.previous_y is not None:
             self.draw.line([self.previous_x, self.previous_y, x, y1, x, y2], line_color)
         else:
             self.draw.line([x, y1, x, y2], line_color)
@@ -330,11 +327,11 @@ class WaveformImage(object):
         if alpha > 0.0 and alpha < 1.0 and y_max_int + 1 < self.image_height:
             current_pix = self.pix[x, y_max_int + 1]
 
-            r = int((1-alpha)*current_pix[0] + alpha*color[0])
-            g = int((1-alpha)*current_pix[1] + alpha*color[1])
-            b = int((1-alpha)*current_pix[2] + alpha*color[2])
+            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
 
-            self.pix[x, y_max_int + 1] = (r,g,b)
+            self.pix[x, y_max_int + 1] = (r, g, b)
 
         y_min = min(y1, y2)
         y_min_int = int(y_min)
@@ -343,17 +340,17 @@ class WaveformImage(object):
         if alpha > 0.0 and alpha < 1.0 and y_min_int - 1 >= 0:
             current_pix = self.pix[x, y_min_int - 1]
 
-            r = int((1-alpha)*current_pix[0] + alpha*color[0])
-            g = int((1-alpha)*current_pix[1] + alpha*color[1])
-            b = int((1-alpha)*current_pix[2] + alpha*color[2])
+            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
 
-            self.pix[x, y_min_int - 1] = (r,g,b)
+            self.pix[x, y_min_int - 1] = (r, g, b)
 
     def save(self, filename):
         # draw a zero "zero" line
         a = 25
         for x in range(self.image_width):
-            self.pix[x, self.image_height/2] = tuple(map(lambda p: p+a, self.pix[x, self.image_height/2]))
+            self.pix[x, self.image_height / 2] = tuple(map(lambda p: p + a, self.pix[x, self.image_height / 2]))
 
         self.image.save(filename)
 
@@ -363,6 +360,7 @@ class SpectrogramImage(object):
     Given spectra from the AudioProcessor, this class will construct a wavefile image which
     can be saved as PNG.
     """
+
     def __init__(self, image_width, image_height, fft_size, color_scheme):
         self.image_width = image_width
         self.image_height = image_height
@@ -379,10 +377,10 @@ class SpectrogramImage(object):
         y_min = math.log10(f_min)
         y_max = math.log10(f_max)
         for y in range(self.image_height):
-            freq = math.pow(10.0, y_min + y / (image_height - 1.0) *(y_max - y_min))
-            bin = freq / 22050.0 * (self.fft_size/2 + 1)
+            freq = math.pow(10.0, y_min + y / (image_height - 1.0) * (y_max - y_min))
+            bin = freq / 22050.0 * (self.fft_size / 2 + 1)
 
-            if bin < self.fft_size/2:
+            if bin < self.fft_size / 2:
                 alpha = bin - int(bin)
 
                 self.y_to_bin.append((int(bin), alpha * 255))
@@ -395,20 +393,19 @@ class SpectrogramImage(object):
     def draw_spectrum(self, x, spectrum):
         # for all frequencies, draw the pixels
         for (index, alpha) in self.y_to_bin:
-            self.pixels.append(self.palette[int((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1])])
+            self.pixels.append(self.palette[int((255.0 - alpha) * spectrum[index] + alpha * spectrum[index + 1])])
 
         # if the FFT is too small to fill up the image, fill with black to the top
         for y in range(len(self.y_to_bin), self.image_height):
             self.pixels.append(self.palette[0])
 
     def save(self, filename, quality=80):
-        assert filename.lower().endswith(".jpg")
         self.image.putdata(self.pixels)
         self.image.transpose(Image.ROTATE_90).save(filename, quality=quality)
 
 
 def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size,
-                       progress_callback=None, progress_callback_steps=10, color_scheme=None):
+                       progress_callback=None, color_scheme=None):
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     :param input_filename: input audio filename (must be PCM)
@@ -417,20 +414,20 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
     :param image_width: width of both spectrogram and waveform images
     :param image_height: height of both spectrogram and waveform images
     :param fft_size: size of the FFT computed for the spectrogram image
-    :param progress_callback: function to iteratively call while images are being created
-    :param progress_callback_steps: number of times the progress_callback will be called until 100% progress is reached
+    :param progress_callback: function to iteratively call while images are being created. Will be called every 1%,
+                                with parameters (current_position, width)
     :param color_scheme: color scheme to use for the generated images (defaults to Freesound2 color scheme)
     """
     processor = AudioProcessor(input_filename, fft_size, numpy.hanning)
-    samples_per_pixel = processor.audio_file.nframes / float(image_width)
+    samples_per_pixel = processor.nframes / float(image_width)
 
     waveform = WaveformImage(image_width, image_height, color_scheme)
     spectrogram = SpectrogramImage(image_width, image_height, fft_size, color_scheme)
 
     for x in range(image_width):
 
-        if progress_callback and x % (image_width/progress_callback_steps) == 0:
-            progress_callback((x*100)/image_width)
+        if progress_callback and x % (image_width / 100) == 0:
+            progress_callback(x, image_width)
 
         seek_point = int(x * samples_per_pixel)
         next_seek_point = int((x + 1) * samples_per_pixel)
@@ -442,7 +439,7 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
         spectrogram.draw_spectrum(x, db_spectrum)
 
     if progress_callback:
-        progress_callback(100)
+        progress_callback(image_width, image_width)
 
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
@@ -464,22 +461,37 @@ def convert_to_pcm(input_filename, output_filename):
 
     if sound_type == "mp3":
         cmd = ["lame", "--decode", input_filename, output_filename]
+        error_messages = ["WAVE file contains 0 PCM samples"]
     elif sound_type == "ogg":
         cmd = ["oggdec", input_filename, "-o", output_filename]
+        error_messages = []
     elif sound_type == "flac":
         cmd = ["flac", "-f", "-d", "-s", "-o", output_filename, input_filename]
+        error_messages = []
     elif sound_type == "m4a":
         cmd = ["faad", "-o", output_filename, input_filename]
+        error_messages = ["Unable to find correct AAC sound track in the MP4 file",
+                          "Error: Bitstream value not allowed by specification",
+                          "Error opening file"]
     else:
         return False
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
 
+    # If external process returned an error (return code != 0) or the expected PCM file does not
+    # exist, raise exception
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
-        raise AudioProcessingException("failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+        raise AudioProcessingException("failed converting to pcm data:\n"
+                                       + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+
+    # If external process apparently returned no error (return code = 0) but we see some errors from our list of
+    # known errors have been printed in stderr, raise an exception as well
+    if any([error_message in stderr for error_message in error_messages]):
+        raise AudioProcessingException("failed converting to pcm data:\n"
+                                       + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
     return True
 
@@ -500,37 +512,33 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
-        raise AudioProcessingException("failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+        raise AudioProcessingException(
+            "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
     stdout = (stdout + " " + stderr).replace("\n", " ")
 
     duration = 0
-    m = re.match(r".*#duration (?P<duration>[\d\.]+).*",  stdout)
-    if m != None:
+    m = re.match(r".*#duration (?P<duration>[\d\.]+).*", stdout)
+    if m is not None:
         duration = float(m.group("duration"))
 
     channels = 0
     m = re.match(r".*#channels (?P<channels>\d+).*", stdout)
-    if m != None:
+    if m is not None:
         channels = float(m.group("channels"))
 
     samplerate = 0
     m = re.match(r".*#samplerate (?P<samplerate>\d+).*", stdout)
-    if m != None:
+    if m is not None:
         samplerate = float(m.group("samplerate"))
 
-    bitdepth = None
+    bitdepth = 0
     m = re.match(r".*#bitdepth (?P<bitdepth>\d+).*", stdout)
-    if m != None:
+    if m is not None:
         bitdepth = float(m.group("bitdepth"))
-    else:
-        # If there is no information of bitdepth we set it to 0
-        bitdepth = 0
 
-    bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
-    bitrate = int(round(bitrate))
-
-    return dict(duration=duration, channels=channels, samplerate=samplerate, bitrate=bitrate, bitdepth=bitdepth)
+    # NOTE: we do not return bitrate here as we compute it when storing audio info fields in the sound model
+    return dict(duration=duration, channels=channels, samplerate=samplerate, bitdepth=bitdepth)
 
 
 def convert_to_mp3(input_filename, output_filename, quality=70):
@@ -567,24 +575,36 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
         raise AudioProcessingException(stdout)
 
 
-def convert_using_ffmpeg(input_filename, output_filename):
+def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
-    converts the incoming wave file to stereo pcm using fffmpeg
+    converts the incoming wave file to 16bit, 44kHz pcm using fffmpeg
+    unlike the convert_to_pcm function above, this one does not try to preserve
+    the original sample rate and bit depth.
     """
-    TIMEOUT = 3 * 60
-
-    def alarm_handler(signum, frame):
-        raise AudioProcessingException("timeout while waiting for ffmpeg")
 
     if not os.path.exists(input_filename):
         raise AudioProcessingException("file %s does not exist" % input_filename)
 
-    command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100", output_filename]
+    command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100"]
+    if mono_out:
+        command += ['-ac', '1']
+    command += [output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    signal.signal(signal.SIGALRM, alarm_handler)
-    signal.alarm(TIMEOUT)
     (stdout, stderr) = process.communicate()
-    signal.alarm(0)
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException(stdout)
+        raise AudioProcessingException("ffmpeg returned an error\nstdout: %s \nstderr: %s" % (stdout, stderr))
+
+
+def analyze_using_essentia(essentia_executable_path, input_filename, output_filename_base, essentia_profile_path=None):
+    """
+    runs Essentia's FreesoundExtractor analsyis
+    """
+    exec_array = [essentia_executable_path, input_filename, output_filename_base]
+    if essentia_profile_path is not None:
+        exec_array += [essentia_profile_path]
+
+    p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+    if p.returncode != 0:
+        raise AudioProcessingException("essentia extractor returned an error\nstdout: %s \nstderr: %s" % (out, err))

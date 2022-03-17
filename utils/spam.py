@@ -18,21 +18,30 @@
 #     See AUTHORS file.
 #
 
-from akismet import Akismet, AkismetError
-from django.contrib.sites.models import Site
 from urllib2 import HTTPError, URLError
+
+from akismet import Akismet, AkismetError
 from django.conf import settings
+from django.contrib.sites.models import Site
+
 from general.models import AkismetSpam
 
-def is_spam(request, comment):
 
-    # If request user has uploaded sounds, we don't check for spam
-    if request.user.sounds.count() > 0:
+def is_spam(request, comment):
+    """Check if some text looks like spam"""
+
+    # If request user has uploaded, moderated sounds, we don't check for spam
+    if request.user.profile.is_trustworthy():
         return False
 
-    domain = "http://%s" % Site.objects.get_current().domain
+    # Hardcoded checks
+    for spam_chunk in settings.SPAM_BLACKLIST:
+        if spam_chunk in comment:
+            return True
+
+    # Akismet check
+    domain = "https://%s" % Site.objects.get_current().domain
     api = Akismet(key=settings.AKISMET_KEY, blog_url=domain)
-    
     data = {
         'user_ip': request.META.get('REMOTE_ADDR', '127.0.0.1'),
         'user_agent': request.META.get('HTTP_USER_AGENT', ''),
@@ -40,10 +49,8 @@ def is_spam(request, comment):
         'comment_type': 'comment',
         'comment_author': request.user.username.encode("utf-8") if request.user.is_authenticated else '',
     }
-    
     if False: # set this to true to force a spam detection
         data['comment_author'] = "viagra-test-123"
-    
     try:
         if api.comment_check(comment.encode('utf-8'), data=data, build_data=True):
             if request.user.is_authenticated:

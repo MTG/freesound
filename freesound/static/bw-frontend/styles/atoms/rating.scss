@@ -1,0 +1,24 @@
+.bw-rating__container {
+  input {
+    display: none;
+  }
+
+  label {
+    padding: 0 2px;
+    float: right;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  input ~ label:hover,
+  input ~ label:hover ~ label {
+    span {
+      color: $yellow-rating;
+    }
+  }
+}
+
+.bw-rating__star-no-editable {
+  padding: 0 2px;
+  float: right;
+}

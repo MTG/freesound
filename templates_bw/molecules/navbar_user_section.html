@@ -1,0 +1,51 @@
+{% load cache %}
+{% load bw_templatetags %}
+
+{% if request.user.is_authenticated %}
+    {% cache 3600 bw_user_header54 request.user.id %}
+        <li class="bw-nav__action dropdown">
+            <a class="bw-link--grey avatar bw-nav__menu--avatar-with{% if not num_messages %}out{% endif %}-notifications dropdown-toggle no-hover cursor-pointer" id="avatar-menu"
+               aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
+                {% bw_user_avatar request.user.profile.locations.avatar.S.url request.user.username 32 %}
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="avatar-menu">
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="{% url 'accounts-home' %}">Upload</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="{% url 'accounts-attribution' %}">Attribution</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="{% url 'bookmarks-for-user' request.user.username %}">Bookmarks</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="{% url 'messages' %}">Messages
+                        {% if num_messages %}<span class="text-red">({{ num_messages }})</span>{% endif %}
+                    </a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="{% url 'account' request.user.username %}">View your profile</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--red" href="{% url 'accounts-edit' %}">Account settings</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--grey" href="{% url 'logout' %}?next=/?fend=bw">Logout</a>
+                </li>
+            </ul>
+        </li>
+        <li class="bw-nav__action d-none d-lg-flex">
+            <a class="btn-secondary" href="{% url 'donate' %}">Donate</a>
+        </li>
+        <li class="bw-nav__action d-none d-lg-flex">
+            <a class="btn-primary" href="{% url 'accounts-upload' %}">Upload sound</a>
+        </li>
+    {% endcache %}
+{% else %}
+    <li class="bw-nav__action">
+        <button class="btn-secondary" data-toggle="modal" data-target="#loginModal">Log in</button>
+    </li>
+    <li class="bw-nav__action d-none d-lg-flex">
+        <button class="btn-primary" data-toggle="modal" data-target="#registerModal">Join</button>
+    </li>
+{% endif %}

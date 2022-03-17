@@ -28,76 +28,84 @@
 <div id="describe_page">
     <h1>Describe</h1>
 
-    {% if not n_files %}
-        <h3>No files to describe</h3>
-        <p>
-            It looks like you have not uploaded any audio files yet or all your files have already been described.
-            <br>Please <a href="{% url 'accounts-upload' %}">upload some more files</a> before comming back here :)
-        </p>
+    {% if describe_enabled %}
 
-    {% else %}
+        {% if not n_files %}
+            <h3>No files to describe</h3>
+            <p>
+                It looks like you have not uploaded any audio files yet or all your files have already been described.
+                <br>Please <a href="{% url 'accounts-upload' %}">upload some more files</a> before coming back here :)
+            </p>
 
-        {% if request.user.profile.can_do_bulk_upload %}
-        <div id="content">
-            <div class="content_box">
-                <h3>Describe files manually</h3>
         {% else %}
-            <h3>Pick the sounds to describe</h3>
-        {% endif %}
-                <p>
-                    You've uploaded the files listed below, but <b>they won't appear on the website until you've described them</b>.
-                    {% if not request.user.profile.can_do_bulk_upload %}<br>{% endif %}Pick a maximum of 10 files from the list below, click on <i>Describe selected files</i>, and follow the instructions.
-                    {% if not request.user.profile.can_do_bulk_upload %}<br>{% endif %}You can also delete files by selecting them and pressing the <i>Delete selected files</i> button.
-                </p>
-                <p>
-                    Your uploaded files ({{ n_files }}):
-                    <ul id="root_file" class="upload">
-                        {% show_file file_structure 1 %}
-                    </ul>
-                </p>
 
-                <p>
-                    <form action="." method="post" id="fileform">{% csrf_token %}
-                        <div style="display:none">
-                        {{form.as_p}}
-                        </div>
-                        <input class="describe_page_action_button" type="submit" value="Describe selected files" name="describe">
-                        <br><input class="describe_page_action_button" type="submit" value="Delete selected files" name="delete">
-                    </form>
-                </p>
-        {% if request.user.profile.can_do_bulk_upload %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Bulk upload part -->
-        {% if request.user.profile.can_do_bulk_upload %}
-            <div id="sidebar">
+            {% if request.user.profile.can_do_bulk_upload %}
+            <div id="content">
                 <div class="content_box">
-                    <h3>Bulk description of files</h3>
+                    <h3>Describe files manually</h3>
+            {% else %}
+                <h3>Pick the sounds to describe</h3>
+            {% endif %}
                     <p>
-                        Alternatively, you can provide descriptions for many files at once by <b>uploading a data file</b>.
-                        To create your data file use the <a href="{{ media_url }}/sample.csv" target="_blank">CSV</a>, <a href="{{ media_url }}/sample.xls" target="_blank">XLS</a>
-                        or <a href="{{ media_url }}/sample.xlsx" target="_blank">XLSX</a> template and follow
-                        <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a>.
-                        Upload your data file using the form below:
+                        You've uploaded the files listed below, but <b>they won't appear on the website until you've described them</b>.
+                        {% if not request.user.profile.can_do_bulk_upload %}<br>{% endif %}Pick a maximum of 10 files from the list below, click on <i>Describe selected files</i>, and follow the instructions.
+                        {% if not request.user.profile.can_do_bulk_upload %}<br>{% endif %}You can also delete files by selecting them and pressing the <i>Delete selected files</i> button.
                     </p>
-                    <form method="POST" enctype="multipart/form-data" action="">
-                        {% csrf_token %}
-                        {{csv_form}}
-                        <input type="submit" name="Submit" value="Upload data file"/>
-                    </form>
-                    <ul class="messages">
-                        <li>This feature is still in <b>beta</b>. If you experience any problems using it or have any
-                            suggestions for improvements, please let us know by <a href=" {% url 'forums-thread' 'bug-reports-errors-and-feature-requests' 41081 %}">writting in the forums</a>
-                            or directly <a href="{% url 'contact' %}">contacting us</a>.</li>
-                        {% comment %}I know the link to the forum has a hardcoded forum name and thread ID. Don't even think of it. {% endcomment %}
-                    </ul>
+                    <p>
+                        Your uploaded files ({{ n_files }}):
+                        <ul id="root_file" class="upload">
+                            {% show_file file_structure 1 %}
+                        </ul>
+                    </p>
+
+                    <p>
+                        <form action="." method="post" id="fileform">{% csrf_token %}
+                            <div style="display:none">
+                            {{form.as_p}}
+                            </div>
+                            <input class="describe_page_action_button" type="submit" value="Describe selected files" name="describe">
+                            <br><input class="describe_page_action_button" type="submit" value="Delete selected files" name="delete">
+                        </form>
+                    </p>
+            {% if request.user.profile.can_do_bulk_upload %}
                 </div>
             </div>
-        {% endif %}
+            {% endif %}
 
-        <br style="clear: both;">
+            <!-- Bulk upload part -->
+            {% if request.user.profile.can_do_bulk_upload %}
+                <div id="sidebar">
+                    <div class="content_box">
+                        <h3>Bulk description of files</h3>
+                        <p>
+                            Alternatively, you can provide descriptions for many files at once by <b>uploading a data file</b>.
+                            To create your data file use the <a href="{{ media_url }}/sample.csv" target="_blank">CSV</a>, <a href="{{ media_url }}/sample.xls" target="_blank">XLS</a>
+                            or <a href="{{ media_url }}/sample.xlsx" target="_blank">XLSX</a> template and follow
+                            <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a>.
+                            Upload your data file using the form below:
+                        </p>
+                        <form method="POST" enctype="multipart/form-data" action="">
+                            {% csrf_token %}
+                            {{csv_form}}
+                            <input type="submit" name="Submit" value="Upload data file"/>
+                        </form>
+                        <ul class="messages">
+                            <li>This feature is still in <b>beta</b>. If you experience any problems using it or have any
+                                suggestions for improvements, please let us know by <a href=" {% url 'forums-thread' 'bug-reports-errors-and-feature-requests' 41081 %}">writting in the forums</a>
+                                or directly <a href="{% url 'contact' %}">contacting us</a>.</li>
+                            {% comment %}I know the link to the forum has a hardcoded forum name and thread ID. Don't even think of it. {% endcomment %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+
+            <br style="clear: both;">
+        {% endif %}
+    {% else %}
+        <ul class="messages">
+            <li>We're deeply sorry but describing sounds is <b>temporarily disabled</b>.
+            We'll enable it again as soon as possible.</li>
+        </ul>
     {% endif %}
 </div>
 {% endblock %}

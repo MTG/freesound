@@ -1,0 +1,46 @@
+$button-border-radius: 100px;
+
+button {
+  position: relative;
+  margin: 0;
+  border: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-primary {
+  letter-spacing: -1px;
+  @include rounded-button($red, $red-hover);
+}
+
+.btn-secondary {
+  letter-spacing: -1px;
+  @include rounded-button($black, $black-hover);
+}
+
+.btn-blue {
+  letter-spacing: -1px;
+  @include rounded-button($blue, $blue-hover);
+}
+
+.btn-inverse {
+  letter-spacing: -1px;
+  @include rounded-button(transparent, $black);
+  color: $navy-grey;
+  @include active() {
+    color: $white;
+  }
+  border: 1px solid $navy-light-grey;
+}
+
+.btn-neutral {
+  @include reset-rounded-button($navy-grey, $black);
+  @include reset-border-bottom-on-hover();
+}
+
+.btn-profile-adapt {
+  color: $black;
+  font-weight: 500;
+}

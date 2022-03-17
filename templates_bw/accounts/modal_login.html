@@ -1,0 +1,25 @@
+{% extends "molecules/modal_base.html" %}
+
+{% block id %}loginModal{% endblock %}
+{% block aria-labelledby %}loginModalLabel{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h5 class="v-spacing-5">Log in to Freesound</h5>
+        <form method="post" action="{% url 'login' %}">{% csrf_token %}
+            {{ login_form }}
+            <input type="hidden" name="next" value="{{ next_path }}" />
+            <button type="submit" class="btn-primary">Log in</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+    <a class="v-spacing-top-3" data-link="forgottenPasswordModal">Problems logging in?</a>
+{% endblock %}
+
+{% block extra %}
+    <a data-link="registerModal">Don't have an account? Join now</a>
+{% endblock %}

@@ -1,3 +1,4 @@
+freesound-data
 *.project
 *.pydevproject
 *.pyc
@@ -21,12 +22,18 @@ _sandbox/load_testing/results/
 _docs/freesound_logo/white background - red - black/freesound_logo_tshirt.ai
 freesound.komodoproject
 .idea/
-freesound/logger.py
-tagrecommendation/TODO.txt
-tagrecommendation/tagrecommendation_settings.py
-similarity/similarity_settings.py
 .env
-start_freesound_services.sh
+see_last_email
+build_static.sh
+create_caches.sh
+run_tests.sh
+clear_cache.sh
+.venv
+
+# BW fornt end
+.cache
 node_modules
-freesound/static/dist
+freesound/static/bw-frontend/dist/
+bw_static/
 npm-debug.log
+

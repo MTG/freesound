@@ -38,5 +38,35 @@
     "display_name": "Weekly stream update email notifications",
     "send_by_default": false
   }
+},
+{
+  "model": "accounts.emailpreferencetype",
+  "pk": 5,
+  "fields": {
+    "description": "Receive emails requesting donations to Freesound",
+    "name": "donation_request",
+    "display_name": "Donation requests for Freesound",
+    "send_by_default": true
+  }
+},
+{
+  "model": "accounts.emailpreferencetype",
+  "pk": 6,
+  "fields": {
+    "description": "Email notification sent when a new post is added to a forum thread you are subscribed to",
+    "name": "new_post",
+    "display_name": "New post in thread I am subscribed to",
+    "send_by_default": true
+  }
+},
+{
+  "model": "accounts.emailpreferencetype",
+  "pk": 7,
+  "fields": {
+    "description": "Email notification sent when one of your sounds is remixed",
+    "name": "new_remix",
+    "display_name": "One of my sounds has been remixed",
+    "send_by_default": true
+  }
 }
 ]

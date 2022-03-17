@@ -10,7 +10,7 @@ of your uploads ({{ ticket.sound.original_filename }}).
 
 Please go to:
 
-<{% absurl 'tickets-ticket' ticket.key %}>
+{% absurl 'tickets-ticket' ticket.key %}
 
  to see the message the moderator has
 left for you. Your upload will not be part of Freesound until the moderator

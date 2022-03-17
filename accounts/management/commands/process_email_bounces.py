@@ -18,22 +18,43 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.dateparse import parse_datetime
 from django.db import IntegrityError
 from accounts.models import EmailBounce
+
+from utils.aws import init_client, AwsCredentialsNotConfigured
 from utils.filesystem import create_directories
-from boto3 import client
+from utils.management_commands import LoggingBaseCommand
 from botocore.exceptions import EndpointConnectionError
+
 import json
 import logging
 import time
 import os
 
-logger_web = logging.getLogger('web')
-logger_console = logging.getLogger('console')
+console_logger = logging.getLogger('console')
+
+
+def process_message(data):
+    bounce_type = EmailBounce.type_from_string(data['bounceType'])
+    timestamp = parse_datetime(data['timestamp'])
+    is_duplicate = False
+    n_recipients = 0
+
+    for recipient in data['bouncedRecipients']:
+        email = recipient['emailAddress']
+        try:
+            user = User.objects.get(email__iexact=email)
+            EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
+            n_recipients += 1
+        except User.DoesNotExist:  # user probably got deleted
+            console_logger.info('User {} not found in database (probably deleted)'.format(email))
+        except IntegrityError:  # message duplicated
+            is_duplicate = True
+
+    return is_duplicate, n_recipients
 
 
 def create_dump_file():
@@ -49,7 +70,7 @@ def decode_idna_email(email):
     return user + '@' + domain
 
 
-class Command(BaseCommand):
+class Command(LoggingBaseCommand):
     help = 'Retrieves email bounce info from AWS SQS and updates db.'
     # At the time of implementation AWS has two queue types: standard and FIFO. Standard queue will not guarantee the
     # uniqueness of messages that we are receiving, thus it is possible to get duplicates of the same message.
@@ -77,28 +98,29 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
-            logger_console.error('AWS credentials are not configured')
+        self.log_start()
+
+        try:
+            sqs = init_client('sqs')
+        except AwsCredentialsNotConfigured as e:
+            console_logger.error(e.message)
             return
 
         queue_url = settings.AWS_SQS_QUEUE_URL
         if not queue_url:
-            logger_console.error('AWS queue URL is not configured')
+            console_logger.error('AWS queue URL is not configured')
             return
 
         messages_per_call = settings.AWS_SQS_MESSAGES_PER_CALL
         if not 1 <= settings.AWS_SQS_MESSAGES_PER_CALL <= 10:
-            logger_console.warn('Invalid value for number messages to process per call: {}, using 1'.format(messages_per_call))
+            console_logger.warn('Invalid value for number messages to process per call: {}, using 1'
+                                .format(messages_per_call))
             messages_per_call = 1
 
         save_messages = options['save']
         no_delete = options['no_delete']
         if no_delete:
-            logger_console.info('Running without deleting messages from queue (one batch)')
-
-        sqs = client('sqs', region_name=settings.AWS_REGION,
-                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+            console_logger.info('Running without deleting messages from queue (one batch)')
 
         total_messages = 0
         total_bounces = 0  # counts multiple recipients of the same mail
@@ -115,7 +137,7 @@ class Command(BaseCommand):
                     WaitTimeSeconds=0
                 )
             except EndpointConnectionError as e:
-                logger_console.error(e.message)
+                console_logger.error(e.message)
                 return
                 
             messages = response.get('Messages', [])
@@ -127,21 +149,8 @@ class Command(BaseCommand):
                 data = json.loads(body['Message'])
 
                 if data['notificationType'] == 'Bounce':
-                    bounce_data = data['bounce']
-                    bounce_type = EmailBounce.type_from_string(bounce_data['bounceType'])
-                    timestamp = parse_datetime(bounce_data['timestamp'])
-                    is_duplicate = False
 
-                    for recipient in bounce_data['bouncedRecipients']:
-                        email = decode_idna_email(recipient['emailAddress'])
-                        try:
-                            user = User.objects.get(email__iexact=email)
-                            EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
-                            total_bounces += 1
-                        except User.DoesNotExist:  # user probably got deleted
-                            logger_console.info(u'User {} not found in database (probably deleted)'.format(email))
-                        except IntegrityError:  # message duplicated
-                            is_duplicate = True
+                    is_duplicate, n_recipients = process_message(data['bounce'])
 
                     if not no_delete:
                         sqs.delete_message(
@@ -159,5 +168,6 @@ class Command(BaseCommand):
             with open(filename, 'w') as fp:
                 json.dump(all_messages, fp)
 
-        result = {'nMailsBounced': total_messages, 'nBounces': total_bounces}
-        logger_web.info('Finished processing messages from queue ({})'.format(json.dumps(result)))
+        result = {'n_mails_bounced': total_messages, 'n_bounces': total_bounces}
+        self.log_end(result)
+

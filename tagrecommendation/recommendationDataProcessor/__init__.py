@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from tagrecommendation_settings import RECOMMENDATION_TMP_DATA_DIR, RECOMMENDATION_DATA_DIR, TAGRECOMMENDATION_ADDRESS, TAGRECOMMENDATION_PORT
+from tagrecommendation_settings import RECOMMENDATION_TMP_DATA_DIR, RECOMMENDATION_DATA_DIR
 import fileinput, sys, os
 from utils import saveToJson, mtx2npy, loadFromJson
 from numpy import save, load, where, in1d
@@ -391,8 +391,8 @@ class RecommendationDataProcessor:
 
         class_names = list(set(class_names))
         saveToJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json', {'database': current_database_name, 'classes':class_names})
-        # Reload tag recommendation server
-        urllib.urlopen('http://%s:%i/tagrecommendation/reload' % (TAGRECOMMENDATION_ADDRESS, TAGRECOMMENDATION_PORT))
+
+        # NOTE: after the cleaning, tag recommendation needs to be reloaded manually
 
     def rollback_last_backup(self):
         backup_data = False
@@ -420,6 +420,5 @@ class RecommendationDataProcessor:
                         # Set previous matrixs to "backup mode" (will be deleted in the next update)
                         print "Rolling back backup %s" % RECOMMENDATION_DATA_DIR + filename
                         os.rename(RECOMMENDATION_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + filename[7:])
-        # Reload tag recommendation server
-        urllib.urlopen('http://%s:%i/tagrecommendation/reload' % (TAGRECOMMENDATION_ADDRESS, TAGRECOMMENDATION_PORT))
 
+        # NOTE: after the rollback, tag recommendation needs to be reloaded manually

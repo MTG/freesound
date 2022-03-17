@@ -1,0 +1,73 @@
+.input-wrapper {
+  background: $search-bg;
+  border-radius: 100px;
+  padding-left: 10px;
+  padding-right: 10px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  color: $black;
+  min-height: 30px;
+
+  input {
+    width: 100%;
+  }
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  bottom: 0;
+  left: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+input[type='search'] {
+  margin-left: 40px;
+  -moz-appearance: none; /* avoid browser styling older firefox */
+  -webkit-appearance: none; /* avoid browser styling safari, chrome, edge and ie mobile */
+  appearance: none; /* avoid browser styling rest */
+}
+
+input {
+  color: $black;
+  background: none;
+  border: 0;
+
+  &::placeholder {
+    color: $black-hover;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.typeahead-wrapper {
+  position: relative;
+}
+
+.input-typeahead-suggestions {
+  position: absolute;
+  box-shadow: $dropdown-shadow;
+  background: $white;
+  width: 100%;
+  max-height: 300px;
+  z-index: get-z-index(dropdown);
+  overflow: auto;
+}
+
+.input-typeahead-suggestion-wrapper {
+  padding: 2px;
+  padding-left: 15px;
+  cursor: pointer;
+  
+  &:focus,
+  &:hover,
+  &:active,
+  &.active {
+    background-color: #f8f8f8;
+  }
+}

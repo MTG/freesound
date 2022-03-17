@@ -1,0 +1,32 @@
+{% extends "molecules/modal_base.html" %}
+{% load staticfiles %}
+{% load bw_templatetags %}
+
+{% block id %}bookmarkSoundModal{% endblock %}
+{% block extra-class %}modal-width-60{% endblock %}
+{% block aria-labelledby %}bookmarkSoundModalLabel{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h5 class="v-spacing-5">Bookmark this sound</h5>
+    </div>
+    <div class="v-spacing-4">
+        {% if bookmarks %}
+            <div class="v-spacing-4 text-grey">
+            {% bw_icon 'bookmark-filled' %}This sound is already in your bookmarks{% if not categories_aready_containing_sound %}{% endif %}
+            {% if categories_aready_containing_sound %}
+                under the categories:
+                {% for cat in categories_aready_containing_sound %}
+                    <strong>{{cat.name}}</strong>{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            {% endif %}
+            </div>
+        {% endif %}
+        <form>
+            {{ form }}
+            <button class="btn-primary v-spacing-top-2">Add bookmark</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

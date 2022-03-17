@@ -18,28 +18,29 @@
 #     See AUTHORS file.
 #
 
+import csv
+import json
+import logging
 import os
 import shutil
-import csv
-import logging
-import json
-import xlrd
-from django.urls import reverse
-from django.contrib.auth.models import User
-from utils.audioprocessing import get_sound_type
-from geotags.models import GeoTag
-from utils.filesystem import md5file, remove_directory_if_empty
-from utils.text import slugify
-from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
-    remove_uploaded_file_from_mirror_locations
-from utils.cache import invalidate_template_cache
-from django.contrib.auth.models import Group
-from gearman.errors import ServerUnavailable
-from django.apps import apps
 from collections import defaultdict
 
+import xlrd
+from django.apps import apps
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import User
+from django.urls import reverse
 
-console_logger = logging.getLogger("console")
+from geotags.models import GeoTag
+from utils.audioprocessing import get_sound_type
+from utils.cache import invalidate_user_template_caches
+from utils.filesystem import md5file, remove_directory_if_empty, create_directories
+from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
+    remove_uploaded_file_from_mirror_locations
+from utils.text import slugify, remove_control_chars
+
+console_logger = logging.getLogger('console')
+sounds_logger = logging.getLogger('sounds')
 
 
 # Classes to handle specific errors messages on calling method
@@ -58,17 +59,38 @@ class CantMoveException(Exception):
 def _remove_user_uploads_folder_if_empty(user):
     """
     Check if the user uploads folder is empty and removes it.
-    Removes user uploads folder in the "local" disk and in mirrored disks too. 
+    Removes user uploads folder in the "local" disk and in mirrored disks too.
     """
     user_uploads_dir = user.profile.locations()['uploads_dir']
     remove_directory_if_empty(user_uploads_dir)
     remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
 
 
-def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exists=False):
+def create_sound(user,
+                 sound_fields,
+                 apiv2_client=None,
+                 bulk_upload_progress=None,
+                 process=True,
+                 remove_exists=False):
     """
-    This function is used by the upload handler to create a sound object with
-    the information provided through sound_fields parameter.
+    This function is used to create sound objects uploaded via the sound describe form, the API or the bulk describe
+    feature.
+
+    Args:
+        user (User): user that will appear as the uploader of the sound (author)
+        sound_fields (dict): dictionary with data to populate the different fields of the sound object. Check example
+            usages of create_sound for more information about what are these fields and their expected format
+        apiv2_client (ApiV2Client): ApiV2Client object corresponding to the API account that triggered the creation
+            of that sound object (if not provided, will be set to None)
+        bulk_upload_progress (BulkUploadProgress): BulkUploadProgress object corresponding to the bulk upload progress
+            that triggered the creation of this sound object (if not provided, will be set to None)
+        process (bool): whether to trigger processing and analysis of the sound object after being created
+            (defaults to True)
+        remove_exists (bool): if the sound we're trying to create an object for already exists (according to
+            md5 check), delete it (defaults to False)
+
+    Returns:
+        Sound: returns the created Sound object
     """
 
     # Import models using apps.get_model (to avoid circular dependencies)
@@ -118,10 +140,7 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
     sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
     new_original_path = sound.locations("path")
     if sound.original_path != new_original_path:
-        try:
-            os.makedirs(os.path.dirname(new_original_path))
-        except OSError:
-            pass
+        create_directories(os.path.dirname(new_original_path), exist_ok=True)
         try:
             shutil.move(sound.original_path, new_original_path)
 
@@ -173,43 +192,54 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             sound.geotag = geotag
 
     # 6 set description, tags
-    sound.description = sound_fields['description']
+    sound.description = remove_control_chars(sound_fields['description'])
     sound.set_tags(sound_fields['tags'])
 
     if 'is_explicit' in sound_fields:
         sound.is_explicit = sound_fields['is_explicit']
 
-    # 6.5 set uploaded apiv2 client
+    # 6.5 set uploaded apiv2 client or bulk progress object (if any)
     sound.uploaded_with_apiv2_client = apiv2_client
+    sound.uploaded_with_bulk_upload_progress = bulk_upload_progress
 
     # 7 save!
     sound.save()
 
     # 8 create moderation tickets if needed
     if user.profile.is_whitelisted:
-        sound.change_moderation_state('OK', do_not_update_related_stuff=True)
+        sound.change_moderation_state('OK')
     else:
         # create moderation ticket!
         sound.create_moderation_ticket()
-        invalidate_template_cache("user_header", user.id)
+        invalidate_user_template_caches(user.id)
         moderators = Group.objects.get(name='moderators').user_set.all()
         for moderator in moderators:
-            invalidate_template_cache("user_header", moderator.id)
+            invalidate_user_template_caches(moderator.id)
 
-    # 9 proces sound and packs
-    try:
-        sound.compute_crc()
-    except:
-        pass
+    # 9 process sound and packs
+    sound.compute_crc()
 
     if process:
         try:
-            sound.process()
+            sound.process_and_analyze(high_priority=True)
 
             if sound.pack:
                 sound.pack.process()
-        except ServerUnavailable:
-            pass
+        except Exception as e:
+            sound_logger.info('Error sending sound to process and analyze: %s' % str(e))
+
+    # Log
+    if sound.uploaded_with_apiv2_client is not None:
+        upload_source = 'api'
+    elif sound.uploaded_with_bulk_upload_progress is not None:
+        upload_source = 'bulk'
+    else:
+        upload_source = 'web'
+    sounds_logger.info('Created Sound object (%s)' % json.dumps({
+        'sound_id': sound.id,
+        'username': sound.user.username,
+        'upload_source': upload_source,
+    }))
 
     return sound
 
@@ -473,8 +503,8 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
         try:
             bulk_upload_progress_object = BulkUploadProgress.objects.get(id=bulkupload_progress_id)
         except BulkUploadProgress.DoesNotExist:
-            console_logger.info('BulkUploadProgress object with id %i can\'t be found, wont store progress information.'
-                                % bulkupload_progress_id)
+            console_logger.error('BulkUploadProgress object with id %i can\'t be found, wont store progress '
+                                 'information.' % bulkupload_progress_id)
 
     # Start the actual process of uploading files
     lines_ok = [line for line in lines_validated if not line['line_errors']]
@@ -487,8 +517,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
         # Move sounds to the user upload directory (if sounds are not already there)
         user_uploads_directory = user.profile.locations()['uploads_dir']
-        if not os.path.exists(user_uploads_directory):
-            os.mkdir(user_uploads_directory)
+        create_directories(user_uploads_directory, exist_ok=True)
         src_path = os.path.join(sounds_base_dir, line_cleaned['audio_filename'])
         dest_path = os.path.join(user_uploads_directory, os.path.basename(line_cleaned['audio_filename']))
         if src_path != dest_path:
@@ -510,6 +539,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
                         'is_explicit': line_cleaned['is_explicit'],
                     },
                     process=False,
+                    bulk_upload_progress=bulk_upload_progress_object,
                     remove_exists=delete_already_existing,
             )
             if bulk_upload_progress_object:
@@ -518,7 +548,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             # Process sound and pack
             error_sending_to_process = None
             try:
-                sound.process()
+                sound.process_and_analyze(high_priority=True)
             except Exception as e:
                 error_sending_to_process = str(e)
             if sound.pack:

@@ -1,0 +1,98 @@
+# --- build essentia_streaming_extractor_freesound static binary
+
+FROM debian:10 as essentia
+# This is basically the contents of https://github.com/MTG/essentia-docker
+# but it only builds the freesound extractor as a static binary
+
+RUN apt-get update \
+    && apt-get install -y \
+       python libpython2.7 build-essential git libeigen3-dev wget pkg-config nasm cmake curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /essentia && cd /essentia && git clone https://github.com/MTG/essentia.git
+WORKDIR /essentia/essentia
+
+# Checkout commit with Freesound Extractor update 0.6 (some files will be overwritten later)
+RUN git fetch && git checkout 89f52d4efb21e11d3745fa4ce4e0bb0e49cd0e98
+
+WORKDIR /essentia/essentia/packaging
+RUN ./build_3rdparty_static_debian.sh
+
+WORKDIR /essentia/essentia/
+# The line below is a dirty hack to fix a bug currently in Essentia's master branch (and merged to 89f52d4efb21e11d3745fa4ce4e0bb0e49cd0e98)
+# This can be removed once we update the commit to checkout for a version without the bug
+RUN sed -i 's/"HAVE_TENSORFLOW"/0/' src/examples/wscript
+
+# To build a freesound extractor which is compatible with the extractor currently installed in production (0.3) we need to
+# replace some essentia source code files for "streaming_extractor_freesound". This is because we can't build an older version
+# of essentia because it is almost impossible to re-recreate the required build environment with required library versions, etc.
+# Using this port of the old Freesound extractor is a temporary workaround so that we can build worker images that generate
+# analysis files compatible with those from production. Once we update the version of the Freesound extractor used in
+# production we can remove this bit of code here and simply checkout the needed git commit/tag above.
+ADD docker/old_freesound_extractor_port/extractor_version.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundDescriptorsSet.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundLowlevelDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundLowlevelDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundRhythmDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundRhythmDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundSfxDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundSfxDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundTonalDescriptors.cpp /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/FreesoundTonalDescriptors.h /essentia/essentia/src/essentia/utils/extractor_freesound/
+ADD docker/old_freesound_extractor_port/freesoundextractor.h /essentia/essentia/src/algorithms/extractor/
+ADD docker/old_freesound_extractor_port/freesoundextractor.cpp /essentia/essentia/src/algorithms/extractor/
+ADD docker/old_freesound_extractor_port/extractor_utils.cpp /essentia/essentia/src/examples/music_extractor/
+
+RUN PKG_CONFIG_PATH=packaging/debian_3rdparty/lib/pkgconfig ./waf configure --with-static-examples --with-example=streaming_extractor_freesound \
+    && ./waf && ./waf install
+
+# --- build stereofy static binary
+
+FROM debian:10 as stereofy
+
+RUN apt-get update && apt-get install -y build-essential libsndfile-dev
+
+RUN mkdir /code
+COPY ./_sandbox/stereofy /code
+WORKDIR /code/
+RUN make clean && make
+
+# --- main Freesound docker file contents
+
+FROM freesound:2020-02
+
+# Install specific dependencies needed for processing, building static files and for ssh
+RUN wget -q -O - https://deb.nodesource.com/setup_14.x | bash - && apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		sndfile-programs \
+		libsndfile1-dev \
+		libasound2-dev \
+		mplayer \
+		lame \
+		vorbis-tools \
+		flac \
+		faad \
+		libjpeg-dev \
+		zlib1g-dev \
+		libpng-dev \
+		libyaml-dev \
+		nodejs \
+		ffmpeg \
+		openssh-client \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Make some folders to add code and data
+RUN mkdir /code
+RUN mkdir /freesound-data
+WORKDIR /code
+
+# Copy essentia_streaming_extractor_freesound and stereofy binaries
+COPY --from=essentia /usr/local/bin/essentia_streaming_extractor_freesound /usr/local/bin
+COPY --from=stereofy /code/stereofy /usr/local/bin
+
+# Install python dependencies
+COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r /code/requirements.txt
+
+# Copy source code
+COPY --chown=fsweb:fsweb . /code

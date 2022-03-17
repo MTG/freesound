@@ -26,14 +26,14 @@ import bookmarks.models
 
 class BookmarksTest(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def test_bookmarks_context(self):
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
         context = resp.context
 
         self.assertEqual(200, resp.status_code)
-        expected_keys = ['bookmark_categories', 'bookmarked_sounds', 'current_page', 'is_owner',
+        expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
                          'n_uncat', 'page', 'paginator', 'user']
         context_keys = context.keys()
         for k in expected_keys:
@@ -67,7 +67,7 @@ class BookmarksTest(TestCase):
         context = resp.context
 
         self.assertEqual(200, resp.status_code)
-        expected_keys = ['bookmark_categories', 'bookmarked_sounds', 'current_page', 'is_owner',
+        expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
                          'n_uncat', 'page', 'paginator', 'user']
         context_keys = context.keys()
         for k in expected_keys:
@@ -84,7 +84,7 @@ class BookmarksTest(TestCase):
         response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(3, len(response.context['bookmarked_sounds']))
+        self.assertEquals(3, len(response.context['page'].object_list))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Uncategorized bookmarks')
         self.assertContains(response, 'BookmarkedSound')
@@ -126,7 +126,7 @@ class BookmarksTest(TestCase):
                                            kwargs={'username': user.username, 'category_id': category.id}))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(2, len(response.context['bookmarked_sounds']))
+        self.assertEquals(2, len(response.context['page'].object_list))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')
@@ -155,8 +155,7 @@ class BookmarksTest(TestCase):
         # The response is a 200
         self.assertEqual(200, response.status_code)
 
-
-        self.assertEquals(2, len(response.context['bookmarked_sounds']))
+        self.assertEquals(2, len(response.context['page'].object_list))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')

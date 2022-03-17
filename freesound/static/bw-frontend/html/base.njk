@@ -1,0 +1,39 @@
+{% import './molecules/modal.njk' as modals %}
+{% import './molecules/toast.njk' as toast %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#000000">
+    <title>Freesound</title>
+    <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
+    <meta name="keywords" content="free, sound">
+    {% block extrahead %}
+    {% endblock %}
+  </head>
+
+  <body>
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    {{ modals.login() }}
+    {{ modals.forgottenPassword() }}
+    {{ modals.register() }}
+    {{ modals.newPassword() }}
+    {{ modals.feedbackRegistration() }}
+    {{ toast.prepareds() }}
+    <div class="notifications-wrapper"></div>
+    <div class="bw-page">
+    {% block content %}
+    {% endblock %}
+    </div>
+    <script src="../src/index.js"></script>
+    <script src="../src/pages/loginAndRegistration.js"></script><!-- this is added here to trigger compilation of pages/loginAndRegistration.js, but is really only used in the Django login page. Ideally, the npm build command should build all *.js files in /pages so that we don't have to link them in nj templates -->
+    <script src="../src/components/mapsMapbox.js"></script><!-- this is added here to trigger compilation of components/mapsMapbox.js, but is really only used in the Django login page. Ideally, the npm build command should build all *.js files in /pages so that we don't have to link them in nj templates -->
+    <script src="../src/pages/donate.js"></script><!-- this is added here to trigger compilation of pages/dobate.js, but is really only used in the Donate page. Ideally, the npm build command should build all *.js files in /pages so that we don't have to link them in nj templates -->
+    {% block extrabody %}
+    {% endblock %}
+  </body>
+</html>

@@ -19,12 +19,16 @@
 #
 
 from django import forms
+
 from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
+
 class PostReplyForm(forms.Form):
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=20)))
-    subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}))
+    subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.",
+                                   required=False, initial=True)
+
     def __init__(self, request, quote, *args, **kwargs):
         self.request = request
         self.quote = quote
@@ -37,15 +41,63 @@ class PostReplyForm(forms.Form):
             raise forms.ValidationError("You should type something...")
 
         if is_spam(self.request, body):
-            raise forms.ValidationError("Your post was considered spam, please edit and repost. If it keeps failing please contact the admins.")
+            raise forms.ValidationError("Your post was considered spam, please edit and repost. "
+                                        "If it keeps failing please contact the admins.")
 
         return body
 
+class BwPostReplyForm(PostReplyForm):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super(BwPostReplyForm, self).__init__(*args, **kwargs)
+
+        html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
+                        <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
+                        <code>blockquote</code> and <code>code</code>."""
+
+        self.fields['body'].label = "Message"
+        self.fields['body'].widget.attrs['placeholder'] = "Write the first message of your thread"
+        self.fields['body'].widget.attrs['autofocus'] = "autofocus"
+        self.fields['body'].widget.attrs['rows'] = False
+        self.fields['body'].widget.attrs['cols'] = False
+        self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
+        self.fields['body'].help_text = html_tags_help_text
+        self.fields['subscribe'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['subscribe'].label = self.fields['subscribe'].help_text
+        self.fields['subscribe'].help_text = False
+
+
 
 class NewThreadForm(forms.Form):
-    title = forms.CharField(max_length=250)
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
+    title = forms.CharField(max_length=250,
+                            widget=forms.TextInput(attrs={'size': 100}))
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}))
     subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
+
+
+class BwNewThreadForm(NewThreadForm):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super(BwNewThreadForm, self).__init__(*args, **kwargs)
+
+        html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
+                <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
+                <code>blockquote</code> and <code>code</code>."""
+
+        # Customize some placeholders and classes, remove labels and help texts
+        self.fields['title'].widget.attrs['placeholder'] = 'Write your new thread title'
+        self.fields['title'].widget.attrs['autofocus'] = "autofocus"
+        self.fields['body'].label = "Message"
+        self.fields['body'].widget.attrs['placeholder'] = "Write the first message of your thread"
+        self.fields['body'].widget.attrs['rows'] = False
+        self.fields['body'].widget.attrs['cols'] = False
+        self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
+        self.fields['body'].help_text = html_tags_help_text
+        self.fields['subscribe'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['subscribe'].label = self.fields['subscribe'].help_text
+        self.fields['subscribe'].help_text = False
 
 
 MODERATION_CHOICES = [(x, x) for x in

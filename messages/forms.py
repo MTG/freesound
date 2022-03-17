@@ -21,7 +21,9 @@
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
+
 from utils.forms import CaptchaWidget, HtmlCleaningCharField
+from utils.spam import is_spam
 
 
 class ManualUserField(forms.CharField):
@@ -34,22 +36,29 @@ class ManualUserField(forms.CharField):
             raise forms.ValidationError("We are sorry, but this username does not exist...")
 
 
-def MessageReplyClassCreator(baseclass, enable_captcha):
+class MessageReplyForm(forms.Form):
+    to = ManualUserField(widget=forms.TextInput(attrs={'size': '40'}))
+    subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size': '80'}))
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
 
-    class MessageReplyForm(baseclass):
-        to = ManualUserField(widget=forms.TextInput(attrs={'size':'40'}))
-        subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size':'80'}))
-        body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
-        if enable_captcha:
-            recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    def __init__(self, request, *args, **kwargs):
+        self.request = request  # This is used by MessageReplyFormWithCaptcha to be able to call is_spam function
+        super(MessageReplyForm, self).__init__(*args, **kwargs)
 
-            def clean_recaptcha_response(self):
-                captcha_response = self.cleaned_data.get("recaptcha_response")
-                if not captcha_response and settings.RECAPTCHA_PUBLIC_KEY:
-                    raise forms.ValidationError(_("Captcha is not correct"))
-                return captcha_response
 
-    return MessageReplyForm
+class MessageReplyFormWithCaptcha(MessageReplyForm):
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
-MessageReplyForm = MessageReplyClassCreator(forms.Form, True)
-MessageReplyFormNoCaptcha = MessageReplyClassCreator(forms.Form, False)
+    def clean_recaptcha_response(self):
+        captcha_response = self.cleaned_data.get("recaptcha_response")
+        if settings.RECAPTCHA_PUBLIC_KEY:
+            if not captcha_response:
+                raise forms.ValidationError("Captcha is not correct")
+        return captcha_response
+
+    def clean_body(self):
+        body = self.cleaned_data['body']
+        if is_spam(self.request, body):
+            raise forms.ValidationError("Your message was considered spam. If your message is not spam and the "
+                                        "check keeps failing, please contact the admins.")
+        return body

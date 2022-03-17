@@ -18,15 +18,17 @@
 #     See AUTHORS file.
 #
 
-import traceback, logging
+import logging
+import traceback
+
 from django.conf import settings
 from django.core.cache import cache
+
 from similarity.client import Similarity
-from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUNDS_TO_CACHE, SIMILARITY_CACHE_TIME
+from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILARITY_CACHE_TIME
 from utils.encryption import create_hash
 
-
-logger = logging.getLogger('web')
+web_logger = logging.getLogger('web')
 
 
 def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS_PER_PAGE, offset=0):
@@ -55,8 +57,8 @@ def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS
             similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
             count = result['count']
         except Exception as e:
-            logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
-                         (e, traceback.format_exc()))
+            web_logger.error('Could not get a response from the similarity service (%s)\n\t%s' % \
+                             (e, traceback.format_exc()))
             result = False
             similar_sounds = []
             count = 0
@@ -138,8 +140,8 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     try:
         returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
     except Exception as e:
-        logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
-                     (e, traceback.format_exc()))
+        web_logger.error('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
+                         (e, traceback.format_exc()))
         raise
 
     # save sound analysis information in cache
@@ -152,12 +154,12 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     return returned_data
 
 
-def delete_sound_from_gaia(sound):
-    logger.info("Deleting sound from gaia with id %d" % sound.id)
+def delete_sound_from_gaia(sound_id):
+    web_logger.info("Deleting sound from gaia with id %d" % sound_id)
     try:
-        Similarity.delete(sound.id)
+        Similarity.delete(sound_id)
     except Exception as e:
-        logger.warn("Could not delete sound from gaia with id %d (%s)" % (sound.id, str(e)))
+        web_logger.warn("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
 
 
 def hash_cache_key(key):

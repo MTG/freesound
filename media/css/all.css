@@ -19,6 +19,7 @@ address,caption,cite,code,dfn,em,strong,th,var {
 
 fieldset,img {
     border: 0;
+    max-width: 100%;
 }
 
 caption,th {
@@ -241,14 +242,11 @@ form {
     margin-bottom: 10px;
 }
 
-form label {
-    display: block;
-}
-
 form input,form textarea {
     padding: 3px;
     font-size: 13px;
 }
+
 #content textarea {
     width: 530px;
 }
@@ -2101,10 +2099,6 @@ ul.pagination {
     margin-bottom: 20px;
 }
 
-#sidebar #latest_geotags {
-    display: none;
-}
-
 #sidebar #latest_geotags #map_canvas {
     position: relative;
     left: -19px;
@@ -3129,6 +3123,24 @@ use classes from pack edition
     margin-bottom: 20px;
 }
 
+map_terrain_menu {
+    position:absolute;
+    background: #fff;
+    padding: 8px;
+    right: 52px;
+    top: 8px;
+    border-radius: 5px;
+    line-height: 24px;
+    border: 2px solid rgba(100,100,100, 0.1);
+    cursor: pointer;
+    background-clip: padding-box;
+}
+
+.map_terrain_menu:hover {
+    background: #eeeeee;
+    background-clip: padding-box;
+}
+
 /* Describe google map
 ------------------------------------------------------*/
 .describe-geotag-form {
@@ -3139,6 +3151,11 @@ use classes from pack edition
 
 .describe-gmap {
     float: left;
+}
+
+.geotag_edit_map_size {
+    width: 600px;
+    height:400px;
 }
 
 /* Notification messages
@@ -3181,6 +3198,26 @@ ul.messages {
     float: left;
     height: 75px;
     width: 75px;
+}
+
+.moderation-user-list-order {
+    list-style: none;
+    padding-left: 0px;
+}
+
+.moderation-user-list-order li {
+    display: inline;
+}
+
+.moderation-user-list-order li a {
+    border: 1px solid;
+    padding: 5px;
+}
+
+.moderation-user-list-order li a.selected {
+    border: 2px solid;
+    padding: 5px;
+    font-weight: bold;
 }
 
 #moderation_form textarea {
@@ -3253,6 +3290,10 @@ ul.messages {
 
 .alternate-row-odd td {
     background-color: #fff;
+}
+
+.ticket-row-highlighted td {
+    background-color: #edd38f!important;
 }
 
 .mod-selected-row td {

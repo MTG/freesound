@@ -23,7 +23,6 @@ from django import forms
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.conf import settings
-from django.utils.translation import ugettext as _
 from django.core.exceptions import PermissionDenied
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
@@ -71,7 +70,8 @@ class SoundDescriptionForm(forms.Form):
     is_explicit = forms.BooleanField(required=False)
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
                     help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                              "For example: <i>field-recording</i> is a popular tag.")
+                              "For example: <i>field-recording</i> is a popular tag."
+                              "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
     def __init__(self, *args, **kwargs):
@@ -117,15 +117,7 @@ class RemixForm(forms.Form):
             try:
                 source = Sound.objects.get(id=sid)
                 self.sound.sources.remove(source)
-
                 source.invalidate_template_caches()
-
-                # modify remix_group
-                send_mail_template(
-                    u'Sound removed as remix source', 'sounds/email_remix_update.txt',
-                    {'source': source, 'action': 'removed', 'remix': self.sound},
-                    user_to=source.user
-                )
             except Sound.DoesNotExist:
                 pass
             except Exception as e:
@@ -140,9 +132,9 @@ class RemixForm(forms.Form):
             self.sound.sources.add(source)
             try:
                 send_mail_template(
-                    u'Sound added as remix source', 'sounds/email_remix_update.txt',
+                    settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'sounds/email_remix_update.txt',
                     {'source': source, 'action': 'added', 'remix': self.sound},
-                    user_to=source.user
+                    user_to=source.user, email_type_preference_check='new_remix'
                 )
             except Exception as e:
                 # Report any exception but fail silently
@@ -241,13 +233,13 @@ class FlagForm(forms.Form):
                                              ' email address appears to be invalid, please check if it\'s correct.'})
     reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
     reason = forms.CharField(widget=forms.Textarea)
-    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
     def clean_recaptcha_response(self):
         captcha_response = self.cleaned_data.get("recaptcha_response")
         if settings.RECAPTCHA_PUBLIC_KEY:
             if not captcha_response:
-                raise forms.ValidationError(_("Captcha is not correct"))
+                raise forms.ValidationError("Captcha is not correct")
         return captcha_response
 
     def save(self):

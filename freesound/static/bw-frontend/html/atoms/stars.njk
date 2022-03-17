@@ -1,0 +1,21 @@
+{% import './icons.njk' as icons %}
+{% macro stars(rating) %}
+  {% for i in range(rating | round(0, 'floor')) %}
+    {{ icons.icon('star', 'text-red')}}
+  {% endfor %}
+  {% if rating !== rating | round(0) %}
+    {{ icons.icon('half-star', 'text-red')}}
+  {% endif %}
+  {% for i in range(5 - rating | round(0)) %}
+    {{ icons.icon('star', 'text-light-grey')}}
+  {% endfor %}
+{% endmacro %}
+
+{% macro rating() %}
+  <div class="bw-rating__container">
+    {% for i in range(5 | round(0)) | reverse %}
+      <input class="bw-rating__input" type="radio" name="rate" id="rate-{{i + 1}}" value="{{i + 1}}">
+      <label for="rate-{{i + 1}}">{{ icons.icon('star', 'text-light-grey text-20')}}</label>
+    {% endfor %}
+  </div>
+{% endmacro %}

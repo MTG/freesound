@@ -1,4 +1,4 @@
-APIv1 Docummentation
+﻿APIv1 Documentation
 >>>>>>>>>>>>>>>>>>>>
 
 **NOTE**: Freesound APIv1 has reached its end of life and is no longer available.
@@ -23,7 +23,7 @@ More help
 ---------
 
 If you need more help after reading these documents or want to stay up to
-date on any changes or future feaures of the freesound api or if you would
+date on any changes or future features of the freesound api or if you would
 like to request more features for the api, please use our google group:
 
 

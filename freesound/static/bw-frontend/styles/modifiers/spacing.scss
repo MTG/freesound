@@ -1,0 +1,78 @@
+@for $i from 1 through 7 {
+  .h-spacing-#{$i} {
+    margin-right: nth($spacing-values-list, $i);
+  }
+
+  .h-spacing-left-#{$i} {
+    margin-left: nth($spacing-values-list, $i);
+  }
+
+  .v-spacing-#{$i} {
+    margin-bottom: nth($spacing-values-list, $i);
+  }
+
+  .v-spacing-top-#{$i} {
+    margin-top: nth($spacing-values-list, $i);
+  }
+
+  .v-spacing-top-negative-#{$i} {
+    margin-top: -#{nth($spacing-values-list, $i)};
+  }
+
+  .spacing-#{$i} {
+    margin-right: nth($spacing-values-list, $i);
+    margin-bottom: nth($spacing-values-list, $i);
+  }
+
+  .padding-left-#{$i} {
+    padding-left: nth($spacing-values-list, $i);
+  }
+
+  .padding-right-#{$i} {
+    padding-right: nth($spacing-values-list, $i);
+  }
+
+  .h-padding-#{$i} {
+    padding-left: nth($spacing-values-list, $i);
+    padding-right: nth($spacing-values-list, $i);
+  }
+
+  .padding-top-#{$i} {
+    padding-top: nth($spacing-values-list, $i);
+  }
+
+  .padding-bottom-#{$i} {
+    padding-bottom: nth($spacing-values-list, $i);
+  }
+
+  .v-padding-#{$i} {
+    padding-top: nth($spacing-values-list, $i);
+    padding-bottom: nth($spacing-values-list, $i);
+  }
+
+  .v-padding-bottom-#{$i} {
+    padding-bottom: nth($spacing-values-list, $i);
+  }
+
+  .padding-#{$i} {
+    padding-left: nth($spacing-values-list, $i);
+    padding-right: nth($spacing-values-list, $i);
+    padding-top: nth($spacing-values-list, $i);
+    padding-bottom: nth($spacing-values-list, $i);
+  }
+}
+
+.no-margins {
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+}
+
+.no-paddings {
+  padding: 0 !important;
+}
+
+.no-padding-left {
+  padding-left: 0 !important;
+}

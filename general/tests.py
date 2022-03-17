@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,16 +20,21 @@
 #     See AUTHORS file.
 #
 
-from forum.models import Thread, Post, Forum
-from ratings.models import SoundRating
-from sounds.tests import create_user_and_sounds
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
+from django.urls import reverse
+
+from forum.models import Thread, Post, Forum
+from general.templatetags.paginator import show_paginator
+from ratings.models import SoundRating
+from sounds.models import Sound
+from utils.pagination import paginate
+from utils.test_helpers import create_user_and_sounds
 
 
 class ReportCountStatusesManagementCommandTestCase(TestCase):
 
-    fixtures = ['initial_data']  # Needed for loading licenses, etc
+    fixtures = ['licenses']
 
     def test_report_count_statuses(self):
 
@@ -44,28 +51,29 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
         thread = Thread.objects.create(forum=forum, title="testThread", author=user)
         Post.objects.create(author=user, body="testBody", thread=thread)
+        Post.objects.create(author=user, body="testBody unnmoderated", thread=thread, moderation_state="NM")
         user.profile.refresh_from_db()  # Refresh from db after methods that use F-expressions
 
         # Assert initial counts are ok
-        self.assertEquals(user.profile.num_sounds, 1)
-        self.assertEquals(user.profile.num_posts, 1)
-        self.assertEquals(pack.num_sounds, 1)
-        self.assertEquals(pack.num_downloads, 0)
-        self.assertEquals(sound.num_ratings, 1)
-        self.assertEquals(sound.avg_rating, 4)
-        self.assertEquals(sound.num_comments, 1)
-        self.assertEquals(sound.num_downloads, 0)
+        self.assertEqual(user.profile.num_sounds, 1)
+        self.assertEqual(user.profile.num_posts, 1)  # Note that count is 1 because one of the posts is not moderated
+        self.assertEqual(pack.num_sounds, 1)
+        self.assertEqual(pack.num_downloads, 0)
+        self.assertEqual(sound.num_ratings, 1)
+        self.assertEqual(sound.avg_rating, 4)
+        self.assertEqual(sound.num_comments, 1)
+        self.assertEqual(sound.num_downloads, 0)
 
         # Run command and assert counts are still ok
         call_command('report_count_statuses')
-        self.assertEquals(user.profile.num_sounds, 1)
-        self.assertEquals(user.profile.num_posts, 1)
-        self.assertEquals(pack.num_sounds, 1)
-        self.assertEquals(pack.num_downloads, 0)
-        self.assertEquals(sound.num_ratings, 1)
-        self.assertEquals(sound.avg_rating, 4)
-        self.assertEquals(sound.num_comments, 1)
-        self.assertEquals(sound.num_downloads, 0)
+        self.assertEqual(user.profile.num_sounds, 1)
+        self.assertEqual(user.profile.num_posts, 1)
+        self.assertEqual(pack.num_sounds, 1)
+        self.assertEqual(pack.num_downloads, 0)
+        self.assertEqual(sound.num_ratings, 1)
+        self.assertEqual(sound.avg_rating, 4)
+        self.assertEqual(sound.num_comments, 1)
+        self.assertEqual(sound.num_downloads, 0)
 
         # Manually set the counts to something wrong
         user.profile.num_sounds = 21
@@ -85,39 +93,60 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         user.profile.refresh_from_db()
         sound.refresh_from_db()
         pack.refresh_from_db()
-        self.assertNotEquals(user.profile.num_sounds, 1)
-        self.assertNotEquals(user.profile.num_posts, 1)
-        self.assertNotEquals(pack.num_sounds, 1)
-        self.assertNotEquals(pack.num_downloads, 0)
-        self.assertNotEquals(sound.num_ratings, 1)
-        self.assertNotEquals(sound.avg_rating, 4)
-        self.assertNotEquals(sound.num_comments, 1)
-        self.assertNotEquals(sound.num_downloads, 0)
+        self.assertNotEqual(user.profile.num_sounds, 1)
+        self.assertNotEqual(user.profile.num_posts, 1)
+        self.assertNotEqual(pack.num_sounds, 1)
+        self.assertNotEqual(pack.num_downloads, 0)
+        self.assertNotEqual(sound.num_ratings, 1)
+        self.assertNotEqual(sound.avg_rating, 4)
+        self.assertNotEqual(sound.num_comments, 1)
+        self.assertNotEqual(sound.num_downloads, 0)
 
         # Re-run command with -d and assert that all counts are ok except for download counts
         call_command('report_count_statuses', '--skip-downloads')
         user.profile.refresh_from_db()
         sound.refresh_from_db()
         pack.refresh_from_db()
-        self.assertEquals(user.profile.num_sounds, 1)
-        self.assertEquals(user.profile.num_posts, 1)
-        self.assertEquals(pack.num_sounds, 1)
-        self.assertNotEquals(pack.num_downloads, 0)
-        self.assertEquals(sound.num_ratings, 1)
-        self.assertEquals(sound.avg_rating, 4)
-        self.assertEquals(sound.num_comments, 1)
-        self.assertNotEquals(sound.num_downloads, 0)
+        self.assertEqual(user.profile.num_sounds, 1)
+        self.assertEqual(user.profile.num_posts, 1)  # Note this is still 1 as unmoderated posts do not count
+        self.assertEqual(pack.num_sounds, 1)
+        self.assertNotEqual(pack.num_downloads, 0)
+        self.assertEqual(sound.num_ratings, 1)
+        self.assertEqual(sound.avg_rating, 4)
+        self.assertEqual(sound.num_comments, 1)
+        self.assertNotEqual(sound.num_downloads, 0)
 
         # Re-run command with no options set and check that all counts are ok now
         call_command('report_count_statuses')
         user.profile.refresh_from_db()
         sound.refresh_from_db()
         pack.refresh_from_db()
-        self.assertEquals(user.profile.num_sounds, 1)
-        self.assertEquals(user.profile.num_posts, 1)
-        self.assertEquals(pack.num_sounds, 1)
-        self.assertEquals(pack.num_downloads, 0)
-        self.assertEquals(sound.num_ratings, 1)
-        self.assertEquals(sound.avg_rating, 4)
-        self.assertEquals(sound.num_comments, 1)
-        self.assertEquals(sound.num_downloads, 0)
+        self.assertEqual(user.profile.num_sounds, 1)
+        self.assertEqual(user.profile.num_posts, 1)
+        self.assertEqual(pack.num_sounds, 1)
+        self.assertEqual(pack.num_downloads, 0)
+        self.assertEqual(sound.num_ratings, 1)
+        self.assertEqual(sound.avg_rating, 4)
+        self.assertEqual(sound.num_comments, 1)
+        self.assertEqual(sound.num_downloads, 0)
+
+
+class PaginatorTestCase(TestCase):
+
+    def test_url_with_non_ascii_characters(self):
+        """Paginator objects are passed a request object which includes a list of request GET parameters and values.
+        The paginator uses this object to get parameters like the current page that is requested, and also to construct
+        pagination links which contain all the same GET parameters as the initial request so that whatever things
+        are determined there, will be preserved when moving to the next page. To do that the paginator iterates over
+        all GET parameters and values. This test checks that if non-ascii characters are passed as GET parameter names
+        or values, paginator does not break.
+        """
+        context = {'media_url': 'fake URL'}
+        text_with_non_ascii = u'�textèé'
+        dummy_request = RequestFactory().get(reverse('sounds'), {
+            text_with_non_ascii: '1',
+            'param_name': text_with_non_ascii,
+            'param2_name': 'ok_value',
+        })
+        paginator = paginate(dummy_request, Sound.objects.all(), 10)
+        show_paginator(context, paginator['paginator'], paginator['page'], paginator['current_page'], dummy_request)

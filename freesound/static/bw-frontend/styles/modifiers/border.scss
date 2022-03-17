@@ -1,0 +1,44 @@
+.border-grey {
+  border: 1px solid $navy-grey;
+}
+
+.border-grey-light {
+  border: 1px solid $navy-light-grey;
+}
+
+@for $i from 1 through 10 {
+  .border-radius-#{$i} {
+    border-radius: #{$i};
+  }
+}
+
+.no-border-radius {
+  border-radius: 0;
+}
+
+.no-border-top {
+  border-top: 0;
+}
+
+.no-border-right {
+  border-right: 0;
+}
+
+.no-border-bottom {
+  border-bottom: 0;
+}
+
+.no-border-left {
+  border-left: 0;
+}
+
+.divider-light {
+  border-top: 1px solid $navy-grey;
+  opacity: 0.15;
+}
+
+.border-light-grey-bottom-hover {
+  &:hover {
+    border-bottom: 1px solid $navy-light-grey;
+  }
+}

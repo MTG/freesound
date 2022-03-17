@@ -1,0 +1,95 @@
+.bw-forums {
+  &__input-search {
+
+    &::placeholder {
+      color: $navy-light-grey;
+    }
+
+    &:before {
+      content: '\e907';
+    }
+  }
+}
+
+.bw-new-thread {
+  &__form {
+    display: flex;
+    flex-direction: column;
+
+    p {
+      margin-bottom: 0;
+    }
+
+    label {
+      width: 100%;
+      color: $navy-grey;
+    }
+
+    span.bw-checkbox-container + label {
+      color: $black;
+    }
+
+    .latest-posts-in-thread {
+      max-height: 400px;
+      overflow: scroll;
+      padding: 10px 20px;
+      border: 1px solid $border-input-profile;
+      background-color: $background-input-profile;
+    }
+
+    input,
+    textarea {
+      margin-top: 12px;
+      margin-bottom: 30px;
+      width: 100%;
+      border: 1px solid $border-input-profile;
+      background-color: $background-input-profile;
+      padding: 10px 20px;
+      border-radius: 5px;
+
+      &::placeholder {
+        color: $navy-light-grey;
+      }
+
+      &:focus {
+        background-color: $white;
+        border: 1px solid $black;
+      }
+    }
+
+    textarea {
+      min-height: 400px;
+      resize: none;
+
+      &:focus {
+        background-color: $white;
+        border: 1px solid $black;
+        outline: none;
+      }
+    }
+
+    button {
+      font-size: 17px;
+    }
+
+    .checkboxNotification {
+      margin-bottom: 28px;
+
+      .bw-search__filter-name {
+        line-height: 20px;
+      }
+    }
+
+    .radioAccount {
+      margin-bottom: 28px;
+      color: $navy-grey;
+    }
+
+    .helptext {
+      color: $navy-light-grey;
+      margin-top: -15px;
+      margin-bottom: 18px;
+      display: block;
+    }
+  }
+}

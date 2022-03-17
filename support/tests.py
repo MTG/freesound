@@ -25,7 +25,7 @@ from zenpy.lib.api import serialize
 
 
 class SupportRequestsTest(TestCase):
-    fixtures = ['initial_data.json', 'moderation_test_users.json']
+    fixtures = ['moderation_test_users']
 
     @override_settings(SUPPORT=(('Name', 'email@freesound.org'),))
     def test_send_support_request_email(self):
@@ -52,8 +52,8 @@ class SupportRequestsTest(TestCase):
         sticket = serialize(ticket)
 
         # Check that ticket loaded users' email and username correctly
-        self.assertEquals(sticket['requester']['email'], request_email)
-        self.assertEquals(sticket['requester']['name'], 'test_user')
+        self.assertEqual(sticket['requester']['email'], request_email)
+        self.assertEqual(sticket['requester']['name'], 'test_user')
 
         # Check that ticket added custom fields
         self.assertTrue('custom_fields' in sticket)
@@ -65,7 +65,7 @@ class SupportRequestsTest(TestCase):
         request_email = 'test.user+1234678235@gmail.com'
         ticket = create_zendesk_ticket(request_email, subject, message)
         sticket = serialize(ticket)
-        self.assertEquals(sticket['requester']['email'], request_email)
-        self.assertEquals(sticket['requester']['name'], 'Unknown username')  # Set unknown username
+        self.assertEqual(sticket['requester']['email'], request_email)
+        self.assertEqual(sticket['requester']['name'], 'Unknown username')  # Set unknown username
         self.assertTrue('custom_fields' not in sticket)  # no custom fields
         self.assertTrue(len(sticket['description']) == len(message))  # No extra description

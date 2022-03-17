@@ -1,3 +1,7 @@
+var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
+var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
+var MIN_INPUT_CHARACTERS_FOR_GEOCODER =  3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
+
 function setMaxZoomCenter(lat, lng, zoom) {
     window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels
 }
@@ -44,7 +48,7 @@ function call_on_bounds_chage_callback(map, map_element_id, callback){
 }
 
 function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_bounds_changed_callback,
-                         center_lat, center_lon, zoom, show_search, cluster){
+                         center_lat, center_lon, zoom, show_search, show_style_selector, cluster){
     /*
     This function is used to display maps with sounds. It is used in all pages where maps with markers (which represent
     sounds) are shown: user home/profile, pack page, geotags map, embeds. Parameters:
@@ -60,6 +64,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
     - center_lon: latitude where to center the map (if not specified, it is automatically determined based on markers)
     - zoom: initial zoom for the map (if not specified, it is automatically determined based on markers)
     - show_search: display search bar to fly to places in the map
+    - show_terrain_selector: display button to switch between streets and satellite styles
     - cluster: whether or not to perform point clustering (on by default)
 
     This function first calls the Freesound endpoint which returns the list of geotags to be displayed as markers.
@@ -72,7 +77,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
     getSoundsLocations(geotags_url, function(data){
         var nSounds = data.length;
-        if (nSounds > 0) {  // only if the user has sounds, we render a map
+        if (nSounds >= 0) {
 
             // Define initial map center and zoom
             var init_zoom = 2;
@@ -88,7 +93,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             // Init map and info window objects
             var map = new mapboxgl.Map({
               container: map_element_id, // HTML container id
-              style: 'mapbox://styles/freesound/cjgxefqkb00142roas6kmqneq', // style URL (custom style with satellite and labels)
+              style: 'mapbox://styles/freesound/' + FREESOUND_SATELLITE_STYLE_ID, // style URL
               center: [init_lon, init_lat], // starting position as [lng, lat]
               zoom: init_zoom - 1,  // Subtract 1 for compatibility with gmaps zoom levels
               maxZoom: 18,
@@ -97,7 +102,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             map.touchZoomRotate.disableRotation();
             map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
             if (show_search === true){
-                map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
+                map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken, minLength: MIN_INPUT_CHARACTERS_FOR_GEOCODER}), 'top-left');
             }
             window.map = map; // Used to have a global reference to the map
 
@@ -123,6 +128,81 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
             });
 
             map.on('load', function() {
+
+                // Add satellite/streets controls
+                if (show_style_selector === true) {
+                    $('#' + map_element_id).append('<div class="map_terrain_menu" onclick="toggleMapStyle()">Show streets</div>');
+                }
+
+                // Add popups
+                map.on('click', 'sounds-unclustered', function (e) {
+
+                    stopAll();
+                    var coordinates = e.features[0].geometry.coordinates.slice();
+                    var sound_id = e.features[0].properties.id;
+
+                    ajaxLoad( '/geotags/infowindow/' + sound_id, function(data, responseCode)
+                    {
+                        // Ensure that if the map is zoomed out such that multiple
+                        // copies of the feature are visible, the popup appears
+                        // over the copy being pointed to.
+                        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                        }
+                        var popup = new mapboxgl.Popup()
+                            .setLngLat(coordinates)
+                            .setHTML(data.response)
+                            .addTo(map);
+
+                        popup.on('close', function(e) {
+                            stopAll();  // Stop sound on popup close
+                        });
+                        makePlayer('.infowindow_player .player');
+                    });
+                });
+
+                // Change the cursor to a pointer when the mouse is over the places layer.
+                map.on('mouseenter', 'sounds-unclustered', function () {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+
+                // Change it back to a pointer when it leaves.
+                map.on('mouseleave', 'sounds-unclustered', function () {
+                    map.getCanvas().style.cursor = '';
+                });
+
+                // Zoom-in when clicking on clusters
+                map.on('click', 'sounds-clusters', function (e) {
+                    map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 4});
+                });
+
+                // Adjust map boundaries
+                if (center_lat === undefined){
+                    // If initital center and zoom were not given, adjust map boundaries now based on the sounds
+                    if (nSounds > 1){
+                        map.fitBounds(bounds, {duration:0, padding: {top:40, right:40, left:40, bottom:40}});
+                    } else {
+                        map.setZoom(3);
+                        map.setCenter(geojson_features[0].geometry.coordinates);
+                    }
+                }
+
+                // Run callback function (if passed) after map is built
+                if (on_built_callback !== undefined){
+                    on_built_callback();
+                }
+
+                // Add listener for callback on bounds changed
+                if (on_bounds_changed_callback !== undefined) {
+                    call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+                    map.on('moveend', function(e) {
+                        call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+                    });
+                }
+            });
+
+
+            map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
                 map.loadImage('/media/images/map_marker.png', function(error, image) {
                     map.addImage("custom-marker", image);
 
@@ -202,72 +282,6 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
                             "icon-allow-overlap": true,
                         }
                     });
-
-                    // Add popups
-                    map.on('click', 'sounds-unclustered', function (e) {
-
-                        stopAll();
-                        var coordinates = e.features[0].geometry.coordinates.slice();
-                        var sound_id = e.features[0].properties.id;
-
-                        ajaxLoad( '/geotags/infowindow/' + sound_id, function(data, responseCode)
-                        {
-                            // Ensure that if the map is zoomed out such that multiple
-                            // copies of the feature are visible, the popup appears
-                            // over the copy being pointed to.
-                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                            }
-                            var popup = new mapboxgl.Popup()
-                                .setLngLat(coordinates)
-                                .setHTML(data.response)
-                                .addTo(map);
-
-                            popup.on('close', function(e) {
-                                stopAll();  // Stop sound on popup close
-                            });
-                            makePlayer('.infowindow_player .player');
-                        });
-                    });
-
-                    // Change the cursor to a pointer when the mouse is over the places layer.
-                    map.on('mouseenter', 'sounds-unclustered', function () {
-                        map.getCanvas().style.cursor = 'pointer';
-                    });
-
-                    // Change it back to a pointer when it leaves.
-                    map.on('mouseleave', 'sounds-unclustered', function () {
-                        map.getCanvas().style.cursor = '';
-                    });
-
-                    // Zoom-in when clicking on clusters
-                    map.on('click', 'sounds-clusters', function (e) {
-                        map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 4});
-                    });
-
-                    // Adjust map boundaries
-                    if (center_lat === undefined){
-                        // If initital center and zoom were not given, adjust map boundaries now based on the sounds
-                        if (nSounds > 1){
-                            map.fitBounds(bounds, {duration:0, padding: {top:40, right:40, left:40, bottom:40}});
-                        } else {
-                            map.setZoom(3);
-                            map.setCenter(geojson_features[0].geometry.coordinates);
-                        }
-                    }
-
-                    // Run callback function (if passed) after map is built
-                    if (on_built_callback !== undefined){
-                        on_built_callback();
-                    }
-
-                    // Add listener for callback on bounds changed
-                    if (on_bounds_changed_callback !== undefined) {
-                        call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
-                        map.on('moveend', function(e) {
-                            call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
-                        });
-                    }
                 });
             });
         }
@@ -276,7 +290,7 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
 
 function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callback,
-                              center_lat, center_lon, zoom){
+                              center_lat, center_lon, zoom, idx){
 
     /*
     This function is used to display the map used to add a geotag to a sound maps with sounds. It is used in the sound
@@ -290,6 +304,7 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
     - center_lat: latitude where to center the map (if not specified, it uses a default one)
     - center_lon: latitude where to center the map (if not specified, it uses a default one)
     - zoom: initial zoom for the map (if not specified, it uses a default one)
+    - idx: map idx (used when creating multiple maps)
 
     This function returns the object of the map that has been created.
      */
@@ -307,14 +322,43 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
       center: initial_center, // starting position as [lng, lat]
       zoom: parseInt(zoom, 10) - 1,  // Subtract 1 for compatibility with gmaps zoom levels
       maxZoom: 18,
+        maxBounds: [[-360,-90],[360,90]]
     });
     map.dragRotate.disable();
     map.touchZoomRotate.disableRotation();
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
-    map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken }), 'top-left');
+    map.addControl(new MapboxGeocoder({ accessToken: mapboxgl.accessToken, minLength: MIN_INPUT_CHARACTERS_FOR_GEOCODER }), 'top-left');
 
+    map.toggleStyle = function() {
+        toggleMapStyle(map, map_element_id);
+    };
 
     map.on('load', function() {
+        // Add controls for toggling style
+        $('#' + map_element_id).append('<div class="map_terrain_menu" onclick="toggleMapStyle(' + idx + ')">Show streets</div>');
+
+        // Add listener for callback on bounds changed
+        if (on_bounds_changed_callback !== undefined) {
+            // Initial call to on_bounds_changed_callback
+            call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+        }
+        map.on('move', function(e) {
+            if (on_bounds_changed_callback !== undefined) {
+                call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+            }
+            var new_map_lat = map.getCenter().lat;
+            var new_map_lon = map.getCenter().lng;
+            map.getSource('position-marker').setData({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [new_map_lon, new_map_lat]
+                }
+            });
+        });
+    });
+
+    map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
         map.loadImage('/media/images/map_marker.png', function(error, image) {
             map.addImage("custom-marker", image);
 
@@ -339,29 +383,59 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
                 }
             });
 
-
-            // Add listener for callback on bounds changed
-            if (on_bounds_changed_callback !== undefined) {
-                // Initial call to on_bounds_changed_callback
-                call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
-            }
-            map.on('move', function(e) {
-                if (on_bounds_changed_callback !== undefined) {
-                    call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
+            // Update marker
+            var new_map_lat = map.getCenter().lat;
+            var new_map_lon = map.getCenter().lng;
+            map.getSource('position-marker').setData({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [new_map_lon, new_map_lat]
                 }
-                var new_map_lat = map.getCenter().lat;
-                var new_map_lon = map.getCenter().lng;
-                map.getSource('position-marker').setData({
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [new_map_lon, new_map_lat]
-                    }
-                });
-
             });
         });
     });
 
     return map;
+}
+
+function toggleMapStyle(idx){
+
+    if (window.map !== undefined){
+        var map = window.map;
+    } else {
+        // if idx is passed, it means map objects will have been saved in maps variable
+        var map = window.maps[idx];
+    }
+    var map_element_id = $(map.getCanvas()).parent().parent().attr('id');
+
+    if (map.getStyle().sprite.indexOf(FREESOUND_STREETS_STYLE_ID) !== -1){
+        // Using streets map, switch to satellite
+        map.setStyle('mapbox://styles/freesound/' + FREESOUND_SATELLITE_STYLE_ID);
+        $('#' + map_element_id).find('.map_terrain_menu')[0].innerText = 'Show streets';
+
+    } else {
+        // Using satellite map, switch to streets
+        map.setStyle('mapbox://styles/freesound/' + FREESOUND_STREETS_STYLE_ID);
+        $('#' + map_element_id).find('.map_terrain_menu')[0].innerText = 'Show terrain';
+    }
+}
+
+function latLonZoomAreValid(lat, lon, zoom){
+    return !(isNaN(lat) || (isNaN(lon)) || (isNaN(zoom) || lat === '' || lon === '' || zoom === ''))
+}
+
+function clipLatLonRanges(lat, lon){
+    if ((lat < -90)){
+        lat = -90;
+    } else if ((lat > 90)){
+        lat = 90;
+    }
+    if ((lon < -180)){
+        lon = -180;
+    } else if ((lon > 180)){
+        lon = 180;
+    }
+
+    return [lat, lon];
 }

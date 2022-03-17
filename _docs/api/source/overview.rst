@@ -1,4 +1,4 @@
-APIv2 Overview
+﻿APIv2 Overview
 >>>>>>>>>>>>>>
 
 Welcome to the Freesound APIv2 documentation!
@@ -11,7 +11,7 @@ advanced queries combining content analysis features and other metadata (tags, e
 With the Freesound APIv2, you can also upload, comment, rate and bookmark sounds!
 
 
-**NOTE**: Some of the examples in the API docummentation use the multi-platform command-line tool ``curl`` (http://curl.haxx.se).
+**NOTE**: Some of the examples in the API documentation use the multi-platform command-line tool ``curl`` (http://curl.haxx.se).
 If you do not have ``curl`` installed, we recommend you to install it as it will help you learning how to use the Freesound API.
 
 
@@ -141,7 +141,7 @@ Specify the desired format in lowercase letters as follows:
   https://freesound.org/apiv2/sounds/1234/?format=xml
   https://freesound.org/apiv2/sounds/1234/?format=yaml
 
-If the format is not specified, it will be automatically determined in the content-negotation phase, typically defaulting to json.
+If the format is not specified, it will be automatically determined in the content-negotiation phase, typically defaulting to json.
 
 
 Errors
@@ -159,7 +159,7 @@ HTTP code                  Explanation
 404 Not found              The information that the request is trying to access does not exist.
 405 Method not allowed     The current request method (generally GET or POST) is not supported by the resource.
 409 Conflict               The request is valid but it can not be processed for some reason detailed in the response.
-429 Too many requests      The request was throttled because of exceeding requst limit rates (see :ref:`overview-throttling`).
+429 Too many requests      The request was throttled because of exceeding request limit rates (see :ref:`overview-throttling`).
 5xx                        An error on our part, hopefully you will see few of these.
 =========================  ====================================================================
 

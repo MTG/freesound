@@ -7,13 +7,13 @@
     If you change this cache index, be sure to change the invalidation in
     ratings/views.py as well
 {% endcomment %}
-{% cache 43200 display_sound sound_id is_authenticated is_explicit %}
+{% cache 43200 display_sound sound.id is_authenticated is_explicit %}
 
-<div class="sample_player_small" id="{{ sound_id }}">
+<div class="sample_player_small" id="{{ sound.id }}">
 
     {% if is_explicit %}
     <div class="explicit_content_text">
-        <span>Warning: this sound may be inappropriate for some users <a href="#">Dismiss</a></span>
+        <span>Warning: this sound may be inappropriate for some users <a href="javascript:void(0);" onclick="remove_explicit_content_warning(this);">Dismiss</a></span>
     </div>
     {% endif %}
 

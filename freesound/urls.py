@@ -20,6 +20,8 @@
 #     See AUTHORS file.
 #
 
+import os
+
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import TemplateView, RedirectView
@@ -57,7 +59,7 @@ urlpatterns = [
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/sources/$', sounds.views.sound_edit_sources, name="sound-edit-sources"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/$', sounds.views.sound_edit, name="sound-edit"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/remixes/$', sounds.views.remixes, name="sound-remixes"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/geotag/$', sounds.views.geotag, name="sound-geotag"),
+    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/geotag/$', geotags.views.for_sound, name="sound-geotag"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/delete/$', sounds.views.delete, name="sound-delete"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/downloaders/$', sounds.views.downloaders, name="sound-downloaders"),
@@ -73,11 +75,11 @@ urlpatterns = [
     url(r'^people/(?P<username>[^//]+)/downloaded_packs/$', accounts.views.downloaded_packs, name="user-downloaded-packs"),
     url(r'^people/(?P<username>[^//]+)/bookmarks/$', bookmarks.views.bookmarks, name="bookmarks-for-user"),
     url(r'^people/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/$', bookmarks.views.bookmarks, name="bookmarks-for-user-for-category"),
-
     url(r'^people/(?P<username>[^//]+)/following_users/$', follow.views.following_users, name="user-following-users"),
     url(r'^people/(?P<username>[^//]+)/followers/$', follow.views.followers, name="user-followers"),
     url(r'^people/(?P<username>[^//]+)/following_tags/$', follow.views.following_tags, name="user-following-tags"),
 
+    url(r'^charts/$', accounts.views.charts, name="charts"),  # BW only
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
@@ -103,7 +105,11 @@ urlpatterns = [
         name="remix-group"),
 
     url(r'^contact/', support.views.contact, name="contact"),
+
     url(r'^search/$', search.views.search, name='sounds-search'),
+    url(r'^clustering_facet/$', search.views.clustering_facet, name='clustering-facet'),
+    url(r'^clustered_graph/$', search.views.clustered_graph, name='clustered-graph-json'),
+    url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
 
     url(r'', include('ratings.urls')),
     url(r'^comments/', include('comments.urls')),
@@ -116,7 +122,7 @@ urlpatterns = [
     url(r'^monitor/', include('monitor.urls')),
     url(r'^follow/', include('follow.urls')),
 
-    url(r'^blog/$', RedirectView.as_view(url='http://blog.freesound.org/'), name="blog"),
+    url(r'^blog/$', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
     url(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
@@ -131,13 +137,7 @@ urlpatterns = [
     url(r'^apiv2/', include('apiv2.urls')),
 
     # tag recommendation
-    url(r'^tagrecommendation/instructions/$', tagrec.new_tagrecommendation_interface_instructions, name="tagrecommendation-instructions"),
     url(r'^tagrecommendation/recommendtags/$', tagrec.get_recommended_tags_view, name="recommend-tags"),
-    url(r'^tagrecommendation/savelog/$', tagrec.log_recommendation_info_view, name="log-recommendation-info"),
-    # Urls for new tag recommendation interface experiment
-    url(r'^tagrecommendation/get_recommendation/$', tagrec.get_recommended_tags_view_new, name="get-recommend-tags-new"),
-    url(r'^tagrecommendation/get_recommended_categories/$', tagrec.get_recommended_categories_view, name="get-recommended-categories"),
-    url(r'^tagrecommendation/get_categories/$', tagrec.get_all_categories_view, name="get-all-categories"),
 
     # 500 view
     url(r'^crash_me/$',
@@ -146,6 +146,8 @@ urlpatterns = [
 
     url(r'^donate/', donations.views.donate_redirect, name="donate-redirect"),
     url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
+    url(r'^p/(?P<pack_id>\d+)/$', sounds.views.pack_short_link, name="short-pack-link"),
+
 
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
@@ -153,16 +155,25 @@ urlpatterns = [
     url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
     url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
+
 ]
+
+urlpatterns += [url(r'^silk/', include('silk.urls', namespace='silk'))]
 
 # if you need django to host the admin files...
 from django.conf import settings
 from django.views.static import serve
 if settings.DEBUG:
     import debug_toolbar
+
+    def serve_source_map_files(request):
+        path = request.path
+        document_root = os.path.join(os.path.dirname(__file__), 'static', 'bw-frontend', 'dist')
+        return serve(request, path, document_root=document_root, show_indexes=False)
+
     urlpatterns += [
         url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
-        url(r'^%s/(?P<path>.*)$' % settings.STATIC_URL.strip('/'), serve, {'document_root': settings.STATIC_ROOT, 'show_indexes': True}),
         url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
         url(r'^__debug__/', include(debug_toolbar.urls)),
+        url(r'^.*\.map$', serve_source_map_files),
     ]

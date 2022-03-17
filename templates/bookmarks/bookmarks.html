@@ -22,7 +22,7 @@
 	<h3>Uncategorized bookmarks</h3>
     {% endif %}
 
-    {% if bookmarked_sounds %}
+    {% if page.object_list %}
 
 	{% show_paginator paginator page current_page request "bookmark" %}
 
@@ -38,7 +38,7 @@
 
 		<div class="bookmark_info">
 
-		    <a href="{% url "sound" bookmark.sound.user.username bookmark.sound.id %}">{% if bookmark.name %}{{bookmark.name|truncatechars:50}}{% else %}{{bookmark.sound.original_filename|truncatechars:50}}{%endif%}</a> by <a href="{% url "account" bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>
+		    <a href="{% url "sound" bookmark.sound.user.username bookmark.sound.id %}">{{bookmark.name_or_sound_name|truncatechars:50}}</a> by <a href="{% url "account" bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>
 
 		    {% if is_owner %}
 			<a href="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete bookmark"/></a>
@@ -70,7 +70,7 @@
 		<li><a href="{% url "bookmarks-for-user" user.username %}" {% if not category %}style="font-weight:bold"{% endif %}>Uncategorized</a> ({{n_uncat}} bookmark{{ n_uncat|pluralize }})</li>
 
 	    {% for cat in bookmark_categories %}
-		<li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %}>{{cat.name}}</a> ({{cat.bookmarks.count}} bookmark{{ cat.bookmarks.count|pluralize }})
+		<li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %}>{{cat.name}}</a> ({{cat.num_bookmarks}} bookmark{{ cat.num_bookmarks|pluralize }})
 
 		{% if is_owner %}<a href="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete {{cat.name}} category"/></a>{% endif %}</li>
 

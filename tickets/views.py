@@ -21,7 +21,6 @@
 import datetime
 import json
 
-import gearman
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -30,13 +29,15 @@ from django.db import transaction
 from django.db.models import Count, Min, Q, F
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from general.tasks import whitelist_user
 
 from models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
-    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm
-from utils.cache import invalidate_template_cache
+    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
+from utils.cache import invalidate_template_cache, invalidate_user_template_caches
+from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
 
 
@@ -73,7 +74,7 @@ def is_selected(request, prefix):
 def invalidate_all_moderators_header_cache():
     mods = Group.objects.get(name='moderators').user_set.all()
     for mod in mods:
-        invalidate_template_cache("user_header", mod.id)
+        invalidate_user_template_caches(mod.id)
 
 
 def ticket(request, ticket_key):
@@ -84,7 +85,7 @@ def ticket(request, ticket_key):
 
     if request.method == 'POST':
 
-        invalidate_template_cache("user_header", ticket.sender.id)
+        invalidate_user_template_caches(ticket.sender.id)
         invalidate_all_moderators_header_cache()
 
         # Left ticket message
@@ -149,7 +150,7 @@ def ticket(request, ticket_key):
                     notification = ticket.NOTIFICATION_APPROVED
 
                 elif sound_action == 'Whitelist':
-                    _whitelist_gearman([ticket.id])  # async job should take care of whitelisting
+                    whitelist_user.delay(ticket_ids=[ticket.id])  # async job should take care of whitelisting
                     comment += 'whitelisted all sounds from user {}'.format(ticket.sender)
                     notification = ticket.NOTIFICATION_WHITELISTED
 
@@ -185,9 +186,10 @@ def ticket(request, ticket_key):
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
 def new_sound_tickets_count():
-
-    return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
-            sound__processing_state='OK', status=TICKET_STATUS_NEW))
+    return len(Ticket.objects.filter(assignee=None,
+                                     sound__moderation_state='PE',
+                                     sound__processing_state='OK',
+                                     status=TICKET_STATUS_NEW))
 
 @login_required
 def sound_ticket_messages(request, ticket_key):
@@ -200,25 +202,23 @@ def sound_ticket_messages(request, ticket_key):
 
 def _get_new_uploaders_by_ticket():
 
-    tickets = Ticket.objects.filter(
-        sound__processing_state='OK',
-        sound__moderation_state='PE',
-        assignee=None,
-        status=TICKET_STATUS_NEW).values('sender')\
-                                 .annotate(total=Count('sender'), older=Min('created'))\
-                                 .order_by('older')
+    tickets = Ticket.objects.filter(assignee=None,
+                                    sound__processing_state='OK',
+                                    sound__moderation_state='PE',
+                                    status=TICKET_STATUS_NEW)\
+        .values('sender')\
+        .annotate(total=Count('sender'), older=Min('created'))\
+        .order_by('older')
 
     users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
     users_dict = {u.id: u for u in users}
     new_sounds_users = []
 
     for t in tickets:
-        new_sounds_users.append((
-            users_dict[t['sender']],
-            t['total'],
-            (datetime.datetime.now() - t['older']).days
-        ))
-
+        new_sounds_users.append({"user": users_dict[t['sender']],
+                                 "username": users_dict[t['sender']].username,
+                                 "new_count": t['total'],
+                                 "time": (datetime.datetime.now() - t['older']).days})
     return new_sounds_users
 
 
@@ -268,8 +268,16 @@ def _get_sounds_in_moderators_queue_count(user):
 def moderation_home(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
-    new_sounds_users = _get_new_uploaders_by_ticket()
     unsure_tickets = _get_unsure_sound_tickets()
+    new_sounds_users = _get_new_uploaders_by_ticket()
+    order = request.GET.get("order", "")
+    if order == "username":
+        new_sounds_users = sorted(new_sounds_users, key=lambda x: x["username"])
+    elif order == "new_count":
+        new_sounds_users = sorted(new_sounds_users, key=lambda x: x["new_count"], reverse=True)
+    else:
+        # Default option, sort by number of days in queue
+        new_sounds_users = sorted(new_sounds_users, key=lambda x: x["time"], reverse=True)
 
     tardy_moderator_tickets = _get_tardy_moderator_tickets()
     tardy_user_tickets = _get_tardy_user_tickets()
@@ -277,13 +285,13 @@ def moderation_home(request):
     tardy_user_tickets_count = len(tardy_user_tickets)
 
     tvars = {"new_sounds_users": new_sounds_users,
+             "order": order,
              "unsure_tickets": unsure_tickets,
              "tardy_moderator_tickets": tardy_moderator_tickets[:5],
              "tardy_user_tickets": tardy_user_tickets[:5],
              "tardy_moderator_tickets_count": tardy_moderator_tickets_count,
              "tardy_user_tickets_count": tardy_user_tickets_count,
-             "moderator_tickets_count": sounds_in_moderators_queue_count,
-             "selected": "assigned"
+             "moderator_tickets_count": sounds_in_moderators_queue_count
             }
 
     return render(request, 'tickets/moderation_home.html', tvars)
@@ -315,6 +323,26 @@ def moderation_tardy_moderators_sounds(request):
     tvars.update(paginated)
 
     return render(request, 'tickets/moderation_tardy_moderators.html', tvars)
+
+
+@permission_required('tickets.can_moderate')
+def moderation_assign_all_new(request):
+    """
+    Assigns all new unassigned tickets to the current user logged in
+    """
+
+    tickets = Ticket.objects.filter(assignee=None,
+                                    sound__processing_state='OK',
+                                    sound__moderation_state='PE',
+                                    status=TICKET_STATUS_NEW)
+
+    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
+
+    msg = 'You have been assigned all new sounds ({}) from the queue.'.format(tickets.count())
+    messages.add_message(request, messages.INFO, msg)
+    invalidate_all_moderators_header_cache()
+
+    return redirect("tickets-moderation-home")
 
 
 @permission_required('tickets.can_moderate')
@@ -376,22 +404,19 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
         return redirect("tickets-moderation-home")
 
 
-def _whitelist_gearman(ticket_ids):
-    gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-    gm_client.submit_job("whitelist_user", json.dumps(ticket_ids),
-                         wait_until_complete=False, background=True)
-
-
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def moderation_assigned(request, user_id):
 
     clear_forms = True
+    mod_sound_form = None
+    msg_form = None
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)
         msg_form = ModerationMessageForm(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
+
             ticket_ids = mod_sound_form.cleaned_data.get("ticket", '').split('|')
             tickets = Ticket.objects.filter(id__in=ticket_ids)
             msg = msg_form.cleaned_data.get("message", False)
@@ -403,12 +428,22 @@ def moderation_assigned(request, user_id):
 
             if action == "Approve":
                 tickets.update(status=TICKET_STATUS_CLOSED)
-                explicit = mod_sound_form.cleaned_data.get("is_explicit")
-                Sound.objects.filter(ticket__in=tickets).update(
-                        is_index_dirty=True,
-                        moderation_state='OK',
-                        moderation_date=datetime.datetime.now(),
-                        is_explicit=explicit)
+                sounds_update_params = {
+                    'is_index_dirty': True,
+                    'moderation_state': 'OK',
+                    'moderation_date': datetime.datetime.now()
+                }
+                is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
+                if is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY:
+                    sounds_update_params['is_explicit'] = True
+                elif is_explicit_choice_key == IS_EXPLICIT_REMOVE_FLAG_KEY:
+                    sounds_update_params['is_explicit'] = False
+
+                # Otherwise is_explicit_choice_key = IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, don't update the
+                # 'is_explicit' field and leave it as the user originally set it
+
+                Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
+
                 if msg:
                     notification = Ticket.NOTIFICATION_APPROVED_BUT
                 else:
@@ -444,7 +479,7 @@ def moderation_assigned(request, user_id):
 
             elif action == "Whitelist":
                 ticket_ids = list(tickets.values_list('id',flat=True))
-                _whitelist_gearman(ticket_ids)
+                whitelist_user.delay(ticket_ids=ticket_ids)  # async job should take care of whitelisting
                 notification = Ticket.NOTIFICATION_WHITELISTED
 
                 users = set(tickets.values_list('sender__username', flat=True))
@@ -461,7 +496,7 @@ def moderation_assigned(request, user_id):
                     users_to_update.add(ticket.sound.user.profile)
                     if ticket.sound.pack:
                         packs_to_update.add(ticket.sound.pack)
-                invalidate_template_cache("user_header", ticket.sender.id)
+                invalidate_user_template_caches(ticket.sender.id)
                 invalidate_all_moderators_header_cache()
                 moderator_only = msg_form.cleaned_data.get("moderator_only", False)
 
@@ -489,7 +524,7 @@ def moderation_assigned(request, user_id):
         mod_sound_form = SoundModerationForm(initial={'action': 'Approve'})
         msg_form = ModerationMessageForm()
 
-    qs = Ticket.objects.select_related() \
+    qs = Ticket.objects.select_related('sound') \
                        .filter(assignee=user_id) \
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(sound=None) \
@@ -510,16 +545,18 @@ def moderation_assigned(request, user_id):
     show_pagination = moderator_tickets_count > settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
     tvars = {
-            "moderator_tickets_count": moderator_tickets_count,
-            "moderation_texts": MODERATION_TEXTS,
-            "page": pagination_response['page'],
-            "paginator": pagination_response['paginator'],
-            "current_page": pagination_response['current_page'],
-            "show_pagination": show_pagination,
-            "mod_sound_form": mod_sound_form,
-            "msg_form": msg_form,
-            "selected": "queue"
-            }
+        "moderator_tickets_count": moderator_tickets_count,
+        "moderation_texts": MODERATION_TEXTS,
+        "page": pagination_response['page'],
+        "paginator": pagination_response['paginator'],
+        "current_page": pagination_response['current_page'],
+        "show_pagination": show_pagination,
+        "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,
+        "mod_sound_form": mod_sound_form,
+        "msg_form": msg_form,
+        "default_autoplay": request.GET.get('autoplay', 'on') == 'on',
+        "default_include_deferred": request.GET.get('include_d', '') == 'on',
+    }
 
     return render(request, 'tickets/moderation_assigned.html', tvars)
 
@@ -565,9 +602,9 @@ def get_pending_sounds(user):
 
 
 @permission_required('tickets.can_moderate')
+@redirect_if_old_username_or_404
 def pending_tickets_per_user(request, username):
-
-    user = get_object_or_404(User, username=username)
+    user = request.parameter_user
     tickets_sounds = get_pending_sounds(user)
     pendings = []
     mods = set()

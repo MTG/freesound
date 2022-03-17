@@ -9,10 +9,12 @@ The user '{{remix.user.username}}' has {{action}} a sound you uploaded as a remi
 
 The sound was {{source.original_filename}}, listen to it here:
 
-<{% absurl 'sound' source.user.username source.id %}>
+{% absurl 'sound' source.user.username source.id %}
 
 The remix is called {{remix.original_filename}}, listen to it here:
 
-<{% absurl 'sound' remix.user.username remix.id %}>
+{% absurl 'sound' remix.user.username remix.id %}
+
+{% include "email_opt_out_text.txt" %}
 
 {% endblock %}

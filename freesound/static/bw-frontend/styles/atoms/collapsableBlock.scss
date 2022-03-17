@@ -1,0 +1,16 @@
+.collapsable-block {
+  transition: max-height 1s;
+  overflow: hidden;
+
+  &-close {
+    max-height: 0px;
+  }
+}
+
+.collapsable-text {
+  color: $navy-grey;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}

@@ -18,12 +18,12 @@
 #     See AUTHORS file.
 #
 
-from similarity.similarity_settings import SIMILARITY_ADDRESS, SIMILARITY_PORT, SIMILARITY_INDEXING_SERVER_PORT
+from django.conf import settings
 import json
 import urllib2
 
-_BASE_URL                     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_PORT)
-_BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_INDEXING_SERVER_PORT)
+_BASE_URL                     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_PORT)
+_BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_INDEXING_SERVER_PORT)
 _URL_ADD_POINT                = 'add_point/'
 _URL_DELETE_POINT             = 'delete_point/'
 _URL_GET_DESCRIPTOR_NAMES     = 'get_descriptor_names/'
@@ -51,6 +51,8 @@ def _get_url_as_json(url, data=None, timeout=None):
         kwargs['data'] = data
     if timeout is not None:
         kwargs['timeout'] = timeout
+    else:
+        kwargs['timeout'] = settings.SIMILARITY_TIMEOUT
     f = urllib2.urlopen(url.replace(" ", "%20"), **kwargs)
     resp = f.read()
     return json.loads(resp)
@@ -139,7 +141,7 @@ class Similarity():
         url = _BASE_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
-        return _result_or_exception(_get_url_as_json(url, timeout=120))
+        return _result_or_exception(_get_url_as_json(url, timeout=60 * 5))
 
     @classmethod
     def save_indexing_server(cls, filename = None):

@@ -20,9 +20,9 @@
 
 from django import forms
 from django.conf import settings
-from django.utils.translation import ugettext as _
 from utils.forms import CaptchaWidget
 from utils.forms import HtmlCleaningCharField
+from django.utils.safestring import mark_safe
 
 
 class ModeratorMessageForm(forms.Form):
@@ -44,13 +44,13 @@ class UserContactForm(UserMessageForm):
 
 class AnonymousMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea)
-    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
 
     def clean_recaptcha_response(self):
         captcha_response = self.cleaned_data.get("recaptcha_response")
         if settings.RECAPTCHA_PUBLIC_KEY:
             if not captcha_response:
-                raise forms.ValidationError(_("Captcha is not correct"))
+                raise forms.ValidationError("Captcha is not correct")
         return captcha_response
 
 
@@ -71,6 +71,13 @@ MODERATION_CHOICES = [(x, x) for x in
                        'Return',
                        'Whitelist']]
 
+IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY = "K"
+IS_EXPLICIT_ADD_FLAG_KEY = "A"
+IS_EXPLICIT_REMOVE_FLAG_KEY = "R"
+IS_EXPLICIT_FLAG_CHOICES = ((IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, 'Keep user preference'),
+                            (IS_EXPLICIT_ADD_FLAG_KEY, 'Add "is explicit" flag'),
+                            (IS_EXPLICIT_REMOVE_FLAG_KEY, 'Remove "is explicit" flag'))
+
 
 class SoundModerationForm(forms.Form):
     action = forms.ChoiceField(choices=MODERATION_CHOICES,
@@ -80,7 +87,11 @@ class SoundModerationForm(forms.Form):
 
     ticket = forms.CharField(widget=forms.widgets.HiddenInput,
                              error_messages={'required': 'No sound selected...'})
-    is_explicit = forms.BooleanField(required=False, label='Sound(s) contain explicit content')
+    
+    is_explicit = forms.ChoiceField(choices=IS_EXPLICIT_FLAG_CHOICES,
+                                    initial=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
+                                    required=True, 
+                                    label=mark_safe("<i>Is explicit</i> flag"))
 
 
 class ModerationMessageForm(forms.Form):

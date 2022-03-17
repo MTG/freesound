@@ -17,20 +17,25 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, RequestFactory
 from django.urls import reverse
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 
 from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
-from sounds.tests import create_user_and_sounds
+from apiv2.serializers import SoundListSerializer, DEFAULT_FIELDS_IN_SOUND_LIST, SoundSerializer
 from forms import SoundCombinedSearchFormAPI
+from sounds.models import Sound
+from utils.test_helpers import create_user_and_sounds
 
 from exceptions import BadRequestException
 
 
 class TestAPiViews(TestCase):
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def test_pack_views_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
@@ -39,7 +44,7 @@ class TestAPiViews(TestCase):
             sound.change_moderation_state("OK")
 
         # Login so api returns session login based responses
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on pack instance
         resp = self.client.get(reverse('apiv2-pack-instance', kwargs={'pk': packs[0].id}))
@@ -60,7 +65,7 @@ class TestAPiViews(TestCase):
         client = ApiV2Client.objects.create(user=user, description='',
                                             name='', url='', redirect_uri='https://freesound.org')
         # Login so api returns session login based responses
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on Oauth2 authorize
         resp = self.client.post(reverse('oauth2_provider:authorize'),
@@ -74,15 +79,12 @@ class TestAPiViews(TestCase):
 
     def test_basic_user_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
-        # 200 response on register page
-        resp = self.client.get(reverse('apiv2-registration'), secure=True)
-        self.assertEqual(resp.status_code, 200)
 
         # 200 response on login page
         resp = self.client.get(reverse('api-login'), secure=True)
         self.assertEqual(resp.status_code, 200)
 
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on keys page
         resp = self.client.get(reverse('apiv2-apply'), secure=True)
@@ -94,7 +96,7 @@ class TestAPiViews(TestCase):
 
 
 class TestAPI(TestCase):
-    fixtures = ['initial_data']
+    fixtures = ['licenses']
 
     def test_cors_header(self):
         # Create App to login using token
@@ -143,7 +145,7 @@ class ApiSearchPaginatorTest(TestCase):
         paginator = ApiSearchPaginator([1, 2, 3, 4, 5], 5, 2)
         page = paginator.page(2)
 
-        self.assertEquals(page, {'object_list': [1, 2, 3, 4, 5],
+        self.assertEqual(page, {'object_list': [1, 2, 3, 4, 5],
                                  'has_next': True,
                                  'has_previous': True,
                                  'has_other_pages': True,
@@ -276,3 +278,113 @@ class TestSoundCombinedSearchFormAPI(SimpleTestCase):
         form = SoundCombinedSearchFormAPI(data={'target': target})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data['target'], target)
+
+
+class TestSoundListSerializer(TestCase):
+
+    fixtures = ['licenses', 'sounds']
+
+    def setUp(self):
+        self.ss = Sound.objects.all()[0:5]
+        self.sids = [s.id for s in self.ss]
+        self.factory = RequestFactory()
+
+    def test_num_fields(self):
+        # Test that serializer returns only fields included in fields parameter of the request
+
+        sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
+
+        # When 'fields' parameter is not used, return default ones
+        dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': ''})
+        serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+        self.assertItemsEqual(serialized_sound.keys(), DEFAULT_FIELDS_IN_SOUND_LIST.split(','))
+
+        # When only some parameters are specified
+        fields_parameter = 'id,username'
+        dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
+        serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+        self.assertItemsEqual(serialized_sound.keys(), fields_parameter.split(','))
+
+        # When all parameters are specified
+        fields_parameter = ','.join(SoundListSerializer.Meta.fields)
+        dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
+        serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+        self.assertItemsEqual(serialized_sound.keys(), fields_parameter.split(','))
+
+    def test_num_queries(self):
+        # Test that the serializer does not perform any extra query when serializing sounds regardless of the number
+        # of sounds and the number of requested fields. This will be as long as sound object passed to the serializer
+        # has been obtained using Sound.objects.dict_ids or Sound.objects.bulk_query_id
+
+        # Make sure sound content type and site objects are cached to avoid further queries
+        ContentType.objects.get_for_model(Sound)
+        Site.objects.get_current()
+
+        field_sets = [
+            '',  # default fields
+            ','.join(SoundListSerializer.Meta.fields),  # all fields
+        ]
+
+        # Test when serializing a single sound
+        for field_set in field_sets:
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0])
+            with self.assertNumQueries(0):
+                dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
+                # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
+                _ = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
+
+        # Test when serializing mulitple sounds
+        for field_set in field_sets:
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
+            with self.assertNumQueries(0):
+                dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
+                for sound in sounds_dict.values():
+                    # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
+                    _ = SoundListSerializer(sound, context={'request': dummy_request}).data
+
+
+class TestSoundSerializer(TestCase):
+
+    fixtures = ['licenses', 'sounds']
+
+    def setUp(self):
+        self.sound = Sound.objects.bulk_query_id(Sound.objects.first().id)[0]
+        self.factory = RequestFactory()
+
+    def test_num_fields_and_num_queries(self):
+
+        # Make sure sound content type and site objects are cached to avoid further queries
+        ContentType.objects.get_for_model(Sound)
+        Site.objects.get_current()
+
+        # Test that the serialized sound instance includes all fields in the serializer and does not perform any
+        # extra query. Because in this test we get sound info using Sound.objects.bulk_query_id, the serializer
+        # should perform no extra queries to render the data
+        with self.assertNumQueries(0):
+            dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]))
+            serialized_sound = SoundSerializer(self.sound, context={'request': dummy_request}).data
+            self.assertItemsEqual(serialized_sound.keys(), SoundSerializer.Meta.fields)
+
+
+class TestApiV2Client(TestCase):
+
+    def test_urls_length_validation(self):
+        """URLs are limited to a length of 200 characters at the DB level, test that passing a longer URL raised a
+        for validation error instead of a DB error.
+        """
+        user = User.objects.create_user("testuser")
+        self.client.force_login(user)
+        resp = self.client.post(reverse('apiv2-apply'), data={
+            'name': 'Name for the app',
+            'url': 'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
+            'redirect_uri': 'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
+            'description': 'test description',
+            'accepted_tos': '1',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('redirect_uri', resp.context['form'].errors)
+        self.assertIn('url', resp.context['form'].errors)

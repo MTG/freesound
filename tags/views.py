@@ -18,21 +18,24 @@
 #     See AUTHORS file.
 #
 
-from tags.models import Tag, FS1Tag
+import logging
+
 from django.conf import settings
-from django.urls import reverse
 from django.http import Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render
-from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
-    SolrResponseInterpreterPaginator, SolrException, Solr
-import logging
-from follow import follow_utils
+from django.urls import reverse
+
 import sounds.models
+from follow import follow_utils
+from tags.models import Tag, FS1Tag
+from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
+from utils.search.search_sounds import perform_search_engine_query
 
 search_logger = logging.getLogger("search")
 
 
 def tags(request, multiple_tags=None):
+
     if multiple_tags:
         multiple_tags = multiple_tags.split('/')
     else:
@@ -45,46 +48,35 @@ def tags(request, multiple_tags=None):
     except ValueError:
         current_page = 1
 
-    solr = Solr(settings.SOLR_URL)
-    query = SolrQuery()
-    if multiple_tags:
-        query.set_query(" ".join("tag:\"" + tag + "\"" for tag in multiple_tags))
-    else:
-        query.set_query("*:*")
-    query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE, rows=settings.SOUNDS_PER_PAGE, field_list=["id"], sort=["num_downloads desc"])
-    query.add_facet_fields("tag")
-    query.set_facet_options_default(limit=100, sort=True, mincount=1, count_missing=False)
-    query.set_group_field(group_field="grouping_pack")
-    query.set_group_options(group_func=None,
-                            group_query=None,
-                            group_rows=10,
-                            group_start=0,
-                            group_limit=1,
-                            group_offset=0,
-                            group_sort=None,
-                            group_sort_ingroup=None,
-                            group_format='grouped',
-                            group_main=False,
-                            group_num_groups=True,
-                            group_cache_percent=0,
-                            group_truncate=True)  # Sets how many results from the same group are taken into account for computing the facets
-
     page = None
-    num_results = 0
     tags = []
     error = False
     docs = {}
     non_grouped_number_of_results = 0
     paginator = None
     try:
-        results = SolrResponseInterpreter(solr.select(unicode(query)))
-        paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-        num_results = paginator.count
-        non_grouped_number_of_results = results.non_grouped_number_of_matches
-        page = paginator.page(current_page)
-        tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
+        if multiple_tags:
+            query_filter = " ".join("tag:\"" + tag + "\"" for tag in multiple_tags)
+        else:
+            query_filter = "*:*"
 
+        results, paginator = perform_search_engine_query(dict(
+            textual_query='',
+            query_filter=query_filter,
+            offset=(current_page- 1) * settings.SOUNDS_PER_PAGE,
+            num_sounds=settings.SOUNDS_PER_PAGE,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST,
+            group_by_pack=True,
+            facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
+            group_counts_as_one_in_facets=False,
+        ))
+
+        page = paginator.page(current_page)
+        non_grouped_number_of_results = results.non_grouped_number_of_results
+        facets = results.facets
         docs = results.docs
+
+        tags = [dict(name=f[0], count=f[1]) for f in facets["tag"]]
         resultids = [d.get("id") for d in docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
@@ -93,11 +85,12 @@ def tags(request, multiple_tags=None):
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
-    except SolrException as e:
+    except SearchEngineException as e:
         error = True
-        search_logger.error("SOLR ERROR - %s" % e)
-    except:
+        search_logger.error('Search error: %s' % e)
+    except Exception as e:
         error = True
+        search_logger.error('Could probably not connect to Solr - %s' % e)
 
     slash_tag = "/".join(multiple_tags)
 
@@ -119,7 +112,6 @@ def tags(request, multiple_tags=None):
              'error': error,
              'tags': tags,
              'slash_tag': slash_tag,
-             'num_results': num_results,
              'non_grouped_number_of_results': non_grouped_number_of_results,
              'docs': docs,
              'paginator': paginator,

@@ -19,40 +19,69 @@
 #
 
 import cStringIO
+import json
+import logging
 import math
 import struct
 
 from django.conf import settings
+from django.core.cache import cache
 from django.http import Http404, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.views.decorators.cache import cache_page
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from sounds.models import Sound
-from utils.username import get_user_or_404, redirect_if_old_username_or_404
+from utils.frontend_handling import render, using_beastwhoosh
+from utils.logging_filters import get_client_ip
+from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
+
+web_logger = logging.getLogger('web')
+
+
+def log_map_load(map_type, num_geotags, request):
+    web_logger.info('Map load (%s)' % json.dumps({
+        'map_type': map_type, 'num_geotags': num_geotags, 'ip': get_client_ip(request)}))
 
 
 def generate_bytearray(sound_queryset):
     # sounds as bytearray
     packed_sounds = cStringIO.StringIO()
+    num_sounds_in_bytearray = 0
     for s in sound_queryset:
         if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lon):
             packed_sounds.write(struct.pack("i", s.id))
             packed_sounds.write(struct.pack("i", int(s.geotag.lat*1000000)))
             packed_sounds.write(struct.pack("i", int(s.geotag.lon*1000000)))
+            num_sounds_in_bytearray += 1
 
-    return HttpResponse(packed_sounds.getvalue(), content_type='application/octet-stream')
+    return packed_sounds.getvalue(), num_sounds_in_bytearray
 
 
-@cache_page(60 * 15)
 def geotags_barray(request, tag=None):
-    sounds = Sound.objects.select_related('geotag')
-    if tag:
-        sounds = sounds.filter(tags__tag__name__iexact=tag)
-    return generate_bytearray(sounds.exclude(geotag=None).all())
+    is_embed = request.GET.get("embed", "0") == "1"
+    if tag is not None:
+        sounds = Sound.objects.select_related('geotag').filter(tags__tag__name__iexact=tag)
+        generated_bytearray, num_geotags = generate_bytearray(sounds.exclude(geotag=None).all())
+        if num_geotags > 0:
+            log_map_load('tag-embed' if is_embed else 'tag', num_geotags, request)
+        return HttpResponse(generated_bytearray, content_type='application/octet-stream')
+    else:
+        all_geotags = cache.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
+        if isinstance(all_geotags, (list, tuple)) and len(all_geotags) == 2:
+            cached_bytearray, num_geotags = all_geotags
+            log_map_load('all-embed' if is_embed else 'all', num_geotags, request)
+            return HttpResponse(cached_bytearray, content_type='application/octet-stream')
+        else:
+            generated_bytearray, _ = generate_bytearray(Sound.objects.none())
+            return HttpResponse(generated_bytearray, content_type='application/octet-stream')
+
 
 
 def geotags_box_barray(request):
     box = request.GET.get("box", "-180,-90,180,90")
+    is_embed = request.GET.get("embed", "0") == "1"
     try:
         min_lat, min_lon, max_lat, max_lon = box.split(",")
         qs = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK")
@@ -66,32 +95,50 @@ def geotags_box_barray(request):
         elif min_lat > max_lat and min_lon > max_lon:
             sounds = qs.exclude(geotag__lat__range=(max_lat, min_lat)).exclude(geotag__lon__range=(max_lon, min_lon))
 
-        return generate_bytearray(sounds)
+        generated_bytearray, num_geotags = generate_bytearray(sounds)
+        if num_geotags > 0:
+            log_map_load('box-embed' if is_embed else 'box', num_geotags, request)
+        return HttpResponse(generated_bytearray, content_type='application/octet-stream')
     except ValueError:
         raise Http404
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 @cache_page(60 * 15)
 def geotags_for_user_barray(request, username):
+    is_embed = request.GET.get("embed", "0") == "1"
     sounds = Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('user-embed' if is_embed else 'user', num_geotags, request)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 @redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
     sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('user_latest', num_geotags, request)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 def geotags_for_pack_barray(request, pack_id):
     sounds = Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None)
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('pack', num_geotags, request)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 def geotag_for_sound_barray(request, sound_id):
     sounds = Sound.objects.filter(id=sound_id).exclude(geotag=None)
-    return generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    if num_geotags > 0:
+        log_map_load('sound', num_geotags, request)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
 def _get_geotags_query_params(request):
@@ -100,27 +147,66 @@ def _get_geotags_query_params(request):
         'center_lon': request.GET.get('c_lon', None),
         'zoom': request.GET.get('z', None),
         'username': request.GET.get('username', None),
-        'tag': request.GET.get('tag', None),
+        'tag': request.GET.get('tag', None)
     }
 
 
 def geotags(request, tag=None):
     tvars = _get_geotags_query_params(request)
+    if tag is None:
+        url = reverse('geotags-barray')
+        # If "all geotags map" and no lat/lon/zoom is indicated, center map so whole world is visible
+        if tvars['center_lat'] is None:
+            tvars['center_lat'] = 24
+        if tvars['center_lon'] is None:
+            tvars['center_lon'] = 20
+        if tvars['zoom'] is None:
+            tvars['zoom'] = 2
+    else:
+        url = reverse('geotags-barray', args=[tag])
+
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': tag,
         'username': None,
+        'url': url,
     })
     return render(request, 'geotags/geotags.html', tvars)
 
 
+@redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
 def for_user(request, username):
-    user = get_user_or_404(username)
     tvars = _get_geotags_query_params(request)
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': None,
-        'username': user,
+        'username': request.parameter_user.username,
+        'sound': None,
+        'url': reverse('geotags-for-user-barray', args=[username]),
     })
     return render(request, 'geotags/geotags.html', tvars)
+
+
+@redirect_if_old_username_or_404
+def for_sound(request, username, sound_id):
+    sound = get_object_or_404(
+        Sound.objects.select_related('geotag', 'user'), id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
+    if not using_beastwhoosh(request):
+        tvars = {'sound': sound}
+        return render(request, 'sounds/geotag.html', tvars)
+    else:
+        tvars = _get_geotags_query_params(request)
+        tvars.update({
+            'tag': None,
+            'username': None,
+            'sound': sound,
+            'center_lat': sound.geotag.lat,
+            'center_lon': sound.geotag.lon,
+            'zoom': sound.geotag.zoom,
+            'url': reverse('geotags-for-sound-barray', args=[sound.id]),
+        })
+        return render(request, 'geotags/geotags.html', tvars)
 
 
 def geotags_box(request):
@@ -132,6 +218,7 @@ def geotags_box(request):
     return render(request, 'geotags/geotags.html', tvars)
 
 
+@xframe_options_exempt
 def embed_iframe(request):
     tvars = _get_geotags_query_params(request)
     tvars.update({
@@ -149,5 +236,8 @@ def infowindow(request, sound_id):
     except Sound.DoesNotExist:
         raise Http404
 
-    tvars = {'sound': sound}
+    tvars = {
+        'sound': sound,
+        'minimal': request.GET.get('minimal', False)
+    }
     return render(request, 'geotags/infowindow.html', tvars)

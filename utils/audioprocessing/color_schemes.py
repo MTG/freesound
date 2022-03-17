@@ -19,14 +19,21 @@ def color_from_value(value):
     return ImageColor.getrgb("hsl(%d,%d%%,%d%%)" % (int((1.0 - value) * 360), 80, 50))
 
 
+FREESOUND2_COLOR_SCHEME = 'Freesound2'
+BEASTWHOOSH_COLOR_SCHEME = 'FreesoundBeastWhoosh'
+CYBERPUNK_COLOR_SCHEME = 'Cyberpunk'
+RAINFOREST_COLOR_SCHEME = 'Rainforest'
+DEFAULT_COLOR_SCHEME_KEY = FREESOUND2_COLOR_SCHEME
+
+
 COLOR_SCHEMES = {
-    'Freesound2': {
+    FREESOUND2_COLOR_SCHEME: {
         'wave_colors': [
             (0, 0, 0),  # Background color
-            (50, 0, 200),  # Low spectral cetroid
+            (50, 0, 200),  # Low spectral centroid
             (0, 220, 80),
             (255, 224, 0),
-            (255, 70, 0),  # High spectral cetroid
+            (255, 70, 0),  # High spectral centroid
         ],
         'spec_colors': [
             (0, 0, 0),  # Background color
@@ -38,13 +45,13 @@ COLOR_SCHEMES = {
             (255, 255, 255)
          ]
     },
-    'FreesoundBeastWhoosh': {
+    BEASTWHOOSH_COLOR_SCHEME: {
         'wave_colors': [
             (255, 255, 255),  # Background color
-            (29, 159, 181),  # 1D9FB5, Low spectral cetroid
+            (29, 159, 181),  # 1D9FB5, Low spectral centroid
             (28, 174, 72),  # 1CAE48
             (255, 158, 53),  # FF9E35
-            (255, 53, 70),  # FF3546, High spectral cetroid
+            (255, 53, 70),  # FF3546, High spectral centroid
         ],
         'spec_colors': [
             (0, 0, 0),  # Background color/Low spectral energy
@@ -54,11 +61,11 @@ COLOR_SCHEMES = {
             (255, 53, 70),  # FF3546, High spectral energy
          ]
     },
-    'Cyberpunk': {
+    CYBERPUNK_COLOR_SCHEME: {
         'wave_colors': [(0, 0, 0)] + [color_from_value(value/29.0) for value in range(0, 30)],
         'spec_colors': [(0, 0, 0)] + [color_from_value(value/29.0) for value in range(0, 30)],
     },
-    'Rainforest': {
+    RAINFOREST_COLOR_SCHEME: {
         'wave_colors': [(213, 217, 221)] + map(partial(desaturate, amount=0.7), [
                         (50, 0, 200),
                         (0, 220, 80),
@@ -71,5 +78,3 @@ COLOR_SCHEMES = {
                      ]),
     }
 }
-
-DEFAULT_COLOR_SCHEME_KEY = 'Freesound2'

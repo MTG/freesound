@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+import datetime
 import json
 import logging
 import urlparse
@@ -27,7 +28,7 @@ from urllib import unquote
 
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import resolve
 from django.utils.encoding import smart_text
@@ -40,18 +41,21 @@ from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.utils import formatting
 
 import combined_search_strategies
+from apiv2.forms import API_SORT_OPTIONS_MAP
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2.exceptions import RequiresHttpsException, UnauthorizedException, ServerErrorException, BadRequestException, \
     NotFoundException
 from examples import examples
-from search.views import search_prepare_query
 from similarity.client import SimilarityException
+from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
+from utils.search import SearchEngineException, get_search_engine
+from utils.search.search_sounds import parse_weights_parameter
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
 
-logger_error = logging.getLogger("api_errors")
+error_logger = logging.getLogger("api_errors")
+cache_api_monitoring = caches["api_monitoring"]
 
 
 ##########################################
@@ -74,7 +78,7 @@ class FsClientIdGenerator(BaseHashGenerator):
 def get_view_description(cls, html=False):
     description = ''
     if getattr(cls, 'get_description', None):
-        cache_key = cls.__name__
+        cache_key = create_hash(cls.get_view_name(), add_secret=False, limit=32)
         cached_description = cache.get(cache_key)
         if not cached_description:
             description = cls.get_description()
@@ -105,6 +109,24 @@ class FreesoundAPIViewMixin(object):
 
     def log_message(self, message):
         return log_message_helper(message, resource=self)
+
+    def store_monitor_usage(self):
+        """This function increases the counter of requests per API client that is stored in the cache.
+        This function is expected to be called everytime an API request is received, it generates a key for the
+        current daily count (composed of the current date and the API client id) and increases the count stored in
+        the cache by one.
+
+        A Django management command is expected to run periodically to take the information from the cache
+        and store it in the DB. The management command should run at least once a day, and it will consolidate
+        API usage counts for the last 2 days (see consolidate_api_usage_data.py for more info). The cache entries
+        set by this function expire in 72 hours so the management command has time to consolidate the results of the
+        previous days.
+        """
+        if self.client_id is not None:
+            now = datetime.datetime.now().date()
+            monitoring_key = '{0}-{1}-{2}_{3}'.format(now.year, now.month, now.day, self.client_id)
+            current_value = cache_api_monitoring.get(monitoring_key, 0)
+            cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
 
     def get_request_information(self, request):
         # Get request information and store it as class variable
@@ -150,6 +172,7 @@ class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     def initial(self, request, *args, **kwargs):
         super(GenericAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         """ This method is overriden to make a redirect when the user is using the interactive API browser and
@@ -170,6 +193,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         super(OauthRequiredAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
@@ -186,6 +210,7 @@ class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         super(DownloadAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
+        self.store_monitor_usage()
 
     # NOTE: don't override finalize_response here as we are returning a file and not the browseable api response.
     # There is no need to check for www/non-www host here.
@@ -199,6 +224,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewM
         super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
+        self.store_monitor_usage()
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
@@ -219,6 +245,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
     def initial(self, request, *args, **kwargs):
         super(ListAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
@@ -234,6 +261,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     def initial(self, request, *args, **kwargs):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
+        self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
@@ -295,35 +323,37 @@ def api_search(
 
         # Standard text-based search
         try:
-            solr = Solr(settings.SOLR_URL)
-            query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
-                                         unquote(search_form.cleaned_data['filter'] or ""),
-                                         search_form.cleaned_data['sort'],
-                                         search_form.cleaned_data['page'],
-                                         search_form.cleaned_data['page_size'],
-                                         grouping=search_form.cleaned_data['group_by_pack'],
-                                         include_facets=False)
-
-            result = SolrResponseInterpreter(solr.select(unicode(query)))
+            # We need to convert the sort parameter to standard sorting options from
+            # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
+            # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
+            processed_sort = API_SORT_OPTIONS_MAP[search_form.cleaned_data['sort'][0]]
+            result = get_search_engine().search_sounds(
+                textual_query=unquote(search_form.cleaned_data['query'] or ""),
+                query_filter=unquote(search_form.cleaned_data['filter'] or ""),
+                query_fields=parse_weights_parameter(search_form.cleaned_data['weights']),
+                sort=processed_sort,
+                offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
+                num_sounds=search_form.cleaned_data['page_size'],
+                group_by_pack=search_form.cleaned_data['group_by_pack']
+            )
             solr_ids = [element['id'] for element in result.docs]
             solr_count = result.num_found
-
             more_from_pack_data = None
             if search_form.cleaned_data['group_by_pack']:
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                 more_from_pack_data = dict([
-                    (int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']])
-                    for element in result.docs
+                    (int(group['id']), [group['n_more_in_group'], group['group_name']]) for group in result.docs
                 ])
 
             return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
-        except SolrException as e:
+        except SearchEngineException as e:
             if search_form.cleaned_data['filter'] is not None:
                 raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field '
                                               'names are correct)' % e.message, resource=resource)
             raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
         except Exception as e:
+            print e
             raise ServerErrorException(
                 msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
 

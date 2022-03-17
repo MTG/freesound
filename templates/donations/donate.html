@@ -10,7 +10,7 @@
     <ul>
         <li style="margin-top: 8px"><b>We are growing and need more resources</b>.
             Freesound was <a href="https://freesound.org/help/about/" target="_blank">started in 2005</a>
-            at the <a href="http://mtg.upf.edu/" target="_blank">Music Technology Group</a>
+            at the <a href="https://www.upf.edu/web/mtg" target="_blank">Music Technology Group</a>
             and it has always been developed and maintained here.
             We need your donations in order to be able dedicate more resources to Freesound and not only
             maintain it but also make it better: add new features, improve existing ones, etc.
@@ -22,7 +22,7 @@
             is one based on user donations like Wikipedia.
         </li>
         <li style="margin-top: 8px"><b>It doesn't take a large donation to help us</b>.
-            There are many users who <a href="http://blog.freesound.org/?p=666" target="_blank">
+            There are many users who <a href="https://blog.freesound.org/?p=666" target="_blank">
             regularly download content from Freesound</a>.
             If many of us contribute, donating just a little bit will be enough to keep Freesound in good shape.
             Ah, and if you donate you'll appear in this glorious <a href="{% url 'donors' %}">list of Freesound donors</a> :)
@@ -40,7 +40,7 @@
     <div id="donation_form_wrapper">
 
       <div id="donation_form">
-        <form method="post" action="{% url 'donate' %}">
+        <form method="post" action="{% url 'donation-session-paypal' %}">
           <ul class="errorlist nonfield"></ul>
           <ul style="list-style-type: none;padding-left:0px;line-height: 18px;">
           {% csrf_token %}
@@ -81,13 +81,13 @@
     </div>
 
     <p>
-        <b>Note</b>: donations are managed through the <a href="http://phonos.upf.edu" target="_blank"> Phonos Foundation</a>,
-            an institution linked to the <a href="http://mtg.upf.edu/" target="_blank">Music
+        <b>Note</b>: donations are managed through the <a href="https://www.upf.edu/web/phonos" target="_blank"> Phonos Foundation</a>,
+            an institution linked to the <a href="https://www.upf.edu/web/mtg" target="_blank">Music
             Technology Group</a> for the promotion of social and cultural initiatives.
         Currently, we only accept donations via PayPal and international credit cards.
     </p>
 
-<script src="https://checkout.stripe.com/checkout.js"></script>
+<script src="https://js.stripe.com/v3"></script>
     <script type="text/javascript">
       $(document).ready(function (){
 
@@ -124,29 +124,36 @@
           e.preventDefault(); // avoid to execute the actual submit of the form.
         });
       
+        var stripe = Stripe('{{stripe_key}}');
         var amount = $('#id_amount');
-        var stripeHandler = StripeCheckout.configure({
-          key: "{{stripe_key}}",
-          name: "Freesound",
-          description: "Donation to the Phonos Foundation",
 
-          token: function(token) {
-            form.attr("action", "{% url 'donation-complete-stripe' %}");
-            $('<input>').attr({type: 'hidden', name: 'stripeToken', value: token.id}).appendTo(form);
-            $('<input>').attr({type: 'hidden', name: 'stripeEmail', value: token.email}).appendTo(form);
-            form.submit();
-          },
-
-        });
         $('.donation_button_stripe').click(function(e) {
-          var email = "{{user.email}}";
-          stripeHandler.open({
-            amount:  amount.val() * 100, // cents
-            currency: 'eur',
-            email: email
+          $.ajax({
+            type: form.attr('method'),
+            url: "{% url 'donation-session-stripe' %}",
+            data: form.serialize(), // serializes the form's elements.
+            success: function(data)
+            {
+              if (data.errors != null) {
+                  $('.errorlist').html("");
+                $.each(data.errors['__all__'], function (index, error) {
+                  $('.errorlist').append("<li>"+error+"</li>");
+                });
+              } else {
+                session=data.session_id;
+                console.log(session)
+                stripe.redirectToCheckout({
+                    sessionId: session
+                  }).then(function (result) {
+                    // Error calling stripe api
+                    $('.errorlist').html("");
+                    $('.errorlist').append("<li>Error calling stripe API, please retry later.</li>");
+                });
+               }
+            }
           });
-          e.preventDefault();
-        });
+          e.preventDefault(); // avoid to execute the actual submit of the form.
+       });
         $('#id_recurring').change(function(e) {
             if ($('#id_recurring').is(':checked')){
                 // Disable credit card donation button

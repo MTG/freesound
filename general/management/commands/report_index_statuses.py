@@ -18,121 +18,112 @@
 #     See AUTHORS file.
 #
 
+import logging
 
-from django.core.management.base import BaseCommand
-from optparse import make_option
-from utils.search.search_general import get_all_sound_ids_from_solr
-from utils.similarity_utilities import Similarity
 from sounds.models import Sound
-from utils.search.solr import Solr
-from django.conf import settings
-import sys
+from utils.management_commands import LoggingBaseCommand
+from utils.search.search_sounds import get_all_sound_ids_from_search_engine, delete_sounds_from_search_engine
+from utils.similarity_utilities import Similarity
 
-class Command(BaseCommand):
-    help = "This command checks the status of the solr and gaia index compared to the fs database. Reports about sounds which " \
-           "are missing in gaia and solr and sounds that are in gaia or solr but not in fs dataset. Moreover, it changes the status " \
-           "of the sounds in fs dataset that are not in gaia or solr so the next time the indexes are updated " \
-           "(running similarity_update and post_dirty_sounds_to_solr) they are indexed."
+console_logger = logging.getLogger('console')
+
+
+class Command(LoggingBaseCommand):
+    help = "This command checks the status of the solr and gaia index compared to the fs database. Reports about " \
+           "sounds which are missing in gaia and solr and sounds that are in gaia or solr but not in fs dataset. " \
+           "Moreover, it changes the status of the sounds in fs dataset that are not in gaia or solr so the next " \
+           "time the indexes are updated (running similarity_update and post_dirty_sounds_to_search_engine) they " \
+           "are indexed."
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-n','--no-changes',
+            '-n', '--no-changes',
             action='store_true',
             dest='no-changes',
             default=False,
-            help='Using the option --no-changes the is_index_dirty and similarity_state sound fields will not be modified.')
+            help='Using the option --no-changes the is_index_dirty and similarity_state sound fields will not '
+                 'be modified.')
 
     def handle(self,  *args, **options):
-
-        # init
-        solr = Solr(settings.SOLR_URL)
+        self.log_start()
 
         # Get all solr ids
-        print "Getting solr ids...",
-        solr_ids = get_all_sound_ids_from_solr()
-        print "done!"
+        console_logger.info("Getting solr ids...")
+        solr_ids = get_all_sound_ids_from_search_engine()
 
         # Get ell gaia ids
-        print "Getting gaia ids...",
+        console_logger.info("Getting gaia ids...")
         gaia_ids = Similarity.get_all_sound_ids()
-        print "done!"
 
-        print "Getting freesound db data..."
+        console_logger.info("Getting freesound db data...")
         # Get all moderated and processed sound ids
         queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK').order_by('id').only("id")
         fs_mp = [sound.id for sound in queryset]
         # Get ell moderated, processed and analysed sounds
-        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK', analysis_state='OK').order_by('id').only("id")
+        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK', analysis_state='OK')\
+            .order_by('id').only("id")
         fs_mpa = [sound.id for sound in queryset]
-        print "done!"
 
-        print "\nNumber of sounds per index:\n--------------------------"
-        print "Solr index\t\t%i" % len(solr_ids)
-        print "Gaia index\t\t%i" % len(gaia_ids)
-        print "Freesound\t\t%i  (moderated and processed)" % len(fs_mp)
-        print "Freesound\t\t%i  (moderated, processed and analyzed)" % len(fs_mpa)
-
-        print "\n\n***************\nSOLR INDEX\n***************\n"
         in_solr_not_in_fs = list(set(solr_ids).intersection(set(set(solr_ids).difference(fs_mp))))
         in_fs_not_in_solr = list(set(fs_mp).intersection(set(set(fs_mp).difference(solr_ids))))
-        print "Sounds in solr but not in fs:\t%i" % len(in_solr_not_in_fs)
-        print "Sounds in fs but not in solr:\t%i" % len(in_fs_not_in_solr)
+
+        messages = []
+        messages.append("\nNumber of sounds per index:\n--------------------------")
+        messages.append("Solr index\t\t%i" % len(solr_ids))
+        messages.append("Gaia index\t\t%i" % len(gaia_ids))
+        messages.append("Freesound\t\t%i  (moderated and processed)" % len(fs_mp))
+        messages.append("Freesound\t\t%i  (moderated, processed and analyzed)" % len(fs_mpa))
+        messages.append("\n\n***************\nSOLR INDEX\n***************\n")
+        messages.append("Sounds in solr but not in fs:\t%i" % len(in_solr_not_in_fs))
+        messages.append("Sounds in fs but not in solr:\t%i" % len(in_fs_not_in_solr))
+        console_logger.info('\n'.join(messages))
 
         if not options['no-changes']:
             # Mark fs sounds to go processing
             if in_fs_not_in_solr:
-                print "Changing is_index_dirty_state of sounds that require it"
-                N = len(in_fs_not_in_solr)
-                for count, sid in enumerate(in_fs_not_in_solr):
-                    sys.stdout.write('\r\tChanging state of sound sound %i of %i         ' % (count+1, N))
-                    sys.stdout.flush()
-                    sound = Sound.objects.get(id=sid)
-                    sound.set_single_field('is_index_dirty', True)
+                console_logger.info("Changing is_index_dirty_state of %i sounds" % len(in_fs_not_in_solr))
+                Sound.objects.filter(id__in=in_fs_not_in_solr).update(is_index_dirty=True)
 
             # Delete sounds from solr that are not in the db
             if in_solr_not_in_fs:
-                print "\nDeleting sounds that should not be in solr"
-                N = len(in_solr_not_in_fs)
-                for count, sid in enumerate(in_solr_not_in_fs):
-                    sys.stdout.write('\r\tDeleting sound %i of %i         ' % (count+1, N))
-                    sys.stdout.flush()
-                    solr.delete_by_id(sid)
+                console_logger.info("\nDeleting %i sounds that should not be in solr" % len(in_solr_not_in_fs))
+                delete_sounds_from_search_engine(sound_ids=in_solr_not_in_fs)
 
-        print "\n***************\nGAIA INDEX\n***************\n"
         in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mpa))))
         in_fs_not_in_gaia = list(set(fs_mpa).intersection(set(set(fs_mpa).difference(gaia_ids))))
-        print "Sounds in gaia but not in fs:\t%i" % len(in_gaia_not_in_fs)
-        print "Sounds in fs but not in gaia:\t%i  (only considering sounds correctly analyzed)" % len(in_fs_not_in_gaia)
-        #Similarity.save()
+
+        messages = []
+        messages.append("\n***************\nGAIA INDEX\n***************\n")
+        messages.append("Sounds in gaia but not in fs:\t%i" % len(in_gaia_not_in_fs))
+        messages.append("Sounds in fs but not in gaia:\t%i  (only considering sounds correctly analyzed)" \
+                   % len(in_fs_not_in_gaia))
+        console_logger.info('\n'.join(messages))
 
         if not options['no-changes']:
             # Mark fs sounds to go processing
             if in_fs_not_in_gaia:
-                print "Changing similarity_state of sounds that require it"
+                console_logger.info("Changing similarity_state of sounds that require it")
                 N = len(in_fs_not_in_gaia)
                 for count, sid in enumerate(in_fs_not_in_gaia):
-                    sys.stdout.write('\r\tChanging state of sound %i of %i         ' % (count+1, N))
-                    sys.stdout.flush()
+                    console_logger.info('\r\tChanging state of sound %i of %i         ' % (count+1, N))
                     sound = Sound.objects.get(id=sid)
                     sound.set_similarity_state('PE')
 
             # Delete sounds from gaia that are not in the db
             if in_gaia_not_in_fs:
-                print "\nDeleting sounds that should not be in gaia"
+                console_logger.info("\nDeleting sounds that should not be in gaia")
                 N = len(in_gaia_not_in_fs)
                 for count, sid in enumerate(in_gaia_not_in_fs):
-                    sys.stdout.write('\r\tDeleting sound %i of %i         ' % (count+1, N))
-                    sys.stdout.flush()
+                    console_logger.info('\r\tDeleting sound %i of %i         ' % (count+1, N))
                     Similarity.delete(sid)
 
-                #Similarity.save()
-
-
-
-
-
-
-
-
-
-
+        self.log_end({
+            'n_sounds_in_db_moderated_processed': len(fs_mp),
+            'n_sounds_in_db_moderated_processed_analyzed': len(fs_mpa),
+            'n_sounds_in_gaia': len(gaia_ids),
+            'n_sounds_in_solr': len(solr_ids),
+            'n_sounds_in_solr_but_not_in_fs': len(in_solr_not_in_fs),
+            'n_sounds_in_fs_but_not_in_solr': len(in_fs_not_in_solr),
+            'n_sounds_in_gaia_but_not_in_fs': len(in_gaia_not_in_fs),
+            'n_sounds_in_fs_but_not_in_gaia': len(in_fs_not_in_gaia),
+        })

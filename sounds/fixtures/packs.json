@@ -1,19 +1,6 @@
 [
     {
-        "pk": 2,
-        "model": "sounds.pack",
-        "fields": {
-            "description": "",
-            "created": "2005-04-06 12:25:50",
-            "last_updated": "2005-04-06 12:25:50",
-            "is_dirty": true,
-            "user": 2,
-            "num_downloads": 1327,
-            "name": "sinusoid pack"
-        }
-    },
-    {
-        "pk": 2,
+        "pk": null,
         "model": "auth.user",
         "fields": {
             "username": "Bram",
@@ -28,6 +15,21 @@
             "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
             "email": "anon8@xmpl.org",
             "date_joined": "2005-02-07 16:42:00"
+        }
+    },
+    {
+        "pk": null,
+        "model": "sounds.pack",
+        "fields": {
+            "description": "",
+            "created": "2005-04-06 12:25:50",
+            "last_updated": "2005-04-06 12:25:50",
+            "is_dirty": true,
+            "user": [
+              "Bram"
+            ],
+            "num_downloads": 1327,
+            "name": "sinusoid pack"
         }
     }
 ]

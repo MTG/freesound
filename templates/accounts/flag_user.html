@@ -6,7 +6,7 @@
 
     <script type="text/javascript">
 
-        function post_flag(div_id, uname, flag_type, object_id, url)
+        function post_flag(div_id, flag_type, object_id, url)
         {
             $("#" + div_id.toString() + "_info").html('<img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/>');
 
@@ -14,7 +14,6 @@
                 type: 'POST',
                 url: url,
                 data: {
-                    username: uname,
                     flag_type: flag_type,
                     object_id: object_id
                 },
@@ -55,7 +54,7 @@
     {% if flagged %}
         <span style="color:#808080;">{{ done_text }}</span>
     {% else %}
-        <a onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{username}}','{{ flag_type }}',{{ content_obj_id }},'{% url "flag-user" username %}')" href="javascript:void(0)">{{ link_text }}</a>
+        <a onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{ flag_type }}',{{ content_obj_id }},'{% url "flag-user" username %}')" href="javascript:void(0)">{{ link_text }}</a>
     {% endif %}
     </span>
 

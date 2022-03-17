@@ -18,12 +18,14 @@
 #     See AUTHORS file.
 #
 
+import datetime
+import time
+
 from django.template import Library
-import datetime, time
 from django.template.defaultfilters import stringfilter
-from django.forms import CheckboxInput
 
 register = Library()
+
 
 @register.filter
 def tuple_to_time(t):
@@ -38,13 +40,35 @@ def truncate_string(value, length):
     else:
         return value
 
+
 @register.filter
 def duration(value):
     duration_minutes = int(value/60)
     duration_seconds = int(value) % 60
     duration_miliseconds = int((value - int(value)) * 1000)
-    return "%02d:%02d:%03d" % (duration_minutes, duration_seconds, duration_miliseconds)
+    return "%d:%02d.%03d" % (duration_minutes, duration_seconds, duration_miliseconds)
+
+
+@register.filter
+def duration_hours(total_seconds):
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    return '{}:{:02d}'.format(hours, minutes)
+
 
 @register.filter
 def in_list(value,arg):
     return value in arg
+
+
+@register.filter
+def chunks(l, n):
+    """
+    Returns the elements of l grouped in chunks of size n.
+    :param list l: list of elements to regroup
+    :param int n: number of elements per group
+    :return: list of n-sized lists
+    """
+    if type(l) is not list:
+        l = list(l)
+    return [l[i:i + n] for i in xrange(0, len(l), n)]

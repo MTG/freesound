@@ -1,0 +1,52 @@
+{% extends "simple_page.html" %}
+{% load bw_templatetags %}
+{% load display_forum_objects %}
+{% load cache %}
+
+{% block title %}Forums - {{forum.name}}{% endblock %}
+{% block page-title %}Freesound Forums{% endblock %}
+
+{% block page-content %}
+    <div class="divider-light v-spacing-top-4 v-spacing-2"></div>
+    <div class="row middle">
+        <div class="col-md-6">
+            <ul class="navbar-forums-hot navbar-breadcrumb">
+                <li class="nav-item">
+                      <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-black" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6 v-spacing-1 v-spacing-top-1 between">
+            <form method="get" action="{% url "forums-search" %}">
+                <input type="hidden" name="advanced_search"  value="0"/>
+                <input type="hidden" name="forum" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum.name_slug}}{% endif %}"/>
+                <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in this forum..." value="{{ search_query }}"/>
+            </form>
+            <div>
+                <a class="btn-primary" href="{% url "forums-new-thread" forum.name_slug %}"><span class="padding-right-1">+</span> New thread</a>
+            </div>
+        </div>
+    </div>
+    <div class="divider-light v-spacing-top-2"></div>
+
+    <div class="v-spacing-top-4">
+        {% for thread in page.object_list %}
+            {% display_thread thread %}
+            {% if not forloop.last %}
+                <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+            {% endif %}
+        {% empty %}
+            <div class="bw-threads">
+                <div class="row">
+                    This forum has no threads
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="v-spacing-top-7">
+        {% bw_paginator paginator page current_page request "thread" %}
+    </div>
+{% endblock %}

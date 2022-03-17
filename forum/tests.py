@@ -17,12 +17,13 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth.models import User, Group
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from accounts.models import EmailPreferenceType, UserEmailSetting
 from forum.models import Forum, Thread, Post, Subscription
 
 
@@ -143,14 +144,25 @@ class ForumPostSignalTestCase(TestCase):
         self.assertEqual(self.thread.num_posts, 1)
         self.assertEqual(self.thread.last_post, firstpost)
 
-    def test_remove_last_post_moderated(self):
-        """If the last post of a thread is deleted, the thread is removed"""
+    def test_remove_only_post_moderated(self):
+        """If the only moderated post of a thread is deleted, the thread is removed"""
 
         post = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
 
         self.thread.refresh_from_db()
         self.assertEqual(self.thread.num_posts, 1)
 
+        post.delete()
+
+        with self.assertRaises(Thread.DoesNotExist):
+            self.thread.refresh_from_db()
+
+    def test_remove_only_post_unmoderated(self):
+        """If the only unmoderated post of a thread is deleted, the thread is removed"""
+
+        post = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
+        self.thread.first_post = post
+        self.thread.save()
         post.delete()
 
         with self.assertRaises(Thread.DoesNotExist):
@@ -163,6 +175,9 @@ class ForumPostSignalTestCase(TestCase):
         unmodpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
 
         self.thread.refresh_from_db()
+        self.thread.first_post = modpost
+        self.thread.save()
+
         self.assertEqual(self.thread.num_posts, 1)
 
         modpost.delete()
@@ -171,6 +186,31 @@ class ForumPostSignalTestCase(TestCase):
         self.thread.refresh_from_db()
         self.assertEqual(self.thread.num_posts, 0)
         self.assertEqual(self.thread.last_post, None)
+
+    def test_remove_first_post_set_to_moderated(self):
+        """If the first post of a thread is removed, update it to the next earliest post"""
+        firstpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        secondpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        self.thread.first_post = firstpost
+        self.thread.save()
+
+        firstpost.delete()
+        self.thread.refresh_from_db()
+        self.assertEqual(self.thread.first_post, secondpost)
+
+    def test_remove_first_post_set_to_unmoderated(self):
+        """If the first post of a thread is removed, update it to the next post even if it's unmoderated"""
+        firstpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        secondpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
+        self.thread.refresh_from_db()
+        self.thread.first_post = firstpost
+        self.thread.save()
+
+        self.assertEqual(self.thread.first_post, firstpost)
+        firstpost.delete()
+        self.thread.refresh_from_db()
+
+        self.assertEqual(self.thread.first_post, secondpost)
 
     def test_remove_post_last_in_thread_not_in_forum(self):
         """If the last post of a thread is removed, the last post of the forum may be
@@ -273,10 +313,12 @@ def _create_forums_threads_posts(author, n_forums=1, n_threads=1, n_posts=5):
 
 class ForumPageResponses(TestCase):
 
+    fixtures = ['email_preference_type']
+
     def setUp(self):
         self.N_FORUMS = 1
         self.N_THREADS = 1
-        self.N_POSTS = 5
+        self.N_POSTS = 4
         self.user = User.objects.create_user(username='testuser', email='email@example.com', password='12345')
         _create_forums_threads_posts(self.user, self.N_FORUMS, self.N_THREADS, self.N_POSTS)
 
@@ -316,7 +358,7 @@ class ForumPageResponses(TestCase):
 
         # Assert logged in user fails creating thread
         long_title = 255 * '1'
-        self.client.login(username=self.user.username, password='12345')
+        self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
             u'body': [u'New thread body (first post)'], u'subscribe': [u'on'], u'title': [long_title]
         })
@@ -404,7 +446,7 @@ class ForumPageResponses(TestCase):
         })
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
         edited_post = Post.objects.get(id=post.id)
-        self.assertEquals(edited_post.body, u'Edited post body')
+        self.assertEqual(edited_post.body, u'Edited post body')
 
     def test_delete_post_response_ok(self):
         forum = Forum.objects.first()
@@ -424,7 +466,7 @@ class ForumPageResponses(TestCase):
         # Assert logged in user can delete post (see delete confirmation page)
         self.client.force_login(self.user)
         resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
 
     def test_delete_post_confirm_response_ok(self):
         forum = Forum.objects.first()
@@ -533,4 +575,106 @@ class ForumPageResponses(TestCase):
 
         # Both users are subscribed but the email is not sent to the user that is sending the post
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "[freesound] topic reply notification - Thread 0 of forum 0")
+        self.assertEqual(mail.outbox[0].to[0], self.user.email)
+        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
+        self.assertTrue(settings.EMAIL_SUBJECT_TOPIC_REPLY in mail.outbox[0].subject)
+
+    def test_emails_not_sent_for_subscription_to_thread_if_preference_disabled(self):
+        forum = Forum.objects.first()
+        thread = forum.thread_set.first()
+        post = thread.post_set.first()
+
+        # A user is subscribed to a thread...
+        _, _ = Subscription.objects.get_or_create(thread=thread, subscriber=self.user)
+
+        # ...but has forum emails disabled
+        # Create email preference object for the email type (which will mean user does not want forum
+        # emails as it is enabled by default and the preference indicates user does not want it).
+        email_pref = EmailPreferenceType.objects.get(name="new_post")
+        UserEmailSetting.objects.create(user=self.user, email_type=email_pref)
+
+        # A second user replies to that thread
+        user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        self.client.force_login(user2)
+        self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
+            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+        })
+
+        # No emails sent
+        self.assertEqual(len(mail.outbox), 0)
+
+class ForumModerationTestCase(TestCase):
+
+    fixtures = ["user_groups"]
+
+    def setUp(self):
+        self.forum_user = User.objects.create_user(username='testuser', email='email@example.com', password='12345')
+        self.regular_user = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
+        self.admin_user = User.objects.create_user(username='testuser3', email='email3@example.com', password='12345')
+        group = Group.objects.get(name="forum_moderators")
+        self.admin_user.groups.add(group)
+
+        _create_forums_threads_posts(self.forum_user, n_forums=1, n_threads=1, n_posts=1)
+        self.post = Post.objects.first()
+        self.post.moderation_state = "NA"
+        self.post.save()
+
+    def test_user_no_permissions(self):
+        """If the user doesn't have forum.can_moderate_forum permission, they're redirected to login screen"""
+        self.client.force_login(self.regular_user)
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete'], u'post': [u'1'],
+        })
+        self.assertEqual(resp.status_code, 302)
+
+    def test_approve_post(self):
+        """Approve a post"""
+
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Approve'], u'post': [str(self.post.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.moderation_state, "OK")
+
+    def test_delete_user(self):
+        """The user is spammy, delete it. The post will also be deleted"""
+        self.client.force_login(self.admin_user)
+
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete User'], u'post': [str(self.post.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        with self.assertRaises(Post.DoesNotExist):
+            self.post.refresh_from_db()
+        with self.assertRaises(User.DoesNotExist):
+            self.forum_user.refresh_from_db()
+
+        self.assertEqual(list(resp.context['messages'])[0].message, "The user has been successfully deleted.")
+
+    def test_delete_post(self):
+        """The post is spammy. Delete it, but keep the user"""
+        self.client.force_login(self.admin_user)
+
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete Post'], u'post': [str(self.post.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        with self.assertRaises(Post.DoesNotExist):
+            self.post.refresh_from_db()
+        self.forum_user.refresh_from_db()
+
+        self.assertEqual(list(resp.context['messages'])[0].message, "The post has been successfully deleted.")
+
+    def test_no_such_post(self):
+        group = Group.objects.get(name="forum_moderators")
+        self.admin_user.groups.add(group)
+        self.client.force_login(self.admin_user)
+
+        resp = self.client.post(reverse('forums-moderate'), data={
+            u'action': [u'Delete Post'], u'post': [str(self.post.id+1)],
+        })
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(list(resp.context['messages'])[0].message, "This post no longer exists. It may have already been deleted.")

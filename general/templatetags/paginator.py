@@ -24,12 +24,18 @@ from django import template
 register = template.Library()
 
 @register.inclusion_tag('templatetags/paginator.html', takes_context=True)
-def show_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results = -1 ):
+def show_paginator(
+        context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
     """
     Adds pagination context variables for use in displaying first, adjacent and
     last page links in addition to those created by the object_list generic
     view.
     """
+
+    if paginator is None:
+        # If paginator object is None, don't go ahead as below calculations will fail. This can happen if show_paginator
+        # is called and no paginator object is present in view
+        return {}
  
     adjacent_pages = 3
     total_wanted = adjacent_pages * 2 + 1
@@ -48,8 +54,8 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
 
     # although paginator objects are 0-based, we use 1-based paging
     page_numbers = [n for n in range(min_page_num, max_page_num) if n > 0 and n <= paginator.num_pages]
-
-    params = urllib.urlencode([(key, value.encode('utf-8')) for (key, value) in request.GET.items() if key.lower() != u"page"])
+    params = urllib.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
+                               if key.lower() != u"page"])
 
     if params == "":
         url = request.path + u"?page="
@@ -72,6 +78,11 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
         url_first_page = url + '1'
     url_last_page = url + str(paginator.num_pages)
 
+    if page_numbers:
+        last_is_next = paginator.num_pages - 1 == page_numbers[-1]
+    else:
+        last_is_next = False
+
     return {
         "page": page,
         "paginator": paginator,
@@ -79,6 +90,7 @@ def show_paginator(context, paginator, page, current_page, request, anchor="", n
         "page_numbers": page_numbers,
         "show_first": 1 not in page_numbers,
         "show_last": paginator.num_pages not in page_numbers,
+        "last_is_next": last_is_next,
         "url" : url,
         "url_prev_page": url_prev_page,
         "url_next_page": url_next_page,

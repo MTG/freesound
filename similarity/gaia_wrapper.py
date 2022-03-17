@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import errno
 import logging
 import os
 import time
@@ -25,11 +26,27 @@ import time
 import yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point, VariableLength
 
+import similarity_settings as sim_settings
 from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, \
     get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
-import similarity_settings as sim_settings
 
 logger = logging.getLogger('similarity')
+
+
+def create_directories(path, exist_ok=True):
+    """
+    Creates directory at the specified path, including all intermediate-level directories needed to contain it.
+    NOTE: after migrating to Python3, this util function can be entirely replaced by calling
+    "os.makedirs(path, exist_ok=True)".
+    :param str path: path of the direcotry to create
+    :param bool exist_ok: if set to True, exceptions won't be raised if the target direcotry already exists
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        # Ignore exception if directory already existing
+        if exist_ok and exc.errno != errno.EEXIST:
+            raise
 
 
 class GaiaWrapper:
@@ -63,8 +80,7 @@ class GaiaWrapper:
         therefore this function does not prepare or normalize loaded datasets.
         """
 
-        if not os.path.exists(sim_settings.INDEX_DIR):
-            os.makedirs(sim_settings.INDEX_DIR)
+        create_directories(sim_settings.INDEX_DIR, exist_ok=True)
 
         # load original dataset
         if os.path.exists(self.original_dataset_path):
@@ -172,7 +188,7 @@ class GaiaWrapper:
                 logger.info('Bulding metric for preset %s' % preset)
                 name = preset
                 path = sim_settings.PRESET_DIR + name + ".yaml"
-                preset_file = yaml.load(open(path))
+                preset_file = yaml.safe_load(open(path))
                 distance = preset_file['distance']['type']
                 parameters = preset_file['distance']['parameters']
                 search_metric = DistanceFunctionFactory.create(
@@ -181,7 +197,7 @@ class GaiaWrapper:
 
     def __build_pca_metric(self):
         logger.info('Bulding metric for preset pca')
-        preset_file = yaml.load(open(sim_settings.PRESET_DIR + "pca.yaml"))
+        preset_file = yaml.safe_load(open(sim_settings.PRESET_DIR + "pca.yaml"))
         distance = preset_file['distance']['type']
         parameters = preset_file['distance']['parameters']
         search_metric = DistanceFunctionFactory.create(str(distance), self.pca_dataset.layout(), parameters)
@@ -514,8 +530,8 @@ class GaiaWrapper:
                     target_file_parsing_type = 'mapPoint'
 
                 except Exception as e:
-                    logger.info('Unable to create gaia point from uploaded file (%s). '
-                                'Trying adding descriptors one by one.' % e)
+                    logger.error('Unable to create gaia point from uploaded file (%s). '
+                                 'Trying adding descriptors one by one.' % e)
 
                     # If does not work load descriptors one by one
                     try:
@@ -556,8 +572,8 @@ class GaiaWrapper:
                         target_file_parsing_type = 'walkDict'
 
                     except Exception as e:
-                        logger.info('Unable to create gaia point from uploaded file and adding descriptors one by '
-                                    'one (%s)' % e)
+                        logger.error('Unable to create gaia point from uploaded file and adding descriptors one by '
+                                     'one (%s)' % e)
                         return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the '
                                                          'file does not have the required layout. Are you using the '
                                                          'correct version of Essentia\'s Freesound extractor?',

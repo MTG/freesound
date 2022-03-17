@@ -1,0 +1,173 @@
+{% extends "simple_page.html" %}
+{% load bw_templatetags %}
+{% load util %}
+
+{% block title %}Charts{% endblock %}
+{% block page-title %}Charts{% endblock %}
+
+{% block page-content %}
+    <div class="row">
+        <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
+            <h5>Most active users in the last weeks</h5>
+            <div class="v-spacing-top-3">
+                {% for user_data in recent_most_active_users  %}
+                    <div class="row middle">
+                        <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
+                        <div class="col-11">
+                            <div class="row middle">
+                                <div class="col-2 center">
+                                    {% bw_user_avatar user_data.0.profile.locations.avatar.M.url user_data.0.username %}
+                                </div>
+                                <div class="col-8">
+                                    <a href="{% url 'account' user_data.0.username %}">{{ user_data.0.username }}</a>
+                                    <div class="text-grey ellipsis">
+                                        {{ user_data.1.uploads }} sound{{ user_data.1.uploads|pluralize }} · {{ user_data.1.posts }} post{{ user_data.1.posts|pluralize }} · {{ user_data.1.comments }} comment{{ user_data.1.comments|pluralize }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="col-9 offset-1 v-spacing-top-2 v-spacing-2 divider-light"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
+            <h5>Most active new users</h5>
+            <div class="v-spacing-top-3">
+                {% for user_data in new_active_users  %}
+                    <div class="row middle">
+                        <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
+                        <div class="col-11">
+                            <div class="row middle">
+                                <div class="col-2 center">
+                                    {% bw_user_avatar user_data.0.profile.locations.avatar.M.url user_data.0.username %}
+                                </div>
+                                <div class="col-8">
+                                    <a href="{% url 'account' user_data.0.username %}">{{ user_data.0.username }}</a>
+                                    <div class="text-grey ellipsis">
+                                        {{ user_data.1.uploads }} sound{{ user_data.1.uploads|pluralize }} · {{ user_data.1.posts }} post{{ user_data.1.posts|pluralize }} · {{ user_data.1.comments }} comment{{ user_data.1.comments|pluralize }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="col-9 offset-1 v-spacing-top-2 v-spacing-2 divider-light"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
+            <h5>Top recent uploaders (by number of sounds)</h5>
+            <div class="v-spacing-top-3">
+                {% for user_avatar_url, username, count in top_recent_uploaders_by_count  %}
+                    <div class="row middle">
+                        <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
+                        <div class="col-11">
+                            <div class="row middle">
+                                <div class="col-2 center">
+                                    {% bw_user_avatar user_avatar_url username %}
+                                </div>
+                                <div class="col-8">
+                                    <a href="{% url 'account' username %}">{{ username }}</a>
+                                    <div class="text-grey ellipsis">
+                                        {{ count }} sound{{ count|pluralize }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="col-9 offset-1 v-spacing-top-2 v-spacing-2 divider-light"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
+            <h5>Top recent uploaders (by sound length)</h5>
+            <div class="v-spacing-top-3">
+                {% for user_avatar_url, username, length in top_recent_uploaders_by_length  %}
+                    <div class="row middle">
+                        <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
+                        <div class="col-11">
+                            <div class="row middle">
+                                <div class="col-2 center">
+                                    {% bw_user_avatar user_avatar_url username %}
+                                </div>
+                                <div class="col-8">
+                                    <a href="{% url 'account' username %}">{{ username }}</a>
+                                    <div class="text-grey ellipsis">
+                                        {{ length|duration_hours }} hours of audio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="col-9 offset-1 v-spacing-top-2 v-spacing-2 divider-light"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
+            <h5>All time top uploaders (by number of sounds)</h5>
+            <div class="v-spacing-top-3">
+                {% for user_avatar_url, username, count in all_time_top_uploaders_by_count  %}
+                    <div class="row middle">
+                        <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
+                        <div class="col-11">
+                            <div class="row middle">
+                                <div class="col-2 center">
+                                    {% bw_user_avatar user_avatar_url username %}
+                                </div>
+                                <div class="col-8">
+                                    <a href="{% url 'account' username %}">{{ username }}</a>
+                                    <div class="text-grey ellipsis">
+                                        {{ count }} sound{{ count|pluralize }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="col-9 offset-1 v-spacing-top-2 v-spacing-2 divider-light"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
+            <h5>All time top uploaders (by sound length)</h5>
+            <div class="v-spacing-top-3">
+                {% for user_avatar_url, username, length in all_time_top_uploaders_by_length  %}
+                    <div class="row middle">
+                        <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
+                        <div class="col-11">
+                            <div class="row middle">
+                                <div class="col-2 center">
+                                    {% bw_user_avatar user_avatar_url username %}
+                                </div>
+                                <div class="col-8">
+                                    <a href="{% url 'account' username %}">{{ username }}</a>
+                                    <div class="text-grey ellipsis">
+                                        {{ length|duration_hours }} hours of audio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="col-9 offset-1 v-spacing-top-2 v-spacing-2 divider-light"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

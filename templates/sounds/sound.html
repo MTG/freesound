@@ -18,7 +18,7 @@
     </script>
     <meta property="og:title" content="{{ sound.original_filename }} by {{ sound.user.username }}" />
     <meta property="og:type" content="song" />
-    <meta property="og:audio" content="http://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
+    <meta property="og:audio" content="https://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
     <meta property="og:audio:artist" content="{{ sound.user.username }}" />
     <meta property="og:audio:title" content="{{ sound.original_filename }}" />
     <meta property="og:url" content="{% absurl 'sound' sound.user.username sound.id %}" />
@@ -57,7 +57,7 @@
               <span>Content warning</span>
               <p>This sound may be inappropriate for some users
               <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page</p>
-              <p><a id="remove_warning_link" href="#">Dismiss</a></p>
+              <p><a id="remove_warning_link" href="javascript:void(0);" onclick="remove_explicit_content_warning(this);">Dismiss</a></p>
           </div>
         </div>
         <script type="text/javascript">
@@ -144,7 +144,7 @@
         </fieldset>
     </form>
     {% else %}
-    <center><p>Please <a href="{% url 'accounts-login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment</center>
+    <center><p>Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment</center>
     {% endif %}
 </div> <!-- single_sample_content -->
 
@@ -159,7 +159,7 @@
     <div id="download">
     {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
         {% if request.user.is_authenticated %}
-        <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');" id="download_button" title="download sound"></a>
+        <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');" id="download_button" title="download sound"></a>
         {% else %}
             <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" id="download_login_button" title="login to download"></a>
         {% endif %}
@@ -262,9 +262,6 @@
             <a href="https://twitter.com/share" class="twitter-share-button" data-count="none">Tweet</a><script type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
             <span id="tumblr_button_abc123" class="social_link"></span>
             <div class="social_link">
-                <g:plusone size="medium" count="false" href="{% absurl 'short-sound-link' sound.id %}"></g:plusone>
-            </div>
-            <div class="social_link">
                 <span id="show_embed_button" onclick="$('#embed_links').toggle(500);">Embed</span>
             </div>
             <br style="clear: both;" />
@@ -304,12 +301,6 @@
                     embed_text = embed_text.replace('HEIGHT', sizes[1]);
                     $('#embed_code').text(embed_text);
                 }
-
-                (function() {
-                    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-                    po.src = 'https://apis.google.com/js/plusone.js';
-                    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-                })();
              </script>
         </div>
         <!--
@@ -348,12 +339,10 @@
             download_button.attr('onclick', '');
             download_button.click(function(){
                 setTimeout(function(){
-                        _gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);
                         afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');
                     }, 100)
                 }
             );
-
         }
     });
 

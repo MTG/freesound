@@ -27,7 +27,7 @@
                  {% endif %}
 
                  {# Show 'assign to me' link if the assigned moderator is not you #}
-                 {% if ticket.assignee.id != user.id %}
+                 {% if perms.tickets.can_moderate and ticket.assignee.id != user.id %}
                  (<a href="{% url 'tickets-moderation-assign-single-ticket' ticket.sender.id ticket.id %}?next=ticket">assign to me</a>)
                  {% endif %}
             </li>
@@ -60,7 +60,7 @@
                 </form>
             </div>
             {% else %}
-            <p>Please <a href="{% url "accounts-login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add messages</center>
+            <p>Please <a href="{% url "login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add messages</center>
             {% endif %}
 
         </div> <!-- /#ticket-left -->

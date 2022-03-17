@@ -1,0 +1,42 @@
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  background-color: $white;
+  text-align: right;
+  position: absolute;
+  top: calc(100% + 13px);
+  right: 0;
+  left: 0;
+  box-shadow: $dropdown-shadow;
+  width: 215px;
+  max-height: 75vh;
+  overflow: auto;
+  padding: 0px 30px 30px 0px;
+  transform: translateX(-82%);
+  z-index: get-z-index(dropdown);
+  display: none;
+  &.show {
+    display: block;
+  }
+
+  @include md-and-above {
+    transform: translateX(-78%);
+  }
+
+  @include lg-and-above {
+    padding: 0px 30px 30px 30px;
+    text-align: left;
+    transform: translateX(-14%);
+  }
+}
+
+.dropdown-item {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  
+  &:last-child {
+    padding-bottom: 0;
+  }
+}

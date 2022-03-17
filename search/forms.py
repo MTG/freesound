@@ -19,21 +19,7 @@
 #
 
 import django.forms as forms
-
-    
-SEARCH_SORT_OPTIONS_WEB = [
-        ("Automatic by relevance", "score desc"),
-        ("Duration (long first)", "duration desc"),
-        ("Duration (short first)", "duration asc"),
-        ("Date added (newest first)", "created desc"),
-        ("Date added (oldest first)", "created asc"),
-        ("Downloads (most first)", "num_downloads desc"),
-        ("Downloads (least first)", "num_downloads asc"),
-        ("Rating (highest first)", "avg_rating desc"),
-        ("Rating (lowest first)", "avg_rating asc")
-    ]
-
-SEARCH_DEFAULT_SORT = "score desc"
+from django.conf import settings
 
 
 class SoundSearchForm(forms.Form):
@@ -62,7 +48,7 @@ class SoundSearchForm(forms.Form):
         for option in self.sort_options:
             if option[0] == s:
                 return option[1]
-        return SEARCH_DEFAULT_SORT
+        return settings.SEARCH_SOUNDS_SORT_DEFAULT
         
     def __init__(self, sort_options, *args, **kargs):
         super(SoundSearchForm, self).__init__(*args, **kargs)

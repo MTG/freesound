@@ -1,0 +1,29 @@
+{% import './icons.njk' as icons %}
+{% macro select2(options, id) %}
+  <div class="bw-select">
+    <select id="{{ id }}">
+      {% for option in options %}
+        <option value="{{ option }}">{{ option }}</option>
+      {% endfor %}
+    </select>
+    {{ icons.icon('chevron-up', 'bw-select__chevron') }}
+  </div>
+{% endmacro %}
+
+{% macro select(options, id) %}
+  <select id="{{ id }}" placeholder-text="{{ options[0] }}">
+    {% for option in options %}
+      <option value="{{ option }}">{{ option }}</option>
+    {% endfor %}
+  </select>
+{% endmacro %}
+
+{% macro forumSelect(options, id) %}
+  <div class="bw-select-forum">
+    <select id="{{ id }}" placeholder-text="{{ options[0] }}">
+      {% for option in options %}
+        <option value="{{ option }}">{{ option }}</option>
+      {% endfor %}
+    </select>
+  </div>
+{% endmacro %}

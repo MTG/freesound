@@ -1,6 +1,8 @@
 import json
 import base64
 from django import forms
+from django.utils.safestring import mark_safe
+
 from models import DonationCampaign
 
 class DonateForm(forms.Form):
@@ -18,11 +20,11 @@ class DonateForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
+        default_donation_amount = kwargs.pop('default_donation_amount', None)
         super(DonateForm, self).__init__(*args, **kwargs)
-
         choices = [
             ('1', "Anonymous"),
-            ('2', "Other: "),
+            ('2', "Other... "),
         ]
         self.user_id = None
         if user.username:
@@ -33,6 +35,9 @@ class DonateForm(forms.Form):
             self.initial['donation_type'] = '1'
 
         self.fields['donation_type'].choices = choices
+
+        if default_donation_amount is not None:
+            self.initial['amount'] = float(default_donation_amount)
 
     def clean(self):
         cleaned_data = super(DonateForm, self).clean()
@@ -66,3 +71,21 @@ class DonateForm(forms.Form):
         # Paypal gives only one field to add extra data so we send it as b64
         self.encoded_data = base64.b64encode(json.dumps(returned_data))
         return cleaned_data
+
+
+class BwDonateForm(DonateForm):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super(BwDonateForm, self).__init__(*args, **kwargs)
+
+        self.fields['donation_type'].label = \
+            mark_safe('Please choose the <b>name</b> that will appear with the donation:')
+        self.fields['donation_type'].widget.attrs['class'] = 'bw-radio'
+        self.fields['name_option'].label = False
+        self.fields['name_option'].widget.attrs['class'] = 'display-none'
+        self.fields['name_option'].widget.attrs['placeholder'] = 'Write the name here'
+        self.fields['amount'].label = mark_safe('Donation amount (&euro;):')
+        self.fields['amount'].widget.attrs['class'] = 'v-spacing-top-1'
+        self.fields['recurring'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['show_amount'].widget.attrs['class'] = 'bw-checkbox'

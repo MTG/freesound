@@ -10,7 +10,7 @@ deleted by a Freesound moderator.
 
 You can see the moderator's explanation here:
 
-<{% absurl 'tickets-ticket' ticket.key %}>
+{% absurl 'tickets-ticket' ticket.key %}
 
 If you do not agree with the decision please write a message to 
 the moderator using the link above.

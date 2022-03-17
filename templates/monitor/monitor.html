@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-
 {% block title %}
     Monitor
 {% endblock title %}
@@ -35,14 +34,16 @@
         <li>{{ sounds_analysis_ok_count }} sound{{ sounds_analysis_ok_count|pluralize }} are analyzed ok</li>
     </ul>
 
-    {% if request.user.is_staff %}
-    <h3>Gearman server status</h3>
-        <ul>
-        {% for item in gearman_status %}
-            <li><b>{{ item.task }}:</b> {{ item.queued }} queued, {{ item.running }} running, {{ item.workers }} workers</li>
-        {% empty %}
-            <li>No info available...</li>
-        {% endfor %}
-        </ul>
+    {%  if request.user.is_staff %}
+    <script>
+        setInterval(function(){
+            $.get("{{ queues_stats_url }}", function(data){
+                console.log(data)
+                $('#queuesStatus').html(data);
+              });
+            }, 1000);
+    </script>
+    <div id="queuesStatus"></div>
     {% endif %}
+
 {% endblock content %}

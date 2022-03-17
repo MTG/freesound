@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load tags %}
+{% load bw_templatetags %}
+{% load util %}
+{% load filter_img %}
+{% load display_sound %}
+{% load absurl %}
+
+{% block title %}Pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 padding-bottom-7 v-spacing-top-5">
+            <div class="row no-gutters">
+                <div class="col-md-8">
+                    <div class="bw-sound-page__information">
+                        <div class="row middle">
+                            <div class="col-10">
+                                <h1><span class="text-light-grey">Pack: </span>{{ pack.name }} </h1>
+                            </div>
+                        </div>
+                        <div class="middle v-spacing-top-2">{% bw_generic_stars pack.avg_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings >= min_num_ratings %}Overall rating ({{ pack.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                        <div class="middle bw-sound-page__user v-spacing-top-5">
+                            <div class="h-spacing-1">
+                                {% bw_user_avatar pack.user.profile.locations.avatar.M.url pack.user.username 40 %}
+                            </div>
+                            <div class="h-spacing-left-1">
+                                <a href="{% url 'account' pack.user.username %}">{{ pack.user.username | truncate_string:15 }}</a>
+                                <p class="text-grey">{{ pack.created|date:"F jS, Y" }}</p>
+                            </div>
+                            {% if pack.user != request.user  %}
+                                <div class="h-spacing-left-3">
+                                    {% if is_following %}
+                                        <a class="no-hover btn-secondary" href="{% url 'unfollow-user' pack.user.username %}?next={{ next_path }}">Unfollow</a>
+                                    {% else %}
+                                        <a class="no-hover btn-inverse" href="{% url 'follow-user' pack.user.username %}?next={{ next_path }}">Follow</a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="v-spacing-top-3" >
+                            {% if pack.description %}
+                                <div class="text-17 line-height-30">
+                                    {{pack.description|replace_img|safe|linebreaksbr}}
+                                </div>
+                            {% endif %}
+                            <div class="v-spacing-top-4">
+                                {% for tag in pack.get_pack_tags_bw|add_sizes:"count:0.1:1.0" %}
+                                    {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="v-spacing-top-5">
+                            <div class="text-center text-18 text-light-grey v-spacing-5">Latest sounds in this pack</div>
+                            {% for sounds_chunk in pack_sounds|chunks:3 %}
+                                <div class="row no-margins">
+                                    {% for sound in sounds_chunk %}
+                                        <div class="col-4">
+                                            {% display_sound_small sound %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% empty %}
+                                <div class="text-center">
+                                    <h5>No sounds... &#128543</h5>
+                                    <div class="text-grey v-spacing-top-1">Looks like {{ pack.name }} has no sounds yet</div>
+                                </div>
+                            {% endfor %}
+                            {% if pack_sounds %}
+                                <div class="v-spacing-top-4 text-center">
+                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 offset-md-1">
+                    <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
+                    <div class="bw-sound__sidebar">
+                        <div>
+                            <ol>
+                                <li class="v-spacing-3">
+                                    {% bw_icon 'wave' 'text-grey text-opacity-050' %}<a href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" class="bw-link--black  no-hover"><span class="text-21">{{ pack.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
+                                </li>
+                                <li class="v-spacing-3">
+                                    {% bw_icon 'play' 'text-light-grey' %} <span class="text-21">{{ pack.get_total_pack_sounds_length|duration_hours }}</span> <span class="text-grey text-17">hours of audio</span>
+                                </li>
+                                <li class="v-spacing-3">
+                                    {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--black no-hover"><span class="text-21">{{ pack.num_downloads }}</span> <span class="text-grey text-17">downloads</span></a>
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="v-spacing-top-5">
+                            {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ pack.license_summary_name }}</span>
+                        </div>
+                        <div class="text-grey v-spacing-top-1">
+                            {{ pack.license_summary_text|safe }} {% if pack.license_summary_deed_url %}<a href="{{ pack.license_summary_deed_url }}" target="_blank" class="bw-link--black">More...</a>{% endif %}
+                        </div>
+                        <div class="v-spacing-top-6">
+                            {% if request.user.is_authenticated %}
+                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Download pack">Download pack</a>
+                            {% else %}
+                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Login to download">Login to download</a>
+                            {% endif %}
+                        </div>
+                        {% if perms.pack.can_edit or pack.user == request.user %}
+                            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'pack-edit' pack.user.username pack.id %}" title="Edit pack">Edit pack</a>
+                        {% endif %}
+                        <div class="v-spacing-top-7">
+                            <ol class="center">
+                                <li><a href="https://www.facebook.com/sharer/sharer.php?u={% absurl 'short-pack-link' pack.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'facebook' 'text-30' %}</div></a></li>
+                                <li class="h-spacing-left-2"><a href="https://twitter.com/share?url={% absurl 'short-pack-link' pack.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'twitter' 'text-30' %}</div></a></li>
+                                <li class="h-spacing-left-2"><a id="toggle-share-link" class="cursor-pointer"><div class="cleanIcon">{% bw_icon 'share2' 'bw-icon__inside_circle' %}</div></a></li>
+                            </ol>
+                        </div>
+
+                        <div id="share-link" class="v-spacing-top-5">
+                             <span class="text-grey">Share url: </span><br><input class="w-100" type="text" readonly value="{% absurl 'short-pack-link' pack.id %}" />
+                        </div>
+                        {% if pack.has_geotags %}
+                            <div id="pack_geotags" class="v-spacing-top-6" data-map-loaded="false">
+                                <h5 class="padding-bottom-3">Geotags in this pack</h5>
+                                {% if geotags_in_pack_serialized %}
+                                    <div id="static_map_wrapper"  class="sidebar-map w-100 middle center cursor-pointer" data-pins="{{ geotags_in_pack_serialized }}"></div>
+                                {% endif %}
+                                <div id="map_canvas" class="sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+    {% bw_maps_js_scripts %}
+    <script src="{% static 'bw-frontend/dist/pack.07d2ab74.js' %}"></script>
+{% endblock %}

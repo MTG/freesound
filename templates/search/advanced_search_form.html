@@ -30,19 +30,19 @@
 <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" %}1{% else %}0{% endif %}" />
 
 <div style="margin-top:8px;"></div>Search in:&nbsp
-<input type="checkbox" name="a_tag" value="1" {% if a_tag %}checked{% endif %}/> Tags&nbsp&nbsp
-<input type="checkbox" name="a_filename" value="1" {% if a_filename %}checked{% endif %}/> File names&nbsp&nbsp
-<input type="checkbox" name="a_description" value="1" {% if a_description %}checked{% endif %}/> Descriptions&nbsp&nbsp
-<input type="checkbox" name="a_packname" value="1" {% if a_packname %}checked{% endif %}/> Pack names&nbsp&nbsp
-<input type="checkbox" name="a_soundid" value="1" {% if a_soundid %}checked{% endif %}/> Sound Ids&nbsp&nbsp
-<input type="checkbox" name="a_username" value="1" {% if a_username %}checked{% endif %}/> User names
+<label><input type="checkbox" name="a_tag" value="1" {% if a_tag %}checked{% endif %}/> Tags</label>&nbsp&nbsp
+<label><input type="checkbox" name="a_filename" value="1" {% if a_filename %}checked{% endif %}/> File names</label>&nbsp&nbsp
+<label><input type="checkbox" name="a_description" value="1" {% if a_description %}checked{% endif %}/> Descriptions</label>&nbsp&nbsp
+<label><input type="checkbox" name="a_packname" value="1" {% if a_packname %}checked{% endif %}/> Pack names</label>&nbsp&nbsp
+<label><input type="checkbox" name="a_soundid" value="1" {% if a_soundid %}checked{% endif %}/> Sound Ids</label>&nbsp&nbsp
+<label><input type="checkbox" name="a_username" value="1" {% if a_username %}checked{% endif %}/> User names</label>
 <span class="advanced_search_indication">(if none is selected, all will be used)</span>
 <br>
 
-Duration between <input class="inputtext" id="filter_duration_min" value="0" size="6" /> (min)
-and <input class="inputtext" id="filter_duration_max" value="*" size="6" /> (max) seconds<br>
-<input id="filter_is_geotagged" type="checkbox" value="1" /> Only geotagged sounds<br>
-<input id="grouping_geotagged" type="checkbox" onchange="set_hidden_grouping_value()" {% if grouping == "1" %}checked{% endif %}/> Group sounds by pack
+Duration between <input class="inputtext" id="filter_duration_min" value="0" size="6" /> <label for="filter_duration_min">(min)</label>
+and <input class="inputtext" id="filter_duration_max" value="*" size="6" /> <label for="filter_duration_max">(max)</label> seconds<br>
+<input id="filter_is_geotagged" type="checkbox" value="1" /> <label for="filter_is_geotagged">Only geotagged sounds</label><br>
+<input id="grouping_geotagged" type="checkbox" onchange="set_hidden_grouping_value()" {% if grouping == "1" %}checked{% endif %}/> <label for="grouping_geotagged">Group sounds by pack</label>
 <input id="grouping_geotagged_hidden" type="hidden" name="g" {% ifequal grouping "1" %}value="1"{% else %}value=""{% endifequal %} />
 
 <br>

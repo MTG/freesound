@@ -1,0 +1,22 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% block title %}Change email{% endblock %}
+
+{% block main_content %}
+
+    <h1>Change email</h1>
+
+    <div class="text-grey v-spacing-top-6">
+        You're currently receiving emails at <span class="text-black">{{ user.email }}</span>.
+        Enter your new email address and your current password in the form below,
+        and we'll email instructions for the activation of the new address.
+    </div>
+
+    <div class="w-100 v-spacing-top-3 v-spacing-5">
+        <form method="post" action="." class="bw-edit-profile__form w-100">{% csrf_token %}
+            {{form.as_p}}
+            <button class="btn-primary w-100 v-spacing-top-5">Change my email</button>
+        </form>
+    </div>
+
+{% endblock %}

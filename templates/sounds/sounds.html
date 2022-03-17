@@ -13,34 +13,19 @@
     <div id="sound_of_the_day" class="content_box">
         <h3>Random sound of the day</h3>
             {% if random_sound %}
-                {% display_raw_sound random_sound %}
+                {% display_sound random_sound %}
             {% else %}
                 <p>We're still choosing a random sound... check back soon!
             {% endif %}
     </div><!-- #sound_of_the_day -->
 
-{% cache 3600 latest_sounds  %}
-    <div id="latest_sounds" class="content_box">
-        <h3>Latest sounds</h3>
-        <div>
-        {% for latest_addition, sound_obj in latest_sounds %}
-            {% display_raw_sound sound_obj %}
-            {% if latest_addition.extra %}
-                <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url "account" latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
-            {% endif %}
-            {% empty %}
-            <p>No sounds in the database!
-        {% endfor %}
-        <p class="more_button" ><a href="{% url "sounds-search" %}?q=&f=&s=created+desc&g=0">more...</a></p>
-        </div>
-    </div><!-- #latest_sounds -->
-{% endcache %}
+{% include "sounds/latest_sounds.html" %}
 
 {% cache 3600 most_downloaded_sounds  %}
     <div id="most_downloaded_sounds" class="content_box">
         <h3>Most downloaded sounds (uploaded in the last week)</h3>
         {% for sound in popular_sounds %}
-            {% display_raw_sound sound %}
+            {% display_sound sound %}
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}
@@ -51,7 +36,7 @@
 </div><!-- #content -->
 
 <div id="sidebar">
-    
+
     <div id="other_sounds" class="content_box">
         <h3>More Sounds</h3>
         <ul style="margin-left: 0; padding-left: 0; list-style: none;">

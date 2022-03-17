@@ -28,12 +28,12 @@ from sounds.models import Sound
 
 class GeoTagsTests(TestCase):
 
-    fixtures = ['sounds']
+    fixtures = ['licenses', 'sounds']
 
     def check_context(self, context, values):
         for k, v in values.items():
             self.assertIn(k, context)
-            self.assertEquals(context[k], v)
+            self.assertEqual(context[k], v)
 
     def test_browse_geotags(self):
         resp = self.client.get(reverse('geotags', kwargs={'tag': 'soundscape'}))
@@ -54,7 +54,7 @@ class GeoTagsTests(TestCase):
     def test_browse_geotags_for_user(self):
         user = User.objects.get(username='Anton')
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
-        check_values = {'tag': None, 'username': user}
+        check_values = {'tag': None, 'username': user.username}
         self.check_context(resp.context, check_values)
 
     def test_browse_geotags_for_user_oldusername(self):
@@ -62,8 +62,13 @@ class GeoTagsTests(TestCase):
         user.username = "new_username"
         user.save()
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
-        check_values = {'tag': None, 'username': user}
-        self.check_context(resp.context, check_values)
+        self.assertRedirects(resp, reverse('geotags-for-user', kwargs={'username': user.username}), status_code=301)
+
+    def test_browse_geotags_for_user_deleted_user(self):
+        user = User.objects.get(username='Anton')
+        user.profile.delete_user()
+        resp = self.client.get(reverse('geotags-for-user', kwargs={'username': 'Anton'}))
+        self.assertEqual(resp.status_code, 404)
 
     def test_geotags_infowindow(self):
         sound = Sound.objects.first()
@@ -72,7 +77,7 @@ class GeoTagsTests(TestCase):
         sound.save()
         resp = self.client.get(reverse('geotags-infowindow', kwargs={'sound_id': sound.id}))
         self.check_context(resp.context, {'sound': sound})
-        self.assertInHTML('<a class="title" target="_blank" href="/people/Anton/sounds/16/">Glass A mf.wav</a>', resp.content)
+        self.assertIn('href="/people/{0}/sounds/{1}/"'.format(sound.user.username, sound.id), resp.content)
 
     def test_browse_geotags_case_insensitive(self):
         user = User.objects.get(username='Anton')

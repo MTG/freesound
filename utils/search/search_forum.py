@@ -17,73 +17,71 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-from solr import Solr, SolrException
-from django.conf import settings
 import logging
 
-logger = logging.getLogger("search")
+from utils.search import get_search_engine, SearchEngineException
 
-def convert_to_solr_document(post):
-    #logger.info("creating solr XML from forum post %d" % post.id)
-    document = {}
-
-    document["id"] = post.id
-    document["thread_id"] = post.thread.id
-    document["thread_title"] = post.thread.title
-    document["thread_author"] = post.thread.author
-    document["thread_created"] = post.thread.created
-
-    document["forum_name"] = post.thread.forum.name
-    document["forum_name_slug"] = post.thread.forum.name_slug
-
-    document["post_author"] = post.author
-    document["post_created"] = post.created
-    document["post_body"] = post.body
-
-    document["num_posts"] = post.thread.num_posts
-    document["has_posts"] = False if post.thread.num_posts == 0 else True
-
-    return document
+search_logger = logging.getLogger("search")
+console_logger = logging.getLogger("console")
 
 
-def add_post_to_solr(post):
-    logger.info("adding single forum post to solr index")
+def add_posts_to_search_engine(post_objects):
+    """Add forum posts to search engine
+
+    Args:
+        post_objects (List[forum.models.Post]): list (or queryset) of forum Post objects to index
+
+    Returns:
+        int: number of sounds added to the index
+    """
+    num_posts = len(post_objects)
     try:
-        Solr(settings.SOLR_FORUM_URL).add([convert_to_solr_document(post)])
-    except SolrException as e:
-        logger.error("failed to add forum post %d to solr index, reason: %s" % (post.id, str(e)))
+        console_logger.info("Adding %d posts to search engine" % num_posts)
+        search_logger.info("Adding %d posts to search engine" % num_posts)
+        get_search_engine().add_forum_posts_to_index(post_objects)
+        return num_posts
+    except SearchEngineException as e:
+        console_logger.error("Failed to add posts to search engine index: %s" % str(e))
+        search_logger.error("Failed to add posts to search engine index: %s" % str(e))
+        return 0
 
 
-def add_posts_to_solr(posts):
-    logger.info("adding multiple forum posts to solr index")
-    solr = Solr(settings.SOLR_FORUM_URL, auto_commit=False)
+def delete_posts_from_search_engine(post_ids):
+    """Delete forum posts from the search engine
 
-
-    logger.info("creating XML")
-    documents = map(convert_to_solr_document, posts)
-    logger.info("posting to Solr")
-    solr.add(documents)
-
-    solr.commit()
-    logger.info("optimizing solr index")
-    #solr.optimize()
-    logger.info("done")
-
-def add_all_posts_to_solr(post_queryset, slice_size=4000, mark_index_clean=False):
-    # Pass in a queryset to avoid needing a reference to
-    # the Post class, it causes circular imports.
-    num_posts = post_queryset.count()
-    for i in range(0, num_posts, slice_size):
-        try:
-            posts = post_queryset[i:i+slice_size]
-            add_posts_to_solr(posts)
-        except SolrException as e:
-            logger.error("failed to add post batch to solr index, reason: %s" % str(e))
-
-def delete_post_from_solr(post):
-    logger.info("deleting post with id %d" % post.id)
+    Args:
+        post_ids (list[int]): IDs of the forum posts to delete
+    """
+    console_logger.info("Deleting %d forum posts from search engine" % len(post_ids))
+    search_logger.info("Deleting %d forum posts from search engine" % len(post_ids))
     try:
-        Solr(settings.SOLR_FORUM_URL).delete_by_id(post.id)
-    except Exception as e:
-        logger.error('could not delete post with id %s (%s).' % (post.id, e))
+        get_search_engine().remove_forum_posts_from_index(post_ids)
+    except SearchEngineException as e:
+        console_logger.error("Could not delete forum posts: %s" % str(e))
+        search_logger.error("Could not delete forum posts: %s" % str(e))
+
+
+def get_all_post_ids_from_search_engine(page_size=2000):
+    """Retrieves the list of all forum post IDs currently indexed in the search engine
+
+    Args:
+        page_size: number of post IDs to retrieve per search engine query
+
+    Returns:
+        list[int]: list of forum IDs indexed in the search engine
+    """
+    console_logger.info("Getting all forum post ids from search engine")
+    search_engine = get_search_engine()
+    solr_ids = []
+    solr_count = None
+    current_page = 1
+    try:
+        while len(solr_ids) < solr_count or solr_count is None:
+            response = search_engine.search_forum_posts(query_filter='*:*', group_by_thread=False,
+                                                        offset=(current_page - 1) * page_size, num_posts=page_size)
+            solr_ids += [element['id'] for element in response.docs]
+            solr_count = response.num_found
+            current_page += 1
+    except SearchEngineException as e:
+        console_logger.error("Could retrieve all forum post IDs from search engine: %s" % str(e))
+    return sorted(solr_ids)

@@ -69,7 +69,8 @@ class Command(LoggingBaseCommand):
         data_to_log = {}
 
         # First print some information about overall status
-        n_sounds = Sound.objects.all().count()
+        all_sound_ids = Sound.objects.all().values_list('id', flat=True).order_by('id')
+        n_sounds = len(all_sound_ids)
         console_logger.info("{: >44} {: >11} {: >11} {: >11} {: >11} {: >11}".format(
             *['', '# ok |', '# failed |', '# skipped |', '# queued |', '# missing']))
         for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
@@ -140,10 +141,10 @@ class Command(LoggingBaseCommand):
                         # When using the only-failed option, we never look at non-analyzed "missing" sounds
                         missing_sounds = Sound.objects.none()
                     else:
-                        sounds_with_sa_object = list(
+                        sound_ids_with_sa_object = list(
                             SoundAnalysis.objects.filter(analyzer=analyzer_name).values_list('sound_id', flat=True))
-                        missing_sounds = Sound.objects.exclude(id__in=sounds_with_sa_object) \
-                                                      .order_by('id')[:num_jobs_to_add]
+                        missing_sound_ids = list(sorted(set(all_sound_ids).difference(sound_ids_with_sa_object)))[:num_jobs_to_add]
+                        missing_sounds = Sound.objects.filter(id__in=missing_sound_ids).order_by('id')
                     num_missing_sounds_to_add = missing_sounds.count()
                     data_to_log[analyzer_name]['just_sent'] = num_missing_sounds_to_add
                     console_logger.info('- Will add {} new jobs from sounds that have not been analyzed '
@@ -167,6 +168,7 @@ class Command(LoggingBaseCommand):
                         if not options['dry_run']:
                             for sa in ssaa:
                                 sa.re_run_analysis(verbose=False)
+
             if analyzer_name in data_to_log:
                 # Log ata to graylog in a way that we can make plots and show stats
                 analyzer_data_to_log = {key: value for key, value in data_to_log[analyzer_name].items()}

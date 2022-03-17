@@ -103,7 +103,8 @@ class TermsOfServiceForm(forms.Form):
     accepted_tos = forms.BooleanField(
         label='',
         help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> '
-                  'and the <a href="/help/privacy/" target="_blank">privacy policy</a> of Freesound',
+                  'and the <a href="/help/privacy/" target="_blank">privacy policy</a> of Freesound, as well '
+                  'as to allow us to upgrade your 3.0 Creative Commons licenses to 4.0',
         required=True,
         error_messages={'required': 'You must accept the terms of use and the privacy poclicy in order to continue '
                                     'using Freesound.'}
@@ -264,8 +265,8 @@ class BwRegistrationForm(RegistrationForm):
         self.fields['password1'].help_text = False
         self.fields['password1'].widget.attrs['placeholder'] = 'Password'
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['accepted_tos'].label = mark_safe('Check this box to accept our <a href="/help/tos_web/" '
-                                                      'target="_blank">terms of use</a>')
+        self.fields['accepted_tos'].label = mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
+                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>')
 
 
 class ReactivationForm(forms.Form):

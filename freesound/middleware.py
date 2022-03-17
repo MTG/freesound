@@ -26,6 +26,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
+from accounts.models import GdprAcceptance
 
 from utils.onlineusers import cache_online_users
 
@@ -99,8 +100,7 @@ class TosAcceptanceHandler(object):
     """Checks if the user has accepted the updates to the Terms
     of Service in 2022. This replaces the agreement to the original ToS (2013, 2fd543f3a).
     When users agree with the new terms of service, they also agree on updating the
-    CC licenses to 4.0. There is no need to add a new tos_acceptance field
-    as we will simply reuse the same field used for 2013.
+    CC licenses to 4.0.
     """
 
     def __init__(self, get_response):
@@ -110,9 +110,9 @@ class TosAcceptanceHandler(object):
 
         if request.user.is_authenticated \
                 and dont_redirect(request.get_full_path()):
-
-            user = request.user
-            if not user.profile.accepted_tos:
+            try:
+                request.user.gdpracceptance
+            except GdprAcceptance.DoesNotExist:
                 return HttpResponseRedirect(reverse("tos-acceptance"))
 
         response = self.get_response(request)

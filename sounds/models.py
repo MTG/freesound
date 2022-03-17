@@ -1524,22 +1524,27 @@ class Pack(SocialModel):
         return sum(durations)
 
     @cached_property
-    def license_summary_name(self):
+    def license_summary_name_and_id(self):
         # TODO: store this in DB?
-        license_names = list(Sound.objects.filter(pack=self).values_list('license__name', flat=True))
-        if len(set(license_names)) == 1:
+        licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
+        license_ids = [lid for _, lid in licenses_data]
+        license_names = [lname for lname, _ in licenses_data]
+
+        if len(set(license_ids)) == 1:
             # All sounds have same license
-            license_summary = license_names[0]
+            license_summary_name = license_names[0]
+            license_id = license_ids[0]
         else:
-            license_summary = self.VARIOUS_LICENSES_NAME
-        return license_summary
+            license_summary_name = self.VARIOUS_LICENSES_NAME
+            license_id = None
+        return license_summary_name, license_id
 
     @property
     def license_summary_text(self):
         # TODO: store this in DB?
-        license_summary_name = self.license_summary_name
+        license_summary_name, license_summary_id = self.license_summary_name_and_id
         if license_summary_name != self.VARIOUS_LICENSES_NAME:
-            return License.objects.get(name=license_summary_name).get_short_summary
+            return License.objects.get(id=license_summary_id).get_short_summary
         else:
             return "This pack contains sounds released under various licenses. Please check every individual sound page " \
                    "(or the <i>readme</i> file upon downloading the pack) to know under which " \
@@ -1547,9 +1552,9 @@ class Pack(SocialModel):
 
     @property
     def license_summary_deed_url(self):
-        license_summary_name = self.license_summary_name
+        license_summary_name, license_summary_id = self.license_summary_name_and_id
         if license_summary_name != self.VARIOUS_LICENSES_NAME:
-            return License.objects.get(name=license_summary_name).deed_url
+            return License.objects.get(id=license_summary_id).deed_url
         else:
             return ""
 

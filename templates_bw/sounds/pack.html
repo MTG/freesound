@@ -93,7 +93,7 @@
                             </ol>
                         </div>
                         <div class="v-spacing-top-5">
-                            {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ pack.license_summary_name }}</span>
+                            {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ pack.license_summary_name_and_id.0 }}</span>
                         </div>
                         <div class="text-grey v-spacing-top-1">
                             {{ pack.license_summary_text|safe }} {% if pack.license_summary_deed_url %}<a href="{{ pack.license_summary_deed_url }}" target="_blank" class="bw-link--black">More...</a>{% endif %}

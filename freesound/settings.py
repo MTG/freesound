@@ -95,7 +95,8 @@ ADMIN_REORDER = (
         'accounts.OldUsername',
         'accounts.EmailBounce',
         'auth.Groups',
-        'fsmessages.Message'
+        'fsmessages.Message',
+        'accounts.GdprAcceptance',
     )},
     {'app': 'sounds', 'models': (
         'sounds.Sound',

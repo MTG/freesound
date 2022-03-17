@@ -39,7 +39,7 @@ from django.utils.functional import cached_property
 from django_object_actions import DjangoObjectActions
 
 from accounts.forms import username_taken_by_other_user
-from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserDeletionRequest, EmailBounce
+from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserDeletionRequest, EmailBounce, GdprAcceptance
 from general import tasks
 
 web_logger = logging.getLogger("web")
@@ -405,6 +405,14 @@ class EmailBounceAdmin(admin.ModelAdmin):
     readonly_fields = ('user', 'type', 'timestamp')
 
 
+class GdprAcceptanceAdmin(admin.ModelAdmin):
+    search_fields = ('=user__username',)
+    readonly_fields = ('user', )
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
 admin.site.register(Profile, ProfileAdmin)
@@ -414,4 +422,4 @@ admin.site.register(EmailPreferenceType)
 admin.site.register(OldUsername, OldUsernameAdmin)
 admin.site.register(DeletedUser, DeletedUserAdmin)
 admin.site.register(UserDeletionRequest, UserDeletionRequestAdmin)
-
+admin.site.register(GdprAcceptance, GdprAcceptanceAdmin)

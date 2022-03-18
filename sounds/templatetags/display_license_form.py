@@ -20,8 +20,20 @@
 
 from django import template
 
+from sounds.models import License
+
 register = template.Library()
 
 @register.inclusion_tag('sounds/license_form.html', takes_context=True)
 def display_license_form(context, form):
-    return {'form': form, "media_url": context['media_url']}
+    cc0_license_id = License.objects.get(name='Creative Commons 0').id
+    cc_by_license_id =  License.objects.get(name="Attribution", deed_url__contains="4.0").id
+    cc_by_nc_license_id = License.objects.get(name="Attribution Noncommercial", deed_url__contains="4.0").id
+    
+    return {
+        'form': form, 
+        'media_url': context['media_url'],
+        'cc0_license_id': cc0_license_id, 
+        'cc_by_license_id': cc_by_license_id, 
+        'cc_by_nc_license_id': cc_by_nc_license_id
+        }

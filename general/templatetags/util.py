@@ -72,3 +72,12 @@ def chunks(l, n):
     if type(l) is not list:
         l = list(l)
     return [l[i:i + n] for i in xrange(0, len(l), n)]
+
+
+@register.filter
+def license_with_version(license_name, license_deed_url):
+    if '3.0' in license_deed_url:
+        return '{} 3.0'.format(license_name)
+    elif '4.0' in license_deed_url:
+        return '{} 4.0'.format(license_name)
+    return license_name

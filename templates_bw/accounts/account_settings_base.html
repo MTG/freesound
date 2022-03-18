@@ -27,6 +27,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if activePage == 'account'%} active {% endif %}" href="{% url "accounts-delete" %}">Delete account</a>
                         </li>
+                        {% if user.profile.has_sounds_with_old_cc_licenses %}
+                        <li class="nav-item text-grey padding-top-4">
+                            <span class="text-black">Warning:</span> We detected that some of your uploaded sounds still have old Creative Commons 3.0 licenses. Please <a href="{% url "update-old-cc-licenses" %}?next={% url "accounts-edit" %}">click here</a> to upgrade your licenses to Creative Commons 4.0 equivalents.
+                        </li>
+                        {% endif %}
                     </ul>
                 </aside>
                 <div class="col-md-7 bw-edit-profile__info">

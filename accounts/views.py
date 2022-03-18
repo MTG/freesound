@@ -64,6 +64,7 @@ from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordFor
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
     BwProblemsLoggingInForm, username_taken_by_other_user
+from general.templatetags.util import license_with_version
 from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
 from bookmarks.models import Bookmark
 from comments.models import Comment
@@ -265,15 +266,16 @@ def bulk_license_change(request):
 
 @login_required
 def tos_acceptance(request):
+    has_sounds_with_old_cc_licenses = request.user.profile.has_sounds_with_old_cc_licenses()
     if request.method == 'POST':
         form = TermsOfServiceForm(request.POST)
         if form.is_valid():
-            profile = Profile.objects.get(user=request.user)
-            profile.accepted_tos = True
-            profile.save()
+            profile = request.user.profile
             profile.agree_to_gdpr()
 
-            cache.set('has-accepted-tos2018-%s' % request.user.id, 'yes', 2592000)
+            if form.cleaned_data['accepted_license_change']:
+                profile.upgrade_old_cc_licenses_to_new_cc_licenses()
+
             if form.cleaned_data['next']:
                 return HttpResponseRedirect(form.cleaned_data['next'])
             else:
@@ -281,8 +283,18 @@ def tos_acceptance(request):
     else:
         next_param = request.GET.get('next')
         form = TermsOfServiceForm(initial={'next': next_param})
-    tvars = {'form': form}
+    tvars = {'form': form, 'has_sounds_with_old_cc_licenses': has_sounds_with_old_cc_licenses}
     return render(request, 'accounts/gdpr_consent.html', tvars)
+
+
+@login_required
+def update_old_cc_licenses(request):
+    request.user.profile.upgrade_old_cc_licenses_to_new_cc_licenses()
+    next = request.GET.get('next', None)
+    if next is not None:
+        return HttpResponseRedirect(next)
+    else:
+        return HttpResponseRedirect(reverse('accounts-home'))
 
 
 @transaction.atomic()
@@ -760,7 +772,7 @@ def describe_sounds(request):
             forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                         request.POST,
                                         prefix=prefix)
-            forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
+            forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix, hide_old_versions=True)
         # Validate each form
         for i in range(len(sounds_to_describe)):
             for f in ['license', 'geotag', 'pack', 'description']:
@@ -864,9 +876,9 @@ def describe_sounds(request):
                                             prefix=prefix)
             if selected_license:
                 forms[i]['license'] = NewLicenseForm(initial={'license': selected_license},
-                                                     prefix=prefix)
+                                                     prefix=prefix, hide_old_versions=True)
             else:
-                forms[i]['license'] = NewLicenseForm(prefix=prefix)
+                forms[i]['license'] = NewLicenseForm(prefix=prefix, hide_old_versions=True)
 
     return render(request, 'accounts/describe_sounds.html', tvars)
 
@@ -875,10 +887,10 @@ def describe_sounds(request):
 def attribution(request):
     qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
-                'license__name', 'sound__license__name', 'created').filter(user=request.user)
+                'license__name', 'license__deed_url', 'sound__license__name', 'sound__license__deed_url', 'created').filter(user=request.user)
     qs_packs = PackDownload.objects.annotate(download_type=Value("pack", CharField()))\
-        .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
-                'pack__name', 'created').filter(user=request.user)
+        .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name', 'pack__name',
+                'pack__name', 'pack__name', 'created').filter(user=request.user)
     # NOTE: in the query above we duplicate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
     # a requirement for doing QuerySet.union below. Also as a result of using QuerySet.union, the names of the columns
     # (keys in each dictionary element) are unified and taken from the main query set. This means that after the union,
@@ -898,10 +910,10 @@ def download_attribution(request):
 
     qs_sounds = Download.objects.annotate(download_type=Value('sound', CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
-                'license__name', 'sound__license__name', 'created').filter(user=request.user)
+                'license__name', 'license__deed_url', 'sound__license__name', 'sound__license__deed_url', 'created').filter(user=request.user)
     qs_packs = PackDownload.objects.annotate(download_type=Value('pack', CharField()))\
-        .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name',
-                'pack__name', 'created').filter(user=request.user)
+        .values('download_type', 'pack_id', 'pack__user__username', 'pack__name', 'pack__name', 'pack__name',
+                'pack__name', 'pack__name', 'created').filter(user=request.user)
     # NOTE: see the above view, attribution. Note that we need to use .encode('utf-8') in some fields that can contain
     # non-ascii characters even if these seem wrongly named due to the fact of using .union() in the QuerySet.
     qs = qs_sounds.union(qs_packs).order_by('-created')
@@ -920,12 +932,14 @@ def download_attribution(request):
                 csv_writer.writerow(
                     [row['download_type'][0].upper(), row['sound__original_filename'].encode('utf-8'),
                      row['sound__user__username'],
-                     row['license__name'].encode('utf-8') or row['sound__license__name'].encode('utf-8')])
+                     license_with_version(row['license__name'].encode('utf-8') or row['sound__license__name'].encode('utf-8'),
+                                          row['license__deed_url'].encode('utf-8') or row['sound__license__deed_url'].encode('utf-8'))])
         elif download == 'txt':
             for row in qs:
                 output.write("{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
                              row['sound__original_filename'].encode("utf-8"), row['sound__user__username'],
-                             row['license__name'].encode("utf-8") or row['sound__license__name'].encode("utf-8")))
+                             license_with_version(row['license__name'].encode("utf-8") or row['sound__license__name'].encode("utf-8"),
+                                                  row['license__deed_url'].encode('utf-8') or row['sound__license__deed_url'].encode('utf-8'))))
         response.writelines(output.getvalue())
         return response
     else:

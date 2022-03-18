@@ -86,8 +86,17 @@ class License(OrderedModel):
         return self.short_summary if self.short_summary is not None else Truncator(self.summary)\
             .words(20, html=True, truncate='...')
 
+    @property
+    def name_with_version(self):
+        version_label = ''
+        if '3.0' in self.deed_url:
+            version_label = ' 3.0'
+        elif '4.0' in self.deed_url:
+            version_label = ' 4.0'
+        return '{}{}'.format(self.name, version_label)
+
     def __unicode__(self):
-        return self.name
+        return self.name_with_version
 
 
 class BulkUploadProgress(models.Model):
@@ -1496,6 +1505,7 @@ class Pack(SocialModel):
                 pack=self,
                 licenses=licenses,
                 sound_list=sounds_list))
+        print attribution
         return attribution
 
     @property

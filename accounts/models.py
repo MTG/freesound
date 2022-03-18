@@ -49,7 +49,7 @@ from general.models import SocialModel
 from geotags.models import GeoTag
 from messages.models import Message
 from ratings.models import SoundRating
-from sounds.models import DeletedSound, Sound, Pack, Download, PackDownload, BulkUploadProgress
+from sounds.models import DeletedSound, License, Sound, Pack, Download, PackDownload, BulkUploadProgress
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import get_search_engine, SearchEngineException
@@ -139,6 +139,17 @@ class Profile(SocialModel):
 
     def agree_to_gdpr(self):
         GdprAcceptance.objects.create(user=self.user)
+
+    def has_sounds_with_old_cc_licenses(self):
+        return self.user.sounds.select_related('license').filter(license__deed_url__contains="3.0").count() > 0
+
+    def upgrade_old_cc_licenses_to_new_cc_licenses(self):
+        old_cc_by = License.objects.get(name="Attribution", deed_url__contains="3.0")
+        old_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="3.0")
+        new_cc_by = License.objects.get(name="Attribution", deed_url__contains="4.0")
+        new_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="4.0")
+        for old_license, new_license in [(old_cc_by, new_cc_by), (old_cc_by_nc, new_cc_by_nc)]:
+            self.user.sounds.filter(license=old_license).update(license=new_license)
 
     def get_sameuser_object(self):
         """Returns the SameUser object where the user is involved"""

@@ -34,14 +34,15 @@
             behave correctly (spam, offensive comments...).</li>
         <li>We can use anonymized data collected from Freesound (sounds, statistics about sounds, tags, comments, downloads...)
             for research purposes.</li>
-        <li>You agree to receive email notifications in accordance with your your email preferences.</li>
+        <li>You agree to receive email notifications in accordance with your email preferences.</li>
     </ul>
 
     <p>
         In addition to the update of terms of service and pricavy policy, we also want to take this opportunity to <strong>upgrade current 
         Creative Commons licenses from 3.0 to 4.0</strong>. The main difference between these two is that Creative Commons licenses 4.0 are
         more user-friendly and more internationally robust, but the general terms are the same. More information can be found 
-        <a href="https://creativecommons.org/version4/" target="_blank">here</a>.
+        <a href="https://creativecommons.org/version4/" target="_blank">here</a>. The option to upgrade licenses is only offered to users
+        who have uploaded sounds with any of the affected licenses.
     </p>
     
     <p>
@@ -62,6 +63,12 @@
         {% with form.accepted_tos as tos %}
             {{ tos }} <label style="display: inline;font-size:12px;" for="{{ tos.id_for_label }}">{{ tos.help_text|safe }}</label>
         {% endwith %}
+        {% if has_sounds_with_old_cc_licenses %}
+        <br>
+        {% with form.accepted_license_change as alc %}
+            {{ alc }} <label style="display: inline;font-size:12px;" for="{{ alc.id_for_label }}">{{ alc.help_text|safe }}</label>
+        {% endwith %}
+        {% endif %}
     <br><br>
         <input type="submit" name="submit" value="Continue using Freesound!" id="submit">
     </form>

@@ -35,6 +35,7 @@ web_logger = logging.getLogger('web')
 
 def dont_redirect(path):
     return 'bulklicensechange' not in path \
+        and 'admin' not in path \
         and 'logout' not in path \
         and 'tosacceptance' not in path \
         and 'tos_api' not in path \

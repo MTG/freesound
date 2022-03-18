@@ -10,31 +10,39 @@ def add_new_licenses(apps, schema_editor):
     
     # CC BY 4.0
     if not License.objects.filter(name="Attribution", deed_url__contains="4.0").count():
-        old_cc_by = License.objects.get(name="Attribution", deed_url__contains="3.0")
-        License.objects.create(
-            name = old_cc_by.name,
-            abbreviation = old_cc_by.abbreviation,
-            summary = old_cc_by.summary,
-            short_summary = old_cc_by.short_summary, 
-            deed_url = 'https://creativecommons.org/licenses/by/4.0/',
-            legal_code_url = 'https://creativecommons.org/licenses/by/4.0/legalcode',
-            is_public = True,
-            order=5
-        )
+        try:
+            old_cc_by = License.objects.get(name="Attribution", deed_url__contains="3.0")
+            License.objects.create(
+                name = old_cc_by.name,
+                abbreviation = old_cc_by.abbreviation,
+                summary = old_cc_by.summary,
+                short_summary = old_cc_by.short_summary, 
+                deed_url = 'https://creativecommons.org/licenses/by/4.0/',
+                legal_code_url = 'https://creativecommons.org/licenses/by/4.0/legalcode',
+                is_public = True,
+                order=5
+            )
+        except License.DoesNotExist:
+            # This can happen in some development or test enviornments
+            pass
 
     # CC BY NC 4.0
     if not License.objects.filter(name="Attribution Noncommercial", deed_url__contains="4.0").count():
-        old_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="3.0")
-        License.objects.create(
-            name = old_cc_by_nc.name,
-            abbreviation = old_cc_by_nc.abbreviation,
-            summary = old_cc_by_nc.summary,
-            short_summary = old_cc_by_nc.short_summary, 
-            deed_url = 'https://creativecommons.org/licenses/by-nc/4.0/',
-            legal_code_url = 'https://creativecommons.org/licenses/by-nc/4.0/legalcode',
-            is_public = True,
-            order=6
-        )
+        try:
+            old_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="3.0")
+            License.objects.create(
+                name = old_cc_by_nc.name,
+                abbreviation = old_cc_by_nc.abbreviation,
+                summary = old_cc_by_nc.summary,
+                short_summary = old_cc_by_nc.short_summary, 
+                deed_url = 'https://creativecommons.org/licenses/by-nc/4.0/',
+                legal_code_url = 'https://creativecommons.org/licenses/by-nc/4.0/legalcode',
+                is_public = True,
+                order=6
+            )
+        except License.DoesNotExist:
+            # This can happen in some development or test enviornments
+            pass
 
 class Migration(migrations.Migration):
 

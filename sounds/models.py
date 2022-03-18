@@ -1505,7 +1505,6 @@ class Pack(SocialModel):
                 pack=self,
                 licenses=licenses,
                 sound_list=sounds_list))
-        print attribution
         return attribution
 
     @property

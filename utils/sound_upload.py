@@ -108,8 +108,11 @@ def create_sound(user,
     except OSError:
         raise NoAudioException()
 
-    # Get license, sort by -id so that 4.0 licenses appear before 3.0
-    license = License.objects.filter(name=sound_fields['license']).order_by('-id').first()
+    if type(sound_fields['license']) == License:
+        license = sound_fields['license']
+    else:
+        # Get license, sort by -id so that 4.0 licenses appear before 3.0
+        license = License.objects.filter(name=sound_fields['license']).order_by('-id').first()
     sound.type = get_sound_type(sound.original_path)
     sound.license = license
     sound.md5 = md5file(sound.original_path)
@@ -377,11 +380,11 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                                 filenames_to_describe.append(src_path)
 
                 # 3) Check that all the other sound fields are ok
-                try:
-                    license = License.objects.filter(name=line['license']).order_by('-id').first()
+                license = License.objects.filter(name=line['license']).order_by('-id').first()
+                if license:
                     license_id = license.id
                     license_name = license.name
-                except License.DoesNotExist:
+                else:
                     license_id = 0
                     license_name = ''
 

@@ -78,16 +78,7 @@ def monitor_home(request):
             processing_state='OK').count()
 
     # Analysis
-    sounds_analysis_pending_count = Sound.objects.filter(
-        analysis_state='PE').count()
-    sounds_analysis_queued_count = Sound.objects.filter(
-        analysis_state='QU').count()
-    sounds_analysis_ok_count = Sound.objects.filter(
-        analysis_state='OK').count()
-    sounds_analysis_failed_count = Sound.objects.filter(
-        analysis_state='FA').count()
-    sounds_analysis_skipped_count = Sound.objects.filter(
-        analysis_state='SK').count()
+    # TODO: add global anlaysis status
 
     tvars = {"new_upload_count": new_upload_count,
              "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
@@ -97,11 +88,6 @@ def monitor_home(request):
              "sounds_processing_count": sounds_processing_count,
              "sounds_failed_count": sounds_failed_count,
              "sounds_ok_count": sounds_ok_count,
-             "sounds_analysis_pending_count": sounds_analysis_pending_count,
-             "sounds_analysis_queued_count": sounds_analysis_queued_count,
-             "sounds_analysis_ok_count": sounds_analysis_ok_count,
-             "sounds_analysis_failed_count": sounds_analysis_failed_count,
-             "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
              "queues_stats_url": reverse('queues-stats'),
     }
@@ -217,17 +203,6 @@ def process_sounds(request):
         if sounds_to_process:
             for sound in sounds_to_process:
                 sound.process()
-
-    # Send sounds to analysis according to their analysis_state
-    analysis_state = request.GET.get('ans', None)
-    if analysis_state:
-        sounds_to_analyze = None
-        if analysis_state in ['QU', 'PE', 'FA', 'SK']:
-            sounds_to_analyze = Sound.objects.filter(analysis_state=analysis_state)
-
-        if sounds_to_analyze:
-            for sound in sounds_to_analyze:
-                sound.analyze()
 
     return redirect("monitor-home")
 

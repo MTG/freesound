@@ -195,14 +195,14 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     analysis_frames = serializers.SerializerMethodField()
     def get_analysis_frames(self, obj):
-        if obj.analysis_state != 'OK':
+        if not obj.analysis_state_essentia_exists:
             return None
         return prepend_base(obj.locations('analysis.frames.url'),
                             request_is_secure=self.context['request'].is_secure())
 
     analysis_stats = serializers.SerializerMethodField()
     def get_analysis_stats(self, obj):
-        if obj.analysis_state != 'OK':
+        if not obj.analysis_state_essentia_exists:
             return None
         return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]),
                             request_is_secure=self.context['request'].is_secure())
@@ -271,7 +271,7 @@ class SoundListSerializer(AbstractSoundSerializer):
         super(SoundListSerializer, self).__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
-        if obj.analysis_state != 'OK':
+        if not obj.analysis_state_essentia_exists:
             return None
         # Get descriptors from the view class (should have been requested before the serializer is invoked)
         try:
@@ -308,7 +308,7 @@ class SoundSerializer(AbstractSoundSerializer):
         super(SoundSerializer, self).__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
-        if obj.analysis_state != 'OK':
+        if not obj.analysis_state_essentia_exists:
             return None
         # Get the sound descriptors from gaia
         try:

@@ -34,6 +34,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
+from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
@@ -63,7 +64,7 @@ from comments.models import Comment
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from similarity.client import Similarity
-from sounds.models import Sound, Pack, License
+from sounds.models import Sound, Pack, License, SoundAnalysis
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.frontend_handling import render, using_beastwhoosh
@@ -395,7 +396,7 @@ class SoundInstance(RetrieveAPIView):
                   get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
 
     serializer_class = SoundSerializer
-    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
+    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK").annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))

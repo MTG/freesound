@@ -20,7 +20,9 @@
 
 import logging
 
-from sounds.models import Sound
+from django.conf import settings
+
+from sounds.models import Sound, SoundAnalysis
 from utils.management_commands import LoggingBaseCommand
 from utils.search.search_sounds import get_all_sound_ids_from_search_engine, delete_sounds_from_search_engine
 from utils.similarity_utilities import Similarity
@@ -60,9 +62,10 @@ class Command(LoggingBaseCommand):
         queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK').order_by('id').only("id")
         fs_mp = [sound.id for sound in queryset]
         # Get ell moderated, processed and analysed sounds
-        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK', analysis_state='OK')\
-            .order_by('id').only("id")
-        fs_mpa = [sound.id for sound in queryset]
+        sound_ids_analyzed_with_analyzer_ok = \
+            list(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")
+                .values_list('sound_id', flat=True))
+        fs_mpa = sorted(list(fs_mp.intersection(sound_ids_analyzed_with_analyzer_ok)))
 
         in_solr_not_in_fs = list(set(solr_ids).intersection(set(set(solr_ids).difference(fs_mp))))
         in_fs_not_in_solr = list(set(fs_mp).intersection(set(set(fs_mp).difference(solr_ids))))

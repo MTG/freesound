@@ -679,7 +679,6 @@ def similar(request, username, sound_id):
                               id=sound_id,
                               moderation_state="OK",
                               processing_state="OK",
-                              analysis_state="OK",
                               similarity_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404

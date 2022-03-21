@@ -367,6 +367,11 @@ class SoundManager(models.Manager):
                         .format(analyzer_name.replace('-', '_'), analyzer_name))
         return "\n          ".join(analyzers_left_join_section_parts)
 
+    def get_analysis_state_essentia_exists_sql(self):
+        """Returns the SQL bits to add analysis_state_essentia_exists to the returned data indicating if thers is a
+        SoundAnalysis objects existing for th given sound_id for the essentia analyzer and with status OK"""
+        return "          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{0}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,".format(settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
+
     def bulk_query_solr(self, sound_ids):
         """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
         of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
@@ -442,7 +447,6 @@ class SoundManager(models.Manager):
           sound.bitdepth,
           sound.bitrate,
           sound.samplerate,
-          sound.analysis_state,
           sound.num_ratings,
           sound.description,
           sound.moderation_state,
@@ -465,6 +469,7 @@ class SoundManager(models.Manager):
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
           %s
+          %s
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -480,7 +485,8 @@ class SoundManager(models.Manager):
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           %s
           LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (self.get_analyzers_data_select_sql(),
+        WHERE %s """ % (self.get_analysis_state_essentia_exists_sql(),
+                        self.get_analyzers_data_select_sql(),
                         ContentType.objects.get_for_model(Sound).id,
                         self.get_analyzers_data_left_join_sql(),
                         where, )
@@ -617,7 +623,7 @@ class Sound(SocialModel):
     # state
     is_index_dirty = models.BooleanField(null=False, default=True)
     similarity_state = models.CharField(db_index=True, max_length=2, choices=SIMILARITY_STATE_CHOICES, default="PE")
-    analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")
+    analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")  # This field is no longer used and should be removed
 
     # counts, updated by django signals
     num_comments = models.PositiveIntegerField(default=0)
@@ -856,16 +862,6 @@ class Sound(SocialModel):
         """
         self.processing_ongoing_state = state
         self.save(update_fields=['processing_ongoing_state'])
-
-    def set_analysis_state(self, state):
-        """
-        Updates self.analysis_state field of the Sound object and saves to DB without updating other
-        fields. This function is used in cases when two instances of the same Sound object could be edited by
-        two processes in parallel and we want to avoid possible field overwrites.
-        :param str state: new state to which self.analysis_state should be set
-        """
-        self.analysis_state = state
-        self.save(update_fields=['analysis_state'])
 
     def set_similarity_state(self, state):
         """
@@ -1113,7 +1109,7 @@ class Sound(SocialModel):
 
     def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
         """
-        Trigger processing of the sound if analysis_state is not "OK" or force=True.
+        Trigger processing of the sound if processing_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
         Processing code generates the file previews and display images as well as fills some audio fields
         of the Sound model.

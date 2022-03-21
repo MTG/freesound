@@ -44,12 +44,11 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
                                                  'filesize', 'channels', 'date_recorded')}),
                  ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description', 'is_explicit')}),
-                 ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_ongoing_state', 'processing_log', 'analysis_state',
-                                            'similarity_state')}),
+                 ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_ongoing_state', 'processing_log', 'similarity_state')}),
                  )
     raw_id_fields = ('user', 'pack', 'sources')
-    list_display = ('id', 'user', 'get_sound_name', 'created', 'moderation_state', 'get_processing_state', 'analysis_state')
-    list_filter = ('moderation_state', 'processing_state', 'analysis_state')
+    list_display = ('id', 'user', 'get_sound_name', 'created', 'moderation_state', 'get_processing_state')
+    list_filter = ('moderation_state', 'processing_state')
     ordering = ['id']
     search_fields = ('=id', '=user__username')
     readonly_fields = ('num_downloads', )

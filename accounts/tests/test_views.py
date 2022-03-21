@@ -45,7 +45,6 @@ class SimpleUserTest(TestCase):
         self.pack.save()
         self.sound.moderation_state = "OK"
         self.sound.processing_state = "OK"
-        self.sound.analysis_state = "OK"
         self.sound.similarity_state = "OK"
         self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())

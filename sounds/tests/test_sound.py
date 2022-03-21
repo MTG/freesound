@@ -770,10 +770,8 @@ class SoundTemplateCacheTests(TestCase):
     # Similarity link (cached in display and view)
     @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
     def _test_similarity_update(self, cache_keys, check_present, similarity_add):
-        # Default analysis_state is 'PE', but for similarity update it should be 'OK', otherwise sound gets ignored
-        # Also we need to create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
+        # Create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
         SoundAnalysis.objects.create(sound=self.sound, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")
-        self.sound.analysis_state = 'OK'
         self.sound.save()
 
         self._assertCacheAbsent(cache_keys)

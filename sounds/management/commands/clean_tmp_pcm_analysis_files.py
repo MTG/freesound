@@ -49,7 +49,7 @@ class Command(LoggingBaseCommand):
         self.log_start()
         
         data_to_log = {}
-        wav_files_in_analysis_path = glob.glob(settings.ANALYSIS_NEW_PATH + '**/*.wav')
+        wav_files_in_analysis_path = glob.glob(settings.ANALYSIS_PATH + '**/*.wav')
         files_to_remove = []
         for filepath in wav_files_in_analysis_path:
             try:

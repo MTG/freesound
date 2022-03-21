@@ -180,7 +180,7 @@ available analyzers are exposed as workers that can consume tasks from their que
 included in the analyzers). If several workers are instantiated for a single analyzer, then the queue for that analyzer will 
 be consumed at a faster rate, but there'll still be only one queue per analyzer.
 
-Analysis jobs can be manuallt triggered using the `analyze_new(analyzer_name)` method of Freesound `Sound` objects. When a job
+Analysis jobs can be manuallt triggered using the `analyze(analyzer_name)` method of Freesound `Sound` objects. When a job
 is triggered, it will be added to the corresponding Celery/RabbitMQ queue, and a `SoundAnalysis` object will be created in the
 database. That object will be used to store the state of the analysis job as well as the results when the job finishes. Only one
 `SoundAnalysis` object can exist per pair of sound ID <> analyzer name. If an analysis job for an analyzer is triggered for a
@@ -199,7 +199,7 @@ them with the search engine and the Freesound API (for a "how to" see implementa
 
 It is not advised to add more than a *few thousands* of jobs in the Celery/RabbitMQ queue (we've experienced problems with that although
 we never furthe investigated). For this reason, if we want to, e.g. analyze the whole Freesound with a new analyzer, we won't simply
-iterate over all sounds and call `analyze_new(new_analyzer_name)`. Instead, the new analysis pipeline adds a management command named
+iterate over all sounds and call `analyze(new_analyzer_name)`. Instead, the new analysis pipeline adds a management command named
 `orchestrate_analysis` (in the sounds app) which is run at every hour will handle the triggering of analysis jobs. The idea is that
 we define which analyzers we want available in Freesound using `settings.ANALYZERS_CONFIGURATION`, and then `orchestrate_analysis` takes
 care of continuously checking the current analysis status of all sounds, and triggering jobs for pairs of sound<>analyzer that are missing.

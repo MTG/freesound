@@ -32,7 +32,6 @@ from django.urls import reverse
 import utils.downloads
 from donations.models import Donation, DonationsModalSettings
 from sounds.models import Sound, Pack, License, Download
-from utils.audioprocessing.freesound_audio_analysis import FreesoundAudioAnalyzer
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
 from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories
@@ -517,14 +516,6 @@ def create_wave_images_mock_fail(
     raise AudioProcessingException("creation of display images has failed")
 
 
-def analyze_using_essentia_mock(essentia_executable_path, input_filename, output_filename_base, **kwargs):
-    create_test_files(paths=['%s_statistics.yaml' % output_filename_base, '%s_frames.json' % output_filename_base])
-
-
-def analyze_using_essentia_mock_fail(essentia_executable_path, input_filename, output_filename_base, **kwargs):
-    raise AudioProcessingException("essentia extractor returned an error")
-
-
 class AudioProcessingTestCase(TestCase):
 
     fixtures = ['licenses']
@@ -747,97 +738,4 @@ class AudioProcessingTestCase(TestCase):
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "OK")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
-
-
-class AudioAnalysisTestCase(TestCase):
-
-    fixtures = ['licenses']
-
-    def pre_test(self, create_sound_file=True):
-        # Do some stuff which needs to be carried out right before each test
-        self.assertEqual(self.sound.analysis_state, "PE")
-        if create_sound_file:
-            create_test_files(paths=[self.sound.locations('path')])  # Create fake file for original sound path
-
-    def setUp(self):
-        user, _, sounds = create_user_and_sounds(num_sounds=1, type="mp3")  # Use mp3 so it needs converstion to PCM
-        self.sound = sounds[0]
-        self.user = user
-
-    def test_sound_object_does_not_exist(self):
-        with self.assertRaises(AudioProcessingException) as cm:
-            FreesoundAudioAnalyzer(sound_id=999)
-        exc = cm.exception
-        self.assertIn('did not find Sound object', exc.message)
-
-    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
-    @override_processing_tmp_path_with_temp_directory
-    def test_sound_path_does_not_exist(self):
-        self.pre_test(create_sound_file=False)
-        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
-        # analysis will fail because sound does not exist
-        self.assertFalse(result)  # Analysis failed, returning False
-        self.sound.refresh_from_db()
-        self.assertEqual(self.sound.analysis_state, "FA")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
-
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_fail)
-    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
-    @override_processing_tmp_path_with_temp_directory
-    @override_sounds_path_with_temp_directory
-    def test_conversion_to_pcm_failed(self, *args):
-        self.pre_test()
-        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
-        # analysis will fail because mocked convert_to_pcm fails
-        self.assertFalse(result)  # Analysis failed, returning False
-        self.sound.refresh_from_db()
-        self.assertEqual(self.sound.analysis_state, "FA")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
-
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock_create_file)
-    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
-    @override_processing_tmp_path_with_temp_directory
-    @override_sounds_path_with_temp_directory
-    @override_settings(MAX_FILESIZE_FOR_ANALYSIS=1024)
-    def test_big_pcm_file_is_not_analyzed(self, *args):
-        self.pre_test()
-        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
-        # analysis will skip as generated PCM filesize is biggen than MAX_FILESIZE_FOR_ANALYSIS
-        self.assertFalse(result)  # Analysis failed, returning False
-        self.sound.refresh_from_db()
-        self.assertEqual(self.sound.analysis_state, "SK")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
-
-    @mock.patch('utils.audioprocessing.processing.analyze_using_essentia', side_effect=analyze_using_essentia_mock_fail)
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
-    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
-    @override_processing_tmp_path_with_temp_directory
-    @override_sounds_path_with_temp_directory
-    @override_analysis_path_with_temp_directory
-    @override_settings(ESSENTIA_PROFILE_FILE_PATH=None)
-    def test_analysis_created_analysis_files(self, *args):
-        self.pre_test()
-        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
-        # analysis will fail because analyze_using_essentia mock raises exception
-        self.assertFalse(result)  # Analysis failed
-        self.sound.refresh_from_db()
-        self.assertEqual(self.sound.analysis_state, "OK")
-        self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
-
-    @mock.patch('utils.audioprocessing.processing.analyze_using_essentia', side_effect=analyze_using_essentia_mock)
-    @mock.patch('utils.audioprocessing.processing.convert_to_pcm', side_effect=convert_to_pcm_mock)
-    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
-    @override_processing_tmp_path_with_temp_directory
-    @override_sounds_path_with_temp_directory
-    @override_analysis_path_with_temp_directory
-    @override_settings(ESSENTIA_PROFILE_FILE_PATH=None)
-    def test_analysis_created_analysis_files(self, *args):
-        self.pre_test()
-        result = FreesoundAudioAnalyzer(sound_id=Sound.objects.first().id).analyze()
-        self.assertTrue(result)  # Analysis succeeded
-        self.assertTrue(os.path.exists(self.sound.locations('analysis.statistics.path')))
-        self.assertTrue(os.path.exists(self.sound.locations('analysis.frames.path')))
-        self.sound.refresh_from_db()
-        self.assertEqual(self.sound.analysis_state, "OK")
         self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)

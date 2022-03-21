@@ -152,7 +152,7 @@ class Command(LoggingBaseCommand):
                                                                      str([s.id for s in missing_sounds[0:5]])))
                     if not options['dry_run']:
                         for sound in missing_sounds:
-                            sound.analyze_new(analyzer_name, verbose=False)
+                            sound.analyze(analyzer_name, verbose=False)
 
                     # After adding sounds from the first pool, check if there are still jobs that can be added and
                     # see if there are any sounds with failed analyses that should be re-scheduled

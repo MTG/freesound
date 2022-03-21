@@ -43,8 +43,7 @@ from sounds.models import Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
 from utils.encryption import encrypt
 from utils.filesystem import create_directories
-from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory, \
-    override_analysis_new_path_with_temp_directory
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 
 
 class CommentSoundsTestCase(TestCase):
@@ -772,6 +771,8 @@ class SoundTemplateCacheTests(TestCase):
     @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
     def _test_similarity_update(self, cache_keys, check_present, similarity_add):
         # Default analysis_state is 'PE', but for similarity update it should be 'OK', otherwise sound gets ignored
+        # Also we need to create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
+        SoundAnalysis.objects.create(sound=self.sound, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")
         self.sound.analysis_state = 'OK'
         self.sound.save()
 
@@ -785,7 +786,7 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCachePresent(cache_keys)
 
         # Update similarity
-        call_command('similarity_update', freesound_extractor_version=None)
+        call_command('similarity_update')
         similarity_add.assert_called_once_with(self.sound.id, self.sound.locations('analysis.statistics.path'))
         self._assertCacheAbsent(cache_keys)
 
@@ -1024,7 +1025,7 @@ class SoundAnalysisModel(TestCase):
 
     fixtures = ['licenses']
 
-    @override_analysis_new_path_with_temp_directory
+    @override_analysis_path_with_temp_directory
     def test_get_analysis(self):
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
@@ -1039,7 +1040,7 @@ class SoundAnalysisModel(TestCase):
 
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
         analysis_filename = '%i-TestExtractor2.json' % sound.id
-        sound_analysis_folder = os.path.join(settings.ANALYSIS_NEW_PATH, str(sound.id / 1000))
+        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
         create_directories(sound_analysis_folder)
         json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
         sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_status="OK")

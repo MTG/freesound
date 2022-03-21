@@ -95,7 +95,8 @@ ADMIN_REORDER = (
         'accounts.OldUsername',
         'accounts.EmailBounce',
         'auth.Groups',
-        'fsmessages.Message'
+        'fsmessages.Message',
+        'accounts.GdprAcceptance',
     )},
     {'app': 'sounds', 'models': (
         'sounds.Sound',
@@ -633,10 +634,6 @@ WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
 # General timeout for processing/analysis workers (in seconds)
 WORKER_TIMEOUT = 60 * 60
 
-ESSENTIA_EXECUTABLE = '/usr/local/bin/essentia_streaming_extractor_freesound'
-ESSENTIA_STATS_OUT_FORMAT = 'yaml'
-ESSENTIA_FRAMES_OUT_FORMAT = 'json'
-
 # Used to configure output formats in newer FreesoundExtractor versions
 ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))
 
@@ -839,7 +836,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
 CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
-CELERY_SOUND_ANALYSIS_OLD_QUEUE_NAME = 'sound_analysis_old_queue'
 
 
 # -------------------------------------------------------------------------------
@@ -868,7 +864,6 @@ PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
-ANALYSIS_NEW_PATH = os.path.join(DATA_PATH, "analysis_new/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
 

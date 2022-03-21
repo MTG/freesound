@@ -76,28 +76,30 @@ Below are instructions for setting up a local Freesound installation for develop
 
         docker-compose run --rm web python manage.py createsuperuser
 
-12. Run all services 🎉 
+12. Run services 🎉 
 
         docker-compose up
 
-  This might take significant time as many services will be started at once. When done, you should be able to point your browser to `http://localhost:8000` and see the Freesound website up and running!
+  When running this command, the most important services that make Freesound work will be run locally. This includes the web application and database, but also the search engine, cache manager, queue manager and asynchronous workers including audio processing. You should be able to point your browser to `http://localhost:8000` and see the Freesound website up and running!
 
 
-13. Build the search index so you can, well, search
+13. Build the search index so you can search for sounds and forum posts
 
         # Open a new terminal window so the services started in the previous step keep running
         docker-compose run --rm web python manage.py reindex_search_engine_sounds
         docker-compose run --rm web python manage.py reindex_search_engine_forum
 
-After following the steps you'll have a fully functional Freesound installation up and running, including the search, sound similarity and audio processing features (and more!). As a sort of *bonus step*, you can run Django's shell plus command like this:
+After following the steps you'll have a functional Freesound installation up and running, with the most relevant services properly configured. You can run Django's shell plus command like this:
 
     docker-compose run --rm web python manage.py shell_plus
 
 Because the `web` container mounts a named volume for the home folder of the user running the shell plus process, command history should be kept between container runs :)
 
-In most situations it is possible that not all Freesound services need to be running. You can selectively run services using the `docker-compose` interface and this will speed up the startup time. For example, the most common service you'll need for development will be the `web` container and (maybe) `search`. Then you can do:
+14. (extra step) The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker-compose.yml` file, you'l see that some services are marked with the profile `analyzers` or `all`. These services include sound similarity, search results clustering and the audio analyzers. To run these services you need to explicitely tell `docker-compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
 
-    docker-compose up web search
+
+        docker-compose --profile analyzers up   # To run all basic services + sound analyzers
+        docker-compose --profile all up         # To run all services
 
 
 ### Running tests

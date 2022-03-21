@@ -217,7 +217,7 @@ https://github.com/mtg/freesound-audio-analyzers. The docker compose of the main
 services for the external analyzers which depend on docker images having been previously built from the 
 `freesound-audio-analyzers` repository. To build these images you simply need to checkout the code repository and run 
 `make`. Once the images are built, Freesound can be run including the external analyzer services by of the docker compose 
-file by running `docker-compose --profile ext_analyzers up`
+file by running `docker-compose --profile analyzers up`
 
 The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ console can be accessed at port `15672`
 (e.g. `http://localhost:15672/rabbitmq-admin`) and using `guest` as both username and password. Also, accessing 

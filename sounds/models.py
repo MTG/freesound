@@ -725,21 +725,19 @@ class Sound(SocialModel):
                 )
             ),
             analysis=dict(
+                base_path=os.path.join(settings.ANALYSIS_PATH, id_folder),
                 statistics=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.%s" % (
-                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.%s" % (
-                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d-%s.yaml" % (
+                        self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)),
+                    url=settings.ANALYSIS_URL + "%s/%d-%s.yaml" % (
+                        id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
                 ),
                 frames=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.%s" % (
-                        self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
-                        id_folder, self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d-%s_frames.json" % (
+                        self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)),
+                    url=settings.ANALYSIS_URL + "%s/%d-%s_frames.json" % (
+                        id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
                 )
-            ),
-            analysis_new=dict(
-                path=os.path.join(settings.ANALYSIS_NEW_PATH, id_folder)
             )
         )
 
@@ -1126,18 +1124,8 @@ class Sound(SocialModel):
             tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
 
-    def analyze(self, force=False, high_priority=False):
-        """
-        Trigger analysis of the sound if analysis_state is not "OK" or force=True. Analysis code runs
-        Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
-        NOTE: high_priority is not implemented and setting it has no effect
-        """
-        if force or self.analysis_state != "OK":
-            self.set_analysis_state("QU")
-            tasks.analyze_sound_old.delay(sound_id=self.id)
-            sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
-
-    def analyze_new(self, analyzer, force=False, verbose=True):
+    def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
+        # Note that "high_priority" is not implemented but needs to be here for compatibility with older code
         if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
             # If specified analyzer is not one of the analyzers configured, do nothing
             if verbose:
@@ -1156,7 +1144,7 @@ class Sound(SocialModel):
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
                 sound_path = self.locations("preview.LQ.mp3.path")
             celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
-                        'analysis_folder': self.locations('analysis_new.path'), 'metadata':json.dumps({'duration': self.duration})}, queue=analyzer)
+                        'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({'duration': self.duration})}, queue=analyzer)
             if verbose:
                 sounds_logger.info("Sending sound {} to analyzer {}".format(self.id, analyzer))
         else:
@@ -1690,9 +1678,9 @@ class SoundAnalysis(models.Model):
         """Returns the absolute path of the analysis files related with this SoundAnalysis object. Related files will
          include analysis output but also logs. The base filepath should be complemented with the extension, which
          could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
-         the ANALYSIS_NEW_PATH and under a sound ID folder structure like sounds and other sound-related files."""
+         the ANALYSIS_PATH and under a sound ID folder structure like sounds and other sound-related files."""
         id_folder = str(self.sound_id / 1000)
-        return os.path.join(settings.ANALYSIS_NEW_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
+        return os.path.join(settings.ANALYSIS_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
 
     def load_analysis_data_from_file_to_db(self):
         """This method checks the analysis output data which has been written to a file, and loads it to the
@@ -1765,7 +1753,7 @@ class SoundAnalysis(models.Model):
             return 'No logs available...'
 
     def re_run_analysis(self, verbose=True):
-        self.sound.analyze_new(self.analyzer, force=True, verbose=verbose)
+        self.sound.analyze(self.analyzer, force=True, verbose=verbose)
 
     def __str__(self):
         return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)

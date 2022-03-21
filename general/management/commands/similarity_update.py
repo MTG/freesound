@@ -19,29 +19,30 @@
 #
 
 import logging
-
 import yaml
 
+from django.conf import settings
+
 from similarity.client import Similarity
-from sounds.models import Sound
+from sounds.models import Sound, SoundAnalysis
 from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger('console')
 
 
 class Command(LoggingBaseCommand):
-    help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force " \
-           "to force reindex ALL sounds. Use option -l to limit the maximum number of sounds to index " \
-           "(to avoid collapsing similarity if using crons). Use option -ev to only index sounds with a specific" \
-           "essentia extractor version. For exampel: python manage.py similarity_update -ev 0.3 -l 1000"
+    help = "Take all sounds that have been analyzer but haven't been added to the similarity service yet and add them. " \
+           "Use option --force to force reindex ALL sounds. Use option -l to limit the maximum number of sounds to index " \
+           "(to avoid collapsing similarity if using crons). Use option -a to only index sounds with a specific" \
+           "analyzer name/version. For example: python manage.py similarity_update -a analyzer-name -l 1000"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-ev', '--extractor_version',
+            '-a', '--analyzer',
             action='store',
-            dest='freesound_extractor_version',
-            default='0.3',
-            help='Only index sounds analyzed with specific Freesound Extractor version')
+            dest='analyzer',
+            default=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+            help='Only index sounds analyzed with specific anayzer name/version')
 
         parser.add_argument(
             '-l', '--limit',
@@ -68,42 +69,23 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         limit = int(options['limit'])
-        freesound_extractor_version = options['freesound_extractor_version']
-        console_logger.info("limit: %s, version: %s", limit, freesound_extractor_version)
+        analyzer_name = options['analyzer']
+        console_logger.info("limit: %s, analyzer: %s", limit, analyzer_name)
 
+        sound_ids_analyzed_with_analyzer_ok = \
+            list(SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK")
+                                      .order_by('id').values_list('sound_id', flat=True))
         if options['force']:
-            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK').order_by('id')[:limit]
+            sound_ids_to_be_added = sound_ids_analyzed_with_analyzer_ok[:limit]
         else:
-            to_be_added = Sound.objects.filter(
-                analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[:limit]
+            sound_ids_similarity_pending =  list(Sound.public.filter(similarity_state='PE').values_list('id', flat=True))
+            sound_ids_to_be_added = list(set(sound_ids_similarity_pending).intersection(sound_ids_analyzed_with_analyzer_ok))[:limit]
 
-        N = len(to_be_added)
+        N = len(sound_ids_to_be_added)
+        to_be_added = sorted(Sound.objects.filter(id__in=sound_ids_to_be_added), key=lambda x: x.id)
+        n_added = 0
+        n_failed = 0
         for count, sound in enumerate(to_be_added):
-
-            # Check if sound analyzed using the desired extractor
-            if freesound_extractor_version:
-                try:
-                    data = yaml.load(open(sound.locations('analysis.statistics.path')), Loader=yaml.cyaml.CLoader)
-                except:
-                    console_logger.error('Sound with id %i was not indexed (no yaml file found when checking for '
-                                         'extractor version)' % sound.id)
-                    continue
-
-                if data:
-                    if 'freesound_extractor' in data['metadata']['version']:
-                        if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
-                            console_logger.info(
-                                'Sound with id %i was not indexed (it was analyzed with extractor version %s)'
-                                % (sound.id, data['metadata']['version']['freesound_extractor']))
-                            continue
-                    else:
-                        console_logger.info('Sound with id %i was not indexed (it was analyzed with an unknown '
-                                            'extractor)' % sound.id)
-                        continue
-                else:
-                    console_logger.info('Sound with id %i was not indexed (most probably empty yaml file)' % sound.id)
-                    continue
-
             try:
                 if options['indexing_server']:
                     result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
@@ -111,12 +93,14 @@ class Command(LoggingBaseCommand):
                     result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
                     sound.set_similarity_state('OK')
                     sound.invalidate_template_caches()
+                n_added += 1
                 console_logger.info("%s (%i of %i)" % (result, count+1, N))
 
             except Exception as e:
                 if not options['indexing_server']:
                     sound.set_similarity_state('FA')
+                n_failed += 1
                 console_logger.error('Unexpected error while trying to add sound (id: %i, %i of %i): \n\t%s'
                                      % (sound.id, count+1, N, str(e)))
 
-        self.log_end({'n_sounds_added': to_be_added.count()})
+        self.log_end({'n_sounds_added': n_added, 'n_sounds_failed': n_failed})

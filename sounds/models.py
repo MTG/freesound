@@ -1126,7 +1126,10 @@ class Sound(SocialModel):
 
     def estimate_num_processing_attemps(self):
         # Estimates how many processing attemps have been made by looking at the processing logs 
-        return max(1, self.processing_log.count('----Processed sound'))
+        if self.processing_log is not None:
+            return max(1, self.processing_log.count('----Processed sound'))
+        else:
+            return 0
 
     def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
         # Note that "high_priority" is not implemented but needs to be here for compatibility with older code

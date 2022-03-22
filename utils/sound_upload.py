@@ -226,7 +226,7 @@ def create_sound(user,
             if sound.pack:
                 sound.pack.process()
         except Exception as e:
-            sound_logger.info('Error sending sound to process and analyze: %s' % str(e))
+            sounds_logger.info('Error sending sound to process and analyze: %s' % str(e))
 
     # Log
     if sound.uploaded_with_apiv2_client is not None:

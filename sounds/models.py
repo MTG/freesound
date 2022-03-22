@@ -946,6 +946,8 @@ class Sound(SocialModel):
             self.mark_index_dirty(commit=False)
             self.processing_state = new_state
             self.processing_date = datetime.datetime.now()
+            if self.processing_log is None:
+                self.processing_log = ''
             self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
             self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
 
@@ -961,6 +963,8 @@ class Sound(SocialModel):
         else:
             # If processing state has not changed, only update the processing date and log
             self.processing_date = datetime.datetime.now()
+            if self.processing_log is None:
+                self.processing_log = ''
             self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
             self.save(update_fields=['processing_date', 'processing_log'])
 

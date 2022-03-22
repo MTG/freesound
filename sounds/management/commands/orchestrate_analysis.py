@@ -71,12 +71,10 @@ class Command(LoggingBaseCommand):
         console_logger.info("{: >44} {: >11} {: >11} {: >11} {: >11} {: >11}".format(
             *['', '# ok |', '# failed |', '# skipped |', '# queued |', '# missing']))
         for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
-            analyzer_statuses = SoundAnalysis.objects.filter(analyzer=analyzer_name).values_list('analysis_status', flat=True)
-            analyzer_statuses_counts = dict(Counter(analyzer_statuses).most_common())
-            ok = analyzer_statuses_counts.get("OK", 0)
-            sk = analyzer_statuses_counts.get("SK", 0)
-            fa = analyzer_statuses_counts.get("FA", 0)
-            qu = analyzer_statuses_counts.get("QU", 0)
+            ok = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK").count()
+            sk = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="SK").count()
+            fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
+            qu = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="QU").count()
             missing = n_sounds - (ok + sk + fa + qu)
             percentage_done = (ok + sk + fa) * 100.0/n_sounds
             # print one row per analyzer

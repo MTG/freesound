@@ -57,6 +57,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         if not requested_fields:  # If parameter is in url but parameter is empty, set to default
             requested_fields = self.default_fields
 
+        if requested_fields == '*':  # If parameter is *, return all fields
+            requested_fields = ','.join(self.fields.keys())
+
         if requested_fields:
             allowed = set(requested_fields.split(","))
             existing = set(self.fields.keys())
@@ -189,20 +192,27 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                                           request_is_secure=self.context['request'].is_secure()),
         }
 
+
+    def get_or_compute_analysis_state_essentia_exists(self, sound_obj):
+        if hasattr(sound_obj, 'analysis_state_essentia_exists'):
+            return sound_obj.analysis_state_essentia_exists
+        else:
+            return SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound_id=sound_obj.id).exists()
+
     analysis = serializers.SerializerMethodField()
     def get_analysis(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
 
     analysis_frames = serializers.SerializerMethodField()
     def get_analysis_frames(self, obj):
-        if not obj.analysis_state_essentia_exists:
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         return prepend_base(obj.locations('analysis.frames.url'),
                             request_is_secure=self.context['request'].is_secure())
 
     analysis_stats = serializers.SerializerMethodField()
     def get_analysis_stats(self, obj):
-        if not obj.analysis_state_essentia_exists:
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]),
                             request_is_secure=self.context['request'].is_secure())
@@ -271,7 +281,7 @@ class SoundListSerializer(AbstractSoundSerializer):
         super(SoundListSerializer, self).__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
-        if not obj.analysis_state_essentia_exists:
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         # Get descriptors from the view class (should have been requested before the serializer is invoked)
         try:
@@ -308,7 +318,7 @@ class SoundSerializer(AbstractSoundSerializer):
         super(SoundSerializer, self).__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
-        if not obj.analysis_state_essentia_exists:
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         # Get the sound descriptors from gaia
         try:

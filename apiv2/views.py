@@ -403,7 +403,7 @@ class SoundInstance(RetrieveAPIView):
         return super(SoundInstance, self).get(request, *args, **kwargs)
 
 
-class SoundAnalysis(GenericAPIView):
+class SoundAnalysisView(GenericAPIView):  # Needs to be named SoundAnalysisView so it does not overlap with SoundAnalysis
 
     @classmethod
     def get_description(cls):
@@ -474,7 +474,9 @@ class SimilarSounds(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
-        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license')\
+            .filter(id__in=ids)\
+            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
         qs_sound_objects = dict()
         for sound_object in qs:
             qs_sound_objects[sound_object.id] = sound_object
@@ -605,7 +607,8 @@ class UserSounds(ListAPIView):
             raise NotFoundException(resource=self)
 
         queryset = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])
+            .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])\
+            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
@@ -694,6 +697,8 @@ class UserBookmarkCategorySounds(ListAPIView):
         else:
             kwargs['category'] = None
         try:
+            # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
+            # make the queries inneficient if the "analysis" is requested. This could be improved in the future.
             queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException(resource=self)
@@ -741,9 +746,9 @@ class PackSounds(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
-                                                                                  processing_state="OK",
-                                                                                  pack__id=self.kwargs['pk'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license')\
+            .filter(moderation_state="OK", processing_state="OK", pack__id=self.kwargs['pk'])\
+            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 

@@ -18,12 +18,9 @@
 #     See AUTHORS file.
 #
 import datetime
-import glob
 import logging
-
-import os
 import json
-import time
+from collections import Counter
 
 from django.conf import settings
 

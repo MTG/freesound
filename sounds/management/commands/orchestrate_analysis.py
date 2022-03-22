@@ -74,12 +74,14 @@ class Command(LoggingBaseCommand):
         console_logger.info("{: >44} {: >11} {: >11} {: >11} {: >11} {: >11}".format(
             *['', '# ok |', '# failed |', '# skipped |', '# queued |', '# missing']))
         for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
-            ok = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK").count()
-            sk = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="SK").count()
-            fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
-            qu = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="QU").count()
-
+            analyzer_statuses = SoundAnalysis.objects.filter(analyzer=analyzer_name).values_list('analysis_status', flat=True)
+            analyzer_statuses_counts = dict(Counter(analyzer_statuses).most_common())
+            ok = analyzer_statuses_counts.get("OK", 0)
+            sk = analyzer_statuses_counts.get("SK", 0)
+            fa = analyzer_statuses_counts.get("FA", 0)
+            qu = analyzer_statuses_counts.get("QU", 0)
             missing = n_sounds - (ok + sk + fa + qu)
+            percentage_done = (ok + sk + fa) * 100.0/n_sounds
             # print one row per analyzer
             console_logger.info("{: >44} {: >11} {: >11} {: >11} {: >11} {: >11}".format(
                 *[analyzer_name + ' |', '{0} |'.format(ok), '{0} |'.format(sk),
@@ -91,6 +93,7 @@ class Command(LoggingBaseCommand):
                 'FA': fa,
                 'QU': qu,
                 'Missing': missing,
+                'Percentage': percentage_done,
             }
         console_logger.info('')
 
@@ -174,7 +177,7 @@ class Command(LoggingBaseCommand):
                 analyzer_data_to_log = {key: value for key, value in data_to_log[analyzer_name].items()}
                 analyzer_data_to_log.update({
                     'analyzer': analyzer_name,
-                    'percentage_completed': (analyzer_data_to_log['OK'] + analyzer_data_to_log['SK'] + analyzer_data_to_log['FA']) * 100.0/n_sounds
+                    'percentage_completed': analyzer_data_to_log['Percentage']
                 })
                 commands_logger.info('Orchestrate analysis analyzer update ({0})'.format(json.dumps(analyzer_data_to_log)))
             console_logger.info('')

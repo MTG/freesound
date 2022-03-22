@@ -946,7 +946,7 @@ class Sound(SocialModel):
             self.mark_index_dirty(commit=False)
             self.processing_state = new_state
             self.processing_date = datetime.datetime.now()
-            self.processing_log = processing_log
+            self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
             self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
 
             if new_state == 'FA':
@@ -961,7 +961,7 @@ class Sound(SocialModel):
         else:
             # If processing state has not changed, only update the processing date and log
             self.processing_date = datetime.datetime.now()
-            self.processing_log = processing_log
+            self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
             self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
@@ -1115,10 +1115,14 @@ class Sound(SocialModel):
         of the Sound model.
         NOTE: high_priority is not implemented and setting it has no effect
         """
-        if force or self.processing_state != "OK":
+        if force or (self.processing_state != "OK" and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
+
+    def estimate_num_processing_attemps(self):
+        # Estimates how many processing attemps have been made by looking at the processing logs 
+        return max(1, self.processing_log.count('----Processed sound'))
 
     def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
         # Note that "high_priority" is not implemented but needs to be here for compatibility with older code

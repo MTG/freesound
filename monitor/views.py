@@ -34,7 +34,7 @@ from django.urls import reverse
 
 import tickets
 from freesound.celery import get_queues_task_counts
-from sounds.models import Sound
+from sounds.models import Sound, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 
 
@@ -63,22 +63,40 @@ def monitor_home(request):
     tardy_user_sounds_count = len(tickets.views._get_tardy_user_tickets())
 
     # Processing
-    sounds_queued_count = Sound.objects.filter(
-            processing_ongoing_state='QU').count()
+    processing_states_data = list(Sound.objects.values('processing_ongoing_state', 'processing_state'))
+    processing_ongoing_state = dict(Counter([item['processing_ongoing_state'] for item in processing_states_data]).most_common())
+    processing_state = dict(Counter([item['processing_state'] for item in processing_states_data]).most_common())
+    sounds_queued_count = processing_ongoing_state.get('QU', 0)
+    sounds_processing_count = processing_ongoing_state.get('PR', 0)
+    sounds_failed_count = processing_state.get('FA', 0)
+    sounds_ok_count = processing_state.get('OK', 0)
     sounds_pending_count = Sound.objects.\
         filter(processing_state='PE')\
         .exclude(processing_ongoing_state='PR')\
         .exclude(processing_ongoing_state='QU')\
-        .count()
-    sounds_processing_count = Sound.objects.filter(
-            processing_ongoing_state='PR').count()
-    sounds_failed_count = Sound.objects.filter(
-            processing_state='FA').count()
-    sounds_ok_count = Sound.objects.filter(
-            processing_state='OK').count()
+        .count()  # TODO: optimize this last query somehow?
 
     # Analysis
-    # TODO: add global anlaysis status
+    analyzers_data = {}  
+    all_sound_ids = Sound.objects.all().values_list('id', flat=True).order_by('id')
+    n_sounds = len(all_sound_ids)
+    for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
+        analyzer_statuses = SoundAnalysis.objects.filter(analyzer=analyzer_name).values_list('analysis_status', flat=True)
+        analyzer_statuses_counts = dict(Counter(analyzer_statuses).most_common())
+        ok = analyzer_statuses_counts.get("OK", 0)
+        sk = analyzer_statuses_counts.get("SK", 0)
+        fa = analyzer_statuses_counts.get("FA", 0)
+        qu = analyzer_statuses_counts.get("QU", 0)
+        missing = n_sounds - (ok + sk + fa + qu)
+        percentage_done = (ok + sk + fa) * 100.0/n_sounds
+        analyzers_data[analyzer_name] = {
+            'OK': ok,
+            'SK': sk,
+            'FA': fa,
+            'QU': qu,
+            'Missing': missing,
+            'Percentage': percentage_done,
+        }
 
     tvars = {"new_upload_count": new_upload_count,
              "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
@@ -89,6 +107,7 @@ def monitor_home(request):
              "sounds_failed_count": sounds_failed_count,
              "sounds_ok_count": sounds_ok_count,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
+             "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
              "queues_stats_url": reverse('queues-stats'),
     }
 
@@ -191,7 +210,7 @@ def process_sounds(request):
             sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
                 .exclude(processing_ongoing_state='QU')
             for sound in sounds_to_process:
-                sound.process()
+                sound.process(force=True)
 
     # Send sounds to processing according to their processing_ongoing_state
     processing_ongoing_state = request.GET.get('pros', None)
@@ -202,7 +221,7 @@ def process_sounds(request):
 
         if sounds_to_process:
             for sound in sounds_to_process:
-                sound.process()
+                sound.process(force=True)
 
     return redirect("monitor-home")
 

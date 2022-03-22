@@ -1,8 +1,8 @@
-<h3>rabbitmq status</h3>
+<h3>rabbitmq queues</h3>
 <table style="min-width:500px;">
 {% for item in celery_task_counts %}
     {% if forloop.counter0 == 0 %}
-        <tr><td><b>queue</b></td><td><b>messages ready (queued)</b></td><td><b>messages unacked (running soon or running)</b></td><td><b>consumers</b></td><td><b>rate</b></td></tr>
+        <tr><td><b>queue</b></td><td><b>messages ready<br>(queued)</b></td><td><b>messages unacked<br> (running soon or running)</b></td><td><b>consumers</b></td><td><b>rate</b></td></tr>
     {% endif %}
     <tr><td>{{ item.0 }}</td><td>{{ item.1 }}</td><td>{{ item.2 }}</td><td>{{ item.3 }}</td><td>{{ item.4 }}/s</td></tr>
 {% empty %}

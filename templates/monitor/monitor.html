@@ -29,9 +29,9 @@
     <table style="min-width:500px;">
     {% for analyzer_name, analyzer_data in analyzers_data %}
         {% if forloop.counter0 == 0 %}
-            <tr><td><b>analyzer</b></td><td><b>% done</b></td><td><b>missing</b></td><td><b>ok</b></td><td><b>skipped</b></td><td><b>failed</b></td></tr>
+            <tr><td><b>analyzer</b></td><td><b>% done</b></td><td><b>missing</b></td><td><b>queued</b></td><td><b>ok</b></td><td><b>skipped</b></td><td><b>failed</b></td></tr>
         {% endif %}
-        <tr><td>{{ analyzer_name }}</td><td>{{ analyzer_data.Percentage }}</td><td>{{ analyzer_data.Missing }}</td><td>{{ analyzer_data.OK }}</td><td>{{ analyzer_data.SK }}</td><td>{{ analyzer_data.FA }}</td></tr>
+        <tr><td>{{ analyzer_name }}</td><td>{{ analyzer_data.Percentage }}</td><td>{{ analyzer_data.Missing }}</td><td>{{ analyzer_data.QU }}</td><td>{{ analyzer_data.OK }}</td><td>{{ analyzer_data.SK }}</td><td>{{ analyzer_data.FA }}</td></tr>
     {% endfor %} 
     </table>
 

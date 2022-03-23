@@ -45,6 +45,7 @@ class Command(LoggingBaseCommand):
         console_logger.info('Will send {} sounds to processing'.format(qs.count()))
         for sound in qs:
             if not options['dry_run']:
-                sound.process()
-                n_sent += 1
+                was_sent = sound.process()
+                if was_sent:
+                    n_sent += 1
         self.log_end({'n_sent_to_processing': n_sent})

@@ -1116,13 +1116,14 @@ class Sound(SocialModel):
         Trigger processing of the sound if processing_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
         Processing code generates the file previews and display images as well as fills some audio fields
-        of the Sound model.
+        of the Sound model. This method returns "True" if sound was sent to process, None otherwise.
         NOTE: high_priority is not implemented and setting it has no effect
         """
         if force or (self.processing_state != "OK" and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
+            return True
 
     def estimate_num_processing_attemps(self):
         # Estimates how many processing attemps have been made by looking at the processing logs 

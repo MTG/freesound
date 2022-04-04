@@ -20,6 +20,9 @@
 
 import logging
 
+from django.conf import settings
+
+from freesound.celery import get_queues_task_counts
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
 
@@ -40,9 +43,25 @@ class Command(LoggingBaseCommand):
 
     def handle(self, *args, **options):
         self.log_start()
-        n_sent = 0
-        qs = Sound.objects.filter(processing_state="FA")
+        
+        # Get IDs of sounds that failed
+        failed_ids = list(Sound.objects.filter(processing_state="FA").values_list('id', flat=True))
+        
+        # If there are no sounds in the queue, send also sounds marked as pending/queued/currently processing
+        other_ids = []
+        queues_counts_dict = {item[0]: item[1] + item[2] for item in get_queues_task_counts()}
+        n_sounds_processing_in_rabbitmq_queue = queues_counts_dict[settings.CELERY_SOUND_PROCESSING_QUEUE_NAME]
+        if n_sounds_processing_in_rabbitmq_queue == 0:
+            pending_ids = list(Sound.objects.filter(processing_state="PE").values_list('id', flat=True))
+            queued_in_db_ids = list(Sound.objects.filter(processing_ongoing_state="QU").values_list('id', flat=True))
+            processing_id_db_ids = list(Sound.objects.filter(processing_ongoing_state="PR").values_list('id', flat=True))
+            other_ids = pending_ids + queued_in_db_ids + processing_id_db_ids
+        
+        # Send the sounds
+        combined_ids =list(set(failed_ids + other_ids))
+        qs = Sound.objects.filter(id__in=combined_ids)
         console_logger.info('Will send {} sounds to processing'.format(qs.count()))
+        n_sent = 0
         for sound in qs:
             if not options['dry_run']:
                 was_sent = sound.process()

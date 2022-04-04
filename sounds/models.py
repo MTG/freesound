@@ -1128,7 +1128,7 @@ class Sound(SocialModel):
         of the Sound model. This method returns "True" if sound was sent to process, None otherwise.
         NOTE: high_priority is not implemented and setting it has no effect
         """
-        if force or (self.processing_state != "OK" and self.estimate_num_processing_attemps() <= 3):
+        if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI") and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)

@@ -138,7 +138,7 @@ class Profile(SocialModel):
         return self.user.username
 
     def agree_to_gdpr(self):
-        GdprAcceptance.objects.create(user=self.user)
+        GdprAcceptance.objects.get_or_create(user=self.user)
 
     def has_sounds_with_old_cc_licenses(self):
         return self.user.sounds.select_related('license').filter(license__deed_url__contains="3.0").count() > 0

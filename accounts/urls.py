@@ -68,6 +68,7 @@ urlpatterns = [
     url(r'^bulklicensechange/$', accounts.bulk_license_change, name="bulk-license-change"),
     url(r'^tosacceptance/$', accounts.tos_acceptance, name="tos-acceptance"),
     url(r'^check_username/$', accounts.check_username, name="check_username"),
+    url(r'^update_old_cc_licenses/$', accounts.update_old_cc_licenses, name="update-old-cc-licenses"),
 
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),

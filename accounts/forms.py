@@ -102,11 +102,18 @@ class FlashUploadFileForm(forms.Form):
 class TermsOfServiceForm(forms.Form):
     accepted_tos = forms.BooleanField(
         label='',
-        help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
-                  'Freesound website',
+        help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> '
+                  'and the <a href="/help/privacy/" target="_blank">privacy policy</a> of Freesound (required)',
         required=True,
-        error_messages={'required': 'You must accept the terms of use in order to continue using Freesound.'}
+        error_messages={'required': 'You must accept the terms of use and the privacy poclicy in order to continue '
+                                    'using Freesound.'}
     )
+    accepted_license_change = forms.BooleanField(
+        label='',
+        help_text='Check this box to upgrade your Creative Commons 3.0 licenses to 4.0',
+        required=False
+    )
+    next = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 
 class AvatarForm(forms.Form):
@@ -190,8 +197,8 @@ class RegistrationForm(forms.Form):
     email2 = forms.EmailField(label="Email confirmation", help_text="Confirm your email address", max_length=254)
     password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
-        label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
-                        'Freesound website'),
+        label=mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
+                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>.'),
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
@@ -231,20 +238,13 @@ class RegistrationForm(forms.Form):
         username = self.cleaned_data["username"]
         email = self.cleaned_data["email1"]
         password = self.cleaned_data["password1"]
-        accepted_tos = self.cleaned_data.get("accepted_tos", False)
-
-        user = User(username=username,
-                    email=email,
-                    is_staff=False,
-                    is_active=False,
-                    is_superuser=False)
-        user.set_password(password)
-        user.save()
-
-        profile = user.profile  # .profile created on User.save()
-        profile.accepted_tos = accepted_tos
-        profile.save()
-
+        user = User.objects.create(
+            username=username,
+            email=email,
+            password=password,
+            is_staff=False,
+            is_active=False,
+            is_superuser=False)
         return user
 
 
@@ -269,8 +269,8 @@ class BwRegistrationForm(RegistrationForm):
         self.fields['password1'].help_text = False
         self.fields['password1'].widget.attrs['placeholder'] = 'Password'
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['accepted_tos'].label = mark_safe('Check this box to accept our <a href="/help/tos_web/" '
-                                                      'target="_blank">terms of use</a>')
+        self.fields['accepted_tos'].label = mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
+                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>')
 
 
 class ReactivationForm(forms.Form):

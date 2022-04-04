@@ -86,6 +86,7 @@
             {% endif %}
             <li>Your <a href="{% url "bookmarks-for-user" user.username %}">bookmarks</a></li>
             <li>Activity <a href="{% url "stream" %}">stream</a></li>
+            {% if user.profile.has_sounds_with_old_cc_licenses %}<li><a href="{% url "update-old-cc-licenses" %}">Upgrade your sound licenses</a> to CC 4.0 equivalents</li>{% endif %}
             {% comment %}<li>Your sound uploads <a href="{% url "accounts-pending" %}">pending moderation</a></li>{% endcomment %}
         </ul>
         </div>

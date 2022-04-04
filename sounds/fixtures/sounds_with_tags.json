@@ -88,7 +88,7 @@
         }, 
         "model": "auth.user", 
         "pk": 58
-    }, 
+    },
     {
         "fields": {
             "username": "jerenveren", 

@@ -65,7 +65,7 @@ class CustomModelBackend(ModelBackend):
         This means that most pages that check a field on the profile will no longer have to
         perform an additional query to get the profile."""
         try:
-            user = UserModel._default_manager.select_related("profile").get(pk=user_id)
+            user = UserModel._default_manager.select_related("profile", "gdpracceptance").get(pk=user_id)
         except UserModel.DoesNotExist:
             return None
         return user if self.user_can_authenticate(user) else None

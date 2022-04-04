@@ -1008,7 +1008,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         sound.set_tags(serializer.data['tags'])
                 if 'license' in serializer.data:
                     if serializer.data['license']:
-                        license = License.objects.get(name=serializer.data['license'])
+                        license = License.objects.filter(name=serializer.data['license']).order_by('-id').first()
                         if license != sound.license:
                             # Only update license and create new SoundLicenseHistory object if license has changed
                             sound.set_license(license)

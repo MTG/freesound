@@ -529,19 +529,22 @@ def sound_edit(request, username, sound_id):
         else:
             geotag_form = GeotaggingForm(prefix="geotag")
 
-    license_form = NewLicenseForm(request.POST)
-    if request.method == 'POST' and license_form.is_valid():
-        new_license = license_form.cleaned_data["license"]
-        if new_license != sound.license:
-            sound.set_license(new_license)
-        sound.mark_index_dirty()  # Sound is saved here
-        if sound.pack:
-            sound.pack.process()  # Sound license changed, process pack (if sound has pack)
-        sound.invalidate_template_caches()
-        update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
-        return HttpResponseRedirect(sound.get_absolute_url())
+    license_form = NewLicenseForm(request.POST, 
+                                  hide_old_versions="3.0" not in sound.license.deed_url)
+    if request.method == 'POST':
+        if license_form.is_valid():
+            new_license = license_form.cleaned_data["license"]
+            if new_license != sound.license:
+                sound.set_license(new_license)
+            sound.mark_index_dirty()  # Sound is saved here
+            if sound.pack:
+                sound.pack.process()  # Sound license changed, process pack (if sound has pack)
+            sound.invalidate_template_caches()
+            update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
+            return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm(initial={'license': sound.license})
+        license_form = NewLicenseForm(initial={'license': sound.license}, 
+                                      hide_old_versions="3.0" not in sound.license.deed_url)
 
     tvars = {
         'sound': sound,

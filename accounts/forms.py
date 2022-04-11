@@ -238,13 +238,16 @@ class RegistrationForm(forms.Form):
         username = self.cleaned_data["username"]
         email = self.cleaned_data["email1"]
         password = self.cleaned_data["password1"]
-        user = User.objects.create(
-            username=username,
-            email=email,
-            password=password,
-            is_staff=False,
-            is_active=False,
-            is_superuser=False)
+
+        # NOTE: we create user "manually" instead of using "create_user" as we don't want 
+        # is_active to be set to True automatically
+        user = User(username=username,
+                    email=email,
+                    is_staff=False,
+                    is_active=False,
+                    is_superuser=False)
+        user.set_password(password)
+        user.save()
         return user
 
 

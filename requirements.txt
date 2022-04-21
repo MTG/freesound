@@ -33,6 +33,7 @@ graypy==0.2.12
 gunicorn==19.9.0
 ipaddress==1.0.23
 ipython==4.2.0
+lexicon==2.0.1
 mapbox==0.18.0
 markdown==2.5.1
 mock==2.0.0

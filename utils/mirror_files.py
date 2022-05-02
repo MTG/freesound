@@ -20,7 +20,7 @@ def copy_files(source_destination_tuples):
                 if settings.LOG_START_AND_END_COPYING_FILES:
                     web_logger.info('Finished copying file %s to %s' % (source_path, destination_path))
             except subprocess.CalledProcessError as e:            
-                web_logger.error('Failed copying %s (%s)' % (source_path, str(e)))
+                web_logger.error('Failed copying %s (%s: %s)' % (source_path, str(e), e.output))
         else:
             # The destioantion path is a local volume
             create_directories(os.path.dirname(destination_path), exist_ok=True)

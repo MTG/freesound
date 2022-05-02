@@ -16,7 +16,7 @@ def copy_files(source_destination_tuples):
         if '@' in destination_path:
             # The destination path is in a remote server, use scp
             try:
-                subprocess.check_output('rsync -e "ssh -o StrictHostKeyChecking=no" -aq --rsync-path="mkdir -p {} && rsync" {} {}/'.format(os.path.dirname(destination_path), source_path, os.path.dirname(destination_path)), shell=True)
+                subprocess.check_output('rsync -e "ssh -o StrictHostKeyChecking=no" -aq --rsync-path="mkdir -p {} && rsync" {} {}/'.format(os.path.dirname(destination_path), source_path, os.path.dirname(destination_path)), stderr=subprocess.STDOUT, shell=True)
                 if settings.LOG_START_AND_END_COPYING_FILES:
                     web_logger.info('Finished copying file %s to %s' % (source_path, destination_path))
             except subprocess.CalledProcessError as e:            

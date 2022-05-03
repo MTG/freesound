@@ -366,11 +366,11 @@ def sound_download(request, username, sound_id):
             sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
 
-    if settings.USE_CDN:
+    if settings.USE_CDN_FOR_DOWNLOADS:
         cdn_filename = cache_cdn_map.get(str(sound_id), None)
         if cdn_filename is not None:
-            # If USE_CDN option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_TEMPLATE_URL.format(int(int(sound_id)/1000), cdn_filename, sound.friendly_filename())
+            # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
+            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(int(sound_id)/1000), cdn_filename, sound.friendly_filename())
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))

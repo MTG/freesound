@@ -660,6 +660,8 @@ class Sound(SocialModel):
     def locations(self):
         id_folder = str(self.id/1000)
         sound_user_id = self.user_id
+        previews_url = settings.PREVIEWS_URL if not settings.USE_CDN_FOR_PREVIEWS else settings.CDN_PREVIEWS_URL
+        displays_url = settings.DISPLAYS_URL if not settings.USE_CDN_FOR_DISPLAYS else settings.CDN_DISPLAYS_URL
         return dict(
             path=os.path.join(settings.SOUNDS_PATH, id_folder, "%d_%d.%s" % (self.id, sound_user_id, self.type)),
             sendfile_url=settings.SOUNDS_SENDFILE_URL + "%s/%d_%d.%s" % (id_folder, self.id, sound_user_id, self.type),
@@ -667,24 +669,24 @@ class Sound(SocialModel):
                 HQ=dict(
                     mp3=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.mp3" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-hq.mp3" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-hq.mp3" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-hq.mp3" % (self.id, sound_user_id),
                     ),
                     ogg=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.ogg" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-hq.ogg" % (self.id, sound_user_id),
                     )
                 ),
                 LQ=dict(
                     mp3=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.mp3" % (self.id, sound_user_id),
                     ),
                     ogg=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.ogg" % (self.id, sound_user_id),
                     ),
                 )
@@ -694,48 +696,48 @@ class Sound(SocialModel):
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 wave=dict(
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 spectral_bw=dict(
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_L.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 wave_bw=dict(
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_L.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
                     )
                 )
             ),

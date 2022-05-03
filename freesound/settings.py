@@ -398,9 +398,13 @@ BULK_UPLOAD_MIN_SOUNDS = 40
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
 
-# Use external CDN for downloading sounds if sounds exist in the CDN
-USE_CDN = False
-CDN_TEMPLATE_URL = 'https://cdn.freesound.org/sounds/{}/{}?filename={}'
+# Use external CDN for downloading sounds (if sounds exist in the CDN) and serving previews/displays
+USE_CDN_FOR_DOWNLOADS = False
+USE_CDN_FOR_PREVIEWS = False
+USE_CDN_FOR_DISPLAYS = False
+CDN_DOWNLOADS_TEMPLATE_URL = 'https://cdn.freesound.org/sounds/{}/{}?filename={}'
+CDN_PREVIEWS_URL = 'https://cdn.freesound.org/previews/'
+CDN_DISPLAYS_URL = 'https://cdn.freesound.org/displays/'
 
 # Followers notifications
 MAX_EMAILS_PER_COMMAND_RUN = 5000

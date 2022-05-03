@@ -43,7 +43,7 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-f', '--filepath', dest='filepath', type=str, help='Path to JSON file with sounds map. If using this option, no new sounds will be copied to the CDN but only the local map in cache will be updated')
-        parser.add_argument('-k', '--keypath', dest='keypath', default='/root/.ssh/id_rsa', type=str, help='Path to the SSH private key to use for connecting to CDN')
+        parser.add_argument('-k', '--keypath', dest='keypath', default='/ssh_fsweb/cdn-ssh-key-fsweb', type=str, help='Path to the SSH private key to use for connecting to CDN')
         parser.add_argument('-d', help='Clear the existing records in the cache (if any) and don\'t do anything else')
         parser.add_argument('-l', action='store', dest='limit', default=500, help='Maximum number of sounds to copy to remote CDN and update cache')
         
@@ -100,8 +100,8 @@ class Command(LoggingBaseCommand):
                             # Copy file to remote, make intermediate folders if needed
                             c.run('mkdir -p {}'.format(os.path.dirname(dst_sound_path)))
                             tmp_dst_sound_path = os.path.join(tmp_dest_sound_dir, os.path.basename(src_sound_path))
-                            os.system('scp -o StrictHostKeyChecking=no {} {}:{}'.format(src_sound_path, cdn_host, tmp_dst_sound_path))
-                            os.system('ssh {} sudo mv {} {}'.format(cdn_host, tmp_dst_sound_path, dst_sound_path))
+                            os.system('scp -o StrictHostKeyChecking=no -i {} {} {}:{}'.format(ssh_key_path, src_sound_path, cdn_host, tmp_dst_sound_path))
+                            os.system('ssh -i {} {} sudo mv {} {}'.format(ssh_key_path, cdn_host, tmp_dst_sound_path, dst_sound_path))
                             # NOTE: for some reason c.put has permission issues and can't put files as fsweb (fsweb can't write to sounds
                             # folder in /home/fsweb). We need to use scp as root to be able to copy files and then use sudo mv from fsweb user.
                             # If we fix fsweb permissions in CDN, then we can simply use c.put(src_sound_path, dst_sound_path)

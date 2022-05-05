@@ -94,17 +94,6 @@ def search(request):
 
     tvars.update(advanced_search_params_dict)
 
-    search_logger.info(u'Search (%s)' % json.dumps({
-        'ip': get_client_ip(request),
-        'query': query_params['textual_query'],
-        'filter': query_params['query_filter'],
-        'username': request.user.username,
-        'page': query_params['current_page'],
-        'sort': query_params['sort'],
-        'group_by_pack': query_params['group_by_pack'],
-        'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else ""
-    }))
-
     try:
         results, paginator = perform_search_engine_query(query_params)
         resultids = [d.get("id") for d in results.docs]
@@ -119,6 +108,18 @@ def search(request):
         docs = [doc for doc in results.docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
+
+        search_logger.info(u'Search (%s)' % json.dumps({
+            'ip': get_client_ip(request),
+            'query': query_params['textual_query'],
+            'filter': query_params['query_filter'],
+            'username': request.user.username,
+            'page': query_params['current_page'],
+            'sort': query_params['sort'],
+            'group_by_pack': query_params['group_by_pack'],
+            'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else "",
+            'query_time': results.q_time 
+        }))
 
         tvars.update({
             'paginator': paginator,

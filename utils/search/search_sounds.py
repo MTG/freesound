@@ -405,6 +405,7 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
 def get_random_sound_id_from_search_engine():
     # This helper function is used to facilitate unit testing and handle exception
     try:
+        search_logger.info("Making random sound query")
         return get_search_engine().get_random_sound_id()
     except SearchEngineException as e:
         search_logger.error("Could not retrieve a random sound ID from search engine: %s" % str(e))

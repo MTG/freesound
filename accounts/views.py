@@ -102,7 +102,7 @@ def crash_me(request):
 
 
 def ratelimited_error(request, exception):
-    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request)})))
+    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request), 'path': request.path})))
     return render(request, '429.html', status=429)
 
 

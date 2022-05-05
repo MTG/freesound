@@ -146,6 +146,7 @@ def remixed(request):
     return render(request, 'sounds/remixed.html', tvars)
 
 
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def random(request):
     random_sound_id = get_random_sound_id_from_search_engine()
     sound_obj = None

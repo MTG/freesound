@@ -102,7 +102,13 @@ def crash_me(request):
 
 
 def ratelimited_error(request, exception):
-    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request), 'path': request.path})))
+    if 'similar' in request.path:
+        path = '/people/<username>/sounds/<sound_id>/similar/'
+    else:
+        path = request.path
+    if not path.endswith('/'):
+        path += '/'
+    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request), 'path': path})))
     return render(request, '429.html', status=429)
 
 

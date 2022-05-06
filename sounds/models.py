@@ -759,10 +759,18 @@ class Sound(SocialModel):
         )
 
     def get_preview_abs_url(self):
-        return 'https://%s%s' % (Site.objects.get_current().domain, self.locations()['preview']['LQ']['mp3']['url'])
+        preview_url = self.locations()['preview']['LQ']['mp3']['url']
+        if (preview_url.startswith('http')):
+            # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
+            return preview_url
+        return 'https://%s%s' % (Site.objects.get_current().domain, preview_url)
 
     def get_thumbnail_abs_url(self, size='M'):
-        return 'https://%s%s' % (Site.objects.get_current().domain, self.locations()['display']['wave'][size]['url'])
+        thumbnail_url = self.locations()['display']['wave'][size]['url']
+        if (thumbnail_url.startswith('http')):
+            # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
+            return thumbnail_url
+        return 'https://%s%s' % (Site.objects.get_current().domain, thumbnail_url)
 
     def get_large_thumbnail_abs_url(self):
         return self.get_thumbnail_abs_url(size='L')

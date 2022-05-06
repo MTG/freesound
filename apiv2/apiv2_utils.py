@@ -423,6 +423,12 @@ def build_info_dict(resource=None, request=None):
 
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
 
+    if rel.startswith('http'):
+        # If "rel" URL is not really a relative path but an absolute URL, return it directly
+        # This happens for example with URLs to serve static files from a CDN, which have a different
+        # domain name that the API endpoints
+        return rel
+
     if request_is_secure:
         use_https = True
         dynamic_resolve = False  # don't need to dynamic resolve is request is https

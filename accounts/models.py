@@ -337,7 +337,7 @@ class Profile(SocialModel):
         Returns:
             bool: True if the user is trustworthy, False otherwise.
         """
-        return self.num_sounds > 0 or self.num_posts > 5 or self.user.is_superuser or self.user.is_staff
+        return self.num_sounds > 0 or self.num_posts > 5 or self.user.is_superuser or self.user.is_staff or self.is_whitelisted
 
     def can_post_in_forum(self):
 

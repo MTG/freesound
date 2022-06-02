@@ -197,6 +197,10 @@ class SearchEngineBase(object):
         """
         raise NotImplementedError
 
+    def remove_all_sounds(self):
+        """Removes all sounds from the search index"""
+        raise NotImplementedError
+
     def sound_exists_in_index(self, sound_object_or_id):
         """Check if a sound is indexed in the search engine
 

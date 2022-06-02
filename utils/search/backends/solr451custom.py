@@ -812,6 +812,10 @@ class Solr451CustomSearchEngine(SearchEngineBase):
             # testing, but it is not needed in production
             self.get_sounds_index().commit()
 
+    def remove_all_sounds(self):
+        """Removes all sounds from the search index"""
+        self.get_sounds_index().delete_by_query("*:*")
+
     def sound_exists_in_index(self, sound_object_or_id):
         if type(sound_object_or_id) != Sound:
             sound_id = sound_object_or_id

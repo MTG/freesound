@@ -24,7 +24,7 @@ from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
 from search.management.commands.post_dirty_sounds_to_search_engine import send_sounds_to_search_engine
-from utils.search.search_sounds import add_sounds_to_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
+from utils.search.search_sounds import add_sounds_to_search_engine, delete_all_sounds_from_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
 
 console_logger = logging.getLogger("console")
 
@@ -56,8 +56,7 @@ class Command(BaseCommand):
         clear_index = options['clear_index']
         indexed_sound_ids = None
         if clear_index:
-            indexed_sound_ids = get_all_sound_ids_from_search_engine()
-            delete_sounds_from_search_engine(indexed_sound_ids)
+            delete_all_sounds_from_search_engine()
 
         # Get all sounds moderated and processed ok and add them to the search engine (also delete them before re-indexing)
         sounds_to_index_ids = list(

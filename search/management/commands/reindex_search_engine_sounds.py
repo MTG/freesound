@@ -24,7 +24,7 @@ from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
 from search.management.commands.post_dirty_sounds_to_search_engine import send_sounds_to_search_engine
-from utils.search.search_sounds import add_sounds_to_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
+from utils.search.search_sounds import add_sounds_to_search_engine, delete_all_sounds_from_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
 
 console_logger = logging.getLogger("console")
 
@@ -56,14 +56,14 @@ class Command(BaseCommand):
         clear_index = options['clear_index']
         indexed_sound_ids = None
         if clear_index:
-            indexed_sound_ids = get_all_sound_ids_from_search_engine()
-            delete_sounds_from_search_engine(indexed_sound_ids)
+            delete_all_sounds_from_search_engine()
 
-        # Get all sounds moderated and processed ok and add them to the search engine (also delete them before re-indexing)
+        # Get all sounds moderated and processed ok and add them to the search engine
+        # Don't delete existing sounds in each loop because we clean up in the final step
         sounds_to_index_ids = list(
             Sound.objects.filter(processing_state="OK", moderation_state="OK").values_list('id', flat=True))
         console_logger.info("Re-indexing %d sounds to the search engine", len(sounds_to_index_ids))
-        send_sounds_to_search_engine(sounds_to_index_ids, slice_size=options['size_size'], delete_if_existing=True)
+        send_sounds_to_search_engine(sounds_to_index_ids, slice_size=options['size_size'], delete_if_existing=False)
 
         # Delete all sounds in the search engine which are not found in the DB. This part of code is to make sure that
         # no "leftover" sounds remain in the search engine, but should normally do nothing, specially if the

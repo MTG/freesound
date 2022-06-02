@@ -374,6 +374,17 @@ def delete_sounds_from_search_engine(sound_ids):
         search_logger.error("Could not delete sounds: %s" % str(e))
 
 
+def delete_all_sounds_from_search_engine():
+    """Delete all sounds from the search engine """
+    console_logger.info("Deleting ALL sounds from search engine")
+    search_logger.info("Deleting ALL sounds from search engine")
+    try:
+        get_search_engine().remove_all_sounds()
+    except SearchEngineException as e:
+        console_logger.error("Could not delete sounds: %s" % str(e))
+        search_logger.error("Could not delete sounds: %s" % str(e))
+
+
 def get_all_sound_ids_from_search_engine(page_size=2000):
     """Retrieves the list of all sound IDs currently indexed in the search engine
 

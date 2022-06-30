@@ -1,4 +1,4 @@
-﻿cd _do.. _resources:
+﻿.. _resources:
 
 Resources
 <<<<<<<<<

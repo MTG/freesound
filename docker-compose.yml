@@ -17,11 +17,11 @@ services:
         env_file:
             - environment
         ports:
-            - 5432:5432
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5432:5432"
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
 
     # Web worker
     web:
@@ -35,12 +35,12 @@ services:
             - ./freesound-data/:/freesound-data
             - fswebhome:/home/fsweb
         ports:
-            - 8000:8000
-            - 3000:3000  # needed for debugpy debugger (to connect with vscode)
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8000:8000"
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}3000:3000"  # needed for debugpy debugger (to connect with vscode)
         env_file:
             - environment
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
         depends_on:
             - db
             - rabbitmq
@@ -58,24 +58,21 @@ services:
             - m2home:/root/.m2
             - ./utils/search/solr4.5.1/solr.home:/code/solr.home
         ports:
-            - 8080:8080
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8080:8080"
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
 
     # Redis (caches)
     redis:
         image: redis:alpine
         command: redis-server --port 6379
-        ports:
-            - 6379:6379
 
     # Celery broker (queue manager)
     rabbitmq:
         hostname: rabbit
         image: rabbitmq:3.9.1-management
         ports:
-            - "5672:5672"
-            - "15672:15672"  # To access management plugin
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5673:5673"
         volumes:
             - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
             - ./freesound-data/rabbitmq:/var/lib/rabbitmq/mnesia/
@@ -93,7 +90,7 @@ services:
         env_file:
             - environment
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
         depends_on:
             - db
             - rabbitmq
@@ -148,7 +145,7 @@ services:
             - redis
         environment:
             - ENV_CELERY_WORKER=1
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
 
     # Similarity http server
     similarity:
@@ -163,9 +160,9 @@ services:
             - ./freesound-data/similarity_index:/freesound-data/similarity_index
             - ./freesound-data/analysis:/freesound-data/analysis
         ports:
-            - 8008:8008
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8008:8008"
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
 
     # Tag recommendation http server
     tagrecommendation:
@@ -179,6 +176,6 @@ services:
             - ./tagrecommendation:/code
             - ./freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
         ports:
-            - 8010:8010
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8010:8010"
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID

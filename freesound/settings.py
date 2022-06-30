@@ -822,7 +822,7 @@ RABBITMQ_USER = "guest"
 RABBITMQ_PASS = "guest"
 RABBITMQ_HOST = 'rabbitmq'
 RABBITMQ_PORT = '5672'
-RABBITMQ_API_PORT = '15672'
+RABBITMQ_API_PORT = '5673'
 
 
 # -------------------------------------------------------------------------------

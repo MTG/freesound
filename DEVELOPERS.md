@@ -219,8 +219,8 @@ services for the external analyzers which depend on docker images having been pr
 `make`. Once the images are built, Freesound can be run including the external analyzer services by of the docker compose 
 file by running `docker-compose --profile analyzers up`
 
-The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ console can be accessed at port `15672`
-(e.g. `http://localhost:15672/rabbitmq-admin`) and using `guest` as both username and password. Also, accessing 
+The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ console can be accessed at port `5673`
+(e.g. `http://localhost:5673/rabbitmq-admin`) and using `guest` as both username and password. Also, accessing 
 `http://localhost:8000/monitor` will show a summary of the state of different analysis job queues (as well as queues
 for Freesound async tasks other than analysis).
 

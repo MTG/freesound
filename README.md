@@ -45,10 +45,13 @@ Below are instructions for setting up a local Freesound installation for develop
 
 4. Download [Freesound development similarity index](https://drive.google.com/file/d/1ydJUUXbQZbHrva4UZd3C05wDcOXI7v1m/view?usp=sharing) and the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place their contents under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). You should get permission to download these files from Freesound admins.
 
-5. Rename `freesound/local_settings.example.py` file so you can customise Django settings if needed and create a `.env` file with your local user UID
+5. Rename `freesound/local_settings.example.py` file so you can customise Django settings if needed and create a `.env` file with your local user UID and other useful settings. These other settings include `COMPOSE_PROJECT_NAME` and `LOCAL_PORT_PREFIX` which can be used to allow parallell local installations running on the same machine (provided that these to variables are different in the local installations), and `FS_BIND_HOST` which you should set to `0.0.0.0` if you need to access your local Fresound services from a remote machine.
 
        cp freesound/local_settings.example.py freesound/local_settings.py
-       echo FS_USER_ID_FROM_ENV=$(id -u) > .env
+       echo FS_USER_ID=$(id -u) > .env
+       echo COMPOSE_PROJECT_NAME=freesound >> .env
+       echo LOCAL_PORT_PREFIX= >> .env
+       echo FS_BIND_HOST= >> .env
 
 6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `freesound/local_settings.py` file (check `settings.py` to know the config parameter names that you need to fill in):
 

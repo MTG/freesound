@@ -1,0 +1,16 @@
+{% extends "simple_page.html" %}
+{% load staticfiles %}
+{% load bw_templatetags %}
+
+{% block title %}Messages - Inbox{% endblock %}
+{% block page-title %}Messages{% endblock %}
+
+{% block page-content %}
+    {% include 'messages/messages_navbar.html' %}
+    <div class="v-spacing-top-4">
+    </div>
+{% endblock %}
+
+{% block extrabody %}
+<script src="{% static 'bw-frontend/dist/messages.c4975674.js' %}"></script>
+{% endblock %}

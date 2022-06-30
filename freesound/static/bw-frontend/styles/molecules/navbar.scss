@@ -155,10 +155,27 @@ $navbar-height-mobile: 64px;
   list-style: none;
   display: flex;
   padding-left: 0;
-  margin: 30px 0;
 
   .nav-item {
     margin-right: 24px;
+
+    .nav-link {
+      font-size: 16px;
+      color: $navy-grey;
+
+      &.active {
+        color: $black;
+      }
+
+      &:hover {
+        color: $black;
+      }
+    }
+
+    span {
+      margin-left: 16px;
+      color: $navy-grey;
+    }
   }
 }
 

@@ -35,7 +35,7 @@ services:
             - ./freesound-data/:/freesound-data
             - fswebhome:/home/fsweb
         ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8000:8000"
+            - "0.0.0.0:${LOCAL_PORT_PREFIX}8000:8000"  # web does not use FS_BIND_HOST because it should be always 0.0.0.0
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}3000:3000"  # needed for debugpy debugger (to connect with vscode)
         env_file:
             - environment

@@ -165,7 +165,7 @@ rating_asc      Same as above, but lowest rated sounds first.
 
 **The 'weights' parameter**
 
-The ``weights`` parameter can be sued to define custom weights when matching queries with sound metadata fields. You can use any of the field names listed above 
+The ``weights`` parameter can be used to define custom weights when matching queries with sound metadata fields. You can use any of the field names listed above 
 (although some might not make sense when preparing a query) and specify integer weights for each field using the following syntax::
 
   weights=field_name:integer_weight,field_name2:integer_weight2

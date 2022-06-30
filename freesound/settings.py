@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os
 import datetime
-import re
 import logging.config
+import os
+import re
+
 import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -14,6 +15,9 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 DISPLAY_DEBUG_TOOLBAR = False
 
+DEBUGGER_HOST = "0.0.0.0"
+DEBUGGER_PORT = 3000  # This port should match the one in docker compose
+
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
 
 default_url = 'postgres://postgres@db/postgres'
@@ -22,11 +26,14 @@ DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=de
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
+    'admin_reorder.middleware.ModelAdminReorder',
+    'ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -59,6 +66,7 @@ INSTALLED_APPS = [
     'bookmarks',
     'forum',
     'search',
+    'clustering',
     'django_extensions',
     'tickets',
     'gunicorn',
@@ -72,7 +80,48 @@ INSTALLED_APPS = [
     'monitor',
     'django_object_actions',
     'silk',
+    'admin_reorder',
 ]
+
+# Specify custom ordering of models in Django Admin index
+ADMIN_REORDER = (
+
+    {'app': 'accounts', 'models': (
+        'auth.User',
+        'accounts.Profile',
+        'accounts.DeletedUser',
+        'accounts.UserDeletionRequest',
+        'accounts.UserFlag',
+        'accounts.OldUsername',
+        'accounts.EmailBounce',
+        'auth.Groups',
+        'fsmessages.Message',
+        'accounts.GdprAcceptance',
+    )},
+    {'app': 'sounds', 'models': (
+        'sounds.Sound',
+        {'model': 'sounds.SoundAnalysis', 'label': 'Sound analyses'},
+        'sounds.Pack',
+        'sounds.DeletedSound',
+        'sounds.License',
+        {'model': 'sounds.Flag', 'label': 'Sound flags'},
+        'sounds.BulkUploadProgress',
+        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
+    )},
+    {'app': 'apiv2', 'label': 'API', 'models': (
+        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
+        'oauth2_provider.AccessToken',
+        'oauth2_provider.RefreshToken',
+        'oauth2_provider.Grant',
+    )},
+    'forum',
+    {'app': 'donations', 'models': (
+        'donations.Donation',
+        'donations.DonationsEmailSettings',
+        'donations.DonationsModalSettings',
+    )},
+    'sites',
+)
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC
@@ -106,13 +155,38 @@ USE_TZ = False
 # to load the internationalization machinery.
 USE_I18N = False
 
+# Redis and caches
+# NOTE: some of these settings need to be re-defined in local_settings.py (eg to build cache urls)
+# We should optimize that so settings do not need to be re-defined
+REDIS_HOST = 'redis'
+REDIS_PORT = 6379
+API_MONITORING_REDIS_STORE_ID = 0
+CLUSTERING_CACHE_REDIS_STORE_ID = 1
+AUDIO_FEATURES_REDIS_STORE_ID = 2
+CELERY_BROKER_REDIS_STORE_ID = 3
+CDN_MAP_STORE_ID = 5
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
     'api_monitoring': {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/0",
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, API_MONITORING_REDIS_STORE_ID),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    'cdn_map': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CDN_MAP_STORE_ID),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    'clustering': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CLUSTERING_CACHE_REDIS_STORE_ID),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -180,12 +254,15 @@ DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 
-# AWS tokens (for accessing email bounce list and email statistics)
+# AWS credentials for sending email (SES)
 AWS_REGION = ''
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 
-# Email bounce processing parameters
+# AWS credentials for accessing bounces queue (SQS)
+AWS_SQS_REGION = ''
+AWS_SQS_ACCESS_KEY_ID = ''
+AWS_SQS_SECRET_ACCESS_KEY = ''
 AWS_SQS_QUEUE_URL = ''
 AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
 
@@ -246,6 +323,7 @@ FREESOUND_RSS = ''
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
+FORUM_THREADS_PER_PAGE_BW = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 15
@@ -256,12 +334,17 @@ SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
+FOLLOW_ITEMS_PER_PAGE = 5  # BW only
+
+BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
+LOSSY_FILE_EXTENSIONS = [ 'ogg', 'mp3', 'm4a']
+COMMON_BITRATES = [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
 # Allowed data file extensions for bulk upload
 ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
@@ -269,15 +352,32 @@ ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
 # Maximum number of times changing the username is allowed
 USERNAME_CHANGE_MAX_TIMES = 3
 
+# Number of hours we give to the async delete workers for deleting a user
+# before considering that deletion failed and therefore reporting that there i
+# one user that should have been deleted and was not
+CHECK_ASYNC_DELETED_USERS_HOURS_BACK = 1
+
 # Anti-spam restrictions for posting comments, messages and in forums
 # Time since last post (in seconds) and maximum number of posts per day
 LAST_FORUM_POST_MINIMUM_TIME = 60 * 5
 BASE_MAX_POSTS_PER_DAY = 5
+SPAM_BLACKLIST = []
 
 # Random Sound of the day settings
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month
 NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
+RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
+
+#Geotags  stuff
+# Cache key for storing "all geotags" bytearray
+ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
+USE_TEXTUAL_LOCATION_NAMES_IN_BW = True
+
+# Avatar background colors (only BW)
+from utils.audioprocessing.processing import interpolate_colors
+from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES
+AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]['wave_colors'][1:], num_colors=10)
 
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
@@ -285,8 +385,12 @@ MIN_NUMBER_RATINGS = 3
 # Buffer size for CRC computation
 CRC_BUFFER_SIZE = 4096
 
+# Enable/disable uploading files (sounds, avatars) and describing sounds
+UPLOAD_AND_DESCRIPTION_ENABLED = True
+
 # Maximum combined file size for uploading files. This is set in nginx configuration
 UPLOAD_MAX_FILE_SIZE_COMBINED = 1024 * 1024 * 1024  # 1 GB
+MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING = True
 
 # Minimum number of sounds that a user has to upload before enabling bulk upload feature for that user
 BULK_UPLOAD_MIN_SOUNDS = 40
@@ -294,9 +398,21 @@ BULK_UPLOAD_MIN_SOUNDS = 40
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
 
+# Use external CDN for downloading sounds (if sounds exist in the CDN) and serving previews/displays
+USE_CDN_FOR_DOWNLOADS = False
+USE_CDN_FOR_PREVIEWS = False
+USE_CDN_FOR_DISPLAYS = False
+CDN_DOWNLOADS_TEMPLATE_URL = 'https://cdn.freesound.org/sounds/{}/{}?filename={}'
+CDN_PREVIEWS_URL = 'https://cdn.freesound.org/previews/'
+CDN_DISPLAYS_URL = 'https://cdn.freesound.org/displays/'
+
 # Followers notifications
 MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
+# Some BW settings
+ENABLE_QUERY_SUGGESTIONS = False
+ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
 
 
 # -------------------------------------------------------------------------------
@@ -330,8 +446,8 @@ LOG_START_AND_END_COPYING_FILES = True
 DONATION_AMOUNT_REQUEST_PARAM = 'dda'
 
 # Stripe
-STRIPE_PUBLIC_KEY = ''
-STRIPE_PRIVATE_KEY = ''
+STRIPE_PUBLIC_KEY = 'pk_test_4w86cbKHcPs2G2kDqNdKd5u2'
+STRIPE_PRIVATE_KEY = 'sk_test_D4u7pcSnUSXtY4GAwDMmSFVZ'
 STRIPE_WEBHOOK_SECRET = ''
 
 # Paypal
@@ -344,60 +460,119 @@ PAYPAL_SIGNATURE = ''
 
 
 # -------------------------------------------------------------------------------
-# AudioCommons analysis settings
+# New Analysis options
+ORCHESTRATE_ANALYSIS_MAX_JOBS_PER_QUEUE_DEFAULT = 500
+ORCHESTRATE_ANALYSIS_MAX_NUM_ANALYSIS_ATTEMPTS = 3
+ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2 # in hours
+ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
 
-AUDIOCOMMONS_EXTRACTOR_NAME = 'AudioCommonsV3'  # This will be used for indexing sounds and returning analysis output
-AUDIOCOMMONS_DESCRIPTOR_PREFIX = 'ac_'
-AUDIOCOMMONS_INCLUDED_DESCRIPTOR_NAMES_TYPES = \
-    [('loudness', float),
-     ('dynamic_range', float),
-     ('temporal_centroid', float),
-     ('log_attack_time', float),
-     ('single_event', bool),
-     ('tonality', str),
-     ('tonality_confidence', float),
-     ('loop', bool),
-     ('tempo', int),
-     ('tempo_confidence', float),
-     ('note_midi', int),
-     ('note_name', str),
-     ('note_frequency', float),
-     ('note_confidence', float),
-     ('brightness', float),
-     ('depth', float),
-     ('hardness', float),
-     ('roughness', float),
-     ('boominess', float),
-     ('warmth', float),
-     ('sharpness', float),
-     ('reverb', bool)]  # Used when running load_audiocommons_analysis_data and when parsing filters
+AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
+FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
+AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 
-# Map of suffixes used for each type of dynamic fields defined in our Solr schema
-# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer)
-# and '*_s' (for string)
-SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
-    float: '_d',
-    int: '_i',
-    bool: '_b',
-    str: '_s',
-    unicode: '_s',
+ANALYZERS_CONFIGURATION = {
+    AUDIOCOMMONS_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('loudness', 'ac_loudness', float),
+            ('dynamic_range', 'ac_dynamic_range', float),
+            ('temporal_centroid', 'ac_temporal_centroid', float),
+            ('log_attack_time', 'ac_log_attack_time', float),
+            ('single_event', 'ac_single_event', bool),
+            ('tonality', 'ac_tonality', str),
+            ('tonality_confidence', 'ac_tonality_confidence', float),
+            ('loop', 'ac_loop', bool),
+            ('tempo', 'ac_tempo', int),
+            ('tempo_confidence', 'ac_tempo_confidence', float),
+            ('note_midi', 'ac_note_midi', int),
+            ('note_name', 'ac_note_name', str),
+            ('note_frequency', 'ac_note_frequency', float),
+            ('note_confidence', 'ac_note_confidence', float),
+            ('brightness', 'ac_brightness', float),
+            ('depth', 'ac_depth', float),
+            ('hardness', 'ac_hardness', float),
+            ('roughness', 'ac_roughness', float),
+            ('boominess', 'ac_boominess', float),
+            ('warmth', 'ac_warmth', float),
+            ('sharpness', 'ac_sharpness', float),
+            ('reverb', 'ac_reverb', bool)
+        ]
+    },
+    FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
+    AUDIOSET_YAMNET_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('classes', 'yamnet_class', list)
+        ]
+    },
 }
-
 
 # -------------------------------------------------------------------------------
-# SOLR and search settings
-SOLR_URL = "http://search:8080/fs2/"
-SOLR_FORUM_URL = "http://search:8080/forum/"
+# Search engine
 
-ENABLE_QUERY_SUGGESTIONS = False  # Only for BW
-DEFAULT_SEARCH_WEIGHTS = {
-    'id': 4,
-    'tag': 4,
-    'description': 3,
-    'username': 1,
-    'pack_tokenized': 2,
-    'original_filename': 2
+# Define the names of some of the indexed sound fields which are to be used later
+SEARCH_SOUNDS_FIELD_ID = 'sound_id'
+SEARCH_SOUNDS_FIELD_NAME = 'name'
+SEARCH_SOUNDS_FIELD_TAGS = 'tags'
+SEARCH_SOUNDS_FIELD_DESCRIPTION = 'description'
+SEARCH_SOUNDS_FIELD_USER_NAME = 'username'
+SEARCH_SOUNDS_FIELD_PACK_NAME = 'packname'
+SEARCH_SOUNDS_FIELD_PACK_GROUPING = 'pack_grouping'
+SEARCH_SOUNDS_FIELD_SAMPLERATE = 'samplerate'
+SEARCH_SOUNDS_FIELD_BITRATE = 'bitrate'
+SEARCH_SOUNDS_FIELD_BITDEPTH = 'bitdepth'
+SEARCH_SOUNDS_FIELD_TYPE = 'type'
+SEARCH_SOUNDS_FIELD_CHANNELS = 'channels'
+SEARCH_SOUNDS_FIELD_LICENSE_NAME = 'license'
+
+# Default weights for fields to match
+SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
+    SEARCH_SOUNDS_FIELD_ID: 4,
+    SEARCH_SOUNDS_FIELD_TAGS: 4,
+    SEARCH_SOUNDS_FIELD_DESCRIPTION: 3,
+    SEARCH_SOUNDS_FIELD_USER_NAME: 1,
+    SEARCH_SOUNDS_FIELD_PACK_NAME: 2,
+    SEARCH_SOUNDS_FIELD_NAME: 2
 }
+
+
+SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC = "Automatic by relevance"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST = "Duration (long first)"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST = "Duration (short first)"
+SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST = "Date added (newest first)"
+SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST = "Date added (oldest first)"
+SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST = "Downloads (most first)"
+SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST = "Downloads (least first)"
+SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST = "Rating (highest first)"
+SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST = "Rating (lowest first)"
+
+SEARCH_SOUNDS_SORT_OPTIONS_WEB = [
+    SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+    SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST,
+    SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST,
+]
+SEARCH_SOUNDS_SORT_DEFAULT = "Automatic by relevance"
+
+
+SEARCH_SOUNDS_DEFAULT_FACETS = {
+    SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
+    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
+    SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30},
+    SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30},
+    SEARCH_SOUNDS_FIELD_BITRATE: {},
+    SEARCH_SOUNDS_FIELD_BITDEPTH: {},
+    SEARCH_SOUNDS_FIELD_TYPE: {'limit': 6},  # Set after the number of choices in sounds.models.Sound.SOUND_TYPE_CHOICES
+    SEARCH_SOUNDS_FIELD_CHANNELS: {},
+    SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
+}
+
+SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine'
+SOLR_SOUNDS_URL = "http://search:8080/fs2/"
+SOLR_FORUM_URL = "http://search:8080/forum/"
 
 
 # -------------------------------------------------------------------------------
@@ -405,22 +580,18 @@ DEFAULT_SEARCH_WEIGHTS = {
 SIMILARITY_ADDRESS = 'similarity'
 SIMILARITY_PORT = 8008
 SIMILARITY_INDEXING_SERVER_PORT = 8009
+SIMILARITY_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Tag recommendation client settings
 TAGRECOMMENDATION_ADDRESS = 'tagrecommendation'
 TAGRECOMMENDATION_PORT = 8010
 TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
+TAGRECOMMENDATION_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Sentry settings
 SENTRY_DSN = None
-
-
-# -------------------------------------------------------------------------------
-# Google analytics settings
-GOOGLE_ANALYTICS_KEY = ''
-
 
 # -------------------------------------------------------------------------------
 # Zendesk settings
@@ -441,6 +612,7 @@ GRAYLOG_PASSWORD = ''
 # Mapbox
 
 MAPBOX_ACCESS_TOKEN = ''
+MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
 
 # -------------------------------------------------------------------------------
@@ -451,14 +623,12 @@ RECAPTCHA_PUBLIC_KEY = ''
 
 
 # -------------------------------------------------------------------------------
-# Mapbox
+# Akismet
 
 AKISMET_KEY = ''
 
 # -------------------------------------------------------------------------------
 # Processing and analysis settings
-
-GEARMAN_JOB_SERVERS = ["gearmand:4730"]
 
 STEREOFY_PATH = '/usr/local/bin/stereofy'
 
@@ -468,16 +638,41 @@ WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
 # General timeout for processing/analysis workers (in seconds)
 WORKER_TIMEOUT = 60 * 60
 
-ESSENTIA_EXECUTABLE = '/usr/local/bin/essentia_streaming_extractor_freesound'
-ESSENTIA_STATS_OUT_FORMAT = 'yaml'
-ESSENTIA_FRAMES_OUT_FORMAT = 'yaml'
-
 # Used to configure output formats in newer FreesoundExtractor versions
 ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))
 
 # Files above this filesize after converting to 16bit mono PCM won't be analyzed (in bytes, ~5MB per minute).
 MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
 
+# -------------------------------------------------------------------------------
+# Search results clustering
+# NOTE: celery configuration is set after the local settings import
+
+# Environment variables
+# '1' indicates that a process is running as a celery worker.
+# We get it from environment variable to avoid the need of a specific settings file for celery workers.
+# We enable the imports of clustering dependencies only in celery workers.
+IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
+
+# Determines whether to use or not the clustering feature.
+# Set to False by default (to be overwritten in local_settings.py)
+# When activated, Enables to do js calls & html clustering facets rendering
+ENABLE_SEARCH_RESULTS_CLUSTERING = False
+
+# -------------------------------------------------------------------------------
+# Rate limiting
+
+RATELIMIT_VIEW = 'accounts.views.ratelimited_error'
+RATELIMIT_SEARCH_GROUP = 'search'
+RATELIMIT_SIMILARITY_GROUP = 'similarity'
+RATELIMIT_DEFAULT_GROUP_RATELIMIT = '2/s'
+RATELIMITS = {
+    RATELIMIT_SEARCH_GROUP: '2/s',
+    RATELIMIT_SIMILARITY_GROUP: '2/s'
+}
+BLOCKED_IPS = []
+CACHED_BLOCKED_IPS_KEY = 'cached_blocked_ips'
+CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 
 # -------------------------------------------------------------------------------
 # API settings
@@ -616,11 +811,35 @@ TEMPLATES = [
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
+# -------------------------------------------------------------------------------
+# Analytics
+PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
+PLAUSIBLE_SEPARATE_FRONTENDS = True
+
+# -------------------------------------------------------------------------------
+# Rabbit MQ 
+RABBITMQ_USER = "guest"
+RABBITMQ_PASS = "guest"
+RABBITMQ_HOST = 'rabbitmq'
+RABBITMQ_PORT = '5672'
+RABBITMQ_API_PORT = '5673'
+
 
 # -------------------------------------------------------------------------------
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
 from local_settings import *
+
+
+# -------------------------------------------------------------------------------
+# Celery
+CELERY_BROKER_URL = 'amqp://{}:{}@{}:{}//'.format(RABBITMQ_USER, RABBITMQ_PASS, RABBITMQ_HOST, RABBITMQ_PORT)
+CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
+CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
 
 
 # -------------------------------------------------------------------------------
@@ -657,10 +876,6 @@ AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
-
-
-# -------------------------------------------------------------------------------
-# Settings depending on DEBUG config
 
 # In a typical development setup original files won't be available in the filesystem, but preview files
 # might be available as these take much less space. The flag below will configure Freesound to use these

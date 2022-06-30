@@ -1,6 +1,7 @@
 @import 'node_modules/bootstrap/scss/mixins/_grid';
 @import 'node_modules/bootstrap/scss/mixins/_breakpoints';
 @import 'node_modules/bootstrap/scss/mixins/_grid-framework';
+@import 'node_modules/bootstrap/scss/utilities/_display';
 
 .container {
   @include make-container();
@@ -25,9 +26,19 @@
   justify-content: center;
 }
 
+.right {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .middle {
   display: flex;
   align-items: center;
+}
+
+.start {
+  display: flex;
+  align-items: start;
 }
 
 .between {
@@ -56,6 +67,10 @@
 
 .hidden {
   display: none;
+}
+
+.inline-block {
+  display: inline-block;
 }
 
 @include make-grid-columns();

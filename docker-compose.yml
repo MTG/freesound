@@ -7,21 +7,23 @@ volumes:
     fswebhome:
 
 services:
+
+    # Database server
     db:
         image: postgres:12.1
         volumes:
             - pgdata:/var/lib/postgresql/data
+            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         env_file:
             - environment
-        volumes:
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:
-            - 5432:5432
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5432:5432"
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
 
+    # Web worker
     web:
         build:
             context: ./
@@ -33,15 +35,18 @@ services:
             - ./freesound-data/:/freesound-data
             - fswebhome:/home/fsweb
         ports:
-            - 8000:8000
+            - "0.0.0.0:${LOCAL_PORT_PREFIX}8000:8000"  # web does not use FS_BIND_HOST because it should be always 0.0.0.0
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}3000:3000"  # needed for debugpy debugger (to connect with vscode)
         env_file:
             - environment
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
         depends_on:
             - db
+            - rabbitmq
             - redis
 
+    # Search server
     search:
         build:
             context: ./docker/search
@@ -53,25 +58,98 @@ services:
             - m2home:/root/.m2
             - ./utils/search/solr4.5.1/solr.home:/code/solr.home
         ports:
-            - 8080:8080
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8080:8080"
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-         
-    tagrecommendation:
-        build:
-            context: ./tagrecommendation
-            dockerfile: ../docker/Dockerfile.tagrecommendation
-        init: true
-        command: python tagrecommendation_server.py
-        volumes:
-            - ./tagrecommendation:/code
-            - ./freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
+            - FS_USER_ID
+
+    # Redis (caches)
+    redis:
+        image: redis:alpine
+        command: redis-server --port 6379
+
+    # Celery broker (queue manager)
+    rabbitmq:
+        hostname: rabbit
+        image: rabbitmq:3.9.1-management
         ports:
-            - 8010:8010
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5673:5673"
+        volumes:
+            - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+            - ./freesound-data/rabbitmq:/var/lib/rabbitmq/mnesia/
+
+    # Worker for async tasks and sound processing
+    worker_celery:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+        env_file:
+            - environment
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-    
+            - FS_USER_ID
+        depends_on:
+            - db
+            - rabbitmq
+
+    # Audio Commons extractor - needs image to be built from freesound-audio-analyzers repository
+    worker_analyzer1:
+        profiles: ["analyzers", "all"]
+        image: ac-extractor_v3
+        volumes:
+            - ./freesound-data/:/freesound-data
+        init: true
+        command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v3
+        depends_on:
+            - rabbitmq
+
+    # Essentia extractor - needs image to be built from freesound-audio-analyzers repository
+    worker_analyzer2:
+        profiles: ["analyzers", "all"]
+        image: fs-essentia-extractor_legacy
+        volumes:
+            - ./freesound-data/:/freesound-data
+        init: true
+        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
+        depends_on:
+            - rabbitmq
+
+    # Audioset-YAMNet extractor - needs image to be built from freesound-audio-analyzers repository
+    # Note this worker must be run with --pool=threads in order for tensorflow predictions to work inside celery
+    worker_analyzer3:
+        profiles: ["analyzers", "all"]
+        image: audioset-yamnet_v1
+        volumes:
+            - ./freesound-data/:/freesound-data
+        init: true
+        command: celery -A main worker --pool=threads --concurrency=1 -l info -Q audioset-yamnet_v1
+        depends_on:
+            - rabbitmq
+
+    # Clustering worker (not using the previous one as this has some specific requirements)
+    worker_clustering:
+        profiles: ["all"]
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.clustering
+        init: true
+        command: celery -A freesound worker -l info -Q clustering
+        volumes:
+            - .:/code
+            - ./freesound-data/clustering_index:/freesound-data/clustering_index
+        depends_on:
+            - rabbitmq
+            - redis
+        environment:
+            - ENV_CELERY_WORKER=1
+            - FS_USER_ID
+
+    # Similarity http server
     similarity:
+        profiles: ["all"]
         build:
             context: ./similarity
             dockerfile: ../docker/Dockerfile.similarity
@@ -82,66 +160,22 @@ services:
             - ./freesound-data/similarity_index:/freesound-data/similarity_index
             - ./freesound-data/analysis:/freesound-data/analysis
         ports:
-            - 8008:8008
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8008:8008"
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
+            - FS_USER_ID
 
-    redis:
-        image: redis:alpine
-        command: redis-server --port 6379
+    # Tag recommendation http server
+    tagrecommendation:
+        profiles: ["all"]
+        build:
+            context: ./tagrecommendation
+            dockerfile: ../docker/Dockerfile.tagrecommendation
+        init: true
+        command: python tagrecommendation_server.py
+        volumes:
+            - ./tagrecommendation:/code
+            - ./freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
         ports:
-            - 6379:6379
-
-    gearmand:
-        image: artefactual/gearmand
-
-    worker_processing:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: python manage.py gm_worker_processing --queue process_sound
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8010:8010"
         environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - gearmand
-    
-    worker_analysis:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: python manage.py gm_worker_processing --queue analyze_sound
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
-        environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - gearmand
-
-    worker_async_tasks:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-        init: true
-        command: python manage.py gm_worker_async_tasks
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        env_file:
-            - environment
-        environment:
-            - FS_USER_ID=$FS_USER_ID_FROM_ENV
-        depends_on:
-            - db
-            - gearmand
+            - FS_USER_ID

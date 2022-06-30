@@ -1,0 +1,32 @@
+.toast {
+  background: red;
+  z-index: 99999;
+  display: none;
+  position: fixed;
+  padding: 14px 14px;
+  width: 100%;
+  @include md-and-above {
+    width: 70%;
+  }
+  border-radius: 5px 5px 0 0;
+  background-color: $black;
+  color: $white;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 18px;
+  text-align: center;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  margin: auto;
+
+  li {
+      list-style-type: none;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+}

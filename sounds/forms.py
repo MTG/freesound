@@ -206,25 +206,24 @@ class PackEditForm(ModelForm):
         }
 
 
-class LicenseForm(forms.Form):
-    license = forms.ModelChoiceField(queryset=License.objects.filter(is_public=True), required=True, empty_label=None)
-
-    def clean_license(self):
-        if self.cleaned_data['license'].abbreviation == "samp+":
-            raise forms.ValidationError('We are in the process of slowly removing this license, '
-                                        'please choose another one.')
-        return self.cleaned_data['license']
-
-
 class NewLicenseForm(forms.Form):
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
 
     def __init__(self, *args, **kwargs):
+        hide_old_versions = kwargs.pop('hide_old_versions', False)
         super(NewLicenseForm, self).__init__(*args, **kwargs)
+        if hide_old_versions:
+            new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
+            self.fields['license'].queryset = new_qs
+            self.license_qs = new_qs
         valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
         self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
                                                                         % valid_licenses})
+    def clean_license(self):
+        if "3.0" in self.cleaned_data['license'].name_with_version:
+            raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
+        return self.cleaned_data['license']
 
 
 class FlagForm(forms.Form):

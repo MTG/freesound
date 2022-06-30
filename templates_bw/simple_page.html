@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 v-spacing-top-5">
+            {% block page-title-custom %}
+                <div class="no-paddings col-12 v-spacing-3">
+                    <h1>{% block page-title %}{% endblock page-title %}</h1>
+                </div>
+            {% endblock page-title-custom %}
+            <div class="col-12 no-paddings v-spacing-5">
+                {% block page-content %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

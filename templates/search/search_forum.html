@@ -1,7 +1,7 @@
 {% extends "forum/_section.html" %}
 
 
-{% load display_forum_result %}
+{% load display_forum_search_results %}
 {% load paginator %}
 {% load search %}
 
@@ -25,7 +25,7 @@
         {% show_paginator paginator page current_page request "thread" %}
         </div>
 
-        {% display_forum_result results.docs results.highlighting %}
+        {% display_forum_search_results results.docs results.highlighting %}
 
         <br style="padding-top:10px">
         <div class="search_paginator">

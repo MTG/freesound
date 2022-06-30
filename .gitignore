@@ -23,6 +23,12 @@ _docs/freesound_logo/white background - red - black/freesound_logo_tshirt.ai
 freesound.komodoproject
 .idea/
 .env
+see_last_email
+build_static.sh
+create_caches.sh
+run_tests.sh
+clear_cache.sh
+.venv
 
 # BW fornt end
 .cache

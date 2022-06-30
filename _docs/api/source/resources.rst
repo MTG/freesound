@@ -40,6 +40,7 @@ Name                    Type                       Description
 ``filter``              string                     Allows filtering query results. See below for more information.
 ``sort``                string                     Indicates how query results should be sorted. See below for a list of the sorting options. By default ``sort=score``.
 ``group_by_pack``       bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
+``weights``             string                     Allows definition of custom weights when matching queries with sound metadata fields. You should most likely never use that :)
 ======================  =========================  ======================
 
 
@@ -160,6 +161,16 @@ downloads_asc   Same as above, but least downloaded sounds first.
 rating_desc     Sort by the average rating given to the sounds, highest rated first.
 rating_asc      Same as above, but lowest rated sounds first.
 ==============  ====================================================================
+
+
+**The 'weights' parameter**
+
+The ``weights`` parameter can be sued to define custom weights when matching queries with sound metadata fields. You can use any of the field names listed above 
+(although some might not make sense when preparing a query) and specify integer weights for each field using the following syntax::
+
+  weights=field_name:integer_weight,field_name2:integer_weight2
+
+If the format is not correct, custom weights will not be applied. The default weights are something like ``id:4,tag:4,description:3,original_filename:2,username:2,pack:2``.
 
 
 **Filter queries using geotagging data**
@@ -487,7 +498,7 @@ Name                  Type              Description
 ``pack``              URI               If the sound is part of a pack, this URI points to that pack's API resource.
 ``download``          URI               The URI for retrieving the original sound.
 ``bookmark``          URI               The URI for bookmarking the sound.
-``previews``          object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively). **API authentication is required for retrieving sound previews (Token or OAuth2)**.
+``previews``          object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
 ``images``            object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
 ``num_downloads``     number            The number of times the sound was downloaded.
 ``avg_rating``        number            The average rating of the sound.

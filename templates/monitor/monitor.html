@@ -26,24 +26,25 @@
     </ul>
 
     <h3>Analysis system status</h3>
-    <ul>
-        <li>{{ sounds_analysis_pending_count }} sound{{ sounds_analysis_pending_count|pluralize }} pending to analyze - <a href="{% url "monitor-processing-process" %}?ans=PE">send to analysis</a></li>
-        <li>{{ sounds_analysis_queued_count }} sound{{ sounds_analysis_queued_count|pluralize }} are queued for analysis - <a href="{% url "monitor-processing-process" %}?ans=QU">send to analysis</a></li>
-        <li>{{ sounds_analysis_failed_count }} sound{{ sounds_analysis_failed_count|pluralize }} failed analysis - <a href="{% url "monitor-processing-process" %}?ans=FA">send to analysis</a></li>
-        <li>{{ sounds_analysis_skipped_count }} sound{{ sounds_analysis_skipped_count|pluralize }} skipped analysis - <a href="{% url "monitor-processing-process" %}?ans=SK">send to analysis</a></li>
-        <li>{{ sounds_analysis_ok_count }} sound{{ sounds_analysis_ok_count|pluralize }} are analyzed ok</li>
-    </ul>
+    <table style="min-width:500px;">
+    {% for analyzer_name, analyzer_data in analyzers_data %}
+        {% if forloop.counter0 == 0 %}
+            <tr><td><b>analyzer</b></td><td><b>% done</b></td><td><b>missing</b></td><td><b>queued</b></td><td><b>ok</b></td><td><b>skipped</b></td><td><b>failed</b></td></tr>
+        {% endif %}
+        <tr><td>{{ analyzer_name }}</td><td>{{ analyzer_data.Percentage }}</td><td>{{ analyzer_data.Missing }}</td><td>{{ analyzer_data.QU }}</td><td>{{ analyzer_data.OK }}</td><td>{{ analyzer_data.SK }}</td><td>{{ analyzer_data.FA }}</td></tr>
+    {% endfor %} 
+    </table>
 
     {%  if request.user.is_staff %}
     <script>
         setInterval(function(){
-            $.get("{{ gearman_stats_url }}", function(data){
+            $.get("{{ queues_stats_url }}", function(data){
                 console.log(data)
-                $('#gearmanStatus').html(data);
+                $('#queuesStatus').html(data);
               });
             }, 1000);
     </script>
-    <div id="gearmanStatus"></div>
+    <div id="queuesStatus"></div>
     {% endif %}
 
 {% endblock content %}

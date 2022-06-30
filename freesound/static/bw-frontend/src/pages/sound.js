@@ -1,4 +1,7 @@
 import './page-polyfills';
+import {showToast} from '../components/toast';
+import {playAtTime} from '../components/player/utils';
+import {openSimilarSoundsModal} from "../components/similarSoundsModal";
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -15,9 +18,7 @@ const copyShareUrlToClipboard = () => {
     shareLinkInputElement.select();
     shareLinkInputElement.setSelectionRange(0, 99999);
     document.execCommand("copy");
-    // TODO: show notification that the URL was coppied
-    // const message = 'Sound URL copied in the clipboard'
-
+    showToast('Sound URL copied in the clipboard');
     document.getSelection().removeAllRanges();
 }
 
@@ -66,3 +67,46 @@ largeEmbedImageElement.addEventListener('click', () => generateEmbedCode('large'
 
 embedLinksElement.style.display = "none"
 shareLinkElement.style.display = "none"
+
+// Transform time marks in sound description and comments into playable timestamps
+const audioElement = document.getElementsByTagName('audio')[0];
+
+const findTimeLinksAndAddEventListeners = element => {
+    // Replace timestamps of pattern #m:ss (e.g. #0:36) for anchor with a specific class and play icon
+    const playIconHtml = '<span class="bw-icon-play" style="font-size:70%"></span>';
+    element.innerHTML = element.innerHTML.replaceAll(/#\d+:\d+/g, '<a class="play-at-time" href="javascript:void(0);">' + playIconHtml + '$&</a>');
+    element.innerHTML = element.innerHTML.replaceAll(playIconHtml + '#', playIconHtml);
+    // Add listener events to each of the created anchors
+    element.getElementsByClassName('play-at-time').forEach(playAyTimeElement => {
+        playAyTimeElement.addEventListener('click', (e) => {
+            if (!e.altKey){
+                const seconds = parseInt(playAyTimeElement.innerText.split(':')[0], 10) * 60 + parseInt(playAyTimeElement.innerText.split(':')[1], 10);
+                playAtTime(audioElement, seconds);
+            } else {
+                audioElement.pause();
+            }
+        });
+    });
+};
+
+const soundDescriptionElement = document.getElementById('soundDescriptionSection');
+const soundCommentsSection = document.getElementById('soundCommentsSection');
+const soundCommentElements = soundCommentsSection.getElementsByTagName('p');
+
+soundCommentElements.forEach(element => {
+    findTimeLinksAndAddEventListeners(element);
+});
+
+findTimeLinksAndAddEventListeners(soundDescriptionElement);
+
+// Open similar sounds modal if activation parameter is passed
+const urlParams = new URLSearchParams(window.location.search);
+const similarSoundsButtons = [...document.querySelectorAll('[data-toggle^="similar-sounds-modal"]')];
+if (similarSoundsButtons.length > 0){
+    const similarSoundsModalActivationParam = similarSoundsButtons[0].dataset.modalActivationParam;
+    const similarSoundsModalParamValue = urlParams.get(similarSoundsModalActivationParam);
+    if (similarSoundsModalParamValue) {
+        openSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
+    }
+}
+

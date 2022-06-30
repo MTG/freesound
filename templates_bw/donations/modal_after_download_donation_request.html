@@ -1,0 +1,26 @@
+{% extends "molecules/modal_base.html" %}
+
+{% block id %}afterDownloadModal{% endblock %}
+{% block extra-class %}modal-width-60{% endblock %}
+{% block aria-labelledby %}afterDownloadModalLabel{% endblock %}
+
+{% block body %}
+<div class="col-10 offset-1">
+    <div class="text-center">
+        <h5 class="v-spacing-5">Enjoying Freesound?</h5>
+    </div>
+    <div class="v-spacing-5">
+        Thanks for downloading! It looks like you have downloaded a significant number of sounds recently.
+        If Freesound is useful to you, please consider supporting us by <b>making a donation</b>.
+        <span class="text-red">Help us to keep Freesound open and free :)</span>
+    </div>
+    <div class="col-lg-8 offset-lg-2 col-10 offset-1">
+        <div class="between v-spacing-4 wrap">
+            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
+            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
+            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50">50€</a>
+            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0">Other</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

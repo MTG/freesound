@@ -27,6 +27,7 @@ from django.contrib.sites.models import Site
 from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
 from apiv2.serializers import SoundListSerializer, DEFAULT_FIELDS_IN_SOUND_LIST, SoundSerializer
+from bookmarks.models import BookmarkCategory, Bookmark
 from forms import SoundCombinedSearchFormAPI
 from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
@@ -44,14 +45,14 @@ class TestAPiViews(TestCase):
             sound.change_moderation_state("OK")
 
         # Login so api returns session login based responses
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on pack instance
         resp = self.client.get(reverse('apiv2-pack-instance', kwargs={'pk': packs[0].id}))
         self.assertEqual(resp.status_code, 200)
 
-        # 200 response on pack instance sounds list
-        resp = self.client.get(reverse('apiv2-pack-sound-list', kwargs={'pk': packs[0].id}))
+        # 200 response on pack instance sounds list (make it return all fields)
+        resp = self.client.get(reverse('apiv2-pack-sound-list', kwargs={'pk': packs[0].id})  + '?fields=*')
         self.assertEqual(resp.status_code, 200)
 
         # 200 response on pack instance download
@@ -65,7 +66,7 @@ class TestAPiViews(TestCase):
         client = ApiV2Client.objects.create(user=user, description='',
                                             name='', url='', redirect_uri='https://freesound.org')
         # Login so api returns session login based responses
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on Oauth2 authorize
         resp = self.client.post(reverse('oauth2_provider:authorize'),
@@ -84,7 +85,7 @@ class TestAPiViews(TestCase):
         resp = self.client.get(reverse('api-login'), secure=True)
         self.assertEqual(resp.status_code, 200)
 
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # 200 response on keys page
         resp = self.client.get(reverse('apiv2-apply'), secure=True)
@@ -93,6 +94,62 @@ class TestAPiViews(TestCase):
         # 302 response on logout page
         resp = self.client.get(reverse('api-logout'), secure=True)
         self.assertEqual(resp.status_code, 302)
+
+
+    def test_user_views_response_ok(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
+        for sound in sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+        self.client.force_login(user)
+
+        # 200 response on user instance
+        resp = self.client.get(reverse('apiv2-user-instance', kwargs={'username': user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on user instance sounds list (add all fields to return list)
+        resp = self.client.get(reverse('apiv2-user-sound-list', kwargs={'username': user.username}) + '?fields=*')
+        self.assertEqual(resp.status_code, 200)
+
+
+    def test_bookmark_views_response_ok(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
+        for sound in sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+
+        category = BookmarkCategory.objects.create(name='Category1', user=user)
+        Bookmark.objects.create(user=user, sound_id=sounds[0].id)
+        Bookmark.objects.create(user=user, sound_id=sounds[1].id)
+        Bookmark.objects.create(user=user, sound_id=sounds[2].id, category=category)
+        Bookmark.objects.create(user=user, sound_id=sounds[3].id, category=category, name='BookmarkedSound')
+
+        self.client.force_login(user)
+
+        # 200 response on list of bookmark categories
+        resp = self.client.get(reverse('apiv2-user-bookmark-categories', kwargs={'username': user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on getting sounds for bookmark category without name
+        resp = self.client.get(reverse('apiv2-user-bookmark-category-sounds', kwargs={'username': user.username, 'category_id': 0}) + '?fields=*')
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on getting sounds for bookmark category without name
+        resp = self.client.get(reverse('apiv2-user-bookmark-category-sounds', kwargs={'username': user.username, 'category_id': category.id}) + '?fields=*')
+        self.assertEqual(resp.status_code, 200)
+
+
+    def test_sound_views_response_ok(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
+        for sound in sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+        self.client.force_login(user)
+
+        # 200 response on user instance
+        resp = self.client.get(reverse('apiv2-sound-instance', kwargs={'pk': sounds[0].id}))
+        self.assertEqual(resp.status_code, 200)
+
 
 
 class TestAPI(TestCase):

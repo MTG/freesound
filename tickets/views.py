@@ -21,7 +21,6 @@
 import datetime
 import json
 
-import gearman
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -30,13 +29,15 @@ from django.db import transaction
 from django.db.models import Count, Min, Q, F
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from general.tasks import whitelist_user
 
 from models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_template_cache, invalidate_user_template_caches
+from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
 
 
@@ -73,7 +74,7 @@ def is_selected(request, prefix):
 def invalidate_all_moderators_header_cache():
     mods = Group.objects.get(name='moderators').user_set.all()
     for mod in mods:
-        invalidate_template_cache("user_header", mod.id)
+        invalidate_user_template_caches(mod.id)
 
 
 def ticket(request, ticket_key):
@@ -84,7 +85,7 @@ def ticket(request, ticket_key):
 
     if request.method == 'POST':
 
-        invalidate_template_cache("user_header", ticket.sender.id)
+        invalidate_user_template_caches(ticket.sender.id)
         invalidate_all_moderators_header_cache()
 
         # Left ticket message
@@ -149,7 +150,7 @@ def ticket(request, ticket_key):
                     notification = ticket.NOTIFICATION_APPROVED
 
                 elif sound_action == 'Whitelist':
-                    _whitelist_gearman([ticket.id])  # async job should take care of whitelisting
+                    whitelist_user.delay(ticket_ids=[ticket.id])  # async job should take care of whitelisting
                     comment += 'whitelisted all sounds from user {}'.format(ticket.sender)
                     notification = ticket.NOTIFICATION_WHITELISTED
 
@@ -212,6 +213,7 @@ def _get_new_uploaders_by_ticket():
     users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
     users_dict = {u.id: u for u in users}
     new_sounds_users = []
+
     for t in tickets:
         new_sounds_users.append({"user": users_dict[t['sender']],
                                  "username": users_dict[t['sender']].username,
@@ -402,12 +404,6 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
         return redirect("tickets-moderation-home")
 
 
-def _whitelist_gearman(ticket_ids):
-    gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-    gm_client.submit_job("whitelist_user", json.dumps(ticket_ids),
-                         wait_until_complete=False, background=True)
-
-
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def moderation_assigned(request, user_id):
@@ -483,7 +479,7 @@ def moderation_assigned(request, user_id):
 
             elif action == "Whitelist":
                 ticket_ids = list(tickets.values_list('id',flat=True))
-                _whitelist_gearman(ticket_ids)
+                whitelist_user.delay(ticket_ids=ticket_ids)  # async job should take care of whitelisting
                 notification = Ticket.NOTIFICATION_WHITELISTED
 
                 users = set(tickets.values_list('sender__username', flat=True))
@@ -500,7 +496,7 @@ def moderation_assigned(request, user_id):
                     users_to_update.add(ticket.sound.user.profile)
                     if ticket.sound.pack:
                         packs_to_update.add(ticket.sound.pack)
-                invalidate_template_cache("user_header", ticket.sender.id)
+                invalidate_user_template_caches(ticket.sender.id)
                 invalidate_all_moderators_header_cache()
                 moderator_only = msg_form.cleaned_data.get("moderator_only", False)
 
@@ -606,9 +602,9 @@ def get_pending_sounds(user):
 
 
 @permission_required('tickets.can_moderate')
+@redirect_if_old_username_or_404
 def pending_tickets_per_user(request, username):
-
-    user = get_object_or_404(User, username=username)
+    user = request.parameter_user
     tickets_sounds = get_pending_sounds(user)
     pendings = []
     mods = set()

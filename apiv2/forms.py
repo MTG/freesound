@@ -56,7 +56,19 @@ SEARCH_SORT_OPTIONS_API = [
         ("rating_asc", "avg_rating asc")
     ]
 
-SEARCH_DEFAULT_SORT = "score desc"
+SEARCH_SOUNDS_SORT_DEFAULT_API = "score desc"
+
+API_SORT_OPTIONS_MAP = {
+    "score desc": settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+    "duration desc": settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST,
+    "duration asc": settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST,
+    "created desc": settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+    "created asc": settings.SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST,
+    "num_downloads desc": settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST,
+    "num_downloads asc": settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST,
+    "avg_rating desc": settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST,
+    "avg_rating asc": settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST
+}
 
 
 def my_quote(s):
@@ -69,6 +81,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
     query = forms.CharField(required=False, label='query')
     page = forms.CharField(required=False, label='page')
     filter = forms.CharField(required=False, label='filter')
+    weights = forms.CharField(required=False, label='weights')
     sort = forms.CharField(required=False, label='sort')
     fields = forms.CharField(required=False, label='fields')
     descriptors = forms.CharField(required=False, label='descriptors')
@@ -116,8 +129,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 sort_option = option[1]
                 self.original_url_sort_value = option[0]
         if not sort_option:
-            sort_option = SEARCH_DEFAULT_SORT
-            self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
+            sort_option = SEARCH_SOUNDS_SORT_DEFAULT_API
+            self.original_url_sort_value = SEARCH_SOUNDS_SORT_DEFAULT_API.split(' ')[0]
         if sort_option == "avg_rating desc":
             sort = [sort_option, "num_ratings desc"]
         elif sort_option == "avg_rating asc":
@@ -163,7 +176,9 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&filter=%s' % my_quote(self.cleaned_data['filter'])
         else:
             link += '&filter=%s' % my_quote(filt)
-        if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_DEFAULT_SORT.split(' ')[0]:
+        if self.cleaned_data['weights'] is not None:
+            link += '&weights=%s' % self.cleaned_data['weights']
+        if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_SOUNDS_SORT_DEFAULT_API.split(' ')[0]:
             link += '&sort=%s' % self.original_url_sort_value
         if self.cleaned_data['descriptors_filter']:
                 link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
@@ -189,7 +204,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&group_by_pack=%s' % self.cleaned_data['group_by_pack']
         else:
             link += '&group_by_pack=%s' % group_by_pack
-        return "http://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
+        return "https://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
 
 
 class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):

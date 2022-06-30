@@ -1,4 +1,5 @@
 import { createIconElement } from '../utils/icons'
+import {  isTouchEnabledDevice } from './player/utils'
 
 const carousels = [...document.getElementsByClassName('bw-carousel-container')]
 
@@ -88,6 +89,10 @@ carousels.forEach(carousel => {
       dotIcon.addEventListener('click', () => {
         setPage(i)
       })
+    }
+    if (isTouchEnabledDevice()) {
+      // For touch-enabled devices, make dots always visible to suggest carousel interaction
+      dotIconsParent.classList.add('opacity-080')
     }
     carousel.append(dotIconsParent)
   }

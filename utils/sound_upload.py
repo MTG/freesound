@@ -30,11 +30,10 @@ from django.apps import apps
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.urls import reverse
-from gearman.errors import ServerUnavailable
 
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_user_template_caches
 from utils.filesystem import md5file, remove_directory_if_empty, create_directories
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
@@ -109,7 +108,11 @@ def create_sound(user,
     except OSError:
         raise NoAudioException()
 
-    license = License.objects.get(name=sound_fields['license'])
+    if type(sound_fields['license']) == License:
+        license = sound_fields['license']
+    else:
+        # Get license, sort by -id so that 4.0 licenses appear before 3.0
+        license = License.objects.filter(name=sound_fields['license']).order_by('-id').first()
     sound.type = get_sound_type(sound.original_path)
     sound.license = license
     sound.md5 = md5file(sound.original_path)
@@ -212,10 +215,10 @@ def create_sound(user,
     else:
         # create moderation ticket!
         sound.create_moderation_ticket()
-        invalidate_template_cache("user_header", user.id)
+        invalidate_user_template_caches(user.id)
         moderators = Group.objects.get(name='moderators').user_set.all()
         for moderator in moderators:
-            invalidate_template_cache("user_header", moderator.id)
+            invalidate_user_template_caches(moderator.id)
 
     # 9 process sound and packs
     sound.compute_crc()
@@ -226,8 +229,8 @@ def create_sound(user,
 
             if sound.pack:
                 sound.pack.process()
-        except ServerUnavailable:
-            pass
+        except Exception as e:
+            sounds_logger.info('Error sending sound to process and analyze: %s' % str(e))
 
     # Log
     if sound.uploaded_with_apiv2_client is not None:
@@ -377,11 +380,11 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                                 filenames_to_describe.append(src_path)
 
                 # 3) Check that all the other sound fields are ok
-                try:
-                    license = License.objects.get(name=line['license'])
+                license = License.objects.filter(name=line['license']).order_by('-id').first()
+                if license:
                     license_id = license.id
                     license_name = license.name
-                except License.DoesNotExist:
+                else:
                     license_id = 0
                     license_name = ''
 

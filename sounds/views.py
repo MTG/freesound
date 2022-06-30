@@ -23,13 +23,14 @@ import json
 import logging
 import time
 from collections import defaultdict
+from django.views.decorators.clickjacking import xframe_options_exempt
 from operator import itemgetter
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 from django.db.models.functions import Greatest
@@ -40,12 +41,14 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse, resolve
 from django.utils.six.moves.urllib.parse import urlparse
+from ratelimit.decorators import ratelimit
 
 from comments.forms import CommentForm
 from comments.models import Comment
 from donations.models import DonationsModalSettings, Donation
 from follow import follow_utils
 from forum.models import Thread
+from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
     RemixForm, PackForm
@@ -55,16 +58,19 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
-from utils.search.search_general import get_random_sound_from_solr
+from utils.ratelimit import key_for_ratelimiting, rate_per_ip
+from utils.search import get_search_engine
+from utils.search.search_sounds import get_random_sound_id_from_search_engine
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
 
 web_logger = logging.getLogger('web')
+cache_cdn_map = caches["cdn_map"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -85,7 +91,7 @@ def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
     """
-    cache_key = "random_sound"
+    cache_key = settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY
     random_sound = cache.get(cache_key)
     if not random_sound:
         try:
@@ -104,8 +110,9 @@ def get_sound_of_the_day_id():
     return random_sound
 
 
+@redirect_if_beastwhoosh('sounds-search', query_string='s=Date+added+(newest+first)&g=1')
 def sounds(request):
-    latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)
+    latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)    
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
     last_week = get_n_weeks_back_datetime(n_weeks=1)
     popular_sounds = Sound.public.select_related('license', 'user') \
@@ -114,7 +121,12 @@ def sounds(request):
     popular_packs = Pack.objects.select_related('user').filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
+            random_sound = None
     else:
         random_sound = None
     tvars = {
@@ -134,15 +146,16 @@ def remixed(request):
     return render(request, 'sounds/remixed.html', tvars)
 
 
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def random(request):
-    sound = get_random_sound_from_solr()
+    random_sound_id = get_random_sound_id_from_search_engine()
     sound_obj = None
-    if sound:
+    if random_sound_id:
         try:
             # There is a small edge case where a sound may have been marked
             # as explicit and is selected here before the index is updated,
             # but we expect this to happen rarely enough that it's not a problem
-            sound_obj = Sound.objects.get(id=sound['id'])
+            sound_obj = Sound.objects.get(id=random_sound_id)
         except Sound.DoesNotExist:
             pass
     if sound_obj is None:
@@ -159,6 +172,7 @@ def random(request):
         reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
+@redirect_if_beastwhoosh('sounds-search', query_string='s=Date+added+(newest+first)&g=1&only_p=1')
 def packs(request):
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
@@ -175,58 +189,48 @@ def packs(request):
 def front_page(request):
     rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
     trending_sound_ids = cache.get("trending_sound_ids", None)
-    trending_pack_ids = cache.get("trending_pack_ids", None)
+    trending_new_sound_ids = cache.get("trending_new_sound_ids", None)
+    trending_new_pack_ids = cache.get("trending_new_pack_ids", None)
     total_num_sounds = cache.get("total_num_sounds", 0)
     popular_searches = cache.get("popular_searches", None)
+    top_donor_user_id = cache.get("top_donor_user_id", None)
+    top_donor_donation_amount = cache.get("top_donor_donation_amount", None)
     if popular_searches is not None:
         popular_searches = [(query_terms, '{0}?q={1}'.format(reverse('sounds-search'), query_terms))
                             for query_terms in popular_searches]
 
-    current_forum_threads = Thread.objects.filter(first_post__moderation_state="OK",
-                                                  last_post__moderation_state="OK") \
-                                          .order_by('-last_post__created') \
-                                          .select_related('author',
-                                                          'forum',
-                                                          'last_post',
-                                                          'last_post__author',
-                                                          'last_post__thread',
-                                                          'last_post__thread__forum')[:10]
+    current_forum_threads = get_hot_threads(n=10)
 
     num_latest_sounds = 5 if not using_beastwhoosh(request) else 9
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
-        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        try:
+            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+        except IndexError:
+            # Clear existing cache for random sound of the day as it contains invalid sound id
+            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
+            random_sound = None
     else:
         random_sound = None
-
-    top_donor = None
-    if using_beastwhoosh(request):
-        # TODO: simplify the calculation of the top donor using annotate in the query
-        # TODO: add pertinent caching strategy here
-        last_week = get_n_weeks_back_datetime(n_weeks=1)
-        top_donor_data = defaultdict(int)
-        for username, amount in \
-            Donation.objects.filter(created__gt=last_week)\
-                    .exclude(user=None, is_anonymous=True)\
-                    .values_list('user__username', 'amount'):
-            top_donor_data[username] += amount
-        if top_donor_data:
-            top_donor_username = sorted(top_donor_data.items(), key=lambda x: x[1], reverse=True)[0][0]
-            top_donor = User.objects.get(username=top_donor_username)
 
     tvars = {
         'rss_cache': rss_cache,
         'popular_searches': popular_searches,
         'trending_sound_ids': trending_sound_ids,
-        'trending_pack_ids': trending_pack_ids,
+        'trending_new_sound_ids': trending_new_sound_ids,
+        'trending_new_pack_ids': trending_new_pack_ids,
         'current_forum_threads': current_forum_threads,
         'latest_sounds': latest_sounds,
         'random_sound': random_sound,
-        'top_donor': top_donor,
+        'top_donor_user_id': top_donor_user_id,
+        'top_donor_donation_amount': top_donor_donation_amount,
         'total_num_sounds': total_num_sounds,
+        'is_authenticated': request.user.is_authenticated(),
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
-        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beash whoosh only
+        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
+        'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
+        'enable_popular_searches': settings.ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE,  # Used for beast whoosh only
     }
     return render(request, 'front.html', tvars)
 
@@ -252,7 +256,7 @@ def sound(request, username, sound_id):
                 raise Http404
     except Sound.DoesNotExist:
         if DeletedSound.objects.filter(sound_id=sound_id).exists():
-            return render(request, 'sounds/deleted_sound.html')
+            return render(request, 'sounds/sound_deleted.html')
         else:
             raise Http404
 
@@ -279,11 +283,7 @@ def sound(request, username, sound_id):
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
     display_random_link = request.GET.get('random_browsing', False)
-    is_following = False
-    if request.user.is_authenticated:
-        users_following = follow_utils.get_users_following(request.user)
-        if sound.user in users_following:
-            is_following = True
+    is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
     tvars = {
@@ -294,8 +294,7 @@ def sound(request, username, sound_id):
         'is_following': is_following,
         'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
-        'min_num_ratings': settings.MIN_NUMBER_RATINGS,
-        'path': request.build_absolute_uri()  # used as "next" parameter for follow/unfollow user links in BW
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)
@@ -309,6 +308,8 @@ def after_download_modal(request):
     """
     response_content = None  # Default content of the response set to None (no modal)
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
+    should_show_modal = False
+    bw_response = None
 
     def modal_shown_timestamps_cache_key(user):
         return 'modal_shown_timestamps_donations_shown_%i' % user.id
@@ -325,17 +326,28 @@ def after_download_modal(request):
             modal_shown_timestamps.append(time.time())
             cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps,
                       60 * 60 * 24)  # 24 lifetime cache
+            should_show_modal = True
+
+    if should_show_modal:
+        if using_beastwhoosh(request):
+            return render(request, 'donations/modal_after_download_donation_request.html',
+                          {'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM})
+        else:
             template = loader.get_template('sounds/after_download_modal_donation.html')
             response_content = template.render({'sound_name': sound_name})
-
-    return JsonResponse({'content': response_content})
+            return JsonResponse({'content': response_content})
+    else:
+        if using_beastwhoosh(request):
+            return HttpResponse()
+        else:
+            return JsonResponse({'content': None})
 
 
 @redirect_if_old_username_or_404
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
                                                     reverse("sound", args=[username, sound_id])))
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -355,6 +367,13 @@ def sound_download(request, username, sound_id):
             sound.invalidate_template_caches()
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
 
+    if settings.USE_CDN_FOR_DOWNLOADS:
+        cdn_filename = cache_cdn_map.get(str(sound_id), None)
+        if cdn_filename is not None:
+            # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
+            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(int(sound_id)/1000), cdn_filename, sound.friendly_filename())
+            return HttpResponseRedirect(cdn_url)
+
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
 
 
@@ -362,7 +381,7 @@ def sound_download(request, username, sound_id):
 @transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -493,6 +512,7 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
+                    sound.geotag.should_update_information = True
                     sound.geotag.save()
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"],
@@ -510,19 +530,22 @@ def sound_edit(request, username, sound_id):
         else:
             geotag_form = GeotaggingForm(prefix="geotag")
 
-    license_form = NewLicenseForm(request.POST)
-    if request.POST and license_form.is_valid():
-        new_license = license_form.cleaned_data["license"]
-        if new_license != sound.license:
-            sound.set_license(new_license)
-        sound.mark_index_dirty()  # Sound is saved here
-        if sound.pack:
-            sound.pack.process()  # Sound license changed, process pack (if sound has pack)
-        sound.invalidate_template_caches()
-        update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
-        return HttpResponseRedirect(sound.get_absolute_url())
+    license_form = NewLicenseForm(request.POST, 
+                                  hide_old_versions="3.0" not in sound.license.deed_url)
+    if request.method == 'POST':
+        if license_form.is_valid():
+            new_license = license_form.cleaned_data["license"]
+            if new_license != sound.license:
+                sound.set_license(new_license)
+            sound.mark_index_dirty()  # Sound is saved here
+            if sound.pack:
+                sound.pack.process()  # Sound license changed, process pack (if sound has pack)
+            sound.invalidate_template_caches()
+            update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
+            return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm(initial={'license': sound.license})
+        license_form = NewLicenseForm(initial={'license': sound.license}, 
+                                      hide_old_versions="3.0" not in sound.license.deed_url)
 
     tvars = {
         'sound': sound,
@@ -651,21 +674,15 @@ def remix_group(request, group_id):
 
 
 @redirect_if_old_username_or_404
-def geotag(request, username, sound_id):
-    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
-    if sound.user.username.lower() != username.lower():
-        raise Http404
-    tvars = {'sound': sound}
-    return render(request, 'sounds/geotag.html', tvars)
-
-
-@redirect_if_old_username_or_404
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?similar=1')
+
     sound = get_object_or_404(Sound,
                               id=sound_id,
                               moderation_state="OK",
                               processing_state="OK",
-                              analysis_state="OK",
                               similarity_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
@@ -674,7 +691,11 @@ def similar(request, username, sound_id):
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
 
     tvars = {'similar_sounds': similar_sounds}
-    return render(request, 'sounds/similar.html', tvars)
+    if using_beastwhoosh(request):
+        # In BW similar sounds are displayed in a modal
+        return render(request, 'sounds/modal_similar_sounds.html', tvars)
+    else:
+        return render(request, 'sounds/similar.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -688,31 +709,46 @@ def pack(request, username, pack_id):
         raise Http404
 
     if pack.is_deleted:
-        return render(request, 'sounds/deleted_pack.html')
+        return render(request, 'sounds/pack_deleted.html')
 
-    qs = Sound.public.only('id').filter(pack=pack)
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE if not using_beastwhoosh(request) else 12)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 
     num_sounds_ok = paginator['paginator'].count
-    if num_sounds_ok == 0 and pack.num_sounds != 0:
-        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
-    else:
-        if num_sounds_ok < pack.num_sounds:
-            messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
+    if num_sounds_ok < pack.num_sounds:
+        messages.add_message(request, messages.INFO,
+                             'Some sounds of this pack might <b>not have been moderated or processed</b> yet.')
 
-    tvars = {'pack': pack,
-             'num_sounds_ok': num_sounds_ok,
-             'pack_sounds': pack_sounds
-             }
-    tvars.update(paginator)
+    is_following = None
+    geotags_in_pack_serialized = []
+    if using_beastwhoosh(request):
+        is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, pack.user)
+        if pack.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
+            for sound in Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None):
+                geotags_in_pack_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
+            geotags_in_pack_serialized = json.dumps(geotags_in_pack_serialized)
+
+    tvars = {
+        'pack': pack,
+        'num_sounds_ok': num_sounds_ok,
+        'pack_sounds': pack_sounds,
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS,  # BW only
+        'is_following': is_following,
+        'geotags_in_pack_serialized': geotags_in_pack_serialized  # BW only
+    }
+    if not using_beastwhoosh(request):
+        tvars.update(paginator)
 
     return render(request, 'sounds/pack.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
+
     user = request.parameter_user
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
@@ -728,6 +764,9 @@ def packs_for_user(request, username):
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
+
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
@@ -824,8 +863,12 @@ def flag(request, username, sound_id):
 
 def sound_short_link(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
-    return redirect('sound', username=sound.user.username,
-            sound_id=sound.id)
+    return redirect('sound', username=sound.user.username, sound_id=sound.id)
+
+
+def pack_short_link(request, pack_id):
+    pack = get_object_or_404(Pack, id=pack_id)
+    return redirect('pack', username=pack.user.username, pack_id=pack.id)
 
 
 def __redirect_old_link(request, cls, url_name):
@@ -875,6 +918,7 @@ def display_sound_wrapper(request, username, sound_id):
     return render(request, 'sounds/display_sound.html', tvars)
 
 
+@xframe_options_exempt
 def embed_iframe(request, sound_id, player_size):
     """
     This view returns an HTML player of `sound_id` which can be embeded in external sites.

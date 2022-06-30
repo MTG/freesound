@@ -8,10 +8,6 @@ button {
   -moz-appearance: none;
   cursor: pointer;
   font-weight: bold;
-
-  &:not(.no-border-bottom-on-hover):not(.btn-inverse) {
-    @include border-bottom-on-hover;
-  }
 }
 
 .btn-primary {
@@ -22,6 +18,11 @@ button {
 .btn-secondary {
   letter-spacing: -1px;
   @include rounded-button($black, $black-hover);
+}
+
+.btn-blue {
+  letter-spacing: -1px;
+  @include rounded-button($blue, $blue-hover);
 }
 
 .btn-inverse {
@@ -37,4 +38,9 @@ button {
 .btn-neutral {
   @include reset-rounded-button($navy-grey, $black);
   @include reset-border-bottom-on-hover();
+}
+
+.btn-profile-adapt {
+  color: $black;
+  font-weight: 500;
 }

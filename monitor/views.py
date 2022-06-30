@@ -21,7 +21,6 @@
 import datetime
 from collections import Counter
 
-import gearman
 import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -34,19 +33,21 @@ from django.shortcuts import render
 from django.urls import reverse
 
 import tickets
-from sounds.models import Sound
+from freesound.celery import get_queues_task_counts
+from sounds.models import Sound, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
-def get_gearman_status(request):
+def get_queues_status(request):
     try:
-        gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
-        gearman_status = gm_admin_client.get_status()
-    except gearman.errors.ServerUnavailable:
-        gearman_status = list()
-    return render(request, 'monitor/gearman_status.html', {'gearman_status': gearman_status})
+        celery_task_counts = get_queues_task_counts()
+    except Exception:
+        celery_task_counts = []
+
+    return render(request, 'monitor/queues_status.html',
+                  {'celery_task_counts': celery_task_counts})
 
 
 @login_required
@@ -77,16 +78,24 @@ def monitor_home(request):
             processing_state='OK').count()
 
     # Analysis
-    sounds_analysis_pending_count = Sound.objects.filter(
-        analysis_state='PE').count()
-    sounds_analysis_queued_count = Sound.objects.filter(
-        analysis_state='QU').count()
-    sounds_analysis_ok_count = Sound.objects.filter(
-        analysis_state='OK').count()
-    sounds_analysis_failed_count = Sound.objects.filter(
-        analysis_state='FA').count()
-    sounds_analysis_skipped_count = Sound.objects.filter(
-        analysis_state='SK').count()
+    analyzers_data = {}  
+    all_sound_ids = Sound.objects.all().values_list('id', flat=True).order_by('id')
+    n_sounds = len(all_sound_ids)
+    for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
+        ok = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK").count()
+        sk = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="SK").count()
+        fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
+        qu = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="QU").count()
+        missing = n_sounds - (ok + sk + fa + qu)
+        percentage_done = (ok + sk + fa) * 100.0/n_sounds
+        analyzers_data[analyzer_name] = {
+            'OK': ok,
+            'SK': sk,
+            'FA': fa,
+            'QU': qu,
+            'Missing': missing,
+            'Percentage': percentage_done,
+        }
 
     tvars = {"new_upload_count": new_upload_count,
              "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
@@ -96,13 +105,9 @@ def monitor_home(request):
              "sounds_processing_count": sounds_processing_count,
              "sounds_failed_count": sounds_failed_count,
              "sounds_ok_count": sounds_ok_count,
-             "sounds_analysis_pending_count": sounds_analysis_pending_count,
-             "sounds_analysis_queued_count": sounds_analysis_queued_count,
-             "sounds_analysis_ok_count": sounds_analysis_ok_count,
-             "sounds_analysis_failed_count": sounds_analysis_failed_count,
-             "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "gearman_stats_url": reverse('gearman-stats'),
+             "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
+             "queues_stats_url": reverse('queues-stats'),
     }
 
     return render(request, 'monitor/monitor.html', tvars)
@@ -204,7 +209,7 @@ def process_sounds(request):
             sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
                 .exclude(processing_ongoing_state='QU')
             for sound in sounds_to_process:
-                sound.process()
+                sound.process(force=True)
 
     # Send sounds to processing according to their processing_ongoing_state
     processing_ongoing_state = request.GET.get('pros', None)
@@ -215,18 +220,7 @@ def process_sounds(request):
 
         if sounds_to_process:
             for sound in sounds_to_process:
-                sound.process()
-
-    # Send sounds to analysis according to their analysis_state
-    analysis_state = request.GET.get('ans', None)
-    if analysis_state:
-        sounds_to_analyze = None
-        if analysis_state in ['QU', 'PE', 'FA', 'SK']:
-            sounds_to_analyze = Sound.objects.filter(analysis_state=analysis_state)
-
-        if sounds_to_analyze:
-            for sound in sounds_to_analyze:
-                sound.analyze()
+                sound.process(force=True)
 
     return redirect("monitor-home")
 

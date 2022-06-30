@@ -1,0 +1,25 @@
+{% load display_sound %}
+{% load bw_templatetags %}
+
+<div>
+    <div id="infoWindowPlayerWrapper-{{ sound.id }}" class="padding-top-2">
+        {% if minimal %}
+            {% display_sound_minimal sound %}
+        {% else %}
+            {% display_sound_infowindow sound %}
+        {% endif %}
+    </div>
+    {% if minimal %}
+        <div class="overflow-hidden">
+            <a href="#"></a>{% comment %}Placing an empty anchor here is a workaround to prevent mapbox infowindows to focus first anchor found{% endcomment %}
+            <a target="_blank" href="{% url "sound" sound.user.username sound.id %}">
+            {{sound.original_filename}}</a>
+            by <a target="_blank" class="user" href="{% url "account" sound.user.username %}">
+            {{sound.user.username}}</a> | <a class="cursor-pointer" id="infoWindowZoomLink-{{ sound.id }}" data-lat="{{ sound.geotag.lat }}" data-lon="{{ sound.geotag.lon }}" data-zoom="{{ sound.geotag.zoom }}">{% bw_icon 'search' %}</a>
+        </div>
+    {% else %}
+        <div class="text-right">
+            <a class="cursor-pointer" id="infoWindowZoomLink-{{ sound.id }}" data-lat="{{ sound.geotag.lat }}" data-lon="{{ sound.geotag.lon }}" data-zoom="{{ sound.geotag.zoom }}">{% bw_icon 'search' %} Zoom in</a>
+        </div>
+    {% endif %}
+</div>

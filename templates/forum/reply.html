@@ -2,9 +2,9 @@
 
 {% load filter_img %}
 
-{% block title %}forum - reply{% endblock %}
+{% block title %}forum - {% if editing %}edit post{% else %}reply{% endif %}{% endblock %}
 
-{% block breadcrumb %} &#187; <a href="{% url "forums-reply" forum.name_slug thread.id %}">Post Reply</a>{% endblock %}
+{% block breadcrumb %} &#187; <a href="{% url "forums-reply" forum.name_slug thread.id %}">{% if editing %}Edit post{% else %}Post Reply{% endif %}</a>{% endblock %}
 
 {% block forum_search %}{% endblock %}
 
@@ -25,16 +25,17 @@
 </div>
 <input type="submit" value="reply" />
 </form>
-<h2>Latest posts in thread:</h2>
-<div style="height:400px; overflow: auto; margin: 10px;">
-{% for post in latest_posts %}
-    <p>
-    <a href="{% url "account" post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago:</br>
-    {{post.body|replace_img|safe|linebreaks}}
-    </p>
-{% endfor %}
-</div>
-
+{% if latest_posts %}
+    <h2>Latest posts in thread:</h2>
+    <div style="height:400px; overflow: auto; margin: 10px;">
+    {% for post in latest_posts %}
+        <p>
+        <a href="{% url "account" post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago:</br>
+        {{post.body|replace_img|safe|linebreaks}}
+        </p>
+    {% endfor %}
+    </div>
+{% endif %}
 <script>
   $(function() {
     unsecureImageCheck($('#{{ form.body.id_for_label }}'));

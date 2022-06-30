@@ -59,7 +59,7 @@ urlpatterns = [
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/sources/$', sounds.views.sound_edit_sources, name="sound-edit-sources"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/$', sounds.views.sound_edit, name="sound-edit"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/remixes/$', sounds.views.remixes, name="sound-remixes"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/geotag/$', sounds.views.geotag, name="sound-geotag"),
+    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/geotag/$', geotags.views.for_sound, name="sound-geotag"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/delete/$', sounds.views.delete, name="sound-delete"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/downloaders/$', sounds.views.downloaders, name="sound-downloaders"),
@@ -75,11 +75,11 @@ urlpatterns = [
     url(r'^people/(?P<username>[^//]+)/downloaded_packs/$', accounts.views.downloaded_packs, name="user-downloaded-packs"),
     url(r'^people/(?P<username>[^//]+)/bookmarks/$', bookmarks.views.bookmarks, name="bookmarks-for-user"),
     url(r'^people/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/$', bookmarks.views.bookmarks, name="bookmarks-for-user-for-category"),
-
     url(r'^people/(?P<username>[^//]+)/following_users/$', follow.views.following_users, name="user-following-users"),
     url(r'^people/(?P<username>[^//]+)/followers/$', follow.views.followers, name="user-followers"),
     url(r'^people/(?P<username>[^//]+)/following_tags/$', follow.views.following_tags, name="user-following-tags"),
 
+    url(r'^charts/$', accounts.views.charts, name="charts"),  # BW only
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
@@ -107,6 +107,8 @@ urlpatterns = [
     url(r'^contact/', support.views.contact, name="contact"),
 
     url(r'^search/$', search.views.search, name='sounds-search'),
+    url(r'^clustering_facet/$', search.views.clustering_facet, name='clustering-facet'),
+    url(r'^clustered_graph/$', search.views.clustered_graph, name='clustered-graph-json'),
     url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
 
     url(r'', include('ratings.urls')),
@@ -120,7 +122,7 @@ urlpatterns = [
     url(r'^monitor/', include('monitor.urls')),
     url(r'^follow/', include('follow.urls')),
 
-    url(r'^blog/$', RedirectView.as_view(url='http://blog.freesound.org/'), name="blog"),
+    url(r'^blog/$', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
     url(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
@@ -144,6 +146,8 @@ urlpatterns = [
 
     url(r'^donate/', donations.views.donate_redirect, name="donate-redirect"),
     url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
+    url(r'^p/(?P<pack_id>\d+)/$', sounds.views.pack_short_link, name="short-pack-link"),
+
 
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),

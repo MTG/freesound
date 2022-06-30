@@ -1,10 +1,11 @@
 {% load static %}
+{% load bw_templatetags %}
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=575, initial-scale=1">
     <meta name="theme-color" content="#000000">
     <title>Freesound - {% block title %}{% endblock %}</title>
     <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
@@ -13,12 +14,27 @@
     {% endblock %}
     <link rel="stylesheet" href="{% static 'bw-frontend/dist/src.7ed060e2.css' %}">
   </head>
-
   <body>
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
+    {% include 'accounts/modal_login.html' %}
+    {% include 'accounts/modal_login_problems.html' %}
+    {% include 'accounts/modal_registration.html' %}
+    {% include 'accounts/modal_registration_feedback.html' %}
+    {% include 'molecules/confirmation_modal.html' %}
+    <div id="genericModalWrapper"></div>
+    {% include 'molecules/toast.html' %}
     <div class="notifications-wrapper"></div>
+    {% if messages %}
+        <div id="django-messages-content" class="display-none">
+            <ul>
+                {% for message in messages %}
+                    <li><span class="h-spacing-1">·</span>{{ message|safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
     <div class="bw-page">
     {% block navbar %}
         {% comment %}This block can be overriden by pages that use a different navbar{% endcomment %}
@@ -28,6 +44,15 @@
     {% endblock %}
     {% include 'molecules/footer.html' %}
     </div>
+    {% bw_plausible_scripts %}
+    <script>
+        document.cookie = "preferSpectrogram={{spectrogram_preference|yesno}}";
+        const siteWidth = 580;  // Minimum expected width. If screen is smaller, scale website.
+        const scale = window.innerWidth / siteWidth;
+        if (scale < 1){
+            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale);
+        }
+    </script>
     <script src="{% static 'bw-frontend/dist/src.7ed060e2.js' %}"></script>
     {% block extrabody %}
     {% endblock %}

@@ -3,7 +3,7 @@
     content: '';
     position: absolute;
     display: block;
-    top: calc(100% + 2px);
+    top: calc(100% + 1px);
     left: 0;
     right: 0;
     height: 2px;
@@ -34,6 +34,8 @@
   border-radius: $button-border-radius;
   background-color: $color;
   color: $white;
+  font-weight: bold;
+  line-height: 1.15;
   transition: background-color 0.2s ease;
 
   @include active() {
@@ -45,6 +47,12 @@
   @include active() {
     background-color: $hover-color;
   }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
 }
 
 @mixin reset-rounded-button($color, $hover-color) {

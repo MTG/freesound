@@ -22,13 +22,14 @@ from __future__ import absolute_import
 
 from django import template
 
-from sounds.models import Pack
+from sounds.models import Pack, Sound
+from utils.frontend_handling import using_beastwhoosh
 
 register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_pack.html', takes_context=True)
-def display_pack(context, pack):
+def display_pack(context, pack, size='small'):
     """This templatetag is used to display a pack with some randomly selected sound players.
 
     Args:
@@ -36,6 +37,9 @@ def display_pack(context, pack):
           argument is automatically added by Django when calling the templatetag inside a template.
         pack (int or Pack): pack ID or Pack object of the pack that will be shown. If no pack exists for the
           given ID, the display_pack.html will be rendered with empty HTML.
+        size (str, optional): size of the "info" to display. This parameter only applies to BW interface.
+          Must be one of ['small' (default), 'big']. Information about the contents of each
+          size is given in the display_pack.html template code.
 
     Returns:
         dict: dictionary with the variables needed for rendering the pack with the display_pack.html template
@@ -55,10 +59,26 @@ def display_pack(context, pack):
             # Pack does not exist, we set pack_obj to empty list so "if pack" check in template returns False
             pack_obj = []
 
+    request = context.get('request')
+    if using_beastwhoosh(request):
+        try:
+            user_profile_locations = pack_obj[0].user.profile.locations()
+        except IndexError:
+            user_profile_locations = None
+    else:
+        user_profile_locations = None
+
     # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
     # display_pack templatetag it is given request in the context as well.
     return {
         'pack': pack_obj,
+        'size': size,
+        'user_profile_locations': user_profile_locations,
         'media_url': context['media_url'],
-        'request': context.get('request')
+        'request': request
     }
+
+
+@register.inclusion_tag('sounds/display_pack.html', takes_context=True)
+def display_pack_big(context, pack):
+    return display_pack(context, pack, size='big')

@@ -26,13 +26,15 @@
 
 input[type='search'] {
   margin-left: 40px;
+  -moz-appearance: none; /* avoid browser styling older firefox */
+  -webkit-appearance: none; /* avoid browser styling safari, chrome, edge and ie mobile */
+  appearance: none; /* avoid browser styling rest */
 }
 
 input {
   color: $black;
   background: none;
   border: 0;
-  font-weight: 600;
 
   &::placeholder {
     color: $black-hover;
@@ -58,13 +60,14 @@ input {
 }
 
 .input-typeahead-suggestion-wrapper {
-  padding: $tiny-spacing;
+  padding: 2px;
+  padding-left: 15px;
   cursor: pointer;
   
   &:focus,
   &:hover,
   &:active,
   &.active {
-    background-color: lighten($navy-light-grey, 10%);
+    background-color: #f8f8f8;
   }
 }

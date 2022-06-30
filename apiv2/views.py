@@ -34,8 +34,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
+from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
@@ -64,9 +64,10 @@ from comments.models import Comment
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from similarity.client import Similarity
-from sounds.models import Sound, Pack, License
+from sounds.models import Sound, Pack, License, SoundAnalysis
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
@@ -143,17 +144,18 @@ class TextSearch(GenericAPIView):
                 sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
+                        pack_id =  more_from_pack_data[sid][1][:more_from_pack_data[sid][1].find("_")]
+                        pack_name = more_from_pack_data[sid][1][more_from_pack_data[sid][1].find("_")+1:]
                         sound['more_from_same_pack'] = search_form.construct_link(
                             reverse('apiv2-sound-text-search'),
                             page=1,
-                            filt='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]),
-                                                            more_from_pack_data[sid][2]),
+                            filt='grouping_pack:"%i_%s"' % (int(pack_id), pack_name),
                             group_by_pack='0')
                         sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
             except KeyError:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.
-                # In that case sounds are are set to null
+                # In that case sounds are set to null
                 sounds.append(None)
         response_data['results'] = sounds
 
@@ -394,14 +396,14 @@ class SoundInstance(RetrieveAPIView):
                   get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
 
     serializer_class = SoundSerializer
-    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
+    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK").annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
         return super(SoundInstance, self).get(request, *args, **kwargs)
 
 
-class SoundAnalysis(GenericAPIView):
+class SoundAnalysisView(GenericAPIView):  # Needs to be named SoundAnalysisView so it does not overlap with SoundAnalysis
 
     @classmethod
     def get_description(cls):
@@ -472,7 +474,9 @@ class SimilarSounds(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
-        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license')\
+            .filter(id__in=ids)\
+            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
         qs_sound_objects = dict()
         for sound_object in qs:
             qs_sound_objects[sound_object.id] = sound_object
@@ -603,7 +607,8 @@ class UserSounds(ListAPIView):
             raise NotFoundException(resource=self)
 
         queryset = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])
+            .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])\
+            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
@@ -692,6 +697,8 @@ class UserBookmarkCategorySounds(ListAPIView):
         else:
             kwargs['category'] = None
         try:
+            # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
+            # make the queries inneficient if the "analysis" is requested. This could be improved in the future.
             queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException(resource=self)
@@ -739,9 +746,9 @@ class PackSounds(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
-                                                                                  processing_state="OK",
-                                                                                  pack__id=self.kwargs['pk'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license')\
+            .filter(moderation_state="OK", processing_state="OK", pack__id=self.kwargs['pk'])\
+            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
@@ -1001,7 +1008,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         sound.set_tags(serializer.data['tags'])
                 if 'license' in serializer.data:
                     if serializer.data['license']:
-                        license = License.objects.get(name=serializer.data['license'])
+                        license = License.objects.filter(name=serializer.data['license']).order_by('-id').first()
                         if license != sound.license:
                             # Only update license and create new SoundLicenseHistory object if license has changed
                             sound.set_license(license)
@@ -1101,6 +1108,7 @@ class RateSound(WriteRequiredGenericAPIView):
                 else:
                     SoundRating.objects.create(
                         user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
+                    Sound.objects.filter(id=sound_id).update(is_index_dirty=True)
                     return Response(data={'detail': 'Successfully rated sound %s.' % sound_id},
                                     status=status.HTTP_201_CREATED)
             except IntegrityError:
@@ -1497,8 +1505,14 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render(request, 'api/manage_permissions.html',
-                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False})
+    return render(request, 'accounts/manage_api_permissions.html' if using_beastwhoosh(request)
+                            else 'api/manage_permissions.html', {
+        'user': request.user,
+        'tokens': tokens,
+        'grants': grants,
+        'show_expiration_date': False,
+        'activePage': 'api',  # BW only
+    })
 
 
 @login_required
@@ -1512,6 +1526,7 @@ def revoke_permission(request, client_id):
     for grant in grants:
         grant.delete()
 
+    messages.add_message(request, messages.INFO, "Permission has been successfully revoked")
     return HttpResponseRedirect(reverse("access-tokens"))
 
 

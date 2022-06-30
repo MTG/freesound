@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load display_license_form %}
 {% load filter_img %}
 {% block title %}{{ block.super }}Describe - Bulk Describe Sounds{% endblock %}
 {% block content %}
@@ -10,7 +9,7 @@
     <h3>Validating data file "{{ bulk.original_csv_filename }}" <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></h3>
     <p>
         The uploaded data file has not yet been validated. If there are many sounds to be described, this process
-        could take a few minutes. This page will reload automatically when data validation has fininshed.
+        could take a few minutes. This page will reload automatically when data validation has finished.
     </p>
     <script>setTimeout(function(){ window.location.reload(1); }, 3500);</script>
 
@@ -149,7 +148,7 @@
     {% elif bulk.progress_type == 'C' %}
         <h3>This bulk description process is closed</h3>
         <p>
-            The bulk description of sounds has been fininshed and the process closed. Here are the results of the
+            The bulk description of sounds has been finished and the process closed. Here are the results of the
             process:
         </p>
     {% endif %}

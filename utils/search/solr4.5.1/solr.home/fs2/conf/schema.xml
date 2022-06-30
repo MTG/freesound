@@ -311,11 +311,12 @@
 		<field name="preview_path" type="string" indexed="false" stored="true" required="true" />
 
         <!-- Dynamic fields -->
-        <!-- This will be used to index Audio Commons analysis fields and potentially other stuff -->
-        <dynamicField name="*_i" type="sint" indexed="true" stored="true"/>
-        <dynamicField name="*_d" type="sdouble" indexed="true" stored="true"/>
-        <dynamicField name="*_b" type="boolean" indexed="true" stored="true"/>
-        <dynamicField name="*_s" type="string" indexed="true" stored="true"/>
+        <!-- This will be used to index analyzer results fields and potentially other stuff -->
+        <dynamicField name="*_i" type="sint" indexed="true" stored="true"/> <!-- integer -->
+        <dynamicField name="*_d" type="sdouble" indexed="true" stored="true"/> <!-- double -->
+        <dynamicField name="*_b" type="boolean" indexed="true" stored="true"/> <!-- bool -->
+        <dynamicField name="*_s" type="string" indexed="true" stored="true"/> <!-- string -->
+        <dynamicField name="*_ls" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/> <!-- list of string (or tags) -->
 
         <!-- Other fields -->
         <field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>

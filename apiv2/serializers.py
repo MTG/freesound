@@ -57,6 +57,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         if not requested_fields:  # If parameter is in url but parameter is empty, set to default
             requested_fields = self.default_fields
 
+        if requested_fields == '*':  # If parameter is *, return all fields
+            requested_fields = ','.join(self.fields.keys())
+
         if requested_fields:
             allowed = set(requested_fields.split(","))
             existing = set(self.fields.keys())
@@ -98,7 +101,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis',
                   'analysis_frames',
                   'analysis_stats',
-                  'ac_analysis',
+                  'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
+                  'analyzers_output'
                   )
 
     url = serializers.SerializerMethodField()
@@ -189,20 +193,26 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         }
 
 
+    def get_or_compute_analysis_state_essentia_exists(self, sound_obj):
+        if hasattr(sound_obj, 'analysis_state_essentia_exists'):
+            return sound_obj.analysis_state_essentia_exists
+        else:
+            return SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound_id=sound_obj.id).exists()
+
     analysis = serializers.SerializerMethodField()
     def get_analysis(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
 
     analysis_frames = serializers.SerializerMethodField()
     def get_analysis_frames(self, obj):
-        if obj.analysis_state != 'OK':
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         return prepend_base(obj.locations('analysis.frames.url'),
                             request_is_secure=self.context['request'].is_secure())
 
     analysis_stats = serializers.SerializerMethodField()
     def get_analysis_stats(self, obj):
-        if obj.analysis_state != 'OK':
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]),
                             request_is_secure=self.context['request'].is_secure())
@@ -259,6 +269,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_ac_analysis(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
 
+    analyzers_output = serializers.SerializerMethodField()
+    def get_analyzers_output(self, obj):
+        raise NotImplementedError  # Should be implemented in subclasses
+
 
 class SoundListSerializer(AbstractSoundSerializer):
 
@@ -267,7 +281,7 @@ class SoundListSerializer(AbstractSoundSerializer):
         super(SoundListSerializer, self).__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
-        if obj.analysis_state != 'OK':
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         # Get descriptors from the view class (should have been requested before the serializer is invoked)
         try:
@@ -278,10 +292,23 @@ class SoundListSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         # Get ac analysis data form the object itself as it will have been included in the Sound
         # by SoundManager.bulk_query
-        if obj.ac_analysis:
-            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value
-                    for key, value in obj.ac_analysis.items()}
-        return None
+        query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
+        return getattr(obj, query_select_name, None)
+
+    def get_analyzers_output(self, obj):
+        # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.
+        # Analysis data will have been included in the Sound object by SoundManager.bulk_query.
+        # Note that audio commons analyzer data can also be obtained with the ac_analysis field name but all
+        # other analyzers' output is only accessible via analyzers_output field. This is kept like that
+        # for legacy reasons.
+        analyzers_output = {}
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'descriptors_map' in analyzer_info:
+                query_select_name = analyzer_name.replace('-', '_')
+                analysis_data = getattr(obj, query_select_name, None)
+                if analysis_data is not None:
+                    analyzers_output.update(analysis_data)
+        return analyzers_output
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -291,7 +318,7 @@ class SoundSerializer(AbstractSoundSerializer):
         super(SoundSerializer, self).__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
-        if obj.analysis_state != 'OK':
+        if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
         # Get the sound descriptors from gaia
         try:
@@ -308,27 +335,42 @@ class SoundSerializer(AbstractSoundSerializer):
             return None
 
     def get_ac_analysis(self, obj):
-        # Retreive analysis data already loaded in the provided object of get it from related SoundAnalysis object
+        # Retrieve analysis data already loaded in the provided object of get it from related SoundAnalysis object
         # corresponding to the Audio Commons extractor.
-
-        analysis_items = {}
-        if hasattr(obj, 'ac_analysis'):
-            if obj.ac_analysis is not None:
-                analysis_items = obj.ac_analysis.items()
+        query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
+        if hasattr(obj, query_select_name):
+            return getattr(obj, query_select_name)
         else:
             # No ac analysis data already loaded in the object, load it with an extra query
             try:
-                analysis_items = obj.analyses.get(extractor=settings.AUDIOCOMMONS_EXTRACTOR_NAME).get_analysis().items()
+                return obj.analyses.get(analyzer=settings.AUDIOCOMMONS_ANALYZER_NAME, analysis_status="OK")\
+                    .analysis_data
             except SoundAnalysis.DoesNotExist:
                 # Do nothing, will lead to end of the method returning None
                 pass
+        return None
 
-        if analysis_items:
-            # Add Audio Commons descirptor prefix so names better match with the names used in filters
-            return {'{0}{1}'.format(settings.AUDIOCOMMONS_DESCRIPTOR_PREFIX, key): value
-                    for key, value in analysis_items}
-        else:
-            return None
+    def get_analyzers_output(self, obj):
+        # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.
+        # Analysis data will have been included in the Sound object by SoundManager.bulk_query,
+        # otherwise it is loaded from db. Note that audio commons analyzer data can also be
+        # obtained with the ac_analysis field name but all other analyzers' output is only accessible
+        # via analyzers_output field. This is kept like that for legacy reasons.
+        analyzers_output = {}
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'descriptors_map' in analyzer_info:
+                query_select_name = analyzer_name.replace('-', '_')
+                if hasattr(obj, query_select_name):
+                    analysis_data = getattr(obj, query_select_name)
+                else:
+                    # Retrieve the analysis data from the db
+                    try:
+                        analysis_data = obj.analyses.get(analyzer=analyzer_name, analysis_status="OK").analysis_data
+                    except SoundAnalysis.DoesNotExist:
+                        analysis_data = None
+                if analysis_data is not None:
+                    analyzers_output.update(analysis_data)
+        return analyzers_output
 
 
 ##################

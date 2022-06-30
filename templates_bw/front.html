@@ -4,8 +4,12 @@
 {% load cache %}
 {% load display_sound %}
 {% load display_pack %}
+{% load display_user %}
 {% load util %}
 {% load bw_templatetags %}
+
+{% load filter_img %}
+{% load ratings %}
 
 {% block title %}Freesound{% endblock %}
 
@@ -13,180 +17,297 @@
 
 {% block content %}
     <div class="container">
-    <div class="bw-front__hero-container">
-      <header>
-        <h1>Find any sound you like</h1>
-        <p class="bw-front__subheader">In a collaborative collection of {{ total_num_sounds }} <a class="bw-link--grey" href="/help/faq/#licenses">free sounds</a></p>
-      </header>
-      <div class="bw-front__hero-container--search">
-        <form method="get" action="/search/">
-            <div class="typeahead-wrapper">
-              <div class="input-wrapper">
-                <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" autocomplete="off"{% endif %} />
-              </div>
-            </div>
-        </form>
-      </div>
-    </div>
-    <div class="row bw-front__content">
-      <main class="col-md-9">
-
-        {% if rss_cache %}
-          {{ rss_cache }}
-        {% endif %}
-
-        <section class="v-spacing-6">
-          <h3 class="v-spacing-4">Latest additions</h3>
-          <div class="bw-carousel-container">
-            <div class="bw-carousel-wrapper">
-              <div class="bw-carousel v-padding-bottom-4">
-                {% for sounds in latest_sounds|chunks:3 %}
-                <div>
-                  <div class="row no-margins">
-                  {% for sound in sounds %}
-                    <div class="col-4">
-                        {% display_sound sound.id %}
-                    </div>
-                  {% endfor %}
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-	      </div>
-        </section>
-
-        {% if popular_searches %}
-        <hr />
-        <section class="v-spacing-6">
-          <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
-          <div class="bw-carousel-container">
-            <div class="bw-carousel-wrapper">
-              <div class="bw-carousel">
-                {% for popular_searches_slice in popular_searches|chunks:4 %}
-                <div>
-                  <div class="row no-margins">
-                    {% for search_term, url in popular_searches_slice %}
-                        <div class="col v-spacing-1">
-                          {% bw_tag search_term 4 'w-100 h-100' url 1.0 %}
+        <div class="bw-front__hero-container">
+            <header>
+                <h1>Find any sound you like</h1>
+                <p class="bw-front__subheader">In a collaborative collection of {{ total_num_sounds }} <a class="bw-link--grey" href="/help/faq/#licenses">free sounds</a></p>
+            </header>
+            <div class="bw-front__hero-container--search">
+                <form method="get" action="/search/">
+                    <div class="typeahead-wrapper">
+                        <div class="input-wrapper">
+                            <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" data-query-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"{% endif %} />
                         </div>
-                    {% endfor %}
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        </section>
-        {% endif %}
-
-        {% if trending_sound_ids %}
-        <hr />
-        <section class="v-spacing-2">
-          <h3 class="v-spacing-4 v-spacing-top-4">Trending sounds</h3>
-          <div class="bw-carousel-container">
-            <div class="bw-carousel-wrapper">
-              <div class="bw-carousel v-padding-bottom-4">
-                {% for sound_ids in trending_sound_ids|chunks:3 %}
-                <div>
-                  <div class="row no-margins">
-                  {% for sound_id in sound_ids %}
-                    <div class="col-4">
-                        {% display_sound_small sound_id %}
                     </div>
-                  {% endfor %}
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
+                </form>
             </div>
-	      </div>
-        </section>
-      {% endif %}
-
-      {% if trending_pack_ids %}
-      <hr />
-      <section class="v-spacing-2">
-        <h3 class="v-spacing-4 v-spacing-top-4">Trending packs</h3>
-        <div class="bw-carousel-container">
-          <div class="bw-carousel-wrapper">
-            <div class="bw-carousel v-padding-bottom-4">
-              {% for pack_ids in trending_pack_ids|chunks:3 %}
-                <div>
-                  <div class="row no-margins">
-                  {% for pack_id in pack_ids %}
-                    <div class="col-4">
-                        {% display_pack pack_id %}
-                    </div>
-                  {% endfor %}
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-           </div>
         </div>
-      </section>
-      {% endif %}
+        <div class="row bw-front__content">
+            <main class="col-lg-9">
 
-      {% if random_sound %}
-      <hr />
-      <section class="v-spacing-6">
-        <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
-        {% display_sound_big_no_info random_sound %}
-      </section>
-      {% endif %}
+                {% if rss_cache %}
+                    {{ rss_cache }}
+                {% endif %}
+                
+                {% cache 300 bw_front_page_latest_additions is_authenticated %}
+                    {% with latest_sounds|chunks:3 as latest_sounds_chunks %}
+                    {% if latest_sounds_chunks|length %}
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4">Latest additions</h3>
+                        <div class="bw-carousel-container">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
+                                <div class="bw-carousel with-dots dots-distance-1">
+                                    {% for sounds in latest_sounds_chunks %}
+                                        <div>
+                                            <div class="row no-margins">
+                                                {% for sound in sounds %}
+                                                    <div class="col-4">
+                                                        {% display_sound sound.id %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <hr />
+                    {% endif %}
+                    {% endwith %}
+                {% endcache %}
 
-      </main>
-      <aside class="col-md-3">
-        <section class="v-spacing-7">
-          <h4>Enjoying Freesound?</h4>
-          <p class="text-grey v-spacing-2">Please consider donating some money</p>
-          <div class="between v-spacing-5 wrap">
-            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">5€</button></a>
-            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">10€</button></a>
-            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">50€</button></a>
-            <a class="no-hover" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0"><button class="btn-inverse bw-front__donate-amount-button v-spacing-1">Other</button></a>
-          </div>
-          {% if top_donor %}
-              <div class="h-spacing-left-3">
-                <div>Top donor this week:</div>
-                <div class="middle">
-                  <div class="avatar h-spacing-2">
-                    <img src="{{ top_donor.profile.locations.avatar.M.url }}" />
-                  </div>
-                  <div>
-                    <a href="{% url 'account' top_donor.username %}">{{ top_donor.username }}</a>
-                    <br />
-                    <div class="text-light-grey">{{ top_donor.profile.num_sounds }} sound{{ top_donor.profile.num_sounds|pluralize }} &middot; {{ top_donor.profile.num_posts }} post{{ top_donor.profile.num_posts|pluralize }}</div>
-                  </div>
+                {% if trending_sound_ids %}
+                    {% cache 300 bw_front_page_trending_sounds is_authenticated %}
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds during the last week">Trending sounds</h3>
+                        <div class="bw-carousel-container">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
+                                <div class="bw-carousel with-dots dots-distance-1">
+                                    {% for sound_ids in trending_sound_ids|chunks:3 %}
+                                        <div>
+                                            <div class="row no-margins">
+                                                {% for sound_id in sound_ids %}
+                                                    <div class="col-4">
+                                                        {% display_sound_small sound_id %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <hr />
+                    {% endcache %}
+                {% endif %}
+
+                {% if trending_new_sound_ids %}
+                    {% cache 300 bw_front_page_trending_new_sounds is_authenticated %}
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
+                        <div class="bw-carousel-container">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
+                                <div class="bw-carousel with-dots dots-distance-1">
+                                    {% for sound_ids in trending_new_sound_ids|chunks:3 %}
+                                        <div>
+                                            <div class="row no-margins">
+                                                {% for sound_id in sound_ids %}
+                                                    <div class="col-4">
+                                                        {% display_sound_small sound_id %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <hr />
+                    {% endcache %}
+                {% endif %}
+
+                {% if trending_new_pack_ids %}
+                    {% cache 300 bw_front_page_trending_new_packs is_authenticated %}
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded pack created in the last week">Trending new packs</h3>
+                        <div class="bw-carousel-container">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
+                                <div class="bw-carousel with-dots dots-distance-1">
+                                    {% for pack_ids in trending_new_pack_ids|chunks:3 %}
+                                        <div>
+                                            <div class="row no-margins">
+                                                {% for pack_id in pack_ids %}
+                                                    <div class="col-4">
+                                                        {% display_pack pack_id %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <hr />
+                    {% endcache %}
+                {% endif %}
+
+                {% if popular_searches and enable_popular_searches %}
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
+                        <div class="bw-carousel-container">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
+                                <div class="bw-carousel with-dots">
+                                    {% for popular_searches_slice in popular_searches|chunks:4 %}
+                                        <div>
+                                            <div class="row no-margins">
+                                                {% for search_term, url in popular_searches_slice %}
+                                                    <div class="col v-spacing-1">
+                                                        {% bw_tag search_term 4 'w-100 h-75 display-inline-block' url 1.0 %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <hr />
+                {% endif %}
+
+                {% if random_sound %}
+                    {% cache 300 bw_front_page_random_sound is_authenticated %}
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
+                        {% with random_sound as sound %}
+                            {% display_sound_big_no_info random_sound %}
+                            <div id="randomSoundDetails" class="bw-sound-page__information v-spacing-top-2 display-none">
+                                <div class="row middle">
+                                    <div class="col-10 overflow-hidden">
+                                        <h4 class="padding-bottom-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{sound.original_filename}}</a></h4>
+                                    </div>
+                                    <div class="col-2 text-right">
+                                        <div class="text-grey">
+                                            {% if sound.similarity_state == 'OK' %}
+                                                <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
+                                                    {% bw_icon 'similar' %}
+                                                </button>
+                                            {% endif %}
+                                            {% if is_authenticated %}
+                                                <span class="h-spacing-left-2"></span>
+                                                <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
+                                                    {% bw_icon 'bookmark' %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="middle v-spacing-top-1">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                                <div class="middle bw-sound-page__user v-spacing-top-2">
+                                    <div class="h-spacing-1">
+                                        {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.username 40 %}
+                                    </div>
+                                    <div class="h-spacing-left-1">
+                                        <a href="{% url 'account' sound.username %}">{{ sound.username | truncate_string:15 }}</a>
+                                        <p class="text-grey">{{ sound.created|date:"F jS, Y" }}</p>
+                                    </div>
+                                    {% if sound.user != request.user  %}
+                                        <div class="h-spacing-left-3">
+                                            <a class="no-hover btn-inverse" href="{% url 'follow-user' sound.username %}?next={{ next_path }}">Follow</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="middle v-spacing-top-3">
+                                    {% if sound.geotag_id %}
+                                        <div>
+                                            <a href="{% url 'sound-geotag' sound.username sound.id %}">
+                                                {% bw_icon 'pin' %} {{ sound.geotag.lat|floatformat:3 }}, {{ sound.geotag.lon|floatformat:3 }}
+                                            </a>
+                                        </div>
+                                        {% if sound.pack_id or sound.remix_group.all.count %}
+                                            <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if sound.pack_id %}
+                                        <div class="text-grey">
+                                            This sound is part of the pack <a href="{% url 'pack' sound.username sound.pack.id %}">{{ sound.pack.name}}</a>
+                                        </div>
+                                        {% if sound.remix_group.all.count %}
+                                            <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if sound.remix_group.all.count %}
+                                        <div class="text-grey">
+                                            This sound has <a href="{% url 'sound-remixes' sound.username sound.id %}">remixes or has been remixed</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="v-spacing-top-1">
+                                    <div class="text-17 line-height-30">
+                                        {{ sound.description|replace_img|safe|linebreaks|truncatewords_html:30 }}
+                                    </div>
+                                    <div class="v-spacing-top-3">
+                                        {% for tag in sound.tag_array %}
+                                            {% bw_tag tag 1 "h-spacing-1" %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center text-16 v-spacing-top-2">
+                                <a id="randomSoundDetailsToggleLink" class="bw-link--grey" href="javascript:void(0);">Reveal details</a>
+                            </div>
+                        {% endwith %}
+                    </section>
+                    {% endcache %}
+                {% endif %}
+            </main>
+            <aside class="col-lg-3">
+                <div class="v-spacing-4 d-lg-none">
+                    <hr />
                 </div>
-              </div>
-            {% endif %}
-        </section>
-        <hr />
-        {% cache 300 bw_forum_threads %}
-        <section class="v-padding-7">
-          <h4 class="v-spacing-3">Hot forum threads</h4>
-            {% for forum in current_forum_threads %}
-                <article class="v-padding-2">
-                    <div class="v-spacing-1">
-                      <a class="bw-link--black" href="{{forum.last_post.get_absolute_url}}">{{ forum.title }}</a>
+                <section class="v-spacing-4">
+                    <h4 class="v-spacing-1">Enjoying Freesound?</h4>
+                    <p class="text-grey v-spacing-2">Please consider donating some money. It doesn't take a large donation to help us!</p>
+                    <div class="no-paddings offset-3 col-6 offset-lg-2 col-lg-8 offset-xl-0 col-xl-12">
+                        <div class="between v-spacing-2 wrap">
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=50">50€</a>
+                            <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=0">Other</a>
+                        </div>
                     </div>
-                    <div class="text-grey">
-                      in <a class="bw-link--grey" href="{{forum.forum.get_absolute_url}}">{{forum.forum}}</a>,
-                      by <a href="{% url 'account' forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a>
-                      <br>{{forum.last_post.created|timesince}} ago
-                    </div>
-                </article>
-            {% endfor %}
-          <div class="center v-spacing-top-4">
-              <a class="no-hover" href="{% url 'forums-forums' %}"><button class="btn-inverse">More posts here</button></a>
-          </div>
-        </section>
-        {% endcache %}
-      </aside>
+                    {% if top_donor_user_id %}
+                        {% cache 300 bw_front_page_top_donor %}
+                            <div class="text-center">
+                                <div class="v-spacing-1 h-spacing-2">Top donor this week:</div>
+                                {% display_user_top_donor top_donor_user_id top_donor_donation_amount %}
+                            </div>
+                        {% endcache %}
+                    {% endif %}
+                </section>
+                <hr />
+                {% cache 300 bw_forum_threads %}
+                    <section class="v-padding-4">
+                        <h4 class="v-spacing-1">Hot forum threads</h4>
+                        {% for forum in current_forum_threads %}
+                            <article class="v-padding-2">
+                                <div class="v-spacing-1">
+                                    <a class="bw-link--black" href="{{forum.last_post.get_absolute_url}}">{{ forum.title }}</a>
+                                </div>
+                                <div class="text-grey">
+                                    in <a class="bw-link--grey" href="{{forum.forum.get_absolute_url}}">{{forum.forum}}</a>,
+                                    by <a href="{% url 'account' forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a>
+                                    <br>{{forum.last_post.created|timesince}} ago
+                                </div>
+                            </article>
+                        {% endfor %}
+                        <div class="center v-spacing-top-4">
+                            <a class="no-hover" href="{% url 'forums-hot-threads' %}"><button class="btn-inverse">More threads here</button></a>
+                        </div>
+                    </section>
+                    <hr />
+                {% endcache %}
+                <section class="v-padding-4">
+                    <div class="bw-front__freesound_labs_logo v-spacing-3"></div>
+                    <p class="text-grey v-spacing-2">Freesound Labs is a directory of apps, hacks, projects, and research using Freesound. <a class="bw-link--grey" href="https://labs.freesound.org" target="_blank">Click here to learn more!</a></p>
+                </section>
+            </aside>
+        </div>
     </div>
-  </div>
 {% endblock %}
 
 {% block extrabody %}

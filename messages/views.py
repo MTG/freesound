@@ -21,7 +21,7 @@
 import json
 from textwrap import wrap
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -34,7 +34,7 @@ from django.urls import reverse
 
 from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha
 from messages.models import Message, MessageBody
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_template_cache, invalidate_user_template_caches
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 
@@ -65,7 +65,7 @@ def messages_change_state(request):
             elif choice == "r":
                 messages.update(is_read=True)
 
-            invalidate_template_cache("user_header", request.user.id)
+            invalidate_user_template_caches(request.user.id)
 
     return HttpResponseRedirect(request.POST.get("next", reverse("messages")))
 
@@ -105,7 +105,7 @@ def message(request, message_id):
 
     if not message.is_read:
         message.is_read = True
-        invalidate_template_cache("user_header", request.user.id)
+        invalidate_user_template_caches(request.user.id)
         message.save()
 
     tvars = {'message': message}
@@ -122,11 +122,11 @@ def new_message(request, username=None, message_id=None):
         form_class = MessageReplyFormWithCaptcha
     
     if request.method == 'POST':
-        form = form_class(request.POST)
+        form = form_class(request, request.POST)
 
         if request.user.profile.is_blocked_for_spam_reports():
             messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account "
-                                                         "has been temporaly blocked after multiple spam reports")
+                                                         "has been temporally blocked after multiple spam reports")
         else:
             if form.is_valid():
                 user_from = request.user
@@ -139,7 +139,7 @@ def new_message(request, username=None, message_id=None):
                 Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False,
                                        is_archived=False, is_read=False)
 
-                invalidate_template_cache("user_header", user_to.id)
+                invalidate_user_template_caches(user_to.id)
 
                 try:
                     # send the user an email to notify him of the sent message!
@@ -154,7 +154,6 @@ def new_message(request, username=None, message_id=None):
 
                 return HttpResponseRedirect(reverse("messages"))
     else:
-        form = form_class(request.POST)
         if message_id:
             try:
                 message = Message.objects.get(id=message_id)
@@ -163,22 +162,29 @@ def new_message(request, username=None, message_id=None):
                     raise Http404
                 
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
-                body = ''.join(BeautifulSoup(body).findAll(text=True))
-                body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
-                                  for line in body.split("\n")])
-                body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
+                body = quote_message_for_reply(body, message.user_from.username)
 
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                form = form_class(initial={"to": to, "subject": subject, "body": body})
+                form = form_class(request, initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
                 pass
         elif username:
-            form = form_class(initial={"to": username})
+            form = form_class(request, initial={"to": username})
+        else:
+            form = form_class(request)
 
     tvars = {'form': form}
     return render(request, 'messages/new.html', tvars)
+
+
+def quote_message_for_reply(body, username):
+    body = ''.join(BeautifulSoup(body).find_all(text=True))
+    body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
+                        for line in body.split("\n")])
+    body = "> --- " + username + " wrote:\n>\n" + body
+    return body
 
 
 def get_previously_contacted_usernames(user):

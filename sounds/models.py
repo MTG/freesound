@@ -20,49 +20,53 @@
 #     See AUTHORS file.
 #
 
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import JSONField
-from django.template.loader import render_to_string
-from django.utils.encoding import smart_unicode
-from django.db import models, connection, transaction
-from django.db.models import F
-from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
-from django.dispatch import receiver
-from django.core.exceptions import ObjectDoesNotExist
-from django.urls import reverse
-from django.utils.text import Truncator
-from general.models import OrderedModel, SocialModel
-from geotags.models import GeoTag
-from tags.models import TaggedItem, Tag
-from utils.cache import invalidate_template_cache
-from utils.text import slugify
-from utils.locations import locations_decorator
-from utils.search.search_general import delete_sound_from_solr
-from utils.similarity_utilities import delete_sound_from_gaia
-from utils.mail import send_mail_template
-from utils.tags import clean_and_split_tags
-from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, \
-    EXPECTED_HEADER_NO_USERNAME
-from search.views import get_pack_tags
-from apiv2.models import ApiV2Client
-from tickets.models import Ticket, Queue, TicketComment
-from comments.models import Comment
-from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
-import accounts.models
-import os
-import logging
-import random
-import gearman
-import subprocess
 import datetime
+import glob
 import json
+import logging
+import math
+import os
+import random
+import yaml
 import zlib
 
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import JSONField
+from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
+from django.db.models import F
+from django.db.models.functions import Greatest
+from django.db.models.signals import pre_delete, post_delete, post_save
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import smart_unicode
+from django.utils.functional import cached_property
+from django.utils.text import Truncator
 
-search_logger = logging.getLogger('search')
+import accounts.models
+from apiv2.models import ApiV2Client
+from comments.models import Comment
+from freesound.celery import app as celery_app
+from general import tasks
+from general.models import OrderedModel, SocialModel
+from geotags.models import GeoTag
+from ratings.models import SoundRating
+from tags.models import TaggedItem, Tag
+from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
+from tickets.models import Ticket, Queue, TicketComment
+from utils.cache import invalidate_template_cache
+from utils.locations import locations_decorator
+from utils.mail import send_mail_template
+from utils.search import get_search_engine, SearchEngineException
+from utils.search.search_sounds import delete_sounds_from_search_engine
+from utils.similarity_utilities import delete_sound_from_gaia
+from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
+from utils.text import slugify
+
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 sentry_logger = logging.getLogger('sentry')
@@ -82,8 +86,17 @@ class License(OrderedModel):
         return self.short_summary if self.short_summary is not None else Truncator(self.summary)\
             .words(20, html=True, truncate='...')
 
+    @property
+    def name_with_version(self):
+        version_label = ''
+        if '3.0' in self.deed_url:
+            version_label = ' 3.0'
+        elif '4.0' in self.deed_url:
+            version_label = ' 4.0'
+        return '{}{}'.format(self.name, version_label)
+
     def __unicode__(self):
-        return self.name
+        return self.name_with_version
 
 
 class BulkUploadProgress(models.Model):
@@ -100,11 +113,16 @@ class BulkUploadProgress(models.Model):
         ("C", 'Closed'),  # Process has finished and has been closes
     )
     progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
-    csv_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+    csv_filename = models.CharField(max_length=512, null=True, blank=True, default=None)
     original_csv_filename = models.CharField(max_length=255)
     validation_output = JSONField(null=True)
     sounds_valid = models.PositiveIntegerField(null=False, default=0)
     description_output = JSONField(null=True)
+
+    @property
+    def csv_path(self):
+        directory = os.path.join(settings.CSV_PATH, str(self.user.id))
+        return os.path.join(directory, self.csv_filename)
 
     def get_bulk_upload_basic_data_for_log(self):
         return {
@@ -337,6 +355,32 @@ class SoundManager(models.Manager):
         else:
             return None
 
+    def get_analyzers_data_select_sql(self):
+        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data is selected
+        in the bulk query"""
+        analyzers_select_section_parts = []
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'descriptors_map' in analyzer_info:
+                analyzers_select_section_parts.append("{0}.analysis_data as {0},"
+                                                      .format(analyzer_name.replace('-', '_')))
+        return "\n          ".join(analyzers_select_section_parts)
+
+    def get_analyzers_data_left_join_sql(self):
+        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data can be left joined
+        in the bulk query"""
+        analyzers_left_join_section_parts = []
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+            if 'descriptors_map' in analyzer_info:
+                analyzers_left_join_section_parts.append(
+                    "LEFT JOIN sounds_soundanalysis {0} ON (sound.id = {0}.sound_id AND {0}.analyzer = '{1}')"
+                        .format(analyzer_name.replace('-', '_'), analyzer_name))
+        return "\n          ".join(analyzers_left_join_section_parts)
+
+    def get_analysis_state_essentia_exists_sql(self):
+        """Returns the SQL bits to add analysis_state_essentia_exists to the returned data indicating if thers is a
+        SoundAnalysis objects existing for th given sound_id for the essentia analyzer and with status OK"""
+        return "          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{0}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,".format(settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
+
     def bulk_query_solr(self, sound_ids):
         """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
         of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
@@ -367,7 +411,8 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
-          ac_analsyis.analysis_data as ac_analysis,
+          geotags_geotag.location_name as geotag_name,
+          %s
           exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
           exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
           ARRAY(
@@ -386,13 +431,12 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
-                                                         AND ac_analsyis.extractor = %s)
-        WHERE
-          sound.id IN %s """
-        return self.raw(query, [ContentType.objects.get_for_model(Sound).id,
-                                settings.AUDIOCOMMONS_EXTRACTOR_NAME,
-                                tuple(sound_ids)])
+          %s
+        """ % (self.get_analyzers_data_select_sql(),
+               ContentType.objects.get_for_model(Sound).id,
+               self.get_analyzers_data_left_join_sql())
+        query += "WHERE sound.id IN %s"
+        return self.raw(query, [tuple(sound_ids)])
 
     def bulk_query(self, where, order_by, limit, args):
         """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or
@@ -412,7 +456,6 @@ class SoundManager(models.Manager):
           sound.bitdepth,
           sound.bitrate,
           sound.samplerate,
-          sound.analysis_state,
           sound.num_ratings,
           sound.description,
           sound.moderation_state,
@@ -429,8 +472,13 @@ class SoundManager(models.Manager):
           sounds_license.name as license_name,
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
+          geotags_geotag.lat as geotag_lat,
+          geotags_geotag.lon as geotag_lon,
+          geotags_geotag.location_name as geotag_name,
           sounds_remixgroup_sounds.id as remixgroup_id,
-          ac_analsyis.analysis_data as ac_analysis,
+          accounts_profile.has_avatar as user_has_avatar,
+          %s
+          %s
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -440,14 +488,16 @@ class SoundManager(models.Manager):
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
+          LEFT JOIN accounts_profile ON accounts_profile.user_id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
-          LEFT JOIN sounds_soundanalysis ac_analsyis ON (sound.id = ac_analsyis.sound_id 
-                                                         AND ac_analsyis.extractor = %s)
-          LEFT OUTER JOIN sounds_remixgroup_sounds
-               ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (ContentType.objects.get_for_model(Sound).id,
-                        "'%s'" % settings.AUDIOCOMMONS_EXTRACTOR_NAME,
+          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+          %s
+          LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
+        WHERE %s """ % (self.get_analysis_state_essentia_exists_sql(),
+                        self.get_analyzers_data_select_sql(),
+                        ContentType.objects.get_for_model(Sound).id,
+                        self.get_analyzers_data_left_join_sql(),
                         where, )
         if order_by:
             query = "%s ORDER BY %s" % (query, order_by)
@@ -582,12 +632,12 @@ class Sound(SocialModel):
     # state
     is_index_dirty = models.BooleanField(null=False, default=True)
     similarity_state = models.CharField(db_index=True, max_length=2, choices=SIMILARITY_STATE_CHOICES, default="PE")
-    analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")
+    analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")  # This field is no longer used and should be removed
 
     # counts, updated by django signals
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0, db_index=True)
-    avg_rating = models.FloatField(default=0)
+    avg_rating = models.FloatField(default=0)  # Store average rating from 0 to 10
     num_ratings = models.PositiveIntegerField(default=0)
 
     objects = SoundManager()
@@ -610,6 +660,8 @@ class Sound(SocialModel):
     def locations(self):
         id_folder = str(self.id/1000)
         sound_user_id = self.user_id
+        previews_url = settings.PREVIEWS_URL if not settings.USE_CDN_FOR_PREVIEWS else settings.CDN_PREVIEWS_URL
+        displays_url = settings.DISPLAYS_URL if not settings.USE_CDN_FOR_DISPLAYS else settings.CDN_DISPLAYS_URL
         return dict(
             path=os.path.join(settings.SOUNDS_PATH, id_folder, "%d_%d.%s" % (self.id, sound_user_id, self.type)),
             sendfile_url=settings.SOUNDS_SENDFILE_URL + "%s/%d_%d.%s" % (id_folder, self.id, sound_user_id, self.type),
@@ -617,24 +669,24 @@ class Sound(SocialModel):
                 HQ=dict(
                     mp3=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.mp3" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-hq.mp3" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-hq.mp3" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-hq.mp3" % (self.id, sound_user_id),
                     ),
                     ogg=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.ogg" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-hq.ogg" % (self.id, sound_user_id),
                     )
                 ),
                 LQ=dict(
                     mp3=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.mp3" % (self.id, sound_user_id),
                     ),
                     ogg=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
-                        url=settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
+                        url=previews_url + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.ogg" % (self.id, sound_user_id),
                     ),
                 )
@@ -644,72 +696,81 @@ class Sound(SocialModel):
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 wave=dict(
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 spectral_bw=dict(
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_L.jpg" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 wave_bw=dict(
                     M=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
                     ),
                     L=dict(
                         path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_L.png" % (self.id,
                                                                                                    sound_user_id)),
-                        url=settings.DISPLAYS_URL + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
+                        url=displays_url + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
                     )
                 )
             ),
             analysis=dict(
+                base_path=os.path.join(settings.ANALYSIS_PATH, id_folder),
                 statistics=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.%s" % (
-                        self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_statistics.%s" % (
-                        id_folder, self.id, sound_user_id, settings.ESSENTIA_STATS_OUT_FORMAT)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d-%s.yaml" % (
+                        self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)),
+                    url=settings.ANALYSIS_URL + "%s/%d-%s.yaml" % (
+                        id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
                 ),
                 frames=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.%s" % (
-                        self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)),
-                    url=settings.ANALYSIS_URL + "%s/%d_%d_frames.%s" % (
-                        id_folder, self.id, sound_user_id, settings.ESSENTIA_FRAMES_OUT_FORMAT)
+                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d-%s_frames.json" % (
+                        self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)),
+                    url=settings.ANALYSIS_URL + "%s/%d-%s_frames.json" % (
+                        id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
                 )
             )
         )
 
     def get_preview_abs_url(self):
-        return 'https://%s%s' % (Site.objects.get_current().domain, self.locations()['preview']['LQ']['mp3']['url'])
+        preview_url = self.locations()['preview']['LQ']['mp3']['url']
+        if (preview_url.startswith('http')):
+            # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
+            return preview_url
+        return 'https://%s%s' % (Site.objects.get_current().domain, preview_url)
 
     def get_thumbnail_abs_url(self, size='M'):
-        return 'https://%s%s' % (Site.objects.get_current().domain, self.locations()['display']['wave'][size]['url'])
+        thumbnail_url = self.locations()['display']['wave'][size]['url']
+        if (thumbnail_url.startswith('http')):
+            # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
+            return thumbnail_url
+        return 'https://%s%s' % (Site.objects.get_current().domain, thumbnail_url)
 
     def get_large_thumbnail_abs_url(self):
         return self.get_thumbnail_abs_url(size='L')
@@ -741,7 +802,7 @@ class Sound(SocialModel):
         return self.bitdepth not in [8, 16]
 
     def bitrate_warning(self):
-        return self.bitrate not in [32, 64, 96, 128, 160, 192, 224, 256, 320]
+        return self.bitrate not in settings.COMMON_BITRATES
 
     def channels_warning(self):
         return self.channels not in [1, 2]
@@ -750,9 +811,14 @@ class Sound(SocialModel):
         return self.duration * 1000
 
     def rating_percent(self):
-        if self.num_ratings <= settings.MIN_NUMBER_RATINGS:
+        if self.num_ratings < settings.MIN_NUMBER_RATINGS:
             return 0
         return int(self.avg_rating*10)
+
+    @property
+    def avg_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.avg_rating / 2
 
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
@@ -815,16 +881,6 @@ class Sound(SocialModel):
         """
         self.processing_ongoing_state = state
         self.save(update_fields=['processing_ongoing_state'])
-
-    def set_analysis_state(self, state):
-        """
-        Updates self.analysis_state field of the Sound object and saves to DB without updating other
-        fields. This function is used in cases when two instances of the same Sound object could be edited by
-        two processes in parallel and we want to avoid possible field overwrites.
-        :param str state: new state to which self.analysis_state should be set
-        """
-        self.analysis_state = state
-        self.save(update_fields=['analysis_state'])
 
     def set_similarity_state(self, state):
         """
@@ -909,7 +965,9 @@ class Sound(SocialModel):
             self.mark_index_dirty(commit=False)
             self.processing_state = new_state
             self.processing_date = datetime.datetime.now()
-            self.processing_log = processing_log
+            if self.processing_log is None:
+                self.processing_log = ''
+            self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
             self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
 
             if new_state == 'FA':
@@ -924,7 +982,9 @@ class Sound(SocialModel):
         else:
             # If processing state has not changed, only update the processing date and log
             self.processing_date = datetime.datetime.now()
-            self.processing_log = processing_log
+            if self.processing_log is None:
+                self.processing_log = ''
+            self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
             self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
@@ -1064,47 +1124,64 @@ class Sound(SocialModel):
         """
         Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
         other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
-        state and analysis state of the sound. 'high_priority' can be set to True to send the processing and/or
-        analysis jobs with high priority to the gearman job server.
+        state and analysis state of the sound.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
         self.process(force=force, high_priority=high_priority)
         self.analyze(force=force, high_priority=high_priority)
 
     def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
         """
-        Trigger processing of the sound if analysis_state is not "OK" or force=True.
+        Trigger processing of the sound if processing_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
-        'high_priority' argument can be set to True to send the processing job with high priority to the gearman job
-        server. Processing code generates the file previews and display images as well as fills some audio fields
-        of the Sound model.
+        Processing code generates the file previews and display images as well as fills some audio fields
+        of the Sound model. This method returns "True" if sound was sent to process, None otherwise.
+        NOTE: high_priority is not implemented and setting it has no effect
         """
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        if force or self.processing_state != "OK":
+        if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI") and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
-            gm_client.submit_job("process_sound", json.dumps({
-                'sound_id': self.id,
-                'skip_previews': skip_previews,
-                'skip_displays': skip_displays
-            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
+            tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
+            return True
 
-    def analyze(self, force=False, high_priority=False):
-        """
-        Trigger analysis of the sound if analysis_state is not "OK" or force=True. 'high_priority' argument can be
-        set to True to send the processing job with high priority to the gearman job server. Analysis code runs
-        Essentia's FreesoundExtractor and stores the results of the analysis in a JSON file.
-        """
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        if force or self.analysis_state != "OK":
-            self.set_analysis_state("QU")
-            gm_client.submit_job("analyze_sound", json.dumps({
-                'sound_id': self.id
-            }), wait_until_complete=False, background=True, priority=gearman.PRIORITY_HIGH if high_priority else None)
-            sounds_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
+    def estimate_num_processing_attemps(self):
+        # Estimates how many processing attemps have been made by looking at the processing logs 
+        if self.processing_log is not None:
+            return max(1, self.processing_log.count('----Processed sound'))
+        else:
+            return 0
+
+    def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
+        # Note that "high_priority" is not implemented but needs to be here for compatibility with older code
+        if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
+            # If specified analyzer is not one of the analyzers configured, do nothing
+            if verbose:
+                sounds_logger.info("Not sending sound {} to unknown analyzer {}".format(self.id, analyzer))
+            return None
+
+        sa, created = SoundAnalysis.objects.get_or_create(sound=self, analyzer=analyzer)
+        if not sa.analysis_status == "QU" or force or created:
+            # Only send to queue if not already in queue
+            sa.num_analysis_attempts += 1
+            sa.analysis_status = "QU"
+            sa.analysis_time = 0
+            sa.last_sent_to_queue = datetime.datetime.now()
+            sa.save(update_fields=['num_analysis_attempts', 'analysis_status', 'last_sent_to_queue', 'analysis_time'])
+            sound_path = self.locations('path')
+            if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
+                sound_path = self.locations("preview.LQ.mp3.path")
+            celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
+                        'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({'duration': self.duration})}, queue=analyzer)
+            if verbose:
+                sounds_logger.info("Sending sound {} to analyzer {}".format(self.id, analyzer))
+        else:
+            if verbose:
+                sounds_logger.info("Not sending sound {} to analyzer {} as is already queued".format(self.id, analyzer))
+        return sa
 
     def delete_from_indexes(self):
-        delete_sound_from_solr(self.id)
-        delete_sound_from_gaia(self)
+        delete_sounds_from_search_engine([self.id])
+        delete_sound_from_gaia(self.id)
 
     def invalidate_template_caches(self):
         for is_explicit in [True, False]:
@@ -1118,9 +1195,24 @@ class Sound(SocialModel):
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
-                for bw_player_size in ['small', 'middle', 'big_no_info', 'small_no_info']:
-                    invalidate_template_cache(
-                        "bw_display_sound", self.id, is_authenticated, is_explicit, bw_player_size)
+
+        # NOTE: in BW we removed the display sound caches because DB queries are optimized and the caches are not
+        # very useful (DB queries are also optimal in NG, but we never removed caching code). If we were to enable
+        # them again, check old code of this function in the repository history.
+
+    def get_geotag_name(self):
+        if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:
+            if hasattr(self, 'geotag_name'):
+                name = self.geotag_name
+            else:
+                name = self.geotag.location_name
+            if name:
+                return name
+        if hasattr(self, 'geotag_lat'):
+            return '{:.3f}, {:.3f}'.format(self.geotag_lat, self.geotag_lon)
+        else:
+            return '{:.3f}, {:.3f}'.format(self.geotag.lat, self.geotag.lon)
+
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
@@ -1205,67 +1297,72 @@ class SoundOfTheDay(models.Model):
 
 
 class DeletedSound(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     sound_id = models.IntegerField(default=0, db_index=True)
     data = JSONField()
 
 
 def on_delete_sound(sender, instance, **kwargs):
-    if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        ds, create = DeletedSound.objects.get_or_create(
-            sound_id=instance.id,
-            user=instance.user,
-            defaults={'data': {}})
 
-        # Copy relevant data to DeletedSound for future research
-        # Note: we do not store information about individual downloads and ratings, we only
-        # store count and average (for ratings). We do not store at all information about bookmarks.
+    ds, create = DeletedSound.objects.get_or_create(
+        sound_id=instance.id,
+        defaults={'data': {}})
+    ds.user = instance.user
 
-        try:
-            data = Sound.objects.filter(pk=instance.pk).values()[0]
-        except IndexError:
-            # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
-            # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
-            # this part of the code. If that happens, return form this function without creating the DeletedSound
-            # object nor doing any of the other steps as this will have been already carried out.
-            return
+    # Copy relevant data to DeletedSound for future research
+    # Note: we do not store information about individual downloads and ratings, we only
+    # store count and average (for ratings). We do not store at all information about bookmarks.
 
-        pack = None
-        if instance.pack:
-            pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
-        data['pack'] = pack
+    try:
+        data = Sound.objects.filter(pk=instance.pk).values()[0]
+    except IndexError:
+        # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
+        # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
+        # this part of the code. If that happens, return form this function without creating the DeletedSound
+        # object nor doing any of the other steps as this will have been already carried out.
+        return
 
-        geotag = None
-        if instance.geotag:
-            geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
-        data['geotag'] = geotag
+    username = None
+    if instance.user:
+        username = instance.user.username
+    data['username'] = username
 
-        license = None
-        if instance.license:
-            license = License.objects.filter(pk=instance.license.pk).values()[0]
-        data['license'] = license
+    pack = None
+    if instance.pack:
+        pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
+    data['pack'] = pack
 
-        data['comments'] = list(instance.comments.values())
-        data['tags'] = list(instance.tags.values())
-        data['sources'] = list(instance.sources.values('id'))
+    geotag = None
+    if instance.geotag:
+        geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
+    data['geotag'] = geotag
 
-        # Alter datetime objects in data to avoid serialization problems
-        data['created'] = str(data['created'])
-        data['moderation_date'] = str(data['moderation_date'])
-        data['processing_date'] = str(data['processing_date'])
-        data['date_recorded'] = str(data['date_recorded'])  # This field is not used
-        if instance.pack:
-            data['pack']['created'] = str(data['pack']['created'])
-            data['pack']['last_updated'] = str(data['pack']['last_updated'])
-        for tag in data['tags']:
-            tag['created'] = str(tag['created'])
-        for comment in data['comments']:
-            comment['created'] = str(comment['created'])
-        if instance.geotag:
-            geotag['created'] = str(geotag['created'])
-        ds.data = data
-        ds.save()
+    license = None
+    if instance.license:
+        license = License.objects.filter(pk=instance.license.pk).values()[0]
+    data['license'] = license
+
+    data['comments'] = list(instance.comments.values())
+    data['tags'] = list(instance.tags.values())
+    data['sources'] = list(instance.sources.values('id'))
+
+    # Alter datetime objects in data to avoid serialization problems
+    data['created'] = str(data['created'])
+    data['moderation_date'] = str(data['moderation_date'])
+    data['processing_date'] = str(data['processing_date'])
+    data['date_recorded'] = str(data['date_recorded'])  # This field is not used
+    if instance.pack:
+        data['pack']['created'] = str(data['pack']['created'])
+        data['pack']['last_updated'] = str(data['pack']['last_updated'])
+    for tag in data['tags']:
+        tag['created'] = str(tag['created'])
+    for comment in data['comments']:
+        comment['created'] = str(comment['created'])
+    if instance.geotag:
+        geotag['created'] = str(geotag['created'])
+    ds.data = data
+    ds.save()
 
     try:
         if instance.geotag:
@@ -1278,8 +1375,12 @@ def on_delete_sound(sender, instance, **kwargs):
 
 
 def post_delete_sound(sender, instance, **kwargs):
-    # after deleted sound update num_sound on profile and pack
+    # after deleted sound update num_sounds on profile and pack
     try:
+        # before updating the number of sounds here, we need to refresh the object from the DB because another signal
+        # triggered after a sound is deleted (the post_delete signal on Download object) also needs to modify the
+        # user profile and if we don't refresh here the changes by that other signal will be overwritten when saving
+        instance.user.profile.refresh_from_db()
         instance.user.profile.update_num_sounds()
     except ObjectDoesNotExist:
         # If this is triggered after user.delete() (instead of sound.delete() or user.profile.delete_user()),
@@ -1324,6 +1425,8 @@ class Pack(SocialModel):
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
     is_deleted = models.BooleanField(db_index=True, default=False)
 
+    VARIOUS_LICENSES_NAME = 'Various licenses'
+
     objects = PackManager()
 
     def __unicode__(self):
@@ -1361,13 +1464,25 @@ class Pack(SocialModel):
         sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
-    def get_pack_tags(self, max_tags=50):
-        pack_tags = get_pack_tags(self)
-        if pack_tags is not False:
-            tags = [t[0] for t in pack_tags['tag']]
+    def get_pack_tags(self):
+        try:
+            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+            tags = [tag for tag, count in pack_tags_counts]
             return {'tags': tags, 'num_tags': len(tags)}
-        else:
-            return -1
+        except SearchEngineException as e:
+            return False
+        except Exception as e:
+            return False
+
+    def get_pack_tags_bw(self):
+        try:
+            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+                    for tag, count in pack_tags_counts]
+        except SearchEngineException as e:
+            return []
+        except Exception as e:
+            return []
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
@@ -1397,6 +1512,74 @@ class Pack(SocialModel):
                 licenses=licenses,
                 sound_list=sounds_list))
         return attribution
+
+    @property
+    def avg_rating(self):
+        # Return average rating from 0 to 10
+        # TODO: don't compute this realtime, store it in DB
+        ratings = list(SoundRating.objects.filter(sound__pack=self).values_list('rating', flat=True))
+        if ratings:
+            return 1.0*sum(ratings)/len(ratings)
+        else:
+            return 0
+
+    @property
+    def avg_rating_0_5(self):
+        # Returns the average raring, normalized from 0 tp 5
+        return self.avg_rating/2
+
+    @property
+    def num_ratings(self):
+        # TODO: store this as pack field instead of computing it live
+        return SoundRating.objects.filter(sound__pack=self).count()
+
+    def get_total_pack_sounds_length(self):
+        # TODO: don't compute this realtime, store it in DB
+        durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
+        return sum(durations)
+
+    @cached_property
+    def license_summary_name_and_id(self):
+        # TODO: store this in DB?
+        licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
+        license_ids = [lid for _, lid in licenses_data]
+        license_names = [lname for lname, _ in licenses_data]
+
+        if len(set(license_ids)) == 1:
+            # All sounds have same license
+            license_summary_name = license_names[0]
+            license_id = license_ids[0]
+        else:
+            license_summary_name = self.VARIOUS_LICENSES_NAME
+            license_id = None
+        return license_summary_name, license_id
+
+    @property
+    def license_summary_text(self):
+        # TODO: store this in DB?
+        license_summary_name, license_summary_id = self.license_summary_name_and_id
+        if license_summary_name != self.VARIOUS_LICENSES_NAME:
+            return License.objects.get(id=license_summary_id).get_short_summary
+        else:
+            return "This pack contains sounds released under various licenses. Please check every individual sound page " \
+                   "(or the <i>readme</i> file upon downloading the pack) to know under which " \
+                   "license each sound is released."
+
+    @property
+    def license_summary_deed_url(self):
+        license_summary_name, license_summary_id = self.license_summary_name_and_id
+        if license_summary_name != self.VARIOUS_LICENSES_NAME:
+            return License.objects.get(id=license_summary_id).deed_url
+        else:
+            return ""
+
+    @property
+    def has_geotags(self):
+        # Returns whether or not the pack has geotags
+        # This is used in the pack page to decide whether or not to show the geotags map. Doing this generates one
+        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a pack (which would
+        # return empty query set if no geotags and indeed generate more queries).
+        return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
 
 
 class Flag(models.Model):
@@ -1436,9 +1619,10 @@ class Download(models.Model):
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs['instance']
     if download.sound_id:
-        Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') - 1)
+        Sound.objects.filter(id=download.sound_id).update(
+            is_index_dirty=True, num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_sound_downloads=F('num_sound_downloads') - 1)
+            num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=Download)
@@ -1446,9 +1630,10 @@ def update_num_downloads_on_insert(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
         if download.sound_id:
-            Sound.objects.filter(id=download.sound_id).update(num_downloads=F('num_downloads') + 1)
+            Sound.objects.filter(id=download.sound_id).update(
+                is_index_dirty=True, num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-                num_sound_downloads=F('num_sound_downloads') + 1)
+                num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
 
 
 class PackDownload(models.Model):
@@ -1466,18 +1651,18 @@ class PackDownloadSound(models.Model):
 @receiver(post_delete, sender=PackDownload)
 def update_num_downloads_on_delete_pack(**kwargs):
     download = kwargs['instance']
-    Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') - 1)
+    Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
     accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-        num_pack_downloads=F('num_pack_downloads') - 1)
+        num_pack_downloads=Greatest(F('num_pack_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=PackDownload)
 def update_num_downloads_on_insert_pack(**kwargs):
     download = kwargs['instance']
     if kwargs['created']:
-        Pack.objects.filter(id=download.pack_id).update(num_downloads=F('num_downloads') + 1)
+        Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_pack_downloads=F('num_pack_downloads') + 1)
+            num_pack_downloads=Greatest(F('num_pack_downloads') + 1, 0))
 
 
 class RemixGroup(models.Model):
@@ -1502,36 +1687,119 @@ class SoundLicenseHistory(models.Model):
 class SoundAnalysis(models.Model):
     """Reference to the analysis output for a given sound and extractor.
     The actual output can be either directly stored in the model (using analysis_data field),
-    or can be stored in a JSON file in disk (using the analysis_filename field).
-
-    NOTE: currently we only use this model to store the output of the Audio Commons extractor (using
-    analysis_data field). We chose to implement it more generically (i.e. name the model SoundAnalysis
-    instead of AudioCommonsAnalysis) so that we can use it in the future for standard Essentia analysis
-    or for other extractors as well, but for the current use case that wouldn't be needed.
+    or can be stored in a JSON/YAML file in disk.
     """
+    STATUS_CHOICES = (
+            ("QU", 'Queued'),
+            ("OK", 'Ok'),
+            ("SK", 'Skipped'),
+            ("FA", 'Failed'),
+        )
+
     sound = models.ForeignKey(Sound, related_name='analyses')
-    created = models.DateTimeField(auto_now_add=True)
-    extractor = models.CharField(db_index=True, max_length=255)
-    analysis_filename = models.CharField(max_length=255, null=True)
+    last_sent_to_queue = models.DateTimeField(auto_now_add=True)
+    last_analyzer_finished = models.DateTimeField(null=True)
+    analyzer = models.CharField(db_index=True, max_length=255)  # Analyzer name including version
     analysis_data = JSONField(null=True)
+    analysis_status = models.CharField(null=False, default="QU", db_index=True, max_length=2, choices=STATUS_CHOICES)
+    num_analysis_attempts = models.IntegerField(default=0)
+    analysis_time = models.FloatField(default=0)
 
     @property
-    def analysis_filepath(self):
-        """Returns the absolute path of the analysis file, which should be placed in the ANALYSIS_PATH
-        and under a sound ID folder structure like sounds and other sound-related files."""
-        id_folder = str(self.id / 1000)
-        return os.path.join(settings.ANALYSIS_PATH, id_folder, "%s" % self.analysis_filename)
+    def analysis_filepath_base(self):
+        """Returns the absolute path of the analysis files related with this SoundAnalysis object. Related files will
+         include analysis output but also logs. The base filepath should be complemented with the extension, which
+         could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
+         the ANALYSIS_PATH and under a sound ID folder structure like sounds and other sound-related files."""
+        id_folder = str(self.sound_id / 1000)
+        return os.path.join(settings.ANALYSIS_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
 
-    def get_analysis(self):
-        """Returns the contents of the analysis"""
-        if self.analysis_data:
-            return self.analysis_data
-        elif self.analysis_filename:
+    def load_analysis_data_from_file_to_db(self):
+        """This method checks the analysis output data which has been written to a file, and loads it to the
+        database using the SoundAnalysis.analysis_data field. The loading of the data into DB only happens if a
+        data mapping for the current analyzer has been specified in the Django settings. Note that for some analyzers
+        we don't actually want the data to be loaded in the DB as it would take a lot of space."""
+
+        def value_is_valid(value):
+            # By convention in the analyzer's code, if descriptors have a value of None, these should not be loaded/indexed
+            # by Freesound, therefore these should not be considered valid.
+            if value is None:
+                return False
+            # Postgres JSON data field can not store float values of nan or inf. Ideally these values should have never
+            # been outputted by the analyzers in the first place, but it can happen. We use this function here and skip
+            # indexing key/value pairs where the value is not valid for Postgres JSON data fields.
+            if type(value) == float:
+                return not math.isinf(value) and not math.isnan(value)
+            return True
+
+        if self.analysis_status == "OK" and \
+            'descriptors_map' in settings.ANALYZERS_CONFIGURATION.get(self.analyzer, {}):
+            analysis_results = self.get_analysis_data_from_file()
+            if analysis_results:
+                descriptors_map = settings.ANALYZERS_CONFIGURATION[self.analyzer]['descriptors_map']
+                analysis_data_for_db = {}
+                for file_descriptor_key_path, db_descriptor_key, _ in descriptors_map:
+                    # TODO: here we could implement support for nested keys in the analysis file, maybe by accessing
+                    # TODO: nested keys with dot notation (e.g. "key1.nested_key2")
+                    if file_descriptor_key_path in analysis_results:
+                        value = analysis_results[file_descriptor_key_path]
+                        if value_is_valid(value):
+                            analysis_data_for_db[db_descriptor_key] = value
+                self.analysis_data = analysis_data_for_db
+            else:
+                self.analysis_data = None
+        self.save(update_fields=['analysis_data'])
+
+    def get_analysis_data_from_file(self):
+        """Returns the analysis data as stored in file or returns empty dict if no file exists. It tries
+        extensions .json and .yaml as these are the supported formats for analysis results"""
+        if os.path.exists(self.analysis_filepath_base + '.json'):
             try:
-                return json.load(open(self.analysis_filepath))
-            except IOError:
+                return json.load(open(self.analysis_filepath_base + '.json'))
+            except Exception:
                 pass
-        return None
+        if os.path.exists(self.analysis_filepath_base + '.yaml'):
+            try:
+                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CLoader)
+            except Exception:
+                pass
+        return {}
+
+    def get_analysis_data(self):
+        """Returns the output of the analysis, either returning them from the DB or from a file in disk"""
+        if self.analysis_status == "OK":
+            if self.analysis_data:
+                return self.analysis_data
+            else:
+                return self.get_analysis_data_from_file()
+        return {}
+
+    def get_analysis_logs(self):
+        """Returns the logs of the analysis"""
+        try:
+            fid = open(self.analysis_filepath_base + '.log')
+            file_contents = fid.read()
+            fid.close()
+            return file_contents
+        except IOError:
+            return 'No logs available...'
+
+    def re_run_analysis(self, verbose=True):
+        self.sound.analyze(self.analyzer, force=True, verbose=verbose)
+
+    def __str__(self):
+        return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)
 
     class Meta:
-        unique_together = (("sound", "extractor"),)
+        unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination
+
+def on_delete_sound_analysis(sender, instance, **kwargs):
+    # Right before deleting a SoundAnalysis object, delete also the associated log and analysis files (if any)
+    for filepath in glob.glob(instance.analysis_filepath_base + '*'):
+        try:
+            os.remove(filepath)
+        except Exception as e:
+            pass
+
+pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
+

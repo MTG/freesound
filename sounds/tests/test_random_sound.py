@@ -50,20 +50,20 @@ class RandomSoundViewTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.views.get_random_sound_from_solr')
+    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view(self, random_sound):
         """ Get a sound from solr and redirect to it. """
         users, packs, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
 
         # We only use the ID field from solr
-        random_sound.return_value = {'id': sound.id}
+        random_sound.return_value = sound.id
 
         response = self.client.get(reverse('sounds-random'))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
 
-    @mock.patch('sounds.views.get_random_sound_from_solr')
+    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view_bad_solr(self, random_sound):
         """ Solr may send us a sound id which no longer exists (index hasn't been updated).
         In this case, use the database access """
@@ -77,7 +77,7 @@ class RandomSoundViewTestCase(TestCase):
         sound.save()
 
         # We only use the ID field from solr
-        random_sound.return_value = {'id': sound.id+100}
+        random_sound.return_value = sound.id+100
 
         # Even though solr returns sound.id+100, we find we are redirected to the db sound, because
         # we call Sound.objects.random
@@ -85,7 +85,7 @@ class RandomSoundViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
 
-    @mock.patch('sounds.views.get_random_sound_from_solr')
+    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view_no_solr(self, random_sound):
         """ If solr is down, get a random sound from the database and redirect to it. """
         users, packs, sounds = create_user_and_sounds(num_sounds=1)
@@ -98,7 +98,7 @@ class RandomSoundViewTestCase(TestCase):
         sound.save()
 
         # Returned if there is an issue accessing solr
-        random_sound.return_value = {}
+        random_sound.return_value = 0
 
         # we find the sound due to Sound.objects.random
         response = self.client.get(reverse('sounds-random'))
@@ -221,6 +221,14 @@ class SoundOfTheDayTestCase(TestCase):
         sound_of_days = SoundOfTheDay.objects.count()
         self.assertEqual(sound_of_days, 6)
 
+    def test_create_sounds_command_clears_random_sound_cache(self):
+        """When generating new random sounds with the management command, we should clear
+        the cache storing the current random sound to make sure when the sound is needed again
+        the correct sound ID will be retrieved from the sound of the day table."""
+        cache.set(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY, 1234)
+        call_command("create_random_sounds")
+        self.assertIsNone(cache.get(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY, None))
+
     def test_send_email_once(self):
         """If we have a SoundOfTheDay, send the sound's user an email, but only once"""
         sound = Sound.objects.get(id=19)
@@ -257,4 +265,4 @@ class SoundOfTheDayTestCase(TestCase):
         sound = Sound.objects.get(id=19)
         sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
         sound_id = get_sound_of_the_day_id()
-        cache_set.assert_called_with("random_sound", 19, 48600)
+        cache_set.assert_called_with(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY, 19, 48600)

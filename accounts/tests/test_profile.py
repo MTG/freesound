@@ -34,14 +34,19 @@ from django.urls import reverse
 from django.utils.http import int_to_base36
 
 import accounts.models
+import utils.search.backends.solr451custom
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
 from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Thread, Post
-from sounds.models import Pack
+from sounds.models import Pack, Download, PackDownload
 from tags.models import TaggedItem
 from utils.mail import send_mail
-from utils.test_helpers import override_avatars_path_with_temp_directory
+from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
+# Below we import SolrResponseInterpreter because we're using them in the 
+# tests to process data returned from Solr. Ideally we should make this test agnostic of search backend and 
+# prepare fake search data as it would be afeter being processed by SolrResponseInterpreter.
+from utils.search.backends.solr451custom import SolrResponseInterpreter
 
 
 class ProfileGetUserTags(TestCase):
@@ -49,28 +54,24 @@ class ProfileGetUserTags(TestCase):
 
     def test_user_tagcloud_solr(self):
         user = User.objects.get(username="Anton")
-        mock_solr = mock.Mock()
+        mock_search_engine = mock.Mock()
         conf = {
-            'select.return_value': {
-                'facet_counts': {
-                    'facet_ranges': {},
-                    'facet_fields': {'tag': ['conversation', 1, 'dutch', 1, 'glas', 1, 'glass', 1, 'instrument', 2,
-                                             'laughter', 1, 'sine-like', 1, 'struck', 1, 'tone', 1, 'water', 1]},
-                    'facet_dates': {},
-                    'facet_queries': {}
-                },
-                'responseHeader': {
-                    'status': 0,
-                    'QTime': 4,
-                    'params': {'fq': 'username:\"Anton\"', 'facet.field': 'tag', 'f.tag.facet.limit': '10',
-                               'facet': 'true', 'wt': 'json', 'f.tag.facet.mincount': '1', 'fl': 'id', 'qt': 'dismax'}
-                },
-                'response': {'start': 0, 'numFound': 48, 'docs': []}
-            }
+            'get_user_tags.return_value': [
+                ('conversation', 1),
+                ('dutch', 1),
+                ('glas', 1),
+                ('glass', 1),
+                ('instrument', 2),
+                ('laughter', 1),
+                ('sine-like', 1),
+                ('struck', 1),
+                ('tone', 1),
+                ('water', 1)
+            ]
         }
-        mock_solr.return_value.configure_mock(**conf)
-        accounts.models.Solr = mock_solr
-        tag_names = [item["name"] for item in list(user.profile.get_user_tags())]
+        mock_search_engine.return_value.configure_mock(**conf)
+        accounts.models.get_search_engine = mock_search_engine
+        tag_names = [item['name'] for item in user.profile.get_user_tags()]
         used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
         non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
 
@@ -78,9 +79,9 @@ class ProfileGetUserTags(TestCase):
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
         self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
 
-        # Test solr not available return False
-        conf = {'select.side_effect': Exception}
-        mock_solr.return_value.configure_mock(**conf)
+        # Test search engine not available return False
+        conf = {'get_user_tags.side_effect': Exception}
+        mock_search_engine.return_value.configure_mock(**conf)
         self.assertEqual(user.profile.get_user_tags(), False)
 
 
@@ -125,19 +126,21 @@ class UserEditProfile(TestCase):
                 'profile-not_shown_in_online_users_list': True,
             })
 
-            user = User.objects.get(username="testuser%d" % i)
+            user.refresh_from_db()
             self.assertEqual(user.old_usernames.count(), i + 1)
 
-        # Now the form should fail when we try to change the username
-        resp = self.client.post("/home/edit/", {
+        # Now the "username" field in the form will be "disabled" because maximum number of username changes has been
+        # reached. Therefore, the contents of "profile-username" in the POST request should have no effect and username
+        # should not be changed any further
+        self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
             'profile-username': 'testuser-error',
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
             'profile-not_shown_in_online_users_list': True,
         })
-
-        self.assertNotEqual(resp.context['profile_form'].errors, None)
+        user.refresh_from_db()
+        self.assertEqual(user.old_usernames.count(), settings.USERNAME_CHANGE_MAX_TIMES)
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
@@ -385,6 +388,7 @@ class ProfileEmailIsValid(TestCase):
 
 
 class ProfilePostInForumTest(TestCase):
+
     def setUp(self):
         self.user = User.objects.create_user("testuser", email='email@freesound.org')
         self.forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
@@ -393,7 +397,6 @@ class ProfilePostInForumTest(TestCase):
     def test_can_post_in_forum_unmoderated(self):
         """If you have an unmoderated post, you can't make another post"""
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="NM")
-
         can_post, reason = self.user.profile.can_post_in_forum()
         self.assertFalse(can_post)
         self.assertIn("you have previous posts", reason)
@@ -526,3 +529,58 @@ class ProfileEnabledEmailTypes(TestCase):
             UserEmailSetting.objects.create(user=user, email_type=email_type)
             email_types = user.profile.get_enabled_email_types()
             self.assertEqual(len(email_types), count + 1)
+
+
+class ProfileTestDownloadCountFields(TestCase):
+
+    fixtures = ['licenses']
+
+    def setUp(self):
+        self.user, self.packs, self.sounds = create_user_and_sounds(num_sounds=3, num_packs=3,
+                                                     processing_state="OK", moderation_state="OK")
+
+    @mock.patch('sounds.models.delete_sound_from_gaia')
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_download_sound_count_field_is_updated(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
+        # Test downloading sounds increases the "num_sound_downloads" field
+        for i in range(0, len(self.sounds)):
+            Download.objects.create(user=self.user, sound=self.sounds[i], license_id=self.sounds[i].license_id)
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_sound_downloads, i + 1)
+
+        # Test deleting downloaded sounds decreases the "num_sound_downloads" field
+        # Delete 2 of the 3 downloaded sounds
+        for i in range(0, len(self.sounds) - 1):
+            self.sounds[i].delete()  # This should decrease "num_sound_downloads" field
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_sound_downloads, len(self.sounds) - 1 - i)
+
+        # Now test that if the "num_sound_downloads" field is out of sync and deleting a sound would set it to
+        # -1, we will set it to 0 instead to avoid DB check constraint error
+        self.user.profile.num_sound_downloads = 0  # Set num_sound_downloads out of sync (should be 1 instead of 0)
+        self.user.profile.save()
+        self.sounds[2].delete()  # Delete the remaining sound
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.num_sound_downloads, 0)
+
+    def test_download_pack_count_field_is_updated(self):
+        # Test downloading packs increases the "num_pack_downloads" field
+        for i in range(0, len(self.packs)):
+            PackDownload.objects.create(user=self.user, pack=self.packs[i])
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_pack_downloads, i + 1)
+
+        # Test deleting downloaded packs decreases the "num_pack_downloads" field
+        # Delete 2 of the 3 downloaded packs
+        for i in range(0, len(self.packs) - 1):
+            self.packs[i].delete()  # This should decrease "num_sound_downloads" field
+            self.user.profile.refresh_from_db()
+            self.assertEqual(self.user.profile.num_pack_downloads, len(self.packs) - 1 - i)
+
+        # Now test that if the "num_pack_downloads" field is out of sync and deleting a pack would set it to
+        # -1, we will set it to 0 instead to avoid DB check constraint error
+        self.user.profile.num_pack_downloads = 0  # Set num_sound_downloads out of sync (should be 1 instead of 0)
+        self.user.profile.save()
+        self.packs[2].delete()  # Delete the remaining sound
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.num_pack_downloads, 0)

@@ -4,8 +4,8 @@
   </button>
 {% endmacro %}
 
-{% macro tags(allTags) %}
+{% macro tags(allTags, size=1, classname="") %}
   {% for tagName in allTags %}
-    {{ tag(tagName) }}
+    {{ tag(tagName, size, classname) }}
   {% endfor %}
 {% endmacro %}

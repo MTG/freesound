@@ -18,11 +18,15 @@
 #     See AUTHORS file.
 #
 
+from functools import wraps
+
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render as django_render
 from django.template import TemplateDoesNotExist
+from django.template.response import TemplateResponse
 from django.urls import reverse
+from django.utils.decorators import available_attrs
 
 
 def selected_frontend(request):
@@ -60,7 +64,7 @@ def render(request, template_name, context=None, content_type=None, status=None,
     except TemplateDoesNotExist:
 
         if name != settings.FRONTEND_DEFAULT:
-            # If the required template does can't be found using the dselected engine, try with the default engine
+            # If the required template does can't be found using the selected engine, try with the default engine
             return django_render(request, template_name, context, content_type, status, using=settings.FRONTEND_DEFAULT)
         else:
             # If the default engine was being used, then raise the exception normally
@@ -109,7 +113,7 @@ def defer_if_beastwhoosh(redirect_to_view):
     return decorator
 
 
-def redirect_if_beastwhoosh(redirect_url_name, kwarg_keys=None, query_string=''):
+def redirect_if_beastwhoosh(redirect_url_name='front-page', kwarg_keys=None, query_string=''):
     """
     Util decorator to be used in view which, when using Beast Whoosh frontend, should return an HTTP redirect to
     a new URL. A typical use case for this is two views whose functionality has been merged into a single one, or
@@ -150,10 +154,67 @@ def redirect_if_beastwhoosh(redirect_url_name, kwarg_keys=None, query_string='')
             if not using_beastwhoosh(request):
                 return view_func(request, *args, **kwargs)
             else:
-                new_args = [kwargs[key] for key in kwarg_keys]
+                if kwarg_keys is not None:
+                    new_args = [kwargs[key] for key in kwarg_keys]
+                else:
+                    new_args = []
                 url = reverse(redirect_url_name, args=new_args)
                 if query_string:
                     url += '?%s' % query_string
                 return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator
+
+
+def redirect_if_beastwhoosh_inline(function=None, redirect_url_name='front-page', kwarg_keys=None, query_string=''):
+    """
+    Works the same as redirect_if_beastwhoosh but can be used inline in urls.py url<>view definitions:
+
+    > redirect_if_beastwhoosh_inline(PasswordResetView.as_view(form_class=FsPasswordResetForm))
+    """
+    def decorator(view_func):
+        @wraps(view_func, assigned=available_attrs(view_func))
+        def _wrapped_view(request, *args, **kwargs):
+            if not using_beastwhoosh(request):
+                return view_func(request, *args, **kwargs)
+            else:
+                if kwarg_keys is not None:
+                    new_args = [kwargs[key] for key in kwarg_keys]
+                else:
+                    new_args = []
+                url = reverse(redirect_url_name, args=new_args)
+                if query_string:
+                    url += '?%s' % query_string
+                return HttpResponseRedirect(url)
+        return _wrapped_view
+    return decorator(function)
+
+
+class BwCompatibleTemplateResponse(TemplateResponse):
+
+    @property
+    def rendered_content(self):
+        """
+        This is a customized version of TemplateResponse required for compatibility with the co-existence of the two
+        front ends. Class-based views do not use the "render" shortcut to render the templates, so we can not use our
+        customized "render" shortcut (see above in this file) which selects the right frontend according to the
+        request and defaults to old frontend if template not found. We re-implement the same logic here, in the
+        BwCompatibleTemplateResponse class which must be used in Class-based views if we want them to be compatible
+        with BW frontend. As an example use of this class, see donations.views.DonationsList. Once we remove the old
+        interface, we'll be able to get rid of these helper methods.
+        """
+        name = selected_frontend(self._request)
+        self.using = name
+        try:
+            template = self.resolve_template(self.template_name)
+        except TemplateDoesNotExist:
+            if name != settings.FRONTEND_DEFAULT:
+                # If the required template does can't be found using the selected engine, try with the default engine
+                self.using = settings.FRONTEND_DEFAULT
+                template = self.resolve_template(self.template_name)
+            else:
+                # If the default engine was being used, then raise the exception normally
+                raise
+        context = self.resolve_context(self.context_data)
+        content = template.render(context, self._request)
+        return content

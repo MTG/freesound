@@ -127,8 +127,8 @@ class ChangeSoundOwnerTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
-    def test_change_sound_owner(self, delete_sound_solr):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_change_sound_owner(self, delete_sounds_from_search_engine):
         # Prepare some content
         userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
         userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
@@ -171,19 +171,18 @@ class ChangeSoundOwnerTestCase(TestCase):
         self.assertEqual(sound.original_path, fake_original_path_template.format(sound_id=sound.id, user_id=userB.id))
 
         # Delete original user and perform further checks
-        userA.delete()  # Completely delete form db (instead of user.profile.delete_user())
+        userA.profile.delete_user(delete_user_object_from_db=True)
         sound = Sound.objects.get(id=target_sound_id)
         self.assertItemsEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
-        calls = [mock.call(i) for i in remaining_sound_ids]
-        delete_sound_solr.assert_has_calls(calls)  # All other sounds by the user were deleted
+        delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in remaining_sound_ids], any_order=True)
 
 
 class ProfileNumSoundsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
-    def test_moderation_and_processing_state_changes(self, delete_sound_solr):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_moderation_and_processing_state_changes(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         self.assertEqual(user.profile.num_sounds, 0)  # Sound not yet moderated or processed
@@ -197,15 +196,15 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(user.profile.num_sounds, 1)  # Sound reprocessed second time and again set as ok
         sound.change_processing_state("FA")
         self.assertEqual(user.profile.num_sounds, 0)  # Sound failed processing
-        delete_sound_solr.assert_called_once_with(sound.id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound.id])
         sound.change_processing_state("OK")
         self.assertEqual(user.profile.num_sounds, 1)  # Sound processed again as ok
         sound.change_moderation_state("DE")
         self.assertEqual(user.profile.num_sounds, 0)  # Sound unmoderated
-        self.assertEqual(delete_sound_solr.call_count, 2) # Sound deleted once when going to FA, once when DE
+        self.assertEqual(delete_sounds_from_search_engine.call_count, 2) # Sound deleted once when going to FA, once when DE
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
-    def test_sound_delete(self, delete_sound_solr):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_sound_delete(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         sound_id = sound.id
@@ -217,17 +216,17 @@ class ProfileNumSoundsTestCase(TestCase):
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
         self.assertEqual(Comment.objects.count(), 0)
-        delete_sound_solr.assert_called_once_with(sound_id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound_id])
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
-    def test_deletedsound_creation(self, delete_sound_solr):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_deletedsound_creation(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         sound_id = sound.id
         sound.delete()
-        delete_sound_solr.assert_called_once_with(sound_id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound_id])
 
         self.assertEqual(DeletedSound.objects.filter(sound_id=sound_id).exists(), True)
         ds = DeletedSound.objects.get(sound_id=sound_id)
@@ -258,8 +257,8 @@ class PackNumSoundsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
-    def test_create_and_delete_sounds(self, delete_sound_solr):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_create_and_delete_sounds(self, delete_sounds_from_search_engine):
         N_SOUNDS = 5
         user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
         pack = packs[0]
@@ -272,7 +271,7 @@ class PackNumSoundsTestCase(TestCase):
         sound_to_delete = sounds[0]
         sound_to_delete_id = sound_to_delete.id
         sound_to_delete.delete()
-        delete_sound_solr.assert_called_once_with(sound_to_delete_id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound_to_delete_id])
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, N_SOUNDS - 1)  # Check num_sounds on delete sound
 
     def test_edit_sound(self):
@@ -285,7 +284,7 @@ class PackNumSoundsTestCase(TestCase):
         sound.change_moderation_state("OK")
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 1)  # Check pack has all sounds
 
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
         resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
             'submit': [u'submit'],
             'pack-new_pack': [u'new pack name'],
@@ -308,7 +307,7 @@ class PackNumSoundsTestCase(TestCase):
         sound_ids_pack1 = [s.id for s in pack1.sounds.all()]
         sound_ids_pack2 = [s.id for s in pack2.sounds.all()]
         sound_ids_pack2.append(sound_ids_pack1.pop())
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
             'submit': [u'submit'],
             'pack_sounds': u','.join([str(sid) for sid in sound_ids_pack2]),
@@ -341,14 +340,14 @@ class SoundViewsTestCase(TestCase):
 
     fixtures = ['licenses']
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
-    def test_delete_sound_view(self, delete_sound_solr):
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    def test_delete_sound_view(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
         sound = sounds[0]
         sound_id = sound.id
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # Try delete with incorrect encrypted sound id link (should not delete sound)
         encrypted_link = encrypt(u"%d\t%f" % (1234, time.time()))
@@ -370,7 +369,7 @@ class SoundViewsTestCase(TestCase):
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertRedirects(resp, reverse('accounts-home'))
-        delete_sound_solr.assert_called_once_with(sound.id)
+        delete_sounds_from_search_engine.assert_called_once_with([sound.id])
 
     def test_embed_iframe(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
@@ -395,7 +394,7 @@ class SoundViewsTestCase(TestCase):
         sound_id = sound.id
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
-        self.client.login(username=user.username, password='testpass')
+        self.client.force_login(user)
 
         # Get url of the sound
         url = reverse('sound', args=[sound.user.username, sound_id])
@@ -450,7 +449,7 @@ class SoundPackDownloadTestCase(TestCase):
             reverse('login'), reverse('sound', args=[self.sound.user.username, self.sound.id])))
 
             # Check download works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
             resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(resp.status_code, 200)
 
@@ -486,7 +485,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.sound.user.save()
 
             # Check download works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
             resp = self.client.get(reverse('sound-download', args=['testuser', self.sound.id]))
             # Check if response is 301
             self.assertEqual(resp.status_code, 301)
@@ -507,7 +506,7 @@ class SoundPackDownloadTestCase(TestCase):
             reverse('login'), reverse('pack', args=[self.sound.user.username, self.pack.id])))
 
             # Check donwload works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
             resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(resp.status_code, 200)
 
@@ -547,7 +546,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.pack.user.save()
 
             # Check donwload works successfully if user logged in
-            self.client.login(username=self.user.username, password='testpass')
+            self.client.force_login(self.user)
 
             # First check that the response is a 301
             resp = self.client.get(reverse('pack-download', args=['testuser', self.pack.id]))
@@ -588,13 +587,13 @@ class SoundSignatureTestCase(TestCase):
         self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (creator of the sound)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (non-creator of the sound)
-        self.client.login(username='testuservisitor', password='testpassword')
+        self.client.force_login(self.user_visitor)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertNotContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
@@ -617,13 +616,13 @@ class SoundSignatureTestCase(TestCase):
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (creator of the sound)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
 
         # Logged-in user (non-creator of the sound)
-        self.client.login(username='testuservisitor', password='testpassword')
+        self.client.force_login(self.user_visitor)
         resp = self.client.get(reverse('sound', args=[self.sound.user.username, self.sound.id]))
         self.assertContains(resp, self.SOUND_DESCRIPTION, status_code=200, html=True)
         self.assertContains(resp, self.USER_SOUND_SIGNATURE, status_code=200, html=True)
@@ -679,7 +678,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Test as an authenticated user, although it doesn't matter in this case because cache templates are the same
         # for both logged in and anonymous user.
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         resp = self._get_sound_view()
         self.assertEqual(resp.status_code, 200)
@@ -713,7 +712,7 @@ class SoundTemplateCacheTests(TestCase):
     def test_add_remove_comment(self):
         cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         # Check the initial state (0 comments)
         resp = self._get_sound_from_home()
@@ -749,7 +748,7 @@ class SoundTemplateCacheTests(TestCase):
         cache_keys = self._get_sound_display_cache_keys()
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         resp = self._get_sound_from_home()
         self.assertInHTML('0 downloads', resp.content)
@@ -771,13 +770,13 @@ class SoundTemplateCacheTests(TestCase):
     # Similarity link (cached in display and view)
     @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
     def _test_similarity_update(self, cache_keys, check_present, similarity_add):
-        # Default analysis_state is 'PE', but for similarity update it should be 'OK', otherwise sound gets ignored
-        self.sound.analysis_state = 'OK'
+        # Create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
+        SoundAnalysis.objects.create(sound=self.sound, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")
         self.sound.save()
 
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         # Initial check
         self.assertEqual(self.sound.similarity_state, 'PE')
@@ -785,7 +784,7 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCachePresent(cache_keys)
 
         # Update similarity
-        call_command('similarity_update', freesound_extractor_version=None)
+        call_command('similarity_update')
         similarity_add.assert_called_once_with(self.sound.id, self.sound.locations('analysis.statistics.path'))
         self._assertCacheAbsent(cache_keys)
 
@@ -808,7 +807,7 @@ class SoundTemplateCacheTests(TestCase):
     def _test_add_remove_pack(self, cache_keys, check_present):
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.pack)
         self.assertFalse(check_present())
@@ -856,7 +855,7 @@ class SoundTemplateCacheTests(TestCase):
     def _test_add_remove_geotag(self, cache_keys, check_present):
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.geotag)
         self.assertFalse(check_present())
@@ -905,7 +904,7 @@ class SoundTemplateCacheTests(TestCase):
     def _test_change_license(self, cache_keys, new_license, check_present):
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertNotEqual(self.sound.license, new_license)
         self.assertFalse(check_present())
@@ -924,12 +923,12 @@ class SoundTemplateCacheTests(TestCase):
     def test_change_license_display(self):
         self._test_change_license(
             self._get_sound_display_cache_keys(),
-            License.objects.get(name='Attribution'),
+            License.objects.filter(name='Attribution').first(),
             lambda: 'images/licenses/by.png' in self._get_sound_from_home().content
         )
 
     def test_change_license_view(self):
-        license = License.objects.get(name='Attribution')
+        license = License.objects.filter(name='Attribution').first()
         self._test_change_license(
             self._get_sound_view_footer_top_cache_keys(),
             license,
@@ -941,7 +940,7 @@ class SoundTemplateCacheTests(TestCase):
         another_sound = sounds[0]
         self._assertCacheAbsent(cache_keys)
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self.assertEqual(self.sound.remix_group.count(), 0)
         self.assertFalse(check_present())
@@ -988,7 +987,7 @@ class SoundTemplateCacheTests(TestCase):
 
     def _test_state_change(self, cache_keys, change_state, check_present):
         """@:param check_present - function that checks presence of indication of not 'OK' state"""
-        self.client.login(username='testuser', password='testpass')
+        self.client.force_login(self.user)
 
         self._assertCacheAbsent(cache_keys)
         self.assertTrue(check_present())
@@ -1031,26 +1030,26 @@ class SoundAnalysisModel(TestCase):
         analysis_data = {'descriptor1': 0.56, 'descirptor2': 1.45, 'descriptor3': 'label'}
 
         # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
-        sa = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor1", analysis_data=analysis_data)
+        sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data,
+                                          analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 1)
-        self.assertEqual(sa.get_analysis().keys(), analysis_data.keys())
-        self.assertEqual(sa.get_analysis()['descriptor1'], 0.56)
+        self.assertEqual(sa.get_analysis_data().keys(), analysis_data.keys())
+        self.assertEqual(sa.get_analysis_data()['descriptor1'], 0.56)
 
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
-        analysis_filename = '%i_testextractor_out.json'
+        analysis_filename = '%i-TestExtractor2.json' % sound.id
         sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
         create_directories(sound_analysis_folder)
         json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
-        sa2 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor2", analysis_filename=analysis_filename)
+        sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 2)
-        self.assertEqual(sa2.get_analysis().keys(), analysis_data.keys())
-        self.assertEqual(sa2.get_analysis()['descriptor1'], 0.56)
+        self.assertEqual(sa2.get_analysis_data().keys(), analysis_data.keys())
+        self.assertEqual(sa2.get_analysis_data()['descriptor1'], 0.56)
 
         # Create an analysis object which references a non-existing file. Check that get_analysis returns None.
-        sa3 = SoundAnalysis.objects.create(sound=sound, extractor="TestExtractor3",
-                                           analysis_filename='non_existing_file.json')
+        sa3 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor3", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 3)
-        self.assertEqual(sa3.get_analysis(), None)
+        self.assertEqual(sa3.get_analysis_data(), {})
 
 
 class SoundEditDeletePermissionTestCase(TestCase):

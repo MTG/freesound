@@ -22,85 +22,50 @@
 
 from follow.models import FollowingUserItem, FollowingQueryItem
 import sounds
-from search.views import search_prepare_query, search_prepare_sort
-from django.conf import settings
-from utils.search.solr import Solr, SolrResponseInterpreter
-from search.forms import SEARCH_SORT_OPTIONS_WEB
-# from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from utils.search import get_search_engine
 import urllib
+from django.conf import settings
 
 SOLR_QUERY_LIMIT_PARAM = 3
 
 
+def get_users_following_qs(user):
+    return FollowingUserItem.objects.select_related('user_to__profile')\
+        .filter(user_from=user).order_by('user_to__username')
+
+
 def get_users_following(user):
-    items = FollowingUserItem.objects.select_related('user_to__profile').filter(user_from=user)
-    return [item.user_to for item in items]
+    return [item.user_to for item in get_users_following_qs(user)]
+
+
+def get_users_followers_qs(user):
+    return FollowingUserItem.objects.select_related('user_from__profile')\
+        .filter(user_to=user).order_by('user_from__username')
 
 
 def get_users_followers(user):
-    items = FollowingUserItem.objects.select_related('user_from__profile').filter(user_to=user)
-    return [item.user_from for item in items]
+    return [item.user_from for item in get_users_followers_qs(user)]
+
+
+def get_tags_following_qs(user):
+    return FollowingQueryItem.objects.filter(user=user).order_by('query')
 
 
 def get_tags_following(user):
-    items = FollowingQueryItem.objects.filter(user=user)
-    return [item.query for item in items]
+    return [item.query for item in get_tags_following_qs(user)]
 
 
 def is_user_following_user(user_from, user_to):
-    return user_to in get_users_following(user=user_from)
+    return FollowingUserItem.objects.filter(user_from=user_from, user_to=user_to).exists()
 
 
 def is_user_following_tag(user, slash_tag):
-    tags_following = get_tags_following(user)
-    space_tag = slash_tag.replace("/", " ")
-    return space_tag in tags_following
-
-
-def is_user_being_followed_by_user(user_from, user_to):
-    return user_to in get_users_followers(user_from)
-
-
-def get_vars_for_account_view(user):
-    return get_vars_for_views_helper(user, clip=True)
-
-
-def get_vars_for_home_view(user):
-    return get_vars_for_views_helper(user, clip=False)
-
-
-def get_vars_for_views_helper(user, clip):
-
-    following = get_users_following(user)
-    followers = get_users_followers(user)
-    following_tags = get_tags_following(user)
-
-    following_count = len(following)
-    followers_count = len(followers)
-    following_tags_count = len(following_tags)
-
-    # show only the first 21 (3 rows) followers and following users and 5 following tags
-    if clip:
-        following = following[:21]
-        followers = followers[:21]
-        following_tags = following_tags[:5]
-
-    space_tags = following_tags
-    split_tags = [tag.split(" ") for tag in space_tags]
-    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
-
-    following_tags = []
-    for i in range(len(space_tags)):
-        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
-
-    return following, followers, following_tags, following_count, followers_count, following_tags_count
+    return FollowingQueryItem.objects.filter(user=user, query=slash_tag.replace("/", " ")).exists()
 
 
 def get_stream_sounds(user, time_lapse):
 
-    solr = Solr(settings.SOLR_URL)
-
-    sort_str = search_prepare_sort("created desc", SEARCH_SORT_OPTIONS_WEB)
+    search_engine = get_search_engine()
 
     #
     # USERS FOLLOWING
@@ -113,27 +78,24 @@ def get_stream_sounds(user, time_lapse):
 
         filter_str = "username:" + user_following.username + " created:" + time_lapse
 
-        query = search_prepare_query(
-            "",
-            filter_str,
-            sort_str,
-            1,
-            SOLR_QUERY_LIMIT_PARAM,
-            grouping=False,
-            include_facets=False
+        result = search_engine.search_sounds(
+            textual_query='',
+            query_filter=filter_str,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+            offset=0,
+            num_sounds=SOLR_QUERY_LIMIT_PARAM,
+            group_by_pack=False,
         )
-
-        result = SolrResponseInterpreter(solr.select(unicode(query)))
 
         if result.num_rows != 0:
 
             more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.quote(filter_str), urllib.quote(sort_str[0])]
+            more_url_params = [urllib.quote(filter_str), urllib.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
 
             # this is the same link but for the email has to be "quoted"
-            more_url = u"?f=" + filter_str + u"&s=" + sort_str[0]
+            more_url = u"?f=" + filter_str + u"&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
@@ -157,27 +119,24 @@ def get_stream_sounds(user, time_lapse):
 
         tag_filter_str = tag_filter_query + " created:" + time_lapse
 
-        query = search_prepare_query(
-            "",
-            tag_filter_str,
-            sort_str,
-            1,
-            SOLR_QUERY_LIMIT_PARAM,
-            grouping=False,
-            include_facets=False
+        result = search_engine.search_sounds(
+            textual_query='',
+            query_filter=tag_filter_str,
+            sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+            offset=0,
+            num_sounds=SOLR_QUERY_LIMIT_PARAM,
+            group_by_pack=False,
         )
-
-        result = SolrResponseInterpreter(solr.select(unicode(query)))
 
         if result.num_rows != 0:
 
             more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.quote(tag_filter_str), urllib.quote(sort_str[0])]
+            more_url_params = [urllib.quote(tag_filter_str), urllib.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
 
             # this is the same link but for the email has to be "quoted"
-            more_url = u"?f=" + tag_filter_str + u"&s=" + sort_str[0]
+            more_url = u"?f=" + tag_filter_str + u"&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
@@ -191,6 +150,6 @@ def get_stream_sounds(user, time_lapse):
 def build_time_lapse(date_from, date_to):
     date_from = date_from.strftime("%Y-%m-%d")
     date_to = date_to.strftime("%Y-%m-%d")
-    time_lapse = "[%sT00:00:00Z TO %sT23:59:59.999Z]" % (date_from, date_to)
+    time_lapse = '["%sT00:00:00Z" TO "%sT23:59:59.999Z"]' % (date_from, date_to)
     return time_lapse
 

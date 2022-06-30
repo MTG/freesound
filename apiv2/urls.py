@@ -55,7 +55,7 @@ urlpatterns = [
     # Sounds
     url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
     url(r'^sounds/(?P<pk>[0-9]+)/comments/$', views.SoundComments.as_view(), name="apiv2-sound-comments"),
-    url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysis.as_view(), name="apiv2-sound-analysis"),
+    url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysisView.as_view(), name="apiv2-sound-analysis"),
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
     url(r'^sounds/(?P<pk>[0-9]+)/download/$', views.DownloadSound.as_view(), name="apiv2-sound-download"),
     url(r'^sounds/(?P<pk>[0-9]+)/download/link/$', views.DownloadLink.as_view(), name="apiv2-sound-get-download-link"),

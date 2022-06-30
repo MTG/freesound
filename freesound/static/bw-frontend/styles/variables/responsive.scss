@@ -8,12 +8,14 @@ $grid-breakpoints: (
   sm: $sm,
   md: $md,
   lg: $lg,
-  xl: $xl
+  xl: $xl,
 );
 
 $container-max-widths: (
-  sm: 90%,
-  md: 90%,
-  lg: 90%,
-  xl: 1200px
+  sm: $sm,
+  md: $md,
+  lg: $lg,
+  xl: 1200px,
 );
+
+$displays: none, inline, inline-block, block, table, table-row, table-cell, flex, inline-flex !default;

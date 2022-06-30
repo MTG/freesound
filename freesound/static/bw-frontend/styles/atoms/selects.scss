@@ -9,8 +9,13 @@
     margin-right: 0px;
   }
 
+  .select-dropdown__list {
+    max-height: 500px;
+  }
+
   &__button {
     background-color: $white;
+    color: $black;
     cursor: pointer;
     min-width: 115px;
     text-align: left;
@@ -71,5 +76,80 @@
       color: $red;
       transition: all ease-in-out 0.3s;
     }
+  }
+}
+
+.bw-select-forum {
+  position: relative;
+  margin-top: 12px;
+
+  select {
+    display: none;
+  }
+
+  .select-selected {
+    border: 1px solid #efeff2;
+    background-color: $background-textarea;
+    border-radius: 5px;
+
+    &:after {
+      position: absolute;
+      content: '';
+      top: 19px;
+      right: 19px;
+      width: 0;
+      height: 0;
+      border: 6px solid transparent;
+      border-color: $navy-light-grey transparent transparent transparent;
+    }
+
+    &.select-arrow-active:after {
+      border-color: transparent transparent $navy-light-grey transparent;
+      top: 11px;
+    }
+
+    &.select-arrow-active {
+      background-color: $white;
+      border: 1px solid $black;
+    }
+
+    &.filled {
+      background-color: $white;
+      border: 1px solid $black;
+      color: $black;
+    }
+  }
+
+  .select-items div,
+  .select-selected {
+    color: $navy-light-grey;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+
+  /* Style items (options): */
+  .select-items {
+    position: absolute;
+    background-color: $white;
+    top: 92%;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    border-radius: 1px;
+    border: 1px solid $black;
+
+    div {
+      color: $black !important;
+    }
+  }
+
+  /* Hide the items when the select box is closed: */
+  .select-hide {
+    display: none;
+  }
+
+  .select-items div:hover,
+  .same-as-selected {
+    background-color: rgba(0, 0, 0, 0.1);
   }
 }

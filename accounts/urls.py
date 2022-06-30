@@ -21,7 +21,7 @@
 #
 
 from django.conf.urls import url, include
-from django.contrib.auth.views import LoginView, PasswordResetView
+from django.contrib.auth import views as auth_views
 from utils.session_checks import login_redirect
 import messages.views as messages
 import accounts.views as accounts
@@ -29,6 +29,7 @@ from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
+from utils.frontend_handling import redirect_if_beastwhoosh_inline
 
 # By putting some URLs at the top that are the same as the ones listed in
 # django.contrib.auth.urls, we can override some configuration:
@@ -36,10 +37,26 @@ import apiv2.views as api
 # 3. Django runs through each URL pattern, in order, and stops at the first one that matches the requested URL.
 urlpatterns = [
     url(r'^login/$', login_redirect(accounts.login), {'template_name': 'registration/login.html',
-                                       'authentication_form': FsAuthenticationForm}, name="accounts-login"),
+                                       'authentication_form': FsAuthenticationForm}, name="login"),
+    url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
     url(r'^cleanup/$', accounts.multi_email_cleanup, name="accounts-multi-email-cleanup"),
-    url(r'^password_reset/$', login_redirect(PasswordResetView.as_view(form_class=FsPasswordResetForm)), name='password_reset'),
-    url('^', include('django.contrib.auth.urls')),  # Include logout and reset email urls
+    url(r'^password_reset/$',
+        login_redirect(
+            redirect_if_beastwhoosh_inline(
+                auth_views.PasswordResetView.as_view(form_class=FsPasswordResetForm),
+                redirect_url_name='front-page',
+                query_string='loginProblems=1')),
+        name='password_reset'),
+    url(r'^password_reset/done/$',
+        redirect_if_beastwhoosh_inline(
+            auth_views.PasswordResetDoneView.as_view(),
+            redirect_url_name='front-page'),
+        name='password_reset_done'),
+    url(r'^password_change/$', accounts.password_change_form, name='password_change'),
+    url(r'^password_change/done/$', accounts.password_change_done, name='password_change_done'),
+    url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
+        accounts.password_reset_confirm, name='password_reset_confirm'),
+    url(r'^reset/done/$', accounts.password_reset_complete, name='password_reset_complete'),
     url(r'^register/$', login_redirect(accounts.registration), name="accounts-register"),
     url(r'^reactivate/$', login_redirect(accounts.resend_activation), name="accounts-resend-activation"),
     url(r'^username/$', login_redirect(accounts.username_reminder), name="accounts-username-reminder"),
@@ -47,9 +64,11 @@ urlpatterns = [
     url(r'^resetemail/$', accounts.email_reset, name="accounts-email-reset"),
     url(r'^resetemail/sent/$', accounts.email_reset_done, name="accounts-email-reset-done"),
     url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', accounts.email_reset_complete, name="accounts-email-reset-complete"),
+    url(r'^problems/$', accounts.problems_logging_in, name="problems-logging-in"),
     url(r'^bulklicensechange/$', accounts.bulk_license_change, name="bulk-license-change"),
     url(r'^tosacceptance/$', accounts.tos_acceptance, name="tos-acceptance"),
     url(r'^check_username/$', accounts.check_username, name="check_username"),
+    url(r'^update_old_cc_licenses/$', accounts.update_old_cc_licenses, name="update-old-cc-licenses"),
 
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),

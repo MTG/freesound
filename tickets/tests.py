@@ -98,7 +98,7 @@ class TicketTests(TestCase):
         self.test_user = User.objects.get(username='test_user')
         self.test_moderator = User.objects.get(username='test_moderator')
         self.sound = self._create_test_sound(self.test_user)
-        self.client.login(username=self.test_moderator.username, password='123456')
+        self.client.force_login(self.test_moderator)
 
     def _create_assigned_ticket(self):
         """Creates ticket that is already assigned to the moderator"""
@@ -160,22 +160,21 @@ class TicketTestsFromQueue(TicketTests):
             'action': action, 'message': u'', 'ticket': self.ticket.id,
             'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
 
-    @mock.patch('sounds.models.delete_sound_from_solr')
+    @mock.patch('sounds.models.delete_sounds_from_search_engine')
     def test_delete_ticket_from_queue(self, delete_sound_solr):
         resp = self._perform_action(u'Delete')
 
         self.assertEqual(resp.status_code, 200)
-        delete_sound_solr.assert_called_once_with(self.sound.id)
+        delete_sound_solr.assert_called_once_with([self.sound.id])
 
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)
         self.assertIsNone(self.ticket.sound)
 
-    @mock.patch('tickets.views._whitelist_gearman')
-    def test_whitelist_from_queue(self, _whitelist_gearman):
+    @mock.patch('general.tasks.whitelist_user.delay')
+    def test_whitelist_from_queue(self, whitelist_task):
         self._perform_action(u'Whitelist')
-
-        _whitelist_gearman.assert_called_once_with([self.ticket.id])
+        whitelist_task.assert_called_once_with(ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
         self.ticket.refresh_from_db()

@@ -20,9 +20,11 @@
 
 import logging
 
-from sounds.models import Sound
+from django.conf import settings
+
+from sounds.models import Sound, SoundAnalysis
 from utils.management_commands import LoggingBaseCommand
-from utils.search.search_general import get_all_sound_ids_from_solr, delete_sounds_from_solr
+from utils.search.search_sounds import get_all_sound_ids_from_search_engine, delete_sounds_from_search_engine
 from utils.similarity_utilities import Similarity
 
 console_logger = logging.getLogger('console')
@@ -32,7 +34,8 @@ class Command(LoggingBaseCommand):
     help = "This command checks the status of the solr and gaia index compared to the fs database. Reports about " \
            "sounds which are missing in gaia and solr and sounds that are in gaia or solr but not in fs dataset. " \
            "Moreover, it changes the status of the sounds in fs dataset that are not in gaia or solr so the next " \
-           "time the indexes are updated (running similarity_update and post_dirty_sounds_to_solr) they are indexed."
+           "time the indexes are updated (running similarity_update and post_dirty_sounds_to_search_engine) they " \
+           "are indexed."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -48,7 +51,7 @@ class Command(LoggingBaseCommand):
 
         # Get all solr ids
         console_logger.info("Getting solr ids...")
-        solr_ids = get_all_sound_ids_from_solr()
+        solr_ids = get_all_sound_ids_from_search_engine()
 
         # Get ell gaia ids
         console_logger.info("Getting gaia ids...")
@@ -59,9 +62,10 @@ class Command(LoggingBaseCommand):
         queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK').order_by('id').only("id")
         fs_mp = [sound.id for sound in queryset]
         # Get ell moderated, processed and analysed sounds
-        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK', analysis_state='OK')\
-            .order_by('id').only("id")
-        fs_mpa = [sound.id for sound in queryset]
+        sound_ids_analyzed_with_analyzer_ok = \
+            list(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")
+                .values_list('sound_id', flat=True))
+        fs_mpa = sorted(list(fs_mp.intersection(sound_ids_analyzed_with_analyzer_ok)))
 
         in_solr_not_in_fs = list(set(solr_ids).intersection(set(set(solr_ids).difference(fs_mp))))
         in_fs_not_in_solr = list(set(fs_mp).intersection(set(set(fs_mp).difference(solr_ids))))
@@ -86,7 +90,7 @@ class Command(LoggingBaseCommand):
             # Delete sounds from solr that are not in the db
             if in_solr_not_in_fs:
                 console_logger.info("\nDeleting %i sounds that should not be in solr" % len(in_solr_not_in_fs))
-                delete_sounds_from_solr(sound_ids=in_solr_not_in_fs)
+                delete_sounds_from_search_engine(sound_ids=in_solr_not_in_fs)
 
         in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mpa))))
         in_fs_not_in_gaia = list(set(fs_mpa).intersection(set(set(fs_mpa).difference(gaia_ids))))

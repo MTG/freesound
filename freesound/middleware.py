@@ -17,13 +17,33 @@
 # Authors:
 #     See AUTHORS file.
 #
+import urllib
+
+import json
+import logging
 
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
+from accounts.models import GdprAcceptance
 
 from utils.onlineusers import cache_online_users
+
+web_logger = logging.getLogger('web')
+
+
+def dont_redirect(path):
+    return 'bulklicensechange' not in path \
+        and 'admin' not in path \
+        and 'logout' not in path \
+        and 'tosacceptance' not in path \
+        and 'tos_api' not in path \
+        and 'tos_web' not in path \
+        and 'privacy' not in path \
+        and 'cookies' not in path \
+        and 'contact' not in path \
+        and not path.startswith(settings.MEDIA_URL)
 
 
 class OnlineUsersHandler(object):
@@ -47,10 +67,7 @@ class BulkChangeLicenseHandler(object):
         # don't run it for media URLs
         # N.B. probably better just to check for login in the URL
         if request.user.is_authenticated \
-                and 'bulklicensechange' not in request.get_full_path() \
-                and 'logout' not in request.get_full_path() \
-                and 'tosacceptance' not in request.get_full_path() \
-                and not request.get_full_path().startswith(settings.MEDIA_URL):
+                and dont_redirect(request.get_full_path()):
 
             user = request.user
             if user.profile.has_old_license:
@@ -70,29 +87,33 @@ class FrontendPreferenceHandler(object):
         The 'render' method will use this session variable to display the new/old frontend
         """
         if request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME, None):
-            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = \
-                request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
+            selected_ui = request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
+            current_ui = request.session.get(settings.FRONTEND_SESSION_PARAM_NAME, None)
+            if selected_ui != current_ui:
+                web_logger.info('Frontend activation (%s)' % json.dumps({'name': selected_ui,
+                                                                         'username': request.user.username}))
+            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = selected_ui
         response = self.get_response(request)
         return response
 
 
 class TosAcceptanceHandler(object):
+    """Checks if the user has accepted the updates to the Terms
+    of Service in 2022. This replaces the agreement to the original ToS (2013, 2fd543f3a).
+    When users agree with the new terms of service, they also agree on updating the
+    CC licenses to 4.0.
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
 
         if request.user.is_authenticated \
-                and 'tosacceptance' not in request.get_full_path() \
-                and 'logout' not in request.get_full_path() \
-                and 'tos_api' not in request.get_full_path() \
-                and 'tos_web' not in request.get_full_path() \
-                and 'contact' not in request.get_full_path() \
-                and 'bulklicensechange' not in request.get_full_path() \
-                and not request.get_full_path().startswith(settings.MEDIA_URL):
-
-            user = request.user
-            if not user.profile.accepted_tos:
+                and dont_redirect(request.get_full_path()):
+            try:
+                request.user.gdpracceptance
+            except GdprAcceptance.DoesNotExist:
                 return HttpResponseRedirect(reverse("tos-acceptance"))
 
         response = self.get_response(request)

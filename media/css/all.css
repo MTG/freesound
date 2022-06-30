@@ -19,6 +19,7 @@ address,caption,cite,code,dfn,em,strong,th,var {
 
 fieldset,img {
     border: 0;
+    max-width: 100%;
 }
 
 caption,th {
@@ -2098,10 +2099,6 @@ ul.pagination {
     margin-bottom: 20px;
 }
 
-#sidebar #latest_geotags {
-    display: none;
-}
-
 #sidebar #latest_geotags #map_canvas {
     position: relative;
     left: -19px;
@@ -3126,7 +3123,7 @@ use classes from pack edition
     margin-bottom: 20px;
 }
 
-.map_terrain_menu {
+map_terrain_menu {
     position:absolute;
     background: #fff;
     padding: 8px;

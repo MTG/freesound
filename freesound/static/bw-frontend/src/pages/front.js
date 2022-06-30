@@ -6,7 +6,7 @@ import wait from '../utils/wait'
 
 // Main search input box behaviour
 const input = document.getElementById('search-sounds')
-const querySuggestionsURL = process.env.QUERY_SUGGESTIONS_URL
+const querySuggestionsURL = input.dataset.querySuggestionsUrl
 
 const fetchSuggestions = async query => {
   let response = await fetch(`${querySuggestionsURL}?q=${input.value}`)
@@ -34,3 +34,18 @@ const checkShouldShowSearchInNavbar = throttle(() => {
 }, SCROLL_CHECK_TIMER)
 
 window.addEventListener('scroll', checkShouldShowSearchInNavbar)
+
+const randomSoundDetailsToggleLink = document.getElementById('randomSoundDetailsToggleLink');
+const randomSoundDetails = document.getElementById('randomSoundDetails');
+
+if (randomSoundDetailsToggleLink !== null){
+    randomSoundDetailsToggleLink.addEventListener('click', () => {
+      if (randomSoundDetails.classList.contains('display-none')){
+          randomSoundDetails.classList.remove('display-none');
+          randomSoundDetailsToggleLink.innerText = "Hide details";
+      } else{
+          randomSoundDetails.classList.add('display-none');
+          randomSoundDetailsToggleLink.innerText = "Reveal details";
+      }
+    });
+}

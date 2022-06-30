@@ -1,0 +1,86 @@
+{% extends "molecules/modal_base.html" %}
+
+{% load bw_templatetags %}
+{% load display_user %}
+{% load util %}
+{% load bw_templatetags %}
+
+{% block id %}followModal{% endblock %}
+{% block extra-class %}modal-width-70{% endblock %}
+{% block aria-labelledby %}followModalLabel{% endblock %}
+
+{% block body %}
+<div class="col-12 col-lg-10 offset-lg-1">
+    {% if follow_page == 'followers' %}
+        <div class="text-center">
+            <h5 class="v-spacing-5">{{ user.username }}'s followers</h5>
+        </div>
+        {% for follow_user_item in page.object_list %}
+            {% display_user_follow_lists follow_user_item.user_from %}
+            <div class="padding-left-3">
+                <div class="col-md-11 offset-1 v-spacing-top-3 v-spacing-3 divider-light"></div>
+            </div>
+        {% empty %}
+            <div class="text-center">
+                <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} has no followers yet... &#128543</div>
+            </div>
+        {% endfor %}
+        <div class="v-spacing-top-5">
+            {% bw_paginator paginator page current_page request "" -1 %}
+        </div>
+
+    {% elif follow_page == 'following' %}
+        <div class="v-spacing-5 text-center">
+            <h5>Users followed by {{ user.username }}</h5>
+        </div>
+        {% for follow_user_item in page.object_list %}
+            {% display_user_follow_lists follow_user_item.user_to %}
+            <div class="padding-left-3">
+                <div class="col-md-11 offset-1 v-spacing-top-3 v-spacing-3 divider-light"></div>
+            </div>
+        {% empty %}
+            <div class="text-center">
+                <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} is not following any users yet... &#128543</div>
+            </div>
+        {% endfor %}
+        <div class="v-spacing-top-5">
+            {% bw_paginator paginator page current_page request "" -1 %}
+        </div>
+
+    {% elif follow_page == 'tags' %}
+        <div class="v-spacing-5 text-center">
+            <h5>Tags followed by {{ user.username }}</h5>
+        </div>
+        {% for follow_tag_item in page.object_list %}
+            <div class="row bw-follows middle">
+                <div class="col-8">
+                    {% if follow_tag_item.get_split_tags|length > 1 %}
+                        <div class="border-light-grey-bottom-hover cursor-pointer" style="display: inline-block" onclick="location.href='{% url "tags" follow_tag_item.get_slash_tags %}'">
+                            {% for tag in follow_tag_item.get_split_tags %}
+                                {% bw_tag tag 1 'v-spacing-top-1' %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {% bw_tag follow_tag_item.get_split_tags.0 %}
+                    {% endif %}
+                </div>
+                <div class="col-4 text-right">
+                    {% if request.user|user_following_tags:follow_tag_item.get_slash_tags %}
+                        <a class="no-hover btn-primary" href="{% url 'unfollow-tags' follow_tag_item.get_slash_tags %}?next={{ next_path }}">Unfollow</a>
+                    {% else %}
+                        <a class="no-hover btn-inverse btn-profile-adapt" href="{% url 'follow-tags' follow_tag_item.get_slash_tags %}?next={{ next_path }}">Follow</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-12 v-spacing-top-3 v-spacing-3 divider-light"></div>
+        {% empty %}
+            <div class="text-center">
+                <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} is not following any tags yet... &#128543</div>
+            </div>
+        {% endfor %}
+        <div class="v-spacing-top-5">
+            {% bw_paginator paginator page current_page request "" -1 %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

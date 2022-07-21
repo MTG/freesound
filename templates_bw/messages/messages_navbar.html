@@ -1,17 +1,16 @@
 <div class="divider-light v-spacing-top-4 v-spacing-1"></div>
 <div class="row middle">
-    <div class="col-md-5 v-spacing-1 v-spacing-top-1">
-        <label for="selectAll" class="between w-100 label-message-action">
+    <div class="col-md-4 col-6 row v-spacing-1 v-spacing-top-1">
+        <label for="selectAll" class="padding-left-2 between w-100 label-message-action">
             <div class="bw-search__filter-checkbox">
                 <input type="checkbox" class="bw-checkbox" id="selectAll" onchange="">
-                <span class="bw-checkbox-container"><span class="bw-icon-checkbox"></span></span>
             </div>
-            <div class="bw-search__filter-name text-grey text-16 line-height-21">
-            Select all
+            <div class="bw-search__filter-name text-grey text-16 padding-top-0">
+                Select all
             </div>
         </label>
     </div>
-    <div class="col-md-5 v-spacing-1 v-spacing-top-1">
+    <div class="col-md-4 col-6 center v-spacing-1 v-spacing-top-1">
         <ul class="navbar-messages">
             <li class="nav-item">
                 <a class="nav-link active " href="{% url 'messages' %}">Inbox</a>
@@ -24,8 +23,8 @@
             </li>
         </ul>
     </div>
-    <div class="col-md-2 v-spacing-1 v-spacing-top-1 right">
-        <a class="btn-inverse btn-profile-adapt" href="{% url 'messages-new' %}">New message</a>
+    <div class="col-md-4 col-12 v-spacing-1 v-spacing-top-1 right">
+        <a class="btn-primary" href="{% url 'messages-new' %}"><span class="padding-right-1">+</span>New message</a>
     </div>
 </div>
 <div class="divider-light v-spacing-top-1"></div>

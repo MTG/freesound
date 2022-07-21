@@ -1,4 +1,4 @@
-const CheckboxGetAllElement = document.getElementById('selectAll');
+const checkboxSelectAllElement = document.getElementById('selectAll');
 const messageCheckboxes = document.getElementsByClassName('message-checkbox');
 const checkboxesActions = document.getElementsByClassName('checked-action');
 const LastMessageElement = document.getElementById('message-last');
@@ -8,11 +8,12 @@ if (LastMessageElement) {
 }
 
 const handleAllCheckboxes = () => {
+  
   const allCheckboxes = document.getElementsByClassName('message-checkbox');
 
   allCheckboxes.forEach(checkboxElement => {
-    checkboxElement.checked = CheckboxGetAllElement.checked;
-    handleActions(CheckboxGetAllElement.checked);
+    checkboxElement.checked = checkboxSelectAllElement.checked;
+    handleActions(checkboxSelectAllElement.checked);
   });
 };
 
@@ -38,4 +39,4 @@ messageCheckboxes.forEach(checkbox =>
   checkbox.addEventListener('change', () => handleMessageCheckboxes(checkbox))
 );
 
-CheckboxGetAllElement.addEventListener('change', handleAllCheckboxes);
+checkboxSelectAllElement.addEventListener('change', handleAllCheckboxes);

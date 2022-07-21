@@ -1,0 +1,26 @@
+{% load bw_templatetags %}
+
+<div class="bw-message__container row">
+    <div class="col-md-1 col-1">
+        <label for="message{{ message.id }}" class="checkbox">
+        <div class="bw-search__filter-checkbox v-spacing-top-2">
+            <input type="checkbox" class="bw-checkbox message-checkbox" id="message{{ message.id }}" onchange="">
+        </div>
+        </label>
+    </div>
+    <div class="col-md-1 left col-2">
+        {% bw_user_avatar message.user_from.profile.locations.avatar.M.url message.user_from.username %}
+    </div>
+    <div class="col-md-9 col-9 bw-message__info {% if active %} active {% endif %} {% if not message.is_read %} unread {% endif %}">
+        <div class="between">
+            <h6 class="no-margins text-16">{{ message.user_from.username }}</h6>
+            <div class="date">{{ message.created|date:"F jS, Y" }}</div>
+            <div class="icons">
+                <a title="Mark as read">{% bw_icon "check" %}</a><a title="Delete message">{% bw_icon "trash" %}</a>
+            </div>
+        </div>
+        <p class="no-margins">{{ message.subject }}</p>
+    </div>
+</div>
+
+

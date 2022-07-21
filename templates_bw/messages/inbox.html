@@ -1,13 +1,26 @@
 {% extends "simple_page.html" %}
 {% load staticfiles %}
 {% load bw_templatetags %}
-
+{% load display_message %}
 {% block title %}Messages - Inbox{% endblock %}
 {% block page-title %}Messages{% endblock %}
 
 {% block page-content %}
     {% include 'messages/messages_navbar.html' %}
-    <div class="v-spacing-top-4">
+    <div class="v-spacing-top-2">
+        <div class="row">
+            <div class="col-12">
+                {% for message in page.object_list %}
+                    {% display_message message %}
+                    {% if not forloop.last %}
+                        <div class="divider-light v-spacing-2"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="v-spacing-top-1">
+            {% bw_paginator paginator page current_page request "message" %}
+        </div>
     </div>
 {% endblock %}
 

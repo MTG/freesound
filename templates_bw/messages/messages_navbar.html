@@ -17,7 +17,7 @@
                     <a class="bw-link--black" href="javascript:void(0);">Toggle read/unread</a>
                 </li>
                 <li class="bw-nav__action dropdown-item" data-action-value="a">
-                    <a class="bw-link--black" href="javascript:void(0);">Toggle archived/unarchived</a>
+                    <a class="bw-link--black" href="javascript:void(0);">{% if list_type == "archived" %}Unarchive{% else %}Archive{% endif %}</a>
                 </li>
                 <li class="bw-nav__action dropdown-item" data-action-value="d">
                     <a href="javascript:void(0);">Delete</a>
@@ -28,13 +28,13 @@
     <div class="col-md-4 col-6 center v-spacing-1 v-spacing-top-1">
         <ul class="navbar-messages">
             <li class="nav-item">
-                <a class="nav-link active " href="{% url 'messages' %}">Inbox</a>
+                <a class="nav-link {% if list_type == "inbox" %}active{% endif %}" href="{% url 'messages' %}">Inbox</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link " href="{% url 'messages-sent' %}">Sent</a>
+                <a class="nav-link {% if list_type == "sent" %}active{% endif %}" href="{% url 'messages-sent' %}">Sent</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link " href="{% url 'messages-archived' %}">Archived</a>
+                <a class="nav-link {% if list_type == "archived" %}active{% endif %}" href="{% url 'messages-archived' %}">Archived</a>
             </li>
         </ul>
     </div>

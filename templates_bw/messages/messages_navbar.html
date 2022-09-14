@@ -9,18 +9,18 @@
                 Select all
             </div>
         </label>
-        <div class="dropdown padding-left-1 display-none actions-menu">
+        <div class="dropdown padding-left-1 display-none actions-menu" data-apply-action-url="{% url "messages-change-state" %}">
             <a class="no-hover dropdown-toggle" aria-haspopup="true"
                aria-expanded="false" data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Actions...</button></a>
             <ul class="dropdown-menu dropdown-menu-left">
-                <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="">Mark as read</a>
+                <li class="bw-nav__action dropdown-item" data-action-value="r">
+                    <a class="bw-link--black" href="javascript:void(0);">Toggle read/unread</a>
                 </li>
-                <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="">Archive</a>
+                <li class="bw-nav__action dropdown-item" data-action-value="a">
+                    <a class="bw-link--black" href="javascript:void(0);">Toggle archived/unarchived</a>
                 </li>
-                <li class="bw-nav__action dropdown-item">
-                    <a href="">Delete</a>
+                <li class="bw-nav__action dropdown-item" data-action-value="d">
+                    <a href="javascript:void(0);">Delete</a>
                 </li>
             </ul>
         </div>

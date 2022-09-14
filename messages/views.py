@@ -43,27 +43,43 @@ from utils.pagination import paginate
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
-        
-        # get all message ids in the format `cb_[number]` which have a value of 'on'
-        message_ids = []
-        for key, val in request.POST.items():
-            if key.startswith('cb_') and val == 'on':
-                try:
-                    msgid = int(key.replace('cb_', ''))
-                    message_ids.append(msgid)
-                except ValueError:
-                    pass
+
+        if not using_beastwhoosh(request):
+            # get all message ids in the format `cb_[number]` which have a value of 'on'
+            message_ids = []
+            for key, val in request.POST.items():
+                if key.startswith('cb_') and val == 'on':
+                    try:
+                        msgid = int(key.replace('cb_', ''))
+                        message_ids.append(msgid)
+                    except ValueError:
+                        pass
+        else:
+            # If using beastwhoosh, the IDs will come in a different form field
+            message_ids = [int(mid) for mid in request.POST.get("ids", "").split(',')]
 
         if choice and message_ids:
             messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) |
                                               Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
 
             if choice == "a":
-                messages.update(is_archived=True)
+                if using_beastwhoosh(request):
+                    for message in messages:
+                        # In BW we allow the option to toggle archived/unarchived, so we need to iterate messages one by one
+                        message.is_archived = not message.is_archived
+                        message.save()
+                else:
+                    messages.update(is_archived=True)
             elif choice == "d":
                 messages.delete()
             elif choice == "r":
-                messages.update(is_read=True)
+                if using_beastwhoosh(request):
+                    for message in messages:
+                        # In BW we allow the option to toggle read/unread, so we need to iterate messages one by one
+                        message.is_read = not message.is_read
+                        message.save()
+                else:
+                    messages.update(is_read=True)
 
             invalidate_user_template_caches(request.user.id)
 

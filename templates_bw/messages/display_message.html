@@ -19,9 +19,9 @@
     <div class="col-xl-2 col-md-4 col-5 bw-message__info middle right padding-right-3">
         <div class="date">{{ message.created|date:"F jS, Y" }}</div>
         <div class="icons">
-            <a title="Mark as read">{% bw_icon "check" %}</a>
-            <a title="Archive message">{% bw_icon "check-double" %}</a>
-            <a title="Delete message">{% bw_icon "trash" %}</a>
+            <a title="Mark as {% if message.is_read %}un{% endif %}read" class="message-action" data-action-value="r" data-message-id="{{ message.id }}">{% bw_icon "check" %}</a>
+            <a title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" class="message-action" data-action-value="a" data-message-id="{{ message.id }}">{% bw_icon "check-double" %}</a>
+            <a title="Delete message" class="message-action" data-action-value="d" data-message-id="{{ message.id }}">{% bw_icon "trash" %}</a>
         </div>
     </div>
 </div>

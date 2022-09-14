@@ -13,7 +13,7 @@
                 {% for message in page.object_list %}
                     {% display_message message %}
                     {% if not forloop.last %}
-                        <div class="divider-light v-spacing-2"></div>
+                        <div class="divider-light v-spacing-2 v-spacing-top-2"></div>
                     {% endif %}
                 {% endfor %}
             </div>

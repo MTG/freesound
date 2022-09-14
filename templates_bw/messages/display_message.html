@@ -1,25 +1,28 @@
 {% load bw_templatetags %}
 
-<div class="bw-message__container row">
-    <div class="col-md-1 col-1">
-        <label for="message{{ message.id }}" class="checkbox">
-        <div class="bw-search__filter-checkbox v-spacing-top-2">
+<div class="bw-message__container row middle">
+    <div class="col-1 d-md-flex d-none">
+        {% comment %}In smaller sizes, we don't show the checkbox column (and also the corresponding column in the navbar){% endcomment %}
+        <label for="message{{ message.id }}" class="checkbox padding-left-3">
+        <div class="bw-search__filter-checkbox">
             <input type="checkbox" class="bw-checkbox message-checkbox" id="message{{ message.id }}" onchange="">
         </div>
         </label>
     </div>
-    <div class="col-md-1 left col-2">
+    <div class="col-lg-1 col-2 middle center">
         {% bw_user_avatar message.user_from.profile.locations.avatar.M.url message.user_from.username %}
     </div>
-    <div class="col-md-9 col-9 bw-message__info {% if active %} active {% endif %} {% if not message.is_read %} unread {% endif %}">
-        <div class="between">
-            <h6 class="no-margins text-16">{{ message.user_from.username }}</h6>
-            <div class="date">{{ message.created|date:"F jS, Y" }}</div>
-            <div class="icons">
-                <a title="Mark as read">{% bw_icon "check" %}</a><a title="Delete message">{% bw_icon "trash" %}</a>
-            </div>
+    <div class="col-xl-7 col-5 bw-message__info {% if active %} active {% endif %} {% if not message.is_read %} unread {% endif %}">
+        <h6 class="no-margins text-16">{{ message.user_from.username }}</h6>
+        <div class="no-margins ellipsis">{{ message.subject }}</div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-5 bw-message__info middle right padding-right-3">
+        <div class="date">{{ message.created|date:"F jS, Y" }}</div>
+        <div class="icons">
+            <a title="Mark as read">{% bw_icon "check" %}</a>
+            <a title="Archive message">{% bw_icon "check-double" %}</a>
+            <a title="Delete message">{% bw_icon "trash" %}</a>
         </div>
-        <p class="no-margins">{{ message.subject }}</p>
     </div>
 </div>
 

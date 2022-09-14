@@ -3,11 +3,12 @@
     cursor: pointer;
 
     .bw-checkbox-container {
-      display: none;
+      opacity: 0.3;
     }
 
     .bw-checkbox:checked {
       & + .bw-checkbox-container {
+        opacity: 1.0;
         display: block !important;
       }
     }
@@ -49,7 +50,7 @@
             content: attr(title);
             position: absolute;
             top: -40px;
-            left: -50px;
+            right: -10px;
             width: max-content;
             border-radius: 100px;
             background-color: $black;
@@ -74,7 +75,7 @@
   }
 
   &__info {
-    padding-bottom: 20px;
+
     color: $navy-grey;
 
     &.active {

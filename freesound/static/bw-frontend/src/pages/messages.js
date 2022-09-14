@@ -1,6 +1,6 @@
 const checkboxSelectAllElement = document.getElementById('selectAll');
 const messageCheckboxes = document.getElementsByClassName('message-checkbox');
-const checkboxesActions = document.getElementsByClassName('checked-action');
+const actionsMenu = document.getElementsByClassName('actions-menu');
 const LastMessageElement = document.getElementById('message-last');
 
 if (LastMessageElement) {
@@ -30,8 +30,8 @@ const handleMessageCheckboxes = () => {
 };
 
 const handleActions = show => {
-  checkboxesActions.forEach(
-    checkboxesActions => (checkboxesActions.style.display = show ? 'flex' : 'none')
+  actionsMenu.forEach(
+    actionsMenu => (actionsMenu.style.display = show ? 'inline' : 'none')
   );
 };
 

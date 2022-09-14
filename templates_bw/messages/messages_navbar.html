@@ -1,7 +1,7 @@
 <div class="divider-light v-spacing-top-4 v-spacing-1"></div>
 <div class="row middle">
-    <div class="col-md-4 col-6 row v-spacing-1 v-spacing-top-1">
-        <label for="selectAll" class="padding-left-2 between w-100 label-message-action">
+    <div class="col-md-4 col-6 row v-spacing-1 v-spacing-top-1 d-md-flex d-none">
+        <label for="selectAll" class="padding-left-2 between label-message-action padding-left-5 middle">
             <div class="bw-search__filter-checkbox">
                 <input type="checkbox" class="bw-checkbox" id="selectAll" onchange="">
             </div>
@@ -9,6 +9,21 @@
                 Select all
             </div>
         </label>
+        <div class="dropdown padding-left-1 display-none actions-menu">
+            <a class="no-hover dropdown-toggle" aria-haspopup="true"
+               aria-expanded="false" data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Actions...</button></a>
+            <ul class="dropdown-menu dropdown-menu-left">
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="">Mark as read</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="">Archive</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
+                    <a href="">Delete</a>
+                </li>
+            </ul>
+        </div>
     </div>
     <div class="col-md-4 col-6 center v-spacing-1 v-spacing-top-1">
         <ul class="navbar-messages">
@@ -23,7 +38,7 @@
             </li>
         </ul>
     </div>
-    <div class="col-md-4 col-12 v-spacing-1 v-spacing-top-1 right">
+    <div class="col-md-4 col-6 v-spacing-1 v-spacing-top-1 right">
         <a class="btn-primary" href="{% url 'messages-new' %}"><span class="padding-right-1">+</span>New message</a>
     </div>
 </div>

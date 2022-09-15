@@ -119,4 +119,17 @@
       outline: none;
     }
   }
+
+  &__message_page {
+    &__avatar {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+    }
+  
+    h6 {
+      font-size: 16px;
+      margin: 0;
+    }
+  }
 }

@@ -10,18 +10,18 @@
         </label>
     </div>
     <div class="col-lg-1 col-2 middle center">
-        {% bw_user_avatar message.user_from.profile.locations.avatar.M.url message.user_from.username %}
+        <a class="no-hover" href="{% url "account" message.user_from.username %}">{% bw_user_avatar message.user_from.profile.locations.avatar.M.url message.user_from.username %}</a>
     </div>
-    <div class="col-xl-7 col-5 bw-message__info {% if active %} active {% endif %} {% if not message.is_read %} unread {% endif %}">
-        <h6 class="no-margins text-16">{{ message.user_from.username }}</h6>
-        <div class="no-margins ellipsis">{{ message.subject }}</div>
+    <div class="col-xl-7 col-5 bw-message__info {% if active %} active {% endif %} {% if not message.is_read %} unread {% endif %}" data-link-url="{% url "message" message.id %}">
+        <h6 class="no-margins text-16">{{ message.user_from.username }}<span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>{{ message.subject }}</h6>
+        <p class="no-margins ellipsis text-light-grey">{{ message.body.body }}</p>
     </div>
-    <div class="col-xl-2 col-md-4 col-5 bw-message__info middle right padding-right-3">
+    <div class="col-xl-2 col-md-4 col-5 bw-message__actions middle right padding-right-3">
         <div class="date">{{ message.created|date:"F jS, Y" }}</div>
-        <div class="icons">
-            <a title="Mark as {% if message.is_read %}un{% endif %}read" class="message-action" data-action-value="r" data-message-id="{{ message.id }}">{% bw_icon "check" %}</a>
-            <a title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" class="message-action" data-action-value="a" data-message-id="{{ message.id }}">{% bw_icon "check-double" %}</a>
-            <a title="Delete message" class="message-action" data-action-value="d" data-message-id="{{ message.id }}">{% bw_icon "trash" %}</a>
+        <div class="icons" data-message-id="{{ message.id }}">
+            <a title="Mark as {% if message.is_read %}un{% endif %}read" class="message-action" data-action-value="r">{% bw_icon "check" %}</a>
+            <a title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" class="message-action" data-action-value="a">{% bw_icon "check-double" %}</a>
+            <a title="Delete message" class="message-action" data-action-value="d">{% bw_icon "trash" %}</a>
         </div>
     </div>
 </div>

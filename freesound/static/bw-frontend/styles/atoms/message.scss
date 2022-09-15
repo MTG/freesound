@@ -1,6 +1,5 @@
 .bw-message {
   &__container {
-    cursor: pointer;
 
     .bw-checkbox-container {
       opacity: 0.3;
@@ -14,13 +13,6 @@
     }
 
     &:hover {
-      h6 {
-        color: $red;
-      }
-
-      p {
-        color: $black;
-      }
 
       .bw-checkbox-container {
         display: block;
@@ -38,6 +30,7 @@
           position: relative;
 
           &:hover {
+            cursor: pointer;
             color: $black;
             text-decoration: none;
           }
@@ -78,6 +71,18 @@
 
     color: $navy-grey;
 
+    &:hover {
+      cursor: pointer;
+
+      h6 {
+        color: $red;
+      }
+
+      p {
+        color: $navy-grey;
+      }
+    }
+
     &.active {
       h6 {
         color: $red;
@@ -90,12 +95,17 @@
 
     &.unread {
       color: $black;
-
-      .date {
-        color: $navy-grey;
-      }
     }
+  }
 
+  &__actions {
+
+    color: $navy-grey;
+
+    .date {
+      color: $navy-grey;
+    }
+    
     .icons {
       display: none;
     }

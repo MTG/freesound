@@ -27,11 +27,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 
-from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha
+from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha, BwMessageReplyForm, BwMessageReplyFormWithCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_user_template_caches
 from utils.frontend_handling import render, using_beastwhoosh
@@ -146,9 +146,9 @@ def message(request, message_id):
 def new_message(request, username=None, message_id=None):
 
     if request.user.profile.is_trustworthy():
-        form_class = MessageReplyForm
+        form_class = BwMessageReplyForm if using_beastwhoosh(request) else MessageReplyForm
     else:
-        form_class = MessageReplyFormWithCaptcha
+        form_class = BwMessageReplyFormWithCaptcha if using_beastwhoosh(request) else MessageReplyFormWithCaptcha
     
     if request.method == 'POST':
         form = form_class(request, request.POST)
@@ -229,5 +229,8 @@ def username_lookup(request):
     results = []
     if request.method == "GET":
         results = get_previously_contacted_usernames(request.user)
-    json_resp = json.dumps(results)
-    return HttpResponse(json_resp, content_type='application/json')
+    if using_beastwhoosh(request):
+        return JsonResponse({'suggestions': results})
+    else:
+        json_resp = json.dumps(results)
+        return HttpResponse(json_resp, content_type='application/json')

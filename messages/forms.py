@@ -21,6 +21,7 @@
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 from utils.forms import CaptchaWidget, HtmlCleaningCharField
 from utils.spam import is_spam
@@ -62,3 +63,36 @@ class MessageReplyFormWithCaptcha(MessageReplyForm):
             raise forms.ValidationError("Your message was considered spam. If your message is not spam and the "
                                         "check keeps failing, please contact the admins.")
         return body
+
+
+class BwMessageReplyForm(MessageReplyForm):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super(BwMessageReplyForm, self).__init__(*args, **kwargs)
+
+        html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
+                    <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
+                    <code>blockquote</code> and <code>code</code>."""
+
+        self.fields['to'].widget.attrs['placeholder'] = "Username of the user to send the message to"
+        self.fields['to'].widget.attrs['data-typeahead'] = "true"
+        self.fields['to'].widget.attrs['data-autocomplete-suggestions-url'] = reverse('messages-username_lookup')
+        self.fields['to'].widget.attrs['data-check-username-url'] = reverse('check_username')
+
+        self.fields['to'].widget.attrs['id'] = "usernames-autocomplete"
+        #self.fields['to'].widget.attrs['class'] = "bw-autocomplete__search" 
+                
+        self.fields['subject'].widget.attrs['placeholder'] = "Subject of your message, don't make it too long :)"
+        self.fields['body'].widget.attrs['placeholder'] = "Write your message here"
+        self.fields['body'].widget.attrs['rows'] = False
+        self.fields['body'].widget.attrs['cols'] = False
+        self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
+        self.fields['body'].help_text = html_tags_help_text
+
+
+class BwMessageReplyFormWithCaptcha(MessageReplyFormWithCaptcha):
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super(BwMessageReplyFormWithCaptcha, self).__init__(*args, **kwargs)

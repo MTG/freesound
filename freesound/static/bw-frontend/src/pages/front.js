@@ -6,7 +6,7 @@ import wait from '../utils/wait'
 
 // Main search input box behaviour
 const input = document.getElementById('search-sounds')
-const querySuggestionsURL = input.dataset.querySuggestionsUrl
+const querySuggestionsURL = input.dataset.autocompleteSuggestionsUrl
 
 const fetchSuggestions = async query => {
   let response = await fetch(`${querySuggestionsURL}?q=${input.value}`)

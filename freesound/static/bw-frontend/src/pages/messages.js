@@ -1,6 +1,8 @@
 import {makePostRequest} from "../utils/postRequest";
-import {handleDismissModal} from "../components/modal";
 import {showToast} from "../components/toast";
+import { addTypeAheadFeatures } from '../components/typeahead'
+import debounce from 'lodash.debounce'
+
 
 const checkboxSelectAllElement = document.getElementById('selectAll');
 const messageCheckboxes = document.getElementsByClassName('message-checkbox');
@@ -8,6 +10,7 @@ const actionsMenu = document.getElementsByClassName('actions-menu')[0];
 const messageActionButtons = document.getElementsByClassName('message-action');
 const LastMessageElement = document.getElementById('message-last');
 const messageInfoContainers = document.getElementsByClassName('bw-message__info');
+const usernameToFormField = document.getElementById('usernames-autocomplete')
 
 if (LastMessageElement) {
   LastMessageElement.focus();
@@ -69,17 +72,21 @@ const applyActionToMessages = (actionType, messageIDs) => {
 };
 
 
-// Bind actions
+// Bind actions message list actions
 
-checkboxSelectAllElement.addEventListener('change', handleAllCheckboxes);
+if (checkboxSelectAllElement !== null){
+  checkboxSelectAllElement.addEventListener('change', handleAllCheckboxes);
+}
 
 messageCheckboxes.forEach(checkbox =>
   checkbox.addEventListener('change', () => handleMessageCheckboxes(checkbox))
 );
 
-actionsMenu.getElementsByClassName('bw-nav__action').forEach(actionElement =>
-  actionElement.addEventListener('click', () => applyActionToMessages(actionElement.dataset.actionValue, getMessageIDsOfCheckedMessages()))
-);
+if (actionsMenu !== undefined){
+  actionsMenu.getElementsByClassName('bw-nav__action').forEach(actionElement =>
+    actionElement.addEventListener('click', () => applyActionToMessages(actionElement.dataset.actionValue, getMessageIDsOfCheckedMessages()))
+  );
+}
 
 messageActionButtons.forEach(actionElement =>
   actionElement.addEventListener('click', () => applyActionToMessages(actionElement.dataset.actionValue, [actionElement.parentNode.dataset.messageId]))
@@ -88,3 +95,33 @@ messageActionButtons.forEach(actionElement =>
 messageInfoContainers.forEach(messageContainer =>
   messageContainer.addEventListener('click', () => window.location = messageContainer.dataset.linkUrl)
 );
+
+
+// Username lookup for new messages
+
+const usernamesPreviouslyContactedUrl = usernameToFormField.dataset.autocompleteSuggestionsUrl
+const checkUsernameUrl = usernameToFormField.dataset.checkUsernameUrl
+
+const fetchSuggestions = async query => {
+  let response = await fetch(`${usernamesPreviouslyContactedUrl}`)
+  let data = await response.json()
+  const suggestions = data.suggestions
+  return suggestions
+}
+
+addTypeAheadFeatures(usernameToFormField, fetchSuggestions)
+
+
+// Username check that username is valid
+
+const checkUsername = async query => {
+  let response = await fetch(`${checkUsernameUrl}?username=${usernameToFormField.value}`)
+  let data = await response.json()
+  if (data.result === false){
+    usernameToFormField.classList.add('username-not-found')
+  } else {
+    usernameToFormField.classList.remove('username-not-found')
+  }
+}
+const debouncedCheckusername = debounce(checkUsername, 200)
+usernameToFormField.addEventListener('input', async evt => debouncedCheckusername())

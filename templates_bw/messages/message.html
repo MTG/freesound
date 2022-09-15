@@ -9,7 +9,7 @@
 
 {% block page-content %}
     {% include 'messages/messages_navbar.html' %}
-    <div class="v-spacing-top-2">
+    <div class="v-spacing-top-4">
         <div class="row bw-message__message_page">
             <div class="col-lg-3">
                 {% if request.user != message.user_from %}
@@ -37,8 +37,6 @@
                         </div>
                     </div>
                 {% endif %}
-
-                
                 <div class="text-light-grey v-spacing-top-2 v-spacing-4">Sent {{message.created|timesince}} ago</div>             
             </div>
             <div class="col-lg-9">

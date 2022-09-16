@@ -101,24 +101,27 @@ messageInfoContainers.forEach(messageContainer =>
 
 const usernamesPreviouslyContactedUrl = usernameToFormField.dataset.autocompleteSuggestionsUrl
 const checkUsernameUrl = usernameToFormField.dataset.checkUsernameUrl
+let cachedUsernames = undefined;
 
-const fetchSuggestions = async query => {
-  let response = await fetch(`${usernamesPreviouslyContactedUrl}`)
-  let data = await response.json()
-  const suggestions = data.suggestions
-  return suggestions
+const fetchPreviouslyContactedUsernames = async query => {
+  if (cachedUsernames === undefined){
+    // Because previously contacted usernames don't change while tying the username, we cache the names to avoid unnecessary requests
+    let response = await fetch(`${usernamesPreviouslyContactedUrl}`)
+    let data = await response.json()
+    cachedUsernames = data.usernames
+  }
+  return cachedUsernames
 }
 
-addTypeAheadFeatures(usernameToFormField, fetchSuggestions)
+addTypeAheadFeatures(usernameToFormField, fetchPreviouslyContactedUsernames)
 
 
 // Username check that username is valid
 const usernameWarningElementId = 'dynamicUsernameInvalidWarning';
 
 const returnUsernameWarningElement = () => {
-  var xpath = "//li[contains(text(),'this username does not exist')]";
-  var matchingElement = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-  return matchingElement;
+  const xpath = "//li[contains(text(),'this username does not exist')]";
+  return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 }
 
 const notifyUsernameInvalidWarning = () => {

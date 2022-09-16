@@ -37,7 +37,9 @@ export const addTypeAheadFeatures = (
   if (input.dataset.typeahead !== 'true') return
   let suggestions = []
   let focusedOptionIndex = -1
-  const wrapper = input.parentElement.parentElement
+  //const wrapper = input.parentElement.parentElement
+  const wrapper = document.getElementById('typeahead-wrapper')
+
   const optionsWrapper = document.createElement('div')
   optionsWrapper.classList.add('input-typeahead-suggestions', 'hidden')
   wrapper.appendChild(optionsWrapper)

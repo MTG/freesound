@@ -1,6 +1,6 @@
-import {makePostRequest} from "../utils/postRequest";
-import {showToast} from "../components/toast";
-import { addTypeAheadFeatures } from '../components/typeahead'
+import { makePostRequest } from "../utils/postRequest";
+import { showToast } from "../components/toast";
+import { addAutocomplete } from '../components/autocomplete'
 import debounce from 'lodash.debounce'
 
 
@@ -96,27 +96,19 @@ messageInfoContainers.forEach(messageContainer =>
   messageContainer.addEventListener('click', () => window.location = messageContainer.dataset.linkUrl)
 );
 
-
 // Username lookup for new messages
-
 const usernamesPreviouslyContactedUrl = usernameToFormField.dataset.autocompleteSuggestionsUrl
-const checkUsernameUrl = usernameToFormField.dataset.checkUsernameUrl
-let cachedUsernames = undefined;
 
-const fetchPreviouslyContactedUsernames = async query => {
-  if (cachedUsernames === undefined){
-    // Because previously contacted usernames don't change while tying the username, we cache the names to avoid unnecessary requests
-    let response = await fetch(`${usernamesPreviouslyContactedUrl}`)
-    let data = await response.json()
-    cachedUsernames = data.usernames
-  }
-  return cachedUsernames
+const setupAtocomplete = async () => {
+  let response = await fetch(`${usernamesPreviouslyContactedUrl}`)
+  let data = await response.json()
+  addAutocomplete(document.getElementById('usernames-autocomplete'), data.usernames);
 }
 
-addTypeAheadFeatures(usernameToFormField, fetchPreviouslyContactedUsernames)
-
+setupAtocomplete();
 
 // Username check that username is valid
+const checkUsernameUrl = usernameToFormField.dataset.checkUsernameUrl
 const usernameWarningElementId = 'dynamicUsernameInvalidWarning';
 
 const returnUsernameWarningElement = () => {
@@ -154,7 +146,6 @@ const removeUsernameInvalidWarning = () => {
   usernameToFormField.classList.remove('username-not-found')
 }
 
-
 const checkUsername = async () => {
   let response = await fetch(`${checkUsernameUrl}?username=${usernameToFormField.value}`)
   let data = await response.json()
@@ -164,6 +155,7 @@ const checkUsername = async () => {
     removeUsernameInvalidWarning();
   }
 }
+
 const debouncedCheckUsername = debounce(checkUsername, 200, {'leading': false, 'trailing': true})
 usernameToFormField.addEventListener('input', async evt => debouncedCheckUsername())
 usernameToFormField.addEventListener('focusin', async evt => debouncedCheckUsername())

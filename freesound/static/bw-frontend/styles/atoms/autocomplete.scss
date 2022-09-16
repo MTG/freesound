@@ -2,7 +2,7 @@
   &__container {
     width: 100%;
     position: relative;
-    display: inline-block;
+    top: 0px;
 
     i {
       display: none;
@@ -13,7 +13,7 @@
       overflow: scroll;
       position: absolute;
       z-index: 99;
-      top: 60px;
+      top: -20px;
       left: 0;
       right: 0;
       box-shadow: 0px 2px 4px rgb(0 0 0 / 8%);

@@ -230,8 +230,7 @@ def username_lookup(request):
     if request.method == "GET":
         results = get_previously_contacted_usernames(request.user)
     if using_beastwhoosh(request):
-        return JsonResponse({
-            'usernames': [{'label': '<p>{0}</p>'.format(username), 'value': username} for username in results]})
+        return JsonResponse({'usernames': results})
     else:
         json_resp = json.dumps(results)
         return HttpResponse(json_resp, content_type='application/json')

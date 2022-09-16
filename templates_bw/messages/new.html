@@ -13,7 +13,6 @@
             <div class="row">
                 <div class=" offset-lg-2 col-lg-8 ">
                     <h5 class="v-spacing-4">{% if form.initial %}Reply to message{% else %}New message{% endif %}</h5>
-                    <div id="typeahead-wrapper"></div>
                     {{form.as_p}}
                     {% if form.recaptcha_response %}
                         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -33,5 +32,4 @@
 
 {% block extrabody %}
 <script src="{% static 'bw-frontend/dist/messages.c4975674.js' %}"></script>
-
 {% endblock %}

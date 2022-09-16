@@ -113,15 +113,55 @@ addTypeAheadFeatures(usernameToFormField, fetchSuggestions)
 
 
 // Username check that username is valid
+const usernameWarningElementId = 'dynamicUsernameInvalidWarning';
 
-const checkUsername = async query => {
+const returnUsernameWarningElement = () => {
+  var xpath = "//li[contains(text(),'this username does not exist')]";
+  var matchingElement = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  return matchingElement;
+}
+
+const notifyUsernameInvalidWarning = () => {
+  // Add dynamic warning to tell users the username is not valid
+  if (document.getElementById(usernameWarningElementId) === null && returnUsernameWarningElement() === null){
+    const ulElement = document.createElement('ul');
+    ulElement.id = usernameWarningElementId;
+    ulElement.classList.add('errorlist');
+    const liElement = document.createElement('li');
+    liElement.innerText = 'We are sorry, but this username does not exist...'
+    ulElement.appendChild(liElement);
+    usernameToFormField.parentNode.parentNode.insertBefore(ulElement, usernameToFormField.parentNode);
+  }
+  // Add class to show username in red
+  usernameToFormField.classList.add('username-not-found')
+}
+
+const removeUsernameInvalidWarning = () => {
+  // If we added dynamic warning element, remove it
+  if (document.getElementById(usernameWarningElementId) !== null){
+    document.getElementById(usernameWarningElementId).remove();
+  }
+  // Also if there was an error message from form validation in the server, remove it
+  var matchingElement = returnUsernameWarningElement();
+  if (matchingElement !== null){
+    matchingElement.remove();
+  }
+
+  // Remove username not found class
+  usernameToFormField.classList.remove('username-not-found')
+}
+
+
+const checkUsername = async () => {
   let response = await fetch(`${checkUsernameUrl}?username=${usernameToFormField.value}`)
   let data = await response.json()
-  if (data.result === false){
-    usernameToFormField.classList.add('username-not-found')
+  if (data.result === true){ // Note that we invert the condition as endpoint returns true if username is NOT taken
+    notifyUsernameInvalidWarning();
   } else {
-    usernameToFormField.classList.remove('username-not-found')
+    removeUsernameInvalidWarning();
   }
 }
-const debouncedCheckusername = debounce(checkUsername, 200)
-usernameToFormField.addEventListener('input', async evt => debouncedCheckusername())
+const debouncedCheckUsername = debounce(checkUsername, 200, {'leading': false, 'trailing': true})
+usernameToFormField.addEventListener('input', async evt => debouncedCheckUsername())
+usernameToFormField.addEventListener('focusin', async evt => debouncedCheckUsername())
+usernameToFormField.addEventListener('focusout', async evt => debouncedCheckUsername())

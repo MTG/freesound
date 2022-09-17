@@ -1,3 +1,5 @@
+// @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-v3-or-later
+
 const addVisibleCheckbox = (checkboxEl) => {
 
     // We want <input type="checkbox" ...> elements to be inside their corresponding <label> element. When rendering
@@ -35,3 +37,5 @@ const addCheckboxVisibleElements = () => {
 addCheckboxVisibleElements();
 
 export default addCheckboxVisibleElements;
+
+// @license-end

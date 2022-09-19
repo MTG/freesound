@@ -95,10 +95,18 @@ function autocomplete(inp, arr) {
   });
 }
 
-export const addAutocomplete = (
-  input,
-  autocompleteItems
-) => {
-  input.setAttribute("autocomplete", "off");  // Prevent browser autocomplete
-  autocomplete(input, autocompleteItems);
+const addAutocomplete = (input, autocompleteItems) => {
+  input.setAttribute("autocomplete", "off");  // Prevent browser autocomplete on that input element
+  if (autocompleteItems.length > 0){
+    autocomplete(input, autocompleteItems);
+  }
 }
+
+document.addEventListener("DOMContentLoaded", function(){
+  var elementsWithAutocomplete = document.querySelectorAll('input[data-autocomplete-suggestions-url]');
+  elementsWithAutocomplete.forEach(element => {
+    fetch(element.dataset.autocompleteSuggestionsUrl)
+    .then((response) => response.json())
+    .then((data) => addAutocomplete(element, data.suggestions));
+  });
+});

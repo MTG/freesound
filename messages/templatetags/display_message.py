@@ -31,5 +31,8 @@ register = template.Library()
 def display_message(context, message):
     return {
         'message': message,
+        'hide_toggle_read_unread': context.get('hide_toggle_read_unread', False),
+        'hide_archive_unarchive': context.get('hide_archive_unarchive', False),
+        'list_type': context['list_type']
     }
     

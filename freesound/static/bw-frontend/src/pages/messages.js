@@ -1,7 +1,6 @@
 import { makePostRequest } from "../utils/postRequest";
 import { showToast } from "../components/toast";
-import { addAutocomplete } from '../components/autocomplete'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash.debounce';
 
 
 const checkboxSelectAllElement = document.getElementById('selectAll');
@@ -9,8 +8,7 @@ const messageCheckboxes = document.getElementsByClassName('message-checkbox');
 const actionsMenu = document.getElementsByClassName('actions-menu')[0];
 const messageActionButtons = document.getElementsByClassName('message-action');
 const LastMessageElement = document.getElementById('message-last');
-const messageInfoContainers = document.getElementsByClassName('bw-message__info');
-const usernameToFormField = document.getElementById('usernames-autocomplete')
+const usernameToFormField = document.getElementById('username-to-field')
 
 if (LastMessageElement) {
   LastMessageElement.focus();
@@ -54,21 +52,10 @@ const getMessageIDsOfCheckedMessages = () => {
 };
 
 const applyActionToMessages = (actionType, messageIDs) => {
-  const applyActionUrl = actionsMenu.dataset.applyActionUrl;
-  const nextUrl = actionsMenu.dataset.nextUrl;
-
-  // Make a post request that will perform the action, the response will redirect accordingly
-  let formData = {};
-  formData.next = nextUrl;
-  formData.choice = actionType;
-  formData.ids = messageIDs.join(',');
-
-  makePostRequest(applyActionUrl, formData, (responseText) => {
-      // Post request returned successfully, reload the page
-      document.location.reload();
-  }, () => {
-      showToast("An unexpected error occurred while performing the action");
-  });
+  const formElement = document.getElementById('message-action-form');
+  document.getElementById('message_ids').value = messageIDs.join(',');
+  document.getElementById('action_choice').value = actionType;
+  formElement.submit();
 };
 
 
@@ -92,23 +79,9 @@ messageActionButtons.forEach(actionElement =>
   actionElement.addEventListener('click', () => applyActionToMessages(actionElement.dataset.actionValue, [actionElement.parentNode.dataset.messageId]))
 );
 
-messageInfoContainers.forEach(messageContainer =>
-  messageContainer.addEventListener('click', () => window.location = messageContainer.dataset.linkUrl)
-);
-
-// Username lookup for new messages
-const usernamesPreviouslyContactedUrl = usernameToFormField.dataset.autocompleteSuggestionsUrl
-
-const setupAtocomplete = async () => {
-  let response = await fetch(`${usernamesPreviouslyContactedUrl}`)
-  let data = await response.json()
-  addAutocomplete(document.getElementById('usernames-autocomplete'), data.usernames);
-}
-
-setupAtocomplete();
+// NOTE: Username autocomplete is set using the data-autocomplete-suggestions property, so does not need to be set here
 
 // Username check that username is valid
-const checkUsernameUrl = usernameToFormField.dataset.checkUsernameUrl
 const usernameWarningElementId = 'dynamicUsernameInvalidWarning';
 
 const returnUsernameWarningElement = () => {
@@ -147,6 +120,7 @@ const removeUsernameInvalidWarning = () => {
 }
 
 const checkUsername = async () => {
+  const checkUsernameUrl = usernameToFormField.dataset.checkUsernameUrl
   let response = await fetch(`${checkUsernameUrl}?username=${usernameToFormField.value}`)
   let data = await response.json()
   if (data.result === true){ // Note that we invert the condition as endpoint returns true if username is NOT taken
@@ -156,7 +130,9 @@ const checkUsername = async () => {
   }
 }
 
-const debouncedCheckUsername = debounce(checkUsername, 200, {'leading': false, 'trailing': true})
-usernameToFormField.addEventListener('input', async evt => debouncedCheckUsername())
-usernameToFormField.addEventListener('focusin', async evt => debouncedCheckUsername())
-usernameToFormField.addEventListener('focusout', async evt => debouncedCheckUsername())
+if (usernameToFormField !== null){
+  const debouncedCheckUsername = debounce(checkUsername, 200, {'leading': false, 'trailing': true})
+  usernameToFormField.addEventListener('input', async evt => debouncedCheckUsername())
+  usernameToFormField.addEventListener('focusin', async evt => debouncedCheckUsername())
+  usernameToFormField.addEventListener('focusout', async evt => debouncedCheckUsername())  
+}

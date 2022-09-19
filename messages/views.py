@@ -104,7 +104,11 @@ def inbox(request):
 @login_required
 def sent_messages(request):
     qs = base_qs.filter(user_from=request.user, is_archived=False, is_sent=True)
-    tvars = {'list_type': 'sent'}  # Used in BW tabs nav only
+    tvars = {
+        'list_type': 'sent',  # Used in BW tabs nav only
+        'hide_toggle_read_unread': True,   # Used to control available actions in BW only
+        'hide_archive_unarchive': True   # Used to control available actions in BW only
+    } 
     tvars.update(paginate(
         request, qs,
         items_per_page=settings.MESSAGES_PER_PAGE_BW if using_beastwhoosh(request) else settings.MESSAGES_PER_PAGE))
@@ -230,7 +234,8 @@ def username_lookup(request):
     if request.method == "GET":
         results = get_previously_contacted_usernames(request.user)
     if using_beastwhoosh(request):
-        return JsonResponse({'usernames': results})
+        # NOTE: key needs to be "suggestions" below so the autocomplete JS part of the code works properly
+        return JsonResponse({'suggestions': results})
     else:
         json_resp = json.dumps(results)
         return HttpResponse(json_resp, content_type='application/json')

@@ -10,21 +10,30 @@
                 Select all
             </div>
         </label>
-        <div class="dropdown padding-left-1 display-none actions-menu" data-apply-action-url="{% url "messages-change-state" %}" data-next-url="{{ request.path }}">
+        <div class="dropdown padding-left-1 display-none actions-menu">
             <a class="no-hover dropdown-toggle" aria-haspopup="true"
                aria-expanded="false" data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Actions...</button></a>
             <ul class="dropdown-menu dropdown-menu-left">
+                {% if not hide_toggle_read_unread %}
                 <li class="bw-nav__action dropdown-item" data-action-value="r">
                     <a class="bw-link--black" href="javascript:void(0);">Toggle read/unread</a>
                 </li>
+                {% endif %}
+                {% if not hide_archive_unarchive %}
                 <li class="bw-nav__action dropdown-item" data-action-value="a">
                     <a class="bw-link--black" href="javascript:void(0);">{% if list_type == "archived" %}Unarchive{% else %}Archive{% endif %}</a>
                 </li>
+                {% endif %}
                 <li class="bw-nav__action dropdown-item" data-action-value="d">
                     <a href="javascript:void(0);">Delete message(s)</a>
                 </li>
             </ul>
         </div>
+        <form method="post" action="{% url 'messages-change-state' %}" id="message-action-form">{% csrf_token %}
+            <input id="message_ids" type="hidden" name="ids" />
+            <input id="action_choice" type="hidden" name="choice" />
+            <input type="hidden" name="next" value="{{ request.path }}" />
+        </form>
         {% endif %}
     </div>
     <div class="col-md-4 col-6 center v-spacing-1 v-spacing-top-1">

@@ -10,7 +10,7 @@
 
     .autocomplete-items {
       max-height: 400px;
-      overflow: scroll;
+      overflow-y: auto;
       position: absolute;
       z-index: 99;
       top: -20px;

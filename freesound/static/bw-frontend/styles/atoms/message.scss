@@ -72,8 +72,6 @@
     color: $navy-grey;
 
     &:hover {
-      cursor: pointer;
-
       h6 {
         color: $red;
       }
@@ -93,8 +91,14 @@
       }
     }
 
+    a {
+      color: $navy-grey;
+    }
+
     &.unread {
-      color: $black;
+      a {
+        color: $black;
+      }
     }
   }
 

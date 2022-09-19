@@ -1,4 +1,5 @@
 akismet==0.2.0
+autopep8==1.5.7
 beautifulsoup4==4.6.0
 bleach==3.1.5
 boto3==1.7.10
@@ -44,7 +45,7 @@ psycopg2==2.7.3.2
 pycrypto==2.6.1
 PyJWT==1.4.2
 pyparsing==2.4.7
-pysolr==3.9.0
+pysolr==3.10.0b1
 pysndfile==1.4.3
 python-cjson==1.1.0
 python-memcached==1.53

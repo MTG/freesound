@@ -351,12 +351,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def add_sounds_to_index(self, sound_objects):
         documents = [convert_sound_to_search_engine_document(s) for s in sound_objects]
         self.get_sounds_index().add(documents)
-        if settings.DEBUG:
-            # Sending the commit message generates server errors in production, we should investigate that... it could
-            # be related with a different version of solr running locally. In any case, this line was added only
-            # recently together with the refactoring of search engine backends so that we could force committing while
-            # testing, but it is not needed in production
-            self.get_sounds_index().commit()
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
         for sound_object_or_id in sound_objects_or_ids:
@@ -365,12 +359,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             else:
                 sound_id = sound_object_or_id.id
             self.get_sounds_index().delete(id=sound_id)
-        if settings.DEBUG:
-            # Sending the commit message generates server errors in production, we should investigate that... it could
-            # be related with a different version of solr running locally. In any case, this line was added only
-            # recently together with the refactoring of search engine backends so that we could force committing while
-            # testing, but it is not needed in production
-            self.get_sounds_index().commit()
 
     def remove_all_sounds(self):
         """Removes all sounds from the search index"""
@@ -488,6 +476,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             else:
                 post_id = post_object_or_id.id
             self.get_forum_index().delete(id=post_id)
+
+    def remove_all_forum_posts(self):
+        """Removes all forum posts from the search index"""
+        self.get_forum_index().delete(q="*:*")
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
         if type(forum_post_object_or_id) != Post:

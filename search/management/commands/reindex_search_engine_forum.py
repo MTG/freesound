@@ -24,7 +24,7 @@ from django.core.management.base import BaseCommand
 
 from forum.models import Post
 from utils.search.search_forum import add_posts_to_search_engine, get_all_post_ids_from_search_engine, \
-    delete_posts_from_search_engine
+    delete_all_posts_from_search_engine
 
 console_logger = logging.getLogger("console")
 
@@ -53,10 +53,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # If indicated, first remove all documents in the index
         clear_index = options['clear_index']
-        indexed_post_ids = None
         if clear_index:
-            indexed_post_ids = get_all_post_ids_from_search_engine()
-            delete_posts_from_search_engine(indexed_post_ids)
+            delete_all_posts_from_search_engine()
 
         # Select all moderated forum posts and index them
         all_posts = Post.objects.select_related("thread", "author", "thread__author", "thread__forum")\
@@ -71,8 +69,7 @@ class Command(BaseCommand):
         # Find all indexed forum posts which are not in the DB and remove them. This part of the code should do nothing
         # as deleted forum posts should be removed from the index in due time. In particular, if the "clear index" is
         # passed, this bit of code should remove no posts.
-        if indexed_post_ids is None:
-            indexed_post_ids = get_all_post_ids_from_search_engine()
+        indexed_post_ids = get_all_post_ids_from_search_engine()
         post_ids_to_delete = list(set(indexed_post_ids).difference(all_posts.values_list('id', flat=True)))
         console_logger.info("Deleting %d non-existing posts form the search engine", len(post_ids_to_delete))
         if post_ids_to_delete:

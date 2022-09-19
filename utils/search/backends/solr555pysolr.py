@@ -332,7 +332,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 SOLR_SOUNDS_URL,
                 encoder=FreesoundSoundJsonEncoder(),
                 results_cls=SolrResponseInterpreter,
-                search_handler="fsquery"
+                search_handler="fsquery",
+                always_commit=True
             )
         return self.sounds_index
 
@@ -341,7 +342,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             self.forum_index = pysolr.Solr(
                 SOLR_FORUM_URL,
                 encoder=FreesoundSoundJsonEncoder(),
-                results_cls=SolrResponseInterpreter
+                results_cls=SolrResponseInterpreter,
+                always_commit=True
             )
         return self.forum_index
 
@@ -478,12 +480,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         documents = [convert_post_to_search_engine_document(p) for p in forum_post_objects]
         documents = [d for d in documents if d is not None]
         self.get_forum_index().add(documents)
-        if settings.DEBUG:
-            # Sending the commit message generates server errors in production, we should investigate that... it could
-            # be related with a different version of solr running locally. In any case, this line was added only
-            # recently together with the refactoring of search engine backends so that we could force committing while
-            # testing, but it is not needed in production
-            self.get_forum_index().commit()
 
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         for post_object_or_id in forum_post_objects_or_ids:
@@ -492,12 +488,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             else:
                 post_id = post_object_or_id.id
             self.get_forum_index().delete(id=post_id)
-        if settings.DEBUG:
-            # Sending the commit message generates server errors in production, we should investigate that... it could
-            # be related with a different version of solr running locally. In any case, this line was added only
-            # recently together with the refactoring of search engine backends so that we could force committing while
-            # testing, but it is not needed in production
-            self.get_forum_index().commit()
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
         if type(forum_post_object_or_id) != Post:

@@ -1,0 +1,139 @@
+.bw-message {
+  &__container {
+
+    .bw-checkbox-container {
+      opacity: 0.3;
+    }
+
+    .bw-checkbox:checked {
+      & + .bw-checkbox-container {
+        opacity: 1.0;
+        display: block !important;
+      }
+    }
+
+    &:hover {
+
+      .bw-checkbox-container {
+        display: block;
+      }
+
+      .date {
+        display: none;
+      }
+
+      .icons {
+        display: block;
+
+        a {
+          color: $navy-light-grey;
+          position: relative;
+
+          &:hover {
+            cursor: pointer;
+            color: $black;
+            text-decoration: none;
+          }
+
+          &:before {
+            display: none;
+          }
+
+          &[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -40px;
+            right: -10px;
+            width: max-content;
+            border-radius: 100px;
+            background-color: $black;
+            color: $white;
+            padding: 2px 18px;
+          }
+        }
+      }
+    }
+  }
+
+  &__avatar {
+    border-radius: 50%;
+    width: 49px;
+    height: 49px;
+  }
+
+  &__avatar-detail {
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+  }
+
+  &__info {
+
+    color: $navy-grey;
+
+    &:hover {
+      h6 {
+        color: $red;
+      }
+
+      p {
+        color: $navy-grey;
+      }
+    }
+
+    &.active {
+      h6 {
+        color: $red;
+      }
+
+      p {
+        color: $black;
+      }
+    }
+
+    a {
+      color: $navy-grey;
+    }
+
+    &.unread {
+      a {
+        color: $black;
+      }
+    }
+  }
+
+  &__actions {
+
+    color: $navy-grey;
+
+    .date {
+      color: $navy-grey;
+    }
+    
+    .icons {
+      display: none;
+    }
+  }
+
+  &__detail_container {
+    width: 100%;
+    border-bottom: 1px solid $navy-light-grey;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__message_page {
+    &__avatar {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+    }
+  
+    h6 {
+      font-size: 16px;
+      margin: 0;
+    }
+  }
+}

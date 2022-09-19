@@ -27,7 +27,9 @@ const start = async () => {
         'ForumLists',
         'ForumListsThread',
         'ForumThread',
-        'ForumNewthread'
+        'ForumNewthread',
+        'MessagesInbox', 
+        'MessagesNew'
       ],
       filter: val => val.toLowerCase(),
     },

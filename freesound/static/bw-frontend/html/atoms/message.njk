@@ -1,0 +1,43 @@
+{% import './icons.njk' as icons %}
+
+{% macro message(active, unread, id) %}
+  <div class="bw-message__container v-padding-2 row">
+    <div class="col-md-1">
+      <label for="message{{id}}" class="checkbox">
+        <div class="bw-search__filter-checkbox v-spacing-top-2">
+          <input type="checkbox" class="bw-checkbox message-checkbox" id="message{{id}}" onchange="">
+        </div>
+      </label>
+    </div>
+    <div class="col-md-2"><img class="bw-message__avatar" src="../public/avatar.jpg" /></div>
+    <div class="col-md-9 bw-message__info {% if active %} active {% endif %} {% if unread %} unread {% endif %}">
+      <div class="between">
+        <h6 class="no-margins text-16">Spidimateo</h6>
+        <div class="date">12:13</div>
+        <div class="icons"><a title="Mark as read">{{ icons.icon('check') }}</a><a title="Delete message">{{ icons.icon('trash') }}</a></div>
+      </div>
+      <p class="no-margins">Ipsum dolor sit amet, consectetur</p>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro messages(count) %}
+  {% for i in range(count) -%}
+    {{ message(i == 0, i % 3 == 0, i)}}
+  {%- endfor %}
+{% endmacro %}
+
+{% macro detailMessage(isLast, i) %}
+  <div tabindex="1" class="bw-message__detail_container v-padding-2 row" id="{% if isLast %}message-last{% else %}message-{{i}}{% endif %}">
+    <div class="col-md-1"><img class="bw-message__avatar-detail v-spacing-top-2" src="../public/avatar.jpg" /></div>
+    <div class="col-md-11">
+      <p>Lorem ipsun dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut. Dolor seta amut best amon dul llarons et oultra um set nultra consectetur adipiscing elit, sed do eiusmod tempor incididunt ut eta amut best amon dul llarons et oultra um set nultra consectetur adipiscing.</p>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro detailMessages(count) %}
+    {% for i in range(count) -%}
+    {{ detailMessage(i == count - 1, i)}}
+  {%- endfor %}
+{% endmacro %}

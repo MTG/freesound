@@ -543,20 +543,20 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     # Tag clouds methods
     def get_user_tags(self, username):
         query = SolrQueryPySolr()
-        query.set_dismax_query('')
+        query.set_dismax_query('*:*')
         filter_query = 'username:\"%s\"' % username
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)
-        results = self.get_sounds_index().search(**query.as_dict())
+        results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
         return results.facets['tag']
 
     def get_pack_tags(self, username, pack_name):
         query = SolrQueryPySolr()
-        query.set_dismax_query('')
+        query.set_dismax_query('*:*')
         filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)
-        results = self.get_sounds_index().search(**query.as_dict())
+        results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
         return results.facets['tag']

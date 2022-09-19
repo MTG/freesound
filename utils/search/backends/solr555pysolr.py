@@ -24,6 +24,7 @@ import json
 import random
 import re
 import types
+import math
 from datetime import date, datetime
 
 import pysolr
@@ -243,6 +244,18 @@ def search_process_sort(sort):
     return sort
 
 
+def search_filter_make_intersection(query_filter):
+    # In solr 4, fl="a:1 b:2" will take the AND of these two filters, but in solr 5+, this will use OR
+    # fl=a:1&fl=b:2 can be used to take an OR, however we don't support this syntax
+    # The AND behaviour can be approximated by using fl="+a:1 +b:2", however, fl="+a:1 OR +b:2" will still do an AND
+    # In the Freesound API documentation, we document and support fl="a:(1 OR 2)" as a behaviour, but we
+    # never documented fl="a:1 OR b:2" as a valid syntax, and looking at search logs we cannot see anyone using
+    # this behaviour. Therefore, add a + to the beginning of each query item to force AND.
+
+    query_filter = re.sub(r'\b([a-z]+:)', r'+\1', query_filter)
+    return query_filter
+
+
 def search_process_filter(query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
     """Process the filter to make a number of adjustments
 
@@ -276,7 +289,8 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
         # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
         #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
         query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
-        #         query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:"Intersects(ENVELOPE(\1,\2,\4,\3))"', query_filter)
+
+    query_filter = search_filter_make_intersection(query_filter)
 
     # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
     # our query to the sounds in that list of IDs.

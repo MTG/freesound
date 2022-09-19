@@ -343,6 +343,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 SOLR_FORUM_URL,
                 encoder=FreesoundSoundJsonEncoder(),
                 results_cls=SolrResponseInterpreter,
+                search_handler="fsquery",
                 always_commit=True
             )
         return self.forum_index
@@ -358,7 +359,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 sound_id = sound_object_or_id
             else:
                 sound_id = sound_object_or_id.id
-            self.get_sounds_index().delete(id=sound_id)
+            self.get_sounds_index().delete(id=str(sound_id))
 
     def remove_all_sounds(self):
         """Removes all sounds from the search index"""
@@ -377,7 +378,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                       group_by_pack=False, facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
                       group_counts_as_one_in_facets=False):
 
-        print("search sounds")
         query = SolrQueryPySolr()
 
 
@@ -457,7 +457,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         filter_query = 'is_explicit:0'
         query.set_query("*:*")
         query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
-        response = self.get_sounds_index().search(**query.as_dict())
+        response = self.get_sounds_index().search(search_handler="select", **query.as_dict())
         docs = response.docs
         if docs:
             return int(docs[0]['id'])
@@ -475,7 +475,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 post_id = post_object_or_id
             else:
                 post_id = post_object_or_id.id
-            self.get_forum_index().delete(id=post_id)
+            self.get_forum_index().delete(id=str(post_id))
 
     def remove_all_forum_posts(self):
         """Removes all forum posts from the search index"""

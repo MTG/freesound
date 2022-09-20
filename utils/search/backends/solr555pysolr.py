@@ -112,7 +112,7 @@ def convert_sound_to_search_engine_document(sound):
         document["type"] = sound.type
     document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
     document["description"] = remove_control_chars(getattr(sound, "description"))
-    document["tag"] = getattr(sound, "tag_array")
+    document["tag"] = list(set([t.lower() for t in getattr(sound, "tag_array")]))
     document["license"] = getattr(sound, "license_name")
     if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
         document["avg_rating"] = getattr(sound, "avg_rating")

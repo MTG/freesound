@@ -256,54 +256,6 @@ def search_filter_make_intersection(query_filter):
     return query_filter
 
 
-def search_process_filter(query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
-    """Process the filter to make a number of adjustments
-
-        1) Add type suffix to human-readable audio analyzer descriptor names (needed for dynamic solr field names).
-        2) If only sounds with pack should be returned, add such a filter.
-        3) Add filter for sound IDs if only_sounds_within_ids is passed.
-        4) Rewrite geotag bounding box queries to use solr 5+ syntax
-
-    Step 1) is used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo ->
-    ac_tempo_i). The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float),
-    '*_i' (for integer) and '*_s' (for string). At indexing time, we append these suffixes to the analyzer
-    descriptor names that need to be indexed so Solr can treat the types properly. Now we automatically append the
-    suffices to the filter names so users do not need to deal with that and Solr understands recognizes the field name.
-
-    Args:
-        query_filter (str): query filter string.
-        only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
-        only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
-
-    Returns:
-        str: processed filter query string.
-    """
-    # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
-    query_filter = add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
-
-    # If we only want sounds with packs and there is no pack filter, add one
-    if only_sounds_with_pack and not 'pack:' in query_filter:
-        query_filter += ' pack:*'
-
-    if 'geotag:"Intersects(' in query_filter:
-        # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
-        #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-        query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
-
-    query_filter = search_filter_make_intersection(query_filter)
-
-    # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
-    # our query to the sounds in that list of IDs.
-    if only_sounds_within_ids:
-        sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
-        if query_filter:
-            query_filter += ' AND ({})'.format(sounds_within_ids_filter)
-        else:
-            query_filter = '({})'.format(sounds_within_ids_filter)
-
-    return query_filter
-
-
 class FreesoundSoundJsonEncoder(json.JSONEncoder):
     def default(self, value):
         if isinstance(value, datetime):
@@ -374,6 +326,53 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         response = self.search_sounds(query_filter='id:{}'.format(sound_id), offset=0, num_sounds=1)
         return response.num_found > 0
 
+    def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
+        """Process the filter to make a number of adjustments
+
+            1) Add type suffix to human-readable audio analyzer descriptor names (needed for dynamic solr field names).
+            2) If only sounds with pack should be returned, add such a filter.
+            3) Add filter for sound IDs if only_sounds_within_ids is passed.
+            4) Rewrite geotag bounding box queries to use solr 5+ syntax
+
+        Step 1) is used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo ->
+        ac_tempo_i). The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float),
+        '*_i' (for integer) and '*_s' (for string). At indexing time, we append these suffixes to the analyzer
+        descriptor names that need to be indexed so Solr can treat the types properly. Now we automatically append the
+        suffices to the filter names so users do not need to deal with that and Solr understands recognizes the field name.
+
+        Args:
+            query_filter (str): query filter string.
+            only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
+            only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
+
+        Returns:
+            str: processed filter query string.
+        """
+        # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
+        query_filter = add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
+
+        # If we only want sounds with packs and there is no pack filter, add one
+        if only_sounds_with_pack and not 'pack:' in query_filter:
+            query_filter += ' pack:*'
+
+        if 'geotag:"Intersects(' in query_filter:
+            # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
+            #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
+            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+
+        query_filter = search_filter_make_intersection(query_filter)
+
+        # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
+        # our query to the sounds in that list of IDs.
+        if only_sounds_within_ids:
+            sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+            if query_filter:
+                query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+            else:
+                query_filter = '({})'.format(sounds_within_ids_filter)
+
+        return query_filter
+
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
                       group_by_pack=False, facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
@@ -397,9 +396,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_dismax_query(textual_query, query_fields=query_fields)
 
         # Process filter
-        query_filter = search_process_filter(query_filter,
-                                             only_sounds_within_ids=only_sounds_within_ids,
-                                             only_sounds_with_pack=only_sounds_with_pack)
+        query_filter = self.search_process_filter(query_filter,
+                                                  only_sounds_within_ids=only_sounds_within_ids,
+                                                  only_sounds_with_pack=only_sounds_with_pack)
 
         # Set other query options
         if current_page is not None:

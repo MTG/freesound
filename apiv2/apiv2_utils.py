@@ -359,7 +359,7 @@ def api_search(
                 num_sounds=search_form.cleaned_data['page_size'],
                 group_by_pack=search_form.cleaned_data['group_by_pack']
             )
-            solr_ids = [element['id'] for element in result.docs]
+            solr_ids = [int(element['id']) for element in result.docs]
             solr_count = result.num_found
             more_from_pack_data = None
             if search_form.cleaned_data['group_by_pack']:

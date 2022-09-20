@@ -588,6 +588,9 @@ SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolr
 SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
 SOLR5_FORUM_URL = "http://search:8983/solr/forum/"
 
+SOLR9_SOUNDS_URL = "http://solr9:8983/solr/freesound/"
+SOLR9_FORUM_URL = "http://solr9:8983/solr/forum/"
+
 
 # -------------------------------------------------------------------------------
 # Similarity client settings

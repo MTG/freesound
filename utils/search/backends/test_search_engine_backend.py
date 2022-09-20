@@ -18,6 +18,9 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
+from builtins import zip
+from builtins import range
 import datetime
 import logging
 import os

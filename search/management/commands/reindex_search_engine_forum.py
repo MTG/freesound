@@ -24,7 +24,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from forum.models import Post
-from utils.search.search_forum import add_posts_to_search_engine, get_all_post_ids_from_search_engine, \
+from utils.search.search_forum import add_posts_to_search_engine, delete_posts_from_search_engine, get_all_post_ids_from_search_engine, \
     delete_all_posts_from_search_engine
 
 console_logger = logging.getLogger("console")
@@ -72,6 +72,6 @@ class Command(BaseCommand):
         # passed, this bit of code should remove no posts.
         indexed_post_ids = get_all_post_ids_from_search_engine()
         post_ids_to_delete = list(set(indexed_post_ids).difference(all_posts.values_list('id', flat=True)))
-        console_logger.info("Deleting %d non-existing posts form the search engine", len(post_ids_to_delete))
+        console_logger.info("Deleting %d non-existing posts from the search engine", len(post_ids_to_delete))
         if post_ids_to_delete:
             delete_posts_from_search_engine(post_ids_to_delete)

@@ -81,6 +81,8 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
         # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
         query_filter = solr555pysolr.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
 
+        # When filtering by the created field, use the `created_range` DateRangeType field instead
+        # which include the ability to filter on exact values and ranges of values.
         if 'created:' in query_filter:
             query_filter = query_filter.replace('created:', 'created_range:')
 

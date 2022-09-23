@@ -53,7 +53,7 @@ class Command(BaseCommand):
             action='store',
             dest='backend_class',
             default=settings.SEARCH_ENGINE_BACKEND_CLASS,
-            help='Path to the backend class to test, eg: utils.search.backends.solr451custom.Solr451CustomSearchEngine')
+            help='Path to the backend class to test, eg: utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine')
 
         parser.add_argument(
             '-s', '--sound_methods',
@@ -88,7 +88,7 @@ class Command(BaseCommand):
             search_engine = get_search_engine(backend_class=options['backend_class'])
         except ValueError:
             raise Exception('Wrong backend name format. Should be a path like '
-                            'utils.search.backends.solr451custom.Solr451CustomSearchEngine')
+                            'utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine')
         except ImportError as e:
             raise Exception('Backend class to test could not be imported: {}'.format(e))
 

@@ -88,6 +88,14 @@ def forum_pre_save_set_slug(sender, instance, **kwargs):
         instance.name_slug = slugify(instance.name)
 
 
+@receiver(pre_save, sender=Forum)
+def forum_pre_save_set_slug(sender, instance, **kwargs):
+    """If a forum has a name set but not a slug, automatically generate the slug
+    """
+    if not instance.id and not instance.name_slug:
+        instance.name_slug = slugify(instance.name)
+
+
 class Thread(models.Model):
     forum = models.ForeignKey(Forum)
     author = models.ForeignKey(User)

@@ -40,6 +40,7 @@ from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_posts_from_search_engine
+from utils.text import slugify
 
 web_logger = logging.getLogger('web')
 
@@ -77,6 +78,14 @@ class Forum(OrderedModel):
 
     def get_absolute_url(self):
         return reverse("forums-forum", args=[smart_text(self.name_slug)])
+
+
+@receiver(pre_save, sender=Forum)
+def forum_pre_save_set_slug(sender, instance, **kwargs):
+    """If a forum has a name set but not a slug, automatically generate the slug
+    """
+    if not instance.id and not instance.name_slug:
+        instance.name_slug = slugify(instance.name)
 
 
 class Thread(models.Model):

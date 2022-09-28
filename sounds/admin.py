@@ -22,6 +22,7 @@
 
 from django.conf.urls import url
 from django.contrib import admin, messages
+from django.core.cache import cache
 from django.core.management import call_command
 from django.http import HttpResponseRedirect
 from django.template.defaultfilters import truncatechars
@@ -181,6 +182,7 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
         urls = super(SoundOfTheDayAdmin, self).get_urls()
         my_urls = [
             url('generate_new_sounds/', self.generate_new_sounds),
+            url('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
         ]
         return my_urls + urls
 
@@ -188,6 +190,17 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
         call_command('create_random_sounds')
         messages.add_message(request, messages.INFO, 'New random sounds of the dat have been generated!')
         return HttpResponseRedirect(reverse('admin:sounds_soundoftheday_changelist'))
+
+    def clear_sound_of_the_day_cache(self, request):
+        try:
+            for key in cache.keys('*random_sound*'):
+                cache.delete(key)
+            messages.add_message(request, messages.INFO, 'Current cache for sound of the day has been cleared!')
+        except AttributeError:
+             messages.add_message(request, messages.WARNING, 'Could not empty cache for sound of the day as selected cache backend is not compatible')
+        return HttpResponseRedirect(reverse('admin:sounds_soundoftheday_changelist'))
+
+        
 
 admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)
 

@@ -4,6 +4,7 @@ volumes:
     pgdata:
     m2home:
     solrdata:
+    solr5data:
     fswebhome:
 
 services:
@@ -61,6 +62,16 @@ services:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8080:8080"
         environment:
             - FS_USER_ID
+
+    # Search server
+    solr5:
+        image: solr:5.5.5
+        volumes:
+            - solr5data:/opt/solr/server/solr/mycores
+            - ./utils/search/solr5.5.5/cores:/cores
+            - ./utils/search/solr5.5.5/docker-entrypoint:/docker-entrypoint-initdb.d
+        ports:
+            - 8983:8983
 
     # Redis (caches)
     redis:

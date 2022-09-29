@@ -21,7 +21,9 @@ const pages = [
   'forumlists',
   'forumliststhread',
   'forumthread',
-  'forumnewthread'
+  'forumnewthread',
+  'messagesinbox', 
+  'messagesnew'
 ];
 
 const outDir = 'freesound/static/bw-frontend/dist';

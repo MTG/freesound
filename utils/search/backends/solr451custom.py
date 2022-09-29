@@ -40,8 +40,8 @@ from sounds.models import Sound
 from utils.text import remove_control_chars
 from utils.search import SearchEngineBase, SearchEngineException, SearchResults
 
-SOLR_SOUNDS_URL = settings.SOLR_SOUNDS_URL
-SOLR_FORUM_URL = settings.SOLR_FORUM_URL
+SOLR_SOUNDS_URL = settings.SOLR4_SOUNDS_URL
+SOLR_FORUM_URL = settings.SOLR4_FORUM_URL
 
 # Mapping from db sound field names to solr sound field names
 FIELD_NAMES_MAP = {
@@ -128,13 +128,22 @@ class Multidict(dict):
 
 
 def convert_sound_to_search_engine_document(sound):
+    """
+    TODO: Document that this includes remove_control_chars due to originally sending XML. not strictly necessary when submitting
+          to json (and also, freesound model code fixes this), but keep it in to ensure that docs are clean.
+    TODO: Assert that sound object is correct?
+    """
     document = {}
 
     # Basic sound fields
     keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5',
-                   'was_remixed', 'original_filename', 'duration', 'type', 'id', 'num_downloads', 'filesize']
+                   'was_remixed', 'original_filename', 'duration', 'id', 'num_downloads', 'filesize']
     for key in keep_fields:
         document[key] = getattr(sound, key)
+    if sound.type == '':
+        document["type"] = "wav"
+    else:
+        document["type"] = sound.type
     document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
     document["description"] = remove_control_chars(getattr(sound, "description"))
     document["tag"] = getattr(sound, "tag_array")
@@ -189,19 +198,23 @@ def convert_sound_to_search_engine_document(sound):
 
 
 def convert_post_to_search_engine_document(post):
+    body = remove_control_chars(post.body)
+    if not body:
+        return None
+
     document = {
         "id": post.id,
         "thread_id": post.thread.id,
         "thread_title": remove_control_chars(post.thread.title),
-        "thread_author": post.thread.author,
+        "thread_author": post.thread.author.username,
         "thread_created": post.thread.created,
 
         "forum_name": post.thread.forum.name,
         "forum_name_slug": post.thread.forum.name_slug,
 
-        "post_author": post.author,
+        "post_author": post.author.username,
         "post_created": post.created,
-        "post_body": remove_control_chars(post.body),
+        "post_body": body,
 
         "num_posts": post.thread.num_posts,
         "has_posts": False if post.thread.num_posts == 0 else True
@@ -721,7 +734,7 @@ class Solr(object):
 
 
 class SolrResponseInterpreter(object):
-    def __init__(self, response):
+    def __init__(self, response, next_page_query=None):
         if "grouped" in response:
             if "thread_title_grouped" in response["grouped"].keys():
                 grouping_field = "thread_title_grouped"
@@ -918,6 +931,8 @@ class Solr451CustomSearchEngine(SearchEngineBase):
 
     def add_forum_posts_to_index(self, forum_post_objects):
         documents = [convert_post_to_search_engine_document(p) for p in forum_post_objects]
+        # If a forum post has no body, we don't convert/index it
+        documents = [d for d in documents if d]
         self.get_forum_index().add(documents)
         if settings.DEBUG:
             # Sending the commit message generates server errors in production, we should investigate that... it could

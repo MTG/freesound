@@ -32,6 +32,16 @@
   }
 }
 
+.dropdown-menu-left {  /* used for dropdown menus on the left side of the screen, the menu will open aligned left */
+  top: calc(100%);
+  text-align: left;
+  transform: translateX(-2px);
+
+  @include md-and-above {
+    transform: translateX(15px);
+  }
+}
+
 .dropdown-item {
   padding-top: 12px;
   padding-bottom: 12px;

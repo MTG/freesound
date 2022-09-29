@@ -61,6 +61,14 @@ def delete_posts_from_search_engine(post_ids):
         search_logger.error("Could not delete forum posts: %s" % str(e))
 
 
+def delete_all_posts_from_search_engine():
+    console_logger.info("Deleting ALL forum posts from search engine")
+    try:
+        get_search_engine().remove_all_forum_posts()
+    except SearchEngineException as e:
+        console_logger.error("Could not delete forum posts: %s" % str(e))
+
+
 def get_all_post_ids_from_search_engine(page_size=2000):
     """Retrieves the list of all forum post IDs currently indexed in the search engine
 

@@ -23,5 +23,6 @@ import './bookmarkSound';
 import './similarSoundsModal';
 import './cookieConsent';
 import './collapsableBlock';
+import './autocomplete';
 
 // @license-end

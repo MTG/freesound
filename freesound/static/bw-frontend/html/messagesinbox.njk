@@ -1,0 +1,85 @@
+{% import './molecules/navbar.njk' as navbars %}
+{% import './atoms/message.njk' as message %}
+{% import './atoms/icons.njk' as icons %}
+{% extends "base.njk" %}
+
+{% block content %}
+  {{ navbars.browseNavbar(true) }}
+  <div class="container bw-messages">
+    <div class="navbar-space-filler v-spacing-3 v-spacing-top-7">
+      <h1 class="text-32">Messages</h1>
+      <div class="divider-light v-spacing-top-4"></div>
+      <div class="row">
+        <div class="col-md-4 middle row">
+          <div class="col-md-5">
+            <label for="selectAll" class="between w-100 label-message-action">
+              <div class="bw-search__filter-checkbox">
+                <input type="checkbox" class="bw-checkbox" id="selectAll" onchange="">
+              </div>
+              <div class="bw-search__filter-name text-grey text-16 line-height-21">
+                Select all
+              </div>
+            </label>
+          </div>
+          <div class="col-md-5">
+            <label for="markasread" class="between w-100 label-message-action checked-action">
+              <div class="bw-search__filter-checkbox">
+                <input type="checkbox" class="bw-checkbox" id="markasread" onchange="">
+              </div>
+              <div class="bw-search__filter-name text-grey text-16 line-height-21">
+                Mark as read
+              </div>
+            </label>
+          </div>
+          <div class="col-md-2">
+            <a class="text-grey text-16 archive-action checked-action">Archive</a>
+          </div>
+        </div>
+        <div class="col-md-4 center">
+          {{ navbars.messagesNavbar('inbox') }}
+        </div>
+        <div class="col-md-4 middle end">
+          <button class="btn-inverse btn-profile-adapt text-15">New message</button>
+        </div>
+      </div>
+      <div class="divider-light"></div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="v-padding-3 text-light-grey relative">
+            <input type="search" class="bw-nav__search" placeholder="Browse messages..." />
+          </div>
+          <div class="bw-messages__messages-list">
+            {{ message.messages(20) }}
+          </div>
+        </div>
+        <div class="col-md-8 row">
+          <div class="col-md-11 offset-md-1">
+            <div class="v-padding-3 row bw-messages__detail-message-container">
+              <div class="col-md-11 text-center">
+                <a href="" class="text-16 font-weight-bold">Spidimateo</a>
+              </div>
+              <div class="col-md-1">
+                <button class="text-light-grey btn-neutral">{{ icons.icon('trash') }}</button>
+              </div>
+            </div>
+            <div class="bw-messages__detail-messages-container">
+              {{ message.detailMessages(20) }}
+            </div>
+            <div class="bw-messages__detail-write-message-container row">
+              <div class="col-md-10">
+                <textarea class="v-spacing-top-4" placeholder="Write your message here..."></textarea>
+              </div>
+              <div class="col-md-2">
+                <button class="btn-inverse text-14">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include './molecules/footer.njk' %}
+{% endblock %}
+{% block extrabody %}
+  <script src="../src/pages/messages.js"></script>
+{% endblock %}

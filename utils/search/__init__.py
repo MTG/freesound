@@ -287,6 +287,10 @@ class SearchEngineBase(object):
         """
         raise NotImplementedError
 
+    def remove_all_forum_posts(self):
+        """Removes all forum posts from the search index"""
+        raise NotImplementedError
+
     def forum_post_exists_in_index(self, forum_post_object_or_id):
         """Check if a sound is indexed in the search engine
 

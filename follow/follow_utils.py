@@ -79,7 +79,7 @@ def get_stream_sounds(user, time_lapse):
         filter_str = "username:" + user_following.username + " created:" + time_lapse
 
         result = search_engine.search_sounds(
-            textual_query='',
+            textual_query='*:*',
             query_filter=filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
@@ -120,7 +120,7 @@ def get_stream_sounds(user, time_lapse):
         tag_filter_str = tag_filter_query + " created:" + time_lapse
 
         result = search_engine.search_sounds(
-            textual_query='',
+            textual_query='*:*',
             query_filter=tag_filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,

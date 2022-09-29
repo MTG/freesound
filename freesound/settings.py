@@ -335,6 +335,8 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5  # BW only
+MESSAGES_PER_PAGE = 20
+MESSAGES_PER_PAGE_BW = 10
 
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
 
@@ -571,8 +573,11 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
 }
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine'
-SOLR_SOUNDS_URL = "http://search:8080/fs2/"
-SOLR_FORUM_URL = "http://search:8080/forum/"
+SOLR4_SOUNDS_URL = "http://search:8080/fs2/"
+SOLR4_FORUM_URL = "http://search:8080/forum/"
+
+SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
+SOLR5_FORUM_URL = "http://search:8983/solr/forum/"
 
 
 # -------------------------------------------------------------------------------

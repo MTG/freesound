@@ -27,14 +27,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
 from django.urls import reverse
 
-from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha
+from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha, BwMessageReplyForm, BwMessageReplyFormWithCaptcha
 from messages.models import Message, MessageBody
-from utils.cache import invalidate_template_cache, invalidate_user_template_caches
+from utils.cache import invalidate_user_template_caches
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 
@@ -43,27 +43,44 @@ from utils.pagination import paginate
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
-        
-        # get all message ids in the format `cb_[number]` which have a value of 'on'
-        message_ids = []
-        for key, val in request.POST.items():
-            if key.startswith('cb_') and val == 'on':
-                try:
-                    msgid = int(key.replace('cb_', ''))
-                    message_ids.append(msgid)
-                except ValueError:
-                    pass
+
+        if not using_beastwhoosh(request):
+            # get all message ids in the format `cb_[number]` which have a value of 'on'
+            message_ids = []
+            for key, val in request.POST.items():
+                if key.startswith('cb_') and val == 'on':
+                    try:
+                        msgid = int(key.replace('cb_', ''))
+                        message_ids.append(msgid)
+                    except ValueError:
+                        pass
+        else:
+            # If using beastwhoosh, the IDs will come in a different form field
+            message_ids = [int(mid) for mid in request.POST.get("ids", "").split(',')]
 
         if choice and message_ids:
-            messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) |
+            fs_messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) |
                                               Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
 
             if choice == "a":
-                messages.update(is_archived=True)
+                if using_beastwhoosh(request):
+                    for message in fs_messages:
+                        # In BW we allow the option to toggle archived/unarchived, so we need to iterate messages
+                        # one by one
+                        message.is_archived = not message.is_archived
+                        message.save()
+                else:
+                    fs_messages.update(is_archived=True)
             elif choice == "d":
-                messages.delete()
+                fs_messages.delete()
             elif choice == "r":
-                messages.update(is_read=True)
+                if using_beastwhoosh(request):
+                    for message in fs_messages:
+                        # In BW we allow the option to toggle read/unread, so we need to iterate messages one by one
+                        message.is_read = not message.is_read
+                        message.save()
+                else:
+                    fs_messages.update(is_read=True)
 
             invalidate_user_template_caches(request.user.id)
 
@@ -77,19 +94,35 @@ base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
 @login_required
 def inbox(request):
     qs = base_qs.filter(user_to=request.user, is_archived=False, is_sent=False)
-    return render(request, 'messages/inbox.html', paginate(request, qs))
+    tvars = {'list_type': 'inbox'}  # Used in BW tabs nav only
+    tvars.update(paginate(
+        request, qs,
+        items_per_page=settings.MESSAGES_PER_PAGE_BW if using_beastwhoosh(request) else settings.MESSAGES_PER_PAGE))
+    return render(request, 'messages/inbox.html', tvars)
 
 
 @login_required
 def sent_messages(request):
     qs = base_qs.filter(user_from=request.user, is_archived=False, is_sent=True)
-    return render(request, 'messages/sent.html', paginate(request, qs))
+    tvars = {
+        'list_type': 'sent',  # Used in BW tabs nav only
+        'hide_toggle_read_unread': True,   # Used to control available actions in BW only
+        'hide_archive_unarchive': True   # Used to control available actions in BW only
+    } 
+    tvars.update(paginate(
+        request, qs,
+        items_per_page=settings.MESSAGES_PER_PAGE_BW if using_beastwhoosh(request) else settings.MESSAGES_PER_PAGE))
+    return render(request, 'messages/sent.html', tvars)
 
 
 @login_required
 def archived_messages(request):
     qs = base_qs.filter(user_to=request.user, is_archived=True, is_sent=False)
-    return render(request, 'messages/archived.html', paginate(request, qs))
+    tvars = {'list_type': 'archived'}  # Used in BW tabs nav only
+    tvars.update(paginate(
+        request, qs,
+        items_per_page=settings.MESSAGES_PER_PAGE_BW if using_beastwhoosh(request) else settings.MESSAGES_PER_PAGE))
+    return render(request, 'messages/archived.html', tvars)
 
 
 @login_required
@@ -117,9 +150,9 @@ def message(request, message_id):
 def new_message(request, username=None, message_id=None):
 
     if request.user.profile.is_trustworthy():
-        form_class = MessageReplyForm
+        form_class = BwMessageReplyForm if using_beastwhoosh(request) else MessageReplyForm
     else:
-        form_class = MessageReplyFormWithCaptcha
+        form_class = BwMessageReplyFormWithCaptcha if using_beastwhoosh(request) else MessageReplyFormWithCaptcha
     
     if request.method == 'POST':
         form = form_class(request, request.POST)
@@ -200,5 +233,9 @@ def username_lookup(request):
     results = []
     if request.method == "GET":
         results = get_previously_contacted_usernames(request.user)
-    json_resp = json.dumps(results)
-    return HttpResponse(json_resp, content_type='application/json')
+    if using_beastwhoosh(request):
+        # NOTE: key needs to be "suggestions" below so the autocomplete JS part of the code works properly
+        return JsonResponse({'suggestions': results})
+    else:
+        json_resp = json.dumps(results)
+        return HttpResponse(json_resp, content_type='application/json')

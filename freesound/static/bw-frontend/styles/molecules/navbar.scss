@@ -151,6 +151,34 @@ $navbar-height-mobile: 64px;
   }
 }
 
+.navbar-messages {
+  list-style: none;
+  display: flex;
+  padding-left: 0;
+
+  .nav-item {
+    margin-right: 24px;
+
+    .nav-link {
+      font-size: 16px;
+      color: $navy-grey;
+
+      &.active {
+        color: $black;
+      }
+
+      &:hover {
+        color: $black;
+      }
+    }
+
+    span {
+      margin-left: 16px;
+      color: $navy-grey;
+    }
+  }
+}
+
 .navbar-profile {
   list-style: none;
 
@@ -245,3 +273,4 @@ $navbar-height-mobile: 64px;
     }
   }
 }
+

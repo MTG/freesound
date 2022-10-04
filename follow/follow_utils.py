@@ -26,8 +26,6 @@ from utils.search import get_search_engine
 import urllib
 from django.conf import settings
 
-SOLR_QUERY_LIMIT_PARAM = 3
-
 
 def get_users_following_qs(user):
     return FollowingUserItem.objects.select_related('user_to__profile')\
@@ -63,7 +61,7 @@ def is_user_following_tag(user, slash_tag):
     return FollowingQueryItem.objects.filter(user=user, query=slash_tag.replace("/", " ")).exists()
 
 
-def get_stream_sounds(user, time_lapse):
+def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
 
     search_engine = get_search_engine()
 
@@ -76,19 +74,19 @@ def get_stream_sounds(user, time_lapse):
     users_sounds = []
     for user_following in users_following:
 
-        filter_str = "username:\"" + user_following.username + "\" AND created:" + time_lapse
+        filter_str = "username:\"" + user_following.username + "\" created:" + time_lapse
         result = search_engine.search_sounds(
             textual_query='',
             query_filter=filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
-            num_sounds=SOLR_QUERY_LIMIT_PARAM,
+            num_sounds=num_results_per_grup,
             group_by_pack=False,
         )
 
         if result.num_rows != 0:
 
-            more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
+            more_count = max(0, result.num_found - num_results_per_grup)
 
             # the sorting only works if done like this!
             more_url_params = [urllib.quote(filter_str), urllib.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
@@ -116,20 +114,20 @@ def get_stream_sounds(user, time_lapse):
         for tag in tags:
             tag_filter_query += "tag:" + tag + " "
 
-        tag_filter_str = tag_filter_query + " AND created:" + time_lapse
+        tag_filter_str = tag_filter_query + " created:" + time_lapse
 
         result = search_engine.search_sounds(
             textual_query='',
             query_filter=tag_filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
-            num_sounds=SOLR_QUERY_LIMIT_PARAM,
+            num_sounds=num_results_per_grup,
             group_by_pack=False,
         )
 
         if result.num_rows != 0:
 
-            more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
+            more_count = max(0, result.num_found - num_results_per_grup)
 
             # the sorting only works if done like this!
             more_url_params = [urllib.quote(tag_filter_str), urllib.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]

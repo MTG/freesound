@@ -19,6 +19,9 @@
                     <a class="bw-link--black" href="{% url 'bookmarks-for-user' request.user.username %}">Bookmarks</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="{% url 'stream' %}">Activity stream</a>
+                </li>
+                <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'messages' %}">Messages
                         {% if num_messages %}<span class="text-red">({{ num_messages }})</span>{% endif %}
                     </a>

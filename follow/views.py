@@ -27,13 +27,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
 from follow import follow_utils
 from follow.models import FollowingQueryItem
 from follow.models import FollowingUserItem
-from utils.frontend_handling import using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh, render
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -118,7 +118,7 @@ def following_tags(request, username):
     """List of tags that are being followed by user with "username"
     """
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('account', args=[username]) + '?following_tags=1')
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?followingTags=1')
 
     user = request.parameter_user
     is_owner = False
@@ -137,7 +137,7 @@ def following_tags(request, username):
         paginator = paginate(request, following_tags, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?following_tags={}'.format(paginator['current_page']),
+            'next_path': reverse('account', args=[username]) + '?followingTags={}'.format(paginator['current_page']),
             'follow_page': 'tags' # Used in BW
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -225,7 +225,7 @@ def stream(request):
     SELECT_OPTIONS = OrderedDict([
         ("last_week", "Last week"),
         ("last_month", "Last month"),
-        ("specific_dates", "Specify dates...")
+        ("specific_dates", "Specific dates...")
     ])
 
     SELECT_OPTIONS_DAYS = {
@@ -269,7 +269,7 @@ def stream(request):
 
     errors_getting_data = False
     try:
-        users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
+        users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse, num_results_per_grup=4 if using_beastwhoosh(request) else 3)
     except socket_error:
         # Could not connect to solr
         errors_getting_data = True

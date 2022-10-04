@@ -1,0 +1,114 @@
+{% extends "simple_page.html" %}
+{% load staticfiles %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% load util %}
+{% block page-title %}Activity stream{% endblock %}
+{% block title %}Activity stream{% endblock %}
+
+{% block page-content %}
+<div>
+
+    <p>In this page you'll see new sounds uploaded by <a href="{% url "user-following-users" request.user %}">users you follow</a> and new sounds tagged with the <a href="{% url "user-following-tags" request.user %}">tags you follow</a>.<br>
+    You can configure email notifications for updates in your activity stream through your <a href="{% url "accounts-email-settings" %}">email settings</a> page.</p>
+
+    <div class="v-spacing-top-4">
+        <form class="bw-form form-inline" action="." method="post">
+            {% csrf_token %}
+            <div>
+                <label id="stream_period">Select time period:</label>
+                <select id="time_lapse" name="time_lapse">
+                    {% for key, value in SELECT_OPTIONS.items %}
+                        <option value="{{ key}}" {% if select_value == key %}selected="selected"{% endif %} >{{ value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label id="lbl_date_from" for="date_from">From:</label>
+                <input id="date_from" name="date_from" type="text" placeholder="YYYY-MM-DD" {% if date_from %}value="{{ date_from }}"{% endif %}/>
+            </div>
+            <div>
+                <label id="lbl_date_to" for="date_to">To:</label>
+                <input id="date_to" name="date_to" type="text" placeholder="YYYY-MM-DD" {% if date_to %}value="{{ date_to }}"{% endif %}/>
+            </div>
+            <button class="btn-primary">Find sounds</button>
+        </form>
+    </div>
+
+    {% if not errors_getting_data %}
+    <div class="divider-light v-spacing-top-3 v-spacing-4"></div>
+    <div>
+        <a id="new_sounds_users"></a>
+        <h3>New sounds by users you follow</h3>
+        {% if not users_sounds %}
+            <div class="v-spacing-7 v-spacing-top-5">
+                <p class="text-grey v-spacing-2">Looks like there are no new sounds from users you follow in that time period... &#128543</p>
+            </div>
+        {% else %}
+            <div class="v-spacing-top-2">
+            {% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}
+                <h5 class="text-grey v-spacing-top-3">From user "{{ user.0.username }}"</h5>
+                <a id="{{ user.0 }}" ></a>
+                <div>    
+                {% for sound_chunk_objs in sound_objs|chunks:4 %}
+                    <div class="row no-margin">
+                        {% for sound_obj in sound_chunk_objs %}
+                            <div class="col-lg-3 col-6">
+                                {% display_sound_small sound_obj %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                </div>
+                {% if more_count > 0 %}
+                <div class="center v-spacing-4">
+                    <a class="btn-inverse" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
+                </div>
+                {% endif %}
+            {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="divider-light v-spacing-top-3 v-spacing-4"></div>
+    <div>
+        <a id="new_sounds_tags"></a>
+        <h3>New sounds with tags you follow</h3>
+        {% if not tags_sounds %}
+            <div class="v-spacing-7 v-spacing-top-5">
+                <p class="text-grey v-spacing-2">Looks like there are no new sounds from tags you follow in that time period... &#128543</p>
+            </div>
+        {% else %}
+            <div class="v-spacing-top-2">
+            {% for tags, sound_objs, more_url_params, more_count, new_count in tags_sounds %}
+                <h5 class="text-grey v-spacing-top-3">From tag{{ tags|pluralize }} "{{ tags|join:", " }}"</h5>
+                <a id="{{ tags|join:"/" }}"></a>
+                <div>
+                {% for sound_chunk_objs in sound_objs|chunks:4 %}
+                <div class="row no-margin">
+                    {% for sound_obj in sound_chunk_objs %}
+                        <div class="col-lg-3 col-6">
+                            {% display_sound_small sound_obj %}
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                {% if more_count > 0 %}
+                <div class="center v-spacing-4">
+                    <a class="btn-inverse" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
+                </div>
+                {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <div class="v-spacing-6 v-spacing-top-4">
+        <p class="v-spacing-4 text-grey">An error occurred while requesting the data, please try again later...</p>
+        <p><button onclick="window.history.back();" class="btn-primary">Go back</button></p>
+    </div>
+    {% endif %}
+</div>
+    
+{% endblock %}

@@ -76,10 +76,9 @@ def get_stream_sounds(user, time_lapse):
     users_sounds = []
     for user_following in users_following:
 
-        filter_str = "username:" + user_following.username + " created:" + time_lapse
-
+        filter_str = "username:\"" + user_following.username + "\" AND created:" + time_lapse
         result = search_engine.search_sounds(
-            textual_query='*:*',
+            textual_query='',
             query_filter=filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
@@ -117,10 +116,10 @@ def get_stream_sounds(user, time_lapse):
         for tag in tags:
             tag_filter_query += "tag:" + tag + " "
 
-        tag_filter_str = tag_filter_query + " created:" + time_lapse
+        tag_filter_str = tag_filter_query + " AND created:" + time_lapse
 
         result = search_engine.search_sounds(
-            textual_query='*:*',
+            textual_query='',
             query_filter=tag_filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,

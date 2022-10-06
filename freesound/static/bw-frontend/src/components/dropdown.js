@@ -1,3 +1,5 @@
+// @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-v3-or-later
+
 const dropdownToggles = [...document.querySelectorAll('[data-toggle="dropdown"]')];
 
 const lastOpenedDropdown = { toggle: undefined, dropdownOptions: undefined };
@@ -42,3 +44,5 @@ const toggleExpandDropdown = toggle => {
 dropdownToggles.forEach(toggle => {
   toggle.addEventListener('click', () => toggleExpandDropdown(toggle));
 });
+
+// @license-end

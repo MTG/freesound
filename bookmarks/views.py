@@ -18,18 +18,19 @@
 #     See AUTHORS file.
 #
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
 from bookmarks.forms import BookmarkForm, BwBookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
-from utils.frontend_handling import using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh, render
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -52,7 +53,7 @@ def bookmarks(request, username, category_id=None):
              'n_uncat': n_uncat,
              'category': category,
              'bookmark_categories': bookmark_categories}
-    tvars.update(paginate(request, bookmarked_sounds, 30))
+    tvars.update(paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE if not using_beastwhoosh(request) else settings.BOOKMARKS_PER_PAGE_BW))
     return render(request, 'bookmarks/bookmarks.html', tvars)
 
 

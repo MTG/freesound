@@ -18,7 +18,7 @@
             {% if categories_aready_containing_sound %}
                 under the categories:
                 {% for cat in categories_aready_containing_sound %}
-                    <strong>{{cat.name}}</strong>{% if not forloop.last %}, {% endif %}
+                    <span class="text-black">{{cat.name}}</span>{% if not forloop.last %}, {% endif %}
                 {% endfor %}
             {% endif %}
             </div>

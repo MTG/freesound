@@ -28,6 +28,16 @@ const saveBookmark = (soundId, data) => {
     });
 }
 
+
+const showHideNewCategoryName = (categoryValue, elementToShowHide) => {
+    if (categoryValue == ''){
+        // No category is selected, show the new category name input
+        elementToShowHide.style.display = 'block'
+    } else {
+        elementToShowHide.style.display = 'none'
+    }
+}
+
 const initBookmarkFormModal = (soundId) => {
     // We need to trigger create select elements because bookmark form has one
     createSelect();
@@ -39,6 +49,11 @@ const initBookmarkFormModal = (soundId) => {
     const formElement = modalElement.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
+    const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-category`);
+    const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_category_name`);
+    showHideNewCategoryName(categorySelectElement.value, newCategoryNameElement);
+    categorySelectElement.addEventListener('change' , (e) => {showHideNewCategoryName(e.target.value, newCategoryNameElement)});
+
     saveButtonElement.addEventListener('click', (e) => {
         e.preventDefault();
         const data = {};

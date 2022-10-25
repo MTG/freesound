@@ -49,22 +49,6 @@ services:
 
     # Search server
     search:
-        build:
-            context: ./docker/search
-            dockerfile: Dockerfile.search
-        init: true
-        command: mvn -Dsolr.solr.home=/code/solr.home jetty:run-war
-        volumes:
-            - solrdata:/var/lib/solr
-            - m2home:/root/.m2
-            - ./utils/search/solr4.5.1/solr.home:/code/solr.home
-        ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8080:8080"
-        environment:
-            - FS_USER_ID
-
-    # Search server
-    solr5:
         image: solr:5.5.5
         volumes:
             - solr5data:/opt/solr/server/solr/mycores

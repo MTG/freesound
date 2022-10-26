@@ -39,13 +39,20 @@ const showHideNewCategoryName = (categoryValue, elementToShowHide) => {
 }
 
 const initBookmarkFormModal = (soundId) => {
-    // We need to trigger create select elements because bookmark form has one
-    createSelect();
-
-    // Bind action to save bookmark in "add bookmark button" (and prevent default form submit)
+    
+    // Modify the form structure to add a "Category" label inline with the select dropdown
     const modalElement = document.getElementById(`bookmarkSoundModal`);
     const selectElement = modalElement.getElementsByTagName('select')[0];
-    selectElement.insertAdjacentHTML("beforebegin", 'Category: ');
+    const wrapper = document.createElement('div');
+    selectElement.parentNode.insertBefore(wrapper, selectElement.parentNode.firstChild);
+    const label = document.createElement('div');
+    label.innerHTML = "Category:"
+    label.style = 'display:inline-block;';
+    wrapper.appendChild(label)
+    wrapper.appendChild(selectElement)
+    createSelect();  // We need to trigger create select elements because bookmark form has one
+    
+    
     const formElement = modalElement.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
@@ -54,6 +61,7 @@ const initBookmarkFormModal = (soundId) => {
     showHideNewCategoryName(categorySelectElement.value, newCategoryNameElement);
     categorySelectElement.addEventListener('change' , (e) => {showHideNewCategoryName(e.target.value, newCategoryNameElement)});
 
+    // Bind action to save bookmark in "add bookmark button" (and prevent default form submit)
     saveButtonElement.addEventListener('click', (e) => {
         e.preventDefault();
         const data = {};

@@ -192,8 +192,8 @@
                                 <li class="v-spacing-3">{% bw_icon 'comments' 'text-grey text-opacity-050' %}<a href="#comments" class="bw-link--black no-hover"><span class="text-21">{{ sound.num_comments }}</span> <span class="text-grey text-17">comments</span></a></li>
                             </ol>
                         </div>
-                        <div class="v-spacing-top-5">
-                            {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ sound.license.name_with_version }}</span>
+                        <div class="v-spacing-top-5 ellipsis">
+                            {% bw_icon sound.license_bw_icon_name 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-1">{{ sound.license.name_with_version }}</span>
                         </div>
                         <div class="text-grey {% if sound.user == request.user %}v-spacing-4{% endif %} v-spacing-top-1">
                             {{ sound.license.get_short_summary|safe }} <a href="{{ sound.license.deed_url }}" target="_blank" class="bw-link--black">More...</a>

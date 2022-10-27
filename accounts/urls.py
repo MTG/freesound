@@ -90,6 +90,8 @@ urlpatterns = [
     url(r'^describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),
     url(r'^describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
 
+    url(r'^bookmarks/$', bookmarks.bookmarks, name="bookmarks"),
+    url(r'^bookmarks/category/(?P<category_id>\d+)/$', bookmarks.bookmarks, name="bookmarks-category"),
     url(r'^bookmarks/add/(?P<sound_id>\d+)/$', bookmarks.add_bookmark, name="add-bookmark"),
     url(r'^bookmarks/get_form_for_sound/(?P<sound_id>\d+)/$', bookmarks.get_form_for_sound, name="bookmarks-add-form-for-sound"),
     url(r'^bookmarks/category/(?P<category_id>\d+)/delete/$', bookmarks.delete_bookmark_category, name="delete-bookmark-category"),

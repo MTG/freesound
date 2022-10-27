@@ -4,8 +4,8 @@
 {% load display_sound %}ç
 {% load util %}
 
-{% block title %}{% if is_owner %}My bookmarks{% else %}Bookmarks by {{user.username}}{% endif %}{% endblock %}
-{% block page-title %}{% if is_owner %}My bookmarks{% else %}Bookmarks by <a href="{% url 'account' user.username %}">{{user.username}}</a>{% endif %}{% endblock %}
+{% block title %}{% if is_owner %}Bookmarks{% else %}Bookmarks by {{user.username}}{% endif %}{% endblock %}
+{% block page-title %}{% if is_owner %}Bookmarks{% else %}Bookmarks by <a href="{% url 'account' user.username %}">{{user.username}}</a>{% endif %}{% endblock %}
 
 {% block page-content %}
     <div class="v-spacing-top-5">
@@ -19,7 +19,7 @@
                         {% for cat in bookmark_categories %}
                             <li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %}>{{cat.name}}</a> <span class="text-grey"> · {{cat.num_bookmarks}} bookmark{{ cat.num_bookmarks|pluralize }}</span>
                             {% if is_owner %}
-                            <a class="cursor-pointer h-spacing-left-1" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this bookmark category?" data-modal-confirmation-url="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}" title="Delete bookmark category">{% bw_icon 'trash' %}</a>
+                            <a class="cursor-pointer h-spacing-left-1" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark category?" data-modal-confirmation-help-text="Note that all the bookmarks inside this category will also be removed" data-modal-confirmation-url="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}" title="Remove bookmark category">{% bw_icon 'trash' %}</a>
                             {% endif %}</li>
                         {% endfor %}
                     </ul>
@@ -31,19 +31,16 @@
                 </div>
             </div>
             <div class="col-lg-8">
-                <h4><span class="text-light-grey">Bookmarks category:</span> {% if category %}{{category.name}}{% else %}Uncategorized{% endif %} </h4>
+                <h4><span class="text-light-grey">Category:</span> {% if category %}{{category.name}}{% else %}Uncategorized{% endif %} </h4>
                 <div class="v-spacing-top-3">
                 {% for bookmarks_chunk in page.object_list|chunks:3 %}
                     <div class="row no-margins">
                         {% for bookmark in bookmarks_chunk %}
                             <div class="col-4">
-                                {% display_sound_small bookmark.sound %}
-                                <!-- TODO: button to remove bookmark and to rename bookmark (?) -->
-                                {% comment %}
+                                {% display_sound_small bookmark.sound %}                     
                                 {% if is_owner %}
-                                    <a href="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete bookmark"/></a>
+                                    <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark from '{{bookmark.category_name_or_uncategorized}}'?" data-modal-confirmation-url="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}" alt="Remove from bookmarks">{% bw_icon 'trash' %} Remove bookmark</a></div>
                                 {% endif %}
-                                {% endcomment %}
                             </div>
                         {% endfor %}
                     </div>

@@ -340,7 +340,12 @@ MESSAGES_PER_PAGE_BW = 10
 BOOKMARKS_PER_PAGE = 30
 BOOKMARKS_PER_PAGE_BW = 12 
 
+
+# Weights using to compute BW charts
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
+
+# Whether or not user bookmarks and bookmark categories should be public (visible to all other users) in BW
+BW_BOOKMARK_PAGES_PUBLIC = False
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3

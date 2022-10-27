@@ -5,8 +5,8 @@ import {createPlayer} from './player/player-ui'
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
 var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
 var MIN_INPUT_CHARACTERS_FOR_GEOCODER =  3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
-var MAP_MARKER_URL = '/static/bw-frontend/public/map_marker.png'; 
-var MAP_MARKER_2X_URL = '/static/bw-frontend/public/map_marker_2x.png';
+var MAP_MARKER_URL = '/static/bw-frontend/dist/map_marker.png'; 
+var MAP_MARKER_2X_URL = '/static/bw-frontend/dist/map_marker_2x.png';
 
 function setMaxZoomCenter(lat, lng, zoom) {
     window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels

@@ -8,18 +8,13 @@ Checkout the Freesound repository and run this command from the root folder:
 npm install
 ```
 
+## Building static
 
-## How to run frontend "demo"
-
-Run this command from the root folder:
+Checkout the Freesound repository and run this command from the root folder:
 
 ```
-npm start
+npm run build
 ```
-
-You will be prompted the choose which page to start (use the arrow keys to pick your choice).
-Once you select, open the browser at `http://localhost:1234` in order to see that page.
-So far, there are work in progress versions of the front page and the search page.
 
 
 ## Icons

@@ -93,7 +93,11 @@ class License(OrderedModel):
             version_label = ' 3.0'
         elif '4.0' in self.deed_url:
             version_label = ' 4.0'
-        return '{}{}'.format(self.name, version_label)
+        name = self.name
+        if name == 'Attribution Noncommercial':
+            # For dipslaying purposes, we make the name shorter, otherwise it overflows in BW sound page
+            name = 'Noncommercial'
+        return '{}{}'.format(name, version_label)
 
     def __unicode__(self):
         return self.name_with_version
@@ -823,6 +827,17 @@ class Sound(SocialModel):
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
 
+    @property
+    def license_bw_icon_name(self):
+        license_name = self.license.name
+        if '0' in license_name.lower():
+            return 'zero'
+        elif 'noncommercial' in license_name.lower():
+            return 'nc'
+        elif 'attribution' in license_name.lower():
+            return 'by'
+        return 'cc'
+
     def get_license_history(self):
         """
         Returns a list of tuples with the following format:
@@ -1539,12 +1554,17 @@ class Pack(SocialModel):
         return sum(durations)
 
     @cached_property
-    def license_summary_name_and_id(self):
-        # TODO: store this in DB?
+    def licenses_data(self):
         licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
         license_ids = [lid for _, lid in licenses_data]
         license_names = [lname for lname, _ in licenses_data]
-
+        return license_ids, license_names
+    
+    @property
+    def license_summary_name_and_id(self):
+        # TODO: store this in DB?
+        license_ids, license_names = self.licenses_data
+        
         if len(set(license_ids)) == 1:
             # All sounds have same license
             license_summary_name = license_names[0]
@@ -1553,6 +1573,17 @@ class Pack(SocialModel):
             license_summary_name = self.VARIOUS_LICENSES_NAME
             license_id = None
         return license_summary_name, license_id
+
+    @property
+    def license_bw_icon_name(self):
+        license_summary_name, _ = self.license_summary_name_and_id
+        if '0' in license_summary_name.lower():
+            return 'zero'
+        elif 'noncommercial' in license_summary_name.lower():
+            return 'nc'
+        elif 'attribution' in license_summary_name.lower():
+            return 'by'
+        return 'cc'
 
     @property
     def license_summary_text(self):

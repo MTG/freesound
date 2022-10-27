@@ -85,15 +85,15 @@
                                     {% bw_icon 'wave' 'text-grey text-opacity-050' %}<a href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" class="bw-link--black  no-hover"><span class="text-21">{{ pack.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
                                 </li>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'play' 'text-light-grey' %} <span class="text-21">{{ pack.get_total_pack_sounds_length|duration_hours }}</span> <span class="text-grey text-17">hours of audio</span>
+                                    {% bw_icon 'clock' 'text-light-grey' %} <span class="text-21">{{ pack.get_total_pack_sounds_length|duration_hours }}</span> <span class="text-grey text-17">hours of audio</span>
                                 </li>
                                 <li class="v-spacing-3">
                                     {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--black no-hover"><span class="text-21">{{ pack.num_downloads }}</span> <span class="text-grey text-17">downloads</span></a>
                                 </li>
                             </ol>
                         </div>
-                        <div class="v-spacing-top-5">
-                            {% bw_icon 'cc' 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-2">{{ pack.license_summary_name_and_id.0 }}</span>
+                        <div class="v-spacing-top-5 ellipsis">
+                            {% bw_icon pack.license_bw_icon_name 'text-grey text-opacity-050' %} <span class="text-20 h-spacing-left-1">{{ pack.license_summary_name_and_id.0 }}</span>
                         </div>
                         <div class="text-grey v-spacing-top-1">
                             {{ pack.license_summary_text|safe }} {% if pack.license_summary_deed_url %}<a href="{{ pack.license_summary_deed_url }}" target="_blank" class="bw-link--black">More...</a>{% endif %}

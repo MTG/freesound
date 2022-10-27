@@ -24,9 +24,9 @@
     </div>
     <div class="col-xl-2 col-md-4 col-5 bw-message__actions middle right padding-right-3">
         <div class="date">{{ message.created|date:"F jS, Y" }}</div>
-        <div class="icons" data-message-id="{{ message.id }}">
-            {% if not hide_toggle_read_unread %}<a title="Mark as {% if message.is_read %}un{% endif %}read" class="message-action" data-action-value="r">{% bw_icon "check" %}</a>{% endif %}
-            {% if not hide_archive_unarchive %}<a title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" class="message-action" data-action-value="a">{% bw_icon "check-double" %}</a>{% endif %}
+        <div class="icons text-18" data-message-id="{{ message.id }}">
+            {% if not hide_toggle_read_unread %}<a title="Mark as {% if message.is_read %}un{% endif %}read" class="message-action" data-action-value="r">{% if message.is_read %}{% bw_icon "eye-blocked" %}{% else %}{% bw_icon "eye" %}{% endif %}</a>{% endif %}
+            {% if not hide_archive_unarchive %}<a title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" class="message-action" data-action-value="a">{% if message.is_archived %}{% bw_icon "box-remove" %}{% else %}{% bw_icon "box-add" %}{% endif %}</a>{% endif %}
             <a title="Delete message" class="message-action" data-action-value="d">{% bw_icon "trash" %}</a>
         </div>
     </div>

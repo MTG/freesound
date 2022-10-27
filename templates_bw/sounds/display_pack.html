@@ -75,7 +75,7 @@
                         <span class="h-spacing-left-1 h-spacing-3">{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</span></div>
                     <div><span class="bw-icon-download"></span>
                         <span class="h-spacing-left-1 h-spacing-3">{{ pack.num_downloads }}</span></div>
-                    <div><span class="bw-icon-cc"></span>
+                    <div><span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
                         <span class="h-spacing-left-1">{{ pack.license_summary_name_and_id.0 }}</span></div>
                 </div>
             </div>

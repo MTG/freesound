@@ -116,16 +116,6 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('user-downloaded-packs', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
 
-    def test_user_bookmarks_response(self):
-        # 200 response on user bookmarks sounds and packs access
-        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': self.user.username}))
-        self.assertEqual(resp.status_code, 200)
-
-        # If user is deleted, get 404
-        self.user.profile.delete_user()
-        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': self.user.username}))
-        self.assertEqual(resp.status_code, 404)
-
     def test_user_follow_response(self):
         # 200 response on user user bookmarks sounds and packs access
         resp = self.client.get(reverse('user-following-users', kwargs={'username': self.user.username}))

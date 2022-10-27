@@ -79,10 +79,9 @@ class BwBookmarkForm(BookmarkForm):
 
     def __init__(self, *args, **kwargs):
         super(BwBookmarkForm, self).__init__(*args, **kwargs)
-        self.fields['name'].label = False
-        self.fields['name'].widget.attrs['placeholder'] = "Name for the bookmark"
-        self.fields['category'].label = False
+        self.fields['name'].widget = forms.HiddenInput()  # In BW we removed the concept of bookmark name
         self.fields['new_category_name'].label = False
         self.fields['new_category_name'].widget.attrs['placeholder'] = \
-            "New category name (only if no category selected above)"
+            "Type the new category name here or leave blank for bookmarking without a category"
         self.fields['new_category_name'].help_text = None
+        self.fields['category'].label = False

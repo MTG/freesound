@@ -17,8 +17,9 @@
 # Authors:
 #     See AUTHORS file.
 #
+from django.conf import settings
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 import bookmarks.models
@@ -28,10 +29,11 @@ class BookmarksTest(TestCase):
 
     fixtures = ['licenses', 'sounds']
 
+    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
     def test_bookmarks_context(self):
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
         context = resp.context
-
+    
         self.assertEqual(200, resp.status_code)
         expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
                          'n_uncat', 'page', 'paginator', 'user']
@@ -49,6 +51,7 @@ class BookmarksTest(TestCase):
 
         self.assertEqual(404, resp.status_code)
 
+    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
     def test_bookmarks_oldusername(self):
         user = User.objects.get(username='Anton')
         user.username = "new-username"
@@ -81,14 +84,12 @@ class BookmarksTest(TestCase):
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, name='BookmarkedSound')
 
-        response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
+        response = self.client.get(reverse('bookmarks'))
 
         self.assertEqual(200, response.status_code)
         self.assertEquals(3, len(response.context['page'].object_list))
-        self.assertContains(response, 'Your bookmarks')
-        self.assertContains(response, 'Uncategorized bookmarks')
-        self.assertContains(response, 'BookmarkedSound')
 
+    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
     def test_others_bookmarks(self):
         logged_in_user = User.objects.get(username='Bram')
         self.client.force_login(logged_in_user)

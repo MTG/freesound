@@ -28,17 +28,40 @@ const saveBookmark = (soundId, data) => {
     });
 }
 
-const initBookmarkFormModal = (soundId) => {
-    // We need to trigger create select elements because bookmark form has one
-    createSelect();
 
-    // Bind action to save bookmark in "add bookmark button" (and prevent default form submit)
+const showHideNewCategoryName = (categoryValue, elementToShowHide) => {
+    if (categoryValue == ''){
+        // No category is selected, show the new category name input
+        elementToShowHide.style.display = 'block'
+    } else {
+        elementToShowHide.style.display = 'none'
+    }
+}
+
+const initBookmarkFormModal = (soundId) => {
+    
+    // Modify the form structure to add a "Category" label inline with the select dropdown
     const modalElement = document.getElementById(`bookmarkSoundModal`);
     const selectElement = modalElement.getElementsByTagName('select')[0];
-    selectElement.insertAdjacentHTML("beforebegin", 'Category: ');
+    const wrapper = document.createElement('div');
+    selectElement.parentNode.insertBefore(wrapper, selectElement.parentNode.firstChild);
+    const label = document.createElement('div');
+    label.innerHTML = "Category:"
+    label.style = 'display:inline-block;';
+    wrapper.appendChild(label)
+    wrapper.appendChild(selectElement)
+    createSelect();  // We need to trigger create select elements because bookmark form has one
+    
+    
     const formElement = modalElement.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
+    const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-category`);
+    const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_category_name`);
+    showHideNewCategoryName(categorySelectElement.value, newCategoryNameElement);
+    categorySelectElement.addEventListener('change' , (e) => {showHideNewCategoryName(e.target.value, newCategoryNameElement)});
+
+    // Bind action to save bookmark in "add bookmark button" (and prevent default form submit)
     saveButtonElement.addEventListener('click', (e) => {
         e.preventDefault();
         const data = {};

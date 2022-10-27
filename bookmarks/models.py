@@ -45,7 +45,15 @@ class Bookmark(models.Model):
         return u"Bookmark: %s" % self.name
 
     @property
+    def category_name_or_uncategorized(self):
+        if self.category is None:
+            return 'Uncategorized'
+        else:
+            return self.category.name
+
+    @property
     def name_or_sound_name(self):
+        # NOTE: this is no longer used in BW as we don't use the concept of custom names for boomarks
         if self.name:
             return self.name
         else:

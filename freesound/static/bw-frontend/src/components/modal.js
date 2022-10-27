@@ -74,6 +74,15 @@ confirmationModalButtons.forEach(modalButton => {
   modalButton.addEventListener('click', () => {
       const confirmationModalTitle = document.getElementById('confirmationModalTitle');
       confirmationModalTitle.innerText = modalButton.dataset.modalConfirmationTitle;
+      
+      const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
+      const helpText = modalButton.dataset.modalConfirmationHelpText;
+      if (helpText !== undefined){
+        confirmationModalHelpText.innerText = helpText;
+      } else {
+        confirmationModalHelpText.innerText = '';
+      }
+      
       const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
       confirmationModalAcceptForm.action = modalButton.dataset.modalConfirmationUrl;
       handleModal('confirmationModal');

@@ -69,8 +69,11 @@
 .bw-icon-checkbox-unselect:before {
   content: "\e911";
 }
-.bw-icon-checkbox:before {
-  content: "\e912";
+.bw-checkbox:checked + .bw-checkbox-container .bw-icon-checkbox:before { /* NOTE: this was added manually */
+  content: '\e912';
+}
+.bw-radio:checked + .bw-radio-container .bw-icon-radio-unchecked:before { /* NOTE: this was added manually */
+  content: '\e936';
 }
 .bw-icon-chevron-up:before {
   content: "\e913";
@@ -205,6 +208,9 @@
 }
 .bw-icon-spectogram:before {
   content: "\e93b";
+}
+.bw-icon-star { /* NOTE: this was added manually */
+  display: inline-block;
 }
 .bw-icon-star-empty:before {
   content: "\e93c";

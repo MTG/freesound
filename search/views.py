@@ -25,6 +25,7 @@ import logging
 import re
 from collections import defaultdict, Counter
 
+from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -74,6 +75,37 @@ def search(request):
 
     filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
 
+    # Process tag mode stuff
+    tags_mode = True  # TODO: this should be set with some parameter
+    initial_tagcloud = None
+    tags_in_filter = []
+    if tags_mode:
+
+        # In tags mode, we increase the size of the tags facet so we include more related tags
+        query_params['facets'][settings.SEARCH_SOUNDS_FIELD_TAGS]['limit'] = 50
+
+        # Get the tags that are being used as a filter
+        for filter_data in filter_query_split:
+            if filter_data['name'].startswith('tag:'):
+                tags_in_filter.append(filter_data['name'].replace('tag:', ''))
+
+        # If no tags are in filter, we are "starting" tag-based browsing so display the initial tagcloud
+        if not tags_in_filter:
+            initial_tagcloud = cache.get('initial_tagcloud')
+            if initial_tagcloud is None:
+                # If tagcloud is not cached, make a query to retrieve it and save it to cache
+                results, _ = perform_search_engine_query(dict(
+                    textual_query='',
+                    query_filter= "*:*",
+                    num_sounds=1,
+                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
+                    group_by_pack=True,
+                    group_counts_as_one_in_facets=False,
+                ))
+                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
+                cache.set('initial_tagcloud', initial_tagcloud, 60 * 5)
+
+
     tvars = {
         'error_text': None,
         'filter_query': query_params['query_filter'],
@@ -89,7 +121,10 @@ def search(request):
         'url_query_params_string': url_query_params_string,
         'cluster_id': extra_vars['cluster_id'],
         'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING,
-        'weights': extra_vars['raw_weights_parameter']
+        'weights': extra_vars['raw_weights_parameter'],
+        'initial_tagcloud': initial_tagcloud,
+        'tags_mode': tags_mode,
+        'tags_in_filter': tags_in_filter
     }
 
     tvars.update(advanced_search_params_dict)

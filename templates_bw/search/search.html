@@ -6,6 +6,7 @@
 {% load bw_templatetags %}
 {% load display_sound %}
 {% load display_pack %}
+{% load tags %}
 
 {% block title %}Search{% endblock %}
 
@@ -25,7 +26,7 @@
             <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
                 <form method="get" id="search_form" action="{% url "sounds-search" %}">
 
-                    <div class="v-spacing-5">
+                    <div class="v-spacing-5 {% if tags_mode %}display-none{% endif %}">
                         <div class="between middle">
                             <div></div>
                             <input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Start browsing here" class="bw-search__input" autocomplete="off" />
@@ -35,7 +36,29 @@
                         </div>
                     </div>
 
-                    <div>
+                    {% if tags_mode %}
+                        {% if initial_tagcloud %}
+                            <section class="v-spacing-5">
+                                <h3 class="v-spacing-5 text-light-grey center">Choose a tag to start browsing</h3>
+                                {% for tag in initial_tagcloud|add_sizes:"count:0.1:1.0" %}
+                                    {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
+                                {% endfor %}
+                            </section>
+                        {% else %}
+                            <div class="v-spacing-5">
+                                <div class="between middle">
+                                    <h3>
+                                        <span class="text-light-grey h-spacing-1">Sounds tagged as</span>
+                                        {% for tag in tags_in_filter %}
+                                            {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1 text-light-grey">·</span>{% endif %}
+                                        {% endfor %}
+                                    </h3>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+
+                    <div {% if tags_mode and initial_tagcloud %}class="display-none"{% endif %}>
                         <div class="divider-light"></div>
                         <div class="padding-3 v-padding-2 between font-weight-bold middle">
                             {% if not only_sounds_with_pack %}
@@ -69,7 +92,7 @@
                             <div class="v-padding-2 between">
                                 <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" %}1{% else %}0{% endif %}" />
 
-                                <div class="col-5 bw-search__advanced-search-filter-section">
+                                <div class="col-5 bw-search__advanced-search-filter-section {% if tags_mode %}visibility-hidden{% endif %}">
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Search in</span>
                                     </div>
@@ -182,7 +205,7 @@
 
                 </form>
             </div>
-            <div class="row no-gutters">
+            <div class="row no-gutters {% if tags_mode and initial_tagcloud %}display-none{% endif %}">
 
                     <div class="col-12 center v-spacing-top-negative-2 d-md-none">
                         <div id="collapsable-text" data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" class="v-spacing-top-2 collapsable-text font-weight-bold text-light-grey">
@@ -191,6 +214,12 @@
                     </div>
 
                     <aside class="col-md-4 col-lg-3 collapsable-block collapsable-block-close md-max-h-100" id="collapsable-filters">
+                        {% if tags_mode and not initial_tagcloud %}
+                            {% if facets.tag and facets.tag|length > 1 %}
+                                {% display_facet "tag" facets.tag "cloud" "Add Related Tags" %}
+                            {% endif %}
+                        {% endif %}
+                    
                         {% if facets.license and facets.license|length > 1 %}
                             {% display_facet "license" facets.license "list" "Licenses" %}
                         {% endif %}
@@ -199,8 +228,10 @@
                             {% display_facet "type" facets.type "list" "Type" %}
                         {% endif %}
 
-                        {% if facets.tag and facets.tag|length > 1 %}
-                            {% display_facet "tag" facets.tag "cloud" "Related Tags" %}
+                        {% if not tags_mode %}
+                            {% if facets.tag and facets.tag|length > 1 %}
+                                {% display_facet "tag" facets.tag "cloud" "Related Tags" %}
+                            {% endif %}
                         {% endif %}
 
                         {% if facets.samplerate and facets.samplerate|length > 1 %}

@@ -48,8 +48,8 @@ from utils.search import get_search_engine, SearchEngineException, SearchResults
 search_logger = logging.getLogger("search")
 
 
-@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
-def search(request):
+
+def search_view_helper(request, tags_mode=False):
     query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
     # check if there was a filter parsing error
@@ -75,8 +75,7 @@ def search(request):
 
     filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
 
-    # Process tag mode stuff
-    tags_mode = True  # TODO: this should be set with some parameter
+    # Process tags mode stuff
     initial_tagcloud = None
     tags_in_filter = []
     if tags_mode:
@@ -175,6 +174,12 @@ def search(request):
         return render(request, 'search/search.html', tvars)
     else:
         return render(request, 'search/search_ajax.html', tvars)
+
+
+
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
+def search(request):
+    return search_view_helper(request, tags_mode=False)
 
 
 def _get_ids_in_cluster(request, requested_cluster_id):

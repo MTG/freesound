@@ -27,7 +27,7 @@ from django.urls import Resolver404, reverse
 
 import sounds.models
 from follow import follow_utils
-from search.views import search
+from search.views import search_view_helper
 from tags.models import Tag, FS1Tag
 from utils.frontend_handling import using_beastwhoosh
 from utils.search import SearchEngineException
@@ -45,9 +45,13 @@ def tags(request, multiple_tags=None):
     multiple_tags = sorted(filter(lambda x: x, multiple_tags))
 
     if using_beastwhoosh(request):
-        # If using BW, we redirect to the search page with the proper tag filters being set
-        tags_as_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
-        return HttpResponseRedirect('{}?f={}'.format(reverse('sounds-search'), tags_as_filter))
+        if multiple_tags:
+            # If using BW and tags in URL, we re-write tags as query filter and redirect
+            tags_as_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
+            return HttpResponseRedirect('{}?f={}'.format(reverse('tags'), tags_as_filter))
+        else:
+            # Share same view code as for the search view, but set "tags mode" on
+            return search_view_helper(request, tags_mode=True)
 
     try:
         current_page = int(request.GET.get("page", 1))

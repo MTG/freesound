@@ -4,6 +4,8 @@ import navbar from "../components/navbar";
 
 // Main search input box behaviour
 const searchInputBrowse = document.getElementById('search-input-browse');
+const tagsModeInput = document.getElementById('tags-mode');
+const tagsMode = tagsModeInput.value == '1';
 const searchInputBrowsePlaceholder = searchInputBrowse.getAttribute("placeholder");
 const removeSearchInputValueBrowse = document.getElementById('remove-content-search');
 
@@ -42,7 +44,21 @@ window.addEventListener('load', function(){updateRemoveSearchInputButtonVisibili
 
 // Navbar search input box behaviour (should only appear when searchInputBrowse is not visible)
 const searchFormIsVisible = () => {
-  const heroRect = searchInputBrowse.getBoundingClientRect()
+
+  let heroRect;
+
+
+  if (advancedSearchOptionsIsVisible()){
+    // If advanced search options is expanded, use that as heroRect to check if search form is visible
+    heroRect = advanced_search_options_div.getBoundingClientRect()
+  } else {
+    if (!tagsMode){
+      heroRect = searchInputBrowse.getBoundingClientRect()
+    } else {
+      heroRect = document.getElementById('tags-mode-input-section').getBoundingClientRect()
+    }
+  }
+  
   // not all browsers support clientRect.height
   const heroSearchPosition = heroRect.height
     ? heroRect.y + heroRect.height
@@ -83,9 +99,14 @@ var sort_by_element = document.getElementById('sort-by');
 var grouping_geotagged_element  = document.getElementById('grouping_geotagged');
 var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
 
+function advancedSearchOptionsIsVisible()
+{
+  return advanced_search_hidden_field.value === "1";
+}
+
 function updateToggleAdvancedSearchOptionsText()
 {
-  if (advanced_search_hidden_field.value === "1"){
+  if (advancedSearchOptionsIsVisible()){
     toggle_advanced_search_options_element.innerHTML = 'Hide advanced search options';
   } else {
     toggle_advanced_search_options_element.innerHTML = 'Show advanced search options';
@@ -107,7 +128,7 @@ function hideAdvancedSearchOptions()
 }
 
 function toggleAdvancedSearchOptions(){
-  if (advanced_search_hidden_field.value === "1"){
+  if (advancedSearchOptionsIsVisible()){
     hideAdvancedSearchOptions();
   } else {
     showAdvancedSearchOptions();

@@ -24,7 +24,7 @@
             </div>
         {% else %}
             <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
-                <form method="get" id="search_form" action="{% url "sounds-search" %}">
+                <form method="get" id="search_form" action="{% if not tags_mode %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
 
                     <div class="v-spacing-5 {% if tags_mode %}display-none{% endif %}">
                         <div class="between middle">
@@ -32,20 +32,21 @@
                             <input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Start browsing here" class="bw-search__input" autocomplete="off" />
                             <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" />
                             <input id="weights" type="hidden" name="w" value="{{weights}}" />
+                            <input id="tags-mode" type="hidden" name="tm" value="{% if tags_mode %}1{% else %}0{% endif %}" />  {% comment %}This is used so that we can know from JS whether we are in tags mode or not{% endcomment %}
                             <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                         </div>
                     </div>
 
                     {% if tags_mode %}
                         {% if initial_tagcloud %}
-                            <section class="v-spacing-5">
+                            <section id="tags-mode-input-section" class="v-spacing-5">
                                 <h3 class="v-spacing-5 text-light-grey center">Choose a tag to start browsing</h3>
                                 {% for tag in initial_tagcloud|add_sizes:"count:0.1:1.0" %}
                                     {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
                                 {% endfor %}
                             </section>
                         {% else %}
-                            <div class="v-spacing-5">
+                            <div id="tags-mode-input-section" class="v-spacing-5">
                                 <div class="between middle">
                                     <h3>
                                         <span class="text-light-grey h-spacing-1">Sounds tagged as</span>
@@ -281,13 +282,13 @@
                                             {% display_sound_middle result.sound %}
                                             {% if result.n_more_in_group %}
                                                 <p class="text-grey text-right v-spacing-top-negative-2">
-                                                    {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                    {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
                                                 </p>
                                             {% endif %}
                                         {% else %}
                                             {% display_pack_big result.sound.pack_id %}
                                             <p class="text-grey text-right v-spacing-top-negative-2">
-                                                {% bw_icon 'plus' %} <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
+                                                {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ grouping }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
                                             </p>
                                         {% endif %}
                                         {% if not forloop.last %}

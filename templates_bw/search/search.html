@@ -10,7 +10,7 @@
 
 {% block title %}Search{% endblock %}
 
-{% block navbar %}{% include 'molecules/navbar_search_page.html' %}{% endblock %}
+{% block navbar %}{% if not tags_mode %}{% include 'molecules/navbar_search_page.html' %}{% else %}{% include 'molecules/navbar.html' %}{% endif %}{% endblock %}
 
 {% block content %}
 
@@ -54,6 +54,7 @@
                                             {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1 text-light-grey">·</span>{% endif %}
                                         {% endfor %}
                                     </h3>
+                                    {% bw_follow_tags_widget %}
                                 </div>
                             </div>
                         {% endif %}

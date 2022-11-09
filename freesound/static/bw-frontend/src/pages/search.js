@@ -46,8 +46,6 @@ window.addEventListener('load', function(){updateRemoveSearchInputButtonVisibili
 const searchFormIsVisible = () => {
 
   let heroRect;
-
-
   if (advancedSearchOptionsIsVisible()){
     // If advanced search options is expanded, use that as heroRect to check if search form is visible
     heroRect = advanced_search_options_div.getBoundingClientRect()
@@ -68,7 +66,7 @@ const searchFormIsVisible = () => {
 
 const SCROLL_CHECK_TIMER = 100 // min interval (in ms) between consecutive calls of scroll checking function
 const checkShouldShowSearchInNavbar = throttle(() => {
-  const shouldShowSearchBar = !searchFormIsVisible();
+  const shouldShowSearchBar = tagsMode === true ? true : !searchFormIsVisible();
   const isShowingSearchBar = !navbar.classList.contains('bw-nav--expanded');
   if (shouldShowSearchBar !== isShowingSearchBar) {
     navbar.classList.toggle('bw-nav--expanded');
@@ -320,16 +318,19 @@ document.body.addEventListener('keydown',  evt => {
   }
 })
 
-search_page_navbar_form.addEventListener('submit', function(evt){
-  // Prevent default form submission
-  if (evt.preventDefault) evt.preventDefault();
+if (search_page_navbar_form !== null){
+  search_page_navbar_form.addEventListener('submit', function(evt){
+    // Prevent default form submission
+    if (evt.preventDefault) evt.preventDefault();
+  
+    // Copy input element contents to the main input element and do submission of the main form instead of the navbar one
+    const searchInputBrowseNavbar = document.getElementById('search-input-browse-navbar');
+    searchInputBrowse.value = searchInputBrowseNavbar.value;
+    addAdvancedSearchOptionsFilters();
+    search_form_element.submit();
+  
+    // It is also needed to return false to prevent default form submission
+    return false;
+  })
+}
 
-  // Copy input element contents to the main input element and do submission of the main form instead of the navbar one
-  const searchInputBrowseNavbar = document.getElementById('search-input-browse-navbar');
-  searchInputBrowse.value = searchInputBrowseNavbar.value;
-  addAdvancedSearchOptionsFilters();
-  search_form_element.submit();
-
-  // It is also needed to return false to prevent default form submission
-  return false;
-})

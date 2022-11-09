@@ -44,6 +44,8 @@ def tags(request, multiple_tags=None):
         multiple_tags = []
     multiple_tags = sorted(filter(lambda x: x, multiple_tags))
 
+    
+
     if using_beastwhoosh(request):
         if multiple_tags:
             # If using BW and tags in URL, we re-write tags as query filter and redirect
@@ -52,6 +54,8 @@ def tags(request, multiple_tags=None):
         else:
             # Share same view code as for the search view, but set "tags mode" on
             return search_view_helper(request, tags_mode=True)
+
+    # NOTE: all code below will not be used when NG UI is retired as tags page is calcualted using search views
 
     try:
         current_page = int(request.GET.get("page", 1))
@@ -102,8 +106,8 @@ def tags(request, multiple_tags=None):
         error = True
         search_logger.error('Could probably not connect to Solr - %s' % e)
 
+    # Calculate follow_tags_url, unfollow_tags_url and show_unfollow_button tvars
     slash_tag = "/".join(multiple_tags)
-
     follow_tags_url = ''
     unfollow_tags_url = ''
     show_unfollow_button = False

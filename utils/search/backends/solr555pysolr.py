@@ -252,7 +252,7 @@ def search_filter_make_intersection(query_filter):
     # never documented fl="a:1 OR b:2" as a valid syntax, and looking at search logs we cannot see anyone using
     # this behaviour. Therefore, add a + to the beginning of each query item to force AND.
 
-    query_filter = re.sub(r'\b([a-z]+:)', r'+\1', query_filter)
+    query_filter = re.sub(r'\b([\w]+:)', r'+\1', query_filter)
     return query_filter
 
 

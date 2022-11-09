@@ -75,18 +75,18 @@ def search_view_helper(request, tags_mode=False):
 
     filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
 
+    # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
+    tags_in_filter = []
+    for filter_data in filter_query_split:
+        if filter_data['name'].startswith('tag:'):
+            tags_in_filter.append(filter_data['name'].replace('tag:', ''))
+    
     # Process tags mode stuff
     initial_tagcloud = None
-    tags_in_filter = []
     if tags_mode:
 
         # In tags mode, we increase the size of the tags facet so we include more related tags
         query_params['facets'][settings.SEARCH_SOUNDS_FIELD_TAGS]['limit'] = 50
-
-        # Get the tags that are being used as a filter
-        for filter_data in filter_query_split:
-            if filter_data['name'].startswith('tag:'):
-                tags_in_filter.append(filter_data['name'].replace('tag:', ''))
 
         # If no tags are in filter, we are "starting" tag-based browsing so display the initial tagcloud
         if not tags_in_filter:
@@ -105,13 +105,26 @@ def search_view_helper(request, tags_mode=False):
                 cache.set('initial_tagcloud', initial_tagcloud, 60 * 5)
 
 
+    # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
+    # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
+    # automatically revert to the previous group_by_pack setting. Also, we compute "disable_group_by_pack_option" so that when we have changed the real
+    # group_by_pack because there is a pack filter, we can grey out the option in the search form. Similar thing we do for only_sounds_with_pack as also
+    # it does not make sense when filtering by pack
+    group_by_pack_in_request = request.GET.get("g", "1") == "1"
+    only_sounds_with_pack_in_request = request.GET.get("only_p", "0") == "1"
+    disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
+    disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
+
     tvars = {
         'error_text': None,
         'filter_query': query_params['query_filter'],
         'filter_query_split': filter_query_split,
         'search_query': query_params['textual_query'],
-        'grouping': "1" if query_params['group_by_pack'] else "",
+        'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
+        'disable_group_by_pack_option': disable_group_by_pack_option,
         'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
+        'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
+        'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
@@ -128,7 +141,7 @@ def search_view_helper(request, tags_mode=False):
 
     tvars.update(advanced_search_params_dict)
 
-    try:
+    try:       
         results, paginator = perform_search_engine_query(query_params)
         resultids = [d.get("id") for d in results.docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
@@ -154,6 +167,12 @@ def search_view_helper(request, tags_mode=False):
             'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else "",
             'query_time': results.q_time 
         }))
+
+        # For the facets of fields that could have mulitple values (i.e. currently, only "tags" facet), make
+        # sure to remove the filters for the corresponding facet field thar are already active (so we remove
+        # redundant information)
+        if tags_in_filter:
+            results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in tags_in_filter]
 
         tvars.update({
             'paginator': paginator,

@@ -47,7 +47,7 @@
                 </div>
             {% endwith %}
             <h5 class="v-spacing-top-1">
-                <a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
+                <span class="text-light-grey">Pack: </span><a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
             </h5>
             {% if pack.description %}
                 <div class="text-black v-spacing-top-2">{{ pack.description|striptags|safe|truncatewords_html:20 }}</div>

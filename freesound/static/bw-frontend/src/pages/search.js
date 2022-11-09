@@ -94,7 +94,7 @@ var filter_duration_min_element = document.getElementById('filter_duration_min')
 var filter_duration_max_element = document.getElementById('filter_duration_max');
 var filter_is_geotagged_element = document.getElementById('filter_is_geotagged');
 var sort_by_element = document.getElementById('sort-by');
-var grouping_geotagged_element  = document.getElementById('grouping_geotagged');
+var group_by_pack_element  = document.getElementById('group_by_pack');
 var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
 
 function advancedSearchOptionsIsVisible()
@@ -136,9 +136,9 @@ function toggleAdvancedSearchOptions(){
 toggle_advanced_search_options_element.addEventListener('click', toggleAdvancedSearchOptions);
 
 function set_hidden_grouping_value(){
-  var element = document.getElementById('grouping_geotagged');
-  var hiddenElement = document.getElementById('grouping_geotagged_hidden');
-  if (element.checked) {
+
+  var hiddenElement = document.getElementById('group_by_pack_hidden');
+  if (group_by_pack_element.checked) {
     hiddenElement.value = "1";
   } else {
     hiddenElement.value = "";
@@ -299,7 +299,7 @@ sort_by_element.addEventListener('change', function() {
   search_form_element.submit();
 })
 
-grouping_geotagged_element.addEventListener('change', function() {
+group_by_pack_element.addEventListener('change', function() {
   set_hidden_grouping_value();
 })
 

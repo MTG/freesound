@@ -18,8 +18,9 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
 
-from recommendationDataProcessor import RecommendationDataProcessor
+from .recommendationDataProcessor import RecommendationDataProcessor
 
 rdp = RecommendationDataProcessor()
 rdp.process_tag_recommendation_data(tag_threshold=10, line_limit=9999999999999999)

@@ -18,11 +18,13 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
+
 import django.forms as forms
 from django.conf import settings
 from urllib import quote, unquote
 from django.contrib.sites.models import Site
-from exceptions import BadRequestException
+from .exceptions import BadRequestException
 
 
 class ApiV2ClientForm(forms.Form):

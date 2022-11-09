@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+
 from django.core.management.base import BaseCommand
 from django.conf import settings
 import os
@@ -32,8 +34,5 @@ class Command(BaseCommand):
             f_mod_date = datetime.datetime.fromtimestamp(os.path.getmtime(settings.FILE_UPLOAD_TEMP_DIR + f))
             now = datetime.datetime.now()
             if (now - f_mod_date).total_seconds() > 3600*24:
-                print "Deleting %s" % f
+                print("Deleting %s" % f)
                 os.remove(settings.FILE_UPLOAD_TEMP_DIR + f)
-
-
-

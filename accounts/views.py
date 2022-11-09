@@ -1235,7 +1235,7 @@ def handle_uploaded_file(user_id, f):
         # file instead of copying it
         try:
             os.rename(f.temporary_file_path(), dest_path)
-            os.chmod(dest_path, 0644)  # Set appropriate permissions so that file can be downloaded from nginx
+            os.chmod(dest_path, 0o644)  # Set appropriate permissions so that file can be downloaded from nginx
         except Exception as e:
             upload_logger.warning("failed moving TemporaryUploadedFile error: %s", str(e))
             return False

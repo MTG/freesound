@@ -24,6 +24,7 @@
 #   - sklearn (joblib)
 
 from __future__ import print_function
+from __future__ import absolute_import
 
 import json
 import logging
@@ -33,9 +34,9 @@ import graypy
 from twisted.internet import reactor
 from twisted.web import server, resource
 
-from communityBasedTagRecommendation import CommunityBasedTagRecommender
-import tagrecommendation_settings as tr_settings
-from utils import loadFromJson, saveToJson
+from .communityBasedTagRecommendation import CommunityBasedTagRecommender
+from . import tagrecommendation_settings as tr_settings
+from .utils import loadFromJson, saveToJson
 
 
 def server_interface(resource):
@@ -181,5 +182,3 @@ if __name__ == '__main__':
     logger.info('Started tag recommendation service, listening to port ' + str(tr_settings.LISTEN_PORT) + "...")
     reactor.run()
     logger.info('Service stopped.')
-
-

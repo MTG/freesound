@@ -1,3 +1,4 @@
+from __future__ import print_function
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -86,7 +87,7 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
     data_to_post = []
     N_SOUNDS_PER_CALL = 10
     total_calls = int(ceil(float(len(sound_qs))/N_SOUNDS_PER_CALL))
-    print "Sending recommendation data..."
+    print("Sending recommendation data...")
     idx = 1
     for count, sound in enumerate(sound_qs):
         data_to_post.append(
@@ -95,7 +96,7 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
         if (count + 1) % N_SOUNDS_PER_CALL == 0:
             ids = [element[0] for element in data_to_post]
             tagss = [element[1] for element in data_to_post]
-            print "\tSending group of sounds %i of %i (%i sounds)" % (idx, total_calls, len(ids))
+            print("\tSending group of sounds %i of %i (%i sounds)" % (idx, total_calls, len(ids)))
             idx += 1
             TagRecommendation.add_to_index(ids, tagss)
             data_to_post = []
@@ -103,10 +104,10 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
     if data_to_post:
         ids = [element[0] for element in data_to_post]
         tagss = [element[1] for element in data_to_post]
-        print "\tSending group of sounds %i of %i (%i sounds)" % (idx, total_calls, len(ids))
+        print("\tSending group of sounds %i of %i (%i sounds)" % (idx, total_calls, len(ids)))
         TagRecommendation.add_to_index(ids, tagss)
 
-    print "Finished!"
+    print("Finished!")
 
 
 class HttpResponseUnavailabileError(HttpResponse):

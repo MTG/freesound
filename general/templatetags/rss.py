@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from future.utils import raise_
 from django import template
 import feedparser
 import urllib2
@@ -39,7 +40,7 @@ class RssParserNode(template.Node):
             try:
                 context[self.var_name] = feedparser.parse(context[self.url_var_name], handlers=[proxy])
             except KeyError:
-                raise template.TemplateSyntaxError, "the variable \"%s\" can't be found in the context" % self.url_var_name
+                raise_(template.TemplateSyntaxError, "the variable \"%s\" can't be found in the context" % self.url_var_name)
         return ''
 
 import re
@@ -51,15 +52,14 @@ def get_rss(parser, token):
         # Splitting by None == splitting by spaces.
         tag_name, arg = token.contents.split(None, 1)
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires arguments" % token.contents.split()[0]
+        raise_(template.TemplateSyntaxError, "%r tag requires arguments" % token.contents.split()[0])
     
     m = re.search(r'(.*?) as (\w+)', arg)
     if not m:
-        raise template.TemplateSyntaxError, "%r tag had invalid arguments" % tag_name
+        raise_(template.TemplateSyntaxError, "%r tag had invalid arguments" % tag_name)
     url, var_name = m.groups()
     
     if url[0] == url[-1] and url[0] in ('"', "'"):
         return RssParserNode(var_name, url=url[1:-1])
     else:
         return RssParserNode(var_name, url_var_name=url)
-    

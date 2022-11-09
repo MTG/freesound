@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+
 from tagrecommendation_settings import RECOMMENDATION_TMP_DATA_DIR, RECOMMENDATION_DATA_DIR
 import fileinput, sys, os
 from utils import saveToJson, mtx2npy, loadFromJson
@@ -73,7 +75,7 @@ class RecommendationDataProcessor:
         n_original_associations = 0
         sound_ids = []
         if self.verbose:
-            print "Reading index file (%i entries)..." % len(index.items()),
+            print("Reading index file (%i entries)..." % len(index.items()), end=' ')
         for sid, tags in index.items():
             ts += tags
             n_original_associations += len(tags)
@@ -89,7 +91,7 @@ class RecommendationDataProcessor:
         }
         saveToJson(RECOMMENDATION_TMP_DATA_DIR + 'Current_index_stats.json', stats)
         if self.verbose:
-            print "done!"
+            print("done!")
 
         # Compute tag ocurrences after loading the file
         tag_occurrences = dict()
@@ -100,7 +102,7 @@ class RecommendationDataProcessor:
             if self.verbose:
                 sys.stdout.write("\rComputing tag occurrences %.2f%%"%(float(100*(id+1))/len(unique_ts)))
                 sys.stdout.flush()
-        print ""
+        print("")
         tags = []
         tags_ids = []
         for id, t in enumerate(unique_ts):
@@ -115,13 +117,13 @@ class RecommendationDataProcessor:
 
         nTags = len(tags)
         if self.verbose:
-            print ""
-            print "\tOriginal number of tags: " + str(len(unique_ts))
-            print "\tTags after filtering: " + str(nTags)
+            print("")
+            print("\tOriginal number of tags: " + str(len(unique_ts)))
+            print("\tTags after filtering: " + str(nTags))
 
         # Generate resource-tags dictionary only with filtered tags
         if self.verbose:
-            print "Reading file for resources...",
+            print("Reading file for resources...", end=' ')
         sys.stdout.flush()
         res_tags = {}
         res_user = {}
@@ -147,18 +149,18 @@ class RecommendationDataProcessor:
         nResources = len(resources)
         resources_ids = range(0,nResources)
         if self.verbose:
-            print "done!"
+            print("done!")
 
         # Generate assocoation matrix
         if self.verbose:
-            print "\tOriginal number of associations: " + str(n_original_associations)
-            print "\tAssociations after filtering: " + str(n_filtered_associations)
+            print("\tOriginal number of associations: " + str(n_original_associations))
+            print("\tAssociations after filtering: " + str(n_filtered_associations))
 
         if self.verbose:
-            print 'Creating empty array of ' + str(nResources) + ' x ' + str(nTags) + '...',
+            print('Creating empty array of ' + str(nResources) + ' x ' + str(nTags) + '...', end=' ')
         M = spmatrix.ll_mat(nResources, nTags)
         if self.verbose:
-            print 'done!'
+            print('done!')
 
         done = 0
         for r_id in resources:
@@ -169,11 +171,11 @@ class RecommendationDataProcessor:
                     sys.stdout.write("\rGenerating association matrix %.2f%%" % (float(100*done)/n_filtered_associations))
                     sys.stdout.flush()
         if self.verbose:
-            print ""
+            print("")
 
         # Save data
         if self.verbose:
-            print "Saving association matrix, resource ids, tag ids and tag names"
+            print("Saving association matrix, resource ids, tag ids and tag names")
 
         filename = "FS%.4i%.2i%.2i" % (datetime.today().year, datetime.today().month, datetime.today().day)
         M.export_mtx(RECOMMENDATION_TMP_DATA_DIR + filename + '_ASSOCIATION_MATRIX.mtx')
@@ -196,7 +198,7 @@ class RecommendationDataProcessor:
                                                 is_general_recommender=False):
 
         if self.verbose:
-            print "Loading association matrix and tag names, ids files..."
+            print("Loading association matrix and tag names, ids files...")
         try:
             M = spmatrix.ll_mat_from_mtx(RECOMMENDATION_TMP_DATA_DIR + dataset + "_ASSOCIATION_MATRIX.mtx")
             resource_ids = load(RECOMMENDATION_TMP_DATA_DIR + dataset + "_RESOURCE_IDS.npy")
@@ -208,7 +210,7 @@ class RecommendationDataProcessor:
             raise Exception("Wrong similarity metric specified")
 
         if self.verbose:
-            print "Computing similarity matrix from a resource subset of the whole association matrix..."
+            print("Computing similarity matrix from a resource subset of the whole association matrix...")
         # Get index of resources to train (usable index for M)
         resource_id_positions = where(in1d(resource_ids, training_set, assume_unique=True))[0]
 
@@ -243,25 +245,25 @@ class RecommendationDataProcessor:
                 # Save sim
                 path = RECOMMENDATION_TMP_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET.npy"
                 if self.verbose:
-                    print "Saving to " + path + "..."
+                    print("Saving to " + path + "...")
                 save(path, sim_matrix_npy)
 
                 # Save tag names
                 path = RECOMMENDATION_TMP_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET_TAG_NAMES.npy"
                 if self.verbose:
-                    print "Saving to " + path + "..."
+                    print("Saving to " + path + "...")
                 save(path, tag_names_sim_matrix)
             else:
                 # Save sim
                 path = RECOMMENDATION_TMP_DATA_DIR + dataset + "_SIMILARITY_MATRIX_" + metric + ".npy"
                 if self.verbose:
-                    print "Saving to " + path + "..."
+                    print("Saving to " + path + "...")
                 save(path, sim_matrix_npy)
 
                 # Save tag names
                 path = RECOMMENDATION_TMP_DATA_DIR + dataset + "_SIMILARITY_MATRIX_" + metric + "_TAG_NAMES.npy"
                 if self.verbose:
-                    print "Saving to " + path + "..."
+                    print("Saving to " + path + "...")
                 save(path, tag_names_sim_matrix)
 
         return {'SIMILARITY_MATRIX': sim_matrix_npy, 'TAG_NAMES': tag_names_sim_matrix}
@@ -276,9 +278,9 @@ class RecommendationDataProcessor:
         # Process tas file and turn into association matrix and derived files
         database_name = self.tas_to_association_matrix(tag_threshold=tag_threshold, line_limit=line_limit)
 
-        print "Loading community detector..."
+        print("Loading community detector...")
         cd = CommunityDetector(verbose=False, PATH=RECOMMENDATION_DATA_DIR + "Classifier")
-        print cd
+        print(cd)
 
         # Classify existing resources
         resources_tags = loadFromJson(RECOMMENDATION_TMP_DATA_DIR + database_name + '_RESOURCES_TAGS.json')
@@ -299,11 +301,11 @@ class RecommendationDataProcessor:
                 sys.stdout.write("\rClassifying resources... %.2f%%"%(float(100*(count+1))/len(instances_ids)))
                 sys.stdout.flush()
 
-        print ""
+        print("")
         saveToJson(RECOMMENDATION_DATA_DIR + 'Classifier_classified_resources.json', resource_class)
-        print ""
+        print("")
 
-        print "\nComputing data for general recommender..."
+        print("\nComputing data for general recommender...")
         self.association_matrix_to_similarity_matrix(
             dataset=database_name,
             training_set=instances_ids[0:resources_limit],
@@ -312,7 +314,7 @@ class RecommendationDataProcessor:
             metric=similarity_metric,
         )
 
-        print "\nComputing data for class recommenders..."
+        print("\nComputing data for class recommenders...")
         instance_id_class = []
         distinct_classes = []
         for count, instance_id in enumerate(instances_ids):
@@ -322,10 +324,10 @@ class RecommendationDataProcessor:
             if class_id not in distinct_classes:
                 distinct_classes.append(class_id)
 
-        print distinct_classes
+        print(distinct_classes)
 
         for collection_id in distinct_classes:
-            print "\nComputing recommender for collection %s..." % collection_id
+            print("\nComputing recommender for collection %s..." % collection_id)
 
             # All resources from the training set classified as the selected category
             # (instead of all manually labeled)
@@ -365,11 +367,11 @@ class RecommendationDataProcessor:
                 if "Classifier" not in filename and "Index" not in filename:  # Do not alter Classifier files
                     if filename[0:6] == "backup":
                         # Delete old backups
-                        print "Removing %s" % RECOMMENDATION_DATA_DIR + filename
+                        print("Removing %s" % RECOMMENDATION_DATA_DIR + filename)
                         os.remove(RECOMMENDATION_DATA_DIR + filename)
                     else:
                         # Set previous matrixs to "backup mode" (will be deleted in the next update)
-                        print "Setting to backup %s" % RECOMMENDATION_DATA_DIR + filename
+                        print("Setting to backup %s" % RECOMMENDATION_DATA_DIR + filename)
                         os.rename(RECOMMENDATION_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + "backup_" + filename)
 
         current_database_name = ""
@@ -379,14 +381,14 @@ class RecommendationDataProcessor:
             if "Index" not in filename:
                 if ("SIMILARITY_MATRIX" in filename and "SUBSET" in filename) or "stats" in filename:
                     # Move similarity matrix to recommendation data dir
-                    print "Moving %s" % RECOMMENDATION_TMP_DATA_DIR + filename
+                    print("Moving %s" % RECOMMENDATION_TMP_DATA_DIR + filename)
                     os.rename(RECOMMENDATION_TMP_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + filename)
                     if "stats" not in filename:
                         current_database_name = filename.split("_")[0]
                         class_names.append(filename.split("_")[1])
                 else:
                     # Remove remeaining files in tmp dir (except for the tas file)
-                    print "Clearing %s" % RECOMMENDATION_TMP_DATA_DIR + filename
+                    print("Clearing %s" % RECOMMENDATION_TMP_DATA_DIR + filename)
                     os.remove(RECOMMENDATION_TMP_DATA_DIR + filename)
 
         class_names = list(set(class_names))
@@ -409,7 +411,7 @@ class RecommendationDataProcessor:
             if file_extension in ['npy', 'json']:
                 if "Classifier" not in filename and "Index" not in filename:  # Do not alter Classifier files and index
                     if filename[0:6] != "backup":
-                        print "Removing %s" % RECOMMENDATION_DATA_DIR + filename
+                        print("Removing %s" % RECOMMENDATION_DATA_DIR + filename)
                         os.remove(RECOMMENDATION_DATA_DIR + filename)
 
         for filename in os.listdir(RECOMMENDATION_DATA_DIR):
@@ -418,7 +420,7 @@ class RecommendationDataProcessor:
                 if "Classifier" not in filename:  # Do not alter Classifier files
                     if filename[0:6] == "backup":
                         # Set previous matrixs to "backup mode" (will be deleted in the next update)
-                        print "Rolling back backup %s" % RECOMMENDATION_DATA_DIR + filename
+                        print("Rolling back backup %s" % RECOMMENDATION_DATA_DIR + filename)
                         os.rename(RECOMMENDATION_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + filename[7:])
 
         # NOTE: after the rollback, tag recommendation needs to be reloaded manually

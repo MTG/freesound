@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
 try:
     import requests
 except:
@@ -105,42 +106,42 @@ class Command(BaseCommand):
         failed = list()
         error = list()
 
-        print ''
+        print('')
         for key, items in examples.items():
             if 'Download' not in key:
                 if section:
                     if section not in key:
                         continue
 
-                print 'Testing %s' % key
-                print '--------------------------------------'
+                print('Testing %s' % key)
+                print('--------------------------------------')
 
                 for desc, urls in items:
                     for url in urls:
                         if url[0:4] != 'curl':
                             prepended_url = base_url + url
-                            print '- %s' % prepended_url,
+                            print('- %s' % prepended_url, end=' ')
                             try:
                                 r = api_request(prepended_url, token=token)
                                 if r.status_code == 200:
-                                    print 'OK'
+                                    print('OK')
                                     ok.append(prepended_url)
                                 else:
-                                    print 'FAIL! (%i)' % r.status_code
+                                    print('FAIL! (%i)' % r.status_code)
                                     failed.append((prepended_url, r.status_code))
                             except Exception as e:
-                                print 'ERROR (%s)' % str(e)
+                                print('ERROR (%s)' % str(e))
                                 error.append(prepended_url)
 
-                print ''
+                print('')
 
-        print '\nRUNNING TESTS FINISHED:'
-        print '\t%i tests completed successfully' % len(ok)
+        print('\nRUNNING TESTS FINISHED:')
+        print('\t%i tests completed successfully' % len(ok))
         if error:
-            print '\t%i tests gave errors (connection, etc...)' % len(error)
-        print '\t%i tests failed' % len(failed)
+            print('\t%i tests gave errors (connection, etc...)' % len(error))
+        print('\t%i tests failed' % len(failed))
         for url, status_code in failed:
-            print '\t\t- %s (%i)' % (url, status_code)
+            print('\t\t- %s (%i)' % (url, status_code))
 
         if test_client is not None:
             test_client.delete()

@@ -20,10 +20,12 @@
 #     See AUTHORS file.
 #
 
-from rest_framework.throttling import SimpleRateThrottle
-from exceptions import Throttled
+from __future__ import absolute_import
+
 from django.conf import settings
-import apiv2_utils
+from rest_framework.throttling import SimpleRateThrottle
+
+from apiv2.exceptions import Throttled
 
 
 class ClientBasedThrottlingBurst(SimpleRateThrottle):

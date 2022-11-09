@@ -1,6 +1,8 @@
 # Generate skeleton for documentation, 
 # add essentia documentation links by hand
 
+from __future__ import print_function
+
 import urllib2,json
 
 
@@ -64,43 +66,42 @@ for line in open("algorithm_mapping.csv"):
 	desc,alg = line[:-1].split(",")
 	mapping[desc] = alg
 
-print header
+print(header)
 
 for k in sorted_namespaces:
 	ns = k[0].upper()+k[1:]
-	print ns+ " Descriptors"
-	print ">>>>>>>>>>>>>>>>>>>>\n\n"
+	print(ns+ " Descriptors")
+	print(">>>>>>>>>>>>>>>>>>>>\n\n")
 	for d in top[k].keys():
 		descriptor = k+"."+d
-		print descriptor
-		print "-------------------------"
-		print "\n::\n"
-		print curl_str+k+"/"+d
+		print(descriptor)
+		print("-------------------------")
+		print("\n::\n")
+		print(curl_str+k+"/"+d)
 		if mapping[descriptor] !="None":
-			print "\n**Essentia Algorithm**\n"
-			print algorithm_doc_str+mapping[descriptor]+".html"
+			print("\n**Essentia Algorithm**\n")
+			print(algorithm_doc_str+mapping[descriptor]+".html")
 		stats = top[k][d]
 		if descriptor in desc_exceptions: 
-			print "\n"
+			print("\n")
 			continue
 		if type(stats) ==dict:
-			print "\n\n**Stats**::\n\n"
+			print("\n\n**Stats**::\n\n")
 			for s in stats.keys():
-				print "/"+s
+				print("/"+s)
 
-			print "\n\n**Distribution in Freesound**\n"
+			print("\n\n**Distribution in Freesound**\n")
 
 			if "mean" in stats.keys():
 				if  type(stats['mean'])==list:
 					for i in range(len(stats['mean'])):
 						img = image_str+descriptor+".mean.%03d"%i
-						print img+".png"
-						print height_str
+						print(img+".png")
+						print(height_str)
 				else:
-					print image_str+descriptor+".mean.png"
-					print height_str
+					print(image_str+descriptor+".mean.png")
+					print(height_str)
 		elif type(stats)== float or type(stats)==int:
-			print image_str+descriptor+".png"
-			print height_str
-		print "\n\n"
-		
+			print(image_str+descriptor+".png")
+			print(height_str)
+		print("\n\n")

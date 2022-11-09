@@ -17,6 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
+from __future__ import absolute_import
 from django.test import TestCase, SimpleTestCase, RequestFactory
 from django.urls import reverse
 from django.conf import settings
@@ -28,11 +29,11 @@ from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
 from apiv2.serializers import SoundListSerializer, DEFAULT_FIELDS_IN_SOUND_LIST, SoundSerializer
 from bookmarks.models import BookmarkCategory, Bookmark
-from forms import SoundCombinedSearchFormAPI
+from .forms import SoundCombinedSearchFormAPI
 from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
 
-from exceptions import BadRequestException
+from .exceptions import BadRequestException
 
 
 class TestAPiViews(TestCase):

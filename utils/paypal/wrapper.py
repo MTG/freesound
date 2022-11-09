@@ -36,6 +36,7 @@
 #   # if you want to get all info:
 #   paypal.get_transaction_details(response['transactionid'])
 
+from __future__ import print_function
 import urllib, cgi
 
 class Paypal:
@@ -73,7 +74,7 @@ class Paypal:
         """for a dict of parameters, create the query-string, get the paypal URL and return the parsed dict"""
         params = self.signature.items() + parameters.items()
         
-        print parameters
+        print(parameters)
 
         if add_urls:
             params += self.urls.items()

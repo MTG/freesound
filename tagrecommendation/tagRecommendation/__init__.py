@@ -18,7 +18,9 @@
 #     See AUTHORS file.
 #
 
-from heuristics import heuristics
+from __future__ import absolute_import
+
+from .heuristics import heuristics
 
 
 class TagRecommender:
@@ -85,9 +87,3 @@ class TagRecommender:
                 added_tags = list()
 
         return added_tags
-
-
-
-
-
-

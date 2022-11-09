@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
 
 from tagRecommendation import TagRecommender
 from communityDetection import CommunityDetector
@@ -56,13 +57,13 @@ class CommunityBasedTagRecommender():
 
     def load_recommenders(self):
         # Load classifier from file
-        print "\nLOADING DATA FOR DATABASE %s AND CLASSES %s\n" % (self.dataset, ", ".join(self.classes))
-        print "Loading community detector..."
+        print("\nLOADING DATA FOR DATABASE %s AND CLASSES %s\n" % (self.dataset, ", ".join(self.classes)))
+        print("Loading community detector...")
         self.communityDetector = CommunityDetector(verbose=False, PATH=RECOMMENDATION_DATA_DIR + "Classifier")
-        print self.communityDetector
+        print(self.communityDetector)
 
         # Loading class recommenders
-        print "Loading class recommenders..."
+        print("Loading class recommenders...")
         self.recommenders = dict()
         for class_name in self.classes:
 
@@ -80,7 +81,7 @@ class CommunityBasedTagRecommender():
                 metric=self.metric
             )
 
-            print self.recommenders[class_name]
+            print(self.recommenders[class_name])
 
     def recommend_tags(self, input_tags, max_number_of_tags=None):
         com_name = self.communityDetector.detectCommunity(input_tags)

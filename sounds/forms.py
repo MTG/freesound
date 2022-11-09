@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+
 import time
 from django import forms
 from django.db.models import Q

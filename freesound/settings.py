@@ -579,10 +579,9 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
 }
 
-SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine'
+SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine' 
 SOLR4_SOUNDS_URL = "http://search:8080/fs2/"
 SOLR4_FORUM_URL = "http://search:8080/forum/"
-
 SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
 SOLR5_FORUM_URL = "http://search:8983/solr/forum/"
 

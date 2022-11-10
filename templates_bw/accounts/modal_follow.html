@@ -55,11 +55,11 @@
             <div class="row bw-follows middle">
                 <div class="col-8">
                     {% if follow_tag_item.get_split_tags|length > 1 %}
-                        <div class="border-light-grey-bottom-hover cursor-pointer" style="display: inline-block" onclick="location.href='{% url "tags" follow_tag_item.get_slash_tags %}'">
+                        <a href="{% url 'tags' follow_tag_item.get_slash_tags %}"  class="no-hover btn-inverse text-black font-weight-normal border-grey-light text-center no-border-radius padding-1 no-text-wrap h-spacing-1 line-height-fs-3 no-letter-spacing opacity-050 tag-container v-spacing-top-1">
                             {% for tag in follow_tag_item.get_split_tags %}
-                                {% bw_tag tag 1 'v-spacing-top-1' %}
+                                {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1">·</span>{%endif%}
                             {% endfor %}
-                        </div>
+                        </a> 
                     {% else %}
                         {% bw_tag follow_tag_item.get_split_tags.0 %}
                     {% endif %}

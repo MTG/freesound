@@ -42,8 +42,8 @@
 Duration between <input class="inputtext" id="filter_duration_min" value="0" size="6" /> <label for="filter_duration_min">(min)</label>
 and <input class="inputtext" id="filter_duration_max" value="*" size="6" /> <label for="filter_duration_max">(max)</label> seconds<br>
 <input id="filter_is_geotagged" type="checkbox" value="1" /> <label for="filter_is_geotagged">Only geotagged sounds</label><br>
-<input id="grouping_geotagged" type="checkbox" onchange="set_hidden_grouping_value()" {% if grouping == "1" %}checked{% endif %}/> <label for="grouping_geotagged">Group sounds by pack</label>
-<input id="grouping_geotagged_hidden" type="hidden" name="g" {% ifequal grouping "1" %}value="1"{% else %}value=""{% endifequal %} />
+<input id="grouping_geotagged" type="checkbox" onchange="set_hidden_grouping_value()" {% if group_by_pack_in_request == "1" %}checked{% endif %}/> <label for="grouping_geotagged">Group sounds by pack</label>
+<input id="grouping_geotagged_hidden" type="hidden" name="g" {% ifequal group_by_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
 
 <br>
 <span class="advanced_search_options_button"><a style="cursor:pointer;" onclick='hideAdvancedSearchOptions();'>Hide advanced search options</a></span>

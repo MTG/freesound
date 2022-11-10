@@ -816,6 +816,7 @@
      <float name="tie">0.01</float>
      <int name="ps">100</int>
      <str name="q.alt">*:*</str>
+     <str name="q.op">AND</str>
     </lst>
   </requestHandler>
 

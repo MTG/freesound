@@ -57,7 +57,7 @@ def display_facet(context, flt, facet, facet_type, title=""):
         element['params'] = u'{0} {1}:"{2}"'.format(filter_query, flt, urlquote_plus(element['name']))
         element['id'] = u'{0}--{1}'.format(flt, urlquote_plus(element['name']))
         element['add_filter_url'] = u'.?g={0}&only_p={1}&q={2}&f={3}&s={4}&w={5}'.format(
-            context['grouping'],
+            context['group_by_pack_in_request'],
             context['only_sounds_with_pack'],
             context['search_query'],
             element['params'],

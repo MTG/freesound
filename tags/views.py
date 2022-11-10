@@ -21,14 +21,16 @@
 import logging
 
 from django.conf import settings
-from django.http import Http404, HttpResponsePermanentRedirect
+from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import reverse
+from django.urls import Resolver404, reverse
 
 import sounds.models
 from follow import follow_utils
+from search.views import search_view_helper
 from tags.models import Tag, FS1Tag
-from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
+from utils.frontend_handling import using_beastwhoosh
+from utils.search import SearchEngineException
 from utils.search.search_sounds import perform_search_engine_query
 
 search_logger = logging.getLogger("search")
@@ -40,8 +42,20 @@ def tags(request, multiple_tags=None):
         multiple_tags = multiple_tags.split('/')
     else:
         multiple_tags = []
-
     multiple_tags = sorted(filter(lambda x: x, multiple_tags))
+
+    
+
+    if using_beastwhoosh(request):
+        if multiple_tags:
+            # If using BW and tags in URL, we re-write tags as query filter and redirect
+            tags_as_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
+            return HttpResponseRedirect('{}?f={}'.format(reverse('tags'), tags_as_filter))
+        else:
+            # Share same view code as for the search view, but set "tags mode" on
+            return search_view_helper(request, tags_mode=True)
+
+    # NOTE: all code below will not be used when NG UI is retired as tags page is calcualted using search views
 
     try:
         current_page = int(request.GET.get("page", 1))
@@ -92,8 +106,8 @@ def tags(request, multiple_tags=None):
         error = True
         search_logger.error('Could probably not connect to Solr - %s' % e)
 
+    # Calculate follow_tags_url, unfollow_tags_url and show_unfollow_button tvars
     slash_tag = "/".join(multiple_tags)
-
     follow_tags_url = ''
     unfollow_tags_url = ''
     show_unfollow_button = False

@@ -63,9 +63,8 @@ def search_prepare_parameters(request):
         sort = settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
 
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
-    # If the query is through AJAX (for sources remix editing), do not collapse
+    # If the query is through AJAX (for sources remix editing), do not collapse by pack
     group_by_pack = request.GET.get("g", "1") == "1"  # Group by default
-
     if "pack" in filter_query or request.GET.get("ajax", "") == "1":
         group_by_pack = False
 

@@ -251,8 +251,9 @@ def search_filter_make_intersection(query_filter):
     # In the Freesound API documentation, we document and support fl="a:(1 OR 2)" as a behaviour, but we
     # never documented fl="a:1 OR b:2" as a valid syntax, and looking at search logs we cannot see anyone using
     # this behaviour. Therefore, add a + to the beginning of each query item to force AND.
-
-    query_filter = re.sub(r'\b([a-z]+:)', r'+\1', query_filter)
+    # NOTE: for the filter names we match "a-zA-Z_" instead of using \w as using \w would cause problems for filters
+    # which have date ranges inside.
+    query_filter = re.sub(r'\b([a-zA-Z_]+:)', r'+\1', query_filter)
     return query_filter
 
 

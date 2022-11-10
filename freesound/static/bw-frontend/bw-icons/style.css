@@ -45,6 +45,11 @@
 .bw-icon-arrow:before {
   content: "\e909";
 }
+.bw-icon-arrow-left:before { /* NOTE: this was added manually */
+  transform: rotate(180deg);
+  display: inline-block;
+  content: '\e909';
+}
 .bw-icon-atom:before {
   content: "\e90a";
 }

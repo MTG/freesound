@@ -4,6 +4,8 @@ import navbar from "../components/navbar";
 
 // Main search input box behaviour
 const searchInputBrowse = document.getElementById('search-input-browse');
+const tagsModeInput = document.getElementById('tags-mode');
+const tagsMode = tagsModeInput.value == '1';
 const searchInputBrowsePlaceholder = searchInputBrowse.getAttribute("placeholder");
 const removeSearchInputValueBrowse = document.getElementById('remove-content-search');
 
@@ -42,7 +44,19 @@ window.addEventListener('load', function(){updateRemoveSearchInputButtonVisibili
 
 // Navbar search input box behaviour (should only appear when searchInputBrowse is not visible)
 const searchFormIsVisible = () => {
-  const heroRect = searchInputBrowse.getBoundingClientRect()
+
+  let heroRect;
+  if (advancedSearchOptionsIsVisible()){
+    // If advanced search options is expanded, use that as heroRect to check if search form is visible
+    heroRect = advanced_search_options_div.getBoundingClientRect()
+  } else {
+    if (!tagsMode){
+      heroRect = searchInputBrowse.getBoundingClientRect()
+    } else {
+      heroRect = document.getElementById('tags-mode-input-section').getBoundingClientRect()
+    }
+  }
+  
   // not all browsers support clientRect.height
   const heroSearchPosition = heroRect.height
     ? heroRect.y + heroRect.height
@@ -52,7 +66,7 @@ const searchFormIsVisible = () => {
 
 const SCROLL_CHECK_TIMER = 100 // min interval (in ms) between consecutive calls of scroll checking function
 const checkShouldShowSearchInNavbar = throttle(() => {
-  const shouldShowSearchBar = !searchFormIsVisible();
+  const shouldShowSearchBar = tagsMode === true ? true : !searchFormIsVisible();
   const isShowingSearchBar = !navbar.classList.contains('bw-nav--expanded');
   if (shouldShowSearchBar !== isShowingSearchBar) {
     navbar.classList.toggle('bw-nav--expanded');
@@ -80,12 +94,17 @@ var filter_duration_min_element = document.getElementById('filter_duration_min')
 var filter_duration_max_element = document.getElementById('filter_duration_max');
 var filter_is_geotagged_element = document.getElementById('filter_is_geotagged');
 var sort_by_element = document.getElementById('sort-by');
-var grouping_geotagged_element  = document.getElementById('grouping_geotagged');
+var group_by_pack_element  = document.getElementById('group_by_pack');
 var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
+
+function advancedSearchOptionsIsVisible()
+{
+  return advanced_search_hidden_field.value === "1";
+}
 
 function updateToggleAdvancedSearchOptionsText()
 {
-  if (advanced_search_hidden_field.value === "1"){
+  if (advancedSearchOptionsIsVisible()){
     toggle_advanced_search_options_element.innerHTML = 'Hide advanced search options';
   } else {
     toggle_advanced_search_options_element.innerHTML = 'Show advanced search options';
@@ -107,7 +126,7 @@ function hideAdvancedSearchOptions()
 }
 
 function toggleAdvancedSearchOptions(){
-  if (advanced_search_hidden_field.value === "1"){
+  if (advancedSearchOptionsIsVisible()){
     hideAdvancedSearchOptions();
   } else {
     showAdvancedSearchOptions();
@@ -117,9 +136,9 @@ function toggleAdvancedSearchOptions(){
 toggle_advanced_search_options_element.addEventListener('click', toggleAdvancedSearchOptions);
 
 function set_hidden_grouping_value(){
-  var element = document.getElementById('grouping_geotagged');
-  var hiddenElement = document.getElementById('grouping_geotagged_hidden');
-  if (element.checked) {
+
+  var hiddenElement = document.getElementById('group_by_pack_hidden');
+  if (group_by_pack_element.checked) {
     hiddenElement.value = "1";
   } else {
     hiddenElement.value = "";
@@ -280,7 +299,7 @@ sort_by_element.addEventListener('change', function() {
   search_form_element.submit();
 })
 
-grouping_geotagged_element.addEventListener('change', function() {
+group_by_pack_element.addEventListener('change', function() {
   set_hidden_grouping_value();
 })
 
@@ -299,16 +318,19 @@ document.body.addEventListener('keydown',  evt => {
   }
 })
 
-search_page_navbar_form.addEventListener('submit', function(evt){
-  // Prevent default form submission
-  if (evt.preventDefault) evt.preventDefault();
+if (search_page_navbar_form !== null){
+  search_page_navbar_form.addEventListener('submit', function(evt){
+    // Prevent default form submission
+    if (evt.preventDefault) evt.preventDefault();
+  
+    // Copy input element contents to the main input element and do submission of the main form instead of the navbar one
+    const searchInputBrowseNavbar = document.getElementById('search-input-browse-navbar');
+    searchInputBrowse.value = searchInputBrowseNavbar.value;
+    addAdvancedSearchOptionsFilters();
+    search_form_element.submit();
+  
+    // It is also needed to return false to prevent default form submission
+    return false;
+  })
+}
 
-  // Copy input element contents to the main input element and do submission of the main form instead of the navbar one
-  const searchInputBrowseNavbar = document.getElementById('search-input-browse-navbar');
-  searchInputBrowse.value = searchInputBrowseNavbar.value;
-  addAdvancedSearchOptionsFilters();
-  search_form_element.submit();
-
-  // It is also needed to return false to prevent default form submission
-  return false;
-})

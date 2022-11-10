@@ -25,3 +25,4 @@ import './similarSoundsModal';
 import './toast';
 import './typeahead';
 import './unsecureImageCheck';
+import './followUnfollowTags';

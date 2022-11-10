@@ -23,6 +23,9 @@ const addVisibleCheckbox = (checkboxEl) => {
         checkboxEl.parentNode.insertBefore(visibleCheckboxContainer, checkboxEl.nextSibling);
         const checkboxIcon = document.createElement('span');
         checkboxIcon.className = 'bw-icon-checkbox';
+        if (checkboxEl.disabled) {
+            checkboxIcon.classList.add('disabled');
+        } 
         visibleCheckboxContainer.append(checkboxIcon);
     }
 };

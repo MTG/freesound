@@ -25,6 +25,7 @@ import logging
 import re
 from collections import defaultdict, Counter
 
+from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -47,8 +48,8 @@ from utils.search import get_search_engine, SearchEngineException, SearchResults
 search_logger = logging.getLogger("search")
 
 
-@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
-def search(request):
+
+def search_view_helper(request, tags_mode=False):
     query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
     # check if there was a filter parsing error
@@ -74,13 +75,56 @@ def search(request):
 
     filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
 
+    # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
+    tags_in_filter = []
+    for filter_data in filter_query_split:
+        if filter_data['name'].startswith('tag:'):
+            tags_in_filter.append(filter_data['name'].replace('tag:', ''))
+    
+    # Process tags mode stuff
+    initial_tagcloud = None
+    if tags_mode:
+
+        # In tags mode, we increase the size of the tags facet so we include more related tags
+        query_params['facets'][settings.SEARCH_SOUNDS_FIELD_TAGS]['limit'] = 50
+
+        # If no tags are in filter, we are "starting" tag-based browsing so display the initial tagcloud
+        if not tags_in_filter:
+            initial_tagcloud = cache.get('initial_tagcloud')
+            if initial_tagcloud is None:
+                # If tagcloud is not cached, make a query to retrieve it and save it to cache
+                results, _ = perform_search_engine_query(dict(
+                    textual_query='',
+                    query_filter= "*:*",
+                    num_sounds=1,
+                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
+                    group_by_pack=True,
+                    group_counts_as_one_in_facets=False,
+                ))
+                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
+                cache.set('initial_tagcloud', initial_tagcloud, 60 * 5)
+
+
+    # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
+    # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
+    # automatically revert to the previous group_by_pack setting. Also, we compute "disable_group_by_pack_option" so that when we have changed the real
+    # group_by_pack because there is a pack filter, we can grey out the option in the search form. Similar thing we do for only_sounds_with_pack as also
+    # it does not make sense when filtering by pack
+    group_by_pack_in_request = request.GET.get("g", "1") == "1"
+    only_sounds_with_pack_in_request = request.GET.get("only_p", "0") == "1"
+    disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
+    disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
+
     tvars = {
         'error_text': None,
         'filter_query': query_params['query_filter'],
         'filter_query_split': filter_query_split,
         'search_query': query_params['textual_query'],
-        'grouping': "1" if query_params['group_by_pack'] else "",
+        'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
+        'disable_group_by_pack_option': disable_group_by_pack_option,
         'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
+        'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
+        'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
@@ -89,12 +133,15 @@ def search(request):
         'url_query_params_string': url_query_params_string,
         'cluster_id': extra_vars['cluster_id'],
         'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING,
-        'weights': extra_vars['raw_weights_parameter']
+        'weights': extra_vars['raw_weights_parameter'],
+        'initial_tagcloud': initial_tagcloud,
+        'tags_mode': tags_mode,
+        'tags_in_filter': tags_in_filter
     }
 
     tvars.update(advanced_search_params_dict)
 
-    try:
+    try:       
         results, paginator = perform_search_engine_query(query_params)
         resultids = [d.get("id") for d in results.docs]
         resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
@@ -121,6 +168,12 @@ def search(request):
             'query_time': results.q_time 
         }))
 
+        # For the facets of fields that could have mulitple values (i.e. currently, only "tags" facet), make
+        # sure to remove the filters for the corresponding facet field thar are already active (so we remove
+        # redundant information)
+        if tags_in_filter:
+            results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in tags_in_filter]
+
         tvars.update({
             'paginator': paginator,
             'page': paginator.page(query_params['current_page']),
@@ -140,6 +193,12 @@ def search(request):
         return render(request, 'search/search.html', tvars)
     else:
         return render(request, 'search/search_ajax.html', tvars)
+
+
+
+@ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
+def search(request):
+    return search_view_helper(request, tags_mode=False)
 
 
 def _get_ids_in_cluster(request, requested_cluster_id):

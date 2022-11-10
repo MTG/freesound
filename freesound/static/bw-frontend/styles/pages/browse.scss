@@ -18,6 +18,10 @@
   &:hover .bw-icon-checkbox {
     opacity: 0.3;
   }
+
+  &:hover .bw-icon-checkbox.disabled {
+    opacity: 1.0;
+  }
 }
 
 .bw-search__filter-checkbox {

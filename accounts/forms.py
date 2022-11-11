@@ -116,6 +116,14 @@ class TermsOfServiceForm(forms.Form):
     next = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 
+class TermsOfServiceFormBW(TermsOfServiceForm):
+
+    def __init__(self, *args, **kwargs):
+        super(TermsOfServiceFormBW, self).__init__(*args, **kwargs)
+        self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['accepted_license_change'].widget.attrs['class'] = 'bw-checkbox'
+        
+
 class AvatarForm(forms.Form):
     file = forms.FileField(required=False, label="")
     remove = forms.BooleanField(help_text="Remove avatar", label="", required=False)

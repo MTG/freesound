@@ -1,0 +1,96 @@
+{% extends "simple_page.html" %}
+{% load staticfiles %}
+{% load absurl %}
+{% block page-title %}Upload Sound Files{% endblock %}
+{% block title %}Upload Sound Files{% endblock %}
+
+{% block page-content %}
+
+<div class="bw-upload">
+    <div class="v-spacing-3">
+        <h4 class="text-light-grey">Please note before uploading...</h4>
+    </div>
+    <div class="row no-gutters v-spacing-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="padding-right-2">
+                <h5>Legality</h5>
+                <p>Only upload sounds created or recorded <strong>by you</strong>. <a href="{% url "wiki-page" "faq" %}#sounds-4">More details...</a></p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="padding-right-2">
+                <h5>Sounds only</h5>
+                <p>Freesound is for <strong>sounds</strong> only. Self-created <strong>music fragments/samples/loops</strong> are also ok, but not complete songs or compositions.</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="padding-right-2">
+                <h5>Moderation</h5>
+                <p>All files are <strong>moderated</strong>. If you upload illegal files or files that don't follow the <a href="{% url "wiki-page" "faq" %}#sounds">guidelines</a> they will be removed.</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="padding-right-2">
+                <h5>Formats</h5>
+                <p>We prefer <strong>wav, aif and flac</strong>, but we support <strong>ogg</strong>, <strong>m4a</strong> and <strong>mp3</strong> too. For very large files please use some compressed format. Uploading more than 1GB at once might fail.</p>
+            </div>
+        </div>
+    </div>
+    <div class="row no-gutters v-spacing-4">
+        {% if uploads_enabled %}
+
+        <div class="col-md-6">
+            <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form" data-max-file-size="{{ max_file_size }}" data-upload-url="{% url 'accounts-upload' %}" data-describe-url="{% url 'accounts-describe' %}">{% csrf_token %}
+                {{ form.as_p }}
+                
+                <div id="drag-tip">
+                    <h1 class="text-light-grey">Drag files here...</h1>
+                    <p>...or click on 'Add files' (valid file extensions: flac, wav, aif, aiff, m4a, ogg and mp3).</p>
+                </div>
+                <ul id="file-list" class="file-list"></ul>
+                <div class="progress-container h-spacing-2" id="progress-container"></div>
+                <div>
+                    {% if successes %}
+                    <p>
+                        <b>{{ successes }} file{{ successes|pluralize }} uploaded successfully!</b>
+                    </p>
+                    {% endif %}
+                    {% if errors %}
+                    <p>
+                        <b>There were errors uploading the files:</b>
+                        <ul>{% for file in errors %}<li>{{ file }}</li>{% endfor %}</ul>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="v-spacing-top-1">
+                    <input class="btn-secondary cursor-pointer" type="button" id="add-files-btn" value="+ Add files" />
+                    <input class="btn-primary cursor-pointer" type="submit" value="Upload" id="html_upload_button" />
+                    <input class="btn-inverse cursor-pointer" type="button" id="abort" value="Abort" />
+                </div>
+            </form>            
+            <div class="drop-area" id="drop-area"></div>
+        </div>
+        <div class="col-md-6 middle">
+            <div class="text-center">
+                <div class="text-grey v-spacing-4 h-padding-7">
+                    Once sounds are uploaded, you'll have to describe them before they can show up in the web site.
+                </div>
+                <div>
+                    <a class="btn-primary" href="{% url 'accounts-describe' %}" title="Describe Your Sounds Link">Describe sounds</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="v-spacing-3 v-spacing-top-6 w-100 text-center">
+            <h5>Uploads disabled... &#128543</h5>
+            <p class="text-grey v-spacing-2">We're deeply sorry but uploading and describing sounds is <b>temporarily disabled</b>.
+                We'll enable it again as soon as possible.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>    
+{% endblock %}
+
+{% block extrabody %}
+<script src="{% static 'bw-frontend/dist/upload.js' %}"></script>
+{% endblock %}

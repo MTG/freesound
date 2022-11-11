@@ -1,0 +1,73 @@
+{% extends "simple_page.html" %}
+{% block page-title %}Updates to our Privacy Policy{% endblock %}
+{% block title %}Updates to our Privacy Policy{% endblock %}
+
+{% block page-content %}
+
+<div>
+    <p>Hello dear Freesound user!</p>
+
+    <p>We have recently updated our terms of service and privacy policy and we need you to give us your consent 
+        before you can continue using Freesound. The updated terms of service and privacy policy are intented to <strong>
+        clarify your rights as users, the ways in which we process your data</strong> and, in general, to protect you and us against 
+        incorrect uses of the site. <strong>This update does not alter the Freesound philosophy in any way</strong>, 
+        it is just a necessary step that we need to make in order to better comply with regulations such as the GDPR.
+    </p>
+    <p>
+        Please, take some time to read our <a href="/help/tos_web/" target="_blank">terms of use</a> and
+        the <a href="/help/privacy/" target="_blank">privacy policy</a>. 
+        We prepared a brief summary of them which we include here:
+    </p>
+
+    <ul>
+        <li>Uploaded sounds are released under one of the CC licenses you choose.
+        Other content (metadata, tags, comments, etc...) is provided as CC-Zero.</li>
+        <li>Your activity in Freesound is public and can be seen by all users (except your private messages).</li>
+        <li>You are responsible for your posted content.</li>
+        <li>We (Freesound) keep your data confidential and apply security measures to keep this confidentiality.</li>
+        <li>We (Freesound) don’t warrant that all the data on the site is correct.
+            We are not liable for information not posted by us on this site.</li>
+        <li>We (Freesound) may remove accounts of users that do not comply with the terms of use or who do not
+            behave correctly (spam, offensive comments...).</li>
+        <li>We can use anonymized data collected from Freesound (sounds, statistics about sounds, tags, comments, downloads...)
+            for research purposes.</li>
+        <li>You agree to receive email notifications in accordance with your email preferences.</li>
+    </ul>
+
+    <p>
+        In addition to the update of terms of service and privacy policy, we also want to take this opportunity to <strong>upgrade current 
+        Creative Commons licenses from 3.0 to 4.0</strong>. The main difference between these two is that Creative Commons licenses 4.0 are
+        more user-friendly and more internationally robust, but the general terms are the same. More information can be found 
+        <a href="https://creativecommons.org/version4/" target="_blank">here</a>. The option to upgrade licenses is only offered to users
+        who have uploaded sounds with any of the affected licenses.
+    </p>
+    
+    <p>
+        Below you'll find a box that you have to check in order to accept the updated terms and license change, and be able to continue using
+        Freesound as usual. Thank you for your patience and understanding, we really appreciate the commitment
+        of the Freesound community!!!
+    </p>
+
+    <form action="" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field.errors }}
+            {{ hidden_field }}
+        {% endfor %}
+        {% with form.accepted_tos as tos %}
+            {{ tos.errors }}
+            {{ tos }} <label for="{{ tos.id_for_label }}" class="bw-checkbox-label">{{ tos.help_text|safe }}</label>
+        {% endwith %}
+        {% if has_sounds_with_old_cc_licenses %}
+        <br>
+        {% with form.accepted_license_change as alc %}
+            {{ alc.errors }}
+            {{ alc }} <label for="{{ alc.id_for_label }}" class="bw-checkbox-label">{{ alc.help_text|safe }}</label>
+        {% endwith %}
+        {% endif %}
+    <br><br>
+        <button class="btn-primary">Continue using Freesound!</button>
+    </form>
+</div>
+    
+{% endblock %}

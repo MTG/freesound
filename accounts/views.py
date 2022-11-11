@@ -62,8 +62,8 @@ from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEE
 from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
     BwDeleteUserForm, UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, UsernameField, \
-    BwProblemsLoggingInForm, username_taken_by_other_user
+    ProfileForm, AvatarForm, TermsOfServiceForm, TermsOfServiceFormBW, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, \
+    UsernameField, BwProblemsLoggingInForm, username_taken_by_other_user
 from general.templatetags.util import license_with_version
 from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
 from bookmarks.models import Bookmark
@@ -273,8 +273,9 @@ def bulk_license_change(request):
 @login_required
 def tos_acceptance(request):
     has_sounds_with_old_cc_licenses = request.user.profile.has_sounds_with_old_cc_licenses()
+    FormClass = TermsOfServiceFormBW if using_beastwhoosh(request) else TermsOfServiceForm
     if request.method == 'POST':
-        form = TermsOfServiceForm(request.POST)
+        form = FormClass(request.POST)
         if form.is_valid():
             profile = request.user.profile
             profile.agree_to_gdpr()
@@ -288,7 +289,7 @@ def tos_acceptance(request):
                 return HttpResponseRedirect(reverse('accounts-home'))
     else:
         next_param = request.GET.get('next')
-        form = TermsOfServiceForm(initial={'next': next_param})
+        form = FormClass(initial={'next': next_param})
     tvars = {'form': form, 'has_sounds_with_old_cc_licenses': has_sounds_with_old_cc_licenses}
     return render(request, 'accounts/gdpr_consent.html', tvars)
 

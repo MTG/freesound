@@ -34,9 +34,9 @@ import graypy
 from twisted.internet import reactor
 from twisted.web import server, resource
 
-from .communityBasedTagRecommendation import CommunityBasedTagRecommender
-from . import tagrecommendation_settings as tr_settings
-from .utils import loadFromJson, saveToJson
+from communityBasedTagRecommendation import CommunityBasedTagRecommender
+import tagrecommendation_settings as tr_settings
+from utils import loadFromJson, saveToJson
 
 
 def server_interface(resource):

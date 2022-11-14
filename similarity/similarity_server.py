@@ -22,14 +22,14 @@ from __future__ import print_function
 from __future__ import absolute_import
 from twisted.web import server, resource
 from twisted.internet import reactor
-from .gaia_wrapper import GaiaWrapper
-from .similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, \
+from gaia_wrapper import GaiaWrapper
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, \
     BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT, \
     LOG_TO_GRAYLOG, LOG_TO_FILE
 import logging
 import graypy
 from logging.handlers import RotatingFileHandler
-from .similarity_server_utils import parse_filter, parse_target, parse_metric_descriptors
+from similarity_server_utils import parse_filter, parse_target, parse_metric_descriptors
 import json
 import yaml
 import cloghandler

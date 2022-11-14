@@ -28,8 +28,8 @@ import time
 import yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point, VariableLength
 
-from . import similarity_settings as sim_settings
-from .similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, \
+import similarity_settings as sim_settings
+from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, \
     get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
 
 logger = logging.getLogger('similarity')

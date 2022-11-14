@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
+
 import os
 import signal
 import logging
@@ -26,7 +28,7 @@ import tempfile
 from django.apps import apps
 from django.conf import settings
 
-import color_schemes
+from . import color_schemes
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories, TemporaryDirectory

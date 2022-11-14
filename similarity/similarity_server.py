@@ -19,6 +19,7 @@
 #
 
 from __future__ import print_function
+from __future__ import absolute_import
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
@@ -257,5 +258,3 @@ if __name__ == '__main__':
     logger.info('Started similarity service, listening to port ' + str(LISTEN_PORT) + "...")
     reactor.run()
     logger.info('Service stopped.')
-
-

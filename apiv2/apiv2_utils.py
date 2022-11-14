@@ -20,6 +20,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+from __future__ import absolute_import
 import datetime
 import json
 import logging
@@ -40,12 +42,12 @@ from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIVie
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.utils import formatting
 
-import combined_search_strategies
+from . import combined_search_strategies
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2.exceptions import RequiresHttpsException, UnauthorizedException, ServerErrorException, BadRequestException, \
     NotFoundException
-from examples import examples
+from .examples import examples
 from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
@@ -353,7 +355,7 @@ def api_search(
                                               'names are correct)' % e.message, resource=resource)
             raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
         except Exception as e:
-            print e
+            print(e)
             raise ServerErrorException(
                 msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
 

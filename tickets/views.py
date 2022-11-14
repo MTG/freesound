@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
+
 import datetime
 import json
 
@@ -31,7 +33,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from general.tasks import whitelist_user
 
-from models import Ticket, TicketComment, UserAnnotation
+from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \

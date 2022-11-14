@@ -213,8 +213,8 @@ class SoundOfTheDayTestCase(TestCase):
             sound_ids.append(s.id)
 
         sound = Sound.objects.get(id=19)
-        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
-        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 21))
+        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 0o6, 20))
+        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 0o6, 21))
 
         call_command("create_random_sounds")
 
@@ -232,7 +232,7 @@ class SoundOfTheDayTestCase(TestCase):
     def test_send_email_once(self):
         """If we have a SoundOfTheDay, send the sound's user an email, but only once"""
         sound = Sound.objects.get(id=19)
-        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
+        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 0o6, 20))
         sotd.notify_by_email()
 
         self.assertEqual(len(mail.outbox), 1)
@@ -252,7 +252,7 @@ class SoundOfTheDayTestCase(TestCase):
         email_pref = accounts.models.EmailPreferenceType.objects.get(name="random_sound")
         accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 
-        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
+        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 0o6, 20))
         sotd.notify_by_email()
 
         self.assertEqual(len(mail.outbox), 0)
@@ -263,6 +263,6 @@ class SoundOfTheDayTestCase(TestCase):
         """When we cache today's random sound, expire the cache at midnight today"""
 
         sound = Sound.objects.get(id=19)
-        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 06, 20))
+        sotd = SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date(2017, 0o6, 20))
         sound_id = get_sound_of_the_day_id()
         cache_set.assert_called_with(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY, 19, 48600)

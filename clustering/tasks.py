@@ -18,14 +18,16 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
+
 from django.conf import settings
 from django.core.cache import caches
 from celery.decorators import task
 from celery import Task
 import logging
 
-from clustering import ClusteringEngine
-from clustering_settings import CLUSTERING_CACHE_TIME, CLUSTERING_PENDING_CACHE_TIME
+from .clustering import ClusteringEngine
+from .clustering_settings import CLUSTERING_CACHE_TIME, CLUSTERING_PENDING_CACHE_TIME
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 logger = logging.getLogger('clustering')

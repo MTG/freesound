@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+
 import json
 from numpy import zeros
 import sys
@@ -26,13 +28,13 @@ import sys
 def loadFromJson(path, verbose=False):
     with open(path, 'r') as f:
         if verbose:
-            print "Loading data from '" + path + "'"
+            print("Loading data from '" + path + "'")
         return json.load(f)
 
 def saveToJson(path="", data="", verbose=True):
     with open(path, mode='w') as f:
         if verbose:
-            print "Saving data to '" + path + "'"
+            print("Saving data to '" + path + "'")
         json.dump(data,f,indent=4)
 
 def mtx2npy(M, verbose = True):
@@ -56,4 +58,3 @@ def mtx2npy(M, verbose = True):
         sys.stdout.write("\n")
         sys.stdout.flush()
     return npy
-

@@ -24,6 +24,7 @@
 #   - sklearn (joblib)
 
 from __future__ import print_function
+from __future__ import absolute_import
 
 import json
 import logging
@@ -181,5 +182,3 @@ if __name__ == '__main__':
     logger.info('Started tag recommendation service, listening to port ' + str(tr_settings.LISTEN_PORT) + "...")
     reactor.run()
     logger.info('Service stopped.')
-
-

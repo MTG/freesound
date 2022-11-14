@@ -25,6 +25,7 @@ This server can be used to index a new dataset in background so whent it is inde
 can be reloaded with the new index.
 '''
 
+from __future__ import absolute_import
 
 import json
 import logging
@@ -34,8 +35,8 @@ import graypy
 from twisted.internet import reactor
 from twisted.web import server, resource
 
-from gaia_wrapper import GaiaWrapper
-import similarity_settings as sim_settings
+from .gaia_wrapper import GaiaWrapper
+from . import similarity_settings as sim_settings
 
 
 def server_interface(resource):

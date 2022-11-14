@@ -1,4 +1,5 @@
-from settings import *
+from __future__ import absolute_import
+from .settings import *
 
 postgres_username = os.getenv('FS_TEST_PG_USERNAME', None)
 if postgres_username is not None:
@@ -33,7 +34,7 @@ CACHES = {
     }
 }
 
-from logger import LOGGING
+from .logger import LOGGING
 LOGGING['handlers']['stdout']['class'] = 'logging.NullHandler'
 
 SOLR_URL = "http://fakehost:8080/fs2/"  # Avoid making accidental queries to "real" search server if running

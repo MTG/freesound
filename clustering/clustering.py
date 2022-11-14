@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
 
 import json
 import logging
@@ -26,7 +27,7 @@ from django.conf import settings
 import six
 from time import time
 
-import clustering_settings as clust_settings
+from . import clustering_settings as clust_settings
 
 # The following packages are only needed if the running process is configured to be a Celery worker. 
 # We avoid importing them in appservers to avoid having to install unneeded dependencies.
@@ -40,7 +41,7 @@ if settings.IS_CELERY_WORKER:
     from sklearn.feature_selection import mutual_info_classif
     from sklearn.neighbors import kneighbors_graph
 
-    from features_store import FeaturesStore
+    from .features_store import FeaturesStore
 
 logger = logging.getLogger('clustering')
 

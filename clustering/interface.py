@@ -17,10 +17,11 @@
 # Authors:
 #     See AUTHORS file.
 #
+from __future__ import absolute_import
 from django.conf import settings
 from django.core.cache import caches
 
-from clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
+from .clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
 from freesound.celery import app as celery_app
 from utils.encryption import create_hash
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters

@@ -21,6 +21,7 @@
 #
 
 
+from __future__ import absolute_import
 import datetime
 import json
 import logging
@@ -56,7 +57,7 @@ from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFi
     EditSoundDescriptionSerializer, SoundDescriptionSerializer, CreateCommentSerializer, SoundCommentsSerializer, \
     CreateRatingSerializer, CreateBookmarkSerializer, BookmarkCategorySerializer, PackSerializer, UserSerializer, \
     SoundSerializer, SoundListSerializer
-from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, \
+from .apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, \
     OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, \
     ApiSearchPaginator, get_sounds_descriptors, prepend_base, get_formatted_examples_for_view
 from bookmarks.models import Bookmark, BookmarkCategory

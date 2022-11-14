@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
+
 import hashlib
 
 import mock
@@ -28,7 +30,7 @@ from django.urls import reverse
 
 import sounds
 import tickets
-from models import Ticket, Queue
+from .models import Ticket, Queue
 from sounds.models import Sound
 from tickets import QUEUE_SOUND_MODERATION
 from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED

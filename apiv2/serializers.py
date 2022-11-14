@@ -20,12 +20,13 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import serializers
 
-from apiv2_utils import prepend_base
+from .apiv2_utils import prepend_base
 from bookmarks.models import BookmarkCategory, Bookmark
 from comments.models import Comment
 from sounds.models import Sound, Pack, SoundAnalysis

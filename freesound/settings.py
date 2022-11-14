@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 import datetime
 import logging.config
 import os
@@ -579,7 +580,7 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
 }
 
-SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine' 
+SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine'
 SOLR4_SOUNDS_URL = "http://search:8080/fs2/"
 SOLR4_FORUM_URL = "http://search:8080/forum/"
 SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
@@ -839,7 +840,7 @@ RABBITMQ_API_PORT = '5673'
 # -------------------------------------------------------------------------------
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
-from local_settings import *
+from .local_settings import *
 
 
 # -------------------------------------------------------------------------------
@@ -921,4 +922,4 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 # -------------------------------------------------------------------------------
 # Import logging settings
-from logger import LOGGING
+from .logger import LOGGING

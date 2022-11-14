@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
 from utils.tagrecommendation_utilities import get_id_of_last_indexed_sound, post_sounds_to_tagrecommendation_service
@@ -42,6 +44,6 @@ class Command(BaseCommand):
         else:
             last_indexed_id = get_id_of_last_indexed_sound()
 
-        print "Starting at id %i" % last_indexed_id
+        print("Starting at id %i" % last_indexed_id)
         sound_qs = Sound.objects.filter(moderation_state='OK', processing_state='OK', id__gt=last_indexed_id).order_by("id")
         post_sounds_to_tagrecommendation_service(sound_qs)

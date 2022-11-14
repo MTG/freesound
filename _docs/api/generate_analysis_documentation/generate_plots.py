@@ -1,3 +1,4 @@
+from __future__ import print_function
 import gaia2
 import pylab as pl
 from numpy import std, average, percentile
@@ -43,7 +44,7 @@ normalization_coeffs = None
 for i in range(0,len(transformation_history)):
     if transformation_history[-(i+1)]['Analyzer name'] == 'normalize':
         normalization_coeffs = transformation_history[-(i+1)]['Applier parameters']['coeffs']
-print [x for x in normalization_coeffs.keys() if (".tonal" in x and "chords" in x)]
+print([x for x in normalization_coeffs.keys() if (".tonal" in x and "chords" in x)])
 descriptor_names = ds.layout().descriptorNames()
 point_names = ds.pointNames()
 example_point = ds.point(point_names[0])
@@ -61,10 +62,10 @@ for descriptor_name in descriptor_names:
         try:
             example_value = example_point.label(descriptor_name)
         except:
-            print "ERROR: %s could not be processed" % descriptor_name
+            print("ERROR: %s could not be processed" % descriptor_name)
             continue
 
-    print "Histogram for descriptor: %s" % descriptor_name
+    print("Histogram for descriptor: %s" % descriptor_name)
     if type(example_value) == float:
         pool = []
         for point_name in point_names:
@@ -83,7 +84,7 @@ for descriptor_name in descriptor_names:
     elif type(example_value) == tuple:
         for i in range(0, len(example_value)):
             label = descriptor_name + '.%.3i' % i
-            print "\tDimension %i" % i
+            print("\tDimension %i" % i)
             pool = []
             for point_name in point_names:
                 point = ds.point(point_name)

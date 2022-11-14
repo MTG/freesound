@@ -319,7 +319,7 @@ class SolrQueryPySolr(SolrQuery):
     def as_dict(self):
         params = {k: v for k, v in self.params.iteritems() if v is not None}
         for k, v in params.iteritems():
-            if type(v) == types.BooleanType:
+            if type(v) == bool:
                 params[k] = json.dumps(v)
         return params
 

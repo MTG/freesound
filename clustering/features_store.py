@@ -18,11 +18,13 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
+
 import json
 import logging
 import os
 
-import clustering_settings as clust_settings
+from . import clustering_settings as clust_settings
 import numpy as np
 import redis
 from django.conf import settings

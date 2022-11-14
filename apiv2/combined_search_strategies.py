@@ -19,12 +19,13 @@
 # Authors:
 #     See AUTHORS file.
 #
+from __future__ import absolute_import
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import parse_weights_parameter
 from similarity.client import SimilarityException
-from exceptions import ServerErrorException, BadRequestException, NotFoundException
+from .exceptions import ServerErrorException, BadRequestException, NotFoundException
 from urllib import unquote
 
 

@@ -18,7 +18,9 @@
 #     See AUTHORS file.
 #
 
-from tag_recommendation_utils import *
+from __future__ import absolute_import
+
+from .tag_recommendation_utils import *
 
 heuristics = {
     'hRankPercentage015': {'name':'RankP@0.15','c':cNMostSimilar, 'a':aNormalizedRankSum,'s':sPercentage, 'options':{'cNMostSimilar_N':100, 'aNormalizedRankSum_factor':1.0, 'sPercentage_percentage': 0.15}},

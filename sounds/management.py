@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+
 import os
 
 from django.db.models.signals import post_syncdb

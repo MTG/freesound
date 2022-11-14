@@ -20,8 +20,9 @@
 #     See AUTHORS file.
 #
 
+from __future__ import absolute_import
 from django.contrib import admin
-from models import Queue, Ticket
+from .models import Queue, Ticket
 
 class QueueAdmin(admin.ModelAdmin): 
     list_display = ('name',)

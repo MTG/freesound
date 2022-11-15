@@ -22,7 +22,7 @@ from future import standard_library
 standard_library.install_aliases()
 from urllib.error import HTTPError, URLError
 
-from akismet import Akismet, AkismetError, APIKeyError
+from akismet import Akismet, AkismetError, APIKeyError, ConfigurationError
 from django.conf import settings
 from django.contrib.sites.models import Site
 
@@ -45,7 +45,7 @@ def is_spam(request, comment):
     domain = "https://%s" % Site.objects.get_current().domain
     try:
         api = Akismet(key=settings.AKISMET_KEY, blog_url=domain)
-    except APIKeyError:
+    except (APIKeyError, ConfigurationError):
         return False
 
     try:

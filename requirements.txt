@@ -1,4 +1,4 @@
-akismet==0.2.0
+akismet==1.0.1
 autopep8==1.5.7
 beautifulsoup4==4.6.0
 bleach==3.1.5

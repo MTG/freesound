@@ -18,7 +18,6 @@ django-oauth-toolkit==0.10.0
 django-object-actions==0.8.2
 django-ratelimit==2.0.0
 django-redis==4.10.0
-django-redis==4.10.0
 django-silk==3.0.2
 Django==1.11.29
 djangorestframework-jsonp==1.0.2

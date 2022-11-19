@@ -14,11 +14,11 @@
                 <div class=" offset-lg-2 col-lg-8 ">
                     <h5 class="v-spacing-4">{% if form.initial %}Reply to message{% else %}New message{% endif %}</h5>
                     {{form.as_p}}
-                    {% if form.recaptcha_response %}
+{% comment %}                    {% if form.recaptcha_response %}
                         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
                         <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
                         <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
-                    {% endif %}
+                    {% endif %}{% endcomment %}
                 </div>
             </div>
             <div class="row v-spacing-top-5 v-spacing-3">

@@ -36,7 +36,6 @@ Python dependencies
   www.initd.org/psycopg
 * networkx 1.5 (c) 2010 NetworkX Developers. BSD "3-clause". networkx.lanl.gov
 * python-gearman 2.0.2 (c) 2010 Yelp. Apache License version 2. www.github.com/Yelp/python-gearman
-* recaptcha-client 1.0.6 (c) Mike Crawford. MIT "X11". pypi.python.org/pypi/recaptcha-client
 
 Javascript dependencies
 * jquery 1.5.2 (c) 2012 The jQuery Foundation. MIT ("Expat") or GPL2. www.jquery.com

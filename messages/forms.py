@@ -18,12 +18,12 @@
 #     See AUTHORS file.
 #
 
+from captcha.fields import ReCaptchaField
 from django import forms
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from utils.forms import CaptchaWidget, HtmlCleaningCharField
+from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
 
@@ -48,14 +48,7 @@ class MessageReplyForm(forms.Form):
 
 
 class MessageReplyFormWithCaptcha(MessageReplyForm):
-    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
-
-    def clean_recaptcha_response(self):
-        captcha_response = self.cleaned_data.get("recaptcha_response")
-        if settings.RECAPTCHA_PUBLIC_KEY:
-            if not captcha_response:
-                raise forms.ValidationError("Captcha is not correct")
-        return captcha_response
+    recaptcha = ReCaptchaField(label="")
 
     def clean_body(self):
         body = self.cleaned_data['body']

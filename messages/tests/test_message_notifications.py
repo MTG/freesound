@@ -17,10 +17,11 @@
 # Authors:
 #     See AUTHORS file.
 #
+import mock
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import EmailPreferenceType, UserEmailSetting
@@ -37,8 +38,8 @@ class MessageReceivedEmailNotification(TestCase):
         self.sender = User.objects.create_user(username='sender', email='sender@example.com')
         self.receiver = User.objects.create_user(username='receiver', email='receiver@example.com')
 
-    @override_settings(RECAPTCHA_PUBLIC_KEY='')
-    def test_message_email_preference_enabled(self):
+    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    def test_message_email_preference_enabled(self, magic_mock):
         self.client.force_login(user=self.sender)
         resp = self.client.post(reverse('messages-new'), data={
             u'body': [u'test message body'],
@@ -50,8 +51,8 @@ class MessageReceivedEmailNotification(TestCase):
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE in mail.outbox[0].subject)
 
-    @override_settings(RECAPTCHA_PUBLIC_KEY='')
-    def test_message_email_preference_disabled(self):
+    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    def test_message_email_preference_disabled(self, magic_mock):
         # Create email preference object for the email type (which will mean user does not want message emails as
         # it is enabled by default and the preference indicates user does not want it).
         email_pref = EmailPreferenceType.objects.get(name="private_message")

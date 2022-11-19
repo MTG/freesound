@@ -2,7 +2,7 @@ import './page-polyfills';
 import {handleDismissModal, handleModal} from '../components/modal';
 import {showToast} from '../components/toast';
 import serialize from '../utils/formSerializer'
-import initRecaptchaWidgets from "../components/recaptcha";
+// import initRecaptchaWidgets from "../components/recaptcha";
 import addCheckboxVisibleElements from "../components/checkbox";
 
 
@@ -109,7 +109,7 @@ const customProblemsLoggingInSubmit = (event) => {
 
 const initRegistrationForm = (registrationForm) => {
     // Initialize all recaptcha widgets (registration form contains one)
-    initRecaptchaWidgets();
+    // initRecaptchaWidgets();
 
     // Initialize checkboxes (registration form contains checkboxes)
     addCheckboxVisibleElements();

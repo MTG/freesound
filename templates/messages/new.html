@@ -40,11 +40,11 @@
 
 <form method="post" action=".">{% csrf_token %}
     {{form.as_p}}
-    {% if form.recaptcha_response %}
+{% comment %}    {% if form.recaptcha_response %}
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
         <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
         <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
-    {% endif %}
+    {% endif %}{% endcomment %}
 <input type="submit" value="send" />
 </form>
 

@@ -23,6 +23,7 @@ from __future__ import print_function
 import re
 import time
 
+from builtins import object
 from captcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
@@ -201,7 +202,7 @@ class PackEditForm(ModelForm):
             affected_pack.process()
         return pack
 
-    class Meta:
+    class Meta(object):
         model = Pack
         fields = ('name', 'description',)
         widgets = {

@@ -22,6 +22,8 @@ import json
 from unittest import skipIf
 
 import mock
+from builtins import range
+from builtins import str
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm

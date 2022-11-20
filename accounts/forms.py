@@ -22,6 +22,8 @@
 import logging
 import time
 
+from builtins import object
+from builtins import str
 from captcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
@@ -141,7 +143,7 @@ class FileChoiceForm(forms.Form):
 
     def __init__(self, files, *args, **kwargs):
         super(FileChoiceForm, self).__init__(*args, **kwargs)
-        choices = files.items()
+        choices = list(files.items())
         self.fields['files'].choices = choices
 
 
@@ -415,7 +417,7 @@ class ProfileForm(forms.ModelForm):
 
         return sound_signature
 
-    class Meta:
+    class Meta(object):
         model = Profile
         fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
 
@@ -462,7 +464,7 @@ class BwProfileForm(ProfileForm):
         self.fields['is_adult'].help_text = False
         self.fields['not_shown_in_online_users_list'].widget = forms.HiddenInput()
 
-    class Meta:
+    class Meta(object):
         model = Profile
         fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', )
 

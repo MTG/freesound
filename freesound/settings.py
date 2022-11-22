@@ -76,7 +76,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'follow',
-    'fixture_magic',
     'utils',
     'donations',
     'monitor',

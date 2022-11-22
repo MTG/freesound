@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+
 import datetime
 import logging.config
 import os
@@ -82,6 +83,7 @@ INSTALLED_APPS = [
     'django_object_actions',
     'silk',
     'admin_reorder',
+    'captcha',
 ]
 
 # Specify custom ordering of models in Django Admin index
@@ -630,8 +632,16 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 # -------------------------------------------------------------------------------
 # Recaptcha settings
 
-RECAPTCHA_PRIVATE_KEY = ''
-RECAPTCHA_PUBLIC_KEY = ''
+# If not set, test keys will be used
+# RECAPTCHA_PRIVATE_KEY = ''
+# RECAPTCHA_PUBLIC_KEY = ''
+
+# Google provides test keys which are set as the default for RECAPTCHA_PUBLIC_KEY and RECAPTCHA_PRIVATE_KEY.
+# These cannot be used in production since they always validate to true and a warning will be shown on the reCAPTCHA.
+# To bypass the security check that prevents the test keys from being used unknowingly add
+# SILENCED_SYSTEM_CHECKS = [..., 'captcha.recaptcha_test_key_error', ...] to your settings.
+
+SILENCED_SYSTEM_CHECKS += ['captcha.recaptcha_test_key_error']
 
 
 # -------------------------------------------------------------------------------

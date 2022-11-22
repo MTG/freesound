@@ -20,18 +20,21 @@
 
 from __future__ import print_function
 
+import re
 import time
+
+from builtins import object
+from captcha.fields import ReCaptchaField
 from django import forms
-from django.db.models import Q
-from django.forms import ModelForm, Textarea, TextInput
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.forms import ModelForm, Textarea, TextInput
+
 from sounds.models import License, Flag, Pack, Sound
+from utils.encryption import decrypt, encrypt
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
-from utils.forms import CaptchaWidget
-from utils.encryption import decrypt, encrypt
-import re
 
 
 class GeotaggingForm(forms.Form):
@@ -199,7 +202,7 @@ class PackEditForm(ModelForm):
             affected_pack.process()
         return pack
 
-    class Meta:
+    class Meta(object):
         model = Pack
         fields = ('name', 'description',)
         widgets = {
@@ -232,16 +235,9 @@ class FlagForm(forms.Form):
     email = forms.EmailField(label="Your email", required=True, help_text="Required.",
                              error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
                                              ' email address appears to be invalid, please check if it\'s correct.'})
-    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
+    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label='Reason type')
     reason = forms.CharField(widget=forms.Textarea)
-    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
-
-    def clean_recaptcha_response(self):
-        captcha_response = self.cleaned_data.get("recaptcha_response")
-        if settings.RECAPTCHA_PUBLIC_KEY:
-            if not captcha_response:
-                raise forms.ValidationError("Captcha is not correct")
-        return captcha_response
+    recaptcha = ReCaptchaField(label="")
 
     def save(self):
         f = Flag()

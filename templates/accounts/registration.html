@@ -74,9 +74,8 @@
         <p>
             {{ form.accepted_tos }} <label for="id_accepted_tos">{{ form.accepted_tos.label }}</label>
         </p>
-        <span class="help-block"> {{ form.recaptcha_response.errors }} </span>
-        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-        <div class="g-recaptcha" data-sitekey={{ recaptcha_public_key }}></div>
+        {{ form.recaptcha.errors }}
+        {{ form.recaptcha }}
         <br><input type="submit" value="Create account!" />
     </form>
 <br>

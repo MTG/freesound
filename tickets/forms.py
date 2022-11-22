@@ -18,11 +18,11 @@
 #     See AUTHORS file.
 #
 
+from captcha.fields import ReCaptchaField
 from django import forms
-from django.conf import settings
-from utils.forms import CaptchaWidget
-from utils.forms import HtmlCleaningCharField
 from django.utils.safestring import mark_safe
+
+from utils.forms import HtmlCleaningCharField
 
 
 class ModeratorMessageForm(forms.Form):
@@ -44,14 +44,7 @@ class UserContactForm(UserMessageForm):
 
 class AnonymousMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea)
-    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
-
-    def clean_recaptcha_response(self):
-        captcha_response = self.cleaned_data.get("recaptcha_response")
-        if settings.RECAPTCHA_PUBLIC_KEY:
-            if not captcha_response:
-                raise forms.ValidationError("Captcha is not correct")
-        return captcha_response
+    recaptcha = ReCaptchaField(label="")
 
 
 class AnonymousContactForm(AnonymousMessageForm):
@@ -87,10 +80,10 @@ class SoundModerationForm(forms.Form):
 
     ticket = forms.CharField(widget=forms.widgets.HiddenInput,
                              error_messages={'required': 'No sound selected...'})
-    
+
     is_explicit = forms.ChoiceField(choices=IS_EXPLICIT_FLAG_CHOICES,
                                     initial=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
-                                    required=True, 
+                                    required=True,
                                     label=mark_safe("<i>Is explicit</i> flag"))
 
 

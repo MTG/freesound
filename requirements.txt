@@ -17,6 +17,7 @@ django-multiupload==0.5
 django-oauth-toolkit==0.10.0
 django-object-actions==0.8.2
 django-ratelimit==2.0.0
+django-recaptcha==2.0.6
 django-redis==4.10.0
 django-silk==3.0.2
 Django==1.11.29
@@ -50,7 +51,6 @@ python-memcached==1.53
 pytz==2020.1
 PyYAML==3.11
 raven==6.10.0
-recaptcha-client==1.0.6
 redis==3.2.0
 sentry-sdk==0.14.4
 Sphinx==1.6.3

@@ -19,7 +19,6 @@ import './navbar';
 import './propagation';
 import './radio';
 import './rating';
-import './recaptcha';
 import './select';
 import './similarSoundsModal';
 import './toast';

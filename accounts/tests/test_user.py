@@ -22,6 +22,8 @@ import json
 from unittest import skipIf
 
 import mock
+from builtins import range
+from builtins import str
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
@@ -35,11 +37,11 @@ from django.test.utils import override_settings
 from django.test.utils import patch_logger
 from django.urls import reverse
 
-from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserDeletionRequest
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
+from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from sounds.models import License, Sound, Pack, DeletedSound, Download, PackDownload
 from utils.mail import transform_unique_email
 
@@ -52,8 +54,8 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(Profile.objects.filter(user=u).exists(), True)
         u.save()  # Check saving user again (with existing profile) does not fail
 
-    @override_settings(RECAPTCHA_PUBLIC_KEY='')
-    def test_user_registration(self):
+    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    def test_user_registration(self, magic_mock_function):
         username = 'new_user'
 
         # Try registration without accepting tos

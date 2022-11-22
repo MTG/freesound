@@ -22,12 +22,14 @@
 import logging
 import time
 
+from builtins import object
+from builtins import str
+from captcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
-from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm
+from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import PermissionDenied
@@ -36,17 +38,12 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from django.template import loader
-from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.core.mail import EmailMultiAlternatives
-from django.core.exceptions import PermissionDenied
-from django.core.validators import RegexValidator
 from multiupload.fields import MultiFileField
 
 from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
 from utils.encryption import decrypt, encrypt
-from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
+from utils.forms import HtmlCleaningCharField, filename_has_valid_extension
 from utils.spam import is_spam
 
 web_logger = logging.getLogger('web')
@@ -146,7 +143,7 @@ class FileChoiceForm(forms.Form):
 
     def __init__(self, files, *args, **kwargs):
         super(FileChoiceForm, self).__init__(*args, **kwargs)
-        choices = files.items()
+        choices = list(files.items())
         self.fields['files'].choices = choices
 
 
@@ -197,9 +194,7 @@ def username_taken_by_other_user(username):
 
 
 class RegistrationForm(forms.Form):
-    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
     username = UsernameField()
-
     email1 = forms.EmailField(label="Email", help_text="We will send you a confirmation/activation email, so make "
                                                        "sure this is correct!.", max_length=254)
     email2 = forms.EmailField(label="Email confirmation", help_text="Confirm your email address", max_length=254)
@@ -210,6 +205,7 @@ class RegistrationForm(forms.Form):
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
+    recaptcha = ReCaptchaField(label="")  # Note that this field needs to be the last to appear last in BW form
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -235,11 +231,6 @@ class RegistrationForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(RegistrationForm, self).clean()
-        if settings.RECAPTCHA_PUBLIC_KEY:
-            # If captcha is enabled, check that captcha is ok
-            captcha_response = cleaned_data.get("recaptcha_response")
-            if not captcha_response:
-                raise forms.ValidationError({"recaptcha_response": "Captcha is not correct"})
         return cleaned_data
 
     def save(self):
@@ -425,7 +416,7 @@ class ProfileForm(forms.ModelForm):
 
         return sound_signature
 
-    class Meta:
+    class Meta(object):
         model = Profile
         fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
 
@@ -472,7 +463,7 @@ class BwProfileForm(ProfileForm):
         self.fields['is_adult'].help_text = False
         self.fields['not_shown_in_online_users_list'].widget = forms.HiddenInput()
 
-    class Meta:
+    class Meta(object):
         model = Profile
         fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', )
 

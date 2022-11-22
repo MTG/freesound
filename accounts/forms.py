@@ -194,9 +194,7 @@ def username_taken_by_other_user(username):
 
 
 class RegistrationForm(forms.Form):
-    recaptcha = ReCaptchaField(label="")
     username = UsernameField()
-
     email1 = forms.EmailField(label="Email", help_text="We will send you a confirmation/activation email, so make "
                                                        "sure this is correct!.", max_length=254)
     email2 = forms.EmailField(label="Email confirmation", help_text="Confirm your email address", max_length=254)
@@ -207,6 +205,7 @@ class RegistrationForm(forms.Form):
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
+    recaptcha = ReCaptchaField(label="")  # Note that this field needs to be the last to appear last in BW form
 
     def clean_username(self):
         username = self.cleaned_data["username"]

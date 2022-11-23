@@ -27,8 +27,6 @@ Python dependencies
 * python-cjson 1.0.5-4. LGPL2+. pypi.python.org/pypi/python-cjson/1.0.5
 * python-imaging (PIL) 1.1.7-2 (c) 1995-2011 Fredrik Lundh, 1997-2011 Secret Labs AB. BSD.
   www.pythonware.com/products/pil
-* python-memcache 1.45-1 (c) 2003 Danga Interactive. Python Software Foundation License v2.
-  www.tummy.com/Community/software/python-memcached
 * python-markdown 2.0.3-2 (c) 2007-2008 The Python Markdown Project. GPL2 + BSD "3-clause".
   www.freewisdom.org/projects/python-markdown
 * python-pygments 1.3.1 (c) 2006-2012 by individual contributors. BSD "2-clause". www.pygments.org
@@ -52,7 +50,6 @@ Javascript dependencies
 Other
 * java-gearman-service 0.6.6 (c) 2012 Isaiah van der Elst. BSD "2-clause". www.gearman.org
 * ffmpeg SVN-r25838. LGPL2.1 with non-free exceptions. www.ffmpeg.org
-* memcached 1.4 (c) 2003 Danga Interactive Inc. BSD "3-clause". www.memcached.org
 * Sphinx 1.0.7 (c) 2007-2011 Sphinx team. BSD "2-clause". www.sphinx-doc.org
 * Essentia (c) Music Technology Group. AGPL3. http://essentia.upf.edu
 

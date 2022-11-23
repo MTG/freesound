@@ -11,7 +11,6 @@ django-amazon-ses==3.0.1
 django-cors-headers==2.0.2
 django-debug-toolbar==1.7
 django-extensions==1.7.8
-django-fixture-magic
 django-modeladmin-reorder==0.3.1
 django-multiupload==0.5
 django-oauth-toolkit==0.10.0
@@ -33,7 +32,6 @@ graypy==0.2.12
 gunicorn==19.9.0
 ipaddress==1.0.23
 ipython==4.2.0
-lexicon==2.0.1
 mapbox==0.18.0
 markdown==2.5.1
 mock==2.0.0
@@ -47,10 +45,8 @@ pyparsing==2.4.7
 pysolr==3.10.0b1
 pysndfile==1.4.3
 python-cjson==1.1.0
-python-memcached==1.53
 pytz==2020.1
 PyYAML==3.11
-raven==6.10.0
 redis==3.2.0
 sentry-sdk==0.14.4
 Sphinx==1.6.3

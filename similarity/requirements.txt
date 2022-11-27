@@ -3,3 +3,4 @@ Twisted==20.3.0
 graypy==2.1.0
 concurrent-log-handler==0.9.20
 #gaia2
+future

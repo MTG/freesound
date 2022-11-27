@@ -18,21 +18,22 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 from __future__ import absolute_import
-from twisted.web import server, resource
-from twisted.internet import reactor
-from gaia_wrapper import GaiaWrapper
-from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, \
-    BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT, \
-    LOG_TO_GRAYLOG, LOG_TO_FILE
-import logging
-import graypy
-from logging.handlers import RotatingFileHandler
-from similarity_server_utils import parse_filter, parse_target, parse_metric_descriptors
+from __future__ import print_function
+
 import json
+import logging
+
+import graypy
 import yaml
-import cloghandler
+from concurrent_log_handler import ConcurrentRotatingFileHandler
+from gaia_wrapper import GaiaWrapper
+from similarity_server_utils import parse_filter, parse_target, parse_metric_descriptors
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, \
+    BAD_REQUEST_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT, \
+    LOG_TO_GRAYLOG, LOG_TO_FILE
+from twisted.internet import reactor
+from twisted.web import server, resource
 
 
 def server_interface(resource):
@@ -236,7 +237,7 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     if LOG_TO_FILE:
-        handler = cloghandler.ConcurrentRotatingFileHandler(LOGFILE, "a", maxBytes=2*1024*1024, backupCount=5)
+        handler = ConcurrentRotatingFileHandler(LOGFILE, "a", maxBytes=2*1024*1024, backupCount=5)
         handler.setLevel(logging.DEBUG)
         handler.setFormatter(formatter)
         logger.addHandler(handler)

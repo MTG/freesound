@@ -4,7 +4,7 @@
 {% cache 3600 display_pack pack.0.id %}
 {% with pack.0 as pack %}
 
-<div class="pack_display" id="{{pack.id}}">
+<div class="pack_display" id="{{pack.id}}" tabindex="0">
 <div class="pack_description">
 
 <h4><a href="{% url "pack" pack.user.username pack.id %}">{{pack.name}}</a> <span style="font-weight:normal;">({{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}) </span></h4>

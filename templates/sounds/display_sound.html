@@ -9,7 +9,7 @@
 {% endcomment %}
 {% cache 43200 display_sound sound.id is_authenticated is_explicit %}
 
-<div class="sample_player_small" id="{{ sound.id }}">
+<div class="sample_player_small" id="{{ sound.id }}" tabindex="0">
 
     {% if is_explicit %}
     <div class="explicit_content_text">

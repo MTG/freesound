@@ -69,7 +69,6 @@ from utils.text import slugify
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
-sentry_logger = logging.getLogger('sentry')
 
 
 class License(OrderedModel):
@@ -162,8 +161,6 @@ class BulkUploadProgress(models.Model):
             # continue with excecution
             lines_validated = []
             global_errors = ['An unexpected error occurred while validating your data file']
-
-            sentry_logger.error('Error validating data file', exc_info=True, extra=bulk_upload_basic_data)
 
         self.validation_output = {
             'lines_ok': [line for line in lines_validated if not line['line_errors']],

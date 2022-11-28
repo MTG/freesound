@@ -155,6 +155,7 @@ const createPlayButton = (audioElement, playerSize) => {
   const playButton = createControlButton(
     playerSize === 'big' ? 'play-stroke' : 'play'
   )
+  playButton.setAttribute('title', 'Play/Pause')
   playButton.classList.add('bw-player__play-btn')
   playButton.addEventListener('click', (e) => {
     const isPlaying = !audioElement.paused
@@ -174,6 +175,7 @@ const createPlayButton = (audioElement, playerSize) => {
  */
 const createStopButton = (audioElement, parentNode) => {
   const stopButton = createControlButton('stop')
+  stopButton.setAttribute('title', 'Stop')
   stopButton.addEventListener('click', (e) => {
     audioElement.pause()
     audioElement.currentTime = 0
@@ -189,6 +191,7 @@ const createStopButton = (audioElement, parentNode) => {
  */
 const createLoopButton = audioElement => {
   const loopButton = createControlButton('loop')
+  loopButton.setAttribute('title', 'Loop')
   loopButton.addEventListener('click', (e) => {
     const willLoop = !audioElement.loop
     if (willLoop) {
@@ -211,6 +214,7 @@ const createLoopButton = audioElement => {
  */
 const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWithSpectrum) => {
   const spectogramButton = createControlButton('spectogram')
+  spectogramButton.setAttribute('title', 'Spectrogram/Waveform')
   const { spectrum, waveform } = parentNode.dataset
   if (startWithSpectrum){
     spectogramButton.classList.add('text-red-important');
@@ -242,6 +246,7 @@ const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWith
 
 const createRulerButton = () => {
   const rulerButton = createControlButton('ruler')
+  rulerButton.setAttribute('title', 'Ruler')
   return rulerButton
 }
 
@@ -360,6 +365,8 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   const favoriteButtonContainer = document.createElement('div')
   const favoriteButton = createControlButton('bookmark')
   const unfavoriteButton = createControlButton('bookmark-filled')
+  favoriteButton.setAttribute('title', 'Bookmark')
+  unfavoriteButton.setAttribute('title', 'Remove bookmark')
   favoriteButtonContainer.classList.add(
     'bw-player__favorite',
     'stop-propagation'

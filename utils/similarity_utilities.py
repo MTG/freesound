@@ -137,12 +137,15 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
             cached_data[unicode(id)] = analysis_data
             # remove id form list so it is not included in similarity request
             not_cached_sound_ids.remove(id)
-    try:
-        returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
-    except Exception as e:
-        web_logger.error('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
-                         (e, traceback.format_exc()))
-        raise
+    if not_cached_sound_ids:
+        try:
+            returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
+        except Exception as e:
+            web_logger.error('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
+                            (e, traceback.format_exc()))
+            raise
+    else:
+        returned_data = {}
 
     # save sound analysis information in cache
     for key, item in returned_data.items():

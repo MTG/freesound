@@ -26,7 +26,6 @@ from django.shortcuts import get_object_or_404
 
 from ratings.models import SoundRating
 from sounds.models import Sound
-from utils.cache import invalidate_template_cache
 
 
 @login_required

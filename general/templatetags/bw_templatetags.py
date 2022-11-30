@@ -22,9 +22,7 @@ import math
 
 from django import template
 from django.conf import settings
-from django.template.defaultfilters import truncatewords_html
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 
 from follow.follow_utils import is_user_following_tag
 from general.templatetags.paginator import show_paginator
@@ -183,4 +181,3 @@ def user_following_tags(user, tags_slash):
 @register.inclusion_tag('molecules/plausible_scripts.html', takes_context=False)
 def bw_plausible_scripts():
     return plausible_scripts()
-

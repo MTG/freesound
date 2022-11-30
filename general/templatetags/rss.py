@@ -22,7 +22,7 @@ from future.utils import raise_
 from django import template
 import feedparser
 import urllib2
-from django.conf import settings
+
 
 register = template.Library()
 

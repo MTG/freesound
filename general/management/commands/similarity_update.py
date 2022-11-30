@@ -19,7 +19,6 @@
 #
 
 import logging
-import yaml
 
 from django.conf import settings
 

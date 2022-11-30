@@ -1,8 +1,7 @@
 from __future__ import print_function
+
 import gaia2
 import pylab as pl
-from numpy import std, average, percentile
-
 
 OUT_FOLDER = 'out_plots' # Must be created
 GAIA_INDEX_FILE = 'fs_index.db' # File with gaia index

@@ -20,7 +20,6 @@
 import datetime
 import logging
 import json
-from collections import Counter
 
 from django.conf import settings
 

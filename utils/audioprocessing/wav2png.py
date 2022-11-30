@@ -25,8 +25,6 @@ from __future__ import print_function, absolute_import
 import argparse
 
 from utils.audioprocessing.processing import create_wave_images, AudioProcessingException
-
-import optparse
 import sys
 
 

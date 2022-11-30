@@ -21,9 +21,8 @@
 
 import datetime
 
-import mock
 from django.contrib.auth.models import User, Permission
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import OldUsername

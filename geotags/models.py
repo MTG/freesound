@@ -19,9 +19,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-import json
 import logging
-import math
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -83,4 +81,3 @@ class GeoTag(models.Model):
                             # It is not possible to derive a name...
                             pass
                 self.save()
-

@@ -23,7 +23,6 @@ from __future__ import print_function
 import errno
 import hashlib
 import os
-import shutil
 import sys
 import warnings
 import zlib

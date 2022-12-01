@@ -22,11 +22,18 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import datetime
 import json
 import logging
-import urlparse
-from urllib import unquote
+import urllib.parse
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -152,11 +159,11 @@ class FreesoundAPIViewMixin(object):
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
             if request.get_host().startswith('www'):
                 domain = "%s://%s" % ('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
-                return_url = urlparse.urljoin(domain, request.get_full_path())
+                return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
             if request.scheme != 'https' and not settings.DEBUG:
                 domain = "https://%s" % Site.objects.get_current().domain
-                return_url = urlparse.urljoin(domain, request.get_full_path())
+                return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
         return response
 
@@ -483,15 +490,15 @@ def get_authentication_details_form_request(request):
 
 
 def request_parameters_info_for_log_message(get_parameters):
-    return ','.join(['%s=%s' % (key, value) for key, value in get_parameters.items()])
+    return ','.join(['%s=%s' % (key, value) for key, value in list(get_parameters.items())])
 
 
 class ApiSearchPaginator(object):
     def __init__(self, results, count, num_per_page):
         self.num_per_page = num_per_page
         self.count = count
-        self.num_pages = count / num_per_page + int(count % num_per_page != 0)
-        self.page_range = range(1, self.num_pages + 1)
+        self.num_pages = old_div(count, num_per_page) + int(count % num_per_page != 0)
+        self.page_range = list(range(1, self.num_pages + 1))
         self.results = results
 
     def page(self, page_num):

@@ -21,7 +21,10 @@
 #
 
 from __future__ import print_function, absolute_import
+from __future__ import division
 
+from builtins import str
+from past.utils import old_div
 import argparse
 
 from utils.audioprocessing.processing import create_wave_images, AudioProcessingException
@@ -29,8 +32,8 @@ import sys
 
 
 def progress_callback(position, width):
-    percentage = (position*100)/width
-    if position % (width / 10) == 0:
+    percentage = old_div((position*100),width)
+    if position % (old_div(width, 10)) == 0:
         sys.stdout.write(str(percentage) + "% ")
         sys.stdout.flush()
 

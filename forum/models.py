@@ -20,6 +20,9 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import logging
 
 from collections import Counter
@@ -137,7 +140,7 @@ class Thread(models.Model):
         }
         return info_to_return
 
-    class Meta:
+    class Meta(object):
         ordering = ('-status', '-last_post__created')
 
     def __unicode__(self):
@@ -210,7 +213,7 @@ class Post(models.Model):
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 
-    class Meta:
+    class Meta(object):
         ordering = ('created',)
         permissions = (
             ("can_moderate_forum", "Can moderate posts."),
@@ -336,7 +339,7 @@ class Subscription(models.Model):
     thread = models.ForeignKey(Thread)
     is_active = models.BooleanField(db_index=True, default=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ("subscriber", "thread")
 
     def __unicode__(self):

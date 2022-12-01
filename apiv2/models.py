@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
+from builtins import object
 import datetime
 
 from django.db import models
@@ -131,6 +133,6 @@ class APIClientDailyUsageHistory(models.Model):
     number_of_requests = models.PositiveIntegerField(default=0)
     date = models.DateField()
 
-    class Meta:
+    class Meta(object):
         ordering = ("-date",)
         unique_together = ('apiv2_client', 'date')

@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,8 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
+from past.utils import old_div
 import datetime
 import time
 
@@ -43,7 +46,7 @@ def truncate_string(value, length):
 
 @register.filter
 def duration(value):
-    duration_minutes = int(value/60)
+    duration_minutes = int(old_div(value,60))
     duration_seconds = int(value) % 60
     duration_miliseconds = int((value - int(value)) * 1000)
     return "%d:%02d.%03d" % (duration_minutes, duration_seconds, duration_miliseconds)
@@ -71,7 +74,7 @@ def chunks(l, n):
     """
     if type(l) is not list:
         l = list(l)
-    return [l[i:i + n] for i in xrange(0, len(l), n)]
+    return [l[i:i + n] for i in range(0, len(l), n)]
 
 
 @register.filter

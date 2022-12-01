@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
@@ -103,6 +104,6 @@ class Message(models.Model):
     def __unicode__(self):
         return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
     
-    class Meta:
+    class Meta(object):
         ordering = ('-created',)
 

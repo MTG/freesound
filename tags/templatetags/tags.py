@@ -32,7 +32,7 @@ def add_sizes(tags, arguments):
 
 @register.filter
 def join_tags_exclude(list, exclude):
-    return "/".join(sorted(filter(lambda x: x != exclude, list))) if list else None
+    return "/".join(sorted([x for x in list if x != exclude])) if list else None
 
 @register.filter
 def join_tags_include(list, include):

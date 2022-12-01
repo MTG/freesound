@@ -18,9 +18,13 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 from django.conf import settings
 import json
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 _BASE_URL                     = 'http://%s:%i/tagrecommendation/' % (settings.TAGRECOMMENDATION_ADDRESS, settings.TAGRECOMMENDATION_PORT)
 _URL_RECOMMEND_TAGS           = 'recommend_tags/'
@@ -29,7 +33,7 @@ _URL_ADD_TO_INDEX             = 'add_to_index/'
 
 
 def _get_url_as_json(url):
-    f = urllib2.urlopen(url.replace(" ","%20"), timeout=settings.TAGRECOMMENDATION_TIMEOUT)
+    f = urllib.request.urlopen(url.replace(" ","%20"), timeout=settings.TAGRECOMMENDATION_TIMEOUT)
     resp = f.read()
     return json.loads(resp)
 
@@ -41,7 +45,7 @@ def _result_or_exception(result):
         raise Exception(result['result'])
 
 
-class TagRecommendation():
+class TagRecommendation(object):
 
     @classmethod
     def recommend_tags(cls, input_tags, max_number_of_tags=None):

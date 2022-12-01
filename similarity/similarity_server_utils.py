@@ -19,6 +19,8 @@
 #
 
 
+from builtins import str
+from builtins import range
 def parse_filter(filter_string, layout_descriptor_names):
     ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS = layout_descriptor_names
 
@@ -80,7 +82,7 @@ def parse_filter(filter_string, layout_descriptor_names):
             current_pos = filter_string.find(op,min_pos)
             min_pos = current_pos + 1
             aux_ops[current_pos] = op#.append({'op':op,'pos':current_pos})
-    keylist = aux_ops.keys()
+    keylist = list(aux_ops.keys())
     keylist.sort()
     for key in keylist:
         op = aux_ops[key]
@@ -296,7 +298,7 @@ def set_nested_dictionary_value(keys, dict, value):
         set_nested_dictionary_value(keys[1:], dict[keys[0]], value)
 
 def get_nested_descriptor_names(structured_layout, accumulated_list=[], keys=[]):
-    for key, item in structured_layout.items():
+    for key, item in list(structured_layout.items()):
         if type(item) == dict:
             keys.append(key)
             get_nested_descriptor_names(item, accumulated_list, keys)

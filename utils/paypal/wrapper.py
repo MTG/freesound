@@ -37,9 +37,12 @@
 #   paypal.get_transaction_details(response['transactionid'])
 
 from __future__ import print_function
-import urllib, cgi
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+import urllib.request, urllib.parse, urllib.error, cgi
 
-class Paypal:
+class Paypal(object):
     
     def __init__(self, debug=True):
         # fill these in with the API values
@@ -72,21 +75,21 @@ class Paypal:
     
     def query(self, parameters, add_urls=True):
         """for a dict of parameters, create the query-string, get the paypal URL and return the parsed dict"""
-        params = self.signature.items() + parameters.items()
+        params = list(self.signature.items()) + list(parameters.items())
         
         print(parameters)
 
         if add_urls:
-            params += self.urls.items()
+            params += list(self.urls.items())
         
         # encode the urls into a query string
-        params_string = urllib.urlencode( params )
+        params_string = urllib.parse.urlencode( params )
         
         # get the response and parse it
-        response = cgi.parse_qs(urllib.urlopen(self.API_ENDPOINT, params_string).read())
+        response = cgi.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())
        
         # the parsed dict has a list for each value, but all Paypal replies are unique
-        return dict([(key.lower(), value[0]) for (key,value) in response.items()])
+        return dict([(key.lower(), value[0]) for (key,value) in list(response.items())])
 
 
     def set_express_checkout(self, amount):

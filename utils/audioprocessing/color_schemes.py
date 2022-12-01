@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import map
+from builtins import range
+from past.utils import old_div
 from PIL import ImageColor
 from functools import partial
 
@@ -11,7 +15,7 @@ def desaturate(rgb, amount):
     luminosity = sum(rgb) / 3.0
     desat = lambda color: color - amount * (color - luminosity)
 
-    return tuple(map(int, map(desat, rgb)))
+    return tuple(map(int, list(map(desat, rgb))))
 
 
 def color_from_value(value):
@@ -37,8 +41,8 @@ COLOR_SCHEMES = {
         ],
         'spec_colors': [
             (0, 0, 0),  # Background color
-            (58/4, 68/4, 65/4),
-            (80/2, 100/2, 153/2),
+            (old_div(58,4), old_div(68,4), old_div(65,4)),
+            (old_div(80,2), old_div(100,2), old_div(153,2)),
             (90, 180, 100),
             (224, 224, 44),
             (255, 60, 30),
@@ -66,15 +70,15 @@ COLOR_SCHEMES = {
         'spec_colors': [(0, 0, 0)] + [color_from_value(value/29.0) for value in range(0, 30)],
     },
     RAINFOREST_COLOR_SCHEME: {
-        'wave_colors': [(213, 217, 221)] + map(partial(desaturate, amount=0.7), [
+        'wave_colors': [(213, 217, 221)] + list(map(partial(desaturate, amount=0.7), [
                         (50, 0, 200),
                         (0, 220, 80),
                         (255, 224, 0),
-                     ]),
-        'spec_colors': [(213, 217, 221)] + map(partial(desaturate, amount=0.7), [
+                     ])),
+        'spec_colors': [(213, 217, 221)] + list(map(partial(desaturate, amount=0.7), [
                         (50, 0, 200),
                         (0, 220, 80),
                         (255, 224, 0),
-                     ]),
+                     ])),
     }
 }

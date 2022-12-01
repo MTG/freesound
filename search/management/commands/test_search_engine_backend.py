@@ -17,6 +17,9 @@
 # Authors:
 #     See AUTHORS file.
 #
+from builtins import str
+from builtins import zip
+from builtins import range
 import datetime
 import logging
 import os
@@ -340,7 +343,7 @@ class Command(BaseCommand):
             }
             results = run_sounds_query_and_save_results(search_engine, dict(facets=test_facet_options))
             assert_and_continue(len(results.facets) == 3, 'Wrong number of facets returned')
-            for facet_field, facet_options in test_facet_options.items():
+            for facet_field, facet_options in list(test_facet_options.items()):
                 assert_and_continue(facet_field in results.facets, 'Facet {} not found in facets'.format(facet_field))
                 if 'limit' in facet_options:
                     assert_and_continue(len(results.facets[facet_field]) == facet_options['limit'],
@@ -459,7 +462,7 @@ class Command(BaseCommand):
             # Test highlighting in results
             results = run_forum_query_and_save_results(search_engine, dict(textual_query="microphone"))
             assert_and_continue(results.highlighting != dict(), 'No highlighting entries returned')
-            for highlighting_content in results.highlighting.values():
+            for highlighting_content in list(results.highlighting.values()):
                 assert_and_continue('post_body' in highlighting_content, 'Highlighting data without expected fields')
 
             # Run a couple of extra queries without assessing results so that these get saved and the results can be

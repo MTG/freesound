@@ -20,6 +20,9 @@
 
 from __future__ import absolute_import
 
+from builtins import str
+from builtins import range
+from builtins import object
 import errno
 import logging
 import os
@@ -51,7 +54,7 @@ def create_directories(path, exist_ok=True):
             raise
 
 
-class GaiaWrapper:
+class GaiaWrapper(object):
 
     def __init__(self, indexing_only_mode=False):
         self.indexing_only_mode = indexing_only_mode
@@ -363,7 +366,7 @@ class GaiaWrapper:
                         # only return descriptors if nested descriptors are statistics
                         if len(set(nested_descriptors.keys()).intersection(
                                 ['min', 'max', 'dvar2', 'dmean2', 'dmean', 'var', 'dvar', 'mean'])) > 0:
-                            for extra_name in nested_descriptors.keys():
+                            for extra_name in list(nested_descriptors.keys()):
                                 processed_descriptor_names.append('%s.%s' % (name, extra_name))
                     else:
                         # Return all nested descriptor names
@@ -492,9 +495,9 @@ class GaiaWrapper:
                 query = Point()
                 query.setLayout(layout)
                 try:
-                    for param in target.keys():
+                    for param in list(target.keys()):
                         # Only add numerical parameters. Non numerical ones (like key) are only used as filters
-                        if param in coeffs.keys():
+                        if param in list(coeffs.keys()):
                             feature_names.append(str(param))
                             value = target[param]
                             if coeffs:
@@ -546,7 +549,7 @@ class GaiaWrapper:
                         nonused_features = []
 
                         for param in feature_names:
-                            if param in coeffs.keys():
+                            if param in list(coeffs.keys()):
                                 value = get_nested_dictionary_value(param[1:].split('.'), target)
                                 if coeffs:
                                     try:

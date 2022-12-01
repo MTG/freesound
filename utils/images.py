@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,7 @@
 #     See AUTHORS file.
 #
 
+from past.utils import old_div
 from PIL import Image
 
 class ImageProcessingError(Exception):
@@ -32,37 +34,37 @@ def extract_square(input_filename, output_filename, size):
     #fill out and resize the image
     if im.size[0] < size and im.size[1] < size:
         if im.size[0] < im.size[1]:
-            ratio = im.size[1] / im.size[0]
-            im = im.resize((size / ratio, size), Image.ANTIALIAS)            
+            ratio = old_div(im.size[1], im.size[0])
+            im = im.resize((old_div(size, ratio), size), Image.ANTIALIAS)            
         else: 
-            ratio = im.size[0] / im.size[1] 
-            im = im.resize((size,size / ratio), Image.ANTIALIAS)
+            ratio = old_div(im.size[0], im.size[1]) 
+            im = im.resize((size,old_div(size, ratio)), Image.ANTIALIAS)
         #fill out          
         background = Image.new("RGB", (size,size), (255, 255, 255)) # use white for empty space
-        background.paste(im, ((size - im.size[0]) / 2, (size - im.size[1]) / 2))  
+        background.paste(im, (old_div((size - im.size[0]), 2), old_div((size - im.size[1]), 2)))  
         background.save(output_filename)
         return
         
     #if one side of the image is smaller and one is bigger
     elif im.size[0] > size and im.size[1] < size:
-        ratio = im.size[0] / im.size[1]
+        ratio = old_div(im.size[0], im.size[1])
         im = im.resize((size * ratio,size), Image.ANTIALIAS)  
                      
     elif im.size[0] < size and im.size[1] > size:  
-        ratio = im.size[1] / im.size[0]
+        ratio = old_div(im.size[1], im.size[0])
         im = im.resize((size, size * ratio), Image.ANTIALIAS)
            
     if im.size[0] > im.size[1]:
         # --------
         # |      |
         # --------
-        box = (im.size[0]-im.size[1])/2, 0, im.size[0] - (im.size[0]-im.size[1])/2, im.size[1]
+        box = old_div((im.size[0]-im.size[1]),2), 0, im.size[0] - old_div((im.size[0]-im.size[1]),2), im.size[1]
     else: 
         # ____
         # |  |
         # |  |
         # |__|
-        box = 0, (im.size[1]-im.size[0])/2, im.size[0], im.size[1] - (im.size[1]-im.size[0])/2 
+        box = 0, old_div((im.size[1]-im.size[0]),2), im.size[0], im.size[1] - old_div((im.size[1]-im.size[0]),2) 
     
     im = im.crop(box)
     im.thumbnail((size, size), Image.ANTIALIAS)

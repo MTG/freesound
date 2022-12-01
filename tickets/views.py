@@ -50,7 +50,7 @@ def _get_tc_form(request, use_post=True):
 def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
     if _can_view_mod_msg(request) and anonymous_form != AnonymousContactForm:
         user_form = ModeratorMessageForm
-    if len(request.POST.keys()) > 0 and use_post:
+    if len(list(request.POST.keys())) > 0 and use_post:
         if request.user.is_authenticated:
             return user_form(request.POST)
         else:
@@ -67,7 +67,7 @@ def _can_view_mod_msg(request):
 
 # TODO: copied from sound_edit view,
 def is_selected(request, prefix):
-    for name in request.POST.keys():
+    for name in list(request.POST.keys()):
         if name.startswith(prefix):
             return True
     return False

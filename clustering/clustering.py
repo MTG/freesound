@@ -19,7 +19,13 @@
 #
 
 from __future__ import absolute_import
+from __future__ import division
 
+from builtins import str
+from builtins import zip
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import json
 import logging
 import os
@@ -46,7 +52,7 @@ if settings.IS_CELERY_WORKER:
 logger = logging.getLogger('clustering')
 
 
-class ClusteringEngine():
+class ClusteringEngine(object):
     """Clustering Engine class.
 
     This class regroups various methods for performing clustering on a set of sounds.
@@ -78,7 +84,7 @@ class ClusteringEngine():
             Tuple(List[List[Float]], List[Int]): 2-element tuple containing a list of evaluation features 
                 and list of classes (clusters) idx.
         """
-        sound_ids_list, clusters = partition.keys(), partition.values()
+        sound_ids_list, clusters = list(partition.keys()), list(partition.values())
         reference_features = self.feature_store.return_sound_reference_features(sound_ids_list)
 
         # Remove sounds that are not in the reference dataset
@@ -203,7 +209,7 @@ class ClusteringEngine():
         communities_centralities = [nx.algorithms.centrality.degree_centrality(subgraph) for subgraph in subgraphs]
 
         # merge and normalize in each community
-        node_community_centralities = {k: v/max(d.values()) for d in communities_centralities for k, v in d.items()}
+        node_community_centralities = {k: old_div(v,max(d.values())) for d in communities_centralities for k, v in list(d.items())}
 
         return node_community_centralities
     
@@ -269,7 +275,7 @@ class ClusteringEngine():
         sound_features, sound_ids_out = self.feature_store.return_features(sound_ids_list)
         A = kneighbors_graph(sound_features, k)
         for idx_from, (idx_to, distance) in enumerate(zip(A.indices, A.data)):
-            idx_from = int(idx_from / k)
+            idx_from = int(old_div(idx_from, k))
             if distance < clust_settings.MAX_NEIGHBORS_DISTANCE:
                 graph.add_edge(sound_ids_out[idx_from], sound_ids_out[idx_to])
 
@@ -336,7 +342,7 @@ class ClusteringEngine():
         """ 
         # Community detection in the graph
         partition  = com.best_partition(graph)
-        num_communities = max(partition .values()) + 1
+        num_communities = max(partition.values()) + 1
         communities = [[key for key, value in six.iteritems(partition ) if value == i] for i in range(num_communities)]
 
         # overall quality (modularity of the partition)

@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 from __future__ import absolute_import
+from builtins import str
 from django.conf import settings
 from django.core.cache import caches
 

@@ -20,6 +20,8 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
+from builtins import object
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
@@ -102,7 +104,7 @@ class Ticket(models.Model):
     def __unicode__(self):
         return u"pk %s, key %s" % (self.id, self.key)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-created",)
         permissions = (
             ("can_moderate", "Can moderate stuff."),
@@ -120,7 +122,7 @@ class TicketComment(models.Model):
         return u"<# Message - ticket_id: %s, ticket_key: %s>" % \
                     (self.ticket.id, self.ticket.key)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-created",)
 
 

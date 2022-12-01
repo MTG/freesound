@@ -36,7 +36,7 @@ class BookmarksTest(TestCase):
         self.assertEqual(200, resp.status_code)
         expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
                          'n_uncat', 'page', 'paginator', 'user']
-        context_keys = context.keys()
+        context_keys = list(context.keys())
         for k in expected_keys:
             self.assertIn(k, context_keys)
 
@@ -71,7 +71,7 @@ class BookmarksTest(TestCase):
         self.assertEqual(200, resp.status_code)
         expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
                          'n_uncat', 'page', 'paginator', 'user']
-        context_keys = context.keys()
+        context_keys = list(context.keys())
         for k in expected_keys:
             self.assertIn(k, context_keys)
 

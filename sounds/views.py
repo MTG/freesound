@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,9 @@
 #     See AUTHORS file.
 #
 
+from builtins import map
+from builtins import str
+from past.utils import old_div
 import datetime
 import json
 import logging
@@ -368,7 +372,7 @@ def sound_download(request, username, sound_id):
         cdn_filename = cache_cdn_map.get(str(sound_id), None)
         if cdn_filename is not None:
             # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(int(sound_id)/1000), cdn_filename, sound.friendly_filename())
+            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(old_div(int(sound_id),1000)), cdn_filename, sound.friendly_filename())
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
@@ -422,7 +426,7 @@ def sound_edit(request, username, sound_id):
 
     def is_selected(prefix):
         if request.method == "POST":
-            for name in request.POST.keys():
+            for name in list(request.POST.keys()):
                 if name.startswith(prefix + '-'):
                     return True
         return False

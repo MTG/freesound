@@ -19,7 +19,14 @@
 #
 
 from __future__ import print_function
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 from tagrecommendation_settings import RECOMMENDATION_TMP_DATA_DIR, RECOMMENDATION_DATA_DIR
 import fileinput, sys, os
 from utils import saveToJson, mtx2npy, loadFromJson
@@ -28,10 +35,10 @@ from math import sqrt
 from pysparse import spmatrix
 from communityDetection import CommunityDetector
 from datetime import datetime
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
-class RecommendationDataProcessor:
+class RecommendationDataProcessor(object):
     '''
     This class has methods to generate all the files that the tag recommendation systems needs to recommend tags.
     To generate these files the data processor needs the Index.json file with the tag association information from freesound.
@@ -75,8 +82,8 @@ class RecommendationDataProcessor:
         n_original_associations = 0
         sound_ids = []
         if self.verbose:
-            print("Reading index file (%i entries)..." % len(index.items()), end=' ')
-        for sid, tags in index.items():
+            print("Reading index file (%i entries)..." % len(list(index.items())), end=' ')
+        for sid, tags in list(index.items()):
             ts += tags
             n_original_associations += len(tags)
             sound_ids.append(sid)
@@ -130,7 +137,7 @@ class RecommendationDataProcessor:
         res_tags_no_filt = {}
         idx = 0
         n_filtered_associations = 0
-        for sid, stags in index.items():
+        for sid, stags in list(index.items()):
             resource = sid
             user = None
             assigned_tags = stags
@@ -145,9 +152,9 @@ class RecommendationDataProcessor:
             if idx > line_limit:
                 break
 
-        resources = res_tags.keys()
+        resources = list(res_tags.keys())
         nResources = len(resources)
-        resources_ids = range(0,nResources)
+        resources_ids = list(range(0,nResources))
         if self.verbose:
             print("done!")
 
@@ -219,16 +226,16 @@ class RecommendationDataProcessor:
 
         # Get similarity matrix
         sim_matrix = spmatrix.ll_mat(MM.shape[0],MM.shape[0])
-        non_zero_index = MM.keys()
+        non_zero_index = list(MM.keys())
         for index in non_zero_index:
             if metric == 'cosine':
-                sim_matrix[index[0], index[1]] = MM[index[0], index[1]] * (1 / (sqrt(MM[index[0], index[0]]) * sqrt(MM[index[1], index[1]])))
+                sim_matrix[index[0], index[1]] = MM[index[0], index[1]] * (old_div(1, (sqrt(MM[index[0], index[0]]) * sqrt(MM[index[1], index[1]]))))
             elif metric == 'coocurrence':
                 sim_matrix[index[0], index[1]] = MM[index[0], index[1]]
             elif metric == 'binary':
-                sim_matrix[index[0], index[1]] = MM[index[0], index[1]]/MM[index[0], index[1]]
+                sim_matrix[index[0], index[1]] = old_div(MM[index[0], index[1]],MM[index[0], index[1]])
             elif metric == 'jaccard':
-                sim_matrix[index[0], index[1]] = MM[index[0], index[1]] * (1 / (MM[index[0], index[0]] + MM[index[1], index[1]] - MM[index[0], index[1]]))
+                sim_matrix[index[0], index[1]] = MM[index[0], index[1]] * (old_div(1, (MM[index[0], index[0]] + MM[index[1], index[1]] - MM[index[0], index[1]])))
 
         # Clean out similarity matrix (clean tags that are not used)
         tag_positions = []
@@ -284,7 +291,7 @@ class RecommendationDataProcessor:
 
         # Classify existing resources
         resources_tags = loadFromJson(RECOMMENDATION_TMP_DATA_DIR + database_name + '_RESOURCES_TAGS.json')
-        instances_ids = resources_tags.keys()
+        instances_ids = list(resources_tags.keys())
         try:
             resource_class = loadFromJson(RECOMMENDATION_DATA_DIR + 'Classifier_classified_resources.json')
         except Exception as e:

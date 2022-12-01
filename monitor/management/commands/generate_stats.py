@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import datetime
 
 from django.contrib.auth.models import User
@@ -95,7 +96,7 @@ class Command(LoggingBaseCommand):
             'pack_downloads': {'obj': sounds.models.PackDownload.objects, 'attr': 'user_id'},
             'rate': {'obj': ratings.models.SoundRating.objects, 'attr': 'user_id'},
         }
-        for i in active_users.keys():
+        for i in list(active_users.keys()):
             qq = active_users[i]['obj'].filter(created__gt=time_span)\
                 .extra({'week': "to_char(created, 'WW-IYYY')"})\
                 .values('week').order_by()\

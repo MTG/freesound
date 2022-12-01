@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
@@ -45,7 +46,7 @@ class Content(models.Model):
     body = models.TextField()
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
-    class Meta:
+    class Meta(object):
         ordering = ('-created', )
         get_latest_by = 'created'
 

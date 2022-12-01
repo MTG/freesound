@@ -18,12 +18,15 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 from django.conf import settings
 
 def encrypt(decrypted_string):
     from Crypto.Cipher import AES
     import base64
-    import urllib
+    import urllib.request, urllib.parse, urllib.error
     
     encryptor = AES.new(settings.SECRET_KEY[0:16]) #@UndefinedVariable
     
@@ -33,18 +36,18 @@ def encrypt(decrypted_string):
     encrypted_string = encryptor.encrypt(decrypted_string)
     
     # base64 encoded strings have "=" signs, quote them!
-    encoded_string = urllib.quote(base64.b64encode(encrypted_string).replace("/", ".").replace("+", "_").replace("=", "-"))
+    encoded_string = urllib.parse.quote(base64.b64encode(encrypted_string).replace("/", ".").replace("+", "_").replace("=", "-"))
     
     return encoded_string
 
 def decrypt(quoted_string):
     from Crypto.Cipher import AES
     import base64
-    import urllib
+    import urllib.request, urllib.parse, urllib.error
 
     decryptor = AES.new(settings.SECRET_KEY[0:16]) #@UndefinedVariable
     
-    encoded_string = urllib.unquote(quoted_string)
+    encoded_string = urllib.parse.unquote(quoted_string)
     
     encrypted_string = base64.b64decode(encoded_string.replace(".", "/").replace("_", "+").replace("-", "="))
     

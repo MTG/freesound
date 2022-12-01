@@ -355,19 +355,19 @@ class TestSoundListSerializer(TestCase):
         # When 'fields' parameter is not used, return default ones
         dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': ''})
         serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
-        self.assertItemsEqual(serialized_sound.keys(), DEFAULT_FIELDS_IN_SOUND_LIST.split(','))
+        self.assertItemsEqual(list(serialized_sound.keys()), DEFAULT_FIELDS_IN_SOUND_LIST.split(','))
 
         # When only some parameters are specified
         fields_parameter = 'id,username'
         dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
         serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
-        self.assertItemsEqual(serialized_sound.keys(), fields_parameter.split(','))
+        self.assertItemsEqual(list(serialized_sound.keys()), fields_parameter.split(','))
 
         # When all parameters are specified
         fields_parameter = ','.join(SoundListSerializer.Meta.fields)
         dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
         serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
-        self.assertItemsEqual(serialized_sound.keys(), fields_parameter.split(','))
+        self.assertItemsEqual(list(serialized_sound.keys()), fields_parameter.split(','))
 
     def test_num_queries(self):
         # Test that the serializer does not perform any extra query when serializing sounds regardless of the number
@@ -396,7 +396,7 @@ class TestSoundListSerializer(TestCase):
             sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
-                for sound in sounds_dict.values():
+                for sound in list(sounds_dict.values()):
                     # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
                     _ = SoundListSerializer(sound, context={'request': dummy_request}).data
 
@@ -421,7 +421,7 @@ class TestSoundSerializer(TestCase):
         with self.assertNumQueries(0):
             dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]))
             serialized_sound = SoundSerializer(self.sound, context={'request': dummy_request}).data
-            self.assertItemsEqual(serialized_sound.keys(), SoundSerializer.Meta.fields)
+            self.assertItemsEqual(list(serialized_sound.keys()), SoundSerializer.Meta.fields)
 
 
 class TestApiV2Client(TestCase):

@@ -18,6 +18,10 @@
 #     See AUTHORS file.
 #
 
+from builtins import next
+from builtins import zip
+from builtins import str
+from builtins import range
 import csv
 import json
 import logging
@@ -263,7 +267,7 @@ def get_csv_lines(csv_file_path):
     """
 
     def xls_val_to_string(val):
-        if type(val) == unicode:
+        if type(val) == str:
             return str(val.encode('utf-8'))
         else:
             return str(val)
@@ -272,13 +276,13 @@ def get_csv_lines(csv_file_path):
         # Read CSV formatted file
         reader = csv.reader(open(csv_file_path, 'rU'), delimiter=',')
         header = next(reader)
-        lines = [dict(zip(header, row)) for row in reader]
+        lines = [dict(list(zip(header, row))) for row in reader]
     elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):
         # Read from Excel format
         wb = xlrd.open_workbook(csv_file_path)
         s = wb.sheet_by_index(0)  # Get first excel sheet
         header = s.row_values(0)
-        lines = [dict(zip(header, row)) for row in
+        lines = [dict(list(zip(header, row))) for row in
                  [[xls_val_to_string(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
     else:
         header = []
@@ -423,7 +427,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 form = SoundCSVDescriptionForm(sound_fields)
                 if not form.is_valid():
                     # If there are errors, add them to line_errors
-                    for field, errors in json.loads(form.errors.as_json()).items():
+                    for field, errors in list(json.loads(form.errors.as_json()).items()):
                         if field in ['lat', 'lon', 'zoom']:
                             line_errors['geotag'] += ' '.join([e['message'] for e in errors])
                         else:
@@ -496,7 +500,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
         else:
             console_logger.info('Skipping the following %i lines due to invalid data' % len(lines_with_errors))
         for line in lines_with_errors:
-            errors = '; '.join(line['line_errors'].values())
+            errors = '; '.join(list(line['line_errors'].values()))
             console_logger.info('l%s: %s' % (line['line_no'], errors))
         if not force_import:
             return

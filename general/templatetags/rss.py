@@ -18,10 +18,12 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
 from future.utils import raise_
 from django import template
 import feedparser
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 
 register = template.Library()
@@ -33,7 +35,7 @@ class RssParserNode(template.Node):
         self.var_name = var_name
 
     def render(self, context):
-        proxy = urllib2.ProxyHandler({})
+        proxy = urllib.request.ProxyHandler({})
         if self.url:
             context[self.var_name] = feedparser.parse(self.url, handlers=[proxy])
         else:

@@ -18,7 +18,11 @@
 #     See AUTHORS file.
 #
 
-import cStringIO
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+import io
 import csv
 import datetime
 import errno
@@ -505,11 +509,11 @@ def edit(request):
 
     def is_selected(prefix):
         if request.method == "POST":
-            for name in request.POST.keys():
+            for name in list(request.POST.keys()):
                 if name.startswith(prefix + '-'):
                     return True
             if request.FILES:
-                for name in request.FILES.keys():
+                for name in list(request.FILES.keys()):
                     if name.startswith(prefix + '-'):
                         return True
         return False
@@ -930,7 +934,7 @@ def download_attribution(request):
         filename = '%s_%s_attribution.%s' % (request.user, now, download)
         response = HttpResponse(content_type='text/%s' % content[download])
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
-        output = cStringIO.StringIO()
+        output = io.StringIO()
         if download == 'csv':
             output.write('Download Type,File Name,User,License\r\n')
             csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -1035,7 +1039,7 @@ def accounts(request):
     most_active_users = User.objects.select_related("profile")\
         .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_active_users]])
     new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time)\
-        .filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
+        .filter(id__in=list(user_rank.keys())).order_by('-date_joined')[:num_active_users+5]
     logged_users = User.objects.select_related("profile").filter(id__in=get_online_users())
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
     most_active_users_display = sorted(most_active_users_display,
@@ -1100,7 +1104,7 @@ def charts(request):
                                        reverse=True)
 
     # Newest active users
-    new_user_in_rank_ids = User.objects.filter(date_joined__gte=last_time, id__in=user_rank.keys())\
+    new_user_in_rank_ids = User.objects.filter(date_joined__gte=last_time, id__in=list(user_rank.keys()))\
         .values_list('id', flat=True)
     new_user_objects = {user.id: user for user in
                         User.objects.select_related("profile").filter(date_joined__gte=last_time)

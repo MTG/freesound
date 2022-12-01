@@ -17,6 +17,10 @@
 # Authors:
 #     See AUTHORS file.
 #
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core import mail

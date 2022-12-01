@@ -163,7 +163,7 @@ class SimilarityServer(resource.Resource):
                             return json.dumps({'error': True, 'result': target, 'status_code': BAD_REQUEST_CODE})
                         else:
                             return json.dumps({'error': True, 'result': 'Invalid descriptor values for target.', 'status_code': BAD_REQUEST_CODE})
-                    if not target.items():
+                    if not list(target.items()):
                         return json.dumps({'error': True, 'result': 'Invalid target.', 'status_code': BAD_REQUEST_CODE})
                 except Exception as e:
                     return json.dumps({'error': True, 'result': 'Invalid descriptor values for target.', 'status_code': BAD_REQUEST_CODE})
@@ -209,7 +209,7 @@ class SimilarityServer(resource.Resource):
             offset = int(offset[0])
 
         if target_type == 'descriptor_values' and target:
-            metric_descriptor_names = parse_metric_descriptors(','.join(target.keys()), self.gaia.descriptor_names['fixed-length'])
+            metric_descriptor_names = parse_metric_descriptors(','.join(list(target.keys())), self.gaia.descriptor_names['fixed-length'])
         else:
             metric_descriptor_names = False  # For the moment metric_descriptor_names can only be set by us
 

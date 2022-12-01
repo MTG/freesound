@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,7 @@
 #     See AUTHORS file.
 #
 
+from past.utils import old_div
 import datetime
 from collections import Counter
 
@@ -81,7 +83,7 @@ def monitor_home(request):
     analyzers_data = {}  
     all_sound_ids = Sound.objects.all().values_list('id', flat=True).order_by('id')
     n_sounds = len(all_sound_ids)
-    for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
+    for analyzer_name in list(settings.ANALYZERS_CONFIGURATION.keys()):
         ok = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK").count()
         sk = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="SK").count()
         fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
@@ -106,7 +108,7 @@ def monitor_home(request):
              "sounds_failed_count": sounds_failed_count,
              "sounds_ok_count": sounds_ok_count,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
+             "analyzers_data": [(key, value) for key, value in list(analyzers_data.items())],
              "queues_stats_url": reverse('queues-stats'),
     }
 
@@ -122,7 +124,7 @@ def monitor_stats(request):
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def moderators_stats(request):
-    time_span = datetime.datetime.now()-datetime.timedelta(6*365/12)
+    time_span = datetime.datetime.now()-datetime.timedelta(old_div(6*365,12))
     #Maybe we should user created and not modified
     user_ids = tickets.models.Ticket.objects.filter(
             status=TICKET_STATUS_CLOSED,
@@ -131,7 +133,7 @@ def moderators_stats(request):
     ).values_list("assignee_id", flat=True)
 
     counter = Counter(user_ids)
-    moderators = User.objects.filter(id__in=counter.keys())
+    moderators = User.objects.filter(id__in=list(counter.keys()))
 
     moderators = [(counter.get(m.id), m) for m in moderators.all()]
     ordered = sorted(moderators, key=lambda m: m[0], reverse=True)
@@ -227,7 +229,7 @@ def process_sounds(request):
 
 def moderator_stats_ajax(request):
     user_id = request.GET.get('user_id', None)
-    time_span = datetime.datetime.now()-datetime.timedelta(6*365/12)
+    time_span = datetime.datetime.now()-datetime.timedelta(old_div(6*365,12))
     tickets_mod = tickets.models.Ticket.objects.filter(
             assignee_id=user_id,
             status=TICKET_STATUS_CLOSED,

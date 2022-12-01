@@ -18,12 +18,13 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from sounds.models import Sound
 from django.core.cache import cache
 from django.conf import settings
 from datetime import datetime
 
-class DBTime():
+class DBTime(object):
     last_time = None
 
     @staticmethod

@@ -18,7 +18,9 @@
 #     See AUTHORS file.
 #
 
-import urlparse
+from future import standard_library
+standard_library.install_aliases()
+import urllib.parse
 from django.template import Library
 from django.template.defaulttags import URLNode, url
 from django.contrib.sites.models import Site
@@ -29,7 +31,7 @@ class AbsoluteURLNode(URLNode):
     def render(self, context):
         path = super(AbsoluteURLNode, self).render(context)
         domain = "https://%s" % Site.objects.get_current().domain
-        return urlparse.urljoin(domain, path)
+        return urllib.parse.urljoin(domain, path)
 
 def absurl(parser, token, node_cls=AbsoluteURLNode):
     """Just like {% url %} but ads the domain of the current site."""

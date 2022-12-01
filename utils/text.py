@@ -18,10 +18,13 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
 import re
 import unicodedata
 from functools import partial
-from htmlentitydefs import name2codepoint
+from html.entities import name2codepoint
 
 import bleach
 from bleach.html5lib_shim import Filter
@@ -37,19 +40,19 @@ def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slu
 
     #  character entity reference
     if entities:
-        s = re.sub(r'&(%s);' % '|'.join(name2codepoint), lambda m: unichr(name2codepoint[m.group(1)]), s)
+        s = re.sub(r'&(%s);' % '|'.join(name2codepoint), lambda m: chr(name2codepoint[m.group(1)]), s)
 
     #  decimal character reference
     if decimal:
         try:
-            s = re.sub(r'&#(\d+);', lambda m: unichr(int(m.group(1))), s)
+            s = re.sub(r'&#(\d+);', lambda m: chr(int(m.group(1))), s)
         except:
             pass
 
     #  hexadecimal character reference
     if hexadecimal:
         try:
-            s = re.sub(r'&#x([\da-fA-F]+);', lambda m: unichr(int(m.group(1), 16)), s)
+            s = re.sub(r'&#x([\da-fA-F]+);', lambda m: chr(int(m.group(1), 16)), s)
         except:
             pass
 
@@ -115,7 +118,7 @@ class EmptyLinkFilter(Filter):
             if 'name' in token and token['name'] == 'a' and token['type'] in ['StartTag', 'EndTag']:
                 if token['type'] == 'StartTag':
                     remove_end_tag = True
-                    for attr, value in token['data'].items():
+                    for attr, value in list(token['data'].items()):
                         if attr == (None, 'href') and value != '' and is_valid_url(value):
                             remove_end_tag = False
                     if remove_end_tag:

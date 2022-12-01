@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import logging
 
 from django.conf import settings

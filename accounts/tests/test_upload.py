@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
 import os
 
 import mock
@@ -275,8 +276,8 @@ class BulkDescribe(TestCase):
         # show that info to the users. First we fake some data for the bulk object
         bulk.progress_type = 'F'
         bulk.validation_output = {
-            'lines_ok': range(5),  # NOTE: we only use the length of these lists, so we fill them with irrelevant data
-            'lines_with_errors': range(2),
+            'lines_ok': list(range(5)),  # NOTE: we only use the length of these lists, so we fill them with irrelevant data
+            'lines_with_errors': list(range(2)),
             'global_errors': [],
         }
         bulk.description_output = {

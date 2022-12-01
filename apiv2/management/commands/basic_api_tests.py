@@ -21,6 +21,7 @@
 #
 
 from __future__ import print_function
+from builtins import str
 try:
     import requests
 except:
@@ -107,7 +108,7 @@ class Command(BaseCommand):
         error = list()
 
         print('')
-        for key, items in examples.items():
+        for key, items in list(examples.items()):
             if 'Download' not in key:
                 if section:
                     if section not in key:

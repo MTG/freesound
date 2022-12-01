@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -37,6 +38,6 @@ class Favorite(models.Model):
     def __unicode__(self):
         return u"%s favorites %s - %s" % (self.user, self.content_type, self.content_type)
     
-    class Meta:
+    class Meta(object):
         unique_together = (('user', 'content_type', 'object_id'),)
         ordering = ("-created", )

@@ -82,7 +82,6 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
     int: '_i',
     bool: '_b',
     str: '_s',
-    str: '_s',
     list: '_ls',
 }
 

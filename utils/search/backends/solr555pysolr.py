@@ -148,14 +148,14 @@ def convert_sound_to_search_engine_document(sound):
     document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
 
     # Analyzer's output
-    for analyzer_name, analyzer_info in list(settings.ANALYZERS_CONFIGURATION.items()):
+    for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
         if 'descriptors_map' in analyzer_info:
             query_select_name = analyzer_name.replace('-', '_')
             analysis_data = getattr(sound, query_select_name, None)
             if analysis_data is not None:
                 # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                 # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                for key, value in list(analysis_data.items()):
+                for key, value in analysis_data.items():
                     if type(value) == list:
                         # Make sure that the list is formed by strings
                         value = ['{}'.format(item) for item in value]
@@ -195,7 +195,7 @@ def add_solr_suffix_to_dynamic_fieldname(fieldname):
     to a dynamic field, leave it unchanged. See docstring in 'add_solr_suffix_to_dynamic_fieldnames_in_filter' for
     more information"""
     dynamic_fields_map = {}
-    for analyzer, analyzer_data in list(settings.ANALYZERS_CONFIGURATION.items()):
+    for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
         if 'descriptors_map' in analyzer_data:
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
@@ -212,7 +212,7 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
     fields which need to end with a specific suffi that SOLR uses to learn about the type of the field and how it
     should treat it.
     """
-    for analyzer, analyzer_data in list(settings.ANALYZERS_CONFIGURATION.items()):
+    for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
         if 'descriptors_map' in analyzer_data:
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
@@ -233,7 +233,7 @@ def search_process_sort(sort):
     Returns:
         List[str]: list containing the sorting field names list for the search engine.
     """
-    if sort in [sort_web_name for sort_web_name, sort_field_name in list(SORT_OPTIONS_MAP.items())]:
+    if sort in [sort_web_name for sort_web_name, sort_field_name in SORT_OPTIONS_MAP.items()]:
         if sort == "avg_rating desc":
             sort = [SORT_OPTIONS_MAP[sort], "num_ratings desc"]
         elif sort == "avg_rating asc":
@@ -318,8 +318,8 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
 class SolrQueryPySolr(SolrQuery):
 
     def as_dict(self):
-        params = {k: v for k, v in list(self.params.items()) if v is not None}
-        for k, v in list(params.items()):
+        params = {k: v for k, v in self.params.items() if v is not None}
+        for k, v in params.items():
             if type(v) == bool:
                 params[k] = json.dumps(v)
         return params
@@ -392,7 +392,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         elif type(query_fields) == dict:
             # Also remove fields with weight <= 0
             query_fields = [(add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)), weight)
-                for field, weight in list(query_fields.items()) if weight > 0]
+                for field, weight in query_fields.items() if weight > 0]
 
         # Set main query options
         query.set_dismax_query(textual_query, query_fields=query_fields)
@@ -413,10 +413,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         # Configure facets
         if facets is not None:
-            facet_fields = [FIELD_NAMES_MAP[field_name] for field_name, _ in list(facets.items())]
+            facet_fields = [FIELD_NAMES_MAP[field_name] for field_name, _ in facets.items()]
             query.add_facet_fields(*facet_fields)
             query.set_facet_options_default(**SOLR_SOUND_FACET_DEFAULT_OPTIONS)
-            for field_name, extra_options in list(facets.items()):
+            for field_name, extra_options in facets.items():
                 query.set_facet_options(FIELD_NAMES_MAP[field_name], **extra_options)
 
         # Configure grouping

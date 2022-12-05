@@ -396,7 +396,7 @@ class TestSoundListSerializer(TestCase):
             sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
-                for sound in list(sounds_dict.values()):
+                for sound in sounds_dict.values():
                     # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
                     _ = SoundListSerializer(sound, context={'request': dummy_request}).data
 

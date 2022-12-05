@@ -299,7 +299,7 @@ class CombinedSearch(GenericAPIView):
 
         # Get search results
         extra_parameters = dict()
-        for key, value in list(request.query_params.items()):
+        for key, value in request.query_params.items():
             if key.startswith('cs_'):
                 extra_parameters[key] = int(value)
 
@@ -324,7 +324,7 @@ class CombinedSearch(GenericAPIView):
             extra_parameters.update({'debug': 1})
         extra_parameters_string = ''
         if extra_parameters:
-            for key, value in list(extra_parameters.items()):
+            for key, value in extra_parameters.items():
                 extra_parameters_string += '&%s=%s' % (key, str(value))
 
         response_data = dict()
@@ -832,7 +832,7 @@ class UploadSound(WriteRequiredGenericAPIView):
                             apiv2_client = request.auth.application.apiv2_client
 
                         sound_fields = {}
-                        for key, item in list(serializer.data.items()):
+                        for key, item in serializer.data.items():
                             sound_fields[key] = item
 
                         filename = sound_fields.get('upload_filename', audiofile.name)
@@ -898,7 +898,7 @@ class PendingUploads(OauthRequiredAPIView):
 
         # Look for sounds pending description
         file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
-        pending_description = [file_instance.name for file_id, file_instance in list(files.items())]
+        pending_description = [file_instance.name for file_id, file_instance in files.items()]
 
         # Look for sounds pending processing
         qs = Sound.objects.filter(user=self.user).exclude(processing_state='OK').exclude(moderation_state='OK')
@@ -917,7 +917,7 @@ class PendingUploads(OauthRequiredAPIView):
 
     def get_minimal_sound_info(self, sound, images=False, processing_state=False):
         sound_data = dict()
-        for key, value in list(SoundSerializer(sound, context=self.get_serializer_context()).data.items()):
+        for key, value in SoundSerializer(sound, context=self.get_serializer_context()).data.items():
             if key in ['id', 'name', 'tags', 'description', 'created', 'license']:
                 sound_data[key] = value
             if images:
@@ -948,7 +948,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
     def post(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('describe_sound'))
         file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
-        filenames = [file_instance.name for file_id, file_instance in list(files.items())]
+        filenames = [file_instance.name for file_id, file_instance in files.items()]
         serializer = SoundDescriptionSerializer(data=request.data, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
@@ -1218,7 +1218,7 @@ class AvailableAudioDescriptors(GenericAPIView):
         try:
             descriptor_names = Similarity.get_descriptor_names()
             del descriptor_names['all']
-            for key, value in list(descriptor_names.items()):
+            for key, value in descriptor_names.items():
                 descriptor_names[key] = [item[1:] for item in value]  # remove initial dot from descriptor names
 
             return Response({
@@ -1244,15 +1244,15 @@ class FreesoundApiV2Resources(GenericAPIView):
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('api_root'))
         api_index = [
-            {'Search resources': OrderedDict(sorted(list(dict({
+            {'Search resources': OrderedDict(sorted(dict({
                     '01 Text Search': prepend_base(
                         reverse('apiv2-sound-text-search'), request_is_secure=request.is_secure()),
                     '02 Content Search': prepend_base(
                         reverse('apiv2-sound-content-search'), request_is_secure=request.is_secure()),
                     '03 Combined Search': prepend_base(
                         reverse('apiv2-sound-combined-search'), request_is_secure=request.is_secure()),
-                }).items()), key=lambda t: t[0]))},
-                {'Sound resources': OrderedDict(sorted(list(dict({
+                }).items(), key=lambda t: t[0]))},
+                {'Sound resources': OrderedDict(sorted(dict({
                     '01 Sound instance': prepend_base(
                         reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'),
                         request_is_secure=request.is_secure()),
@@ -1278,8 +1278,8 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '11 Pending uploads': prepend_base(reverse('apiv2-uploads-pending')),
                     '12 Edit sound description': prepend_base(
                         reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
-                }).items()), key=lambda t: t[0]))},
-                {'User resources': OrderedDict(sorted(list(dict({
+                }).items(), key=lambda t: t[0]))},
+                {'User resources': OrderedDict(sorted(dict({
                     '01 User instance': prepend_base(
                         reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
@@ -1296,8 +1296,8 @@ class FreesoundApiV2Resources(GenericAPIView):
                         reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
                             .replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
-                }).items()), key=lambda t: t[0]))},
-                {'Pack resources': OrderedDict(sorted(list(dict({
+                }.items()), key=lambda t: t[0]))},
+                {'Pack resources': OrderedDict(sorted(dict({
                     '01 Pack instance': prepend_base(
                         reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'),
                         request_is_secure=request.is_secure()),
@@ -1306,17 +1306,17 @@ class FreesoundApiV2Resources(GenericAPIView):
                         request_is_secure=request.is_secure()),
                     '03 Download pack': prepend_base(
                         reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
-                }).items()), key=lambda t: t[0]))},
-                {'Other resources': OrderedDict(sorted(list(dict({
+                }).items(), key=lambda t: t[0]))},
+                {'Other resources': OrderedDict(sorted(dict({
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
                     '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
-                }).items()), key=lambda t: t[0]))},
+                }).items(), key=lambda t: t[0]))},
             ]
 
         # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested
         if request.accepted_renderer.format in [u'yaml']:
             for element in api_index:
-                for key, ordered_dict in list(element.items()):
+                for key, ordered_dict in element.items():
                     element[key] = dict(ordered_dict)
 
         # Xml format seems to have problems with white spaces and numbers in dict keys...
@@ -1328,9 +1328,9 @@ class FreesoundApiV2Resources(GenericAPIView):
             aux_api_index = list()
             for element in api_index:
                 aux_dict_a = dict()
-                for key_a, ordered_dict in list(element.items()):
+                for key_a, ordered_dict in element.items():
                     aux_dict_b = dict()
-                    for key_b, value in list(ordered_dict.items()):
+                    for key_b, value in ordered_dict.items():
                         aux_dict_b[key_to_valid_xml(key_b)] = value
                     aux_dict_a[key_to_valid_xml(key_a)] = aux_dict_b
                 aux_api_index.append(aux_dict_a)

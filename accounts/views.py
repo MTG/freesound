@@ -509,11 +509,11 @@ def edit(request):
 
     def is_selected(prefix):
         if request.method == "POST":
-            for name in list(request.POST.keys()):
+            for name in request.POST.keys():
                 if name.startswith(prefix + '-'):
                     return True
             if request.FILES:
-                for name in list(request.FILES.keys()):
+                for name in request.FILES.keys():
                     if name.startswith(prefix + '-'):
                         return True
         return False

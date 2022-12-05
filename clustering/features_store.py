@@ -49,7 +49,7 @@ class RedisStore(object):
             return json.loads(feature)
 
     def set_features(self, d):
-        self.r.mset({k: json.dumps(v) for k, v in list(d.items())})
+        self.r.mset({k: json.dumps(v) for k, v in d.items()})
 
     def get_features(self, sound_ids):
         return self.r.mget(sound_ids)

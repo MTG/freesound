@@ -490,7 +490,7 @@ def get_authentication_details_form_request(request):
 
 
 def request_parameters_info_for_log_message(get_parameters):
-    return ','.join(['%s=%s' % (key, value) for key, value in list(get_parameters.items())])
+    return ','.join(['%s=%s' % (key, value) for key, value in get_parameters.items()])
 
 
 class ApiSearchPaginator(object):

@@ -149,7 +149,7 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
         returned_data = {}
 
     # save sound analysis information in cache
-    for key, item in list(returned_data.items()):
+    for key, item in returned_data.items():
         cache.set(hash_cache_key(cache_key % (key, ",".join(sorted(descriptor_names)), str(normalization))),
                   item, SIMILARITY_CACHE_TIME)
 

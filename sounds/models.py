@@ -216,7 +216,7 @@ class BulkUploadProgress(models.Model):
         sound_ids_described_ok = []
         sound_errors = []
         if self.description_output is not None:
-            for line_no, value in list(self.description_output.items()):
+            for line_no, value in self.description_output.items():
                 if type(value) == int:
                     # Sound id, meaning a file for which a Sound object was successfully created
                     sound_ids_described_ok.append(value)
@@ -366,7 +366,7 @@ class SoundManager(models.Manager):
         """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data is selected
         in the bulk query"""
         analyzers_select_section_parts = []
-        for analyzer_name, analyzer_info in list(settings.ANALYZERS_CONFIGURATION.items()):
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_info:
                 analyzers_select_section_parts.append("{0}.analysis_data as {0},"
                                                       .format(analyzer_name.replace('-', '_')))
@@ -376,7 +376,7 @@ class SoundManager(models.Manager):
         """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data can be left joined
         in the bulk query"""
         analyzers_left_join_section_parts = []
-        for analyzer_name, analyzer_info in list(settings.ANALYZERS_CONFIGURATION.items()):
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_info:
                 analyzers_left_join_section_parts.append(
                     "LEFT JOIN sounds_soundanalysis {0} ON (sound.id = {0}.sound_id AND {0}.analyzer = '{1}')"
@@ -1171,7 +1171,7 @@ class Sound(SocialModel):
 
     def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
         # Note that "high_priority" is not implemented but needs to be here for compatibility with older code
-        if analyzer not in list(settings.ANALYZERS_CONFIGURATION.keys()):
+        if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
             # If specified analyzer is not one of the analyzers configured, do nothing
             if verbose:
                 sounds_logger.info("Not sending sound {} to unknown analyzer {}".format(self.id, analyzer))
@@ -1836,4 +1836,3 @@ def on_delete_sound_analysis(sender, instance, **kwargs):
             pass
 
 pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
-

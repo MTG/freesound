@@ -209,7 +209,7 @@ class ClusteringEngine(object):
         communities_centralities = [nx.algorithms.centrality.degree_centrality(subgraph) for subgraph in subgraphs]
 
         # merge and normalize in each community
-        node_community_centralities = {k: old_div(v,max(d.values())) for d in communities_centralities for k, v in list(d.items())}
+        node_community_centralities = {k: old_div(v,max(d.values())) for d in communities_centralities for k, v in d.items()}
 
         return node_community_centralities
     

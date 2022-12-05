@@ -83,7 +83,7 @@ def monitor_home(request):
     analyzers_data = {}  
     all_sound_ids = Sound.objects.all().values_list('id', flat=True).order_by('id')
     n_sounds = len(all_sound_ids)
-    for analyzer_name in list(settings.ANALYZERS_CONFIGURATION.keys()):
+    for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
         ok = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK").count()
         sk = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="SK").count()
         fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
@@ -108,7 +108,7 @@ def monitor_home(request):
              "sounds_failed_count": sounds_failed_count,
              "sounds_ok_count": sounds_ok_count,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "analyzers_data": [(key, value) for key, value in list(analyzers_data.items())],
+             "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
              "queues_stats_url": reverse('queues-stats'),
     }
 

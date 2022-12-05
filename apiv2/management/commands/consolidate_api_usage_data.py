@@ -49,7 +49,7 @@ class Command(LoggingBaseCommand):
         for i in range(0, n_days_back):
             date_filter = now - datetime.timedelta(days=i)
             monitoring_key_pattern = '{0}-{1}-{2}_*'.format(date_filter.year, date_filter.month, date_filter.day)
-            for key, count in list(cache_api_monitoring.get_many(cache_api_monitoring.keys(monitoring_key_pattern)).items()):
+            for key, count in cache_api_monitoring.get_many(cache_api_monitoring.keys(monitoring_key_pattern)).items():
                 try:
                     apiv2_client = ApiV2Client.objects.get(oauth_client__client_id=key.split('_')[1])
                     usage_history, _ = APIClientDailyUsageHistory\

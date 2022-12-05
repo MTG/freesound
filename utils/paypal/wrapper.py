@@ -89,7 +89,7 @@ class Paypal(object):
         response = cgi.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())
        
         # the parsed dict has a list for each value, but all Paypal replies are unique
-        return dict([(key.lower(), value[0]) for (key,value) in list(response.items())])
+        return dict([(key.lower(), value[0]) for (key,value) in response.items()])
 
 
     def set_express_checkout(self, amount):

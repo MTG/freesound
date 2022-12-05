@@ -66,7 +66,7 @@ class CommunityDetector(object):
 
     def __repr__(self):
         return "Community Detector (%s, %i classes, %i instances, %s init) " % (self.clf_type,
-                                                                                len(list(self.class_name_ids.keys())),
+                                                                                len(self.class_name_ids.keys()),
                                                                                 self.n_training_instances,
                                                                                 self.init_method)
 

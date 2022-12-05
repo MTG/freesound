@@ -108,7 +108,7 @@ class Command(BaseCommand):
         error = list()
 
         print('')
-        for key, items in list(examples.items()):
+        for key, items in examples.items():
             if 'Download' not in key:
                 if section:
                     if section not in key:

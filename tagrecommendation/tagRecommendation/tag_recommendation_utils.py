@@ -69,7 +69,7 @@ def aNormalizedRankSum(candidate_tags, input_tags, options):
         else:
             aggregated_candiate_tags[item['name']] = float(item['rank'])/(len(input_tags))
     aggregated_candiate_tags_list = []
-    for key in list(aggregated_candiate_tags.keys()):
+    for key in aggregated_candiate_tags.keys():
         aggregated_candiate_tags_list.append({"name":key, "rank": aggregated_candiate_tags[key]})
     aggregated_candiate_tags_list.sort(key=operator.itemgetter('rank'))
     aggregated_candiate_tags_list.reverse()

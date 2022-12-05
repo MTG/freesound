@@ -298,7 +298,7 @@ def set_nested_dictionary_value(keys, dict, value):
         set_nested_dictionary_value(keys[1:], dict[keys[0]], value)
 
 def get_nested_descriptor_names(structured_layout, accumulated_list=[], keys=[]):
-    for key, item in list(structured_layout.items()):
+    for key, item in structured_layout.items():
         if type(item) == dict:
             keys.append(key)
             get_nested_descriptor_names(item, accumulated_list, keys)

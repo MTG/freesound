@@ -66,7 +66,7 @@ def _result_or_exception(result):
     if not result['error']:
         return result['result']
     else:
-        if 'status_code' in list(result.keys()):
+        if 'status_code' in result.keys():
             raise SimilarityException(result['result'], status_code=result['status_code'])
         else:
             raise SimilarityException(result['result'], status_code=500)

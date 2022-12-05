@@ -366,7 +366,7 @@ class GaiaWrapper(object):
                         # only return descriptors if nested descriptors are statistics
                         if len(set(nested_descriptors.keys()).intersection(
                                 ['min', 'max', 'dvar2', 'dmean2', 'dmean', 'var', 'dvar', 'mean'])) > 0:
-                            for extra_name in list(nested_descriptors.keys()):
+                            for extra_name in nested_descriptors.keys():
                                 processed_descriptor_names.append('%s.%s' % (name, extra_name))
                     else:
                         # Return all nested descriptor names
@@ -495,9 +495,9 @@ class GaiaWrapper(object):
                 query = Point()
                 query.setLayout(layout)
                 try:
-                    for param in list(target.keys()):
+                    for param in target.keys():
                         # Only add numerical parameters. Non numerical ones (like key) are only used as filters
-                        if param in list(coeffs.keys()):
+                        if param in coeffs.keys():
                             feature_names.append(str(param))
                             value = target[param]
                             if coeffs:
@@ -549,7 +549,7 @@ class GaiaWrapper(object):
                         nonused_features = []
 
                         for param in feature_names:
-                            if param in list(coeffs.keys()):
+                            if param in coeffs.keys():
                                 value = get_nested_dictionary_value(param[1:].split('.'), target)
                                 if coeffs:
                                     try:

@@ -35,7 +35,7 @@ class SoundManagerQueryMethods(TestCase):
                                      'num_comments', 'pack_id', 'duration', 'pack_name', 'license_id', 'license_name',
                                      'license_deed_url', 'geotag_id', 'remixgroup_id', 'tag_array'] \
                                     + [analyzer_name.replace('-', '_') for analyzer_name, analyzer_info
-                                       in list(settings.ANALYZERS_CONFIGURATION.items())
+                                       in settings.ANALYZERS_CONFIGURATION.items()
                                        if 'descriptors_map' in analyzer_info]
 
     fields_to_check_bulk_query_solr = ['username', 'user_id', 'id', 'type', 'original_filename', 'is_explicit',
@@ -44,7 +44,7 @@ class SoundManagerQueryMethods(TestCase):
                                        'bitrate', 'bitdepth', 'samplerate', 'pack_name', 'license_name', 'geotag_lat',
                                        'geotag_lon', 'is_remix', 'was_remixed', 'tag_array', 'comments_array'] \
                                       + [analyzer_name.replace('-', '_') for analyzer_name, analyzer_info
-                                         in list(settings.ANALYZERS_CONFIGURATION.items())
+                                         in settings.ANALYZERS_CONFIGURATION.items()
                                          if 'descriptors_map' in analyzer_info]
 
     def setUp(self):

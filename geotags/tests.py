@@ -33,7 +33,7 @@ class GeoTagsTests(TestCase):
     fixtures = ['licenses', 'sounds']
 
     def check_context(self, context, values):
-        for k, v in list(values.items()):
+        for k, v in values.items():
             self.assertIn(k, context)
             self.assertEqual(context[k], v)
 

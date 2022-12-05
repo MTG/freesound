@@ -237,7 +237,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         user_info = obj.profile.get_info_before_delete_user(include_sounds=True, include_other_related_objects=False)
         user_info['deleted_objects_details'] = {}
         model_count = {model._meta.verbose_name_plural: len(objs) for
-                       model, objs in list(user_info['deleted'].model_objs.items())}
+                       model, objs in user_info['deleted'].model_objs.items()}
         user_info['deleted_objects_details']['model_count'] = list(dict(model_count).items())
 
         tvars = {'users_to_delete': [], 'type': 'delete_include_sounds'}
@@ -274,7 +274,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         user_info = obj.profile.get_info_before_delete_user(include_sounds=True, include_other_related_objects=True)
         user_info['deleted_objects_details'] = {}
         model_count = {model._meta.verbose_name_plural: len(objs) for
-                       model, objs in list(user_info['deleted'].model_objs.items())}
+                       model, objs in user_info['deleted'].model_objs.items()}
         user_info['deleted_objects_details']['model_count'] = list(dict(model_count).items())
 
         tvars = {'users_to_delete': [], 'type': 'delete_spammer'}
@@ -311,7 +311,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         user_info = obj.profile.get_info_before_delete_user(include_sounds=True, include_other_related_objects=True)
         user_info['deleted_objects_details'] = {}
         model_count = {model._meta.verbose_name_plural: len(objs) for
-                       model, objs in list(user_info['deleted'].model_objs.items())}
+                       model, objs in user_info['deleted'].model_objs.items()}
         user_info['deleted_objects_details']['model_count'] = list(dict(model_count).items())
 
         tvars = {'users_to_delete': [], 'type': 'full_delete'}

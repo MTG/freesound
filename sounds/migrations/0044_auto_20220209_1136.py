@@ -16,7 +16,7 @@ def update_existing_ac_analysis_objects(apps, schema_editor):
         sa.last_analyzer_finished = sa.last_sent_to_queue
         if sa.analysis_data:
             updated_analysis_data = {}
-            for key, value in list(sa.analysis_data.items()):
+            for key, value in sa.analysis_data.items():
                 updated_analysis_data['ac_{0}'.format(key)] = value
             sa.analysis_data = updated_analysis_data
         sa.save()

@@ -82,8 +82,8 @@ class RecommendationDataProcessor(object):
         n_original_associations = 0
         sound_ids = []
         if self.verbose:
-            print("Reading index file (%i entries)..." % len(list(index.items())), end=' ')
-        for sid, tags in list(index.items()):
+            print("Reading index file (%i entries)..." % len(index.items()), end=' ')
+        for sid, tags in index.items():
             ts += tags
             n_original_associations += len(tags)
             sound_ids.append(sid)
@@ -137,7 +137,7 @@ class RecommendationDataProcessor(object):
         res_tags_no_filt = {}
         idx = 0
         n_filtered_associations = 0
-        for sid, stags in list(index.items()):
+        for sid, stags in index.items():
             resource = sid
             user = None
             assigned_tags = stags

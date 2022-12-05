@@ -63,7 +63,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             requested_fields = self.default_fields
 
         if requested_fields == '*':  # If parameter is *, return all fields
-            requested_fields = ','.join(list(self.fields.keys()))
+            requested_fields = ','.join(self.fields.keys())
 
         if requested_fields:
             allowed = set(requested_fields.split(","))
@@ -307,7 +307,7 @@ class SoundListSerializer(AbstractSoundSerializer):
         # other analyzers' output is only accessible via analyzers_output field. This is kept like that
         # for legacy reasons.
         analyzers_output = {}
-        for analyzer_name, analyzer_info in list(settings.ANALYZERS_CONFIGURATION.items()):
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_info:
                 query_select_name = analyzer_name.replace('-', '_')
                 analysis_data = getattr(obj, query_select_name, None)
@@ -362,7 +362,7 @@ class SoundSerializer(AbstractSoundSerializer):
         # obtained with the ac_analysis field name but all other analyzers' output is only accessible
         # via analyzers_output field. This is kept like that for legacy reasons.
         analyzers_output = {}
-        for analyzer_name, analyzer_info in list(settings.ANALYZERS_CONFIGURATION.items()):
+        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_info:
                 query_select_name = analyzer_name.replace('-', '_')
                 if hasattr(obj, query_select_name):

@@ -75,7 +75,7 @@ for k in sorted_namespaces:
 	ns = k[0].upper()+k[1:]
 	print(ns+ " Descriptors")
 	print(">>>>>>>>>>>>>>>>>>>>\n\n")
-	for d in list(top[k].keys()):
+	for d in top[k].keys():
 		descriptor = k+"."+d
 		print(descriptor)
 		print("-------------------------")
@@ -90,12 +90,12 @@ for k in sorted_namespaces:
 			continue
 		if type(stats) ==dict:
 			print("\n\n**Stats**::\n\n")
-			for s in list(stats.keys()):
+			for s in stats.keys():
 				print("/"+s)
 
 			print("\n\n**Distribution in Freesound**\n")
 
-			if "mean" in list(stats.keys()):
+			if "mean" in stats.keys():
 				if  type(stats['mean'])==list:
 					for i in range(len(stats['mean'])):
 						img = image_str+descriptor+".mean.%03d"%i

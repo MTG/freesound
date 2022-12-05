@@ -118,7 +118,7 @@ class EmptyLinkFilter(Filter):
             if 'name' in token and token['name'] == 'a' and token['type'] in ['StartTag', 'EndTag']:
                 if token['type'] == 'StartTag':
                     remove_end_tag = True
-                    for attr, value in list(token['data'].items()):
+                    for attr, value in token['data'].items():
                         if attr == (None, 'href') and value != '' and is_valid_url(value):
                             remove_end_tag = False
                     if remove_end_tag:

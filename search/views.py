@@ -273,7 +273,7 @@ def clustering_facet(request):
 
     # extract tags for each clusters and do not use query terms for labeling clusters
     query_terms = {t.lower() for t in request.GET.get('q', '').split(' ')}
-    for sound_id, tags in list(sound_tags.items()):
+    for sound_id, tags in sound_tags.items():
         cluster_tags[partition[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
 
     # count 3 most occuring tags

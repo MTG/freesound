@@ -44,7 +44,7 @@ normalization_coeffs = None
 for i in range(0,len(transformation_history)):
     if transformation_history[-(i+1)]['Analyzer name'] == 'normalize':
         normalization_coeffs = transformation_history[-(i+1)]['Applier parameters']['coeffs']
-print([x for x in list(normalization_coeffs.keys()) if (".tonal" in x and "chords" in x)])
+print([x for x in normalization_coeffs.keys() if (".tonal" in x and "chords" in x)])
 descriptor_names = ds.layout().descriptorNames()
 point_names = ds.pointNames()
 example_point = ds.point(point_names[0])
@@ -89,7 +89,7 @@ for descriptor_name in descriptor_names:
             for point_name in point_names:
                 point = ds.point(point_name)
                 normalized_value = point.value(descriptor_name)[i]
-                if not normalization_coeffs or descriptor_name not in list(normalization_coeffs.keys()):
+                if not normalization_coeffs or descriptor_name not in normalization_coeffs.keys():
                     value = normalized_value
                 else:
                     a = normalization_coeffs[descriptor_name]['a']

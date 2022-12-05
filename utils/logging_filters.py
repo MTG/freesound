@@ -61,7 +61,7 @@ class GenericDataFilter(logging.Filter):
             message = record.getMessage()
             json_part = message[message.find('(') + 1:-1]
             fields = json.loads(json_part)
-            for key, value in list(fields.items()):
+            for key, value in fields.items():
                 setattr(record, key, value)
         except (IndexError, ValueError, AttributeError):
             pass  # Message is not formatted for json parsing
@@ -77,9 +77,9 @@ class APILogsFilter(logging.Filter):
             if ':' in message:
                 message = ' '.join([item.split(':')[0] for item in message.split(' ')])
             record.api_resource = message
-            for key, value in list(json.loads(info).items()):
+            for key, value in json.loads(info).items():
                 setattr(record, key, value)
-            for key, value in list(json.loads(data).items()):
+            for key, value in json.loads(data).items():
                 setattr(record, key, value)
         except:
             pass

@@ -48,7 +48,7 @@ def locations_decorator(cache=True):
     return decorator
 
 def pretty_print_locations(locations, indent=0):
-    for (key, value) in list(locations.items()):
+    for (key, value) in locations.items():
         if isinstance(value, dict):
             print("  "*indent, "*", key)
             pretty_print_locations(value, indent+1)

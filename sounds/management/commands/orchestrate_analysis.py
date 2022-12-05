@@ -70,7 +70,7 @@ class Command(LoggingBaseCommand):
         n_sounds = len(all_sound_ids)
         console_logger.info("{: >44} {: >11} {: >11} {: >11} {: >11} {: >11}".format(
             *['', '# ok |', '# failed |', '# skipped |', '# queued |', '# missing']))
-        for analyzer_name in list(settings.ANALYZERS_CONFIGURATION.keys()):
+        for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
             ok = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK").count()
             sk = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="SK").count()
             fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
@@ -108,7 +108,7 @@ class Command(LoggingBaseCommand):
             queues_status_dict = None
             consumers_per_queue_dict = {}
 
-        for analyzer_name in list(settings.ANALYZERS_CONFIGURATION.keys()):
+        for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
             console_logger.info(analyzer_name)
             if queues_status_dict is not None:
                 num_jobs_in_queue = queues_status_dict.get(analyzer_name, 0)
@@ -169,7 +169,7 @@ class Command(LoggingBaseCommand):
 
             if analyzer_name in data_to_log:
                 # Log ata to graylog in a way that we can make plots and show stats
-                analyzer_data_to_log = {key: value for key, value in list(data_to_log[analyzer_name].items())}
+                analyzer_data_to_log = {key: value for key, value in data_to_log[analyzer_name].items()}
                 analyzer_data_to_log.update({
                     'analyzer': analyzer_name,
                     'percentage_completed': analyzer_data_to_log['Percentage']

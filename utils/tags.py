@@ -57,7 +57,7 @@ def annotate_tags(tags, sort=None, small_size=0.7, large_size=1.8):
     [ {"name": "tag1", "count": 1, "size": 0.7}, {"name": "tag2", "count": 200, "size": 1.8}, {"name": "tag3", "count": 200, "size": 1.8}]
     """
     unique_counts = sorted(set(tag["count"] for tag in tags))
-    lookup = dict(list(zip(unique_counts, size_generator(small_size, large_size, len(unique_counts)))))
+    lookup = dict(zip(unique_counts, size_generator(small_size, large_size, len(unique_counts))))
     tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
     if sort is not None:
         if sort == "name":

@@ -426,7 +426,7 @@ def sound_edit(request, username, sound_id):
 
     def is_selected(prefix):
         if request.method == "POST":
-            for name in list(request.POST.keys()):
+            for name in request.POST.keys():
                 if name.startswith(prefix + '-'):
                     return True
         return False

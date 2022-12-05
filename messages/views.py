@@ -47,7 +47,7 @@ def messages_change_state(request):
         if not using_beastwhoosh(request):
             # get all message ids in the format `cb_[number]` which have a value of 'on'
             message_ids = []
-            for key, val in list(request.POST.items()):
+            for key, val in request.POST.items():
                 if key.startswith('cb_') and val == 'on':
                     try:
                         msgid = int(key.replace('cb_', ''))

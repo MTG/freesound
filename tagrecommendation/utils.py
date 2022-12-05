@@ -43,7 +43,7 @@ def mtx2npy(M, verbose = True):
     npy = zeros((n, m) , 'float32')
     #non_zero_index = M.keys()
     items = list(M.items())
-    nItems = len(list(M.items()))
+    nItems = len(M.items())
     done = 0
     #for index in non_zero_index :
     for index, value in items:

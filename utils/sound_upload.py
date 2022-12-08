@@ -18,11 +18,12 @@
 #     See AUTHORS file.
 #
 
+from backports import csv
 from builtins import next
 from builtins import zip
 from builtins import str
 from builtins import range
-import csv
+from builtins import open
 import json
 import logging
 import os
@@ -274,7 +275,7 @@ def get_csv_lines(csv_file_path):
 
     if csv_file_path.endswith('.csv'):
         # Read CSV formatted file
-        reader = csv.reader(open(csv_file_path, 'rU'), delimiter=',')
+        reader = csv.reader(open(csv_file_path, 'r', newline='', encoding="utf-8"))
         header = next(reader)
         lines = [dict(zip(header, row)) for row in reader]
     elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):

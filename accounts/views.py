@@ -23,7 +23,7 @@ standard_library.install_aliases()
 from builtins import str
 from builtins import range
 import io
-import csv
+from backports import csv
 import datetime
 import errno
 import json
@@ -936,8 +936,8 @@ def download_attribution(request):
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
         output = io.StringIO()
         if download == 'csv':
-            output.write('Download Type,File Name,User,License\r\n')
-            csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            output.write(u'Download Type,File Name,User,License\r\n')
+            csv_writer = csv.writer(output, delimiter=u',', quotechar=u'"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
                 csv_writer.writerow(
                     [row['download_type'][0].upper(), row['sound__original_filename'].encode('utf-8'),

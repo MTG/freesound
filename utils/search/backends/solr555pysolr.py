@@ -406,7 +406,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             offset = (current_page - 1) * num_sounds
         query.set_query_options(start=offset,
                                 rows=num_sounds,
-                                field_list=["id"],  # We only want the sound IDs of the results as we load data from DB
+                                field_list=["id", "score"],  # We only want the sound IDs of the results as we load data from DB
                                 filter_query=query_filter,
                                 sort=search_process_sort(sort))
 

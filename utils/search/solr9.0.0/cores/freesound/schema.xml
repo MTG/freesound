@@ -157,6 +157,9 @@
       <!-- The TrimFilter removes any leading or trailing whitespace -->
       <filter class="solr.TrimFilterFactory" />
     </analyzer>
+    <!-- BooleanSimilarity simply gives a field a score of 1 if the search term appears in it, rather than 
+         performing any ranking -->
+    <similarity class="solr.BooleanSimilarityFactory"/>
   </fieldType>
   <fieldType name="freesound_text" class="solr.TextField" positionIncrementGap="100">
     <analyzer type="index">
@@ -178,6 +181,9 @@
       <filter class="solr.SnowballPorterFilterFactory" language="English"/>
       <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
     </analyzer>
+    <!-- BooleanSimilarity simply gives a field a score of 1 if the search term appears in it, rather than 
+         performing any ranking -->
+    <similarity class="solr.BooleanSimilarityFactory"/>
   </fieldType>
 
 

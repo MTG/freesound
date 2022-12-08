@@ -194,7 +194,7 @@ In general, you can define geotagging queries in two ways:
  You can use the ``filter`` parameter of a standard query to specify minimum and maximum latitude and longitude using the
  following syntax::
 
-  filter=geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
+  filter=geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
 
 
  Minimum and maximum latitude and longitude define the lower left and upper right corners of the rectangle as shown below.

@@ -940,16 +940,16 @@ def download_attribution(request):
             csv_writer = csv.writer(output, delimiter=u',', quotechar=u'"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
                 csv_writer.writerow(
-                    [row['download_type'][0].upper(), row['sound__original_filename'].encode('utf-8'),
+                    [row['download_type'][0].upper(), row['sound__original_filename'],
                      row['sound__user__username'],
-                     license_with_version(row['license__name'].encode('utf-8') or row['sound__license__name'].encode('utf-8'),
-                                          row['license__deed_url'].encode('utf-8') or row['sound__license__deed_url'].encode('utf-8'))])
+                     license_with_version(row['license__name'] or row['sound__license__name'],
+                                          row['license__deed_url'] or row['sound__license__deed_url'])])
         elif download == 'txt':
             for row in qs:
-                output.write("{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
-                             row['sound__original_filename'].encode("utf-8"), row['sound__user__username'],
-                             license_with_version(row['license__name'].encode("utf-8") or row['sound__license__name'].encode("utf-8"),
-                                                  row['license__deed_url'].encode('utf-8') or row['sound__license__deed_url'].encode('utf-8'))))
+                output.write(u"{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
+                             row['sound__original_filename'], row['sound__user__username'],
+                             license_with_version(row['license__name'] or row['sound__license__name'],
+                                                  row['license__deed_url'] or row['sound__license__deed_url'])))
         response.writelines(output.getvalue())
         return response
     else:

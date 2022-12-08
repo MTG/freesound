@@ -39,7 +39,6 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
                 SOLR_SOUNDS_URL,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
-                search_handler="fsquery",
                 always_commit=True
             )
         return self.sounds_index
@@ -50,7 +49,6 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
                 SOLR_FORUM_URL,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
-                search_handler="fsquery",
                 always_commit=True
             )
         return self.forum_index

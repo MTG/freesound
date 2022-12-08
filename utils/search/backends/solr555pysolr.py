@@ -438,6 +438,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Do the query!
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
+<<<<<<< HEAD
         try:
             results = self.get_sounds_index().search(**query.as_kwargs())
             return SearchResults(
@@ -452,6 +453,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             )
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
+=======
+        results = self.get_sounds_index().search(**query.as_dict())
+        # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
+        # before use to avoid issues
+        docs = results.docs
+        for d in docs:
+            d["id"] = int(d["id"])
+        return SearchResults(
+            docs=results.docs,
+            num_found=results.num_found,
+            start=results.start,
+            num_rows=results.num_rows,
+            non_grouped_number_of_results=results.non_grouped_number_of_results,
+            facets=results.facets,
+            highlighting=results.highlighting,
+            q_time=results.q_time
+        )
+>>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
 
     def get_random_sound_id(self):
         query = SolrQuery()
@@ -460,6 +479,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         filter_query = 'is_explicit:0'
         query.set_query("*:*")
         query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
+<<<<<<< HEAD
         try:
             response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
             docs = response.docs
@@ -468,6 +488,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             return 0
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
+=======
+        response = self.get_sounds_index().search(**query.as_dict())
+        docs = response.docs
+        if docs:
+            return int(docs[0]['id'])
+        return 0
+>>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
 
     # Forum posts methods
     def add_forum_posts_to_index(self, forum_post_objects):
@@ -561,12 +588,18 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     # Tag clouds methods
     def get_user_tags(self, username):
+<<<<<<< HEAD
         query = SolrQuery()
         query.set_dismax_query('*:*')
+=======
+        query = SolrQueryPySolr()
+        query.set_query('*:*')
+>>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
         filter_query = 'username:\"%s\"' % username
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)
+<<<<<<< HEAD
         try:
             results = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
             return results.facets['tag']
@@ -576,12 +609,25 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
         query.set_dismax_query('*:*')
+=======
+        results = self.get_sounds_index().search(**query.as_dict())
+        return results.facets['tag']
+
+    def get_pack_tags(self, username, pack_name):
+        query = SolrQueryPySolr()
+        query.set_query('*:*')
+>>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
         filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)
+<<<<<<< HEAD
         try:
             results = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
             return results.facets['tag']
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
+=======
+        results = self.get_sounds_index().search(**query.as_dict())
+        return results.facets['tag']
+>>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)

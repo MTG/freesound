@@ -740,17 +740,6 @@
     </lst>
   </requestHandler>
 
-  <!-- Freesound dismax request handler with some defaults -->
-  <requestHandler name="/fsquery" class="solr.SearchHandler" >
-    <lst name="defaults">
-     <str name="defType">dismax</str>
-     <str name="echoParams">explicit</str>
-     <float name="tie">0.01</float>
-     <int name="ps">100</int>
-     <str name="q.alt">*:*</str>
-    </lst>
-  </requestHandler>
-
   <!-- A request handler that returns indented JSON by default -->
   <requestHandler name="/query" class="solr.SearchHandler">
     <lst name="defaults">

@@ -35,19 +35,17 @@ class SolrQuery(object):
     """A wrapper around a lot of Solr query funcionality.
     """
 
-    def __init__(self, query_type=None, writer_type="json", indent=None, debug_query=None):
+    def __init__(self, debug_query=None):
         """Creates a SolrQuery object
-        query_type: Which handler to use when replying, default: default, dismax
-        writer_type: Available types are: SolJSON, SolPHP, SolPython, SolRuby, XMLResponseFormat, XsltResponseWriter
-        indent: format output with indentation or not
         debug_query: if 1 output debug infomation
         """
         # some default parameters
         self.params = {
-            'qt': query_type,
-            'wt': writer_type,
-            'indent': indent,
-            'debugQuery': debug_query
+            'wt': 'json',
+            'indent': 'true',
+            'debugQuery': debug_query,
+            'q.op': 'AND',
+            'echoParams': 'explicit',
         }
 
     def set_query(self, query):
@@ -71,8 +69,9 @@ class SolrQuery(object):
         boost_query: see docs...
         boost_functions: see docs...
         """
-        self.params['qt'] = "dismax"
         self.params['q'] = query
+        self.params['defType'] = 'dismax'
+        self.params['q.alt'] = '*:*'
         if query_fields:
             qf = []
             for f in query_fields:
@@ -86,9 +85,9 @@ class SolrQuery(object):
             self.params['qf'] = None
         self.params['mm'] = minimum_match
         self.params['pf'] = " ".join(phrase_fields) if phrase_fields else phrase_fields
-        self.params['ps'] = phrase_slop
+        self.params['ps'] = phrase_slop or '100'
         self.params['qs'] = query_phrase_slop
-        self.params['tie'] = tie_breaker
+        self.params['tie'] = tie_breaker or '0.01'
         self.params['bq'] = boost_query
         self.params['bf'] = boost_functions
 

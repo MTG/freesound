@@ -563,8 +563,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     # Tag clouds methods
     def get_user_tags(self, username):
         query = SolrQuery()
-        query.set_dismax_query('*:*')
-        filter_query = 'username:\"%s\"' % username
+        query.set_query('*:*')
+        filter_query = 'username:"%s"' % username
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)
@@ -576,8 +576,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
-        query.set_dismax_query('*:*')
-        filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
+        query.set_query('*:*')
+        filter_query = 'username:"%s" AND pack:"%s"' % (username, pack_name)
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)

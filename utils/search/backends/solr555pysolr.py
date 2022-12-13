@@ -24,7 +24,6 @@ from builtins import str
 import json
 import random
 import re
-import types
 import math
 from datetime import date, datetime
 

@@ -13,6 +13,7 @@ RUN apt-get update \
                        git \
                        gosu \
                        pkg-config \
+                       procps \
                        python \
                        python-dev \
                        wget \

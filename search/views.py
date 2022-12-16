@@ -19,6 +19,10 @@
 #     See AUTHORS file.
 #
 
+from builtins import map
+from builtins import str
+from builtins import zip
+from builtins import range
 import datetime
 import json
 import logging
@@ -38,7 +42,7 @@ from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
-from utils.frontend_handling import render, defer_if_beastwhoosh, using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
@@ -263,13 +267,13 @@ def clustering_facet(request):
     partition = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}
 
     # label clusters using most occuring tags
-    sound_instances = sounds.models.Sound.objects.bulk_query_id(map(int, partition.keys()))
+    sound_instances = sounds.models.Sound.objects.bulk_query_id(list(map(int, list(partition.keys()))))
     sound_tags = {sound.id: sound.tag_array for sound in sound_instances}
     cluster_tags = defaultdict(list)
 
     # extract tags for each clusters and do not use query terms for labeling clusters
     query_terms = {t.lower() for t in request.GET.get('q', '').split(' ')}
-    for sound_id, tags in sound_tags.iteritems():
+    for sound_id, tags in sound_tags.items():
         cluster_tags[partition[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
 
     # count 3 most occuring tags
@@ -286,7 +290,7 @@ def clustering_facet(request):
 
     # extract sound examples for each cluster
     sound_ids_examples_per_cluster = [
-        map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET])
+        list(map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET]))
         for cluster_sound_ids in results
     ]
     sound_ids_examples = [item for sublist in sound_ids_examples_per_cluster for item in sublist]
@@ -303,12 +307,12 @@ def clustering_facet(request):
     return render(request, 'search/clustering_facet.html', {
             'results': partition,
             'url_query_params_string': url_query_params_string,
-            'cluster_id_num_results_tags_sound_examples': zip(
-                range(num_clusters),
+            'cluster_id_num_results_tags_sound_examples': list(zip(
+                list(range(num_clusters)),
                 num_sounds_per_cluster,
                 most_occuring_tags_formatted,
                 sound_url_examples_per_cluster
-            ),
+            )),
     })
 
 

@@ -19,7 +19,10 @@
 #
 
 from __future__ import print_function
+from __future__ import division
 
+from builtins import str
+from past.utils import old_div
 import json
 import os
 import time
@@ -239,7 +242,7 @@ class ProfileNumSoundsTestCase(TestCase):
                 'original_path', 'pack_id', 'license', 'created',
                 'original_filename', 'geotag']
 
-        json_data = ds.data.keys()
+        json_data = list(ds.data.keys())
         for k in keys:
             self.assertTrue(k in json_data)
 
@@ -670,7 +673,7 @@ class SoundTemplateCacheTests(TestCase):
         return self.client.get(reverse('accounts-home'))
 
     def _print_cache(self, cache_keys):
-        print(locmem._caches[''].keys())
+        print(list(locmem._caches[''].keys()))
         print(cache_keys)
 
     # Make sure the sound name and description are updated
@@ -903,13 +906,13 @@ class SoundTemplateCacheTests(TestCase):
         )
 
     # Changing license
-    def _test_change_license(self, cache_keys, new_license, check_present):
+    def _test_change_license(self, cache_keys, new_license, expected_text, check_present):
         self._assertCacheAbsent(cache_keys)
 
         self.client.force_login(self.user)
 
         self.assertNotEqual(self.sound.license, new_license)
-        self.assertFalse(check_present())
+        self.assertNotContains(check_present(), expected_text)
         self._assertCachePresent(cache_keys)
 
         # Change license
@@ -920,13 +923,14 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCacheAbsent(cache_keys)
 
         # Check that license is updated
-        self.assertTrue(check_present())
+        self.assertContains(check_present(), expected_text)
 
     def test_change_license_display(self):
         self._test_change_license(
             self._get_sound_display_cache_keys(),
             License.objects.filter(name='Attribution').first(),
-            lambda: 'images/licenses/by.png' in self._get_sound_from_home().content
+            "images/licenses/by.png",
+            self._get_sound_from_home,
         )
 
     def test_change_license_view(self):
@@ -934,7 +938,8 @@ class SoundTemplateCacheTests(TestCase):
         self._test_change_license(
             self._get_sound_view_footer_top_cache_keys(),
             license,
-            lambda: str(license.name) in self._get_sound_view().content
+            str(license.name),
+            self._get_sound_view,
         )
 
     def _test_add_remove_remixes(self, cache_keys, check_present):
@@ -1035,17 +1040,17 @@ class SoundAnalysisModel(TestCase):
         sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data,
                                           analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 1)
-        self.assertEqual(sa.get_analysis_data().keys(), analysis_data.keys())
+        self.assertEqual(list(sa.get_analysis_data().keys()), list(analysis_data.keys()))
         self.assertEqual(sa.get_analysis_data()['descriptor1'], 0.56)
 
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
         analysis_filename = '%i-TestExtractor2.json' % sound.id
-        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id / 1000))
+        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(old_div(sound.id, 1000)))
         create_directories(sound_analysis_folder)
         json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
         sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 2)
-        self.assertEqual(sa2.get_analysis_data().keys(), analysis_data.keys())
+        self.assertEqual(list(sa2.get_analysis_data().keys()), list(analysis_data.keys()))
         self.assertEqual(sa2.get_analysis_data()['descriptor1'], 0.56)
 
         # Create an analysis object which references a non-existing file. Check that get_analysis returns None.

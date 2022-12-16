@@ -21,6 +21,10 @@
 #
 
 from __future__ import absolute_import
+from __future__ import division
+from builtins import str
+from past.utils import old_div
+from builtins import object
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -67,7 +71,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    class Meta:
+    class Meta(object):
         model = Sound
         fields = ('id',
                   'url',
@@ -252,7 +256,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     avg_rating = serializers.SerializerMethodField()
     def get_avg_rating(self, obj):
-        return obj.avg_rating/2
+        return old_div(obj.avg_rating,2)
 
     comments = serializers.SerializerMethodField()
     def get_comments(self, obj):
@@ -381,7 +385,7 @@ class SoundSerializer(AbstractSoundSerializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = User
         fields = ('url',
                   'username',
@@ -461,7 +465,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 class PackSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = Pack
         fields = ('id',
                   'url',
@@ -503,7 +507,7 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
 class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = BookmarkCategory
         fields = ('id',
                   'url',
@@ -575,7 +579,7 @@ class CreateRatingSerializer(serializers.Serializer):
 
 class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = Comment
         fields = ('username',
                   'comment',

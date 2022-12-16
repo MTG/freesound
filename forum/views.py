@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -17,13 +18,17 @@
 # Authors:
 #     See AUTHORS file.
 #
+from future import standard_library
+standard_library.install_aliases()
+from past.utils import old_div
+from builtins import object
 import datetime
 import re
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
@@ -193,7 +198,7 @@ def post(request, forum_name_slug, thread_id, post_id):
                              moderation_state="OK")
 
     posts_before = Post.objects.filter(thread=post.thread, moderation_state="OK", created__lt=post.created).count()
-    page = 1 + posts_before / settings.FORUM_POSTS_PER_PAGE
+    page = 1 + old_div(posts_before, settings.FORUM_POSTS_PER_PAGE)
     url = post.thread.get_absolute_url() + "?page=%d#post%d" % (page, post.id)
 
     return HttpResponseRedirect(url)

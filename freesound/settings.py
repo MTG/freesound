@@ -481,6 +481,8 @@ AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 
+from builtins import str  # This is needed while moving from py2 to py3 for str type compatibility
+
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
         'descriptors_map': [

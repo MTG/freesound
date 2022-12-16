@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -59,5 +60,5 @@ class Bookmark(models.Model):
         else:
             return self.sound.original_filename
 
-    class Meta:
+    class Meta(object):
         ordering = ("-created", )

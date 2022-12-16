@@ -17,6 +17,9 @@
 # Authors:
 #     See AUTHORS file.
 #
+from builtins import map
+from builtins import chr
+from past.builtins import basestring
 import collections
 
 import pyparsing as pp
@@ -25,9 +28,9 @@ from pyparsing import pyparsing_common as ppc
 
 pp.ParserElement.enablePackrat()
 
-COLON, LBRACK, RBRACK, LBRACE, RBRACE, TILDE, CARAT = map(pp.Literal, ":[]{}~^")
-LPAR, RPAR = map(pp.Literal, "()")
-and_, or_, not_, to_ = map(pp.CaselessKeyword, "AND OR NOT TO".split())
+COLON, LBRACK, RBRACK, LBRACE, RBRACE, TILDE, CARAT = list(map(pp.Literal, ":[]{}~^"))
+LPAR, RPAR = list(map(pp.Literal, "()"))
+and_, or_, not_, to_ = list(map(pp.CaselessKeyword, "AND OR NOT TO".split()))
 keyword = and_ | or_ | not_ | to_
 
 expression = pp.Forward()

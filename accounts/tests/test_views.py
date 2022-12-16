@@ -21,9 +21,8 @@
 
 import datetime
 
-import mock
 from django.contrib.auth.models import User, Permission
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import OldUsername
@@ -131,10 +130,10 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=csv')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertEqual(resp.content,
-                         'Download Type,File Name,User,License\r\nP,{0},{1},{0}\r\nS,{2},{3},{4}\r\n'.format(
-                             self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
-                             self.sound.license))
+        self.assertContains(resp,
+                            'Download Type,File Name,User,License\r\nP,{0},{1},{0}\r\nS,{2},{3},{4}\r\n'.format(
+                                self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
+                                self.sound.license))
 
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)

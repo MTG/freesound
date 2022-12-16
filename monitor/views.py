@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,7 @@
 #     See AUTHORS file.
 #
 
+from past.utils import old_div
 import datetime
 from collections import Counter
 
@@ -122,7 +124,7 @@ def monitor_stats(request):
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def moderators_stats(request):
-    time_span = datetime.datetime.now()-datetime.timedelta(6*365/12)
+    time_span = datetime.datetime.now()-datetime.timedelta(old_div(6*365,12))
     #Maybe we should user created and not modified
     user_ids = tickets.models.Ticket.objects.filter(
             status=TICKET_STATUS_CLOSED,
@@ -131,7 +133,7 @@ def moderators_stats(request):
     ).values_list("assignee_id", flat=True)
 
     counter = Counter(user_ids)
-    moderators = User.objects.filter(id__in=counter.keys())
+    moderators = User.objects.filter(id__in=list(counter.keys()))
 
     moderators = [(counter.get(m.id), m) for m in moderators.all()]
     ordered = sorted(moderators, key=lambda m: m[0], reverse=True)
@@ -227,7 +229,7 @@ def process_sounds(request):
 
 def moderator_stats_ajax(request):
     user_id = request.GET.get('user_id', None)
-    time_span = datetime.datetime.now()-datetime.timedelta(6*365/12)
+    time_span = datetime.datetime.now()-datetime.timedelta(old_div(6*365,12))
     tickets_mod = tickets.models.Ticket.objects.filter(
             assignee_id=user_id,
             status=TICKET_STATUS_CLOSED,

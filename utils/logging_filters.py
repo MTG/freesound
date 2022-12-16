@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import ipaddress
 import logging
 import json
@@ -37,7 +38,7 @@ def get_client_ip(request):
     if x_forwarded_for:
         ip = x_forwarded_for.split(',')[0].strip()
         try:
-            ipaddress.ip_network(unicode(ip))
+            ipaddress.ip_network(str(ip))
         except ValueError:
             # Not a valid ip address
             ip = '-'

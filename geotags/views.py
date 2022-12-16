@@ -18,7 +18,9 @@
 #     See AUTHORS file.
 #
 
-import cStringIO
+from future import standard_library
+standard_library.install_aliases()
+import io
 import json
 import logging
 import math
@@ -47,7 +49,7 @@ def log_map_load(map_type, num_geotags, request):
 
 def generate_bytearray(sound_queryset):
     # sounds as bytearray
-    packed_sounds = cStringIO.StringIO()
+    packed_sounds = io.BytesIO()
     num_sounds_in_bytearray = 0
     for s in sound_queryset:
         if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lon):

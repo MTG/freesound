@@ -27,7 +27,7 @@
 
 
 from django.conf.urls import url, include
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LogoutView
 from apiv2 import views
 from accounts.views import login
 from accounts.forms import FsAuthenticationForm
@@ -109,5 +109,3 @@ urlpatterns = [
     url(r'^$', views.FreesoundApiV2Resources.as_view()),
     url(r'/$', views.invalid_url),
 ]
-
-

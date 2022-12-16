@@ -18,13 +18,14 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
+from builtins import zip
+from builtins import range
 import math
 
 from django import template
 from django.conf import settings
-from django.template.defaultfilters import truncatewords_html
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 
 from follow.follow_utils import is_user_following_tag
 from general.templatetags.paginator import show_paginator
@@ -132,7 +133,7 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
             'allow_rating': is_authenticated and allow_rating,
             'sound': sound,
             'update_stars_color_on_save': update_stars_color_on_save,
-            'stars_range': zip(stars_5, list(range(1, 6)))}
+            'stars_range': list(zip(stars_5, list(range(1, 6))))}
 
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
@@ -156,7 +157,7 @@ def bw_generic_stars(context, rating_0_10):
     return {
         'allow_rating': False,
         'update_stars_color_on_save': False,
-        'stars_range': zip(stars_5, list(range(1, 6)))
+        'stars_range': list(zip(stars_5, list(range(1, 6))))
     }
 
 
@@ -183,4 +184,3 @@ def user_following_tags(user, tags_slash):
 @register.inclusion_tag('molecules/plausible_scripts.html', takes_context=False)
 def bw_plausible_scripts():
     return plausible_scripts()
-

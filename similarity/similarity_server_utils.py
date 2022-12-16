@@ -19,6 +19,8 @@
 #
 
 
+from builtins import str
+from builtins import range
 def parse_filter(filter_string, layout_descriptor_names):
     ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS = layout_descriptor_names
 
@@ -80,7 +82,7 @@ def parse_filter(filter_string, layout_descriptor_names):
             current_pos = filter_string.find(op,min_pos)
             min_pos = current_pos + 1
             aux_ops[current_pos] = op#.append({'op':op,'pos':current_pos})
-    keylist = aux_ops.keys()
+    keylist = list(aux_ops.keys())
     keylist.sort()
     for key in keylist:
         op = aux_ops[key]

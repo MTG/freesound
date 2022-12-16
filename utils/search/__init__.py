@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,9 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import importlib
 
 from django.conf import settings
@@ -155,8 +159,8 @@ class SearchResultsPaginator(object):
         self.num_per_page = num_per_page
         self.results = search_results.docs
         self.count = search_results.num_found
-        self.num_pages = search_results.num_found / num_per_page + int(search_results.num_found % num_per_page != 0)
-        self.page_range = range(1, self.num_pages + 1)
+        self.num_pages = old_div(search_results.num_found, num_per_page) + int(search_results.num_found % num_per_page != 0)
+        self.page_range = list(range(1, self.num_pages + 1))
 
     def page(self, page_num):
         has_next = page_num < self.num_pages

@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from builtins import next
+from builtins import range
 import os
 from functools import partial, wraps
 from itertools import count

@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.conf import settings
 
 from boto3 import client

@@ -20,10 +20,10 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import json
 import random
 import re
-import types
 import math
 from datetime import date, datetime
 
@@ -81,7 +81,6 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
     int: '_i',
     bool: '_b',
     str: '_s',
-    unicode: '_s',
     list: '_ls',
 }
 
@@ -317,8 +316,8 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
 class SolrQueryPySolr(SolrQuery):
 
     def as_dict(self):
-        params = {k: v for k, v in self.params.iteritems() if v is not None}
-        for k, v in params.iteritems():
+        params = {k: v for k, v in self.params.items() if v is not None}
+        for k, v in params.items():
             if type(v) == bool:
                 params[k] = json.dumps(v)
         return params

@@ -20,8 +20,6 @@
 #     See AUTHORS file.
 #
 from django.test import TestCase
-from django.test.client import Client
-from accounts.models import Profile
 from django.contrib.auth.models import User
 from follow.models import FollowingUserItem, FollowingQueryItem
 

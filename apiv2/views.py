@@ -22,12 +22,17 @@
 
 
 from __future__ import absolute_import
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.utils import old_div
 import datetime
 import json
 import logging
 import os
 from collections import OrderedDict
-from urllib import quote
+from urllib.parse import quote
 
 import jwt
 from django.conf import settings
@@ -213,7 +218,7 @@ class ContentSearch(GenericAPIView):
         response_data = dict()
         if self.analysis_file:
             response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
-                                                                    self.analysis_file._size/1024)
+                                                                    old_div(self.analysis_file._size,1024))
         response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
@@ -325,7 +330,7 @@ class CombinedSearch(GenericAPIView):
         response_data = dict()
         if self.analysis_file:
             response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
-                                                                    self.analysis_file._size/1024)
+                                                                    old_div(self.analysis_file._size,1024))
 
         # Build 'more' link (only add it if we know there might be more results)
         if 'no_more_results' not in extra_parameters:
@@ -333,7 +338,7 @@ class CombinedSearch(GenericAPIView):
                 response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
                                                                    include_page=False)
             else:
-                num_pages = count / search_form.cleaned_data['page_size'] + \
+                num_pages = old_div(count, search_form.cleaned_data['page_size']) + \
                             int(count % search_form.cleaned_data['page_size'] != 0)
                 if search_form.cleaned_data['page'] < num_pages:
                     response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
@@ -1291,7 +1296,7 @@ class FreesoundApiV2Resources(GenericAPIView):
                         reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
                             .replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
-                }).items(), key=lambda t: t[0]))},
+                }.items()), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted(dict({
                     '01 Pack instance': prepend_base(
                         reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'),
@@ -1478,7 +1483,7 @@ def granted_permissions(request):
     for token in tokens_raw:
         if not token.application.apiv2_client.name in token_names:
             td = (token.expires - datetime.datetime.today())
-            seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+            seconds_to_expiration_date = old_div((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6), 10**6)
             tokens.append({
                 'client_name': token.application.apiv2_client.name,
                 'expiration_date': token.expires,
@@ -1495,7 +1500,7 @@ def granted_permissions(request):
     for grant in grants_pending_access_token_request_raw:
         if not grant.application.apiv2_client.name in grant_and_token_names:
             td = (grant.expires - datetime.datetime.today())
-            seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+            seconds_to_expiration_date = old_div((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6), 10**6)
             if seconds_to_expiration_date > 0:
                 grants.append({
                     'client_name': grant.application.apiv2_client.name,

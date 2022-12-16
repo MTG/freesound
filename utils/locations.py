@@ -20,6 +20,7 @@
 
 from __future__ import print_function
 
+from builtins import object
 def locations_decorator(cache=True):
     """wraps a locations function and adds two things:
         * caching for the calculation done inside the function if cache is true
@@ -47,7 +48,7 @@ def locations_decorator(cache=True):
     return decorator
 
 def pretty_print_locations(locations, indent=0):
-    for (key, value) in locations.iteritems():
+    for (key, value) in locations.items():
         if isinstance(value, dict):
             print("  "*indent, "*", key)
             pretty_print_locations(value, indent+1)

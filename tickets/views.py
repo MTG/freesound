@@ -38,7 +38,7 @@ from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
-from utils.cache import invalidate_template_cache, invalidate_user_template_caches
+from utils.cache import invalidate_user_template_caches
 from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
 

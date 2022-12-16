@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import logging
 import traceback
 
@@ -134,7 +135,7 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     for id in sound_ids:
         analysis_data = cache.get(hash_cache_key(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization))))
         if analysis_data:
-            cached_data[unicode(id)] = analysis_data
+            cached_data[str(id)] = analysis_data
             # remove id form list so it is not included in similarity request
             not_cached_sound_ids.remove(id)
     if not_cached_sound_ids:

@@ -20,17 +20,19 @@
 
 from __future__ import print_function
 
+from builtins import hex
+from builtins import str
+from builtins import object
 import errno
 import hashlib
 import os
-import shutil
 import sys
 import warnings
 import zlib
 from tempfile import mkdtemp
 
 
-class File:
+class File(object):
 
     def __init__(self, id, name, full_path, is_dir):
         self.name = name

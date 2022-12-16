@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -36,7 +37,7 @@ class Tag(models.Model):
     def get_browse_tag_url(self):
         return reverse('tags', self.name)
 
-    class Meta:
+    class Meta(object):
         ordering = ("name",)
 
 
@@ -58,7 +59,7 @@ class TaggedItem(models.Model):
     def get_absolute_url(self):
         return reverse('tag', args=[smart_unicode(self.tag.id)])
 
-    class Meta:
+    class Meta(object):
         ordering = ("-created",)
         unique_together = (('tag', 'content_type', 'object_id'),)
 

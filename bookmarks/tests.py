@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -37,7 +36,7 @@ class BookmarksTest(TestCase):
         self.assertEqual(200, resp.status_code)
         expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
                          'n_uncat', 'page', 'paginator', 'user']
-        context_keys = context.keys()
+        context_keys = list(context.keys())
         for k in expected_keys:
             self.assertIn(k, context_keys)
 
@@ -72,7 +71,7 @@ class BookmarksTest(TestCase):
         self.assertEqual(200, resp.status_code)
         expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
                          'n_uncat', 'page', 'paginator', 'user']
-        context_keys = context.keys()
+        context_keys = list(context.keys())
         for k in expected_keys:
             self.assertIn(k, context_keys)
 

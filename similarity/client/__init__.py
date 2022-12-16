@@ -18,9 +18,13 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 from django.conf import settings
 import json
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 _BASE_URL                     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_PORT)
 _BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_INDEXING_SERVER_PORT)
@@ -53,7 +57,7 @@ def _get_url_as_json(url, data=None, timeout=None):
         kwargs['timeout'] = timeout
     else:
         kwargs['timeout'] = settings.SIMILARITY_TIMEOUT
-    f = urllib2.urlopen(url.replace(" ", "%20"), **kwargs)
+    f = urllib.request.urlopen(url.replace(" ", "%20"), **kwargs)
     resp = f.read()
     return json.loads(resp)
 
@@ -68,7 +72,7 @@ def _result_or_exception(result):
             raise SimilarityException(result['result'], status_code=500)
 
 
-class Similarity():
+class Similarity(object):
 
     @classmethod
     def search(cls, sound_id, num_results = None, preset = None, offset = None):

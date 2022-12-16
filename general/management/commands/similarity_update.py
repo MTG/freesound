@@ -18,8 +18,8 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import logging
-import yaml
 
 from django.conf import settings
 

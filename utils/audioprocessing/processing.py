@@ -22,7 +22,12 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import math
 import os
 import re
@@ -56,7 +61,7 @@ class TestAudioFile(object):
         self.seekpoint = seekpoint
 
     def read_frames(self, frames_to_read):
-        if self.has_broken_header and self.seekpoint + frames_to_read > self.num_frames / 2:
+        if self.has_broken_header and self.seekpoint + frames_to_read > old_div(self.num_frames, 2):
             raise RuntimeError()
 
         num_frames_left = self.num_frames - self.seekpoint
@@ -118,7 +123,7 @@ class AudioProcessor(object):
         fft = numpy.fft.rfft(numpy.ones(fft_size) * self.window)
         max_fft = (numpy.abs(fft)).max()
         # set the scale to normalized audio and normalized FFT
-        self.scale = 1.0 / max_level / max_fft if max_level > 0 else 1
+        self.scale = old_div(1.0 / max_level, max_fft) if max_level > 0 else 1
 
     def read(self, start, size, resize_if_less=False):
         """ read size samples starting at start, if resize_if_less is True and less than size
@@ -172,7 +177,7 @@ class AudioProcessor(object):
     def spectral_centroid(self, seek_point, spec_range=110.0):
         """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
 
-        samples = self.read(seek_point - self.fft_size / 2, self.fft_size, True)
+        samples = self.read(seek_point - old_div(self.fft_size, 2), self.fft_size, True)
 
         samples *= self.window
         fft = numpy.fft.rfft(samples)
@@ -180,7 +185,7 @@ class AudioProcessor(object):
         length = numpy.float64(spectrum.shape[0])
 
         # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]
-        db_spectrum = ((20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range) / spec_range
+        db_spectrum = old_div(((20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range), spec_range)
 
         energy = spectrum.sum()
         spectral_centroid = 0
@@ -191,11 +196,11 @@ class AudioProcessor(object):
             if self.spectrum_range is None:
                 self.spectrum_range = numpy.arange(length)
 
-            spectral_centroid = (spectrum * self.spectrum_range).sum() / (energy * (length - 1)) * self.samplerate * 0.5
+            spectral_centroid = old_div((spectrum * self.spectrum_range).sum(), (energy * (length - 1))) * self.samplerate * 0.5
 
             # clip > log10 > scale between 0 and 1
-            spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (
-                        self.higher_log - self.lower_log)
+            spectral_centroid = old_div((math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log), (
+                        self.higher_log - self.lower_log))
 
         return spectral_centroid, db_spectrum
 
@@ -255,7 +260,7 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     palette = []
 
     for i in range(num_colors):
-        index = (i * (len(colors) - 1)) / (num_colors - 1.0)
+        index = old_div((i * (len(colors) - 1)), (num_colors - 1.0))
         index_int = int(index)
         alpha = index - float(index_int)
 
@@ -351,7 +356,7 @@ class WaveformImage(object):
         # draw a zero "zero" line
         a = 25
         for x in range(self.image_width):
-            self.pix[x, self.image_height / 2] = tuple(map(lambda p: p + a, self.pix[x, self.image_height / 2]))
+            self.pix[x, old_div(self.image_height, 2)] = tuple([p + a for p in self.pix[x, old_div(self.image_height, 2)]])
 
         self.image.save(filename)
 
@@ -378,10 +383,10 @@ class SpectrogramImage(object):
         y_min = math.log10(f_min)
         y_max = math.log10(f_max)
         for y in range(self.image_height):
-            freq = math.pow(10.0, y_min + y / (image_height - 1.0) * (y_max - y_min))
-            bin = freq / 22050.0 * (self.fft_size / 2 + 1)
+            freq = math.pow(10.0, y_min + old_div(y, (image_height - 1.0)) * (y_max - y_min))
+            bin = freq / 22050.0 * (old_div(self.fft_size, 2) + 1)
 
-            if bin < self.fft_size / 2:
+            if bin < old_div(self.fft_size, 2):
                 alpha = bin - int(bin)
 
                 self.y_to_bin.append((int(bin), alpha * 255))
@@ -427,7 +432,7 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
 
     for x in range(image_width):
 
-        if progress_callback and x % (image_width / 100) == 0:
+        if progress_callback and x % (old_div(image_width, 100)) == 0:
             progress_callback(x, image_width)
 
         seek_point = int(x * samples_per_pixel)

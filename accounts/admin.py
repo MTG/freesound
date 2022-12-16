@@ -20,10 +20,8 @@
 #     See AUTHORS file.
 #
 
-import json
 import logging
 
-from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
@@ -240,7 +238,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         user_info['deleted_objects_details'] = {}
         model_count = {model._meta.verbose_name_plural: len(objs) for
                        model, objs in user_info['deleted'].model_objs.items()}
-        user_info['deleted_objects_details']['model_count'] = dict(model_count).items()
+        user_info['deleted_objects_details']['model_count'] = list(dict(model_count).items())
 
         tvars = {'users_to_delete': [], 'type': 'delete_include_sounds'}
         tvars['users_to_delete'].append(user_info)
@@ -277,7 +275,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         user_info['deleted_objects_details'] = {}
         model_count = {model._meta.verbose_name_plural: len(objs) for
                        model, objs in user_info['deleted'].model_objs.items()}
-        user_info['deleted_objects_details']['model_count'] = dict(model_count).items()
+        user_info['deleted_objects_details']['model_count'] = list(dict(model_count).items())
 
         tvars = {'users_to_delete': [], 'type': 'delete_spammer'}
         tvars['users_to_delete'].append(user_info)
@@ -314,7 +312,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         user_info['deleted_objects_details'] = {}
         model_count = {model._meta.verbose_name_plural: len(objs) for
                        model, objs in user_info['deleted'].model_objs.items()}
-        user_info['deleted_objects_details']['model_count'] = dict(model_count).items()
+        user_info['deleted_objects_details']['model_count'] = list(dict(model_count).items())
 
         tvars = {'users_to_delete': [], 'type': 'full_delete'}
         tvars['users_to_delete'].append(user_info)

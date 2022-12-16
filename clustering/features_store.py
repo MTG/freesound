@@ -20,6 +20,9 @@
 
 from __future__ import absolute_import
 
+from builtins import zip
+from builtins import str
+from builtins import object
 import json
 import logging
 import os
@@ -46,7 +49,7 @@ class RedisStore(object):
             return json.loads(feature)
 
     def set_features(self, d):
-        self.r.mset({k: json.dumps(v) for k, v in d.iteritems()})
+        self.r.mset({k: json.dumps(v) for k, v in d.items()})
 
     def get_features(self, sound_ids):
         return self.r.mget(sound_ids)

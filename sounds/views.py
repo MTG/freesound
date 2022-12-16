@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,11 +19,13 @@
 #     See AUTHORS file.
 #
 
+from builtins import map
+from builtins import str
+from past.utils import old_div
 import datetime
 import json
 import logging
 import time
-from collections import defaultdict
 from django.views.decorators.clickjacking import xframe_options_exempt
 from operator import itemgetter
 
@@ -32,7 +35,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models.functions import Greatest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404, \
@@ -45,9 +48,8 @@ from ratelimit.decorators import ratelimit
 
 from comments.forms import CommentForm
 from comments.models import Comment
-from donations.models import DonationsModalSettings, Donation
+from donations.models import DonationsModalSettings
 from follow import follow_utils
-from forum.models import Thread
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
@@ -63,7 +65,6 @@ from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search import get_search_engine
 from utils.search.search_sounds import get_random_sound_id_from_search_engine
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
@@ -371,7 +372,7 @@ def sound_download(request, username, sound_id):
         cdn_filename = cache_cdn_map.get(str(sound_id), None)
         if cdn_filename is not None:
             # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(int(sound_id)/1000), cdn_filename, sound.friendly_filename())
+            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(old_div(int(sound_id),1000)), cdn_filename, sound.friendly_filename())
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))

@@ -1794,7 +1794,7 @@ class SoundAnalysis(models.Model):
                 pass
         if os.path.exists(self.analysis_filepath_base + '.yaml'):
             try:
-                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CLoader)
+                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CFullLoader)
             except Exception:
                 pass
         return {}

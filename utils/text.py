@@ -28,7 +28,7 @@ from html.entities import name2codepoint
 
 import bleach
 from bleach.html5lib_shim import Filter
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 
 from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, \
     SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER
@@ -36,7 +36,7 @@ from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHO
 
 def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slug_field='slug', filter_dict=None):
     """ slugify with character translation which translates foreign characters to regular ascii equivalents """
-    s = smart_unicode(s)
+    s = smart_text(s)
 
     #  character entity reference
     if entities:

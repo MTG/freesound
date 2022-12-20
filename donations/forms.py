@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import json
 import base64
 from django import forms
 from django.utils.safestring import mark_safe
 
-from models import DonationCampaign
+from .models import DonationCampaign
 
 class DonateForm(forms.Form):
     RADIO_CHOICES = []

@@ -25,7 +25,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 from django.urls import reverse
 
 class Tag(models.Model):
@@ -57,7 +57,7 @@ class TaggedItem(models.Model):
         return u"%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
 
     def get_absolute_url(self):
-        return reverse('tag', args=[smart_unicode(self.tag.id)])
+        return reverse('tag', args=[smart_text(self.tag.id)])
 
     class Meta(object):
         ordering = ("-created",)

@@ -23,7 +23,7 @@
 from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 from django.urls import reverse
 
 class Page(models.Model):
@@ -36,7 +36,7 @@ class Page(models.Model):
         return Content.objects.filter(page=self).latest()
 
     def get_absolute_url(self):
-        return reverse("wiki-page", args=[smart_unicode(self.name)])
+        return reverse("wiki-page", args=[smart_text(self.name)])
 
 
 class Content(models.Model):

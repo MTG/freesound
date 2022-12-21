@@ -28,7 +28,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.db import models
 from django.db.models.signals import post_save
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 import uuid
 from utils.mail import send_mail_template
 
@@ -99,7 +99,7 @@ class Ticket(models.Model):
                                    user_to=self.sender)
 
     def get_absolute_url(self):
-        return reverse('ticket', args=[smart_unicode(self.key)])
+        return reverse('ticket', args=[smart_text(self.key)])
 
     def __unicode__(self):
         return u"pk %s, key %s" % (self.id, self.key)

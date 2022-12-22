@@ -27,6 +27,7 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
+from builtins import bytes
 from past.utils import old_div
 import math
 import os
@@ -105,8 +106,9 @@ class AudioProcessor(object):
     """
 
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
+        input_filename = bytes(input_filename.encode('utf-8'))  # This should not be needed when migrating to Py3
+        
         max_level = get_max_level(input_filename)
-
         self.audio_file = pysndfile.PySndfile(input_filename, 'r')
         self.nframes = self.audio_file.frames()
         self.samplerate = self.audio_file.samplerate()

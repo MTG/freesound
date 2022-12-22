@@ -117,13 +117,13 @@ ADMIN_REORDER = (
         'oauth2_provider.RefreshToken',
         'oauth2_provider.Grant',
     )},
-    'forum',
+    str('forum'),  # str() should be replaced when moving to Py3
     {'app': 'donations', 'models': (
         'donations.Donation',
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-    'sites',
+    str('sites'),  # str() should be replaced when moving to Py3
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled

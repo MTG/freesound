@@ -21,7 +21,8 @@
 from __future__ import print_function
 
 from builtins import hex
-from builtins import str
+from builtins import str as new_str
+from builtins import bytes
 from builtins import object
 import errno
 import hashlib
@@ -49,6 +50,9 @@ class File(object):
 
 
 def generate_tree(path):
+    # Force path to use the "old" py2 str type. This should not be needed when using py3
+    path = str(path)
+
     counter = 0
     lookups = {path: File(counter, path, path, True)}
     files = {}
@@ -151,7 +155,7 @@ class TemporaryDirectory(object):
                 # Issue #10188: Emit a warning on stderr
                 # if the directory could not be cleaned
                 # up due to missing globals
-                if "None" not in str(ex):
+                if "None" not in new_str(ex):
                     raise
                 print("ERROR: {!r} while cleaning up {!r}".format(ex, self, ),
                       file=sys.stderr)

@@ -1244,15 +1244,15 @@ class FreesoundApiV2Resources(GenericAPIView):
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('api_root'))
         api_index = [
-            {'Search resources': OrderedDict(sorted(dict({
+            {'Search resources': OrderedDict(sorted({
                     '01 Text Search': prepend_base(
                         reverse('apiv2-sound-text-search'), request_is_secure=request.is_secure()),
                     '02 Content Search': prepend_base(
                         reverse('apiv2-sound-content-search'), request_is_secure=request.is_secure()),
                     '03 Combined Search': prepend_base(
                         reverse('apiv2-sound-combined-search'), request_is_secure=request.is_secure()),
-                }).items(), key=lambda t: t[0]))},
-                {'Sound resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'Sound resources': OrderedDict(sorted({
                     '01 Sound instance': prepend_base(
                         reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'),
                         request_is_secure=request.is_secure()),
@@ -1278,8 +1278,8 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '11 Pending uploads': prepend_base(reverse('apiv2-uploads-pending')),
                     '12 Edit sound description': prepend_base(
                         reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
-                }).items(), key=lambda t: t[0]))},
-                {'User resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'User resources': OrderedDict(sorted({
                     '01 User instance': prepend_base(
                         reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
@@ -1296,8 +1296,8 @@ class FreesoundApiV2Resources(GenericAPIView):
                         reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
                             .replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
-                }.items()), key=lambda t: t[0]))},
-                {'Pack resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'Pack resources': OrderedDict(sorted({
                     '01 Pack instance': prepend_base(
                         reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'),
                         request_is_secure=request.is_secure()),
@@ -1306,11 +1306,11 @@ class FreesoundApiV2Resources(GenericAPIView):
                         request_is_secure=request.is_secure()),
                     '03 Download pack': prepend_base(
                         reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
-                }).items(), key=lambda t: t[0]))},
-                {'Other resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'Other resources': OrderedDict(sorted({
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
                     '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
-                }).items(), key=lambda t: t[0]))},
+                }.items(), key=lambda t: t[0]))},
             ]
 
         # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested

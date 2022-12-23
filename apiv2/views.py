@@ -63,7 +63,7 @@ from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFi
     CreateRatingSerializer, CreateBookmarkSerializer, BookmarkCategorySerializer, PackSerializer, UserSerializer, \
     SoundSerializer, SoundListSerializer
 from .apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, \
-    OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, \
+    OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_sound_ids, api_search, \
     ApiSearchPaginator, get_sounds_descriptors, prepend_base, get_formatted_examples_for_view
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
@@ -141,9 +141,8 @@ class TextSearch(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
-        sound_analysis_data = get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
-
         sounds = []
         for i, sid in enumerate(ids):
             try:
@@ -232,13 +231,13 @@ class ContentSearch(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
 
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -352,13 +351,13 @@ class CombinedSearch(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
 
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -479,7 +478,7 @@ class SimilarSounds(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         qs = Sound.objects.select_related('user', 'pack', 'license')\
             .filter(id__in=ids)\
             .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
@@ -489,7 +488,7 @@ class SimilarSounds(GenericAPIView):
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -615,7 +614,6 @@ class UserSounds(ListAPIView):
         queryset = Sound.objects.select_related('user', 'pack', 'license')\
             .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])\
             .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
-        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 
@@ -708,7 +706,6 @@ class UserBookmarkCategorySounds(ListAPIView):
             queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException(resource=self)
-        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 
@@ -755,7 +752,6 @@ class PackSounds(ListAPIView):
         queryset = Sound.objects.select_related('user', 'pack', 'license')\
             .filter(moderation_state="OK", processing_state="OK", pack__id=self.kwargs['pk'])\
             .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
-        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 

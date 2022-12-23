@@ -141,13 +141,13 @@ class TextSearch(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
 
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
                         pack_id =  more_from_pack_data[sid][1][:more_from_pack_data[sid][1].find("_")]

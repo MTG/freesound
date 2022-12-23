@@ -565,18 +565,21 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
         # Required descriptors are indicated with the parameter 'descriptors'.
         # If 'descriptors' is empty, we return nothing
         descriptors = view.request.query_params.get('descriptors', [])
-        view.sound_analysis_data = {}
+        sound_analysis_data = {}
         if descriptors:
             try:
-                view.sound_analysis_data = get_sounds_descriptors(
+                sound_analysis_data = get_sounds_descriptors(
                     ids, descriptors.split(','), view.request.query_params.get('normalized', '0') == '1',
                     only_leaf_descriptors=True)
             except:
                 pass
         else:
             for id in ids:
-                view.sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors ' \
+                sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors ' \
                                                     'you want with the \'descriptors\' request parameter.'
+        return sound_analysis_data
+    else:
+        return None
 
 
 # APIv1 end of life

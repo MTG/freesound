@@ -29,7 +29,7 @@ from django.core.signing import TimestampSigner
 def sign_with_timestamp(unsigned_value):
     signer = TimestampSigner()
     value = signer.sign(unsigned_value)
-    orig_val, signed_value = value.split(":", maxsplit=1)
+    orig_val, signed_value = value.split(":", 1)
     return signed_value
 
 

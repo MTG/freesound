@@ -46,7 +46,7 @@ from general.templatetags.filter_img import replace_img
 from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis
 from sounds.models import Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
-from utils.encryption import encrypt
+from utils.encryption import sign_with_timestamp
 from utils.filesystem import create_directories
 from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 
@@ -354,22 +354,23 @@ class SoundViewsTestCase(TestCase):
         sound.change_moderation_state("OK")
         self.client.force_login(user)
 
-        # Try delete with incorrect encrypted sound id link (should not delete sound)
-        encrypted_link = encrypt(u"%d\t%f" % (1234, time.time()))
+        # Try to delete with incorrect encrypted sound id link (should not delete sound)
+        encrypted_link = sign_with_timestamp(1234)
         resp = self.client.post(reverse('sound-delete',
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(resp.status_code, 403)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
 
-        # Try delete with expired encrypted link (should not delete sound)
-        encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time() - 15))
+        # Try to delete with expired encrypted link (should not delete sound)
+        encrypted_link = sign_with_timestamp(sound.id)
+        time.sleep(10)
         resp = self.client.post(reverse('sound-delete',
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
 
-        # Try delete with valid link (should delete sound)
-        encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time()))
+        # Try to delete with valid link (should delete sound)
+        encrypted_link = sign_with_timestamp(sound.id)
         resp = self.client.post(reverse('sound-delete',
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)

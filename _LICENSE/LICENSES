@@ -21,7 +21,6 @@ Python dependencies
 * python-beautifulsoup 3.1.0.1-2 (c) 1996-2012 Leonard Richardson. BSD "3-clause".
   www.crummy.com/software/BeautifulSoup
 * python-yaml 3.05-5 (c) 2006 Kitill Simonov. MIT License ("expat"). www.pyyaml.org
-* python-crypto 2.1.0-2. Public domain. www.dlitz.net/software/pycrypto
 * python-feedparser 4.1-14 (c) 2002-2008 Mark Pilgrim, 2010-2012 Kurt McKee. MIT License
   ("expat"). code.google.com/p/feedparser
 * python-cjson 1.0.5-4. LGPL2+. pypi.python.org/pypi/python-cjson/1.0.5

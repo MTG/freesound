@@ -21,7 +21,6 @@
 from __future__ import print_function
 
 import re
-import time
 
 from builtins import object
 from captcha.fields import ReCaptchaField
@@ -30,9 +29,10 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
+from django.core.signing import BadSignature, SignatureExpired
 
 from sounds.models import License, Flag, Pack, Sound
-from utils.encryption import decrypt, encrypt
+from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
 
@@ -254,18 +254,20 @@ class DeleteSoundForm(forms.Form):
         data = self.cleaned_data['encrypted_link']
         if not data:
             raise PermissionDenied
-        sound_id, now = decrypt(data).split("\t")
+        try:
+            sound_id = unsign_with_timestamp(str(self.sound_id), data, max_age=10)
+        except SignatureExpired:
+            raise forms.ValidationError("Time expired")
+        except BadSignature:
+            raise PermissionDenied
         sound_id = int(sound_id)
         if sound_id != self.sound_id:
             raise PermissionDenied
-        link_generated_time = float(now)
-        if abs(time.time() - link_generated_time) > 10:
-            raise forms.ValidationError("Time expired")
         return data
 
     def __init__(self, *args, **kwargs):
         self.sound_id = int(kwargs.pop('sound_id'))
-        encrypted_link = encrypt(u"%d\t%f" % (self.sound_id, time.time()))
+        encrypted_link = sign_with_timestamp(self.sound_id)
         kwargs['initial'] = {
                 'encrypted_link': encrypted_link
                 }

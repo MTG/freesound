@@ -23,7 +23,7 @@
 from rest_framework import exceptions
 from rest_framework.authentication import get_authorization_header
 from rest_framework.authentication import BaseAuthentication, SessionAuthentication as DjangoRestFrameworkSessionAuthentication
-from oauth2_provider.ext.rest_framework import OAuth2Authentication as Oauth2ProviderOauth2Authentication
+from oauth2_provider.contrib.rest_framework import OAuth2Authentication as Oauth2ProviderOauth2Authentication
 from apiv2.models import ApiV2Client
 
 

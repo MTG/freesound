@@ -1296,7 +1296,7 @@ class FreesoundApiV2Resources(GenericAPIView):
                         reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
                             .replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
-                }.items()), key=lambda t: t[0]))},
+                }).items(), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted(dict({
                     '01 Pack instance': prepend_base(
                         reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'),

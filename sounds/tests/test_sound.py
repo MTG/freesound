@@ -27,6 +27,7 @@ import json
 import os
 import time
 
+import six
 import mock
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -178,7 +179,7 @@ class ChangeSoundOwnerTestCase(TestCase):
         # Delete original user and perform further checks
         userA.profile.delete_user(delete_user_object_from_db=True)
         sound = Sound.objects.get(id=target_sound_id)
-        self.assertItemsEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
+        six.assertCountEqual(self, [ti.id for ti in sound.tags.all()], target_sound_tags)
         delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in remaining_sound_ids], any_order=True)
 
 

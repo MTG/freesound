@@ -48,6 +48,7 @@ pytz==2020.1
 PyYAML==5.4.1
 redis==3.2.0
 sentry-sdk==0.14.4
+six
 Sphinx==1.6.3
 stripe==2.28.1
 xlrd==1.1.0

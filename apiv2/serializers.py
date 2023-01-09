@@ -57,12 +57,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     default_fields = None
 
     def __init__(self, *args, **kwargs):
-        if 'sound_analysis_data' in kwargs:
-            # A sound_analysis_data is a dictionary with sound analysis informartion for sound ids
-            self.sound_analysis_data = kwargs.get('sound_analysis_data')
-            del kwargs['sound_analysis_data']
-        else:
-            self.sound_analysis_data = {}
+        self.sound_analysis_data = kwargs.pop('sound_analysis_data', {})
         super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
         if not requested_fields:  # If parameter is in url but parameter is empty, set to default

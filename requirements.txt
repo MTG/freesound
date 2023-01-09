@@ -39,7 +39,6 @@ networkx==1.5
 numpy==1.16.6
 pillow==6.2.2
 psycopg2==2.7.7
-pycrypto==2.6.1
 PyJWT==1.4.2
 pyparsing==2.4.7
 pysolr==3.10.0b1

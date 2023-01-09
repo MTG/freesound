@@ -45,6 +45,7 @@ from django.template import loader
 from django.urls import reverse, resolve
 from django.utils.six.moves.urllib.parse import urlparse
 from ratelimit.decorators import ratelimit
+from django.core.signing import BadSignature, SignatureExpired
 
 from comments.forms import CommentForm
 from comments.models import Comment
@@ -59,7 +60,7 @@ from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, Sound
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
-from utils.encryption import encrypt, decrypt
+from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
@@ -600,19 +601,21 @@ def pack_delete(request, username, pack_id):
     encrypted_string = request.GET.get("pack", None)
     waited_too_long = False
     if encrypted_string is not None:
-        pack_id, now = decrypt(encrypted_string).split("\t")
+        try:
+            pack_id = unsign_with_timestamp(str(pack.id), encrypted_string, max_age=10)
+        except SignatureExpired:
+            waited_too_long = True
+        except BadSignature:
+            raise PermissionDenied
         pack_id = int(pack_id)
-        link_generated_time = float(now)
         if pack_id != pack.id:
             raise PermissionDenied
-        if abs(time.time() - link_generated_time) < 10:
+        if not waited_too_long:
             web_logger.info("User %s requested to delete pack %s" % (request.user.username, pack_id))
             pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
-        else:
-            waited_too_long = True
 
-    encrypted_link = encrypt(u"%d\t%f" % (pack.id, time.time()))
+    encrypted_link = sign_with_timestamp(pack.id)
     tvars = {
         'pack': pack,
         'encrypted_link': encrypted_link,

@@ -57,6 +57,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     default_fields = None
 
     def __init__(self, *args, **kwargs):
+        self.sound_analysis_data = kwargs.pop('sound_analysis_data', {})
         super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
         if not requested_fields:  # If parameter is in url but parameter is empty, set to default
@@ -288,11 +289,8 @@ class SoundListSerializer(AbstractSoundSerializer):
     def get_analysis(self, obj):
         if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
-        # Get descriptors from the view class (should have been requested before the serializer is invoked)
-        try:
-            return self.context['view'].sound_analysis_data[str(obj.id)]
-        except Exception as e:
-            return None
+        # Get descriptors from self.sound_analysis_data (should have been passed to the serializer)
+        return self.sound_analysis_data.get(str(obj.id), None)
 
     def get_ac_analysis(self, obj):
         # Get ac analysis data form the object itself as it will have been included in the Sound

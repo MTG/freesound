@@ -29,6 +29,7 @@ from builtins import str
 from builtins import range
 from past.utils import old_div
 from builtins import object
+import collections
 import datetime
 import json
 import logging
@@ -263,7 +264,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
         kwargs['context'] = self.get_serializer_context()
         if 'SoundListSerializer' in str(serializer_class):
             # If we are trying to serialize sounds, check if we should and sound analysis data to them and add it
-            if isinstance(args[0], Iterable):
+            if isinstance(args[0], collections.Iterable):
                 sound_analysis_data = get_analysis_data_for_sound_ids(kwargs['context']['request'], sound_ids=[s.id for s in args[0]])
                 if sound_analysis_data:
                     kwargs['sound_analysis_data'] = sound_analysis_data

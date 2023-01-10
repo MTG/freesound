@@ -124,7 +124,10 @@ def parse_query_filter_string(filter_query):
         List[List[str]]: list containing lists of filter fields' names and values
     """
     if filter_query:
-        filter_list_str = expression.parseString(filter_query).asList()[0]
+        try:
+            filter_list_str = expression.parseString(filter_query).asList()[0]
+        except pp.ParseSyntaxException:
+            return []
 
         # check if not nested meaning there is only one filter
         # if yes, make it nested to treat it the same way as if there were several filters

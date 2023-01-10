@@ -45,6 +45,7 @@ services:
             - db
             - rabbitmq
             - redis
+            - search
 
     # Search server
     search:

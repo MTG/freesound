@@ -45,7 +45,6 @@ PyJWT==1.4.2
 pyparsing==2.4.7
 pysolr==3.10.0b1
 pysndfile==1.4.4
-python-cjson==1.1.0
 pytz==2020.1
 PyYAML==5.4.1
 redis==3.2.0

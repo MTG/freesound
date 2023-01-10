@@ -751,7 +751,7 @@ def pack(request, username, pack_id):
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
 
     user = request.parameter_user
     order = request.GET.get("order", "name")
@@ -769,7 +769,7 @@ def packs_for_user(request, username):
 @redirect_if_old_username_or_404
 def for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
 
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)

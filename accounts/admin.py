@@ -322,6 +322,17 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     full_delete.label = "Full delete"
     full_delete.short_description = 'Completely delete user from db'
 
+    def clear_spam_flags(self, request, obj):
+        num_akismet, _ = obj.akismetspam_set.all().delete()
+        num_reports, _ = obj.flags.all().delete()
+        messages.add_message(request, messages.INFO,
+                                 'User \'%s\' flags have been cleared: %i akismet flags and %i user reports.' 
+                                 % (obj.username, num_akismet, num_reports))
+        return HttpResponseRedirect(reverse('admin:auth_user_change', args=[obj.id]))
+
+    clear_spam_flags.label = "Clear spam flags"
+    clear_spam_flags.short_description = 'Clear all user flags for of spam reports and akismet'
+
     def view_on_site_action(self, request, obj):
         return HttpResponseRedirect(reverse('account', args=[obj.username]))
 
@@ -337,7 +348,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     # NOTE: in the line below we removed the 'full_delete' option as ideally we should never need to use it. In for
     # some unexpected reason we happen to need it, we can call the .delete() method on a user object using the terminal.
     # If we observe a real need for that, we can re-add the option to the admin.
-    change_actions = ('edit_profile_admin', 'view_on_site_action',
+    change_actions = ('edit_profile_admin', 'view_on_site_action', 'clear_spam_flags',
                       'delete_spammer', 'delete_include_sounds', 'delete_preserve_sounds', )
 
 

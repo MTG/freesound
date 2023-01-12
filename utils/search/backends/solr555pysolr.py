@@ -33,7 +33,7 @@ from django.conf import settings
 from forum.models import Post
 from sounds.models import Sound
 from utils.text import remove_control_chars
-from utils.search import SearchEngineBase, SearchResults
+from utils.search import SearchEngineBase, SearchResults, SearchEngineException
 from utils.search.backends.solr451custom import SolrQuery, SolrResponseInterpreter
 
 
@@ -351,19 +351,28 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     # Sound methods
     def add_sounds_to_index(self, sound_objects):
         documents = [convert_sound_to_search_engine_document(s) for s in sound_objects]
-        self.get_sounds_index().add(documents)
+        try:
+            self.get_sounds_index().add(documents)
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
-        for sound_object_or_id in sound_objects_or_ids:
-            if type(sound_object_or_id) != Sound:
-                sound_id = sound_object_or_id
-            else:
-                sound_id = sound_object_or_id.id
-            self.get_sounds_index().delete(id=str(sound_id))
+        try:
+            for sound_object_or_id in sound_objects_or_ids:
+                if type(sound_object_or_id) != Sound:
+                    sound_id = sound_object_or_id
+                else:
+                    sound_id = sound_object_or_id.id
+                self.get_sounds_index().delete(id=str(sound_id))
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def remove_all_sounds(self):
         """Removes all sounds from the search index"""
-        self.get_sounds_index().delete(q="*:*")
+        try:
+            self.get_sounds_index().delete(q="*:*")
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def sound_exists_in_index(self, sound_object_or_id):
         if type(sound_object_or_id) != Sound:
@@ -438,17 +447,20 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Do the query!
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
-        results = self.get_sounds_index().search(**query.as_dict())
-        return SearchResults(
-            docs=results.docs,
-            num_found=results.num_found,
-            start=results.start,
-            num_rows=results.num_rows,
-            non_grouped_number_of_results=results.non_grouped_number_of_results,
-            facets=results.facets,
-            highlighting=results.highlighting,
-            q_time=results.q_time
-        )
+        try:
+            results = self.get_sounds_index().search(**query.as_dict())
+            return SearchResults(
+                docs=results.docs,
+                num_found=results.num_found,
+                start=results.start,
+                num_rows=results.num_rows,
+                non_grouped_number_of_results=results.non_grouped_number_of_results,
+                facets=results.facets,
+                highlighting=results.highlighting,
+                q_time=results.q_time
+            )
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def get_random_sound_id(self):
         query = SolrQueryPySolr()
@@ -457,29 +469,42 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         filter_query = 'is_explicit:0'
         query.set_query("*:*")
         query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
-        response = self.get_sounds_index().search(search_handler="select", **query.as_dict())
-        docs = response.docs
-        if docs:
-            return int(docs[0]['id'])
-        return 0
+        try:
+            response = self.get_sounds_index().search(search_handler="select", **query.as_dict())
+            docs = response.docs
+            if docs:
+                return int(docs[0]['id'])
+            return 0
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     # Forum posts methods
     def add_forum_posts_to_index(self, forum_post_objects):
         documents = [convert_post_to_search_engine_document(p) for p in forum_post_objects]
         documents = [d for d in documents if d is not None]
-        self.get_forum_index().add(documents)
+        try:
+            self.get_forum_index().add(documents)
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
-        for post_object_or_id in forum_post_objects_or_ids:
-            if type(post_object_or_id) != Post:
-                post_id = post_object_or_id
-            else:
-                post_id = post_object_or_id.id
-            self.get_forum_index().delete(id=str(post_id))
+        try:
+            for post_object_or_id in forum_post_objects_or_ids:
+                if type(post_object_or_id) != Post:
+                    post_id = post_object_or_id
+                else:
+                    post_id = post_object_or_id.id
+
+                self.get_forum_index().delete(id=str(post_id))
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def remove_all_forum_posts(self):
         """Removes all forum posts from the search index"""
-        self.get_forum_index().delete(q="*:*")
+        try:
+            self.get_forum_index().delete(q="*:*")
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
         if type(forum_post_object_or_id) != Post:
@@ -528,17 +553,20 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Do the query!
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
-        results = self.get_forum_index().search(**query.as_dict())
-        return SearchResults(
-            docs=results.docs,
-            num_found=results.num_found,
-            start=results.start,
-            num_rows=results.num_rows,
-            non_grouped_number_of_results=results.non_grouped_number_of_results,
-            facets=results.facets,
-            highlighting=results.highlighting,
-            q_time=results.q_time
-        )
+        try:
+            results = self.get_forum_index().search(**query.as_dict())
+            return SearchResults(
+                docs=results.docs,
+                num_found=results.num_found,
+                start=results.start,
+                num_rows=results.num_rows,
+                non_grouped_number_of_results=results.non_grouped_number_of_results,
+                facets=results.facets,
+                highlighting=results.highlighting,
+                q_time=results.q_time
+            )
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     # Tag clouds methods
     def get_user_tags(self, username):
@@ -548,8 +576,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)
-        results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
-        return results.facets['tag']
+        try:
+            results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
+            return results.facets['tag']
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
 
     def get_pack_tags(self, username, pack_name):
         query = SolrQueryPySolr()
@@ -558,5 +589,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)
-        results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
-        return results.facets['tag']
+        try:
+            results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
+            return results.facets['tag']
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)

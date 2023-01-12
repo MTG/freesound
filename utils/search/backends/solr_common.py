@@ -30,35 +30,6 @@ import urllib.request, urllib.parse, urllib.error
 from utils.search import SearchEngineException
 
 
-class Multidict(dict):
-    """A dictionary that represents a query string. If values in the dics are tuples, they are expanded.
-    None values are skipped and all values are utf-encoded. We need this because in solr, we can have multiple
-    fields with the same value, like facet.field
-
-    >>> [ (key, value) for (key,value) in Multidict({"a": 1, "b": (2,3,4), "c":None, "d":False}).items() ]
-    [('a', 1), ('b', 2), ('b', 3), ('b', 4), ('d', 'false')]
-    """
-
-    def items(self):
-        # generator that retuns all items
-        def all_items():
-            for (key, value) in dict.items(self):
-                if isinstance(value, tuple) or isinstance(value, list):
-                    for v in value:
-                        yield key, v
-                else:
-                    yield key, value
-
-        # generator that filters all items: drop (key, value) pairs with value=None and convert bools to lower case strings
-        for (key, value) in filter(lambda key_value: key_value[1] != None and key_value[1] != "", all_items()):
-            if isinstance(value, bool):
-                value = str(value).lower()
-            else:
-                value = str(value).encode('utf-8')
-
-            yield (key, value)
-
-
 class SolrQuery(object):
     """A wrapper around a lot of Solr query funcionality.
     """
@@ -282,7 +253,7 @@ class SolrQuery(object):
         self.params['f.%s.hl.simple.post' % field] = post
 
     def __unicode__(self):
-        return urllib.parse.urlencode(Multidict(self.params))
+        return urllib.parse.urlencode(self.params, doseq=True)
 
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field

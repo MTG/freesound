@@ -305,6 +305,14 @@ class SolrQuery(object):
         self.params['group.truncate'] = group_truncate
         self.params['group.cache.percent'] = group_cache_percent
 
+    def as_kwargs(self):
+        """Return params in a way that can be passed to pysolr commands as kwargs"""
+        params = {k: v for k, v in self.params.items() if v is not None}
+        for k, v in params.items():
+            if type(v) == bool:
+                params[k] = json.dumps(v)
+        return params
+
 
 class SolrResponseInterpreter(object):
     def __init__(self, response, next_page_query=None):

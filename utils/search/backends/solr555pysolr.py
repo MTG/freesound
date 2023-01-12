@@ -34,7 +34,7 @@ from forum.models import Post
 from sounds.models import Sound
 from utils.text import remove_control_chars
 from utils.search import SearchEngineBase, SearchResults, SearchEngineException
-from utils.search.backends.solr451custom import SolrQuery, SolrResponseInterpreter
+from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 
 
 SOLR_FORUM_URL = settings.SOLR5_FORUM_URL
@@ -313,14 +313,6 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
 
         return json.JSONEncoder.default(self, value)
 
-class SolrQueryPySolr(SolrQuery):
-
-    def as_dict(self):
-        params = {k: v for k, v in self.params.items() if v is not None}
-        for k, v in params.items():
-            if type(v) == bool:
-                params[k] = json.dumps(v)
-        return params
 
 class Solr555PySolrSearchEngine(SearchEngineBase):
     sounds_index = None
@@ -387,7 +379,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                       group_by_pack=False, facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
                       group_counts_as_one_in_facets=False):
 
-        query = SolrQueryPySolr()
+        query = SolrQuery()
 
 
         # Process search fields: replace "db" field names by solr field names and set default weights if needed
@@ -448,7 +440,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
         try:
-            results = self.get_sounds_index().search(**query.as_dict())
+            results = self.get_sounds_index().search(**query.as_kwargs())
             return SearchResults(
                 docs=results.docs,
                 num_found=results.num_found,
@@ -463,14 +455,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             raise SearchEngineException(e)
 
     def get_random_sound_id(self):
-        query = SolrQueryPySolr()
+        query = SolrQuery()
         rand_key = random.randint(1, 10000000)
         sort = ['random_%d asc' % rand_key]
         filter_query = 'is_explicit:0'
         query.set_query("*:*")
         query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
         try:
-            response = self.get_sounds_index().search(search_handler="select", **query.as_dict())
+            response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
             docs = response.docs
             if docs:
                 return int(docs[0]['id'])
@@ -516,7 +508,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,
                            num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
-        query = SolrQueryPySolr()
+        query = SolrQuery()
         query.set_dismax_query(textual_query, query_fields=[("thread_title", 4),
                                                             ("post_body", 3),
                                                             ("thread_author", 3),
@@ -554,7 +546,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
         try:
-            results = self.get_forum_index().search(**query.as_dict())
+            results = self.get_forum_index().search(**query.as_kwargs())
             return SearchResults(
                 docs=results.docs,
                 num_found=results.num_found,
@@ -570,27 +562,27 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     # Tag clouds methods
     def get_user_tags(self, username):
-        query = SolrQueryPySolr()
+        query = SolrQuery()
         query.set_dismax_query('*:*')
         filter_query = 'username:\"%s\"' % username
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)
         try:
-            results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
+            results = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
             return results.facets['tag']
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
 
     def get_pack_tags(self, username, pack_name):
-        query = SolrQueryPySolr()
+        query = SolrQuery()
         query.set_dismax_query('*:*')
         filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)
         try:
-            results = self.get_sounds_index().search(search_handler="select", **query.as_dict())
+            results = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
             return results.facets['tag']
         except pysolr.SolrError as e:
             raise SearchEngineException(e)

@@ -141,7 +141,7 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=txt')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertEqual(resp.content,
+        self.assertContains(resp,
                          'P: {0} by {1} | License: {0}\nS: {2} by {3} | License: {4}\n'.format(
                              self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
                              self.sound.license))

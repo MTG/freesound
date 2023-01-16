@@ -998,7 +998,7 @@ class SoundTemplateCacheTests(TestCase):
         self._test_add_remove_remixes(
             self._get_sound_view_footer_top_cache_keys(),
             '<a id="remixes_link"',
-            self._get_sound_view(),
+            self._get_sound_view,
         )
 
     def _test_state_change(self, cache_keys, change_state, texts):

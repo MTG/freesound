@@ -37,6 +37,7 @@ import subprocess
 import numpy
 import pysndfile
 from PIL import Image, ImageDraw
+from six import PY2
 
 from .color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
 from utils.audioprocessing import get_sound_type
@@ -106,7 +107,8 @@ class AudioProcessor(object):
     """
 
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
-        input_filename = bytes(input_filename.encode('utf-8'))  # This should not be needed when migrating to Py3
+        if PY2:
+            input_filename = bytes(input_filename.encode('utf-8'))  # This should not be needed when migrating to Py3
         
         max_level = get_max_level(input_filename)
         self.audio_file = pysndfile.PySndfile(input_filename, 'r')

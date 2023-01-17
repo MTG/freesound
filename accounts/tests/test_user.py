@@ -342,7 +342,7 @@ class UserDelete(TestCase):
         self.assertRedirects(resp, reverse('front-page'))
 
         # Check loaded page contains message about user deletion
-        self.assertContains(resp, 'Your user account will be deleted in a few moments')
+        self.assertContains(resp, 'Your user account will be deleted in a few moments', status_code=302)
 
     @mock.patch('general.tasks.delete_user.delay')
     def test_user_delete_keep_sounds_using_web_form(self, submit_job):
@@ -370,7 +370,7 @@ class UserDelete(TestCase):
         self.assertRedirects(resp, reverse('front-page'))
 
         # Check loaded page contains message about user deletion
-        self.assertContains(resp, 'Your user account will be deleted in a few moments')
+        self.assertContains(resp, 'Your user account will be deleted in a few moments', status_code=302)
 
     def test_fail_user_delete_include_sounds_using_web_form(self):
         # Test delete user account form with wrong password does not delete

@@ -48,14 +48,14 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Test successful file upload
         filename = "file.wav"
-        f = SimpleUploadedFile(filename, "file_content")
+        f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post("/home/upload/html/", {'file': f})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), True)
 
         # Test file upload that should fail
         filename = "file.xyz"
-        f = SimpleUploadedFile(filename, "file_content")
+        f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post("/home/upload/html/", {'file': f})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
@@ -196,7 +196,7 @@ class BulkDescribe(TestCase):
 
         # Test successful file upload and redirect
         filename = "file.csv"
-        f = SimpleUploadedFile(filename, "file_content")
+        f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post(reverse('accounts-describe'), {u'bulk-csv_file': f})
         bulk = BulkUploadProgress.objects.get(user=user)
         self.assertRedirects(resp, reverse('accounts-bulk-describe', args=[bulk.id]))

@@ -296,6 +296,7 @@ class SolrResponseInterpreter(object):
 
             self.docs = [{
                 'id': group['doclist']['docs'][0]['id'],
+                'score': group['doclist']['docs'][0]['score'],
                 'n_more_in_group': group['doclist']['numFound'] - 1,
                 'group_docs': group['doclist']['docs'],
                 'group_name': group['groupValue']

@@ -68,7 +68,6 @@ class TestSearchEngineBackend():
         for count, doc in enumerate(results.docs):
             self.output_file.write('\t{}. {}: {}\n'.format(count + 1, doc['id'], doc))
 
-
     def run_sounds_query_and_save_results(self, query_data):
         """Run a sounds search query in the search engine, save and return the results
 
@@ -91,7 +90,6 @@ class TestSearchEngineBackend():
             self.save_query_results(results, query_data, end - start, query_type='SOUNDS')
 
         return results
-
 
     def run_forum_query_and_save_results(self, query_data):
         """Run a forum posts search query in the search engine, save and return the results
@@ -116,6 +114,26 @@ class TestSearchEngineBackend():
 
         return results
 
+    def sound_check_mandatory_doc_fields(self):
+        # Check that returned sounds (docs) from search engine include the mandatory fields
+
+        # Check the case of non-grouped search results
+        mandatory_fields = ['id', 'score']
+        results = self.run_sounds_query_and_save_results(dict(num_sounds=1, group_by_pack=False))
+        for result in results.docs:
+            for field in mandatory_fields:
+                assert_and_continue(field in result, 
+                                    'Mandatory field {} not present in result when not grouping (available fields: {})'
+                                    .format(field, ', '.join(result.keys())))
+
+        # Check the case of grouped search results
+        mandatory_fields = ['id', 'score', 'group_name', 'n_more_in_group', 'group_docs']                        
+        results = self.run_sounds_query_and_save_results(dict(num_sounds=1, group_by_pack=True, only_sounds_with_pack=True))
+        for result in results.docs:
+            for field in mandatory_fields:
+                assert_and_continue(field in result, 
+                                    'Mandatory field {} not present in result when grouping by pack (available fields: {})'
+                                    .format(field, ', '.join(result.keys())))
 
     def sound_check_random_sound(self):
         # Get random sound IDs and make sure these are different
@@ -333,7 +351,7 @@ class TestSearchEngineBackend():
         # Re-index all sounds to leave index in "correct" state
         self.search_engine.add_sounds_to_index(sounds)
 
-
+        self.sound_check_mandatory_doc_fields()
         self.sound_check_random_sound()
         self.sound_check_offsets()
         self.sound_check_empty_query()
@@ -349,6 +367,27 @@ class TestSearchEngineBackend():
                             'reindex_search_engine_sounds -c command to make sure the index is left in a correct '
                             'state after having run these tests')
 
+    def forum_check_mandatory_doc_fields(self):
+        # Check that returned forum posts (docs) from search engine include the mandatory fields
+         
+        # Check the case of non-grouped search results
+        mandatory_fields = ['id', 'score', 'post_body', 'thread_author', 'forum_name', 'forum_name_slug']
+        results = self.run_forum_query_and_save_results(dict(num_posts=1, group_by_thread=False))
+        for result in results.docs:
+            for field in mandatory_fields:
+                assert_and_continue(field in result, 
+                                    'Mandatory field {} not present in result when not grouping by thread (available fields: {})'
+                                    .format(field, ', '.join(result.keys())))
+
+        # Check the case of grouped search results
+        mandatory_fields = ['id', 'score', 'group_name', 'n_more_in_group', 'group_docs']                        
+        results = self.run_forum_query_and_save_results(dict(num_posts=1, group_by_thread=True))
+        for result in results.docs:
+            for field in mandatory_fields:
+                assert_and_continue(field in result, 
+                                    'Mandatory field {} not present in result when grouping by thread (available fields: {})'
+                                    .format(field, ', '.join(result.keys())))
+    
     def forum_check_offsets(self):
         # Test num_posts/offset/current_page parameters
         results = self.run_forum_query_and_save_results(dict(num_posts=10, offset=0))
@@ -460,6 +499,7 @@ class TestSearchEngineBackend():
         # Re-index all posts to leave index in "correct" state
         self.search_engine.add_forum_posts_to_index(posts)
 
+        self.forum_check_mandatory_doc_fields()
         self.forum_check_offsets()
         self.forum_check_empty_query()
         self.forum_check_group_by_thread()

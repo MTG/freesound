@@ -20,6 +20,9 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import logging
 
 from collections import Counter
@@ -30,13 +33,14 @@ from django.db.models.functions import Greatest
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 
 import accounts
 from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_posts_from_search_engine
+from utils.text import slugify
 
 web_logger = logging.getLogger('web')
 
@@ -73,7 +77,15 @@ class Forum(OrderedModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("forums-forum", args=[smart_unicode(self.name_slug)])
+        return reverse("forums-forum", args=[smart_text(self.name_slug)])
+
+
+@receiver(pre_save, sender=Forum)
+def forum_pre_save_set_slug(sender, instance, **kwargs):
+    """If a forum has a name set but not a slug, automatically generate the slug
+    """
+    if not instance.id and not instance.name_slug:
+        instance.name_slug = slugify(instance.name)
 
 
 class Thread(models.Model):
@@ -120,7 +132,7 @@ class Thread(models.Model):
             self.save(update_fields=['first_post'])
 
     def get_absolute_url(self):
-        return reverse("forums-thread", args=[smart_unicode(self.forum.name_slug), self.id])
+        return reverse("forums-thread", args=[smart_text(self.forum.name_slug), self.id])
 
     def is_user_subscribed(self, user):
         """A user is subscribed to a thread if a Subscription object exists that related the two of them"""
@@ -137,7 +149,7 @@ class Thread(models.Model):
         }
         return info_to_return
 
-    class Meta:
+    class Meta(object):
         ordering = ('-status', '-last_post__created')
 
     def __unicode__(self):
@@ -210,7 +222,7 @@ class Post(models.Model):
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 
-    class Meta:
+    class Meta(object):
         ordering = ('created',)
         permissions = (
             ("can_moderate_forum", "Can moderate posts."),
@@ -220,7 +232,7 @@ class Post(models.Model):
         return u"Post by %s in %s" % (self.author, self.thread)
 
     def get_absolute_url(self):
-        return reverse("forums-post", args=[smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id])
+        return reverse("forums-post", args=[smart_text(self.thread.forum.name_slug), self.thread.id, self.id])
 
 
 @receiver(pre_save, sender=Post)
@@ -336,9 +348,8 @@ class Subscription(models.Model):
     thread = models.ForeignKey(Thread)
     is_active = models.BooleanField(db_index=True, default=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ("subscriber", "thread")
 
     def __unicode__(self):
         return u"%s subscribed to %s" % (self.subscriber, self.thread)
-F

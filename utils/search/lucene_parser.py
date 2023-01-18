@@ -17,6 +17,9 @@
 # Authors:
 #     See AUTHORS file.
 #
+from builtins import map
+from builtins import chr
+from past.builtins import basestring
 import collections
 
 import pyparsing as pp
@@ -25,9 +28,9 @@ from pyparsing import pyparsing_common as ppc
 
 pp.ParserElement.enablePackrat()
 
-COLON, LBRACK, RBRACK, LBRACE, RBRACE, TILDE, CARAT = map(pp.Literal, ":[]{}~^")
-LPAR, RPAR = map(pp.Literal, "()")
-and_, or_, not_, to_ = map(pp.CaselessKeyword, "AND OR NOT TO".split())
+COLON, LBRACK, RBRACK, LBRACE, RBRACE, TILDE, CARAT = list(map(pp.Literal, ":[]{}~^"))
+LPAR, RPAR = list(map(pp.Literal, "()"))
+and_, or_, not_, to_ = list(map(pp.CaselessKeyword, "AND OR NOT TO".split()))
 keyword = and_ | or_ | not_ | to_
 
 expression = pp.Forward()
@@ -121,7 +124,10 @@ def parse_query_filter_string(filter_query):
         List[List[str]]: list containing lists of filter fields' names and values
     """
     if filter_query:
-        filter_list_str = expression.parseString(filter_query).asList()[0]
+        try:
+            filter_list_str = expression.parseString(filter_query).asList()[0]
+        except pp.ParseSyntaxException:
+            return []
 
         # check if not nested meaning there is only one filter
         # if yes, make it nested to treat it the same way as if there were several filters

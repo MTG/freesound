@@ -18,7 +18,11 @@
 #     See AUTHORS file.
 #
 
-import urllib
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+import urllib.request, urllib.parse, urllib.error
 from django import template
 
 register = template.Library()
@@ -54,7 +58,7 @@ def show_paginator(
 
     # although paginator objects are 0-based, we use 1-based paging
     page_numbers = [n for n in range(min_page_num, max_page_num) if n > 0 and n <= paginator.num_pages]
-    params = urllib.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
+    params = urllib.parse.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
                                if key.lower() != u"page"])
 
     if params == "":

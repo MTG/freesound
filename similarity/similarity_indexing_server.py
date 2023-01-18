@@ -27,6 +27,7 @@ can be reloaded with the new index.
 
 from __future__ import absolute_import
 
+from builtins import str
 import json
 import logging
 from logging.handlers import RotatingFileHandler

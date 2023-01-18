@@ -18,12 +18,13 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
@@ -102,9 +103,9 @@ def add_bookmark(request, sound_id):
         form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
         if form.is_valid():
             saved_bookmark = form.save()
-            msg_to_return = 'Bookmark created with name "{}"'.format(saved_bookmark.name_or_sound_name)
+            msg_to_return = u'Bookmark created with name "{}"'.format(saved_bookmark.name_or_sound_name)
             if saved_bookmark.category:
-                msg_to_return += ' under category "{}".'.format(saved_bookmark.category.name)
+                msg_to_return += u' under category "{}".'.format(saved_bookmark.category.name)
             else:
                 msg_to_return += '.'
 

@@ -1,6 +1,8 @@
+from future import standard_library
+standard_library.install_aliases()
 from django import template
 from django.urls import reverse
-from urllib import quote
+from urllib.parse import quote
 
 register = template.Library()
 

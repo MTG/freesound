@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,11 +19,13 @@
 #     See AUTHORS file.
 #
 
+from builtins import map
+from builtins import str
+from past.utils import old_div
 import datetime
 import json
 import logging
 import time
-from collections import defaultdict
 from django.views.decorators.clickjacking import xframe_options_exempt
 from operator import itemgetter
 
@@ -32,7 +35,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models.functions import Greatest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404, \
@@ -42,12 +45,12 @@ from django.template import loader
 from django.urls import reverse, resolve
 from django.utils.six.moves.urllib.parse import urlparse
 from ratelimit.decorators import ratelimit
+from django.core.signing import BadSignature, SignatureExpired
 
 from comments.forms import CommentForm
 from comments.models import Comment
-from donations.models import DonationsModalSettings, Donation
+from donations.models import DonationsModalSettings
 from follow import follow_utils
-from forum.models import Thread
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
@@ -57,13 +60,12 @@ from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, Sound
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
-from utils.encryption import encrypt, decrypt
+from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search import get_search_engine
 from utils.search.search_sounds import get_random_sound_id_from_search_engine
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
@@ -371,7 +373,7 @@ def sound_download(request, username, sound_id):
         cdn_filename = cache_cdn_map.get(str(sound_id), None)
         if cdn_filename is not None:
             # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(int(sound_id)/1000), cdn_filename, sound.friendly_filename())
+            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(old_div(int(sound_id),1000)), cdn_filename, sound.friendly_filename())
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
@@ -599,19 +601,21 @@ def pack_delete(request, username, pack_id):
     encrypted_string = request.GET.get("pack", None)
     waited_too_long = False
     if encrypted_string is not None:
-        pack_id, now = decrypt(encrypted_string).split("\t")
+        try:
+            pack_id = unsign_with_timestamp(str(pack.id), encrypted_string, max_age=10)
+        except SignatureExpired:
+            waited_too_long = True
+        except BadSignature:
+            raise PermissionDenied
         pack_id = int(pack_id)
-        link_generated_time = float(now)
         if pack_id != pack.id:
             raise PermissionDenied
-        if abs(time.time() - link_generated_time) < 10:
+        if not waited_too_long:
             web_logger.info("User %s requested to delete pack %s" % (request.user.username, pack_id))
             pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
-        else:
-            waited_too_long = True
 
-    encrypted_link = encrypt(u"%d\t%f" % (pack.id, time.time()))
+    encrypted_link = sign_with_timestamp(pack.id)
     tvars = {
         'pack': pack,
         'encrypted_link': encrypted_link,
@@ -747,7 +751,7 @@ def pack(request, username, pack_id):
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
 
     user = request.parameter_user
     order = request.GET.get("order", "name")
@@ -765,7 +769,7 @@ def packs_for_user(request, username):
 @redirect_if_old_username_or_404
 def for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
 
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import datetime
 import logging.config
@@ -116,13 +117,13 @@ ADMIN_REORDER = (
         'oauth2_provider.RefreshToken',
         'oauth2_provider.Grant',
     )},
-    'forum',
+    str('forum'),  # str() should be replaced when moving to Py3
     {'app': 'donations', 'models': (
         'donations.Donation',
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-    'sites',
+    str('sites'),  # str() should be replaced when moving to Py3
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -481,6 +482,8 @@ AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 
+from builtins import str  # This is needed while moving from py2 to py3 for str type compatibility
+
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
         'descriptors_map': [
@@ -582,8 +585,6 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
 }
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine'
-SOLR4_SOUNDS_URL = "http://search:8080/fs2/"
-SOLR4_FORUM_URL = "http://search:8080/forum/"
 SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
 SOLR5_FORUM_URL = "http://search:8983/solr/forum/"
 

@@ -1,3 +1,4 @@
+from builtins import str
 from django import template
 from bs4 import BeautifulSoup
 

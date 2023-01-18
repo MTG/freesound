@@ -18,11 +18,14 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import datetime
 import logging
 import requests
 import json
-from urlparse import parse_qs
+from urllib.parse import parse_qs
 from django.conf import settings
 from django.contrib.auth.models import User
 from donations.models import Donation, DonationCampaign

@@ -20,7 +20,6 @@
 #
 
 import logging
-import time
 
 from builtins import object
 from builtins import str
@@ -40,9 +39,10 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from multiupload.fields import MultiFileField
+from django.core.signing import BadSignature, SignatureExpired
 
 from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
-from utils.encryption import decrypt, encrypt
+from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension
 from utils.spam import is_spam
 
@@ -502,21 +502,23 @@ class DeleteUserForm(forms.Form):
         data = self.cleaned_data['encrypted_link']
         if not data:
             raise PermissionDenied
-        user_id, now = decrypt(data).split("\t")
+        try:
+            user_id = unsign_with_timestamp(str(self.user_id), data, max_age=10)
+        except SignatureExpired:
+            raise forms.ValidationError("Sorry, you waited too long, ... try again?")
+        except BadSignature:
+            raise PermissionDenied
         user_id = int(user_id)
         if user_id != self.user_id:
             raise PermissionDenied
-        link_generated_time = float(now)
-        if abs(time.time() - link_generated_time) > 10:
-            raise forms.ValidationError("Sorry, you waited too long, ... try again?")
 
     def reset_encrypted_link(self, user_id):
         self.data = self.data.copy()
-        self.data["encrypted_link"] = encrypt(u"%d\t%f" % (user_id, time.time()))
+        self.data["encrypted_link"] = sign_with_timestamp(user_id)
 
     def __init__(self, *args, **kwargs):
         self.user_id = kwargs.pop('user_id')
-        encrypted_link = encrypt(u"%d\t%f" % (self.user_id, time.time()))
+        encrypted_link = sign_with_timestamp(self.user_id)
         kwargs['initial'] = {
                 'delete_sounds': 'only_user',
                 'encrypted_link': encrypted_link

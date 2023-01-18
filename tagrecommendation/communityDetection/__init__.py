@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
+from builtins import object
 from sklearn.externals import joblib
 from numpy import load, where, zeros
 from utils import loadFromJson
@@ -25,7 +27,7 @@ from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
 import os
 
 
-class CommunityDetector:
+class CommunityDetector(object):
     verbose = None
     clf = None
     clf_type = None
@@ -85,4 +87,4 @@ class CommunityDetector:
         instance_vector = self.load_instance_vector_from_tags(input_tags)
         cl = self.clf.predict([instance_vector])[0]
 
-        return str(self.class_name_ids[unicode(cl)])
+        return str(self.class_name_ids[str(cl)])

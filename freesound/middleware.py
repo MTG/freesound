@@ -17,8 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
-import urllib
 
+from builtins import object
 import json
 import logging
 
@@ -26,8 +26,8 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
-from accounts.models import GdprAcceptance
 
+from accounts.models import GdprAcceptance
 from utils.onlineusers import cache_online_users
 
 web_logger = logging.getLogger('web')

@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 
 from django.contrib.contenttypes.models import ContentType
@@ -41,7 +42,7 @@ class SoundRating(models.Model):
     def __unicode__(self):
         return u"%s rated %s: %d" % (self.user, self.sound, self.rating)
 
-    class Meta:
+    class Meta(object):
         unique_together = (('user', 'sound'),)
         ordering = ('-created',)
 

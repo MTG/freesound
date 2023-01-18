@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -32,7 +33,7 @@ class FollowingUserItem(models.Model):
     def __unicode__(self):
         return u"%s following %s" % (self.user_from, self.user_to)
 
-    class Meta:
+    class Meta(object):
         verbose_name_plural = "Users"
         unique_together = ("user_from", "user_to")
 
@@ -55,6 +56,6 @@ class FollowingQueryItem(models.Model):
     def get_space_tags(self):
         return self.query
 
-    class Meta:
+    class Meta(object):
         verbose_name_plural = 'Tags'
         unique_together = ("user", "query")

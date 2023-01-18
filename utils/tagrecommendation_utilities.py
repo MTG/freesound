@@ -19,10 +19,12 @@ from __future__ import print_function
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
 import json
 import logging
 import traceback
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from hashlib import md5
 from math import ceil
 
@@ -66,7 +68,7 @@ def get_recommended_tags_view(request):
                 try:
                     tags, community = get_recommended_tags(input_tags)
                     return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
-                except urllib2.URLError as e:
+                except urllib.error.URLError as e:
                     web_logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
                                      (e, traceback.format_exc()))
                     return HttpResponseUnavailabileError()

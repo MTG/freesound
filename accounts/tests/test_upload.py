@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
 import os
 
 import mock
@@ -47,14 +48,14 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Test successful file upload
         filename = "file.wav"
-        f = SimpleUploadedFile(filename, "file_content")
+        f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post("/home/upload/html/", {'file': f})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), True)
 
         # Test file upload that should fail
         filename = "file.xyz"
-        f = SimpleUploadedFile(filename, "file_content")
+        f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post("/home/upload/html/", {'file': f})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
@@ -195,7 +196,7 @@ class BulkDescribe(TestCase):
 
         # Test successful file upload and redirect
         filename = "file.csv"
-        f = SimpleUploadedFile(filename, "file_content")
+        f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post(reverse('accounts-describe'), {u'bulk-csv_file': f})
         bulk = BulkUploadProgress.objects.get(user=user)
         self.assertRedirects(resp, reverse('accounts-bulk-describe', args=[bulk.id]))
@@ -275,8 +276,8 @@ class BulkDescribe(TestCase):
         # show that info to the users. First we fake some data for the bulk object
         bulk.progress_type = 'F'
         bulk.validation_output = {
-            'lines_ok': range(5),  # NOTE: we only use the length of these lists, so we fill them with irrelevant data
-            'lines_with_errors': range(2),
+            'lines_ok': list(range(5)),  # NOTE: we only use the length of these lists, so we fill them with irrelevant data
+            'lines_with_errors': list(range(2)),
             'global_errors': [],
         }
         bulk.description_output = {

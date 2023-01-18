@@ -22,12 +22,17 @@
 
 
 from __future__ import absolute_import
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.utils import old_div
 import datetime
 import json
 import logging
 import os
 from collections import OrderedDict
-from urllib import quote
+from urllib.parse import quote
 
 import jwt
 from django.conf import settings
@@ -58,7 +63,7 @@ from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFi
     CreateRatingSerializer, CreateBookmarkSerializer, BookmarkCategorySerializer, PackSerializer, UserSerializer, \
     SoundSerializer, SoundListSerializer
 from .apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, \
-    OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, \
+    OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_sound_ids, api_search, \
     ApiSearchPaginator, get_sounds_descriptors, prepend_base, get_formatted_examples_for_view
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
@@ -138,13 +143,12 @@ class TextSearch(GenericAPIView):
         object_list = [ob for ob in page['object_list']]
         id_score_map = dict(object_list)
         sound_ids = [ob[0] for ob in object_list]
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=sound_ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids)
-
         sounds = []
         for i, sid in enumerate(sound_ids):
             try:
-                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), score_map=id_score_map).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), score_map=id_score_map, sound_analysis_data=sound_analysis_data).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
                         pack_id =  more_from_pack_data[sid][1][:more_from_pack_data[sid][1].find("_")]
@@ -215,7 +219,7 @@ class ContentSearch(GenericAPIView):
         response_data = dict()
         if self.analysis_file:
             response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
-                                                                    self.analysis_file._size/1024)
+                                                                    old_div(self.analysis_file._size,1024))
         response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
@@ -229,13 +233,13 @@ class ContentSearch(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
 
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -327,7 +331,7 @@ class CombinedSearch(GenericAPIView):
         response_data = dict()
         if self.analysis_file:
             response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
-                                                                    self.analysis_file._size/1024)
+                                                                    old_div(self.analysis_file._size,1024))
 
         # Build 'more' link (only add it if we know there might be more results)
         if 'no_more_results' not in extra_parameters:
@@ -335,7 +339,7 @@ class CombinedSearch(GenericAPIView):
                 response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
                                                                    include_page=False)
             else:
-                num_pages = count / search_form.cleaned_data['page_size'] + \
+                num_pages = old_div(count, search_form.cleaned_data['page_size']) + \
                             int(count % search_form.cleaned_data['page_size'] != 0)
                 if search_form.cleaned_data['page'] < num_pages:
                     response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
@@ -349,13 +353,13 @@ class CombinedSearch(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
 
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -476,7 +480,7 @@ class SimilarSounds(GenericAPIView):
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         qs = Sound.objects.select_related('user', 'pack', 'license')\
             .filter(id__in=ids)\
             .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
@@ -486,7 +490,7 @@ class SimilarSounds(GenericAPIView):
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -612,7 +616,6 @@ class UserSounds(ListAPIView):
         queryset = Sound.objects.select_related('user', 'pack', 'license')\
             .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])\
             .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
-        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 
@@ -705,7 +708,6 @@ class UserBookmarkCategorySounds(ListAPIView):
             queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException(resource=self)
-        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 
@@ -752,7 +754,6 @@ class PackSounds(ListAPIView):
         queryset = Sound.objects.select_related('user', 'pack', 'license')\
             .filter(moderation_state="OK", processing_state="OK", pack__id=self.kwargs['pk'])\
             .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
-        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 
@@ -1241,15 +1242,15 @@ class FreesoundApiV2Resources(GenericAPIView):
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('api_root'))
         api_index = [
-            {'Search resources': OrderedDict(sorted(dict({
+            {'Search resources': OrderedDict(sorted({
                     '01 Text Search': prepend_base(
                         reverse('apiv2-sound-text-search'), request_is_secure=request.is_secure()),
                     '02 Content Search': prepend_base(
                         reverse('apiv2-sound-content-search'), request_is_secure=request.is_secure()),
                     '03 Combined Search': prepend_base(
                         reverse('apiv2-sound-combined-search'), request_is_secure=request.is_secure()),
-                }).items(), key=lambda t: t[0]))},
-                {'Sound resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'Sound resources': OrderedDict(sorted({
                     '01 Sound instance': prepend_base(
                         reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'),
                         request_is_secure=request.is_secure()),
@@ -1275,8 +1276,8 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '11 Pending uploads': prepend_base(reverse('apiv2-uploads-pending')),
                     '12 Edit sound description': prepend_base(
                         reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
-                }).items(), key=lambda t: t[0]))},
-                {'User resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'User resources': OrderedDict(sorted({
                     '01 User instance': prepend_base(
                         reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
@@ -1293,8 +1294,8 @@ class FreesoundApiV2Resources(GenericAPIView):
                         reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
                             .replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
-                }).items(), key=lambda t: t[0]))},
-                {'Pack resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'Pack resources': OrderedDict(sorted({
                     '01 Pack instance': prepend_base(
                         reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'),
                         request_is_secure=request.is_secure()),
@@ -1303,11 +1304,11 @@ class FreesoundApiV2Resources(GenericAPIView):
                         request_is_secure=request.is_secure()),
                     '03 Download pack': prepend_base(
                         reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
-                }).items(), key=lambda t: t[0]))},
-                {'Other resources': OrderedDict(sorted(dict({
+                }.items(), key=lambda t: t[0]))},
+                {'Other resources': OrderedDict(sorted({
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
                     '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
-                }).items(), key=lambda t: t[0]))},
+                }.items(), key=lambda t: t[0]))},
             ]
 
         # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested
@@ -1480,7 +1481,7 @@ def granted_permissions(request):
     for token in tokens_raw:
         if not token.application.apiv2_client.name in token_names:
             td = (token.expires - datetime.datetime.today())
-            seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+            seconds_to_expiration_date = old_div((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6), 10**6)
             tokens.append({
                 'client_name': token.application.apiv2_client.name,
                 'expiration_date': token.expires,
@@ -1497,7 +1498,7 @@ def granted_permissions(request):
     for grant in grants_pending_access_token_request_raw:
         if not grant.application.apiv2_client.name in grant_and_token_names:
             td = (grant.expires - datetime.datetime.today())
-            seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+            seconds_to_expiration_date = old_div((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6), 10**6)
             if seconds_to_expiration_date > 0:
                 grants.append({
                     'client_name': grant.application.apiv2_client.name,

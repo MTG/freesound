@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import ipaddress
 import logging
 import random
@@ -73,7 +74,7 @@ def add_new_ip_to_block(ip):
         ip (str): IP to block. Can also specify a range as described in ipaddress.IPv4Network docs.
     """
     try:
-        ipaddress.ip_network(unicode(ip))
+        ipaddress.ip_network(str(ip))
     except ValueError as e:
         console_logger.info('The provided IP {} is not valid: {}'.format(ip, e))
         return
@@ -99,7 +100,7 @@ def ip_is_blocked(ip):
 
     """
     for ip_to_block in get_ips_to_block():
-        if ipaddress.ip_network(unicode(ip_to_block)).overlaps(ipaddress.ip_network(unicode(ip))):
+        if ipaddress.ip_network(str(ip_to_block)).overlaps(ipaddress.ip_network(str(ip))):
             return True
     return False
 

@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django import forms
 from wiki import models
 
@@ -26,7 +27,7 @@ class ContentForm(forms.ModelForm):
     title = forms.CharField(label='Page name', widget=forms.TextInput(attrs={'size': '100'}))
     body = forms.CharField(widget=forms.Textarea(attrs={'rows': '40', 'cols': '100'}))
 
-    class Meta:
+    class Meta(object):
         model = models.Content
         exclude = ('author', 'page', 'created')
 

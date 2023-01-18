@@ -20,9 +20,10 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 
 
 class MessageBody(models.Model):
@@ -98,11 +99,10 @@ class Message(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def get_absolute_url(self):
-        return "message", (smart_unicode(self.id),)
+        return "message", (smart_text(self.id),)
 
     def __unicode__(self):
         return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
     
-    class Meta:
+    class Meta(object):
         ordering = ('-created',)
-

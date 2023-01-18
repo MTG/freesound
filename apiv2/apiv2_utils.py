@@ -22,11 +22,19 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
+import collections
 import datetime
 import json
 import logging
-import urlparse
-from urllib import unquote
+import urllib.parse
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -40,6 +48,7 @@ from oauthlib.common import generate_client_id as oauthlib_generate_client_id
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, \
     ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from rest_framework.renderers import BrowsableAPIRenderer
+from rest_framework.response import Response
 from rest_framework.utils import formatting
 
 from . import combined_search_strategies
@@ -152,11 +161,11 @@ class FreesoundAPIViewMixin(object):
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
             if request.get_host().startswith('www'):
                 domain = "%s://%s" % ('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
-                return_url = urlparse.urljoin(domain, request.get_full_path())
+                return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
             if request.scheme != 'https' and not settings.DEBUG:
                 domain = "https://%s" % Site.objects.get_current().domain
-                return_url = urlparse.urljoin(domain, request.get_full_path())
+                return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
         return response
 
@@ -248,6 +257,18 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
         super(ListAPIView, self).initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.store_monitor_usage()
+
+    def get_serializer(self, *args, **kwargs):
+        # Overwrite DRF's get_serializer method so that we add sound analysis information when requested
+        serializer_class = self.get_serializer_class()
+        kwargs['context'] = self.get_serializer_context()
+        if 'SoundListSerializer' in str(serializer_class):
+            # If we are trying to serialize sounds, check if we should and sound analysis data to them and add it
+            if isinstance(args[0], collections.Iterable):
+                sound_analysis_data = get_analysis_data_for_sound_ids(kwargs['context']['request'], sound_ids=[s.id for s in args[0]])
+                if sound_analysis_data:
+                    kwargs['sound_analysis_data'] = sound_analysis_data
+        return serializer_class(*args, **kwargs)
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
@@ -490,8 +511,8 @@ class ApiSearchPaginator(object):
     def __init__(self, results, count, num_per_page):
         self.num_per_page = num_per_page
         self.count = count
-        self.num_pages = count / num_per_page + int(count % num_per_page != 0)
-        self.page_range = range(1, self.num_pages + 1)
+        self.num_pages = old_div(count, num_per_page) + int(count % num_per_page != 0)
+        self.page_range = list(range(1, self.num_pages + 1))
         self.results = results
 
     def page(self, page_num):
@@ -541,35 +562,25 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
 # Similarity utils
 ##################
 
-def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[]):
-    # Get analysis data for all requested sounds and save it to a class variable so the serializer can access it and
-    # we only need one request to the similarity service
-
-    analysis_data_required = 'analysis' in view.request.query_params.get('fields', '').split(',')
-    if analysis_data_required:
-        # Get ids of the particular sounds we need
-        if queryset:
-            paginated_queryset = view.paginate_queryset(queryset)
-            ids = [int(sound.id) for sound in paginated_queryset]
-        else:
-            ids = [int(sid) for sid in sound_ids]
-
-        # Get descriptor values for the required ids
-        # Required descriptors are indicated with the parameter 'descriptors'.
-        # If 'descriptors' is empty, we return nothing
-        descriptors = view.request.query_params.get('descriptors', [])
-        view.sound_analysis_data = {}
+def get_analysis_data_for_sound_ids(request, sound_ids=[]):
+    # Get analysis data for all requested sounds and return it as a dictionary    
+    sound_analysis_data = {}
+    analysis_data_is_requested = 'analysis' in request.query_params.get('fields', '').split(',')
+    if analysis_data_is_requested:
+        descriptors = request.query_params.get('descriptors', '').split(',')
+        normalized = request.query_params.get('normalized', '0') == '1'
+        ids = [int(sid) for sid in sound_ids]
         if descriptors:
             try:
-                view.sound_analysis_data = get_sounds_descriptors(
-                    ids, descriptors.split(','), view.request.query_params.get('normalized', '0') == '1',
-                    only_leaf_descriptors=True)
+                sound_analysis_data = get_sounds_descriptors(ids, descriptors, normalized, only_leaf_descriptors=True)
             except:
                 pass
         else:
             for id in ids:
-                view.sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors ' \
+                sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors ' \
                                                     'you want with the \'descriptors\' request parameter.'
+    return sound_analysis_data
+
 
 
 # APIv1 end of life

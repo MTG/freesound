@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from future import standard_library
+standard_library.install_aliases()
 from django.core.management.base import BaseCommand
 from forum.models import Thread
 from forum.models import Post

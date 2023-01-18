@@ -20,6 +20,10 @@
 #     See AUTHORS file.
 #
 
+from __future__ import division
+from builtins import str
+from builtins import object
+from past.utils import old_div
 import datetime
 import os
 import random
@@ -36,7 +40,7 @@ from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 from django.utils.timezone import now
 
 import tickets.models
@@ -198,11 +202,11 @@ class Profile(SocialModel):
         return self.num_sound_downloads + self.num_pack_downloads
 
     def get_absolute_url(self):
-        return reverse('account', args=[smart_unicode(self.user.username)])
+        return reverse('account', args=[smart_text(self.user.username)])
 
     @staticmethod
     def locations_static(user_id, has_avatar):
-        id_folder = str(user_id / 1000)
+        id_folder = str(old_div(user_id, 1000))
         if has_avatar:
             s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, user_id)
             m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, user_id)
@@ -570,14 +574,14 @@ class Profile(SocialModel):
         # TODO: don't compute this realtime, store it in DB
         ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
         if ratings:
-            return 1.0*sum(ratings)/len(ratings)
+            return old_div(1.0*sum(ratings),len(ratings))
         else:
             return 0
 
     @property
     def avg_rating_0_5(self):
         # Returns the average raring, normalized from 0 tp 5
-        return self.avg_rating/2
+        return old_div(self.avg_rating,2)
 
     def get_total_uploaded_sounds_length(self):
         # TODO: don't compute this realtime, store it in DB
@@ -611,7 +615,7 @@ class UserFlag(models.Model):
     def __unicode__(self):
         return u"Flag %s: %s" % (self.content_type, self.object_id)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-user__username",)
 
 
@@ -722,7 +726,7 @@ class EmailBounce(models.Model):
 
     timestamp = models.DateTimeField(default=now)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-timestamp",)
         unique_together = ('user', 'type', 'timestamp')
 

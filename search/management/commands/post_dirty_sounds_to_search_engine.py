@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
 import logging
 
 from sounds.models import Sound

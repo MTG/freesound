@@ -20,6 +20,7 @@
 
 from __future__ import print_function
 
+from builtins import object
 from tagRecommendation import TagRecommender
 from communityDetection import CommunityDetector
 from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
@@ -27,7 +28,7 @@ from utils import loadFromJson
 from numpy import load
 
 
-class CommunityBasedTagRecommender():
+class CommunityBasedTagRecommender(object):
 
     recommenders = None
     communityDetector = None

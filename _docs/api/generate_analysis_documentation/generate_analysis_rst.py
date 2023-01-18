@@ -3,7 +3,10 @@
 
 from __future__ import print_function
 
-import urllib2,json
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+import urllib.request, urllib.error, urllib.parse,json
 
 
 header = """
@@ -56,8 +59,8 @@ desc_exceptions = ["metadata.audio_properties","metadata.version","rhythm.onset_
 
 example_url = "https://freesound.org/api/sounds/1234/analysis/?api_key=53b80e4d8a674ccaa80b780372103680&all=True"
 
-req = urllib2.Request(example_url)
-resp = urllib2.urlopen(req)
+req = urllib.request.Request(example_url)
+resp = urllib.request.urlopen(req)
 top = json.loads(resp.read())
 
 

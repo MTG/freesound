@@ -326,7 +326,9 @@ class UserDelete(TestCase):
         encr_link = form.initial['encrypted_link']
         resp = self.client.post(
             reverse('accounts-delete'),
-            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
+            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'},
+            follow=True,
+        )
 
         # Test job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
@@ -342,7 +344,7 @@ class UserDelete(TestCase):
         self.assertRedirects(resp, reverse('front-page'))
 
         # Check loaded page contains message about user deletion
-        self.assertContains(resp, 'Your user account will be deleted in a few moments', status_code=302)
+        self.assertContains(resp, 'Your user account will be deleted in a few moments')
 
     @mock.patch('general.tasks.delete_user.delay')
     def test_user_delete_keep_sounds_using_web_form(self, submit_job):
@@ -354,7 +356,9 @@ class UserDelete(TestCase):
         encr_link = form.initial['encrypted_link']
         resp = self.client.post(
             reverse('accounts-delete'),
-            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
+            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'},
+            follow=True,
+        )
 
         # Test job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
@@ -370,7 +374,7 @@ class UserDelete(TestCase):
         self.assertRedirects(resp, reverse('front-page'))
 
         # Check loaded page contains message about user deletion
-        self.assertContains(resp, 'Your user account will be deleted in a few moments', status_code=302)
+        self.assertContains(resp, 'Your user account will be deleted in a few moments')
 
     def test_fail_user_delete_include_sounds_using_web_form(self):
         # Test delete user account form with wrong password does not delete

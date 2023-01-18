@@ -18,12 +18,15 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
+
 import datetime
 import logging
 import os
 import time
 
 from django.conf import settings
+from tags.models import TaggedItem
 
 import utils.search
 from forum.models import Post
@@ -264,6 +267,50 @@ class TestSearchEngineBackend():
         self.run_sounds_query_and_save_results(dict(textual_query='piano loop'))
         self.run_sounds_query_and_save_results(dict(textual_query='explosion'))
 
+    def sound_check_get_user_tags(self, sound):
+        """
+        search_engine.get_user_tags() returns the top 10 tags that a user has applied,
+        so this could by chance not coincide with any of the tags on this sound.
+        Instead, get all tags by the user and check that the ones from solr are a subset of them.
+        """
+        user_tagged_items = TaggedItem.objects.filter(user=sound.user).select_related('tag').all()
+        all_user_tags = [ti.tag.name for ti in user_tagged_items]
+        tags_and_counts = self.search_engine.get_user_tags(sound.user.username)
+        search_engine_tags = [t[0] for t in tags_and_counts]
+
+        remaining_tags = set(search_engine_tags) - set(all_user_tags)
+        assert_and_continue(len(remaining_tags) == 0, "get_user_tags returned tags which the user hasn't tagged")
+
+        if self.output_file:
+            self.output_file.write('\n* USER "{}" TOP TAGS FROM SEARCH ENGINE: {}\n'.format(sound.user.username, search_engine_tags))
+
+    def sound_check_get_pack_tags(self, sounds):
+        """
+        Choose a sound that has a pack and tags, get all tags for all sounds in the pack.
+        Check that the tags for a user/pack are a subset of all of these sounds
+        """
+        # Find a sound in our dataset of known sounds that has a pack and tags
+        target_sound = None
+        for sound in sounds:
+            if sound.pack and sound.tags.count():
+                target_sound = sound
+                break
+
+        assert_and_continue(target_sound is not None, "Sample sounds dataset doesn't have any sounds with a pack and tags")
+        if target_sound:
+            pack = target_sound.pack
+            all_sound_tags = []
+            for s in pack.sounds.all():
+                all_sound_tags.extend([t.lower() for t in s.get_sound_tags()])
+
+            tags_and_counts = self.search_engine.get_pack_tags(target_sound.user.username, pack.name)
+            search_engine_tags = [t[0].lower() for t in tags_and_counts]
+            remaining_tags = set(search_engine_tags) - set(all_sound_tags)
+            assert_and_continue(len(remaining_tags) == 0, "get_pack_tags returned tags which the user hasn't tagged")
+
+            if self.output_file:
+                self.output_file.write('\n* PACK "{}" TOP TAGS FROM SEARCH ENGINE: {}\n'.format(pack.id, search_engine_tags))
+
     def test_search_enginge_backend_sounds(self):
         # Get sounds for testing
         test_sound_ids = list(Sound.public
@@ -319,6 +366,8 @@ class TestSearchEngineBackend():
         self.sound_check_sounds_with_pack()
         self.sound_check_facets()
         self.sound_check_extra_queries()
+        self.sound_check_get_user_tags(sounds[0])
+        self.sound_check_get_pack_tags(sounds)
 
         console_logger.info('Testing of sound search methods finished. You might want to run the '
                             'reindex_search_engine_sounds -c command to make sure the index is left in a correct '

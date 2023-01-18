@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,12 +17,15 @@ from __future__ import division
 # Authors:
 #     See AUTHORS file.
 #
+
+from __future__ import division
+
 from future import standard_library
 standard_library.install_aliases()
 from past.utils import old_div
-from builtins import object
 import datetime
 import re
+import functools
 
 from django.conf import settings
 from django.contrib import messages
@@ -57,16 +59,13 @@ def deactivate_spammer(user_id):
     user.save()
 
 
-class last_action(object):
-    def __init__(self, view_func):
-        self.view_func = view_func
-        self.__name__ = view_func.__name__
-        self.__doc__ = view_func.__doc__
+def last_action(view_func):
 
-    def __call__(self, request, *args, **kwargs):
+    @functools.wraps(view_func)
+    def inner(request, *args, **kwargs):
 
         if not request.user.is_authenticated:
-            return self.view_func(request, *args, **kwargs)
+            return view_func(request, *args, **kwargs)
 
         from datetime import datetime, timedelta
         date_format = "%Y-%m-%d %H:%M:%S:%f"
@@ -85,11 +84,13 @@ class last_action(object):
 
         request.last_action_time = string2date(request.session.get(key, now_as_string))
 
-        reply_object = self.view_func(request, *args, **kwargs)
+        reply_object = view_func(request, *args, **kwargs)
 
         reply_object.set_cookie(key, now_as_string, 60*60*24*30)  # 30 days
 
         return reply_object
+
+    return inner
 
 
 @last_action

@@ -19,7 +19,6 @@ from __future__ import division
 #     See AUTHORS file.
 #
 
-from past.builtins import cmp
 from builtins import zip
 from builtins import range
 from past.utils import old_div
@@ -61,9 +60,9 @@ def annotate_tags(tags, sort=None, small_size=0.7, large_size=1.8):
     tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
     if sort is not None:
         if sort == "name":
-            tags.sort(cmp=lambda x, y: cmp(x["name"].lower(), y["name"].lower()))
+            tags.sort(key=lambda x: x["name"].lower())
         elif sort == "count":
-            tags.sort(cmp=lambda x, y: cmp(x["count"], y["count"]), reverse=True)
+            tags.sort(key=lambda x: x["count"], reverse=True)
     return tags
 
 

@@ -34,7 +34,7 @@ from utils.tags import clean_and_split_tags
 
 def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024):
     """
-    This function generates test files ith random content and saves them in the specified directory.
+    This function generates test files with random content and saves them in the specified directory.
     :param filenames: list of names for the files to generate
     :param directory: folder where to store the files
     :param paths: if provided, then files are created in the indicated paths regardless of filenames and direcotry args
@@ -43,13 +43,13 @@ def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024):
     if paths is None:
         create_directories(directory)
         for filename in filenames:
-            f = open(os.path.join(directory, filename), 'w')
+            f = open(os.path.join(directory, filename), 'wb')
             f.write(os.urandom(n_bytes))
             f.close()
     else:
         for path in paths:
             create_directories(os.path.dirname(path))
-            f = open(path, 'w')
+            f = open(path, 'wb')
             f.write(os.urandom(n_bytes))
             f.close()
 

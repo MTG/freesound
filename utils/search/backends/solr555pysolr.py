@@ -525,6 +525,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_query_options(start=offset,
                                 rows=num_posts,
                                 field_list=["id",
+                                            "score",
                                             "forum_name",
                                             "forum_name_slug",
                                             "thread_id",

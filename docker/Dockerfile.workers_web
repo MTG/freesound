@@ -1,3 +1,5 @@
+ARG PYTHON_MAJOR_VERSION=2
+
 # --- build stereofy static binary
 
 FROM debian:10 as stereofy
@@ -11,7 +13,8 @@ RUN make clean && make
 
 # --- main Freesound docker file contents
 
-FROM freesound:2020-02
+FROM freesound:2023-01-py${PYTHON_MAJOR_VERSION}
+ARG PYTHON_MAJOR_VERSION
 
 # Install specific dependencies needed for processing, building static files and for ssh
 RUN wget -q -O - https://deb.nodesource.com/setup_14.x | bash - && apt-get update \
@@ -44,7 +47,9 @@ COPY --from=stereofy /code/stereofy /usr/local/bin
 
 # Install python dependencies
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir -r /code/requirements.txt
+RUN if [ ${PYTHON_MAJOR_VERSION} -eq 3 ]; then pip${PYTHON_MAJOR_VERSION} install --no-cache-dir -U pip 'setuptools<=58'; fi && \
+    pip${PYTHON_MAJOR_VERSION} install --no-cache-dir -r /code/requirements.txt
+
 
 # Copy source code
 COPY --chown=fsweb:fsweb . /code

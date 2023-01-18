@@ -276,10 +276,13 @@ class TestSearchEngineBackend():
         user_tagged_items = TaggedItem.objects.filter(user=sound.user).select_related('tag').all()
         all_user_tags = [ti.tag.name for ti in user_tagged_items]
         tags_and_counts = self.search_engine.get_user_tags(sound.user.username)
-        solr_tags = [t[0] for t in tags_and_counts]
+        search_engine_tags = [t[0] for t in tags_and_counts]
 
-        remaining_tags = set(solr_tags) - set(all_user_tags)
+        remaining_tags = set(search_engine_tags) - set(all_user_tags)
         assert_and_continue(len(remaining_tags) == 0, "get_user_tags returned tags which the user hasn't tagged")
+
+        if self.output_file:
+            self.output_file.write('\n* USER "{}" TOP TAGS FROM SEARCH ENGINE: {}\n'.format(sound.user.username, search_engine_tags))
 
     def sound_check_get_pack_tags(self, sounds):
         """
@@ -301,9 +304,12 @@ class TestSearchEngineBackend():
                 all_sound_tags.extend([t.lower() for t in s.get_sound_tags()])
 
             tags_and_counts = self.search_engine.get_pack_tags(target_sound.user.username, pack.name)
-            solr_tags = [t[0].lower() for t in tags_and_counts]
-            remaining_tags = set(solr_tags) - set(all_sound_tags)
+            search_engine_tags = [t[0].lower() for t in tags_and_counts]
+            remaining_tags = set(search_engine_tags) - set(all_sound_tags)
             assert_and_continue(len(remaining_tags) == 0, "get_pack_tags returned tags which the user hasn't tagged")
+
+            if self.output_file:
+                self.output_file.write('\n* PACK "{}" TOP TAGS FROM SEARCH ENGINE: {}\n'.format(pack.id, search_engine_tags))
 
     def test_search_enginge_backend_sounds(self):
         # Get sounds for testing

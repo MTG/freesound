@@ -54,6 +54,7 @@ class SearchResults(object):
                 of a sound), but it can also include other properties. Here is a list of possible properties:
                 - id (int): ID of the matched object (a sound or forum post). If results are grouped, this will be the ID of
                     the first matching result in the group
+                - score (float): score of the matched object as provided by the search engine
                 - group_name (str): the name of the group. This includes the value of the grouping field shared by all
                     grouped results (only if grouping).
                 - group_docs (List[Dict]): information about of results in the group. This is a list of dictionaries

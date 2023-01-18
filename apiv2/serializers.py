@@ -57,6 +57,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     default_fields = None
 
     def __init__(self, *args, **kwargs):
+        self.score_map = kwargs.pop('score_map', {})
         self.sound_analysis_data = kwargs.pop('sound_analysis_data', {})
         super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
@@ -108,7 +109,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis_frames',
                   'analysis_stats',
                   'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
-                  'analyzers_output'
+                  'analyzers_output',
+                  'score',
                   )
 
     url = serializers.SerializerMethodField()
@@ -123,6 +125,13 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             return obj.username
         except AttributeError:
             return obj.user.username
+
+    score = serializers.SerializerMethodField()
+    def get_score(self, obj):
+        if self.score_map:
+            return self.score_map.get(obj.id)
+        else:
+            return None
 
     name = serializers.SerializerMethodField()
     def get_name(self, obj):

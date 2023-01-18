@@ -338,8 +338,8 @@ def api_search(
                 num_sounds=search_form.cleaned_data['page_size'],
                 group_by_pack=search_form.cleaned_data['group_by_pack']
             )
-            solr_ids = [(int(element['id']), element['score']) for element in result.docs]
-            solr_count = result.num_found
+            ids_score = [(int(element['id']), element['score']) for element in result.docs]
+            num_found = result.num_found
             more_from_pack_data = None
             if search_form.cleaned_data['group_by_pack']:
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
@@ -347,7 +347,7 @@ def api_search(
                     (int(group['id']), [group['n_more_in_group'], group['group_name']]) for group in result.docs
                 ])
 
-            return solr_ids, solr_count, None, more_from_pack_data, None, None, None
+            return ids_score, num_found, None, more_from_pack_data, None, None, None
 
         except SearchEngineException as e:
             if search_form.cleaned_data['filter'] is not None:

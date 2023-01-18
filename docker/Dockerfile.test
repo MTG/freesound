@@ -1,6 +1,6 @@
-# This container is used for testing in travis. it install the same things as the web container except for
-# essentia and other processing depencies. This is to avoid travis compiling essentia everytime we want to
-# run the tests
+# This container is used for testing. it install the same things as the web container except for
+# essentia and other processing depencies. This is to avoid test runs compiling essentia 
+# every time we want to run the tests
 
 
 FROM freesound:2020-02

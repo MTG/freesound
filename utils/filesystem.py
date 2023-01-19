@@ -78,7 +78,7 @@ def generate_tree(path):
 
 def md5file(filename):
     """Return the hex digest of a file without loading it all into memory"""
-    fh = open(filename, "rb")
+
     digest = hashlib.md5()
     with open(filename, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):

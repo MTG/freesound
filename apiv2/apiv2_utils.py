@@ -89,7 +89,7 @@ class FsClientIdGenerator(BaseHashGenerator):
 def get_view_description(cls, html=False):
     description = ''
     if getattr(cls, 'get_description', None):
-        cache_key = create_hash(cls.get_view_name(), add_secret=False, limit=32)
+        cache_key = create_hash(cls.get_view_name(), limit=32)
         cached_description = cache.get(cache_key)
         if not cached_description:
             description = cls.get_description()

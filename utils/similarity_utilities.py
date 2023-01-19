@@ -167,4 +167,4 @@ def delete_sound_from_gaia(sound_id):
 
 
 def hash_cache_key(key):
-    return create_hash(key, add_secret=False, limit=32)
+    return create_hash(key, limit=32)

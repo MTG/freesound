@@ -79,7 +79,6 @@ from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, Geotagg
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
-from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.images import extract_square
@@ -355,8 +354,7 @@ def activate_user(request, username, uid_hash):
         return render(request, 'accounts/activate.html', {'user_does_not_exist': True,
                                                           'next_path': reverse('accounts-home')})
 
-    new_hash = create_hash(user.id)
-    if new_hash != uid_hash:
+    if not default_token_generator.check_token(user, uid_hash):
         return render(request, 'accounts/activate.html', {'decode_error': True,
                                                           'next_path': reverse('accounts-home')})
 
@@ -366,12 +364,12 @@ def activate_user(request, username, uid_hash):
 
 
 def send_activation(user):
-    uid_hash = create_hash(user.id)
+    token = default_token_generator.make_token(user)
     username = user.username
     tvars = {
         'user': user,
         'username': username,
-        'hash': uid_hash
+        'hash': token
     }
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
 

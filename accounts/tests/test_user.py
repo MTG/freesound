@@ -19,6 +19,7 @@
 #
 
 import json
+import re
 from unittest import skipIf
 
 import mock
@@ -151,7 +152,14 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
-    def test_user_activation(self):
+        activation_code = re.search(r"home/activate/.+/(.+)/", mail.outbox[0].body).group(1)
+        # Test calling accounts-activate with good hash, user should be activated
+        resp = self.client.get(reverse('accounts-activate', args=[username, activation_code]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['all_ok'], True)
+        self.assertEqual(User.objects.get(username=username).is_active, True)
+
+    def test_user_activation_fails(self):
         user = User.objects.get(username="User6Inactive")  # Inactive user in fixture
 
         # Test calling accounts-activate with wrong hash, user should not be activated
@@ -160,14 +168,6 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['decode_error'], True)
         self.assertEqual(User.objects.get(username="User6Inactive").is_active, False)
-
-        # Test calling accounts-activate with good hash, user should be activated
-        from utils.encryption import create_hash
-        good_hash = create_hash(user.id)
-        resp = self.client.get(reverse('accounts-activate', args=[user.username, good_hash]))
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['all_ok'], True)
-        self.assertEqual(User.objects.get(username="User6Inactive").is_active, True)
 
         # Test calling accounts-activate for a user that does not exist
         resp = self.client.get(reverse('accounts-activate', args=["noone", hash]))

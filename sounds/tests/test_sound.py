@@ -706,9 +706,8 @@ class SoundTemplateCacheTests(TestCase):
 
         # Check that the information is updated properly
         resp = self._get_sound_view()
-        self.assertEqual(resp.status_code, 200)
-        self.assertInHTML(new_description, resp.content)
-        self.assertInHTML(new_name, resp.content)
+        self.assertContains(resp, new_description, html=True)
+        self.assertContains(resp, new_name, html=True)
 
     def _get_delete_comment_url(self, html):
         soup = BeautifulSoup(html, "html.parser")
@@ -723,8 +722,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Check the initial state (0 comments)
         resp = self._get_sound_from_home()
-        self.assertInHTML('0 comments', resp.content)
-        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, '0 comments', html=True)
         self._assertCachePresent(cache_keys)
 
         # Add comment
@@ -736,7 +734,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Verify that sound display has updated number of comments
         resp = self._get_sound_from_home()
-        self.assertInHTML('1 comment', resp.content)
+        self.assertContains(resp, '1 comment', html=True)
         self._assertCachePresent(cache_keys)
 
         # Delete the comment
@@ -746,7 +744,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Verify that sound display has no comments
         resp = self._get_sound_from_home()
-        self.assertInHTML('0 comments', resp.content)
+        self.assertContains(resp, '0 comments', html=True)
 
     # Downloads are only cached in display
     @mock.patch('sounds.views.sendfile', return_value=HttpResponse('Dummy response'))
@@ -758,8 +756,7 @@ class SoundTemplateCacheTests(TestCase):
         self.client.force_login(self.user)
 
         resp = self._get_sound_from_home()
-        self.assertInHTML('0 downloads', resp.content)
-        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, '0 downloads', html=True)
         self._assertCachePresent(cache_keys)
 
         # Download
@@ -772,11 +769,11 @@ class SoundTemplateCacheTests(TestCase):
 
         # Verify that sound display has updated number of downloads
         resp = self._get_sound_from_home()
-        self.assertInHTML('1 download', resp.content)
+        self.assertContains(resp, '1 download', html=True)
 
     # Similarity link (cached in display and view)
     @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
-    def _test_similarity_update(self, cache_keys, check_present, similarity_add):
+    def _test_similarity_update(self, cache_keys, expected, request_func, similarity_add):
         # Create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
         SoundAnalysis.objects.create(sound=self.sound, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")
         self.sound.save()
@@ -787,7 +784,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Initial check
         self.assertEqual(self.sound.similarity_state, 'PE')
-        self.assertFalse(check_present())
+        self.assertNotContains(request_func(), expected)
         self._assertCachePresent(cache_keys)
 
         # Update similarity
@@ -798,26 +795,30 @@ class SoundTemplateCacheTests(TestCase):
         # Check similarity icon
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.similarity_state, 'OK')
-        self.assertTrue(check_present())
+        self.assertContains(request_func(), expected)
 
     def test_similarity_update_display(self):
         self._test_similarity_update(
             self._get_sound_display_cache_keys(),
-            lambda: '<a class="similar"' in self._get_sound_from_home().content)
+            '<a class="similar"',
+            self._get_sound_from_home,
+        )
 
     def test_similarity_update_view(self):
         self._test_similarity_update(
             self._get_sound_view_footer_top_cache_keys(),
-            lambda: '<a id="similar_sounds_link"' in self._get_sound_view().content)
+            '<a id="similar_sounds_link"',
+            self._get_sound_view,
+        )
 
     # Pack link (cached in display and view)
-    def _test_add_remove_pack(self, cache_keys, check_present):
+    def _test_add_remove_pack(self, cache_keys, text, request_func):
         self._assertCacheAbsent(cache_keys)
 
         self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.pack)
-        self.assertFalse(check_present())
+        self.assertNotContains(request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Add sound to pack
@@ -831,7 +832,7 @@ class SoundTemplateCacheTests(TestCase):
         # Check pack icon
         self.sound.refresh_from_db()
         self.assertIsNotNone(self.sound.pack)
-        self.assertTrue(check_present())  # check_present should render the template
+        self.assertContains(request_func(), text)  # request_func should render the template
         self._assertCachePresent(cache_keys)
 
         # Remove sound from pack
@@ -844,28 +845,30 @@ class SoundTemplateCacheTests(TestCase):
         # Check pack icon being absent
         self.sound.refresh_from_db()
         self.assertIsNone(self.sound.pack)
-        self.assertFalse(check_present())
+        self.assertNotContains(request_func(), text)
 
     def test_add_remove_pack_display(self):
         self._test_add_remove_pack(
             self._get_sound_display_cache_keys(),
-            lambda: '<a class="pack"' in self._get_sound_from_home().content
+            '<a class="pack"',
+            self._get_sound_from_home,
         )
 
     def test_add_remove_pack_view(self):
         self._test_add_remove_pack(
             self._get_sound_view_footer_top_cache_keys(),
-            lambda: '<a id="pack_link"' in self._get_sound_view().content
+            '<a id="pack_link"',
+            self._get_sound_view,
         )
 
     # Geotag link (cached in display and view)
-    def _test_add_remove_geotag(self, cache_keys, check_present):
+    def _test_add_remove_geotag(self, cache_keys, text, request_func):
         self._assertCacheAbsent(cache_keys)
 
         self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.geotag)
-        self.assertFalse(check_present())
+        self.assertNotContains(request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Add a geotag to the sound
@@ -880,7 +883,7 @@ class SoundTemplateCacheTests(TestCase):
         # Check geotag icon
         self.sound.refresh_from_db()
         self.assertIsNotNone(self.sound.geotag)
-        self.assertTrue(check_present())
+        self.assertContains(request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Remove geotag from the sound
@@ -893,18 +896,20 @@ class SoundTemplateCacheTests(TestCase):
         # Check geotag icon being absent
         self.sound.refresh_from_db()
         self.assertIsNone(self.sound.geotag)
-        self.assertFalse(check_present())
+        self.assertNotContains(request_func(), text)
 
     def test_add_remove_geotag_display(self):
         self._test_add_remove_geotag(
             self._get_sound_display_cache_keys(),
-            lambda: '<a class="geotag"' in self._get_sound_from_home().content
+            '<a class="geotag"',
+            self._get_sound_from_home,
         )
 
     def test_add_remove_geotag_view(self):
         self._test_add_remove_geotag(
             self._get_sound_view_footer_top_cache_keys(),
-            lambda: '<a id="geotag_link"' in self._get_sound_view().content
+            '<a id="geotag_link"',
+            self._get_sound_view,
         )
 
     # Changing license
@@ -944,7 +949,7 @@ class SoundTemplateCacheTests(TestCase):
             self._get_sound_view,
         )
 
-    def _test_add_remove_remixes(self, cache_keys, check_present):
+    def _test_add_remove_remixes(self, cache_keys, text, request_func):
         _, _, sounds = create_user_and_sounds(num_sounds=1, user=self.user)
         another_sound = sounds[0]
         self._assertCacheAbsent(cache_keys)
@@ -952,7 +957,7 @@ class SoundTemplateCacheTests(TestCase):
         self.client.force_login(self.user)
 
         self.assertEqual(self.sound.remix_group.count(), 0)
-        self.assertFalse(check_present())
+        self.assertNotContains(request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Indicate another sound as source
@@ -966,7 +971,7 @@ class SoundTemplateCacheTests(TestCase):
         # Check remix icon
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.remix_group.count(), 1)
-        self.assertTrue(check_present())
+        self.assertContains(request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Remove remix from the sound
@@ -980,33 +985,39 @@ class SoundTemplateCacheTests(TestCase):
         # Check remix icon being absent
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.remix_group.count(), 0)
-        self.assertFalse(check_present())
+        self.assertNotContains(request_func(), text)
 
     def test_add_remove_remixes_display(self):
         self._test_add_remove_remixes(
             self._get_sound_display_cache_keys(),
-            lambda: '<a class="remixes"' in self._get_sound_from_home().content
+            '<a class="remixes"',
+            self._get_sound_from_home,
         )
 
     def test_add_remove_remixes_view(self):
         self._test_add_remove_remixes(
             self._get_sound_view_footer_top_cache_keys(),
-            lambda: '<a id="remixes_link"' in self._get_sound_view().content
+            '<a id="remixes_link"',
+            self._get_sound_view,
         )
 
-    def _test_state_change(self, cache_keys, change_state, check_present):
+    def _test_state_change(self, cache_keys, change_state, texts):
         """@:param check_present - function that checks presence of indication of not 'OK' state"""
         self.client.force_login(self.user)
 
         self._assertCacheAbsent(cache_keys)
-        self.assertTrue(check_present())
+        resp = self.client.get(self._get_sound_url('sound-display'))
+        for text in texts:
+            self.assertContains(resp, text)
         self._assertCachePresent(cache_keys)
 
         # Change processing state
         change_state()
 
         self._assertCacheAbsent(cache_keys)
-        self.assertFalse(check_present())
+        resp = self.client.get(self._get_sound_url('sound-display'))
+        for text in texts:
+            self.assertNotContains(resp, text)
         self._assertCachePresent(cache_keys)
 
     def test_processing_state_change_display(self):
@@ -1014,8 +1025,7 @@ class SoundTemplateCacheTests(TestCase):
         self._test_state_change(
             self._get_sound_display_cache_keys(),
             lambda: self.sound.change_processing_state('OK'),
-            lambda: all([text in self.client.get(self._get_sound_url('sound-display')).content
-                         for text in ['Processing state:', 'Pending']])
+            ['Processing state:', 'Pending'],
         )
 
     def test_moderation_state_change_display(self):
@@ -1023,8 +1033,7 @@ class SoundTemplateCacheTests(TestCase):
         self._test_state_change(
             self._get_sound_display_cache_keys(),
             lambda: self.sound.change_moderation_state('OK'),
-            lambda: all([text in self.client.get(self._get_sound_url('sound-display')).content
-                         for text in ['Moderation state:', 'Pending']])
+            ['Moderation state:', 'Pending'],
         )
 
 

@@ -231,7 +231,7 @@ class BulkDescribe(TestCase):
             self.client.force_login(user)
             resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]), follow=True)
             self.assertRedirects(resp, reverse('accounts-home'))
-            self.assertIn('Your user does not have permission to use the bulk describe', resp.content)
+            self.assertContains(resp, 'Your user does not have permission to use the bulk describe')
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_validating(self):
@@ -240,7 +240,7 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
         self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('The uploaded data file has not yet been validated', resp.content)
+        self.assertContains(resp, 'The uploaded data file has not yet been validated')
 
     @mock.patch('general.tasks.bulk_describe.delay')
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
@@ -250,7 +250,7 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
         self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('Validation results of the data file', resp.content)
+        self.assertContains(resp, 'Validation results of the data file')
 
         # Test that chosing option to delete existing BulkUploadProgress really does it
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=delete')
@@ -270,7 +270,7 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="S", user=user, original_csv_filename="test.csv")
         self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('Your sounds are being described and processed', resp.content)
+        self.assertContains(resp, 'Your sounds are being described and processed')
 
         # Test that when BulkUploadProgress has finished describing items but still is processing some sounds, we
         # show that info to the users. First we fake some data for the bulk object
@@ -287,7 +287,7 @@ class BulkDescribe(TestCase):
         }
         bulk.save()
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('Your sounds are being described and processed', resp.content)
+        self.assertContains(resp, 'Your sounds are being described and processed')
 
         # Test that when both description and processing have finished we show correct info to users
         for i in range(0, 5):  # First create the sound objects so BulkUploadProgress can properly compute progress
@@ -304,7 +304,7 @@ class BulkDescribe(TestCase):
             bulk.description_output[count] = sound.id  # Fill bulk.description_output with real sound IDs
         bulk.save()
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('The bulk description process has finished!', resp.content)
+        self.assertContains(resp, 'The bulk description process has finished!')
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_closed(self):
@@ -313,4 +313,4 @@ class BulkDescribe(TestCase):
         bulk = BulkUploadProgress.objects.create(progress_type="C", user=user, original_csv_filename="test.csv")
         self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertIn('This bulk description process is closed', resp.content)
+        self.assertContains(resp, 'This bulk description process is closed')

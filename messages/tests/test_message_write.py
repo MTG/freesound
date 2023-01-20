@@ -52,12 +52,12 @@ class RecaptchaPresenceInMessageForms(TestCase):
         # Not a spammer case, recaptcha field should NOT be shown
         self.client.force_login(user=self.no_spammer)
         resp = self.client.get(reverse('messages-new'))
-        self.assertNotIn('recaptcha', resp.content)
+        self.assertNotContains(resp, 'recaptcha')
 
         # Potential spammer (has no uploaded sounds), recaptcha field should be shown
         self.client.force_login(user=self.potential_spammer)
         resp = self.client.get(reverse('messages-new'))
-        self.assertIn('recaptcha', resp.content)
+        self.assertContains(resp, 'recaptcha')
 
     def test_captcha_presence_in_reply_message_form(self):
 
@@ -67,7 +67,7 @@ class RecaptchaPresenceInMessageForms(TestCase):
             body=MessageBody.objects.create(body='Message body'), is_sent=True, is_archived=False, is_read=False)
         self.client.force_login(user=self.no_spammer)
         resp = self.client.get(reverse('messages-new', args=[message.id]))
-        self.assertNotIn('recaptcha', resp.content)
+        self.assertNotContains(resp, 'recaptcha')
 
         # Potential spammer (has no uploaded sounds), recaptcha field should be shown
         message = Message.objects.create(
@@ -75,7 +75,7 @@ class RecaptchaPresenceInMessageForms(TestCase):
             body=MessageBody.objects.create(body='Message body'), is_sent=True, is_archived=False, is_read=False)
         self.client.force_login(user=self.potential_spammer)
         resp = self.client.get(reverse('messages-new', args=[message.id]))
-        self.assertIn('recaptcha', resp.content)
+        self.assertContains(resp, 'recaptcha')
 
 
 class UsernameLookup(TestCase):

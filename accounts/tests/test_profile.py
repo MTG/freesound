@@ -193,9 +193,9 @@ class AboutFieldVisibilityTest(TestCase):
     def _check_visibility(self, username, condition):
         resp = self.client.get(reverse('account', kwargs={'username': username}))
         if condition:
-            self.assertIn(self.about, resp.content)
+            self.assertContains(resp, self.about)
         else:
-            self.assertNotIn(self.about, resp.content)
+            self.assertNotContains(resp, self.about)
 
     def _check_visible(self):
         self._check_visibility('downloader', True)

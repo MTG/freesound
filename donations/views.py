@@ -1,7 +1,11 @@
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import base64
 import json
 import logging
-import urlparse
+import urllib.parse
 
 import requests
 import stripe
@@ -15,8 +19,8 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 
-from forms import DonateForm, BwDonateForm
-from models import Donation, DonationCampaign
+from .forms import DonateForm, BwDonateForm
+from .models import Donation, DonationCampaign
 from utils.frontend_handling import render, using_beastwhoosh, BwCompatibleTemplateResponse
 from utils.mail import send_mail_template
 
@@ -170,9 +174,9 @@ def donation_session_stripe(request):
             email_to = request.user.email if request.user.is_authenticated() else None
             amount = form.cleaned_data['amount']
             domain = "https://%s" % Site.objects.get_current().domain
-            return_url_success = urlparse.urljoin(domain, reverse('donation-success'))
+            return_url_success = urllib.parse.urljoin(domain, reverse('donation-success'))
             return_url_success += '?token={}'.format(form.encoded_data)
-            return_url_cancel = urlparse.urljoin(domain, reverse('donate'))
+            return_url_cancel = urllib.parse.urljoin(domain, reverse('donate'))
             session = stripe.checkout.Session.create(
                 customer_email=email_to,
                 payment_method_types=['card'],
@@ -207,7 +211,7 @@ def donation_session_paypal(request):
             amount = form.cleaned_data['amount']
             returned_data_str = form.encoded_data
             domain = "https://%s" % Site.objects.get_current().domain
-            return_url = urlparse.urljoin(domain, reverse('donation-complete-paypal'))
+            return_url = urllib.parse.urljoin(domain, reverse('donation-complete-paypal'))
             data = {"url": settings.PAYPAL_VALIDATION_URL,
                     "params": {
                         "cmd": "_donations",

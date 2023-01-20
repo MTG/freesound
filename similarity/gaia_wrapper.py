@@ -20,6 +20,9 @@
 
 from __future__ import absolute_import
 
+#from builtins import str  # For gaia code, str needs to be old python2 str type and not py3 str
+from builtins import range
+from builtins import object
 import errno
 import logging
 import os
@@ -51,7 +54,7 @@ def create_directories(path, exist_ok=True):
             raise
 
 
-class GaiaWrapper:
+class GaiaWrapper(object):
 
     def __init__(self, indexing_only_mode=False):
         self.indexing_only_mode = indexing_only_mode

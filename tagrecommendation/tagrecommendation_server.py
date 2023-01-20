@@ -23,19 +23,20 @@
 #   - numpy
 #   - sklearn (joblib)
 
-from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import print_function
 
+from builtins import str
 import json
 import logging
 
-import cloghandler
 import graypy
+import tagrecommendation_settings as tr_settings
+from communityBasedTagRecommendation import CommunityBasedTagRecommender
+from concurrent_log_handler import ConcurrentRotatingFileHandler
 from twisted.internet import reactor
 from twisted.web import server, resource
 
-from communityBasedTagRecommendation import CommunityBasedTagRecommender
-import tagrecommendation_settings as tr_settings
 from utils import loadFromJson, saveToJson
 
 
@@ -159,8 +160,9 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     if tr_settings.LOG_TO_FILE:
-        handler = cloghandler.ConcurrentRotatingFileHandler(tr_settings.LOGFILE,
-                                                            mode="a", maxBytes=2 * 1024 * 1024, backupCount=5)
+        handler = ConcurrentRotatingFileHandler(
+            tr_settings.LOGFILE, mode="a", maxBytes=2 * 1024 * 1024, backupCount=5,
+        )
         handler.setLevel(logging.DEBUG)
         handler.setFormatter(formatter)
         logger.addHandler(handler)

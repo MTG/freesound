@@ -17,10 +17,10 @@
 # Authors:
 #     See AUTHORS file.
 #
+from builtins import str
 import datetime
 import logging
 import json
-from collections import Counter
 
 from django.conf import settings
 

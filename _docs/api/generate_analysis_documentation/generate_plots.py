@@ -1,8 +1,8 @@
 from __future__ import print_function
+
+from builtins import range
 import gaia2
 import pylab as pl
-from numpy import std, average, percentile
-
 
 OUT_FOLDER = 'out_plots' # Must be created
 GAIA_INDEX_FILE = 'fs_index.db' # File with gaia index
@@ -28,7 +28,7 @@ def plot_histogram(pool, label,  x_label_ticks = False):
     if not x_label_ticks:
         ax.ticklabel_format(axis='x', style='sci', scilimits=(-3,3))
     else:
-        pl.xticks(range(0, len(x_label_ticks)),['           %s'%tick for tick in x_label_ticks])
+        pl.xticks(list(range(0, len(x_label_ticks))),['           %s'%tick for tick in x_label_ticks])
     ax.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
     ax.set_xlabel('Value')
     ax.set_ylabel('Frequency of occurrence')

@@ -18,12 +18,15 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from django import forms
+
 from bookmarks.models import BookmarkCategory, Bookmark
+
 
 class BookmarkCategoryForm(forms.ModelForm):
     
-    class Meta:
+    class Meta(object):
         model = BookmarkCategory
         fields = ('name',)
         widgets = {
@@ -37,7 +40,7 @@ class BookmarkForm(forms.ModelForm):
         required=False)
     use_last_category = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
 
-    class Meta:
+    class Meta(object):
         model = Bookmark
         fields = ('name','category')
         widgets = {

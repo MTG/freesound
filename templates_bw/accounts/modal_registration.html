@@ -9,9 +9,6 @@
         <h5 class="v-spacing-5">Join Freesound</h5>
         <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1&next={{ next_path }}" data-check-username-url="{% url 'check_username' %}">{% csrf_token %}
             {{ registration_form }}
-            {{ registration_form.recaptcha_response.errors }}
-            <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
-            <div class="v-spacing-top-3 g-recaptcha padding-left-5" data-sitekey={{ recaptcha_public_key }}></div>
             <button type="submit" class="btn-primary v-spacing-top-3">Join</button>
         </form>
     </div>

@@ -16,7 +16,6 @@ if use_django_nose is not None:
     ]
 
 SECRET_KEY = "testsecretwhichhastobeatleast16characterslong"
-RAVEN_CONFIG = {}
 SUPPORT = (('Name Surname', 'support@freesound.org'),)
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 CACHES = {
@@ -39,7 +38,7 @@ LOGGING['handlers']['stdout']['class'] = 'logging.NullHandler'
 
 SOLR_URL = "http://fakehost:8080/fs2/"  # Avoid making accidental queries to "real" search server if running
 SOLR_FORUM_URL = "http://fakehost:8080/forum/"  # Avoid making accidental requests to "real" search server if running
-SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr451custom.Solr451CustomSearchEngine' # Test with our own custom search engine functions
+SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine' # Test with our own custom search engine functions
 SIMILARITY_ADDRESS = 'fakehost' # Avoid making accidental requests to "real" similarity server if running
 TAGRECOMMENDATION_ADDRESS = 'fakehost'  # Avoid making accidental requests to "real" tag rec server if running
 

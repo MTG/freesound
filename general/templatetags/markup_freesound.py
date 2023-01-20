@@ -7,7 +7,7 @@ import markdown as markdown_package
 import re
 
 from django import template
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 
 register = template.Library()
@@ -33,7 +33,7 @@ def markdown(value, arg=''):
     }
 
     md = markdown_package.Markdown(extensions=extensions, extension_configs=extension_configs)
-    html_contents = md.convert(force_unicode(value))
+    html_contents = md.convert(force_text(value))
 
     # Markdown TOC extension adds target ids to the header tags (e.g. <h2 id="xxx">), but this does not work well
     # in BW frontend because we need to offset the targets to compensate for the fixed header height, and the technique

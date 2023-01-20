@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 from __future__ import absolute_import
+from builtins import str
 from django.conf import settings
 from django.core.cache import caches
 
@@ -109,4 +110,4 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
 
 
 def hash_cache_key(key):
-    return create_hash(key, add_secret=False, limit=32)
+    return create_hash(key, limit=32)

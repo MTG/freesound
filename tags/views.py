@@ -42,7 +42,7 @@ def tags(request, multiple_tags=None):
         multiple_tags = multiple_tags.split('/')
     else:
         multiple_tags = []
-    multiple_tags = sorted(filter(lambda x: x, multiple_tags))
+    multiple_tags = sorted([x for x in multiple_tags if x])
 
     
 

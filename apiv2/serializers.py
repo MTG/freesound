@@ -21,6 +21,10 @@
 #
 
 from __future__ import absolute_import
+from __future__ import division
+from builtins import str
+from past.utils import old_div
+from builtins import object
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -53,6 +57,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     default_fields = None
 
     def __init__(self, *args, **kwargs):
+        self.score_map = kwargs.pop('score_map', {})
+        self.sound_analysis_data = kwargs.pop('sound_analysis_data', {})
         super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
         if not requested_fields:  # If parameter is in url but parameter is empty, set to default
@@ -67,7 +73,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    class Meta:
+    class Meta(object):
         model = Sound
         fields = ('id',
                   'url',
@@ -103,7 +109,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis_frames',
                   'analysis_stats',
                   'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
-                  'analyzers_output'
+                  'analyzers_output',
+                  'score',
                   )
 
     url = serializers.SerializerMethodField()
@@ -118,6 +125,13 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             return obj.username
         except AttributeError:
             return obj.user.username
+
+    score = serializers.SerializerMethodField()
+    def get_score(self, obj):
+        if self.score_map:
+            return self.score_map.get(obj.id)
+        else:
+            return None
 
     name = serializers.SerializerMethodField()
     def get_name(self, obj):
@@ -252,7 +266,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     avg_rating = serializers.SerializerMethodField()
     def get_avg_rating(self, obj):
-        return obj.avg_rating/2
+        return old_div(obj.avg_rating,2)
 
     comments = serializers.SerializerMethodField()
     def get_comments(self, obj):
@@ -284,11 +298,8 @@ class SoundListSerializer(AbstractSoundSerializer):
     def get_analysis(self, obj):
         if not self.get_or_compute_analysis_state_essentia_exists(obj):
             return None
-        # Get descriptors from the view class (should have been requested before the serializer is invoked)
-        try:
-            return self.context['view'].sound_analysis_data[str(obj.id)]
-        except Exception as e:
-            return None
+        # Get descriptors from self.sound_analysis_data (should have been passed to the serializer)
+        return self.sound_analysis_data.get(str(obj.id), None)
 
     def get_ac_analysis(self, obj):
         # Get ac analysis data form the object itself as it will have been included in the Sound
@@ -381,7 +392,7 @@ class SoundSerializer(AbstractSoundSerializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = User
         fields = ('url',
                   'username',
@@ -461,7 +472,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 class PackSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = Pack
         fields = ('id',
                   'url',
@@ -503,7 +514,7 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
 class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = BookmarkCategory
         fields = ('id',
                   'url',
@@ -575,7 +586,7 @@ class CreateRatingSerializer(serializers.Serializer):
 
 class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta:
+    class Meta(object):
         model = Comment
         fields = ('username',
                   'comment',

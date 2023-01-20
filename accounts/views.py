@@ -18,8 +18,12 @@
 #     See AUTHORS file.
 #
 
-import cStringIO
-import csv
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+import io
+from backports import csv
 import datetime
 import errno
 import json
@@ -39,7 +43,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView, \
     PasswordChangeView, PasswordChangeDoneView
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import transaction
@@ -76,7 +79,6 @@ from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, Geotagg
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
-from utils.encryption import create_hash
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.images import extract_square
@@ -352,8 +354,7 @@ def activate_user(request, username, uid_hash):
         return render(request, 'accounts/activate.html', {'user_does_not_exist': True,
                                                           'next_path': reverse('accounts-home')})
 
-    new_hash = create_hash(user.id)
-    if new_hash != uid_hash:
+    if not default_token_generator.check_token(user, uid_hash):
         return render(request, 'accounts/activate.html', {'decode_error': True,
                                                           'next_path': reverse('accounts-home')})
 
@@ -363,12 +364,12 @@ def activate_user(request, username, uid_hash):
 
 
 def send_activation(user):
-    uid_hash = create_hash(user.id)
+    token = default_token_generator.make_token(user)
     username = user.username
     tvars = {
         'user': user,
         'username': username,
-        'hash': uid_hash
+        'hash': token
     }
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
 
@@ -931,22 +932,22 @@ def download_attribution(request):
         filename = '%s_%s_attribution.%s' % (request.user, now, download)
         response = HttpResponse(content_type='text/%s' % content[download])
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
-        output = cStringIO.StringIO()
+        output = io.StringIO()
         if download == 'csv':
-            output.write('Download Type,File Name,User,License\r\n')
-            csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            output.write(u'Download Type,File Name,User,License\r\n')
+            csv_writer = csv.writer(output, delimiter=u',', quotechar=u'"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
                 csv_writer.writerow(
-                    [row['download_type'][0].upper(), row['sound__original_filename'].encode('utf-8'),
+                    [row['download_type'][0].upper(), row['sound__original_filename'],
                      row['sound__user__username'],
-                     license_with_version(row['license__name'].encode('utf-8') or row['sound__license__name'].encode('utf-8'),
-                                          row['license__deed_url'].encode('utf-8') or row['sound__license__deed_url'].encode('utf-8'))])
+                     license_with_version(row['license__name'] or row['sound__license__name'],
+                                          row['license__deed_url'] or row['sound__license__deed_url'])])
         elif download == 'txt':
             for row in qs:
-                output.write("{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
-                             row['sound__original_filename'].encode("utf-8"), row['sound__user__username'],
-                             license_with_version(row['license__name'].encode("utf-8") or row['sound__license__name'].encode("utf-8"),
-                                                  row['license__deed_url'].encode('utf-8') or row['sound__license__deed_url'].encode('utf-8'))))
+                output.write(u"{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
+                             row['sound__original_filename'], row['sound__user__username'],
+                             license_with_version(row['license__name'] or row['sound__license__name'],
+                                                  row['license__deed_url'] or row['sound__license__deed_url'])))
         response.writelines(output.getvalue())
         return response
     else:
@@ -1036,7 +1037,7 @@ def accounts(request):
     most_active_users = User.objects.select_related("profile")\
         .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_active_users]])
     new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time)\
-        .filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
+        .filter(id__in=list(user_rank.keys())).order_by('-date_joined')[:num_active_users+5]
     logged_users = User.objects.select_related("profile").filter(id__in=get_online_users())
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
     most_active_users_display = sorted(most_active_users_display,
@@ -1101,7 +1102,7 @@ def charts(request):
                                        reverse=True)
 
     # Newest active users
-    new_user_in_rank_ids = User.objects.filter(date_joined__gte=last_time, id__in=user_rank.keys())\
+    new_user_in_rank_ids = User.objects.filter(date_joined__gte=last_time, id__in=list(user_rank.keys()))\
         .values_list('id', flat=True)
     new_user_objects = {user.id: user for user in
                         User.objects.select_related("profile").filter(date_joined__gte=last_time)

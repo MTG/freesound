@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from django.contrib import admin
-from models import DonationCampaign, DonationsModalSettings, DonationsEmailSettings, Donation
+from .models import DonationCampaign, DonationsModalSettings, DonationsEmailSettings, Donation
 
 admin.site.register(DonationCampaign)
 

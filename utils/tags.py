@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,9 @@
 #     See AUTHORS file.
 #
 
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import re
 
 def size_generator(small_size, large_size, num_items):
@@ -25,7 +29,7 @@ def size_generator(small_size, large_size, num_items):
         yield (small_size + large_size)*0.5
     else:
         for i in range(0,num_items):
-            yield (i*(large_size - small_size))/(num_items-1) + small_size;
+            yield old_div((i*(large_size - small_size)),(num_items-1)) + small_size;
 
 def annotate(dictionary, **kwargs):
     x = dictionary.copy()
@@ -56,9 +60,9 @@ def annotate_tags(tags, sort=None, small_size=0.7, large_size=1.8):
     tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
     if sort is not None:
         if sort == "name":
-            tags.sort(cmp=lambda x, y: cmp(x["name"].lower(), y["name"].lower()))
+            tags.sort(key=lambda x: x["name"].lower())
         elif sort == "count":
-            tags.sort(cmp=lambda x, y: cmp(x["count"], y["count"]), reverse=True)
+            tags.sort(key=lambda x: x["count"], reverse=True)
     return tags
 
 

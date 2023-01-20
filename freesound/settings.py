@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import datetime
 import logging.config
 import os
@@ -75,13 +77,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'follow',
-    'fixture_magic',
     'utils',
     'donations',
     'monitor',
     'django_object_actions',
     'silk',
     'admin_reorder',
+    'captcha',
 ]
 
 # Specify custom ordering of models in Django Admin index
@@ -115,13 +117,13 @@ ADMIN_REORDER = (
         'oauth2_provider.RefreshToken',
         'oauth2_provider.Grant',
     )},
-    'forum',
+    str('forum'),  # str() should be replaced when moving to Py3
     {'app': 'donations', 'models': (
         'donations.Donation',
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-    'sites',
+    str('sites'),  # str() should be replaced when moving to Py3
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -480,6 +482,8 @@ AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 
+from builtins import str  # This is needed while moving from py2 to py3 for str type compatibility
+
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
         'descriptors_map': [
@@ -581,8 +585,6 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
 }
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine'
-SOLR4_SOUNDS_URL = "http://search:8080/fs2/"
-SOLR4_FORUM_URL = "http://search:8080/forum/"
 SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
 SOLR5_FORUM_URL = "http://search:8983/solr/forum/"
 
@@ -630,8 +632,16 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 # -------------------------------------------------------------------------------
 # Recaptcha settings
 
-RECAPTCHA_PRIVATE_KEY = ''
-RECAPTCHA_PUBLIC_KEY = ''
+# If not set, test keys will be used
+# RECAPTCHA_PRIVATE_KEY = ''
+# RECAPTCHA_PUBLIC_KEY = ''
+
+# Google provides test keys which are set as the default for RECAPTCHA_PUBLIC_KEY and RECAPTCHA_PRIVATE_KEY.
+# These cannot be used in production since they always validate to true and a warning will be shown on the reCAPTCHA.
+# To bypass the security check that prevents the test keys from being used unknowingly add
+# SILENCED_SYSTEM_CHECKS = [..., 'captcha.recaptcha_test_key_error', ...] to your settings.
+
+SILENCED_SYSTEM_CHECKS += ['captcha.recaptcha_test_key_error']
 
 
 # -------------------------------------------------------------------------------

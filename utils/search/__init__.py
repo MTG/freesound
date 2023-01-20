@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,6 +19,9 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import importlib
 
 from django.conf import settings
@@ -50,6 +54,7 @@ class SearchResults(object):
                 of a sound), but it can also include other properties. Here is a list of possible properties:
                 - id (int): ID of the matched object (a sound or forum post). If results are grouped, this will be the ID of
                     the first matching result in the group
+                - score (float): score of the matched object as provided by the search engine
                 - group_name (str): the name of the group. This includes the value of the grouping field shared by all
                     grouped results (only if grouping).
                 - group_docs (List[Dict]): information about of results in the group. This is a list of dictionaries
@@ -155,8 +160,8 @@ class SearchResultsPaginator(object):
         self.num_per_page = num_per_page
         self.results = search_results.docs
         self.count = search_results.num_found
-        self.num_pages = search_results.num_found / num_per_page + int(search_results.num_found % num_per_page != 0)
-        self.page_range = range(1, self.num_pages + 1)
+        self.num_pages = old_div(search_results.num_found, num_per_page) + int(search_results.num_found % num_per_page != 0)
+        self.page_range = list(range(1, self.num_pages + 1))
 
     def page(self, page_num):
         has_next = page_num < self.num_pages

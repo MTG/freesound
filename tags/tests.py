@@ -18,10 +18,12 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 from django.test import TestCase
-from django.test.client import Client
-from tags.models import FS1Tag
 from django.urls import reverse
+
+from tags.models import FS1Tag
+
 
 class OldTagLinksRedirectTestCase(TestCase):
     

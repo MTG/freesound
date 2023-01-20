@@ -3,7 +3,6 @@ version: "3.7"
 volumes:
     pgdata:
     m2home:
-    solrdata:
     solr5data:
     fswebhome:
 
@@ -46,6 +45,7 @@ services:
             - db
             - rabbitmq
             - redis
+            - search
 
     # Search server
     search:
@@ -55,7 +55,7 @@ services:
             - ./utils/search/solr5.5.5/cores:/cores
             - ./utils/search/solr5.5.5/docker-entrypoint:/docker-entrypoint-initdb.d
         ports:
-            - 8983:8983
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8983:8983"
 
     # Redis (caches)
     redis:

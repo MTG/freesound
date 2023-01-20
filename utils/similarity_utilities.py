@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import str
 import logging
 import traceback
 
@@ -134,15 +135,18 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     for id in sound_ids:
         analysis_data = cache.get(hash_cache_key(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization))))
         if analysis_data:
-            cached_data[unicode(id)] = analysis_data
+            cached_data[str(id)] = analysis_data
             # remove id form list so it is not included in similarity request
             not_cached_sound_ids.remove(id)
-    try:
-        returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
-    except Exception as e:
-        web_logger.error('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
-                         (e, traceback.format_exc()))
-        raise
+    if not_cached_sound_ids:
+        try:
+            returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
+        except Exception as e:
+            web_logger.error('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
+                            (e, traceback.format_exc()))
+            raise
+    else:
+        returned_data = {}
 
     # save sound analysis information in cache
     for key, item in returned_data.items():
@@ -163,4 +167,4 @@ def delete_sound_from_gaia(sound_id):
 
 
 def hash_cache_key(key):
-    return create_hash(key, add_secret=False, limit=32)
+    return create_hash(key, limit=32)

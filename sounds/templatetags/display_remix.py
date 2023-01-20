@@ -20,9 +20,10 @@
 
 from __future__ import absolute_import, division
 #avoid namespace clash with 'tags' templatetag
+from builtins import str
 from django import template
 import json
-from random import randint
+
 
 register = template.Library()
 @register.inclusion_tag('sounds/display_remix.html', takes_context=True)

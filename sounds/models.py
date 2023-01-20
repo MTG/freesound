@@ -20,6 +20,12 @@
 #     See AUTHORS file.
 #
 
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
+from past.utils import old_div
 import datetime
 import glob
 import json
@@ -43,7 +49,7 @@ from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 from django.utils.functional import cached_property
 from django.utils.text import Truncator
 
@@ -69,7 +75,6 @@ from utils.text import slugify
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
-sentry_logger = logging.getLogger('sentry')
 
 
 class License(OrderedModel):
@@ -163,8 +168,6 @@ class BulkUploadProgress(models.Model):
             lines_validated = []
             global_errors = ['An unexpected error occurred while validating your data file']
 
-            sentry_logger.error('Error validating data file', exc_info=True, extra=bulk_upload_basic_data)
-
         self.validation_output = {
             'lines_ok': [line for line in lines_validated if not line['line_errors']],
             'lines_with_errors': [line for line in lines_validated if line['line_errors']],
@@ -246,14 +249,14 @@ class BulkUploadProgress(models.Model):
                                                     n_sounds_failed_processing)
         progress = 0
         if self.description_output is not None:
-            progress = 100.0 * (n_sounds_published +
+            progress = old_div(100.0 * (n_sounds_published +
                                 n_sounds_moderation +
                                 n_sounds_failed_processing +
                                 n_sounds_error +
-                                n_sounds_unknown) / \
+                                n_sounds_unknown), \
                        (n_sounds_described_ok +
                         n_sounds_error +
-                        n_sounds_remaining_to_describe)
+                        n_sounds_remaining_to_describe))
             progress = int(progress)
             # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
             # number of sounds that should have been described and processed. Sounds that fail processing or description
@@ -291,7 +294,7 @@ class BulkUploadProgress(models.Model):
             return len(self.validation_output['lines_with_errors']) > 0
         return False
 
-    class Meta:
+    class Meta(object):
         permissions = (
             ("can_describe_in_bulk", "Can use the Bulk Describe feature."),
         )
@@ -662,7 +665,7 @@ class Sound(SocialModel):
 
     @locations_decorator()
     def locations(self):
-        id_folder = str(self.id/1000)
+        id_folder = str(old_div(self.id,1000))
         sound_user_id = self.user_id
         previews_url = settings.PREVIEWS_URL if not settings.USE_CDN_FOR_PREVIEWS else settings.CDN_PREVIEWS_URL
         displays_url = settings.DISPLAYS_URL if not settings.USE_CDN_FOR_DISPLAYS else settings.CDN_DISPLAYS_URL
@@ -822,10 +825,10 @@ class Sound(SocialModel):
     @property
     def avg_rating_0_5(self):
         # Returns the average raring, normalized from 0 tp 5
-        return self.avg_rating / 2
+        return old_div(self.avg_rating, 2)
 
     def get_absolute_url(self):
-        return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
+        return reverse('sound', args=[self.user.username, smart_text(self.id)])
 
     @property
     def license_bw_icon_name(self):
@@ -1330,7 +1333,7 @@ def on_delete_sound(sender, instance, **kwargs):
     # store count and average (for ratings). We do not store at all information about bookmarks.
 
     try:
-        data = Sound.objects.filter(pk=instance.pk).values()[0]
+        data = list(Sound.objects.filter(pk=instance.pk).values())[0]
     except IndexError:
         # The sound being deleted can't be found on the database. This might happen if a sound is being deleted
         # multiple times concurrently, and in one "thread" the sound object has already been deleted when reaching
@@ -1345,17 +1348,17 @@ def on_delete_sound(sender, instance, **kwargs):
 
     pack = None
     if instance.pack:
-        pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
+        pack = list(Pack.objects.filter(pk=instance.pack.pk).values())[0]
     data['pack'] = pack
 
     geotag = None
     if instance.geotag:
-        geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
+        geotag = list(GeoTag.objects.filter(pk=instance.geotag.pk).values())[0]
     data['geotag'] = geotag
 
     license = None
     if instance.license:
-        license = License.objects.filter(pk=instance.license.pk).values()[0]
+        license = list(License.objects.filter(pk=instance.license.pk).values())[0]
     data['license'] = license
 
     data['comments'] = list(instance.comments.values())
@@ -1448,7 +1451,7 @@ class Pack(SocialModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('pack', args=[self.user.username, smart_unicode(self.id)])
+        return reverse('pack', args=[self.user.username, smart_text(self.id)])
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')
@@ -1534,14 +1537,14 @@ class Pack(SocialModel):
         # TODO: don't compute this realtime, store it in DB
         ratings = list(SoundRating.objects.filter(sound__pack=self).values_list('rating', flat=True))
         if ratings:
-            return 1.0*sum(ratings)/len(ratings)
+            return old_div(1.0*sum(ratings),len(ratings))
         else:
             return 0
 
     @property
     def avg_rating_0_5(self):
         # Returns the average raring, normalized from 0 tp 5
-        return self.avg_rating/2
+        return old_div(self.avg_rating,2)
 
     @property
     def num_ratings(self):
@@ -1629,7 +1632,7 @@ class Flag(models.Model):
     def __unicode__(self):
         return u"%s: %s" % (self.reason_type, self.reason[:100])
 
-    class Meta:
+    class Meta(object):
         ordering = ("-created",)
 
 
@@ -1639,7 +1642,7 @@ class Download(models.Model):
     license = models.ForeignKey(License)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-created",)
         indexes = [
             models.Index(fields=['user', 'sound']),
@@ -1711,7 +1714,7 @@ class SoundLicenseHistory(models.Model):
     sound = models.ForeignKey(Sound)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-created",)
 
 
@@ -1742,7 +1745,7 @@ class SoundAnalysis(models.Model):
          include analysis output but also logs. The base filepath should be complemented with the extension, which
          could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
          the ANALYSIS_PATH and under a sound ID folder structure like sounds and other sound-related files."""
-        id_folder = str(self.sound_id / 1000)
+        id_folder = str(old_div(self.sound_id, 1000))
         return os.path.join(settings.ANALYSIS_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
 
     def load_analysis_data_from_file_to_db(self):
@@ -1791,7 +1794,7 @@ class SoundAnalysis(models.Model):
                 pass
         if os.path.exists(self.analysis_filepath_base + '.yaml'):
             try:
-                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CLoader)
+                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CSafeLoader)
             except Exception:
                 pass
         return {}
@@ -1821,7 +1824,7 @@ class SoundAnalysis(models.Model):
     def __str__(self):
         return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)
 
-    class Meta:
+    class Meta(object):
         unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination
 
 def on_delete_sound_analysis(sender, instance, **kwargs):
@@ -1833,4 +1836,3 @@ def on_delete_sound_analysis(sender, instance, **kwargs):
             pass
 
 pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
-

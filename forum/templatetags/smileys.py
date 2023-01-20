@@ -17,7 +17,7 @@ mapping = """8-) 8) cool
 :O :-O woot"""
 
 d = []
-for emoticons, name in map(lambda x: (x[:-1], x[-1]), [x.split() for x in mapping.lower().split("\n")]):
+for emoticons, name in [(x[:-1], x[-1]) for x in [x.split() for x in mapping.lower().split("\n")]]:
     for emoticon in emoticons:
         d.append((emoticon,name))
 

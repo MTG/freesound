@@ -20,17 +20,20 @@
 
 from __future__ import print_function
 
+from builtins import hex
+from builtins import str as new_str
+from builtins import bytes
+from builtins import object
 import errno
 import hashlib
 import os
-import shutil
 import sys
 import warnings
 import zlib
 from tempfile import mkdtemp
 
 
-class File:
+class File(object):
 
     def __init__(self, id, name, full_path, is_dir):
         self.name = name
@@ -47,6 +50,9 @@ class File:
 
 
 def generate_tree(path):
+    # Force path to use the "old" py2 str type. This should not be needed when using py3
+    path = str(path)
+
     counter = 0
     lookups = {path: File(counter, path, path, True)}
     files = {}
@@ -72,7 +78,7 @@ def generate_tree(path):
 
 def md5file(filename):
     """Return the hex digest of a file without loading it all into memory"""
-    fh = open(filename, "rb")
+
     digest = hashlib.md5()
     with open(filename, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -149,7 +155,7 @@ class TemporaryDirectory(object):
                 # Issue #10188: Emit a warning on stderr
                 # if the directory could not be cleaned
                 # up due to missing globals
-                if "None" not in str(ex):
+                if "None" not in new_str(ex):
                     raise
                 print("ERROR: {!r} while cleaning up {!r}".format(ex, self, ),
                       file=sys.stderr)

@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import range
 import datetime
 import os
 import shutil
@@ -41,7 +42,7 @@ from utils.tags import clean_and_split_tags
 from utils.test_helpers import create_test_files, create_user_and_sounds, override_uploads_path_with_temp_directory, \
     override_csv_path_with_temp_directory, override_sounds_path_with_temp_directory, \
     override_previews_path_with_temp_directory, override_displays_path_with_temp_directory, \
-    override_analysis_path_with_temp_directory, override_processing_tmp_path_with_temp_directory
+    override_processing_tmp_path_with_temp_directory
 
 
 class UtilsTest(TestCase):

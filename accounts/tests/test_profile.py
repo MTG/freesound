@@ -17,6 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
+from builtins import range
 import datetime
 import os
 
@@ -34,7 +35,6 @@ from django.urls import reverse
 from django.utils.http import int_to_base36
 
 import accounts.models
-import utils.search.backends.solr451custom
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
 from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
 from accounts.views import handle_uploaded_image
@@ -43,10 +43,6 @@ from sounds.models import Pack, Download, PackDownload
 from tags.models import TaggedItem
 from utils.mail import send_mail
 from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
-# Below we import SolrResponseInterpreter because we're using them in the 
-# tests to process data returned from Solr. Ideally we should make this test agnostic of search backend and 
-# prepare fake search data as it would be afeter being processed by SolrResponseInterpreter.
-from utils.search.backends.solr451custom import SolrResponseInterpreter
 
 
 class ProfileGetUserTags(TestCase):
@@ -197,9 +193,9 @@ class AboutFieldVisibilityTest(TestCase):
     def _check_visibility(self, username, condition):
         resp = self.client.get(reverse('account', kwargs={'username': username}))
         if condition:
-            self.assertIn(self.about, resp.content)
+            self.assertContains(resp, self.about)
         else:
-            self.assertNotIn(self.about, resp.content)
+            self.assertNotContains(resp, self.about)
 
     def _check_visible(self):
         self._check_visibility('downloader', True)

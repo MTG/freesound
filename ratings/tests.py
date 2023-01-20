@@ -50,7 +50,7 @@ class RatingsTestCase(TestCase):
 
         RATING_VALUE = 3
         resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, RATING_VALUE))
-        self.assertEqual(resp.content, "2")
+        self.assertContains(resp, "2")
 
         self.assertEqual(ratings.models.SoundRating.objects.count(), 2)
         r = ratings.models.SoundRating.objects.get(sound_id=self.sound.id, user_id=self.user1.id)
@@ -91,10 +91,10 @@ class RatingsTestCase(TestCase):
 
         resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 0))
         # After doing an invalid rating, there are still none for this sound
-        self.assertEqual(resp.content, "0")
+        self.assertContains(resp, "0")
 
         resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 6))
-        self.assertEqual(resp.content, "0")
+        self.assertContains(resp, "0")
 
     def test_delete_all_ratings(self):
         r = ratings.models.SoundRating.objects.create(sound=self.sound, user_id=self.user2.id, rating=2)

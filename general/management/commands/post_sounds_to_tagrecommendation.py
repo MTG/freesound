@@ -21,9 +21,9 @@
 from __future__ import print_function
 
 from django.core.management.base import BaseCommand
+
 from sounds.models import Sound
 from utils.tagrecommendation_utilities import get_id_of_last_indexed_sound, post_sounds_to_tagrecommendation_service
-from optparse import make_option
 
 
 class Command(BaseCommand):

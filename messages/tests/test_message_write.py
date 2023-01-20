@@ -17,8 +17,10 @@
 # Authors:
 #     See AUTHORS file.
 #
+from builtins import range
 import json
 
+import six
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -50,12 +52,12 @@ class RecaptchaPresenceInMessageForms(TestCase):
         # Not a spammer case, recaptcha field should NOT be shown
         self.client.force_login(user=self.no_spammer)
         resp = self.client.get(reverse('messages-new'))
-        self.assertNotIn('recaptcha', resp.content)
+        self.assertNotContains(resp, 'recaptcha')
 
         # Potential spammer (has no uploaded sounds), recaptcha field should be shown
         self.client.force_login(user=self.potential_spammer)
         resp = self.client.get(reverse('messages-new'))
-        self.assertIn('recaptcha', resp.content)
+        self.assertContains(resp, 'recaptcha')
 
     def test_captcha_presence_in_reply_message_form(self):
 
@@ -65,7 +67,7 @@ class RecaptchaPresenceInMessageForms(TestCase):
             body=MessageBody.objects.create(body='Message body'), is_sent=True, is_archived=False, is_read=False)
         self.client.force_login(user=self.no_spammer)
         resp = self.client.get(reverse('messages-new', args=[message.id]))
-        self.assertNotIn('recaptcha', resp.content)
+        self.assertNotContains(resp, 'recaptcha')
 
         # Potential spammer (has no uploaded sounds), recaptcha field should be shown
         message = Message.objects.create(
@@ -73,7 +75,7 @@ class RecaptchaPresenceInMessageForms(TestCase):
             body=MessageBody.objects.create(body='Message body'), is_sent=True, is_archived=False, is_read=False)
         self.client.force_login(user=self.potential_spammer)
         resp = self.client.get(reverse('messages-new', args=[message.id]))
-        self.assertIn('recaptcha', resp.content)
+        self.assertContains(resp, 'recaptcha')
 
 
 class UsernameLookup(TestCase):
@@ -111,9 +113,9 @@ class UsernameLookup(TestCase):
     def test_get_previously_contacted_usernames(self):
         # Check get_previously_contacted_usernames helper function returns userames of users previously contacted by
         # the sender or users who previously contacted the sender
-        self.assertItemsEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username,
-                               self.sender2.username, self.sender.username],
-                              get_previously_contacted_usernames(self.sender))
+        six.assertCountEqual(self, [self.receiver3.username, self.receiver2.username, self.receiver1.username,
+                                    self.sender2.username, self.sender.username],
+                             get_previously_contacted_usernames(self.sender))
 
     def test_username_lookup_response(self):
         # Check username lookup view returns userames of users previously contacted by the sender or users who
@@ -122,9 +124,9 @@ class UsernameLookup(TestCase):
         resp = self.client.get(reverse('messages-username_lookup'))
         response_json = json.loads(resp.content)
         self.assertEqual(resp.status_code, 200)
-        self.assertItemsEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username,
-                               self.sender2.username, self.sender.username],
-                              response_json)
+        six.assertCountEqual(self, [self.receiver3.username, self.receiver2.username, self.receiver1.username,
+                                    self.sender2.username, self.sender.username],
+                             response_json)
 
 
 class QuoteMessageTestCase(TestCase):

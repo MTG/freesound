@@ -17,6 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
+from builtins import str
 import datetime
 import json
 import logging
@@ -72,7 +73,7 @@ class Command(LoggingBaseCommand):
             week_first_day_str = week_first_day.strftime("%d %b").lstrip("0")
             week_last_day_str = week_last_day.strftime("%d %b").lstrip("0")
 
-            extra_email_subject = unicode(week_first_day_str) + u' to ' + unicode(week_last_day_str)
+            extra_email_subject = str(week_first_day_str) + u' to ' + str(week_last_day_str)
 
             # Set date range from which to get upload notifications
             time_lapse = follow_utils.build_time_lapse(week_first_day, week_last_day)

@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 from comments.models import Comment
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
@@ -34,7 +35,7 @@ class SocialModel(models.Model):
     tags = fields.GenericRelation(TaggedItem)
     fans = fields.GenericRelation(Favorite)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
 class AkismetSpam(SocialModel):
@@ -86,6 +87,6 @@ class OrderedModel(models.Model):
         except ModelClass.DoesNotExist:
             pass
 
-    class Meta:
+    class Meta(object):
         ordering = ["order"]
         abstract = True

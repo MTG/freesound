@@ -20,12 +20,11 @@
 import datetime
 import glob
 import logging
-
 import os
-import json
 import time
 
 from django.conf import settings
+
 from utils.management_commands import LoggingBaseCommand
 
 

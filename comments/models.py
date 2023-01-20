@@ -20,9 +20,9 @@
 #     See AUTHORS file.
 #
 
+from builtins import object
 import sounds
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import fields
 from django.db import models
 from django.db.models.signals import post_delete
 
@@ -37,7 +37,7 @@ class Comment(models.Model):
     def __unicode__(self):
         return u"%s comment on %s" % (self.user, self.sound)
 
-    class Meta:
+    class Meta(object):
         ordering = ('-created', )
 
 

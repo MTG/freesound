@@ -22,7 +22,6 @@ import os
 import logging
 
 from django.core.management.base import BaseCommand
-from django.urls import reverse
 
 
 console_logger = logging.getLogger("console")

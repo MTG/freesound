@@ -19,9 +19,12 @@
 #
 
 import json
+import re
 from unittest import skipIf
 
 import mock
+from builtins import range
+from builtins import str
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
@@ -35,11 +38,11 @@ from django.test.utils import override_settings
 from django.test.utils import patch_logger
 from django.urls import reverse
 
-from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
 from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserDeletionRequest
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
+from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from sounds.models import License, Sound, Pack, DeletedSound, Download, PackDownload
 from utils.mail import transform_unique_email
 
@@ -52,8 +55,8 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(Profile.objects.filter(user=u).exists(), True)
         u.save()  # Check saving user again (with existing profile) does not fail
 
-    @override_settings(RECAPTCHA_PUBLIC_KEY='')
-    def test_user_registration(self):
+    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    def test_user_registration(self, magic_mock_function):
         username = 'new_user'
 
         # Try registration without accepting tos
@@ -65,7 +68,7 @@ class UserRegistrationAndActivation(TestCase):
             u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('You must accept the terms of use', resp.content)
+        self.assertContains(resp, 'You must accept the terms of use')
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
@@ -78,7 +81,7 @@ class UserRegistrationAndActivation(TestCase):
             u'email2': [u'exampleemail.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('Enter a valid email', resp.content)
+        self.assertContains(resp, 'Enter a valid email')
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
@@ -91,7 +94,7 @@ class UserRegistrationAndActivation(TestCase):
             u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('This field is required', resp.content)
+        self.assertContains(resp, 'This field is required')
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
@@ -104,7 +107,7 @@ class UserRegistrationAndActivation(TestCase):
             u'email2': [u'exampl@email.net']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('Please confirm that your email address is the same', resp.content)
+        self.assertContains(resp, 'Please confirm that your email address is the same')
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
@@ -117,7 +120,7 @@ class UserRegistrationAndActivation(TestCase):
             u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('Registration done, activate your account', resp.content)
+        self.assertContains(resp, 'Registration done, activate your account')
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # An email was sent!
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
@@ -132,7 +135,7 @@ class UserRegistrationAndActivation(TestCase):
             u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('You cannot use this username to create an account', resp.content)
+        self.assertContains(resp, 'You cannot use this username to create an account')
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
@@ -145,11 +148,18 @@ class UserRegistrationAndActivation(TestCase):
             u'email2': [u'example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('You cannot use this email address to create an account', resp.content)
+        self.assertContains(resp, 'You cannot use this email address to create an account')
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
-    def test_user_activation(self):
+        activation_code = re.search(r"home/activate/.+/(.+)/", mail.outbox[0].body).group(1)
+        # Test calling accounts-activate with good hash, user should be activated
+        resp = self.client.get(reverse('accounts-activate', args=[username, activation_code]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['all_ok'], True)
+        self.assertEqual(User.objects.get(username=username).is_active, True)
+
+    def test_user_activation_fails(self):
         user = User.objects.get(username="User6Inactive")  # Inactive user in fixture
 
         # Test calling accounts-activate with wrong hash, user should not be activated
@@ -158,14 +168,6 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['decode_error'], True)
         self.assertEqual(User.objects.get(username="User6Inactive").is_active, False)
-
-        # Test calling accounts-activate with good hash, user should be activated
-        from utils.encryption import create_hash
-        good_hash = create_hash(user.id)
-        resp = self.client.get(reverse('accounts-activate', args=[user.username, good_hash]))
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['all_ok'], True)
-        self.assertEqual(User.objects.get(username="User6Inactive").is_active, True)
 
         # Test calling accounts-activate for a user that does not exist
         resp = self.client.get(reverse('accounts-activate', args=["noone", hash]))
@@ -324,7 +326,9 @@ class UserDelete(TestCase):
         encr_link = form.initial['encrypted_link']
         resp = self.client.post(
             reverse('accounts-delete'),
-            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'})
+            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'},
+            follow=True,
+        )
 
         # Test job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
@@ -340,7 +344,7 @@ class UserDelete(TestCase):
         self.assertRedirects(resp, reverse('front-page'))
 
         # Check loaded page contains message about user deletion
-        self.assertIn(resp.content, 'Your user account will be deleted in a few moments')
+        self.assertContains(resp, 'Your user account will be deleted in a few moments')
 
     @mock.patch('general.tasks.delete_user.delay')
     def test_user_delete_keep_sounds_using_web_form(self, submit_job):
@@ -352,7 +356,9 @@ class UserDelete(TestCase):
         encr_link = form.initial['encrypted_link']
         resp = self.client.post(
             reverse('accounts-delete'),
-            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
+            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'},
+            follow=True,
+        )
 
         # Test job is triggered
         data = json.dumps({'user_id': user.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
@@ -368,7 +374,7 @@ class UserDelete(TestCase):
         self.assertRedirects(resp, reverse('front-page'))
 
         # Check loaded page contains message about user deletion
-        self.assertIn(resp.content, 'Your user account will be deleted in a few moments')
+        self.assertContains(resp, 'Your user account will be deleted in a few moments')
 
     def test_fail_user_delete_include_sounds_using_web_form(self):
         # Test delete user account form with wrong password does not delete
@@ -383,7 +389,7 @@ class UserDelete(TestCase):
             {'encrypted_link': encr_link, 'password': 'wrong_pass', 'delete_sounds': 'delete_sounds'})
 
         # Check user is reported incorrect password
-        self.assertIn('Incorrect password', resp.content)
+        self.assertContains(resp, 'Incorrect password')
 
         # Check user is not marked as anonymized
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, False)

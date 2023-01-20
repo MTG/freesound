@@ -291,7 +291,7 @@
 
                 <ul>
                     {% for follow_user_item in following|slice:":21" %}
-                        <a href="{% url "account" follow_user_item.user_to.username %}" title="{{ follow_user_item.user_to.username }}"><img src="{{follow_user_item.user_to.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                        <a href="{% url "account" follow_user_item.user_to.username %}" title="{{ follow_user_item.user_to.username }}"><img src="{{follow_user_item.user_to.profile.locations.avatar.M.url}}" alt="{{ follow_user_item.user_to.username }} avatar" /></a>
                     {% endfor %}
                 </ul>
                 <p><a href="{% url "user-following-users" user %}">more...</a></p>
@@ -306,7 +306,7 @@
 
                 <ul>
                     {% for follow_user_item in followers|slice:":21" %}
-                        <a href="{% url "account" follow_user_item.user_from.username %}" title="{{follow_user_item.user_from.username}}"><img src="{{follow_user_item.user_from.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                        <a href="{% url "account" follow_user_item.user_from.username %}" title="{{follow_user_item.user_from.username}}"><img src="{{follow_user_item.user_from.profile.locations.avatar.M.url}}" alt="{{follow_user_item.user_from.username}} avatar" /></a>
                     {% endfor %}
                 </ul>
                 <p><a href="{% url "user-followers" user %}">more...</a></p>

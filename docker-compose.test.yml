@@ -19,7 +19,7 @@ services:
     test_runner:
         build:
             context: ./
-            dockerfile: ./docker/Dockerfile.travis_test_runner
+            dockerfile: ./docker/Dockerfile.test
         init: true
         volumes:
             - .:/code

@@ -19,9 +19,11 @@
 #     See AUTHORS file.
 #
 
+from __future__ import unicode_literals
+
 from django.test import TestCase
 
-from utils.text import clean_html, is_shouting, text_may_be_spam, remove_control_chars
+from utils.text import clean_html, is_shouting, text_may_be_spam, remove_control_chars, slugify
 
 
 class TextUtilTest(TestCase):
@@ -62,6 +64,35 @@ class TextUtilTest(TestCase):
         self.assertEqual(remove_control_chars(text), "text with \n newline")
         text = "text with control\x08char"
         self.assertEqual(remove_control_chars(text), "text with controlchar")
+
+
+class SlugifyTest(TestCase):
+
+    def test_slugify(self):
+        self.assertEqual("voice-gong", slugify("voice-gong"))
+        self.assertEqual("voice-gong", slugify("voice---gong"))
+        self.assertEqual("voice-gong", slugify("---voice---gong--"))
+        self.assertEqual("abcabcabc", slugify("abcABCabc"))
+
+        expected = "roomy-remix-of-otherperson-s-freesound-12345"
+        result = slugify("roomy remix of otherperson's freesound #12345")
+        self.assertEqual(expected, result)
+        result = slugify("roomy remix of otherperson&#x27;s freesound #12345")
+        self.assertEqual(expected, result)
+
+        self.assertEqual("glass-a-ff", slugify("Glass A# ff"))
+        self.assertEqual(
+            "gesprekken-stoel-kraak-lachen-bij-tim",
+            slugify("gesprekken stoel kraak lachen bij tim")
+        )
+        self.assertEqual(
+            "der-gerauschedetektiv-wav",
+            slugify("Der Geräuschedetektiv.wav")
+        )
+        self.assertEqual(
+            "tham-c-019",
+            slugify("Tham_C_019")
+        )
 
 
 class CleanHtmlTest(TestCase):

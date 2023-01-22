@@ -34,27 +34,25 @@ from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHO
     SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER
 
 
-def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slug_field='slug', filter_dict=None):
+
+def slugify(s):
     """ slugify with character translation which translates foreign characters to regular ascii equivalents """
     s = smart_text(s)
 
     #  character entity reference
-    if entities:
-        s = re.sub(r'&(%s);' % '|'.join(name2codepoint), lambda m: chr(name2codepoint[m.group(1)]), s)
+    s = re.sub(r'&(%s);' % '|'.join(name2codepoint), lambda m: chr(name2codepoint[m.group(1)]), s)
 
     #  decimal character reference
-    if decimal:
-        try:
-            s = re.sub(r'&#(\d+);', lambda m: chr(int(m.group(1))), s)
-        except:
-            pass
+    try:
+        s = re.sub(r'&#(\d+);', lambda m: chr(int(m.group(1))), s)
+    except:
+        pass
 
     #  hexadecimal character reference
-    if hexadecimal:
-        try:
-            s = re.sub(r'&#x([\da-fA-F]+);', lambda m: chr(int(m.group(1), 16)), s)
-        except:
-            pass
+    try:
+        s = re.sub(r'&#x([\da-fA-F]+);', lambda m: chr(int(m.group(1), 16)), s)
+    except:
+        pass
 
     #  translate
     s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore')
@@ -66,19 +64,6 @@ def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slu
     s = re.sub('-{2,}', '-', s).strip('-')
 
     slug = s
-
-    if instance:
-        def get_query():
-            query = instance.__class__.objects.filter(**{slug_field: slug})
-            if filter_dict:
-                query = query.filter(**filter_dict)
-            if instance.pk:
-                query = query.exclude(pk=instance.pk)
-            return query
-        counter = 1
-        while get_query():
-            slug = "%s-%s" % (s, counter)
-            counter += 1
 
     return slug.lower()
 

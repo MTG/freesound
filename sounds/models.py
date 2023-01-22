@@ -51,7 +51,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_text
 from django.utils.functional import cached_property
-from django.utils.text import Truncator
+from django.utils.text import Truncator, slugify
 
 import accounts.models
 from apiv2.models import ApiV2Client
@@ -71,7 +71,6 @@ from utils.search import get_search_engine, SearchEngineException
 from utils.search.search_sounds import delete_sounds_from_search_engine
 from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
-from utils.text import slugify
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -1459,7 +1458,7 @@ class Pack(SocialModel):
 
     def friendly_filename(self):
         name_slug = slugify(self.name)
-        username_slug =  slugify(self.user.username)
+        username_slug = slugify(self.user.username)
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
     def process(self):

@@ -40,7 +40,7 @@ web_logger = logging.getLogger('web')
 
 def get_recommended_tags(input_tags, max_number_of_tags=30):
 
-    hashed_tags = md5(",".join(sorted(input_tags)))
+    hashed_tags = md5(",".join(sorted(input_tags)).encode())
     cache_key = "recommended-tags-for-%s" % (hashed_tags.hexdigest())
 
     recommended_tags = False

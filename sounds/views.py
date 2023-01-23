@@ -572,7 +572,7 @@ def sound_edit(request, username, sound_id):
 
 def clear_session_edit_and_describe_data(request):
     # Clear pre-existing edit/describe sound related data in the session
-    for key in ['describe_sounds', 'describe_license', 'describe_pack', 'len_original_describe_edit_sounds']:
+    for key in ['describe_sounds', 'edit_sounds' ,'describe_license', 'describe_pack', 'len_original_describe_edit_sounds']:
         request.session.pop(key, None)  
 
 
@@ -598,7 +598,7 @@ def edit_and_describe_sounds_helper(request):
             sound_fields = {
                 'name': form.cleaned_data['name'],
                 'dest_path': u'{}'.format(form.file_full_path),
-                'license': License.objects.last(),# form['license'].cleaned_data['license'],  # TODO use real license
+                'license': form.cleaned_data['license'],
                 'description': form.cleaned_data.get('description', ''),
                 'tags': form.cleaned_data.get('tags', ''),
                 'is_explicit': form.cleaned_data['is_explicit'],
@@ -678,8 +678,9 @@ def edit_and_describe_sounds_helper(request):
             form = BWSoundEditAndDescribeForm(
                 request.POST, 
                 prefix=prefix, 
+                file_full_path=element.full_path if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
-                file_full_path=element.full_path if describing else None)
+                hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True)
             forms.append(form)  
             if form.is_valid():
                 data = form.cleaned_data
@@ -690,7 +691,14 @@ def edit_and_describe_sounds_helper(request):
                     sound.set_tags(data["tags"])
                     sound.description = remove_control_chars(data["description"])
                     sound.original_filename = data["name"]
-                    sound.mark_index_dirty()
+                    new_license = data["license"]
+                    if new_license != sound.license:
+                        sound.set_license(new_license)
+                    sound.mark_index_dirty()  # Sound is saved here
+                    if new_license != sound.license and sound.pack:
+                        # Sound license changed and sound has pack, pack needs to be re-processed
+                        # TODO: is this still true?
+                        sound.pack.process()
                     sound.invalidate_template_caches()
                     update_sound_tickets(sound, '%s updated the sound description and/or tags.' % request.user.username)
                     messages.add_message(request, messages.INFO,
@@ -704,13 +712,16 @@ def edit_and_describe_sounds_helper(request):
             if not describing:
                 initial = dict(tags=element.get_sound_tags_string(),
                             description=element.description,
-                            name=element.original_filename)
+                            name=element.original_filename,
+                            license=element.license)
             else:
                 initial = dict(name=element.name)
             form = BWSoundEditAndDescribeForm(
                 prefix=prefix, 
                 explicit_disable=element.is_explicit if not describing else False,
-                initial=initial)
+                initial=initial,
+                hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True)
+
             forms.append(form)  
 
     tvars = {

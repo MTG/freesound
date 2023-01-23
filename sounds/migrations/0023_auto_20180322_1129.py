@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='download',
-            index=models.Index(fields=[b'user', b'sound'], name='sounds_down_user_id_cde275_idx'),
+            index=models.Index(fields=['user', 'sound'], name='sounds_down_user_id_cde275_idx'),
         ),
     ]

@@ -228,34 +228,16 @@ class SearchUtilsTest(TestCase):
     # that gave problems while developping the filter string parser function 
     # utils.search.lucene_parser.parse_query_filter_string()
     def test_parse_filter_query_special_created(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'       
-            filter_query_split = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
+        filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
     def test_parse_filter_query_special_char(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
-            filter_query_split = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
+        filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
     def test_parse_filter_query_special_char2(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
-            filter_query_split = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
+        filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
+        filter_query_split = parse_query_filter_string(filter_query_string)
 
     def test_parse_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''
@@ -274,15 +256,8 @@ class SearchUtilsTest(TestCase):
         ])
 
     def test_parse_filter_nested_composed_with_OR(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
-            parsed_filters = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
-        
+        filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
+        parsed_filters = parse_query_filter_string(filter_query_string)
 
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):

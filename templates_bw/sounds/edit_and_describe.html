@@ -1,0 +1,22 @@
+{% extends "simple_page.html" %}
+{% load display_sound %}
+{% load util %}
+
+{% block title %}{% if describing %}Describe{% else %}Edit{% endif %}  sound{{num_forms|pluralize}}{% endblock %}
+{% block page-title %}{% if describing %}Describe{% else %}Edit{% endif %}  sound{{num_forms|pluralize}} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
+
+{% block page-content %}
+<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit">{% csrf_token %}
+<div>
+    {% for form in forms%}
+    <div>
+        {% if not describing %}
+            {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
+        {% endif %}
+        {{ form.as_p }}
+    </div>
+    {% endfor %}
+</div>
+<button type="submit" class="btn-primary v-spacing-top-3">Save</button>
+</form>
+{% endblock %}

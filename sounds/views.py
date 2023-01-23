@@ -25,6 +25,7 @@ from past.utils import old_div
 import datetime
 import json
 import logging
+import math
 import time
 from django.views.decorators.clickjacking import xframe_options_exempt
 from operator import itemgetter
@@ -54,11 +55,12 @@ from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
-    RemixForm, PackForm
+    RemixForm, PackForm, BWSoundEditAndDescribeForm
 from sounds.models import PackDownload, PackDownloadSound
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
+from utils.cache import invalidate_user_template_caches
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
@@ -70,8 +72,11 @@ from utils.search.search_sounds import get_random_sound_id_from_search_engine
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
+from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException
 
 web_logger = logging.getLogger('web')
+sounds_logger = logging.getLogger('sounds')
+upload_logger = logging.getLogger('file_upload')
 cache_cdn_map = caches["cdn_map"]
 
 
@@ -425,6 +430,12 @@ def sound_edit(request, username, sound_id):
     if not (request.user.is_superuser or sound.user == request.user):
         raise PermissionDenied
 
+    if using_beastwhoosh(request):
+        clear_session_edit_and_describe_data(request)
+        request.session['edit_sounds'] = [sound]  # Add the list of sounds to edit in the session object
+        request.session['len_original_describe_edit_sounds'] = 1
+        return edit_and_describe_sounds_helper(request)
+
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
@@ -557,6 +568,193 @@ def sound_edit(request, username, sound_id):
         'license_form': license_form
     }
     return render(request, 'sounds/sound_edit.html', tvars)
+
+
+def clear_session_edit_and_describe_data(request):
+    # Clear pre-existing edit/describe sound related data in the session
+    for key in ['describe_sounds', 'describe_license', 'describe_pack', 'len_original_describe_edit_sounds']:
+        request.session.pop(key, None)  
+
+
+def edit_and_describe_sounds_helper(request):
+
+    def update_sound_tickets(sound, text):
+        tickets = Ticket.objects.filter(sound_id=sound.id).exclude(status=TICKET_STATUS_CLOSED)
+        for ticket in tickets:
+            tc = TicketComment(sender=request.user,
+                               ticket=ticket,
+                               moderator_only=False,
+                               text=text)
+            tc.save()
+            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
+                                            ticket.MODERATOR_ONLY)
+
+    def create_sounds(request, forms):
+        # Create actual Sound objects, trigger processing of sounds and of affected packs
+        sounds_to_process = []
+        dirty_packs = []
+        for form in forms:
+            from sounds.models import License
+            sound_fields = {
+                'name': form.cleaned_data['name'],
+                'dest_path': u'{}'.format(form.file_full_path),
+                'license': License.objects.last(),# form['license'].cleaned_data['license'],  # TODO use real license
+                'description': form.cleaned_data.get('description', ''),
+                'tags': form.cleaned_data.get('tags', ''),
+                'is_explicit': form.cleaned_data['is_explicit'],
+            }
+
+            # TODO: add more fields to the form and add the data in sound_fields
+            '''
+            pack = form['pack'].cleaned_data.get('pack', False)
+            new_pack = form['pack'].cleaned_data.get('new_pack', False)
+            if not pack and new_pack:
+                sound_fields['pack'] = new_pack
+            elif pack:
+                sound_fields['pack'] = pack
+
+            data = form['geotag'].cleaned_data
+            if not data.get('remove_geotag') and data.get('lat'):  # if 'lat' is in data, we assume other fields are too
+                geotag = '%s,%s,%d' % (data.get('lat'), data.get('lon'), data.get('zoom'))
+                sound_fields['geotag'] = geotag
+            '''
+            try:
+                user = request.user
+                sound = create_sound(user, sound_fields, process=False)
+                sounds_to_process.append(sound)
+                if user.profile.is_whitelisted:
+                    messages.add_message(request, messages.INFO,
+                        'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
+                        (sound.get_absolute_url(), sound.original_filename))
+                else:
+                    messages.add_message(request, messages.INFO,
+                        'File <a href="%s">%s</a> has been described and is now awaiting processing '
+                        'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
+
+                    # Invalidate affected caches in user header
+                    invalidate_user_template_caches(request.user.id)
+                    for moderator in Group.objects.get(name='moderators').user_set.all():
+                        invalidate_user_template_caches(moderator.id)
+
+            except NoAudioException:
+                # If for some reason audio file does not exist, skip creating this sound
+                messages.add_message(request, messages.ERROR,
+                                     'Something went wrong with accessing the file %s.' % form.cleaned_data['name'])
+            except AlreadyExistsException as e:
+                msg = e.message
+                messages.add_message(request, messages.WARNING, msg)
+            except CantMoveException as e:
+                upload_logger.error(e.message, e)
+
+        # Trigger processing of sounds and of affected packs
+        try:
+            for s in sounds_to_process:
+                s.process_and_analyze()
+        except Exception as e:
+            sounds_logger.error('Sound with id %s could not be sent to processing. (%s)' % (s.id, str(e)))
+        for p in dirty_packs:
+            p.process()
+
+    
+    files = request.session.get('describe_sounds', None)  # List of File objects of sounds to describe
+    sounds = request.session.get('edit_sounds', None)  # List of Sound objects to edit
+    if sounds is None and files is None:
+        raise Exception('Expecting either a list of sounds or audio files to describe, got none.')
+    if sounds is not None and files is not None:
+        raise Exception('Got both a list of sounds and audio files to describe, expected only one of the two.')
+    describing = sounds is None and files is not None
+    forms = []
+    forms_per_round = settings.SOUNDS_PER_DESCRIBE_ROUND
+    all_forms_validated_ok = True
+    all_remaining_sounds_to_edit_or_describe = files if describing else sounds
+    sounds_to_edit_or_describe = all_remaining_sounds_to_edit_or_describe[:forms_per_round]
+    len_original_describe_edit_sounds = request.session.get('len_original_describe_edit_sounds', 0)
+    num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
+    current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
+    
+    for count, element in enumerate(sounds_to_edit_or_describe):
+        prefix = str(count)
+        if request.method == "POST":
+            form = BWSoundEditAndDescribeForm(
+                request.POST, 
+                prefix=prefix, 
+                explicit_disable=element.is_explicit if not describing else False,
+                file_full_path=element.full_path if describing else None)
+            forms.append(form)  
+            if form.is_valid():
+                data = form.cleaned_data
+                if not describing:
+                    # Edit existing Sound object
+                    sound = element
+                    sound.is_explicit = data["is_explicit"]
+                    sound.set_tags(data["tags"])
+                    sound.description = remove_control_chars(data["description"])
+                    sound.original_filename = data["name"]
+                    sound.mark_index_dirty()
+                    sound.invalidate_template_caches()
+                    update_sound_tickets(sound, '%s updated the sound description and/or tags.' % request.user.username)
+                    messages.add_message(request, messages.INFO,
+                        'Sound <a href="%s">%s</a> succesfully edited!' % (sound.get_absolute_url(), sound.original_filename))
+                else:
+                    # Don't do anything here, as later we call method to create actual Sound objects
+                    pass
+            else:
+                all_forms_validated_ok = False
+        else:
+            if not describing:
+                initial = dict(tags=element.get_sound_tags_string(),
+                            description=element.description,
+                            name=element.original_filename)
+            else:
+                initial = dict(name=element.name)
+            form = BWSoundEditAndDescribeForm(
+                prefix=prefix, 
+                explicit_disable=element.is_explicit if not describing else False,
+                initial=initial)
+            forms.append(form)  
+
+    tvars = {
+        'describing': describing,
+        'num_forms': len(forms),
+        'forms': forms,
+        'sound_objects': sounds_to_edit_or_describe if not describing else None,
+        'current_round': current_round,
+        'num_rounds': num_rounds,
+    }
+    
+    if request.method == "POST" and all_forms_validated_ok:
+        if describing:
+            # Create Sound objects, trigger moderation, processing, etc...
+            create_sounds(request, forms)
+
+            # Remove sounds successfully described from session data
+            request.session['describe_sounds'] = files[forms_per_round:]
+
+            # If no more sounds to describe, redirect to manage sound page, otherwise redirect to same page to proceed with second round
+            messages.add_message(request, messages.INFO, 
+                'Successfully finished sound description round {} of {}!'.format(current_round, num_rounds))
+            if not request.session['describe_sounds']:
+                return HttpResponseRedirect(reverse('accounts-manage-sounds'))
+            else:
+                return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+        else:
+            # Remove sounds successfully described from session data
+            request.session['edit_sounds'] = sounds[forms_per_round:]
+
+            # If user was only editing one sound and has finished, redirect to the sound page
+            if len(forms) == 1 and len_original_describe_edit_sounds == 1:
+                return HttpResponseRedirect(sounds[0].get_absolute_url())
+
+            messages.add_message(request, messages.INFO, 
+                'Successfully finished sound editing round {} of {}!'.format(current_round, num_rounds))
+            if not request.session['edit_sounds']:
+                # If no more sounds to edit, redirect to manage sounds page
+                return HttpResponseRedirect(reverse('accounts-manage-sounds'))
+            else:
+                # Otherwise, redirect to the same page to continue with next round of sounds
+                return HttpResponseRedirect(reverse('accounts-edit-sounds'))
+        
+    return render(request, 'sounds/edit_and_describe.html', tvars)
 
 
 @login_required

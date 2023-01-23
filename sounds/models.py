@@ -858,7 +858,14 @@ class Sound(SocialModel):
         Returns the tags assigned to the sound as a list of strings, e.g. ["tag1", "tag2", "tag3"]
         :param limit: The maximum number of tags to return
         """
-        return [ti.tag.name for ti in self.tags.select_related("tag").all()[0:limit]]
+        return [ti.tag.name for ti in self.tags.select_related("tag").all().order_by('tag__name')[0:limit]]
+
+    def get_sound_tags_string(self, limit=None):
+        """
+        Returns the tags assigned to the sound as a string with tags separated by spaces, e.g. "tag1 tag2 tag3"
+        :param limit: The maximum number of tags to return
+        """
+        return " ".join(self.get_sound_tags(limit=limit))
 
     def set_tags(self, tags):
         """

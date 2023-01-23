@@ -292,3 +292,24 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
         # Overwrite clean method from 'GeotaggingForm' as we don't need to check for all fields present here because an
         # equivalent check is performed when parsing the geotag format "lat, lon, zoom".
         return self.cleaned_data
+
+
+class BWSoundEditAndDescribeForm(forms.Form):
+    name = forms.CharField(max_length=512, min_length=5,
+                           widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
+    is_explicit = forms.BooleanField(required=False)
+    tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
+                    help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
+                              "For example: <i>field-recording</i> is a popular tag."
+                              "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
+    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
+    file_full_path = None
+
+    def __init__(self, *args, **kwargs):
+        self.file_full_path = kwargs.pop('file_full_path', None)
+        explicit_disable = kwargs.pop('explicit_disable', False)
+
+        super(BWSoundEditAndDescribeForm, self).__init__(*args, **kwargs)
+        # Disable is_explicit field if is already marked
+        self.initial['is_explicit'] = explicit_disable
+        self.fields['is_explicit'].disabled = explicit_disable

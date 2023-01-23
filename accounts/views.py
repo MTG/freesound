@@ -77,6 +77,7 @@ from general import tasks
 from messages.models import Message
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
+from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
@@ -635,6 +636,19 @@ def handle_uploaded_image(profile, f):
 
 
 @login_required
+def manage_sounds(request):
+    # BW only view
+    # TODO: implement that view
+    return HttpResponseRedirect(reverse('accounts-home'))
+
+
+@login_required
+def edit_sounds(request):
+    # BW only view
+    return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
+
+
+@login_required
 def describe(request):
     file_structure, files = generate_tree(request.user.profile.locations()['uploads_dir'])
     file_structure.name = ''
@@ -681,15 +695,18 @@ def describe(request):
 
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
-                # Clear existing describe-related session data
-                for key in ['describe_sounds', 'describe_license', 'describe_pack']:
-                    request.session.pop(key, None)  # Clear pre-existing describe-sound related data in session
+                clear_session_edit_and_describe_data(request)
                 request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                request.session['len_original_describe_edit_sounds'] = len(request.session['describe_sounds'])
                 # If only one file is choosen, go straight to the last step of the describe process,
                 # otherwise go to license selection step
-                if len(request.session['describe_sounds']) > 1:
-                    return HttpResponseRedirect(reverse('accounts-describe-license'))
+                if not using_beastwhoosh(request):
+                    if len(request.session['describe_sounds']) > 1:
+                        return HttpResponseRedirect(reverse('accounts-describe-license'))
+                    else:
+                        return HttpResponseRedirect(reverse('accounts-describe-sounds'))
                 else:
+                    # In BW we have not yet implemented the pages to select license and pack for multiple sounds
                     return HttpResponseRedirect(reverse('accounts-describe-sounds'))
             else:
                 form = FileChoiceForm(files)
@@ -744,6 +761,9 @@ def describe_pack(request):
 
 @login_required
 def describe_sounds(request):
+    if using_beastwhoosh(request):
+        return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
+
     forms = []
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)

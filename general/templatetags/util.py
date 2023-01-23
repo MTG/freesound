@@ -84,3 +84,8 @@ def license_with_version(license_name, license_deed_url):
     elif '4.0' in license_deed_url:
         return '{} 4.0'.format(license_name)
     return license_name
+
+
+@register.filter
+def element_at_index(l, index):
+    return l[index]

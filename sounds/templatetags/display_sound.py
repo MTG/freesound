@@ -142,6 +142,10 @@ def display_sound_big_no_info(context, sound):
     return display_sound(context, sound, player_size='big_no_info')
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_big_no_info_no_bookmark(context, sound):
+    return display_sound(context, sound, player_size='big_no_info', show_bookmark=False)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
     return display_sound(context, sound, player_size='small_no_info')
 

@@ -40,7 +40,7 @@ from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_posts_from_search_engine
-from utils.text import slugify
+from django.utils.text import slugify
 
 web_logger = logging.getLogger('web')
 

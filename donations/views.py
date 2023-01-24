@@ -209,7 +209,7 @@ def donation_session_paypal(request):
         form = FormToUse(request.POST, user=request.user)
         if form.is_valid():
             amount = form.cleaned_data['amount']
-            returned_data_str = form.encoded_data
+            returned_data_str = form.encoded_data.decode()
             domain = "https://%s" % Site.objects.get_current().domain
             return_url = urllib.parse.urljoin(domain, reverse('donation-complete-paypal'))
             data = {"url": settings.PAYPAL_VALIDATION_URL,

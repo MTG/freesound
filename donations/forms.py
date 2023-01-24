@@ -70,7 +70,7 @@ class DonateForm(forms.Form):
 
 
         # Paypal gives only one field to add extra data so we send it as b64
-        self.encoded_data = base64.b64encode(json.dumps(returned_data))
+        self.encoded_data = base64.b64encode(json.dumps(returned_data).encode())
         return cleaned_data
 
 

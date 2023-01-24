@@ -35,6 +35,7 @@ from django.apps import apps
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils.text import slugify
 
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
@@ -42,7 +43,7 @@ from utils.cache import invalidate_user_template_caches
 from utils.filesystem import md5file, remove_directory_if_empty, create_directories
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
-from utils.text import slugify, remove_control_chars
+from utils.text import remove_control_chars
 
 console_logger = logging.getLogger('console')
 sounds_logger = logging.getLogger('sounds')

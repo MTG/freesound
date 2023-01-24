@@ -19,6 +19,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import unicode_literals
+
 from django.test import TestCase
 
 from utils.text import clean_html, is_shouting, text_may_be_spam, remove_control_chars

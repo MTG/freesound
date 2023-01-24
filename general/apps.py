@@ -22,3 +22,4 @@ class GeneralConfig(AppConfig):
         create_directories(settings.ANALYSIS_PATH)
         create_directories(settings.FILE_UPLOAD_TEMP_DIR)
         create_directories(settings.PROCESSING_TEMP_DIR)
+        create_directories(settings.PROCESSING_BEFORE_DESCRIPTION_DIR)

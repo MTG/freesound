@@ -62,9 +62,11 @@ def validate_file_extension(audiofiles):
                     if not content_type.startswith("audio") and not content_type == 'application/octet-stream':
                         raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
                 elif ext == 'ogg':
-                    # Firefox seems to set wrong mime type for ogg files to video/ogg instead of audio/ogg
-                    # For this reason we also allow this mime type for ogg files.
-                    if not content_type.startswith("audio") and not content_type == 'video/ogg':
+                    # Firefox seems to set wrong mime type for ogg files to video/ogg instead of audio/ogg.
+                    # Also safari seems to use 'application/octet-stream'.
+                    # For these reasons we also allow extra mime types for ogg files.
+                    print(content_type)
+                    if not content_type.startswith("audio") and not content_type == 'video/ogg' and not content_type == 'application/octet-stream':
                         raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
                 else:
                     if not content_type.startswith("audio"):

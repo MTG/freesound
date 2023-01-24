@@ -1272,6 +1272,10 @@ def handle_uploaded_file(user_id, f):
             upload_logger.warning("failed writing uploaded file error: %s", str(e))
             return False
 
+    # trigger processing of uploaded files before description
+    tasks.process_before_description.delay(audio_file_path=dest_path)
+    upload_logger.info("sent uploaded file {} to processing before description".format(dest_path))
+
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
     copy_uploaded_file_to_mirror_locations(dest_path)
     upload_logger.info("handling file upload done, took {:.2f} seconds".format(time.time() - starttime))

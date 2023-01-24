@@ -19,9 +19,12 @@
 #
 from builtins import str
 import datetime
+import hashlib
 import json
 import logging
+import os
 import time
+
 
 from celery.decorators import task
 from django.apps import apps
@@ -31,7 +34,7 @@ from django.contrib.auth.models import User
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
-    FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm
+    FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm, FreesoundAudioProcessorBeforeUpload
 
 
 workers_logger = logging.getLogger("workers")
@@ -42,6 +45,7 @@ VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME = "validate_bulk_describe_csv"
 BULK_DESCRIBE_TASK_NAME = "bulk_describe"
 PROCESS_ANALYSIS_RESULTS_TASK_NAME = "process_analysis_results"
 SOUND_PROCESSING_TASK_NAME = "process_sound"
+PROCESS_BEFORE_DESCRIPTION_TASK_NAME = "process_before_description"
 
 DELETE_SPAMMER_USER_ACTION_NAME = 'delete_user_spammer'
 FULL_DELETE_USER_ACTION_NAME = 'full_delete_user'
@@ -244,7 +248,7 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
 
 @task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
 def process_sound(sound_id, skip_previews=False, skip_displays=False):
-    """ Process a sound and generate the mp3/ogg preview files and the waveform/spectrogram displays
+    """Process a sound and generate the mp3/ogg preview files and the waveform/spectrogram displays
 
     Args:
         sound_id (int): ID of the sound to process
@@ -291,6 +295,44 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
             pass
         workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
+             'work_time': round(time.time() - start_time)}))
+
+    cancel_timeout_alarm()
+
+
+@task(name=PROCESS_BEFORE_DESCRIPTION_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+def process_before_description(audio_file_path):
+    """Processes an uploaed sound file before the sound is described and saves generated previews
+    and wave/spectral images in a specfic directory so these can be served in the sound players
+    used in the description phase.
+
+    Args:
+        audio_file_path (str): path to the uploaded file
+    """
+    set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing-before-describe of sound %s timed out' % audio_file_path)
+    workers_logger.info("Starting processing-before-describe of sound (%s)" % json.dumps({
+        'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path}))
+    start_time = time.time()
+    try:
+        check_if_free_space()
+        result = FreesoundAudioProcessorBeforeUpload(audio_file_path=audio_file_path).process()
+        if result:
+            workers_logger.info("Finished processing-before-describe of sound (%s)" % json.dumps(
+                {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'result': 'success',
+                 'work_time': round(time.time() - start_time)}))
+        else:
+            workers_logger.info("Finished processing-before-describe of sound (%s)" % json.dumps(
+                {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'result': 'failure',
+                 'work_time': round(time.time() - start_time)}))
+
+    except WorkerException as e:
+        workers_logger.error("WorkerException while processing-before-describe sound (%s)" % json.dumps(
+            {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
+             'work_time': round(time.time() - start_time)}))
+
+    except Exception as e:
+        workers_logger.error("Unexpected error while processing-before-describe sound (%s)" % json.dumps(
+            {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
 
     cancel_timeout_alarm()

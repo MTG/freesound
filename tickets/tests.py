@@ -80,7 +80,7 @@ class TicketTests(TestCase):
             processing_state=processing_state,
             license=sounds.models.License.objects.get(pk=1),
             user=user,
-            md5=hashlib.md5(filename).hexdigest(),
+            md5=hashlib.md5(filename.encode()).hexdigest(),
             original_filename=filename)
         return sound
 

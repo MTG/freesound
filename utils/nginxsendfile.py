@@ -43,7 +43,7 @@ def sendfile(path, attachment_name, secret_url=None):
         raise Http404
     
     if settings.DEBUG:
-        response = HttpResponse(FileWrapper(file(path, "rb")))
+        response = HttpResponse(FileWrapper(open(path, "rb")))
         response['Content-Length'] = os.path.getsize(path)
     else:
         response = HttpResponse()

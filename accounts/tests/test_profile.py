@@ -155,7 +155,7 @@ class UserEditProfile(TestCase):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
         self.client.post("/home/edit/", {
-            'image-file': open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'),
+            'image-file': open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb'),
             'image-remove': False,
         })
 

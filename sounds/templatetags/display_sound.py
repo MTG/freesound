@@ -156,3 +156,46 @@ def display_sound_minimal(context, sound):
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_infowindow(context, sound):
     return display_sound(context, sound, player_size='infowindow')
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_no_object(context, file_urls):
+    '''
+    This player works for sounds which have no Sound object. It requires
+    URLs to the sound files (mp3 and ogg) and the wave/spectral images so
+    the JS player can be created. These URLs are passes through the file_urls.
+    Here is an example of how file_urls should look like using a Sound object:
+    
+    sound = xxx
+    file_urls = {
+        'preview_mp3': sound.locations('preview.LQ.mp3.url'),
+        'preview_ogg': sound.locations('preview.LQ.ogg.url'),
+        'wave': sound.locations('display.wave_bw.L.url'),
+        'spectral': sound.locations('display.spectral_bw.L.url')
+    }
+    '''
+    player_size  ='big_no_info'
+    return {
+        'sound': {
+            'locations': {
+                'preview': {
+                    'LQ': {
+                        'mp3': {'url': file_urls['preview_mp3']},
+                        'ogg': {'url': file_urls['preview_ogg']}
+                    }
+                },
+                'display': {
+                    'wave_bw': {
+                        'M': {'url': file_urls['wave']},
+                        'L': {'url': file_urls['wave']}
+                    }, 
+                    'spectral_bw': {
+                        'M': {'url': file_urls['spectral']},
+                        'L': {'url': file_urls['spectral']}
+                    }
+                }
+            }
+        },
+        'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
+        'show_bookmark_button': False,
+        'player_size': player_size
+    }

@@ -112,39 +112,7 @@ class RemixForm(forms.Form):
 
     def save(self):
         new_sources = self.cleaned_data['sources']
-        old_sources = set(source["id"] for source in self.sound.sources.all().values("id"))
-        try:
-            new_sources.remove(self.sound.id)  # stop the universe from collapsing :-D
-        except KeyError:
-            pass
-
-        for sid in old_sources - new_sources:  # in old but not in new
-            try:
-                source = Sound.objects.get(id=sid)
-                self.sound.sources.remove(source)
-                source.invalidate_template_caches()
-            except Sound.DoesNotExist:
-                pass
-            except Exception as e:
-                # Report any other type of exception and fail silently
-                print ("Problem removing source from remix or sending mail: %s" % e)
-
-        for sid in new_sources - old_sources:  # in new but not in old
-            source = Sound.objects.get(id=sid)
-
-            source.invalidate_template_caches()
-
-            self.sound.sources.add(source)
-            try:
-                send_mail_template(
-                    settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'sounds/email_remix_update.txt',
-                    {'source': source, 'action': 'added', 'remix': self.sound},
-                    user_to=source.user, email_type_preference_check='new_remix'
-                )
-            except Exception as e:
-                # Report any exception but fail silently
-                print ("Problem sending mail about source added to remix: %s" % e)
-
+        self.sound.set_sources(new_sources)
 
 class PackChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, pack):
@@ -323,6 +291,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
     zoom = forms.IntegerField(min_value=11,
                               error_messages={'min_value': "The zoom value sould be at least 11."},
                               required=False)
+    sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
         self.file_full_path = kwargs.pop('file_full_path', None)
@@ -352,13 +321,31 @@ class BWSoundEditAndDescribeForm(forms.Form):
             lat = data.get('lat', False)
             lon = data.get('lon', False)
             zoom = data.get('zoom', False)
-            # second clause is to detect when no values were submitted.
-            # otherwise doesn't work in the describe workflow
             if (not (lat and lon and zoom)) and (not (not lat and not lon and not zoom)):
-                raise forms.ValidationError('There are missing fields or zoom level is not enough.')
+                # If at least one of the three fields is present but some are missing (and we're not "removing" 
+                # the geotag), then show "required field" errors where appropriate
+                validation_errors_dict = {}
+                if not lat and 'lat' not in self.errors:
+                    validation_errors_dict['lat'] = ['This field is required.']
+                if not lon and 'lon' not in self.errors:
+                    validation_errors_dict['lon'] = ['This field is required.']
+                if not zoom and 'zoom' not in self.errors:
+                    validation_errors_dict['zoom'] = ['This field is required.']
+                raise forms.ValidationError(validation_errors_dict)
         return data
 
     def clean_license(self):
         if "3.0" in self.cleaned_data['license'].name_with_version:
             raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
         return self.cleaned_data['license']
+
+    def clean_sources(self):
+        sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
+        sources = re.sub(",+", ",", sources)
+        sources = re.sub("^,+", "", sources)
+        sources = re.sub(",+$", "", sources)
+        if len(sources) > 0:
+            sources = set([int(source) for source in sources.split(",")])
+        else:
+            sources = set()
+        return sources

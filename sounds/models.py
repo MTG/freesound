@@ -893,6 +893,41 @@ class Sound(SocialModel):
         self.license = new_license
         SoundLicenseHistory.objects.create(sound=self, license=new_license)
 
+    def get_sound_sources_as_set(self):
+        """
+        Returns a set object with the integer sound IDs of the current sources of the sound
+        """
+        return set(source["id"] for source in self.sources.all().values("id"))
+
+    def set_sources(self, new_sources):
+        """
+        :param set new_sources: set object with the integer IDs of the sounds which should be set as sources of the sound
+        """
+        new_sources.discard(self.id)  # stop the universe from collapsing :-D
+        old_sources = self.get_sound_sources_as_set()
+        
+        # process sources in old but not in new
+        for sid in old_sources - new_sources:
+            try:
+                source = Sound.objects.get(id=sid)
+                self.sources.remove(source)
+                source.invalidate_template_caches()
+            except Sound.DoesNotExist:
+                pass
+
+        # process sources in new but not in old
+        for sid in new_sources - old_sources:
+            source = Sound.objects.get(id=sid)
+            source.invalidate_template_caches()
+            self.sources.add(source)
+            send_mail_template(
+                settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'sounds/email_remix_update.txt',
+                {'source': source, 'action': 'added', 'remix': self},
+                user_to=source.user, email_type_preference_check='new_remix')
+        
+        if old_sources != new_sources:
+            self.invalidate_template_caches()
+
     # N.B. The set_xxx functions below are used in the distributed processing and other parts of the app where we only
     # want to save an individual field of the model to prevent overwritting other model fields.
 

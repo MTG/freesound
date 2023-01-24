@@ -617,6 +617,9 @@ def edit_and_describe_sounds_helper(request):
             try:
                 user = request.user
                 sound = create_sound(user, sound_fields, process=False)
+                sound_sources = form.cleaned_data['sources']
+                if sound_sources:
+                    sound.set_sources(sound_sources)
                 sounds_to_process.append(sound)
                 if user.profile.is_whitelisted:
                     messages.add_message(request, messages.INFO,
@@ -692,6 +695,10 @@ def edit_and_describe_sounds_helper(request):
             else:
                 sound.geotag = GeoTag.objects.create(
                     lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+
+        sound_sources = data["sources"]
+        if sound_sources != sound.get_sound_sources_as_set():
+            sound.set_sources(sound_sources)
         
         sound.mark_index_dirty()  # Sound is saved here
         sound.invalidate_template_caches()
@@ -747,8 +754,8 @@ def edit_and_describe_sounds_helper(request):
                             pack=element.pack,
                             lat=element.geotag.lat if element.geotag else None,
                             lon=element.geotag.lon if element.geotag else None,
-                            zoom=element.geotag.zoom if element.geotag else None)
-
+                            zoom=element.geotag.zoom if element.geotag else None,
+                            sources=','.join([str(item) for item in element.get_sound_sources_as_set()]))
             else:
                 initial = dict(name=element.name)
             form = BWSoundEditAndDescribeForm(

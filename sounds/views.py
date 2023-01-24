@@ -594,7 +594,6 @@ def edit_and_describe_sounds_helper(request):
         sounds_to_process = []
         dirty_packs = []
         for form in forms:
-            from sounds.models import License
             sound_fields = {
                 'name': form.cleaned_data['name'],
                 'dest_path': u'{}'.format(form.file_full_path),
@@ -604,32 +603,29 @@ def edit_and_describe_sounds_helper(request):
                 'is_explicit': form.cleaned_data['is_explicit'],
             }
 
-            # TODO: add more fields to the form and add the data in sound_fields
-            '''
-            pack = form['pack'].cleaned_data.get('pack', False)
-            new_pack = form['pack'].cleaned_data.get('new_pack', False)
+            pack = form.cleaned_data.get('pack', False)
+            new_pack = form.cleaned_data.get('new_pack', False)
             if not pack and new_pack:
                 sound_fields['pack'] = new_pack
             elif pack:
                 sound_fields['pack'] = pack
 
-            data = form['geotag'].cleaned_data
-            if not data.get('remove_geotag') and data.get('lat'):  # if 'lat' is in data, we assume other fields are too
-                geotag = '%s,%s,%d' % (data.get('lat'), data.get('lon'), data.get('zoom'))
+            if not form.cleaned_data.get('remove_geotag') and form.cleaned_data.get('lat'):  # if 'lat' is in data, we assume other fields are too
+                geotag = '%s,%s,%d' % (form.cleaned_data.get('lat'), form.cleaned_data.get('lon'), form.cleaned_data.get('zoom'))
                 sound_fields['geotag'] = geotag
-            '''
+            
             try:
                 user = request.user
                 sound = create_sound(user, sound_fields, process=False)
                 sounds_to_process.append(sound)
                 if user.profile.is_whitelisted:
                     messages.add_message(request, messages.INFO,
-                        'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
+                        'File <a href="{}">{}</a> has been described and has been added to freesound.'.format\
                         (sound.get_absolute_url(), sound.original_filename))
                 else:
                     messages.add_message(request, messages.INFO,
-                        'File <a href="%s">%s</a> has been described and is now awaiting processing '
-                        'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
+                        'File <a href="{}">{}</a> has been described and is now awaiting processing '
+                        'and moderation.'.format(sound.get_absolute_url(), sound.original_filename))
 
                     # Invalidate affected caches in user header
                     invalidate_user_template_caches(request.user.id)
@@ -639,7 +635,7 @@ def edit_and_describe_sounds_helper(request):
             except NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
                 messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file %s.' % form.cleaned_data['name'])
+                                     'Something went wrong with accessing the file {}.'.format(form.cleaned_data['name']))
             except AlreadyExistsException as e:
                 msg = e.message
                 messages.add_message(request, messages.WARNING, msg)
@@ -651,11 +647,61 @@ def edit_and_describe_sounds_helper(request):
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error('Sound with id %s could not be sent to processing. (%s)' % (s.id, str(e)))
+            sounds_logger.error('Sound with id {} could not be sent to processing. ({})'.format(s.id, str(e)))
         for p in dirty_packs:
             p.process()
 
-    
+    def update_edited_sound(sound, data):
+        sound.is_explicit = data["is_explicit"]
+        sound.set_tags(data["tags"])
+        sound.description = remove_control_chars(data["description"])
+        sound.original_filename = data["name"]
+        
+        new_license = data["license"]
+        if new_license != sound.license:
+            sound.set_license(new_license)
+        
+        packs_to_process = []
+        if data['new_pack']:
+            pack, _ = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
+            if sound.pack:
+                packs_to_process.append(sound.pack)  # Append previous sound pack if exists
+            sound.pack = pack
+            packs_to_process.append(pack)
+        else:
+            new_pack = data["pack"]
+            old_pack = sound.pack
+            if new_pack != old_pack:
+                sound.pack = new_pack
+                if new_pack:
+                    packs_to_process.append(new_pack)
+                if old_pack:
+                    packs_to_process.append(old_pack)
+
+        if data["remove_geotag"]:
+            if sound.geotag:
+                sound.geotag.delete()
+                sound.geotag = None
+        else:
+            if sound.geotag:
+                sound.geotag.lat = data["lat"]
+                sound.geotag.lon = data["lon"]
+                sound.geotag.zoom = data["zoom"]
+                sound.geotag.should_update_information = True
+                sound.geotag.save()
+            else:
+                sound.geotag = GeoTag.objects.create(
+                    lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+        
+        sound.mark_index_dirty()  # Sound is saved here
+        sound.invalidate_template_caches()
+        update_sound_tickets(sound, '{} updated one or more fields of the sound description.'.format(request.user.username))   
+        messages.add_message(request, messages.INFO,
+            'Sound <a href="{}">{}</a> succesfully edited!'.format(sound.get_absolute_url(), sound.original_filename))
+
+        for packs_to_process in packs_to_process:
+            packs_to_process.process()
+        
     files = request.session.get('describe_sounds', None)  # List of File objects of sounds to describe
     sounds = request.session.get('edit_sounds', None)  # List of Sound objects to edit
     if sounds is None and files is None:
@@ -671,6 +717,7 @@ def edit_and_describe_sounds_helper(request):
     len_original_describe_edit_sounds = request.session.get('len_original_describe_edit_sounds', 0)
     num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
+    user_packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)
@@ -680,29 +727,12 @@ def edit_and_describe_sounds_helper(request):
                 prefix=prefix, 
                 file_full_path=element.full_path if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
-                hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True)
+                hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
+                user_packs=user_packs)
             forms.append(form)  
             if form.is_valid():
-                data = form.cleaned_data
                 if not describing:
-                    # Edit existing Sound object
-                    sound = element
-                    sound.is_explicit = data["is_explicit"]
-                    sound.set_tags(data["tags"])
-                    sound.description = remove_control_chars(data["description"])
-                    sound.original_filename = data["name"]
-                    new_license = data["license"]
-                    if new_license != sound.license:
-                        sound.set_license(new_license)
-                    sound.mark_index_dirty()  # Sound is saved here
-                    if new_license != sound.license and sound.pack:
-                        # Sound license changed and sound has pack, pack needs to be re-processed
-                        # TODO: is this still true?
-                        sound.pack.process()
-                    sound.invalidate_template_caches()
-                    update_sound_tickets(sound, '%s updated the sound description and/or tags.' % request.user.username)
-                    messages.add_message(request, messages.INFO,
-                        'Sound <a href="%s">%s</a> succesfully edited!' % (sound.get_absolute_url(), sound.original_filename))
+                    update_edited_sound(element, form.cleaned_data)
                 else:
                     # Don't do anything here, as later we call method to create actual Sound objects
                     pass
@@ -713,14 +743,20 @@ def edit_and_describe_sounds_helper(request):
                 initial = dict(tags=element.get_sound_tags_string(),
                             description=element.description,
                             name=element.original_filename,
-                            license=element.license)
+                            license=element.license,
+                            pack=element.pack,
+                            lat=element.geotag.lat if element.geotag else None,
+                            lon=element.geotag.lon if element.geotag else None,
+                            zoom=element.geotag.zoom if element.geotag else None)
+
             else:
                 initial = dict(name=element.name)
             form = BWSoundEditAndDescribeForm(
                 prefix=prefix, 
                 explicit_disable=element.is_explicit if not describing else False,
                 initial=initial,
-                hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True)
+                hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
+                user_packs=user_packs)
 
             forms.append(form)  
 

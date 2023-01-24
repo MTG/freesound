@@ -306,25 +306,58 @@ class BWSoundEditAndDescribeForm(forms.Form):
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
+    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
+    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
+                               label="Or fill in the name of a new pack:", required=False, min_length=5)
+    remove_geotag = forms.BooleanField(required=False)
+    lat = forms.FloatField(min_value=-90, max_value=90, required=False,
+                           error_messages={
+                               'min_value': 'Latitude must be between -90 and 90.',
+                               'max_value': 'Latitude must be between -90 and 90.'
+                           })
+    lon = forms.FloatField(min_value=-180, max_value=180, required=False,
+                           error_messages={
+                               'min_value': 'Longitude must be between -180 and 180.',
+                               'max_value': 'Longitude must be between -180 and 180.'
+                           })
+    zoom = forms.IntegerField(min_value=11,
+                              error_messages={'min_value': "The zoom value sould be at least 11."},
+                              required=False)
 
     def __init__(self, *args, **kwargs):
         self.file_full_path = kwargs.pop('file_full_path', None)
         explicit_disable = kwargs.pop('explicit_disable', False)
         hide_old_license_versions = kwargs.pop('hide_old_license_versions', False)
+        user_packs = kwargs.pop('user_packs', False)
         super(BWSoundEditAndDescribeForm, self).__init__(*args, **kwargs)
         
         # Disable is_explicit field if is already marked
         self.initial['is_explicit'] = explicit_disable
         self.fields['is_explicit'].disabled = explicit_disable
 
-        # Process license part
+        # Prepare license field
         if hide_old_license_versions:
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
         valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
-        self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
-                                                                        % valid_licenses})
+        self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s' % valid_licenses})
+
+        # Prepare pack field
+        self.fields['pack'].queryset = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+
+    def clean(self):
+        data = self.cleaned_data
+        if not data.get('remove_geotag'):
+            lat = data.get('lat', False)
+            lon = data.get('lon', False)
+            zoom = data.get('zoom', False)
+            # second clause is to detect when no values were submitted.
+            # otherwise doesn't work in the describe workflow
+            if (not (lat and lon and zoom)) and (not (not lat and not lon and not zoom)):
+                raise forms.ValidationError('There are missing fields or zoom level is not enough.')
+        return data
+
     def clean_license(self):
         if "3.0" in self.cleaned_data['license'].name_with_version:
             raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         

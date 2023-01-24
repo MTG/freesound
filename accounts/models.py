@@ -590,8 +590,9 @@ class Profile(SocialModel):
 
     @property
     def num_packs(self):
+        # Return the number of packs for which at least one sound has been published
         # TODO: store this as an account field instead of computing it live
-        return Pack.objects.filter(user_id=self.user_id).count()
+        return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

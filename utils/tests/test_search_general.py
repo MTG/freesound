@@ -232,7 +232,7 @@ class SearchUtilsTest(TestCase):
         filter_query_split = parse_query_filter_string(filter_query_string)
 
     def test_parse_filter_query_special_char(self):
-        filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
+        filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'
         filter_query_split = parse_query_filter_string(filter_query_string)
 
     def test_parse_filter_query_special_char2(self):

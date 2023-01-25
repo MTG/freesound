@@ -87,7 +87,7 @@ class UserEditProfile(TestCase):
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser")
-        f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'), None, None, None, None, None)
+        f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb'), None, None, None, None, None)
         handle_uploaded_image(user.profile, f)
 
         # Test that avatar files were created

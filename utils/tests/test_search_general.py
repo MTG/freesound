@@ -230,14 +230,24 @@ class SearchUtilsTest(TestCase):
     def test_parse_filter_query_special_created(self):
         filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'
         filter_query_split = parse_query_filter_string(filter_query_string)
+        self.assertEqual(filter_query_split, [
+            ['created', ':', '[', 'NOW-7DAY', ' TO ', 'NOW', ']'],
+            ['license', ':', '"Creative Commons 0"'],
+        ])
 
     def test_parse_filter_query_special_char(self):
         filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'
         filter_query_split = parse_query_filter_string(filter_query_string)
+        self.assertEqual(filter_query_split, [
+            ['grouping_pack', ':', '"32119_Conch Blowing (शङ्ख)"'],
+        ])
 
     def test_parse_filter_query_special_char2(self):
         filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
         filter_query_split = parse_query_filter_string(filter_query_string)
+        self.assertEqual(filter_query_split, [
+            ['grouping_pack', ':', '"2806_Hurt & Pain sounds"'],
+        ])
 
     def test_parse_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''

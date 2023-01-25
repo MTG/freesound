@@ -30,6 +30,7 @@ import os
 import shutil
 from collections import defaultdict
 
+import six
 import xlrd
 from django.apps import apps
 from django.contrib.auth.models import Group
@@ -269,7 +270,7 @@ def get_csv_lines(csv_file_path):
     """
 
     def xls_val_to_string(val):
-        if type(val) == str:
+        if six.PY2 and isinstance(val, unicode):
             return str(val.encode('utf-8'))
         else:
             return str(val)

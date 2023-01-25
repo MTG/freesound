@@ -9,14 +9,23 @@
 <form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit">{% csrf_token %}
 <div>
     {% for form in forms%}
-    <div>
+        <div data-target="collapsable-{{ forloop.counter0 }}" data-show-text="Show {{ form.name.value }}" data-hide-text="Hide {{ form.name.value }}" class="collapsable-text"></div>
+        <div id="collapsable-{{ forloop.counter0 }}" style="overflow:hidden;">
         {% if not describing %}
             {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
+        {% else %}
+            {% with files_data_for_players|element_at_index:forloop.counter0 as sound_data %}
+                {% if sound_data %}
+                    {% display_sound_big_no_sound_object sound_data %}
+                {% else %}
+                    <div class="center text-grey bg-navy-light-grey padding-7">Sound player not currently available</div>
+                {% endif %}
+            {% endwith %}
         {% endif %}
         {{ form.as_p }}
-    </div>
+        </div>
     {% endfor %}
 </div>
-<button type="submit" class="btn-primary v-spacing-top-3">Save</button>
+<button type="submit" class="btn-primary v-spacing-top-5 w-100 center">{% if current_round < num_rounds %}Save and continue to next round{% else %}Save description{% endif %}</button>
 </form>
 {% endblock %}

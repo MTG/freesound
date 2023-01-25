@@ -899,6 +899,7 @@ AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
+PROCESSING_BEFORE_DESCRIPTION_URL = DATA_URL + "processing_before_description/"
 
 # In a typical development setup original files won't be available in the filesystem, but preview files
 # might be available as these take much less space. The flag below will configure Freesound to use these

@@ -26,6 +26,7 @@ import datetime
 import json
 import logging
 import math
+import os
 import time
 from django.views.decorators.clickjacking import xframe_options_exempt
 from operator import itemgetter
@@ -72,7 +73,8 @@ from utils.search.search_sounds import get_random_sound_id_from_search_engine
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
-from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException
+from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException, \
+    clean_processing_before_describe_files, get_processing_before_describe_sound_base_url, get_duration_from_processing_before_describe_files
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -594,9 +596,10 @@ def edit_and_describe_sounds_helper(request):
         sounds_to_process = []
         dirty_packs = []
         for form in forms:
+            file_full_path=form.file_full_path
             sound_fields = {
                 'name': form.cleaned_data['name'],
-                'dest_path': u'{}'.format(form.file_full_path),
+                'dest_path': file_full_path,
                 'license': form.cleaned_data['license'],
                 'description': form.cleaned_data.get('description', ''),
                 'tags': form.cleaned_data.get('tags', ''),
@@ -629,11 +632,10 @@ def edit_and_describe_sounds_helper(request):
                     messages.add_message(request, messages.INFO,
                         'File <a href="{}">{}</a> has been described and is now awaiting processing '
                         'and moderation.'.format(sound.get_absolute_url(), sound.original_filename))
-
-                    # Invalidate affected caches in user header
                     invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
                         invalidate_user_template_caches(moderator.id)
+                clean_processing_before_describe_files(file_full_path)
 
             except NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
@@ -725,14 +727,34 @@ def edit_and_describe_sounds_helper(request):
     num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
     user_packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
+    files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
     
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)
+        if describing:
+            audio_file_path = element.full_path
+            duration = get_duration_from_processing_before_describe_files(audio_file_path)
+            if duration > 0.0:
+                processing_before_describe_base_url = get_processing_before_describe_sound_base_url(audio_file_path)
+                file_data = {
+                    'duration': duration,
+                    'preview_mp3': processing_before_describe_base_url + 'preview.mp3',
+                    'preview_ogg': processing_before_describe_base_url + 'preview.ogg',
+                    'wave': processing_before_describe_base_url + 'wave.png',
+                    'spectral': processing_before_describe_base_url + 'spectral.png',
+                }
+                files_data_for_players.append(file_data)
+            else:
+                # If duration is 0.0, it might be because the file has not been processed-before-description yet
+                # or there might have been problems while processing-before-description the sound. In that case
+                # we won't show the player
+                files_data_for_players.append(None)
+
         if request.method == "POST":
             form = BWSoundEditAndDescribeForm(
                 request.POST, 
                 prefix=prefix, 
-                file_full_path=element.full_path if describing else None,
+                file_full_path=element.full_path.encode("utf-8") if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
                 user_packs=user_packs)
@@ -772,6 +794,7 @@ def edit_and_describe_sounds_helper(request):
         'num_forms': len(forms),
         'forms': forms,
         'sound_objects': sounds_to_edit_or_describe if not describing else None,
+        'files_data_for_players': files_data_for_players,
         'current_round': current_round,
         'num_rounds': num_rounds,
     }

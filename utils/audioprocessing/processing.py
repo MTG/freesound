@@ -463,10 +463,8 @@ def convert_to_pcm(input_filename, output_filename):
     """
     converts any audio file type to pcm audio
     """
-
     if not os.path.exists(input_filename):
         raise AudioProcessingException("file %s does not exist" % input_filename)
-
     sound_type = get_sound_type(input_filename)
 
     if sound_type == "mp3":
@@ -488,7 +486,7 @@ def convert_to_pcm(input_filename, output_filename):
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-
+    
     # If external process returned an error (return code != 0) or the expected PCM file does not
     # exist, raise exception
     if process.returncode != 0 or not os.path.exists(output_filename):
@@ -496,13 +494,12 @@ def convert_to_pcm(input_filename, output_filename):
             raise NoSpaceLeftException
         raise AudioProcessingException("failed converting to pcm data:\n"
                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-
+    
     # If external process apparently returned no error (return code = 0) but we see some errors from our list of
     # known errors have been printed in stderr, raise an exception as well
     if any([error_message in stderr for error_message in error_messages]):
         raise AudioProcessingException("failed converting to pcm data:\n"
                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-
     return True
 
 

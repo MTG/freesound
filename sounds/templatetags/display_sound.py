@@ -158,15 +158,16 @@ def display_sound_infowindow(context, sound):
     return display_sound(context, sound, player_size='infowindow')
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound_no_object(context, file_urls):
+def display_sound_big_no_sound_object(context, file_data):
     '''
     This player works for sounds which have no Sound object. It requires
-    URLs to the sound files (mp3 and ogg) and the wave/spectral images so
-    the JS player can be created. These URLs are passes through the file_urls.
-    Here is an example of how file_urls should look like using a Sound object:
+    URLs to the sound files (mp3 and ogg)a and the wave/spectral images, and
+    the duration of the sound the JS player can be created. This data is 
+    passed through the file_data argument. Here is an example of how file_data 
+    should look like if preapring it from a Sound object:
     
-    sound = xxx
-    file_urls = {
+    file_data = {
+        'duration': sound.duration,
         'preview_mp3': sound.locations('preview.LQ.mp3.url'),
         'preview_ogg': sound.locations('preview.LQ.ogg.url'),
         'wave': sound.locations('display.wave_bw.L.url'),
@@ -176,21 +177,22 @@ def display_sound_no_object(context, file_urls):
     player_size  ='big_no_info'
     return {
         'sound': {
+            'duration': file_data['duration'],
             'locations': {
                 'preview': {
                     'LQ': {
-                        'mp3': {'url': file_urls['preview_mp3']},
-                        'ogg': {'url': file_urls['preview_ogg']}
+                        'mp3': {'url': file_data['preview_mp3']},
+                        'ogg': {'url': file_data['preview_ogg']}
                     }
                 },
                 'display': {
                     'wave_bw': {
-                        'M': {'url': file_urls['wave']},
-                        'L': {'url': file_urls['wave']}
+                        'M': {'url': file_data['wave']},
+                        'L': {'url': file_data['wave']}
                     }, 
                     'spectral_bw': {
-                        'M': {'url': file_urls['spectral']},
-                        'L': {'url': file_urls['spectral']}
+                        'M': {'url': file_data['spectral']},
+                        'L': {'url': file_data['spectral']}
                     }
                 }
             }

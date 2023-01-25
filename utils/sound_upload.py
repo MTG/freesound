@@ -24,6 +24,7 @@ from builtins import zip
 from builtins import str
 from builtins import range
 from builtins import open
+import hashlib
 import json
 import logging
 import os
@@ -32,6 +33,7 @@ from collections import defaultdict
 
 import xlrd
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -40,7 +42,7 @@ from django.utils.text import slugify
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_user_template_caches
-from utils.filesystem import md5file, remove_directory_if_empty, create_directories
+from utils.filesystem import md5file, remove_directory_if_empty, create_directories, remove_directory
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
 from utils.text import remove_control_chars
@@ -70,6 +72,35 @@ def _remove_user_uploads_folder_if_empty(user):
     user_uploads_dir = user.profile.locations()['uploads_dir']
     remove_directory_if_empty(user_uploads_dir)
     remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
+
+
+def clean_processing_before_describe_files(audio_file_path):
+    directory_path = get_processing_before_describe_sound_folder(audio_file_path)
+    if os.path.exists(directory_path):
+        remove_directory(directory_path)
+
+
+def get_duration_from_processing_before_describe_files(audio_file_path):
+    info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), 'info.json')
+    try:
+        return float(json.load(open(info_file_path, 'r'))['duration'])
+    except Exception as e:
+        return 0.0
+
+
+def get_processing_before_describe_sound_folder(audio_file_path):
+    """
+    Get the path to the folder where the sound files generated during procesing-before-describe
+    should be stored.
+    """
+    user_id = os.path.basename(os.path.dirname(audio_file_path))
+    hash = str(hashlib.md5(audio_file_path).hexdigest())
+    return os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, user_id, hash)
+
+
+def get_processing_before_describe_sound_base_url(audio_file_path):
+    path = get_processing_before_describe_sound_folder(audio_file_path)
+    return settings.PROCESSING_BEFORE_DESCRIPTION_URL + '/'.join(path.split('/')[-2:]) + '/'
 
 
 def create_sound(user,

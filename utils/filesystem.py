@@ -27,6 +27,7 @@ from builtins import object
 import errno
 import hashlib
 import os
+import shutil
 import sys
 import warnings
 import zlib
@@ -78,7 +79,6 @@ def generate_tree(path):
 
 def md5file(filename):
     """Return the hex digest of a file without loading it all into memory"""
-
     digest = hashlib.md5()
     with open(filename, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -96,6 +96,10 @@ def crc32file(filename):
         crc32 = zlib.crc32(buf, crc32)
     fh.close()
     return hex(crc32)[2:]
+
+
+def remove_directory(path):
+    shutil.rmtree(path)
 
 
 def remove_directory_if_empty(path):

@@ -24,7 +24,6 @@ from __future__ import division
 from builtins import str
 from past.utils import old_div
 from builtins import object
-import hashlib
 import json
 import os
 import signal
@@ -39,6 +38,7 @@ import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
 from utils.filesystem import create_directories, TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
+from utils.sound_upload import get_processing_before_describe_sound_folder
 
 console_logger = logging.getLogger("console")
 
@@ -176,6 +176,8 @@ class FreesoundAudioProcessorBase(object):
                 raise AudioProcessingException("conversion to PCM failed, "
                                                "make sure that ffmpeg executable exists: %s" % e)
         except Exception as e:
+            import traceback
+            print(traceback.print_exc())
             raise AudioProcessingException("unhandled exception while converting to PCM: %s" % e)
 
         self.log_info("PCM file path: " + tmp_wavefile)
@@ -363,13 +365,13 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 class FreesoundAudioProcessorBeforeUpload(FreesoundAudioProcessorBase):
 
     def __init__(self, audio_file_path):
-        self.audio_file_path = audio_file_path
-        self.hash = str(hashlib.md5(self.audio_file_path.encode()).hexdigest())
-        self.output_wave_path = os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, self.hash, 'wave.png')
-        self.output_spectral_path = os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, self.hash, 'spectral.png')
-        self.output_preview_mp3 = os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, self.hash, 'preview.mp3')
-        self.output_preview_ogg = os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, self.hash, 'preview.ogg')
-        self.output_info_file = os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, self.hash, 'info.json')
+        self.audio_file_path = audio_file_path.encode("utf-8")
+        self.output_folder = get_processing_before_describe_sound_folder(self.audio_file_path)
+        self.output_wave_path = os.path.join(self.output_folder, 'wave.png')
+        self.output_spectral_path = os.path.join(self.output_folder, 'spectral.png')
+        self.output_preview_mp3 = os.path.join(self.output_folder, 'preview.mp3')
+        self.output_preview_ogg = os.path.join(self.output_folder, 'preview.ogg')
+        self.output_info_file = os.path.join(self.output_folder, 'info.json')
         create_directories(os.path.dirname(self.output_preview_ogg))
 
     def log_info(self, message):
@@ -393,8 +395,9 @@ class FreesoundAudioProcessorBeforeUpload(FreesoundAudioProcessorBase):
 
     def process(self):
         with TemporaryDirectory(
-                prefix='processing_before_description_{}_'.format(self.hash),
+                prefix='processing_before_description_{}_'.format(os.path.basename(self.output_folder)),
                 dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
+            tmp_directory = tmp_directory.encode('utf-8')
 
             # Get the path of the original sound and convert to PCM
             try:
@@ -402,10 +405,10 @@ class FreesoundAudioProcessorBeforeUpload(FreesoundAudioProcessorBase):
             except AudioProcessingException as e:
                 self.set_failure(e)
                 return False
-            print(tmp_wavefile)
+
             # Now get info about the file, stereofy it and save new stereofied PCM version in `tmp_wavefile2`
             try:
-                fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", prefix="{}_".format(self.hash), dir=tmp_directory)
+                fh, tmp_wavefile2 = tempfile.mkstemp(suffix=".wav", dir=tmp_directory)
                 # Close file handler as we don't use it from Python
                 os.close(fh)
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
@@ -442,9 +445,6 @@ class FreesoundAudioProcessorBeforeUpload(FreesoundAudioProcessorBase):
                 return False
 
             self.log_info("got sound info and stereofied: " + tmp_wavefile2)
-
-            # Save info data to json file
-            json.dump(info, open(self.output_info_file, 'w'))
 
             # Generate previews
             try:
@@ -487,4 +487,7 @@ class FreesoundAudioProcessorBeforeUpload(FreesoundAudioProcessorBase):
             except Exception as e:
                 self.set_failure("unhandled exception while generating displays", e)
                 return False
+
+            # Save info data to json file
+            json.dump(info, open(self.output_info_file, 'w'))
         return True

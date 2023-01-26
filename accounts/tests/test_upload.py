@@ -56,7 +56,7 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), True)
 
         # Test file upload that should fail
-        filename = "file.xyz"
+        filename = "filè.xyz"
         f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post("/home/upload/html/", {'file': f})
         self.assertEqual(resp.status_code, 200)

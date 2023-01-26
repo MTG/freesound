@@ -797,6 +797,7 @@ def edit_and_describe_sounds_helper(request):
         'files_data_for_players': files_data_for_players,
         'current_round': current_round,
         'num_rounds': num_rounds,
+        'last_latlong': request.user.profile.get_last_latlong(),
     }
     
     if request.method == "POST" and all_forms_validated_ok:
@@ -811,6 +812,7 @@ def edit_and_describe_sounds_helper(request):
             messages.add_message(request, messages.INFO, 
                 'Successfully finished sound description round {} of {}!'.format(current_round, num_rounds))
             if not request.session['describe_sounds']:
+                clear_session_edit_and_describe_data(request)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds'))
             else:
                 return HttpResponseRedirect(reverse('accounts-describe-sounds'))
@@ -826,6 +828,7 @@ def edit_and_describe_sounds_helper(request):
                 'Successfully finished sound editing round {} of {}!'.format(current_round, num_rounds))
             if not request.session['edit_sounds']:
                 # If no more sounds to edit, redirect to manage sounds page
+                clear_session_edit_and_describe_data(request)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds'))
             else:
                 # Otherwise, redirect to the same page to continue with next round of sounds

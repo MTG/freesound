@@ -886,6 +886,7 @@ def describe_sounds(request):
                       'status in the <a href="%s">uploaded sounds awaiting moderation' \
                       '</a> page.' % (reverse('accounts-home'), reverse('accounts-pending'))
                 messages.add_message(request, messages.WARNING, msg)
+            clear_session_edit_and_describe_data(request)
             return HttpResponseRedirect(reverse('accounts-describe'))
         else:
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))

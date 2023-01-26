@@ -536,7 +536,7 @@ class AudioProcessingTestCase(TestCase):
         with self.assertRaises(AudioProcessingException) as cm:
             FreesoundAudioProcessor(sound_id=999)
         exc = cm.exception
-        self.assertIn('did not find Sound object', exc.message)
+        self.assertIn('did not find Sound object', getattr(exc, 'message', str(exc)))
 
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     @override_processing_tmp_path_with_temp_directory

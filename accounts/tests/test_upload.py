@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -63,7 +65,7 @@ class UserUploadAndDescribeSounds(TestCase):
     @override_uploads_path_with_temp_directory
     def test_select_uploaded_files_to_describe(self):
         # Create audio files
-        filenames = ['file1.wav', 'file2.wav', 'file3.wav']
+        filenames = ['file1.wav', 'file2.wav', 'file3.wav', 'filè4.wav']
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
@@ -73,43 +75,49 @@ class UserUploadAndDescribeSounds(TestCase):
         # Check that files are displayed in the template
         resp = self.client.get('/home/describe/')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.context['file_structure'].children), len(filenames))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in resp.context['file_structure'].children]), sorted(filenames))
 
         # Selecting one file redirects to /home/describe/sounds/
+        sounds_to_describe_idx = [0]
         resp = self.client.post('/home/describe/', {
             'describe': [u'Describe selected files'],
-            'sound-files': [u'file1'],
+            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, '/home/describe/sounds/')
-
+        self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session['describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        
         # Selecting multiple file redirects to /home/describe/license/
+        sounds_to_describe_idx = [1, 2, 3]
         resp = self.client.post('/home/describe/', {
             'describe': [u'Describe selected files'],
-            'sound-files': [u'file1', u'file0'],
+            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, '/home/describe/license/')
-
-        # Selecting files to delete, redirecte to delete confirmation
-        filenames_to_delete = [u'file1', u'file0']
+        self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session['describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        
+        # Selecting files to delete, redirect to delete confirmation
+        sounds_to_delete_idx = [1, 2, 3]
         resp = self.client.post('/home/describe/', {
             'delete': [u'Delete selected files'],
-            'sound-files': filenames_to_delete,
+            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.context['filenames']), len(filenames_to_delete))
+        self.assertListEqual(sorted(resp.context['filenames']), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
 
         # Selecting confirmation of files to delete
         resp = self.client.post('/home/describe/', {
             'delete_confirm': [u'delete_confirm'],
-            'sound-files': filenames_to_delete,
+            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
         })
         self.assertRedirects(resp, '/home/describe/')
-        self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(filenames_to_delete))
+        self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(sounds_to_delete_idx))
 
     @override_uploads_path_with_temp_directory
     def test_describe_selected_files(self):
         # Create audio files
-        filenames = ['file1.wav', 'file2.wav']
+        filenames = ['file1.wav', 'filè2.wav']
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
@@ -135,13 +143,13 @@ class UserUploadAndDescribeSounds(TestCase):
             '0-license': [u'3'],
             '0-description': [u'a test description for the sound file'],
             '0-new_pack': [u''],
-            '0-name': [u'%s' % filenames[0]],
+            '0-name': [filenames[0]],
             '1-license': [u'3'],
             '1-description': [u'another test description'],
             '1-lat': [u''],
             '1-pack': [u''],
             '1-lon': [u''],
-            '1-name': [u'%s' % filenames[1]],
+            '1-name': [filenames[1]],
             '1-new_pack': [u'Name of a new pack'],
             '1-zoom': [u''],
             '1-tags': [u'testtag1 testtag4 testtag5'],
@@ -153,6 +161,9 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Check that sounds have been created along with related tags, geotags and packs
         self.assertEqual(user.sounds.all().count(), 2)
+        self.assertListEqual(
+            sorted(list(user.sounds.values_list('original_filename', flat=True))), 
+            sorted([f.decode('utf-8') for f in filenames]))
         self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)

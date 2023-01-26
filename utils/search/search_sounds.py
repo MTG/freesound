@@ -157,7 +157,7 @@ def search_prepare_parameters(request):
     parsing_error = False
     try:
         parsed_filters = parse_query_filter_string(filter_query)
-    except ParseException as e:
+    except ParseException:
         parsed_filters = []
         parsing_error = True
 
@@ -210,7 +210,7 @@ def parse_weights_parameter(weights_param):
                     field_name = part.split(':')[0]
                     weight = int(part.split(':')[1])
                     parsed_field_weights[field_name] = weight
-                except Exception as e:
+                except Exception:
                     # If format is wrong, ignore parameter
                     pass
     if len(parsed_field_weights):
@@ -421,4 +421,3 @@ def get_random_sound_id_from_search_engine():
     except SearchEngineException as e:
         search_logger.error("Could not retrieve a random sound ID from search engine: %s" % str(e))
     return 0
-

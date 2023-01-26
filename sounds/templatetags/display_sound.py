@@ -177,6 +177,7 @@ def display_sound_big_no_sound_object(context, file_data):
     player_size  ='big_no_info'
     return {
         'sound': {
+            'id': file_data['preview_mp3'].split('/')[-2],  # Pass a unique fake ID to avoid caching problems
             'duration': file_data['duration'],
             'locations': {
                 'preview': {

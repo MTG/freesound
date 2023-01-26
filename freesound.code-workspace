@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../freesound-audio-analyzers"
+		},
+		{
+			"path": "freesound-data"
 		}
 	],
 	"launch": {

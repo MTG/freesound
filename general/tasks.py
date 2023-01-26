@@ -34,7 +34,7 @@ from django.contrib.auth.models import User
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
-    FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm, FreesoundAudioProcessorBeforeUpload
+    FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm, FreesoundAudioProcessorBeforeDescription
 
 
 workers_logger = logging.getLogger("workers")
@@ -315,7 +315,7 @@ def process_before_description(audio_file_path):
     start_time = time.time()
     try:
         check_if_free_space()
-        result = FreesoundAudioProcessorBeforeUpload(audio_file_path=audio_file_path).process()
+        result = FreesoundAudioProcessorBeforeDescription(audio_file_path=audio_file_path).process()
         if result:
             workers_logger.info("Finished processing-before-describe of sound (%s)" % json.dumps(
                 {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'result': 'success',

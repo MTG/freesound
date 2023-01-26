@@ -176,8 +176,6 @@ class FreesoundAudioProcessorBase(object):
                 raise AudioProcessingException("conversion to PCM failed, "
                                                "make sure that ffmpeg executable exists: %s" % e)
         except Exception as e:
-            import traceback
-            print(traceback.print_exc())
             raise AudioProcessingException("unhandled exception while converting to PCM: %s" % e)
 
         self.log_info("PCM file path: " + tmp_wavefile)
@@ -362,7 +360,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
         return True
 
 
-class FreesoundAudioProcessorBeforeUpload(FreesoundAudioProcessorBase):
+class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
 
     def __init__(self, audio_file_path):
         self.audio_file_path = audio_file_path.encode("utf-8")

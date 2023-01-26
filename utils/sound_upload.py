@@ -39,6 +39,8 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.text import slugify
 
+from six import PY2
+
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_user_template_caches
@@ -93,6 +95,8 @@ def get_processing_before_describe_sound_folder(audio_file_path):
     Get the path to the folder where the sound files generated during procesing-before-describe
     should be stored.
     """
+    if PY2 and type(audio_file_path) == unicode:
+        audio_file_path = audio_file_path.encode("utf-8")
     user_id = os.path.basename(os.path.dirname(audio_file_path))
     hash = str(hashlib.md5(audio_file_path).hexdigest())
     return os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, user_id, hash)

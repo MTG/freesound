@@ -626,12 +626,12 @@ def edit_and_describe_sounds_helper(request):
                 sounds_to_process.append(sound)
                 if user.profile.is_whitelisted:
                     messages.add_message(request, messages.INFO,
-                        'File <a href="{}">{}</a> has been described and has been added to freesound.'.format\
-                        (sound.get_absolute_url(), sound.original_filename))
+                        u'File <a href="{}">{}</a> has been described and has been added to freesound.'\
+                            .format(sound.get_absolute_url(), sound.original_filename))
                 else:
                     messages.add_message(request, messages.INFO,
-                        'File <a href="{}">{}</a> has been described and is now awaiting processing '
-                        'and moderation.'.format(sound.get_absolute_url(), sound.original_filename))
+                        u'File <a href="{}">{}</a> has been described and is now awaiting processing and moderation.'\
+                            .format(sound.get_absolute_url(), sound.original_filename))
                     invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
                         invalidate_user_template_caches(moderator.id)
@@ -688,15 +688,16 @@ def edit_and_describe_sounds_helper(request):
                 sound.geotag.delete()
                 sound.geotag = None
         else:
-            if sound.geotag:
-                sound.geotag.lat = data["lat"]
-                sound.geotag.lon = data["lon"]
-                sound.geotag.zoom = data["zoom"]
-                sound.geotag.should_update_information = True
-                sound.geotag.save()
-            else:
-                sound.geotag = GeoTag.objects.create(
-                    lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+            if data["lat"] and data["lon"] and data["zoom"]:
+                if sound.geotag:
+                    sound.geotag.lat = data["lat"]
+                    sound.geotag.lon = data["lon"]
+                    sound.geotag.zoom = data["zoom"]
+                    sound.geotag.should_update_information = True
+                    sound.geotag.save()
+                else:
+                    sound.geotag = GeoTag.objects.create(
+                        lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
 
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():
@@ -728,6 +729,8 @@ def edit_and_describe_sounds_helper(request):
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
     user_packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
+    preselected_license = request.session.get('describe_license', False)  # Pre-selected from the license selection page when describing mulitple sounds
+    preselected_pack = request.session.get('describe_pack', False)  # Pre-selected from the pack selection page when describing mulitple sounds
     
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)
@@ -754,7 +757,7 @@ def edit_and_describe_sounds_helper(request):
             form = BWSoundEditAndDescribeForm(
                 request.POST, 
                 prefix=prefix, 
-                file_full_path=element.full_path.encode("utf-8") if describing else None,
+                file_full_path=element.full_path if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
                 user_packs=user_packs)
@@ -780,6 +783,10 @@ def edit_and_describe_sounds_helper(request):
                             sources=','.join([str(item) for item in element.get_sound_sources_as_set()]))
             else:
                 initial = dict(name=element.name)
+                if preselected_license:
+                    initial['license'] = preselected_license
+                if preselected_pack:
+                    initial['pack'] = preselected_pack
             form = BWSoundEditAndDescribeForm(
                 prefix=prefix, 
                 explicit_disable=element.is_explicit if not describing else False,

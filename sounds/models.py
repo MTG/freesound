@@ -1254,10 +1254,11 @@ class Sound(SocialModel):
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
+                for player_size in ['small', 'middle', 'big_no_info', 'small_no_info', 'minimal', 'infowindow']:
+                    invalidate_template_cache("bw_display_sound", self.id, is_authenticated, is_explicit, player_size)
 
-        # NOTE: in BW we removed the display sound caches because DB queries are optimized and the caches are not
-        # very useful (DB queries are also optimal in NG, but we never removed caching code). If we were to enable
-        # them again, check old code of this function in the repository history.
+        invalidate_template_cache("bw_sound_page", self.id)
+        invalidate_template_cache("bw_sound_page_sidebar", self.id)
 
     def get_geotag_name(self):
         if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:

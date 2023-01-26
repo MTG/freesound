@@ -49,7 +49,7 @@ from sounds.models import Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
 from utils.encryption import sign_with_timestamp
 from utils.filesystem import create_directories
-from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory, test_using_bw_ui
 
 
 class CommentSoundsTestCase(TestCase):
@@ -646,16 +646,26 @@ class SoundTemplateCacheTests(TestCase):
         self.sound.change_moderation_state("OK")
         self.user = user
 
-    def _get_sound_view_cache_keys(self, is_explicit=False, display_random_link=False):
-        return ([get_template_cache_key('sound_footer_bottom', self.sound.id),
-                get_template_cache_key('sound_header', self.sound.id, is_explicit)] +
-                self._get_sound_view_footer_top_cache_keys(display_random_link))
+    def _get_sound_view_cache_keys(self, is_explicit=False, display_random_link=False, frontend=settings.FRONTEND_NIGHTINGALE):
+        if frontend == settings.FRONTEND_NIGHTINGALE:
+            return ([get_template_cache_key('sound_footer_bottom', self.sound.id),
+                    get_template_cache_key('sound_header', self.sound.id, is_explicit)] +
+                    self._get_sound_view_footer_top_cache_keys(display_random_link))
+        else:
+            return ([get_template_cache_key('bw_sound_page', self.sound.id),
+                    get_template_cache_key('bw_sound_page_sidebar', self.sound.id)])
 
-    def _get_sound_view_footer_top_cache_keys(self, display_random_link=False):
-        return [get_template_cache_key('sound_footer_top', self.sound.id, display_random_link)]
+    def _get_sound_view_footer_top_cache_keys(self, display_random_link=False, frontend=settings.FRONTEND_NIGHTINGALE):
+        if frontend == settings.FRONTEND_NIGHTINGALE:
+            return [get_template_cache_key('sound_footer_top', self.sound.id, display_random_link)]
+        else:
+            return [get_template_cache_key('bw_sound_page', self.sound.id)]
 
-    def _get_sound_display_cache_keys(self, is_authenticated=True, is_explicit=False):
-        return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit)]
+    def _get_sound_display_cache_keys(self, is_authenticated=True, is_explicit=False, player_size='small', frontend=settings.FRONTEND_NIGHTINGALE):
+        if frontend == settings.FRONTEND_NIGHTINGALE:
+            return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit)]
+        else:
+            return [get_template_cache_key('bw_display_sound', self.sound.id, is_authenticated, is_explicit, player_size)]
 
     def _assertCacheAbsent(self, cache_keys):
         for cache_key in cache_keys:
@@ -698,6 +708,39 @@ class SoundTemplateCacheTests(TestCase):
             'description-description': new_description,
             'description-name': new_name,
             'description-tags': u'tag1 tag2 tag3'
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        # Check that keys are no longer in cache
+        self._assertCacheAbsent(cache_keys)
+
+        # Check that the information is updated properly
+        resp = self._get_sound_view()
+        self.assertContains(resp, new_description, html=True)
+        self.assertContains(resp, new_name, html=True)
+
+    def test_update_description_bw(self):
+        test_using_bw_ui(self)
+        
+        cache_keys = self._get_sound_view_cache_keys(frontend=settings.FRONTEND_BEASTWHOOSH)
+        self._assertCacheAbsent(cache_keys)
+
+        # Test as an authenticated user, although it doesn't matter in this case because cache templates are the same
+        # for both logged in and anonymous user.
+        self.client.force_login(self.user)
+
+        resp = self._get_sound_view()
+        self.assertEqual(resp.status_code, 200)
+        self._assertCachePresent(cache_keys)
+
+        # Edit sound
+        new_description = u'New description'
+        new_name = u'New name'
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-description': new_description,
+            '0-name': new_name,
+            '0-tags': u'tag1 tag2 tag3',
+            '0-license': [u'3'],
         })
         self.assertEqual(resp.status_code, 302)
 
@@ -1147,3 +1190,48 @@ class SoundEditDeletePermissionTestCase(TestCase):
         self.client.force_login(self.other_user)
         resp = self.client.post(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
         self.assertEqual(resp.status_code, 403)
+
+
+class SoundEditTestCase(TestCase):
+    fixtures = ['licenses', 'email_preference_type']
+
+    def setUp(self):
+        cache.clear()
+        user, _, sounds = create_user_and_sounds(num_sounds=3)
+        self.sound = sounds[0]
+        self.sound.change_processing_state("OK")
+        self.sound.change_moderation_state("OK")
+        self.user = user
+    
+    def test_update_description_bw(self):
+        test_using_bw_ui(self)
+        self.client.force_login(self.user)
+        new_description = u'New description'
+        new_name = u'New name'
+        new_tags = ['tag1', 'tag2', 'tag3']
+        new_pack_name = u'Name of a new pack'
+        new_sound_sources = Sound.objects.exclude(id=self.sound.id)
+        geotag_lat = 46.31658418182218
+        resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]), {
+            '0-description': new_description,
+            '0-name': new_name,
+            '0-tags': ' '.join(new_tags),
+            '0-license': '3',
+            '0-sources': ','.join([u'{}'.format(s.id) for s in new_sound_sources]),
+            '0-pack': '',
+            '0-new_pack': new_pack_name,
+            '0-lat': '{}'.format(geotag_lat),
+            '0-lon': '3.515625',
+            '0-zoom': '16',
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        self.sound.refresh_from_db()
+        self.assertEqual(self.sound.description, new_description)
+        self.assertEqual(self.sound.original_filename, new_name)
+        self.assertListEqual(sorted(self.sound.get_sound_tags()), sorted(new_tags))
+        self.assertEqual(self.sound.sources.all().count(), len(new_sound_sources))
+        self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
+        self.assertEqual(self.sound.pack.name, new_pack_name)
+        self.assertTrue(self.sound.geotag is not None)
+        self.assertAlmostEqual(self.sound.geotag.lat, geotag_lat)

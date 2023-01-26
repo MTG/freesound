@@ -3,6 +3,7 @@
 {% load bw_templatetags %}
 
 {% if sound %}
+    {% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size %}
     {% if player_size == 'small' %}
         {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
         {% if is_explicit %}
@@ -156,4 +157,5 @@
         </div>
 
     {% endif %}
+    {% endcache %}
 {% endif %}

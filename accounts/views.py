@@ -639,7 +639,8 @@ def handle_uploaded_image(profile, f):
 def manage_sounds(request):
     # BW only view
     # TODO: implement that view
-    return HttpResponseRedirect(reverse('accounts-home'))
+    tvars = {}
+    return render(request, 'accounts/manage_sounds.html', tvars)
 
 
 @login_required
@@ -701,13 +702,9 @@ def describe(request):
                 request.session['len_original_describe_edit_sounds'] = len(request.session['describe_sounds'])
                 # If only one file is choosen, go straight to the last step of the describe process,
                 # otherwise go to license selection step
-                if not using_beastwhoosh(request):
-                    if len(request.session['describe_sounds']) > 1:
-                        return HttpResponseRedirect(reverse('accounts-describe-license'))
-                    else:
-                        return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+                if len(request.session['describe_sounds']) > 1:
+                    return HttpResponseRedirect(reverse('accounts-describe-license'))
                 else:
-                    # In BW we have not yet implemented the pages to select license and pack for multiple sounds
                     return HttpResponseRedirect(reverse('accounts-describe-sounds'))
             else:
                 form = FileChoiceForm(files)

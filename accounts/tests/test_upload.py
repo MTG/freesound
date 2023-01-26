@@ -35,11 +35,11 @@ from sounds.models import License, Sound, Pack, BulkUploadProgress
 from tags.models import Tag
 from utils.filesystem import File, create_directories
 from utils.test_helpers import create_test_files, override_uploads_path_with_temp_directory, \
-    override_csv_path_with_temp_directory
+    override_csv_path_with_temp_directory, create_user_and_sounds, test_using_bw_ui
 
 
 class UserUploadAndDescribeSounds(TestCase):
-    fixtures = ['licenses', 'user_groups', 'moderation_queues']
+    fixtures = ['licenses', 'user_groups', 'moderation_queues', 'email_preference_type']
 
     @skipIf(True, "Test not ready for new uploader")
     @override_uploads_path_with_temp_directory
@@ -167,6 +167,72 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
+
+    @override_uploads_path_with_temp_directory
+    def test_describe_selected_files_bw(self):
+        # NOTE: because BW ui uses different views/templates for sound description, we write a complementary
+        # test for it
+
+        # Create audio files
+        filenames = ['file1.wav', 'filè2.wav']
+        user = User.objects.create_user("testuser", email="1@xmpl.com", password="testpass")
+        self.client.force_login(user)
+        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        create_directories(user_upload_path)
+        create_test_files(filenames, user_upload_path)
+        _, _, sound_sources = create_user_and_sounds(
+            num_sounds=3, num_packs=0, 
+            user=User.objects.create_user("testuser2", email="2@xmpl.com", password="testpass"))  # These sounds will be used as sources for an uploaded sound
+
+        # Set license and pack data in session
+        session = self.client.session
+        session['describe_license'] = License.objects.all()[0]
+        session['describe_pack'] = False
+        session['len_original_describe_edit_sounds'] = 2
+        session['describe_sounds'] = [File(1, filenames[0], user_upload_path + filenames[0], False),
+                                      File(2, filenames[1], user_upload_path + filenames[1], False)]
+        session.save()
+
+        # Set BW frontend in session
+        test_using_bw_ui(self)
+
+        # Post description information
+        resp = self.client.post('/home/describe/sounds/', {
+            '0-lat': [u'46.31658418182218'],
+            '0-lon': [u'3.515625'],
+            '0-zoom': [u'16'],
+            '0-tags': [u'testtag1 testtag2 testtag3'],
+            '0-pack': [u''],
+            '0-license': [u'3'],
+            '0-description': [u'a test description for the sound file'],
+            '0-new_pack': [u''],
+            '0-name': [filenames[0]],
+            '1-license': [u'3'],
+            '1-description': [u'another test description'],
+            '1-lat': [u''],
+            '1-pack': [u''],
+            '1-lon': [u''],
+            '1-name': [filenames[1]],
+            '1-new_pack': [u'Name of a new pack'],
+            '1-zoom': [u''],
+            '1-tags': [u'testtag1 testtag4 testtag5'],
+            '1-sources': u','.join([u'{}'.format(s.id) for s in sound_sources]),
+        })
+        
+        # Check that post redirected to first describe page with confirmation message on sounds described
+        self.assertRedirects(resp, '/home/sounds/manage/')
+        self.assertEqual('Successfully finished sound description round' in resp.cookies['messages'].value, True)
+
+        # Check that sounds have been created along with related tags, geotags and packs
+        self.assertEqual(user.sounds.all().count(), 2)
+        self.assertListEqual(
+            sorted(list(user.sounds.values_list('original_filename', flat=True))), 
+            sorted([f.decode('utf-8') for f in filenames]))
+        self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
+        self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
+        self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
+        sound_with_sources = user.sounds.get(original_filename=filenames[1])
+        self.assertEquals(sound_with_sources.sources.all().count(), len(sound_sources))
 
 
 class BulkDescribe(TestCase):

@@ -24,6 +24,7 @@ import os
 from functools import partial, wraps
 from itertools import count
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
@@ -105,6 +106,12 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
             sound.set_tags(clean_and_split_tags(tags))
         sounds.append(sound)
     return user, packs, sounds
+
+
+def test_using_bw_ui(test_case_object):
+    session = test_case_object.client.session
+    session[settings.FRONTEND_SESSION_PARAM_NAME] = settings.FRONTEND_BEASTWHOOSH
+    session.save()
 
 
 def override_path_with_temp_directory(fun, settings_path_name):

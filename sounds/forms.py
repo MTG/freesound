@@ -31,6 +31,7 @@ from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.core.signing import BadSignature, SignatureExpired
 
+from accounts.forms import html_tags_help_text
 from sounds.models import License, Flag, Pack, Sound
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import TagField, HtmlCleaningCharField
@@ -266,18 +267,22 @@ class BWSoundEditAndDescribeForm(forms.Form):
     file_full_path = None
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
-    is_explicit = forms.BooleanField(required=False)
-    tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
-                    help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                              "For example: <i>field-recording</i> is a popular tag."
-                              "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
-    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
+    tags = TagField(
+        widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
+        help_text="Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
+                  "For example: <i>field-recording</i> is a popular tag."
+                  "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
+    description = HtmlCleaningCharField(
+        widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
+        help_text="You can add <i>timestamped</i> comments by using a syntax like \"#1:07 nice bird chirp\" in the description. "
+                  "This will be rendered with little play button to play the sound at that timestamp. " + html_tags_help_text)
+    is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
     pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
                                label="Or fill in the name of a new pack:", required=False, min_length=5)
-    remove_geotag = forms.BooleanField(required=False)
+    remove_geotag = forms.BooleanField(required=False, label="Remove geotag")
     lat = forms.FloatField(min_value=-90, max_value=90, required=False,
                            error_messages={
                                'min_value': 'Latitude must be between -90 and 90.',
@@ -294,11 +299,14 @@ class BWSoundEditAndDescribeForm(forms.Form):
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
         self.file_full_path = kwargs.pop('file_full_path', None)
         explicit_disable = kwargs.pop('explicit_disable', False)
         hide_old_license_versions = kwargs.pop('hide_old_license_versions', False)
         user_packs = kwargs.pop('user_packs', False)
         super(BWSoundEditAndDescribeForm, self).__init__(*args, **kwargs)
+        self.fields['is_explicit'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['remove_geotag'].widget.attrs['class'] = 'bw-checkbox'
         
         # Disable is_explicit field if is already marked
         self.initial['is_explicit'] = explicit_disable

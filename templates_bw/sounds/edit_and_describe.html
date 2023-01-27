@@ -15,7 +15,7 @@
     {% if num_forms > 1%}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
 </div>
 
-<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit">{% csrf_token %}
+<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit bw-form">{% csrf_token %}
 <div class="v-spacing-6">
     {% for form in forms%}
     <div>

@@ -48,6 +48,10 @@ from utils.spam import is_spam
 
 web_logger = logging.getLogger('web')
 
+html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
+                <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
+                <code>blockquote</code> and <code>code</code>."""
+
 
 def validate_file_extension(audiofiles):
     try:
@@ -434,10 +438,6 @@ class BwProfileForm(ProfileForm):
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
         super(BwProfileForm, self).__init__(*args, **kwargs)
-
-        html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
-                <code>blockquote</code> and <code>code</code>."""
 
         # Customize some placeholders and classes, remove labels and help texts
         self.fields['username'].widget.attrs['placeholder'] = 'Write your name here (30 characters maximum)'

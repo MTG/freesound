@@ -13,7 +13,7 @@
     </div>
 
     <div class="w-100 v-spacing-top-3 v-spacing-5">
-        <form method="post" action="." class="bw-edit-profile__form w-100">{% csrf_token %}
+        <form method="post" action="." class="bw-form w-100">{% csrf_token %}
             {{form.as_p}}
             <button class="btn-primary w-100 v-spacing-top-5">Change my email</button>
         </form>

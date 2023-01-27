@@ -39,7 +39,7 @@
         <div class="text-center text-grey v-spacing-top-3"><span class="text-red">Warning:</span> avatar uploading is currently disabled. We'll enable it as soon as possible.</span></div>
     {% endif %}
     <div class="v-spacing-top-7 w-100 v-spacing-5">
-        <form method="post" action="." class="bw-edit-profile__form w-100">{% csrf_token %}
+        <form method="post" action="." class="bw-form w-100">{% csrf_token %}
             {{profile_form.as_p}}
             <button class="btn-primary w-100 v-spacing-top-5">Update profile</button>
         </form>

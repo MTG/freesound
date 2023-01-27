@@ -38,7 +38,7 @@ from utils.filesystem import create_directories, TemporaryDirectory
 from utils.tags import clean_and_split_tags
 
 
-def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, make_valid_wav_files=False, duration=0):
+def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, make_valid_wav_files=False, duration=0.0):
     """
     This function generates test files with random content and saves them in the specified directory.
     :param filenames: list of names for the files to generate
@@ -49,8 +49,7 @@ def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, 
     :param duration: duration of the wav file in seconds if make_valid_wav_files is True
     """
     if paths is None:
-        for filename in filenames:
-            paths = [os.path.join(directory, filename)]
+        paths = [os.path.join(directory, filename) for filename in filenames]
         
     for path in paths:
         create_directories(os.path.dirname(path))
@@ -59,7 +58,7 @@ def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, 
             f.write(os.urandom(n_bytes))
             f.close()
         else:
-            data = np.random.uniform(-1, 1, duration * 44100)
+            data = np.random.uniform(-1, 1, int(duration * 44100))
             scaled = np.int16(data / np.max(np.abs(data)) * 32767)
             if PY2 and type(path) == unicode:
                 path = bytes(path.encode('utf-8'))

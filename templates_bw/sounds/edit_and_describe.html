@@ -38,7 +38,81 @@
                 {% endif %}
             {% endwith %}
         {% endif %}
-        {{ form.as_p }}
+        
+        <div>
+            {{ form.non_field_errors }}
+        </div>
+        
+        <div>
+            {{ form.name.errors }}
+            {{ form.name.label_tag }}
+            {{ form.name }}
+        </div>
+
+        <div>
+            {{ form.tags.errors }}
+            {{ form.tags.label_tag }}
+            {{ form.tags }}
+        </div>
+
+        <div>
+            {{ form.description.errors }}
+            {{ form.description.label_tag }}
+            {{ form.description }}
+        </div>
+
+        <div>
+            {{ form.is_explicit.errors }}
+            {{ form.is_explicit.label_tag }}
+            {{ form.is_explicit }}
+        </div>
+
+        <div>
+            {{ form.license.errors }}
+            {{ form.license.label_tag }}
+            {{ form.license }}
+        </div>
+
+        <div>
+            {{ form.pack.errors }}
+            {{ form.pack.label_tag }}
+            {{ form.pack }}
+        </div>
+
+        <div>
+            {{ form.new_pack.errors }}
+            {{ form.new_pack.label_tag }}
+            {{ form.new_pack }}
+        </div>
+
+        <div>
+            {{ form.remove_geotag.errors }}
+            {{ form.remove_geotag.label_tag }}
+            {{ form.remove_geotag }}
+        </div>
+
+        <div>
+            {{ form.lat.errors }}
+            {{ form.lat.label_tag }}
+            {{ form.lat }}
+        </div>
+
+        <div>
+            {{ form.lon.errors }}
+            {{ form.lon.label_tag }}
+            {{ form.lon }}
+        </div>
+
+        <div>
+            {{ form.zoom.errors }}
+            {{ form.zoom.label_tag }}
+            {{ form.zoom }}
+        </div>
+
+        <div>
+            {{ form.sources }}
+        </div>
+            
         </div>
         {% if not forloop.last %}
             <hr class="v-spacing-3 v-spacing-top-3" />

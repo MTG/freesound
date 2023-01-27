@@ -15,6 +15,18 @@ input.bw-radio {
   color: $black;
 }
 
+.bw-radio2 {
+  ul {
+    padding: 0;
+    padding-inline: 0px;
+    background-color: red;
+  }
+
+  li {
+    list-style: none;
+  }
+}
+
 .bw-multiple-radio {
 
   ul {

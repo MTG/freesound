@@ -278,7 +278,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
                   "This will be rendered with little play button to play the sound at that timestamp. " + html_tags_help_text)
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
-    license = forms.ModelChoiceField(queryset=license_qs, required=True)
+    license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
     pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
                                label="Or fill in the name of a new pack:", required=False, min_length=5)
@@ -307,6 +307,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
         super(BWSoundEditAndDescribeForm, self).__init__(*args, **kwargs)
         self.fields['is_explicit'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['remove_geotag'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['license'].widget.attrs['class'] = 'bw-radio'
         
         # Disable is_explicit field if is already marked
         self.initial['is_explicit'] = explicit_disable
@@ -317,6 +318,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
+        print(self.fields['license'].queryset)
         valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
         self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s' % valid_licenses})
 

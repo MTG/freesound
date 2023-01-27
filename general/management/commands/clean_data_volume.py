@@ -29,11 +29,12 @@ from utils.management_commands import LoggingBaseCommand
 console_logger = logging.getLogger("console")
 
 
-def remove_folder(folderpath):
+def remove_folder(folderpath, recursively=False):
     try:
-        # First delete files inside folder
-        for filename in os.listdir(folderpath):
-            os.remove(os.path.join(folderpath, filename))        
+        if not recursively:
+            # First delete files inside folder
+            for filename in os.listdir(folderpath):
+                os.remove(os.path.join(folderpath, filename))        
         # Then delete the folder itself 
         shutil.rmtree(folderpath)
     except Exception as e:
@@ -55,6 +56,7 @@ class Command(LoggingBaseCommand):
             'tmp_uploads': 0,
             'tmp_processing': 0,
             'uploads': 0,
+            'processing_before_describe': 0
         }
 
         one_day_ago = datetime.datetime.today() - datetime.timedelta(days=1)
@@ -106,5 +108,16 @@ class Command(LoggingBaseCommand):
                     cleaned_files['uploads'] += 1
                     if not options['dry_run']:
                         remove_folder(folderpath)
+
+        # Clean folders from processing_before_describe which don't have a parallel folder in uploads
+        for filename in os.listdir(settings.PROCESSING_BEFORE_DESCRIPTION_DIR):
+            folderpath = os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, filename)
+            corresponding_folderpath_in_uploads = os.path.join(settings.UPLOADS_PATH, filename)
+            if not os.path.exists(corresponding_folderpath_in_uploads):
+                console_logger.info('Deleting directory {}'.format(folderpath))
+                cleaned_files['processing_before_describe'] += 1
+                if not options['dry_run']:
+                    remove_folder(folderpath, recursively=True)
+
                 
         self.log_end(cleaned_files)

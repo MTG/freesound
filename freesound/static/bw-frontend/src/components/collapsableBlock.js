@@ -1,4 +1,4 @@
-const collapsableToggles = document.getElementsByClassName('collapsable-text');
+const collapsableToggles = document.getElementsByClassName('collapsable-toggle');
 
 const toggleCollapse = (toggleElement) => {
   const collapsableContainer = document.getElementById(toggleElement.dataset.target);
@@ -15,7 +15,7 @@ const handleCollapsable = (e) => {
 };
 
 collapsableToggles.forEach(element => {
-  if (element.dataset.hideFromStart !== undefined){
+  if (element.dataset.hideOnLoad !== undefined){
     toggleCollapse(element);
   } else {
     element.textContent = element.dataset.hideText;

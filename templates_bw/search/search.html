@@ -210,10 +210,10 @@
             <div class="row no-gutters {% if tags_mode and initial_tagcloud %}display-none{% endif %}">
 
                     <div class="col-12 center v-spacing-top-negative-2 d-md-none">
-                        <div data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" class="collapsable-text v-spacing-top-2 font-weight-bold text-light-grey"></div>
+                        <div data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" data-hide-on-load class="collapsable-toggle v-spacing-top-2 font-weight-bold text-light-grey"></div>
                     </div>
 
-                    <aside class="col-md-4 col-lg-3 collapsable-block collapsable-block-close md-max-h-100" id="collapsable-filters">
+                    <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
                         {% if tags_mode and not initial_tagcloud %}
                             {% if facets.tag and facets.tag|length > 1 %}
                                 {% display_facet "tag" facets.tag "cloud" "Add Related Tags" %}

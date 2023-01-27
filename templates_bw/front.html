@@ -33,10 +33,6 @@
         </div>
         <div class="row bw-front__content">
             <main class="col-lg-9">
-
-                {% if rss_cache %}
-                    {{ rss_cache }}
-                {% endif %}
                 
                 {% cache 300 bw_front_page_latest_additions is_authenticated %}
                     {% with latest_sounds|chunks:3 as latest_sounds_chunks %}
@@ -61,10 +57,15 @@
                             </div>
                         </div>
                     </section>
-                    <hr />
                     {% endif %}
                     {% endwith %}
                 {% endcache %}
+
+                {% if rss_cache %}
+                    {{ rss_cache }}
+                {% else %}
+                    <hr>
+                {% endif %}
 
                 {% if trending_sound_ids %}
                     {% cache 300 bw_front_page_trending_sounds is_authenticated %}
@@ -174,7 +175,7 @@
                         <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
                         {% with random_sound as sound %}
                             {% display_sound_big_no_info random_sound %}
-                            <div id="randomSoundDetails" class="bw-sound-page__information v-spacing-top-2 display-none">
+                            <div id="collapsable-random-sound" class="collapsable-block bw-sound-page__information v-spacing-top-2">
                                 <div class="row middle">
                                     <div class="col-10 overflow-hidden">
                                         <h4 class="padding-bottom-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{sound.original_filename}}</a></h4>
@@ -246,8 +247,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-center text-16 v-spacing-top-2">
-                                <a id="randomSoundDetailsToggleLink" class="bw-link--grey" href="javascript:void(0);">Reveal details</a>
+                            <div class="text-center v-spacing-top-2">
+                                <span data-target="collapsable-random-sound" data-show-text="Reveal sound details" data-hide-text="Hide sound details" data-hide-on-load class="collapsable-toggle text-16"></span>
                             </div>
                         {% endwith %}
                     </section>

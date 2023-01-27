@@ -9,8 +9,8 @@
 <form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit">{% csrf_token %}
 <div>
     {% for form in forms%}
-        <div data-target="collapsable-{{ forloop.counter0 }}" data-show-text="Show {{ form.name.value }}" data-hide-text="Hide {{ form.name.value }}" class="collapsable-text"></div>
-        <div id="collapsable-{{ forloop.counter0 }}" style="overflow:hidden;">
+        <div data-target="collapsable-{{ forloop.counter0 }}" data-show-text="Show {{ form.name.value }}" data-hide-text="Hide {{ form.name.value }}" class="collapsable-toggle"></div>
+        <div id="collapsable-{{ forloop.counter0 }}" class="collapsable-block">
         {% if not describing %}
             {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
         {% else %}

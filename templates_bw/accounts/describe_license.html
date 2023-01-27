@@ -1,0 +1,14 @@
+{% extends "simple_page.html" %}
+{% load display_license_form %}
+
+{% block title %}Describe sounds - pick a license{% endblock %}
+{% block page-title %}Describe sounds{% endblock %}
+
+{% block page-content %}
+<h2 class="text-grey">Pick a license</h2>
+<div class="v-spacing-5 v-spacing-top-2">This license will be applied to the {{ num_files }} file you've selected for description, but don't worry, you can change individual sound licenses later.</div>
+<form action="." method="post" class="license-form">{% csrf_token %}
+    {% display_license_form form %}
+    <button type="submit" class="btn-primary v-spacing-top-5 w-100 center">Save and continue with description</button>
+</form>
+{% endblock %}

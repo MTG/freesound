@@ -804,7 +804,9 @@ def edit_and_describe_sounds_helper(request):
         'files_data_for_players': files_data_for_players,
         'current_round': current_round,
         'num_rounds': num_rounds,
+        'sounds_per_round': forms_per_round,
         'last_latlong': request.user.profile.get_last_latlong(),
+        'total_sounds_to_describe': len_original_describe_edit_sounds
     }
     
     if request.method == "POST" and all_forms_validated_ok:

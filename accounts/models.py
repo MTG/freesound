@@ -585,7 +585,8 @@ class Profile(SocialModel):
 
     def get_total_uploaded_sounds_length(self):
         # TODO: don't compute this realtime, store it in DB
-        durations = list(Sound.objects.filter(user=self.user).values_list('duration', flat=True))
+        # NOTE: this only includes duration of sounds that have been processed and moderated
+        durations = list(Sound.public.filter(user=self.user).values_list('duration', flat=True))
         return sum(durations)
 
     @property

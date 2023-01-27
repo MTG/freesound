@@ -732,7 +732,7 @@ def describe_license(request):
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
         form = NewLicenseForm()
-    tvars = {'form': form}
+    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
     return render(request, 'accounts/describe_license.html', tvars)
 
 
@@ -753,7 +753,7 @@ def describe_pack(request):
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
         form = PackForm(packs, prefix="pack")
-    tvars = {'form': form}
+    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
     return render(request, 'accounts/describe_pack.html', tvars)
 
 

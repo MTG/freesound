@@ -27,9 +27,8 @@
                 <form method="get" id="search_form" action="{% if not tags_mode %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
 
                     <div class="v-spacing-5 {% if tags_mode %}display-none{% endif %}">
-                        <div class="between middle">
-                            <div></div>
-                            <input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Start browsing here" class="bw-search__input" autocomplete="off"/>
+                        <div class="middle center">
+                            <div class="bw-search__input_wrapper"><i class="bw-icon-search input-icon text-light-grey"></i><input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Search sounds..." class="bw-search__input" autocomplete="off"/></div>
                             <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" />
                             <input id="weights" type="hidden" name="w" value="{{weights}}" />
                             <input id="tags-mode" type="hidden" name="tm" value="{% if tags_mode %}1{% else %}0{% endif %}" />  {% comment %}This is used so that we can know from JS whether we are in tags mode or not{% endcomment %}

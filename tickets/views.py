@@ -590,16 +590,13 @@ def user_annotations(request, user_id):
 
 
 def get_pending_sounds(user):
-    # gets all tickets from a user that have not been closed
-
+    # gets all tickets from a user that have not been closed (and that have an assigned sound)
     ret = []
-    user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED).order_by('-assignee')
-
+    user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED).exclude(sound=None).order_by('-assignee')
     for user_ticket in user_tickets:
         sound = user_ticket.sound
         if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
             ret.append( (user_ticket, sound) )
-
     return ret
 
 

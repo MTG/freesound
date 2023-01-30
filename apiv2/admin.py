@@ -26,7 +26,7 @@ from apiv2.models import ApiV2Client
 
 class ApiV2ClientAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
-    search_fields = ('user__username', 'name', "=oauth_client__client_id", "=oauth_client__client_secret")
+    search_fields = ('user__username', 'name', "=oauth_client__client_id", "=oauth_client__client_secret", "description")
     list_filter = ('status', 'throttling_level')
     list_display = ("name", "url", "user", "status", "throttling_level")
 

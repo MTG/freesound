@@ -268,12 +268,6 @@ def get_csv_lines(csv_file_path):
     between "header" and "row")
     """
 
-    def xls_val_to_string(val):
-        if type(val) == str:
-            return str(val.encode('utf-8'))
-        else:
-            return str(val)
-
     if csv_file_path.endswith('.csv'):
         # Read CSV formatted file
         reader = csv.reader(open(csv_file_path, 'r', newline='', encoding="utf-8"))
@@ -285,7 +279,7 @@ def get_csv_lines(csv_file_path):
         s = wb.sheet_by_index(0)  # Get first excel sheet
         header = s.row_values(0)
         lines = [dict(zip(header, row)) for row in
-                 [[xls_val_to_string(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+                 [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
     else:
         header = []
         lines = []

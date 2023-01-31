@@ -87,7 +87,7 @@ class UserEditProfile(TestCase):
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser")
-        f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'), None, None, None, None, None)
+        f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb'), None, None, None, None, None)
         handle_uploaded_image(user.profile, f)
 
         # Test that avatar files were created
@@ -403,6 +403,7 @@ class ProfilePostInForumTest(TestCase):
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
+        self.user.profile.refresh_from_db()
         with freezegun.freeze_time("2019-02-03 10:52:30"):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertFalse(can_post)
@@ -420,7 +421,7 @@ class ProfilePostInForumTest(TestCase):
         post.save()
         self.user.profile.num_sounds = 3
         self.user.profile.save()
-
+        self.user.profile.refresh_from_db()
         with freezegun.freeze_time("2019-02-03 10:52:30"):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
@@ -442,6 +443,7 @@ class ProfilePostInForumTest(TestCase):
             today = today + datetime.timedelta(minutes=i+10)
             post.created = today
             post.save()
+        self.user.profile.refresh_from_db()
 
         # After making 9 posts, we can't make any more
         with freezegun.freeze_time("2019-02-05 14:52:30"):

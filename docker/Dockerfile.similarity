@@ -1,4 +1,4 @@
-FROM freesound:2020-02-py2
+FROM freesound:2023-01-py2
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

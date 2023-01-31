@@ -284,7 +284,7 @@ def clustering_facet(request):
         for cluster_id in range(len(results))
     ]
     most_occuring_tags_formatted = [
-        ' '.join(most_occuring_tags)
+        ' '.join(sorted(most_occuring_tags))
         for most_occuring_tags in cluster_most_occuring_tags
     ]
 

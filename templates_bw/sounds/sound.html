@@ -299,11 +299,10 @@
                             <h6 class="text-26 no-margins ">Comments</h6>
                             <a name="comments"></a>
                             {% if request.user.is_authenticated %}
-                                <form method="POST" action=".#comments" class="disable-on-submit">{% csrf_token %}
+                                <form method="POST" action=".#comments" class="bw-edit-profile__form disable-on-submit">{% csrf_token %}
                                     <div class="row">
                                         <div class="col-md-9">
-                                            <textarea name="comment" id="id_comment" class="v-spacing-top-4 bw-comments_textarea" placeholder="Write your comment here..."></textarea>
-                                            <div class="text-light-grey v-spacing-top-2">You can refer to a specific second of the sound using the syntax <i>#mm:ss</i> (e.g., use #1:34 to refer to 1 minute and 23 seconds).</div>
+                                            {{form.as_p}}
                                         </div>
                                         <div class="col-md-3">
                                             <button id="sound_comment_submit" class="v-spacing-top-5 btn-inverse text-14">Post comment</button>

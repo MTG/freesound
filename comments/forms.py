@@ -23,7 +23,7 @@ from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
 class CommentForm(forms.Form):
-    comment = HtmlCleaningCharField(widget=forms.Textarea)
+    comment = HtmlCleaningCharField(widget=forms.Textarea, max_length=255)
     
     def __init__(self, request, *args, **kwargs):
         self.request = request
@@ -36,3 +36,17 @@ class CommentForm(forms.Form):
             raise forms.ValidationError("Your comment was considered spam, please edit and repost. If it keeps failing please contact the admins.")
         
         return comment
+
+
+class BwCommentForm(CommentForm):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super(BwCommentForm, self).__init__(*args, **kwargs)
+
+        self.fields['comment'].widget.attrs['placeholder'] = 'Write your comment here...'
+        self.fields['comment'].widget.attrs['rows'] = False
+        self.fields['comment'].widget.attrs['cols'] = False
+        self.fields['comment'].label = ""
+        self.fields['comment'].help_text = "You can refer to a specific second of the sound using the syntax #mm:ss (e.g., use #1:34 to refer to 1 minute and 23 seconds)."
+        #self.fields['comment'].widget.attrs['class'] = 'unsecure-image-check'

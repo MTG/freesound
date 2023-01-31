@@ -21,6 +21,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN adduser -q --gecos "" --disabled-password fsweb
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 COPY entrypoint.sh /usr/local/bin
 

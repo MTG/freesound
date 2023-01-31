@@ -1,4 +1,4 @@
-FROM freesound:2020-02
+FROM freesound:2020-02-py2
 
 RUN mkdir /code
 RUN mkdir /tag_recommendation_models

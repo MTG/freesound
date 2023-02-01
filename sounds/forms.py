@@ -318,7 +318,6 @@ class BWSoundEditAndDescribeForm(forms.Form):
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
-        print(self.fields['license'].queryset)
         valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
         self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s' % valid_licenses})
 

@@ -168,7 +168,7 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(user.sounds.all().count(), 2)
         self.assertListEqual(
             sorted(list(user.sounds.values_list('original_filename', flat=True))), 
-            sorted([f.decode('utf-8') for f in filenames]))
+            sorted([f for f in filenames]))
         self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
@@ -232,7 +232,7 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(user.sounds.all().count(), 2)
         self.assertListEqual(
             sorted(list(user.sounds.values_list('original_filename', flat=True))), 
-            sorted([f.decode('utf-8') for f in filenames]))
+            sorted([f for f in filenames]))
         self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)

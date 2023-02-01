@@ -31,8 +31,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
-from six import PY2
-
 from sounds.models import Sound, Pack, License
 from utils.filesystem import create_directories, TemporaryDirectory
 from utils.tags import clean_and_split_tags
@@ -60,8 +58,6 @@ def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, 
         else:
             data = np.random.uniform(-1, 1, int(duration * 44100))
             scaled = np.int16(data / np.max(np.abs(data)) * 32767)
-            if PY2 and type(path) == unicode:
-                path = bytes(path.encode('utf-8'))
             pysndfile.sndio.write(path, scaled, format='wav', rate=44100)
 
 

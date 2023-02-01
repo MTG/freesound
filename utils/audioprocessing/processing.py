@@ -37,7 +37,6 @@ import subprocess
 import numpy
 import pysndfile
 from PIL import Image, ImageDraw
-from six import PY2
 
 from .color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
 from utils.audioprocessing import get_sound_type
@@ -107,9 +106,6 @@ class AudioProcessor(object):
     """
 
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
-        if PY2:
-            input_filename = bytes(input_filename.encode('utf-8'))  # This should not be needed when migrating to Py3
-        
         max_level = get_max_level(input_filename)
         self.audio_file = pysndfile.PySndfile(input_filename, 'r')
         self.nframes = self.audio_file.frames()
@@ -486,6 +482,8 @@ def convert_to_pcm(input_filename, output_filename):
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
+    stdout = stdout.decode()
+    stderr = stderr.decode()
     
     # If external process returned an error (return code != 0) or the expected PCM file does not
     # exist, raise exception
@@ -515,6 +513,8 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
+    stdout = stdout.decode()
+    stderr = stderr.decode()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
@@ -522,7 +522,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
         raise AudioProcessingException(
             "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
-    stdout = (stdout.decode() + " " + stderr.decode()).replace("\n", " ")
+    stdout = (stdout + " " + stderr).replace("\n", " ")
 
     duration = 0
     m = re.match(r".*#duration (?P<duration>[\d\.]+).*", stdout)
@@ -559,7 +559,8 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     command = ["lame", "--silent", "--abr", str(quality), input_filename, output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (stdout, stderr) = process.communicate()
+    (stdout, _) = process.communicate()
+    stdout = stdout.decode()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
@@ -576,8 +577,9 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     command = ["oggenc", "-q", str(quality), input_filename, "-o", output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (stdout, stderr) = process.communicate()
-
+    (stdout, _) = process.communicate()
+    stdout = stdout.decode()
+    
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
 
@@ -599,5 +601,7 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
+    stdout = stdout.decode()
+    stderr = stderr.decode()
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException("ffmpeg returned an error\nstdout: %s \nstderr: %s" % (stdout, stderr))

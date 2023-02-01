@@ -363,7 +363,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
 
     def __init__(self, audio_file_path):
-        self.audio_file_path = audio_file_path.encode("utf-8")
+        self.audio_file_path = audio_file_path
         self.output_folder = get_processing_before_describe_sound_folder(self.audio_file_path)
         self.output_wave_path = os.path.join(self.output_folder, 'wave.png')
         self.output_spectral_path = os.path.join(self.output_folder, 'spectral.png')
@@ -395,7 +395,6 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         with TemporaryDirectory(
                 prefix='processing_before_description_{}_'.format(os.path.basename(self.output_folder)),
                 dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
-            tmp_directory = tmp_directory.encode('utf-8')
 
             # Get the path of the original sound and convert to PCM
             try:

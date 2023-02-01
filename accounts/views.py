@@ -1271,7 +1271,7 @@ def handle_uploaded_file(user_id, f):
             return False
 
     # trigger processing of uploaded files before description
-    tasks.process_before_description.delay(audio_file_path=dest_path)
+    tasks.process_before_description.delay(audio_file_path=dest_path.decode())
     upload_logger.info("sent uploaded file {} to processing before description".format(dest_path))
 
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async

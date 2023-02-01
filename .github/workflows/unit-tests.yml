@@ -45,7 +45,7 @@ jobs:
       run: make -C docker
 
     - name: Build images
-      run: docker-compose -f docker-compose.test.yml build db test_runner
+      run: docker-compose -f docker-compose.test.yml build --build-arg PYTHON_MAJOR_VERSION=3 db test_runner
 
     - name: Run tests
       run: docker-compose -f docker-compose.test.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings

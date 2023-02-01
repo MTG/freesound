@@ -18,13 +18,15 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
+import os
 from builtins import object
-from sklearn.externals import joblib
+from builtins import str
+
 from numpy import load, where, zeros
+from sklearn.externals import joblib
+
 from utils import loadFromJson
 from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
-import os
 
 
 class CommunityDetector(object):

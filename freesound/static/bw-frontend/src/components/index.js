@@ -25,3 +25,4 @@ import './toast';
 import './typeahead';
 import './unsecureImageCheck';
 import './followUnfollowTags';
+import './textareaCharactersCounter';

@@ -32,7 +32,7 @@ import logging
 
 import graypy
 import tagrecommendation_settings as tr_settings
-from communityBasedTagRecommendation import CommunityBasedTagRecommender
+from tag_recommendation.community_tag_recommender import CommunityBasedTagRecommender
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 from twisted.internet import reactor
 from twisted.web import server, resource

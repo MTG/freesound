@@ -20,9 +20,8 @@
 
 import json
 import re
-from unittest import skipIf
+from unittest import skipIf, mock
 
-import mock
 from builtins import range
 from builtins import str
 from django import forms

@@ -23,7 +23,6 @@ import datetime
 import os
 import shutil
 
-import mock
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache

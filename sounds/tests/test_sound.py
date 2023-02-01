@@ -26,9 +26,9 @@ from past.utils import old_div
 import json
 import os
 import time
+from unittest import mock
 
 import six
-import mock
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.models import User

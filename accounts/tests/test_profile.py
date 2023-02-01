@@ -20,9 +20,9 @@
 from builtins import range
 import datetime
 import os
+from unittest import mock
 
 import freezegun
-import mock
 from dateutil.parser import parse as parse_date
 from django.conf import settings
 from django.contrib.auth.models import User, Permission

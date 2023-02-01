@@ -24,7 +24,7 @@ from django.urls import reverse
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
-import mock
+from unittest import mock
 
 
 def create_fake_search_engine_results():

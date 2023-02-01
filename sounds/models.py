@@ -1630,7 +1630,7 @@ class Flag(models.Model):
     reason = models.TextField()
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __str__(self):
+    def __unicode__(self):
         return u"%s: %s" % (self.reason_type, self.reason[:100])
 
     class Meta(object):

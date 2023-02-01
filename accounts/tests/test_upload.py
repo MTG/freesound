@@ -111,6 +111,11 @@ class UserUploadAndDescribeSounds(TestCase):
         # Create audio files
         filenames = ['file1.wav', 'file2.wav']
         user = User.objects.create_user("testuser", password="testpass")
+        existing_pack = Pack.objects.create(user=user, name="existing pack")
+        # Set is_whitelisted because this will trigger change_moderation_state after creating sound and make 
+        # the test more complete
+        user.profile.is_whitelisted = True
+        user.profile.save()
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         create_directories(user_upload_path)
@@ -131,7 +136,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '0-lon': [u'3.515625'],
             '0-zoom': [u'16'],
             '0-tags': [u'testtag1 testtag2 testtag3'],
-            '0-pack': [u''],
+            '0-pack': [u'{}'.format(existing_pack.id)],
             '0-license': [u'3'],
             '0-description': [u'a test description for the sound file'],
             '0-new_pack': [u''],

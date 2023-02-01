@@ -29,7 +29,7 @@ from django.utils.encoding import smart_text
 class MessageBody(models.Model):
     body = models.TextField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.body[0:30] + u"[...]"
 
 
@@ -101,7 +101,7 @@ class Message(models.Model):
     def get_absolute_url(self):
         return "message", (smart_text(self.id),)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
     
     class Meta(object):

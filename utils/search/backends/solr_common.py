@@ -253,7 +253,7 @@ class SolrQuery(object):
         self.params['f.%s.hl.simple.pre' % field] = pre
         self.params['f.%s.hl.simple.post' % field] = post
 
-    def __unicode__(self):
+    def __str__(self):
         return urllib.parse.urlencode(self.params, doseq=True)
 
     def set_group_field(self, group_field=None):

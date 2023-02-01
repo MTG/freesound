@@ -651,7 +651,7 @@ class Sound(SocialModel):
     objects = SoundManager()
     public = PublicSoundManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.base_filename_slug
 
     @staticmethod
@@ -1284,7 +1284,7 @@ class SoundOfTheDay(models.Model):
 
     objects = SoundOfTheDayManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return u'Random sound of the day {0}'.format(self.date_display)
 
     def notify_by_email(self):
@@ -1448,7 +1448,7 @@ class Pack(SocialModel):
 
     objects = PackManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def get_absolute_url(self):
@@ -1630,7 +1630,7 @@ class Flag(models.Model):
     reason = models.TextField()
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s: %s" % (self.reason_type, self.reason[:100])
 
     class Meta(object):

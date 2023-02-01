@@ -86,7 +86,7 @@ class DeletedUser(models.Model):
     )
     reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)
 
-    def __unicode__(self):
+    def __str__(self):
         return 'Deleted user object for: {0}'.format(self.username)
 
 
@@ -138,7 +138,7 @@ class Profile(SocialModel):
 
     objects = ProfileManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.user.username
 
     def agree_to_gdpr(self):
@@ -612,7 +612,7 @@ class UserFlag(models.Model):
     content_object = fields.GenericForeignKey('content_type', 'object_id')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"Flag %s: %s" % (self.content_type, self.object_id)
 
     class Meta(object):
@@ -690,7 +690,7 @@ class EmailPreferenceType(models.Model):
         help_text="Indicates if the user should receive an email, if " +
         "UserEmailSetting exists for the user then the behavior is the opposite")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.display_name
 
 
@@ -704,7 +704,7 @@ class OldUsername(models.Model):
     username = models.CharField(max_length=255, db_index=True, unique=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{0} > {1}'.format(self.username, self.user.username)
 
 

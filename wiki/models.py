@@ -29,7 +29,7 @@ from django.urls import reverse
 class Page(models.Model):
     name = models.CharField(max_length=256, db_index=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def content(self):
@@ -50,5 +50,5 @@ class Content(models.Model):
         ordering = ('-created', )
         get_latest_by = 'created'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title

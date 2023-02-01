@@ -52,7 +52,7 @@ class ApiV2Client(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     throttling_level = models.IntegerField(default=1)
 
-    def __unicode__(self):
+    def __str__(self):
         return "credentials for developer %s" % self.user.username
 
     def save(self, *args, **kwargs):

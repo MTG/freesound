@@ -31,7 +31,7 @@ from django.urls import reverse
 class Tag(models.Model):
     name = models.SlugField(unique=True, db_index=True, max_length=100)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def get_browse_tag_url(self):
@@ -53,7 +53,7 @@ class TaggedItem(models.Model):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
 
     def get_absolute_url(self):

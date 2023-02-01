@@ -36,7 +36,8 @@ from django.conf import settings
 from . import color_schemes
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.filesystem import create_directories, TemporaryDirectory
+from utils.filesystem import create_directories
+from tempfile import TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 from utils.sound_upload import get_processing_before_describe_sound_folder
 

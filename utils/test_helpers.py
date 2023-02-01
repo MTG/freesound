@@ -32,7 +32,8 @@ from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
 from sounds.models import Sound, Pack, License
-from utils.filesystem import create_directories, TemporaryDirectory
+from utils.filesystem import create_directories
+from tempfile import TemporaryDirectory
 from utils.tags import clean_and_split_tags
 
 

@@ -525,7 +525,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
         raise AudioProcessingException(
             "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
 
-    stdout = (stdout + " " + stderr).replace("\n", " ")
+    stdout = (stdout.decode() + " " + stderr.decode()).replace("\n", " ")
 
     duration = 0
     m = re.match(r".*#duration (?P<duration>[\d\.]+).*", stdout)

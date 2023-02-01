@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='gdpracceptance',
             name='date_accepted',
-            field=models.DateTimeField(auto_now_add=True, default=datetime.datetime(2023, 2, 1, 11, 2, 41, 212265)),
+            field=models.DateTimeField(auto_now_add=True, default=datetime.datetime.now),
             preserve_default=False,
         ),
         migrations.AlterField(

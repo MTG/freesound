@@ -17,8 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-from backports import csv
+import csv
 from builtins import next
 from builtins import zip
 from builtins import str
@@ -38,8 +37,6 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.text import slugify
-
-from six import PY2
 
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type

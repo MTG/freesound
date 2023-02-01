@@ -23,7 +23,7 @@ from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
 class CommentForm(forms.Form):
-    comment = HtmlCleaningCharField(widget=forms.Textarea, max_length=255)
+    comment = HtmlCleaningCharField(widget=forms.Textarea, max_length=4000)
     
     def __init__(self, request, *args, **kwargs):
         self.request = request

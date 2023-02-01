@@ -18,8 +18,8 @@
 #     See AUTHORS file.
 #
 
-
 import operator
+
 from numpy import *
 
 

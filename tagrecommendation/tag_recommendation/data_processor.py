@@ -18,24 +18,24 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 from __future__ import division
+from __future__ import print_function
 
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import str
 from builtins import range
 from builtins import object
 from past.utils import old_div
 from tagrecommendation_settings import RECOMMENDATION_TMP_DATA_DIR, RECOMMENDATION_DATA_DIR
-import fileinput, sys, os
+import sys, os
 from utils import saveToJson, mtx2npy, loadFromJson
 from numpy import save, load, where, in1d
 from math import sqrt
 from pysparse import spmatrix
-from communityDetection import CommunityDetector
+from .community_tag_recommender import CommunityDetector
 from datetime import datetime
-import urllib.request, urllib.parse, urllib.error
 
 
 class RecommendationDataProcessor(object):

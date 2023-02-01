@@ -21,11 +21,12 @@
 from __future__ import print_function
 
 from builtins import object
-from tagRecommendation import TagRecommender
-from communityDetection import CommunityDetector
-from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
-from utils import loadFromJson
+
 from numpy import load
+
+from .community_detector import CommunityDetector
+from .tag_recommender import TagRecommender
+from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
 
 
 class CommunityBasedTagRecommender(object):

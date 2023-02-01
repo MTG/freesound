@@ -227,7 +227,7 @@
 
                             {% if perms.sound.can_edit or sound.user == request.user %}
                                 {% if sound.processing_state == 'OK' %}
-                                    <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'sound-edit' sound.user.username sound.id %}">Edit sound</a>
+                                    <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'sound-edit' sound.user.username sound.id %}">Edit sound description</a>
                                 {% else %}
                                     <div class="v-spacing-top-3 text-grey text-center">Sound is processing, cannot edit</div>
                                 {% endif %}
@@ -304,7 +304,7 @@
                             <h6 class="text-26 no-margins ">Comments</h6>
                             <a name="comments"></a>
                             {% if request.user.is_authenticated %}
-                                <form method="POST" action=".#comments" class="bw-edit-profile__form disable-on-submit">{% csrf_token %}
+                                <form method="POST" action=".#comments" class="bw-form disable-on-submit">{% csrf_token %}
                                     <div class="row">
                                         <div class="col-md-9">
                                             {{form.as_p}}

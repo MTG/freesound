@@ -73,7 +73,7 @@ class Forum(OrderedModel):
         if commit:
             self.save()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def get_absolute_url(self):
@@ -152,7 +152,7 @@ class Thread(models.Model):
     class Meta(object):
         ordering = ('-status', '-last_post__created')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
 
@@ -228,7 +228,7 @@ class Post(models.Model):
             ("can_moderate_forum", "Can moderate posts."),
         )
 
-    def __unicode__(self):
+    def __str__(self):
         return u"Post by %s in %s" % (self.author, self.thread)
 
     def get_absolute_url(self):
@@ -351,5 +351,5 @@ class Subscription(models.Model):
     class Meta(object):
         unique_together = ("subscriber", "thread")
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s subscribed to %s" % (self.subscriber, self.thread)

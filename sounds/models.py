@@ -23,6 +23,7 @@
 from __future__ import division
 from future import standard_library
 standard_library.install_aliases()
+from future.utils import python_2_unicode_compatible
 from builtins import str
 from builtins import object
 from past.utils import old_div
@@ -76,6 +77,7 @@ web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 
 
+@python_2_unicode_compatible
 class License(OrderedModel):
     """A creative commons license model"""
     name = models.CharField(max_length=512)
@@ -103,7 +105,7 @@ class License(OrderedModel):
             name = 'Noncommercial'
         return '{}{}'.format(name, version_label)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name_with_version
 
 
@@ -649,7 +651,7 @@ class Sound(SocialModel):
     objects = SoundManager()
     public = PublicSoundManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.base_filename_slug
 
     @staticmethod
@@ -1325,7 +1327,7 @@ class SoundOfTheDay(models.Model):
 
     objects = SoundOfTheDayManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return u'Random sound of the day {0}'.format(self.date_display)
 
     def notify_by_email(self):
@@ -1489,7 +1491,7 @@ class Pack(SocialModel):
 
     objects = PackManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def get_absolute_url(self):

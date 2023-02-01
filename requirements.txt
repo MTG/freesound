@@ -5,6 +5,7 @@ beautifulsoup4==4.6.0
 bleach==3.1.5
 boto3==1.7.10
 celery==4.4.7
+importlib-metadata<5.0 # Required for celery, see https://github.com/python/importlib_metadata/issues/411
 debugpy==1.5.1
 dj-database-url==0.5.0
 django-amazon-ses==3.0.1

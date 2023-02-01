@@ -38,7 +38,7 @@ class Queue(models.Model):
     groups          = models.ManyToManyField(Group)
     notify_by_email = models.BooleanField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -101,7 +101,7 @@ class Ticket(models.Model):
     def get_absolute_url(self):
         return reverse('ticket', args=[smart_text(self.key)])
 
-    def __unicode__(self):
+    def __str__(self):
         return u"pk %s, key %s" % (self.id, self.key)
 
     class Meta(object):
@@ -118,7 +118,7 @@ class TicketComment(models.Model):
     ticket          = models.ForeignKey(Ticket, related_name='messages')
     moderator_only  = models.BooleanField(default=False)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"<# Message - ticket_id: %s, ticket_key: %s>" % \
                     (self.ticket.id, self.ticket.key)
 

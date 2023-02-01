@@ -49,7 +49,7 @@ from django.utils.six.moves.urllib.parse import urlparse
 from ratelimit.decorators import ratelimit
 from django.core.signing import BadSignature, SignatureExpired
 
-from comments.forms import CommentForm
+from comments.forms import CommentForm, BwCommentForm
 from comments.models import Comment
 from donations.models import DonationsModalSettings
 from follow import follow_utils
@@ -269,8 +269,9 @@ def sound(request, username, sound_id):
         else:
             raise Http404
 
+    CommentFormClass = CommentForm if not using_beastwhoosh(request) else BwCommentForm
     if request.method == "POST":
-        form = CommentForm(request, request.POST)
+        form = CommentFormClass(request, request.POST)
         if request.user.is_authenticated:
             if request.user.profile.is_blocked_for_spam_reports():
                 messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your "
@@ -287,7 +288,7 @@ def sound(request, username, sound_id):
 
                     return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        form = CommentForm(request)
+        form = CommentFormClass(request)
 
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)

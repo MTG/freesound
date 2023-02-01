@@ -1434,6 +1434,7 @@ def monitor_api_credential(request, key):
             day_limit = 0
         n_days = int(request.GET.get('n_days', 30))
         usage_history = client.get_usage_history(n_days_back=n_days)
+        last_year = datetime.datetime.now().year - 1
         tvars = {
             'n_days': n_days,
             'n_days_options': [
@@ -1445,6 +1446,8 @@ def monitor_api_credential(request, key):
             'data': json.dumps([(str(date), count) for date, count in usage_history]),
             'total_in_range': sum([count for _, count in usage_history]),
             'total_in_range_above_5000': sum([count - 5000 for _, count in usage_history if count > 5000]),
+            'total_previous_year_above_5000': client.get_usage_history_total(year=last_year, discard_per_day=5000),
+            'last_year': last_year,
             'limit': day_limit
         }
         return render(request, 'api/monitor_api_credential.html', tvars)

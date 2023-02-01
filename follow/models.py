@@ -30,7 +30,7 @@ class FollowingUserItem(models.Model):
     user_to = models.ForeignKey(User, related_name='follower_items')
     created = models.DateTimeField(auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s following %s" % (self.user_from, self.user_to)
 
     class Meta(object):
@@ -44,7 +44,7 @@ class FollowingQueryItem(models.Model):
     query = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s following tag '%s'" % (self.user, self.query)
 
     def get_slash_tags(self):

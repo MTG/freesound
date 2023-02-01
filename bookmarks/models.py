@@ -31,7 +31,7 @@ class BookmarkCategory(models.Model):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=128, default="")
     
-    def __unicode__(self):
+    def __str__(self):
         return u"%s" % self.name
 
 
@@ -42,7 +42,7 @@ class Bookmark(models.Model):
     sound = models.ForeignKey(Sound)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
-    def __unicode__(self):
+    def __str__(self):
         return u"Bookmark: %s" % self.name
 
     @property

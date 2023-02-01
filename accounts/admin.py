@@ -360,7 +360,7 @@ class OldUsernameAdmin(admin.ModelAdmin):
 
 class UserDeletionRequestAdmin(admin.ModelAdmin):
     list_filter = ('status', )
-    search_fields = ('=username_to', '=email')
+    search_fields = ('=username_to', '=email_from')
     raw_id_fields = ('user_from', 'user_to' )
     list_display = ('status', 'email_from', 'username_from', 'username_to', 'user_to_link', 'deleted_user_link',
                     'get_reason', 'last_updated')

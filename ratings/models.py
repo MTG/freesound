@@ -39,7 +39,7 @@ class SoundRating(models.Model):
     sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u"%s rated %s: %d" % (self.user, self.sound, self.rating)
 
     class Meta(object):

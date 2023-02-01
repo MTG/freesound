@@ -36,7 +36,6 @@ from django.conf import settings
 from . import color_schemes
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.filesystem import create_directories
 from tempfile import TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 from utils.sound_upload import get_processing_before_describe_sound_folder
@@ -276,7 +275,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Create directory to store previews (if it does not exist)
                 # Same directory is used for all MP3 and OGG previews of a given sound so we only need to run this once
                 try:
-                    create_directories(os.path.dirname(self.sound.locations("preview.LQ.mp3.path")))
+                    os.makedirs(os.path.dirname(self.sound.locations("preview.LQ.mp3.path")), exist_ok=True)
                 except OSError:
                     self.set_failure("could not create directory for previews")
                     return False
@@ -322,7 +321,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Create directory to store display images (if it does not exist)
                 # Same directory is used for all displays of a given sound so we only need to run this once
                 try:
-                    create_directories(os.path.dirname(self.sound.locations("display.wave.M.path")))
+                    os.makedirs(os.path.dirname(self.sound.locations("display.wave.M.path")), exist_ok=True)
                 except OSError:
                     self.set_failure("could not create directory for displays")
                     return False
@@ -371,7 +370,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         self.output_preview_mp3 = os.path.join(self.output_folder, 'preview.mp3')
         self.output_preview_ogg = os.path.join(self.output_folder, 'preview.ogg')
         self.output_info_file = os.path.join(self.output_folder, 'info.json')
-        create_directories(os.path.dirname(self.output_preview_ogg))
+        os.makedirs(os.path.dirname(self.output_preview_ogg), exist_ok=True)
 
     def log_info(self, message):
         console_logger.info("{} - {}".format(self.audio_file_path, message))

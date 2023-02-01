@@ -32,7 +32,6 @@ from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
 from sounds.models import Sound, Pack, License
-from utils.filesystem import create_directories
 from tempfile import TemporaryDirectory
 from utils.tags import clean_and_split_tags
 
@@ -51,7 +50,7 @@ def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, 
         paths = [os.path.join(directory, filename) for filename in filenames]
         
     for path in paths:
-        create_directories(os.path.dirname(path))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         if not make_valid_wav_files:
             f = open(path, 'wb')
             f.write(os.urandom(n_bytes))

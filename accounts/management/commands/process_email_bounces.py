@@ -25,7 +25,6 @@ from django.db import IntegrityError
 from accounts.models import EmailBounce
 
 from utils.aws import init_client, AwsCredentialsNotConfigured
-from utils.filesystem import create_directories
 from utils.management_commands import LoggingBaseCommand
 from botocore.exceptions import EndpointConnectionError
 
@@ -59,7 +58,7 @@ def process_message(data):
 
 def create_dump_file():
     path = os.path.join(settings.DATA_PATH, 'bounced_emails')
-    create_directories(path)
+    os.makedirs(path, exist_ok=True)
     return os.path.join(path, time.strftime('%Y%m%d_%H%M') + '.json')
 
 
@@ -170,4 +169,3 @@ class Command(LoggingBaseCommand):
 
         result = {'n_mails_bounced': total_messages, 'n_bounces': total_bounces}
         self.log_end(result)
-

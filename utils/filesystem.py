@@ -22,7 +22,6 @@ from __future__ import print_function
 
 from builtins import hex
 from builtins import object
-import errno
 import hashlib
 import os
 import shutil
@@ -100,19 +99,3 @@ def remove_directory(path):
 def remove_directory_if_empty(path):
     if not os.listdir(path):
         os.rmdir(path)
-
-
-def create_directories(path, exist_ok=True):
-    """
-    Creates directory at the specified path, including all intermediate-level directories needed to contain it.
-    NOTE: after migrating to Python3, this util function can be entirely replaced by calling
-    "os.makedirs(path, exist_ok=True)".
-    :param str path: path of the direcotry to create
-    :param bool exist_ok: if set to True, exceptions won't be raised if the target direcotry already exists
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        # Ignore exception if directory already existing
-        if exist_ok and exc.errno != errno.EEXIST:
-            raise

@@ -835,10 +835,9 @@ def describe_sounds(request):
                 messages.add_message(request, messages.ERROR,
                                      'Something went wrong with accessing the file %s.' % forms[i]['description'].cleaned_data['name'])
             except utils.sound_upload.AlreadyExistsException as e:
-                msg = e.message
-                messages.add_message(request, messages.WARNING, msg)
+                messages.add_message(request, messages.WARNING, str(e))
             except utils.sound_upload.CantMoveException as e:
-                upload_logger.error(e.message, e)
+                upload_logger.error(str(e), e)
 
         # Remove the files we just described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]

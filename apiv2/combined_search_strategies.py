@@ -305,13 +305,13 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
 
     except SimilarityException as e:
         if e.status_code == 500:
-            raise ServerErrorException(msg=e.message)
+            raise ServerErrorException(msg=str(e))
         elif e.status_code == 400:
-            raise BadRequestException(msg=e.message)
+            raise BadRequestException(msg=str(e))
         elif e.status_code == 404:
-            raise NotFoundException(msg=e.message)
+            raise NotFoundException(msg=str(e))
         else:
-            raise ServerErrorException(msg='Similarity server error: %s' % e.message)
+            raise ServerErrorException(msg='Similarity server error: %s' % str(e))
     except Exception as e:
         raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.')
 
@@ -361,7 +361,7 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             n_page_requests += 1
 
     except SearchEngineException as e:
-        raise ServerErrorException(msg='Search server error: %s' % e.message)
+        raise ServerErrorException(msg='Search server error: %s' % str(e))
     except Exception as e:
         raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
     return solr_ids, solr_count

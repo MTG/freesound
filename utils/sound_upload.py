@@ -575,14 +575,14 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except CantMoveException as e:
-            message = 'l%i: %s.' % (line['line_no'], e.message,)
+            message = 'l%i: %s.' % (line['line_no'], str(e),)
             console_logger.info(message)
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
-        except Exception:
+        except Exception as e:
             # If another unexpected exception happens, show a message and continue with the process so that
             # other sounds can be added
-            message = 'l%i: Unexpected error.' % line['line_no']
+            message = 'l%i: Unexpected error %s.' % (line['line_no'], str(e),)
             console_logger.info(message, exc_info=True)
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)

@@ -329,13 +329,13 @@ def api_search(
             return gaia_ids, gaia_count, distance_to_target_data, None, note, None, None
         except SimilarityException as e:
             if e.status_code == 500:
-                raise ServerErrorException(msg=e.message, resource=resource)
+                raise ServerErrorException(msg=str(e), resource=resource)
             elif e.status_code == 400:
-                raise BadRequestException(msg=e.message, resource=resource)
+                raise BadRequestException(msg=str(e), resource=resource)
             elif e.status_code == 404:
-                raise NotFoundException(msg=e.message, resource=resource)
+                raise NotFoundException(msg=str(e), resource=resource)
             else:
-                raise ServerErrorException(msg='Similarity server error: %s' % e.message, resource=resource)
+                raise ServerErrorException(msg='Similarity server error: %s' % str(e), resource=resource)
         except Exception as e:
             raise ServerErrorException(
                 msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource)
@@ -373,8 +373,8 @@ def api_search(
         except SearchEngineException as e:
             if search_form.cleaned_data['filter'] is not None:
                 raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field '
-                                              'names are correct)' % e.message, resource=resource)
-            raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
+                                              'names are correct)' % str(e), resource=resource)
+            raise BadRequestException(msg='Search server error: %s' % str(e), resource=resource)
         except Exception as e:
             print(e)
             raise ServerErrorException(

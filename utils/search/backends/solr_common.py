@@ -281,7 +281,7 @@ class SolrQuery(object):
         """Return params in a way that can be passed to pysolr commands as kwargs"""
         params = {k: v for k, v in self.params.items() if v is not None}
         for k, v in params.items():
-            if type(v) == bool:
+            if isinstance(v, bool):
                 params[k] = json.dumps(v)
         return params
 

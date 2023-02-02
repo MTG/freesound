@@ -218,7 +218,7 @@ class BulkUploadProgress(models.Model):
         sound_errors = []
         if self.description_output is not None:
             for line_no, value in self.description_output.items():
-                if type(value) == int:
+                if isinstance(value, int):
                     # Sound id, meaning a file for which a Sound object was successfully created
                     sound_ids_described_ok.append(value)
                 else:
@@ -1806,7 +1806,7 @@ class SoundAnalysis(models.Model):
             # Postgres JSON data field can not store float values of nan or inf. Ideally these values should have never
             # been outputted by the analyzers in the first place, but it can happen. We use this function here and skip
             # indexing key/value pairs where the value is not valid for Postgres JSON data fields.
-            if type(value) == float:
+            if isinstance(value, float):
                 return not math.isinf(value) and not math.isnan(value)
             return True
 

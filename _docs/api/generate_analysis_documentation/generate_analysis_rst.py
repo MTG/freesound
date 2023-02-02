@@ -88,7 +88,7 @@ for k in sorted_namespaces:
 		if descriptor in desc_exceptions: 
 			print("\n")
 			continue
-		if type(stats) ==dict:
+		if isinstance(stats, dict):
 			print("\n\n**Stats**::\n\n")
 			for s in stats.keys():
 				print("/"+s)
@@ -96,7 +96,7 @@ for k in sorted_namespaces:
 			print("\n\n**Distribution in Freesound**\n")
 
 			if "mean" in stats.keys():
-				if  type(stats['mean'])==list:
+				if  isinstance(stats['mean'], list):
 					for i in range(len(stats['mean'])):
 						img = image_str+descriptor+".mean.%03d"%i
 						print(img+".png")
@@ -104,7 +104,7 @@ for k in sorted_namespaces:
 				else:
 					print(image_str+descriptor+".mean.png")
 					print(height_str)
-		elif type(stats)== float or type(stats)==int:
+		elif isinstance(stats, float) or isinstance(stats, int):
 			print(image_str+descriptor+".png")
 			print(height_str)
 		print("\n\n")

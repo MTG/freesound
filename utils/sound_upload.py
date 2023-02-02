@@ -144,7 +144,7 @@ def create_sound(user,
     except OSError:
         raise NoAudioException()
 
-    if type(sound_fields['license']) == License:
+    if isinstance(sound_fields['license'], License):
         license = sound_fields['license']
     else:
         # Get license, sort by -id so that 4.0 licenses appear before 3.0

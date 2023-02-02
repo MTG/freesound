@@ -70,7 +70,7 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     get_sound_name.short_description = 'Name'
 
     def reprocess_sound(self, request, queryset_or_object):
-        if type(queryset_or_object) == Sound:
+        if isinstance(queryset_or_object, Sound):
             queryset_or_object.process(force=True, high_priority=True)
             queryset_or_object.analyze(force=True, high_priority=True)
             messages.add_message(request, messages.INFO,
@@ -230,7 +230,7 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
         return False
 
     def re_run_analysis(self, request, queryset_or_object):
-        if type(queryset_or_object) == SoundAnalysis:
+        if isinstance(queryset_or_object, SoundAnalysis):
             queryset_or_object.re_run_analysis()
             messages.add_message(request, messages.INFO,
                                  'Sound {} was sent to re-analyze with analyzer {}.'

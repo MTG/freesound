@@ -72,7 +72,7 @@ def chunks(l, n):
     :param int n: number of elements per group
     :return: list of n-sized lists
     """
-    if type(l) is not list:
+    if not isinstance(l, list):
         l = list(l)
     return [l[i:i + n] for i in range(0, len(l), n)]
 

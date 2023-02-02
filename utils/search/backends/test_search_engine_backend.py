@@ -83,7 +83,7 @@ class TestSearchEngineBackend():
         end = time.time()
 
         # Assert that the result is of the expected type
-        assert_and_continue(type(results) == utils.search.SearchResults, 'Returned search results object of wrong type')
+        assert_and_continue(isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type')
 
         # Save results to file so the later we can compare between different search engine backends
         if self.output_file:
@@ -106,7 +106,7 @@ class TestSearchEngineBackend():
         end = time.time()
 
         # Assert that the result is of the expected type
-        assert_and_continue(type(results) == utils.search.SearchResults, 'Returned search results object of wrong type')
+        assert_and_continue(isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type')
 
         # Save results to file so the later we can compare between different search engine backends
         if self.output_file:

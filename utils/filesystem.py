@@ -80,7 +80,7 @@ def md5file(filename):
 def crc32file(filename):
     fh = open(filename, "rb")
     crc32 = 0
-    while 1:
+    while True:
         buf = fh.read(4096)
         if buf == "":
             break

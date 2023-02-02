@@ -154,7 +154,7 @@ def convert_sound_to_search_engine_document(sound):
                 # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                 # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
                 for key, value in analysis_data.items():
-                    if type(value) == list:
+                    if isinstance(value, list):
                         # Make sure that the list is formed by strings
                         value = ['{}'.format(item) for item in value]
                     suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
@@ -351,7 +351,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def remove_sounds_from_index(self, sound_objects_or_ids):
         try:
             for sound_object_or_id in sound_objects_or_ids:
-                if type(sound_object_or_id) != Sound:
+                if not isinstance(sound_object_or_id, Sound):
                     sound_id = sound_object_or_id
                 else:
                     sound_id = sound_object_or_id.id
@@ -367,7 +367,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             raise SearchEngineException(e)
 
     def sound_exists_in_index(self, sound_object_or_id):
-        if type(sound_object_or_id) != Sound:
+        if not isinstance(sound_object_or_id, Sound):
             sound_id = sound_object_or_id
         else:
             sound_id = sound_object_or_id.id
@@ -386,9 +386,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if query_fields is None:
             # If no fields provided, use the default
             query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
-        if type(query_fields) == list:
+        if isinstance(query_fields, list):
             query_fields = [add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)) for field in query_fields]
-        elif type(query_fields) == dict:
+        elif isinstance(query_fields, dict):
             # Also remove fields with weight <= 0
             query_fields = [(add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)), weight)
                 for field, weight in query_fields.items() if weight > 0]
@@ -482,7 +482,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         try:
             for post_object_or_id in forum_post_objects_or_ids:
-                if type(post_object_or_id) != Post:
+                if not isinstance(post_object_or_id, Post):
                     post_id = post_object_or_id
                 else:
                     post_id = post_object_or_id.id
@@ -499,7 +499,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             raise SearchEngineException(e)
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
-        if type(forum_post_object_or_id) != Post:
+        if not isinstance(forum_post_object_or_id, Post):
             post_id = forum_post_object_or_id
         else:
             post_id = forum_post_object_or_id.id

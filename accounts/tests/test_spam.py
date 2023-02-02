@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import range
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
@@ -43,8 +42,8 @@ class ReportSpamOffensive(TestCase):
         # Create users reporting spam
         self.reporters = []
         for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
-            reporter = User.objects.create_user(username='reporter_{0}'.format(i),
-                                                email='reporter_{0}@example.com'.format(i))
+            reporter = User.objects.create_user(username='reporter_{}'.format(i),
+                                                email='reporter_{}@example.com'.format(i))
             self.reporters.append(reporter)
 
         # Create user posting spam

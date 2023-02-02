@@ -18,17 +18,14 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 
-from builtins import hex
-from builtins import object
 import hashlib
 import os
 import shutil
 import zlib
 
 
-class File(object):
+class File:
 
     def __init__(self, id, name, full_path, is_dir):
         self.name = name

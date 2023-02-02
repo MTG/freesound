@@ -99,8 +99,7 @@ class Command(LoggingBaseCommand):
                 if not files_in_folder:
                     should_delete = True
                 else:
-                    # NOTE: add u''.format(x) below to avoid issues with filenames with non-ascii characters. This can probably be removed when fully migrating to py3
-                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, u''.format(sound_filename)))) < one_year_ago for sound_filename in files_in_folder]):
+                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, sound_filename))) < one_year_ago for sound_filename in files_in_folder]):
                         should_delete = True
                 if should_delete:
                     # Delete directory and contents

@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import range
 import datetime
 import os
 from unittest import mock
@@ -68,8 +67,8 @@ class ProfileGetUserTags(TestCase):
         mock_search_engine.return_value.configure_mock(**conf)
         accounts.models.get_search_engine = mock_search_engine
         tag_names = [item['name'] for item in user.profile.get_user_tags()]
-        used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
-        non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
+        used_tag_names = list({item.tag.name for item in TaggedItem.objects.filter(user=user)})
+        non_used_tag_names = list({item.tag.name for item in TaggedItem.objects.exclude(user=user)})
 
         # Test that tags retrieved with get_user_tags are those found in db
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
@@ -306,8 +305,8 @@ class EmailBounceTest(TestCase):
         self.assertFalse(user.profile.email_is_valid())
 
     def test_idna_email(self):
-        encoded_email = u'user@xn--eb-tbv.de'
-        decoded_email = u'user@\u2211eb.de'
+        encoded_email = 'user@xn--eb-tbv.de'
+        decoded_email = 'user@\u2211eb.de'
         self.assertEqual(decoded_email, decode_idna_email(encoded_email))
 
     def test_email_email_bounce_removed_when_resetting_email(self):
@@ -318,7 +317,7 @@ class EmailBounceTest(TestCase):
         # User fills in email reset form
         self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
-            'email': u'new_email@freesound.org',
+            'email': 'new_email@freesound.org',
             'password': '12345',
         })
         self.assertRedirects(resp, reverse('accounts-email-reset-done'))
@@ -342,12 +341,12 @@ class EmailBounceTest(TestCase):
         self.client.force_login(admin_user)
         resp = self.client.post(reverse('admin:auth_user_change', args=[user.id]), data={
             'username': user.username,
-            'email': u'new_email@freesound.org',
+            'email': 'new_email@freesound.org',
             'date_joined_0': "2015-10-06",
             'date_joined_1': "16:42:00"
         })
         user.refresh_from_db()
-        self.assertEqual(user.email, u'new_email@freesound.org')
+        self.assertEqual(user.email, 'new_email@freesound.org')
 
         # Now asses no EmailBounce still exist
         self.assertEqual(EmailBounce.objects.filter(user=user).count(), 0)

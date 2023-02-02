@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import json
 import logging
 import os

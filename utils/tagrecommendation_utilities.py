@@ -1,4 +1,3 @@
-from __future__ import print_function
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #

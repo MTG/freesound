@@ -18,17 +18,13 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
-from __future__ import division
 
-from builtins import str
 from past.utils import old_div
 import json
 import os
 import time
 from unittest import mock
 
-import six
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -70,7 +66,7 @@ class CommentSoundsTestCase(TestCase):
         sound = Sound.objects.get(id=19)
         commenting_user = User.objects.get(id=2)
         self.client.force_login(commenting_user)
-        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': u'Test comment'})
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Test comment'})
 
         # Check email was sent notifying about comment
         self.assertEqual(len(mail.outbox), 1)
@@ -84,7 +80,7 @@ class CommentSoundsTestCase(TestCase):
         accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 
         # Make the comment again and assert no new email has been sent
-        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': u'Test comment'})
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Test comment'})
         self.assertEqual(len(mail.outbox), 1)
 
     def test_unsecure_content(self):
@@ -178,7 +174,7 @@ class ChangeSoundOwnerTestCase(TestCase):
         # Delete original user and perform further checks
         userA.profile.delete_user(delete_user_object_from_db=True)
         sound = Sound.objects.get(id=target_sound_id)
-        six.assertCountEqual(self, [ti.id for ti in sound.tags.all()], target_sound_tags)
+        self.assertCountEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
         delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in remaining_sound_ids], any_order=True)
 
 
@@ -291,9 +287,9 @@ class PackNumSoundsTestCase(TestCase):
 
         self.client.force_login(user)
         resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
-            'submit': [u'submit'],
-            'pack-new_pack': [u'new pack name'],
-            'pack-pack': [u''],
+            'submit': ['submit'],
+            'pack-new_pack': ['new pack name'],
+            'pack-pack': [''],
         })
         self.assertRedirects(resp, reverse('sound', args=[sound.user.username, sound.id]))
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 0)  # Sound changed from pack
@@ -314,10 +310,10 @@ class PackNumSoundsTestCase(TestCase):
         sound_ids_pack2.append(sound_ids_pack1.pop())
         self.client.force_login(user)
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'submit': [u'submit'],
-            'pack_sounds': u','.join([str(sid) for sid in sound_ids_pack2]),
-            'name': [u'Test pack 1 (edited)'],
-            'description': [u'A new description']
+            'submit': ['submit'],
+            'pack_sounds': ','.join([str(sid) for sid in sound_ids_pack2]),
+            'name': ['Test pack 1 (edited)'],
+            'description': ['A new description']
         })
         self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
         self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
@@ -329,11 +325,11 @@ class PackNumSoundsTestCase(TestCase):
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'submit': [u'submit'],
+            'submit': ['submit'],
             'pack_sounds':
-                u','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]),
-            'name': [u'Test pack 1 (edited again)'],
-            'description': [u'A new description']
+                ','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]),
+            'name': ['Test pack 1 (edited again)'],
+            'description': ['A new description']
         })
         self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
         self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
@@ -701,12 +697,12 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCachePresent(cache_keys)
 
         # Edit sound
-        new_description = u'New description'
-        new_name = u'New name'
+        new_description = 'New description'
+        new_name = 'New name'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             'description-description': new_description,
             'description-name': new_name,
-            'description-tags': u'tag1 tag2 tag3'
+            'description-tags': 'tag1 tag2 tag3'
         })
         self.assertEqual(resp.status_code, 302)
 
@@ -733,13 +729,13 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCachePresent(cache_keys)
 
         # Edit sound
-        new_description = u'New description'
-        new_name = u'New name'
+        new_description = 'New description'
+        new_name = 'New name'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-description': new_description,
             '0-name': new_name,
-            '0-tags': u'tag1 tag2 tag3',
-            '0-license': [u'3'],
+            '0-tags': 'tag1 tag2 tag3',
+            '0-license': ['3'],
         })
         self.assertEqual(resp.status_code, 302)
 
@@ -769,7 +765,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Add comment
         resp = self.client.post(self._get_sound_url('sound'), {
-            'comment': u'Test comment'
+            'comment': 'Test comment'
         }, follow=True)  # we are testing sound-display, rendering sound view is ok
         delete_url = self._get_delete_comment_url(resp.content)
         self._assertCacheAbsent(cache_keys)
@@ -1205,10 +1201,10 @@ class SoundEditTestCase(TestCase):
     def test_update_description_bw(self):
         test_using_bw_ui(self)
         self.client.force_login(self.user)
-        new_description = u'New description'
-        new_name = u'New name'
+        new_description = 'New description'
+        new_name = 'New name'
         new_tags = ['tag1', 'tag2', 'tag3']
-        new_pack_name = u'Name of a new pack'
+        new_pack_name = 'Name of a new pack'
         new_sound_sources = Sound.objects.exclude(id=self.sound.id)
         geotag_lat = 46.31658418182218
         resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]), {
@@ -1216,7 +1212,7 @@ class SoundEditTestCase(TestCase):
             '0-name': new_name,
             '0-tags': ' '.join(new_tags),
             '0-license': '3',
-            '0-sources': ','.join([u'{}'.format(s.id) for s in new_sound_sources]),
+            '0-sources': ','.join(['{}'.format(s.id) for s in new_sound_sources]),
             '0-pack': '',
             '0-new_pack': new_pack_name,
             '0-lat': '{}'.format(geotag_lat),

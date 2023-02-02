@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
 from django import template
 
@@ -35,4 +34,3 @@ def display_message(context, message):
         'hide_archive_unarchive': context.get('hide_archive_unarchive', False),
         'list_type': context['list_type']
     }
-    

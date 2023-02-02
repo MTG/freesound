@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -94,7 +92,7 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             more_url_params = [urllib.parse.quote(filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
 
             # this is the same link but for the email has to be "quoted"
-            more_url = u"?f=" + filter_str + u"&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
+            more_url = "?f=" + filter_str + "&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
@@ -135,7 +133,7 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             more_url_params = [urllib.parse.quote(tag_filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
 
             # this is the same link but for the email has to be "quoted"
-            more_url = u"?f=" + tag_filter_str + u"&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
+            more_url = "?f=" + tag_filter_str + "&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]

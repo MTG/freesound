@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -37,7 +34,7 @@ class Tag(models.Model):
     def get_browse_tag_url(self):
         return reverse('tags', self.name)
 
-    class Meta(object):
+    class Meta:
         ordering = ("name",)
 
 
@@ -54,12 +51,12 @@ class TaggedItem(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return u"%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
+        return "%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
 
     def get_absolute_url(self):
         return reverse('tag', args=[smart_text(self.tag.id)])
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
         unique_together = (('tag', 'content_type', 'object_id'),)
 

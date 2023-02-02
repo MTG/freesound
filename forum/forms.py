@@ -32,7 +32,7 @@ class PostReplyForm(forms.Form):
     def __init__(self, request, quote, *args, **kwargs):
         self.request = request
         self.quote = quote
-        super(PostReplyForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean_body(self):
         body = self.cleaned_data['body']
@@ -50,7 +50,7 @@ class BwPostReplyForm(PostReplyForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwPostReplyForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
                         <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
@@ -80,7 +80,7 @@ class BwNewThreadForm(NewThreadForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwNewThreadForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
                 <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,

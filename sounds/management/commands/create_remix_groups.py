@@ -18,9 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import division
 
-from builtins import str
 import json
 import logging
 
@@ -106,7 +104,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
     # dict with key=sound_id, value=index, nodeName=original_filname
     # in the previous sorted by date list
     # FIXME: no need for all this data, can be simple dict, key=value
-    container = dict((val[0], {'index': idx, 'nodeName': val[1]['nodeName']}) for (idx, val) in enumerate(node_list))
+    container = {val[0]: {'index': idx, 'nodeName': val[1]['nodeName']} for (idx, val) in enumerate(node_list)}
     # print ' ========== CONTAINER ========= '
     # pp(container)
 

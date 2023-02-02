@@ -20,8 +20,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
-from __future__ import absolute_import
 import sys
 from .processing import convert_to_wav, audio_info, AudioProcessingException
 

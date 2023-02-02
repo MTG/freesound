@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,7 +18,6 @@ from __future__ import division
 #     See AUTHORS file.
 #
 
-from builtins import range
 from past.utils import old_div
 import datetime
 import time
@@ -39,7 +37,7 @@ def tuple_to_time(t):
 @stringfilter
 def truncate_string(value, length):
     if len(value) > length:
-        return value[:length-3] + u"..."
+        return value[:length-3] + "..."
     else:
         return value
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,12 +18,9 @@
 #     See AUTHORS file.
 #
 
-from __future__ import division
 from future import standard_library
 standard_library.install_aliases()
 from future.utils import python_2_unicode_compatible
-from builtins import str
-from builtins import object
 from past.utils import old_div
 import datetime
 import glob
@@ -295,7 +290,7 @@ class BulkUploadProgress(models.Model):
             return len(self.validation_output['lines_with_errors']) > 0
         return False
 
-    class Meta(object):
+    class Meta:
         permissions = (
             ("can_describe_in_bulk", "Can use the Bulk Describe feature."),
         )
@@ -387,7 +382,7 @@ class SoundManager(models.Manager):
     def get_analysis_state_essentia_exists_sql(self):
         """Returns the SQL bits to add analysis_state_essentia_exists to the returned data indicating if thers is a
         SoundAnalysis objects existing for th given sound_id for the essentia analyzer and with status OK"""
-        return "          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{0}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,".format(settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
+        return "          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,".format(settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
 
     def bulk_query_solr(self, sound_ids):
         """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
@@ -548,7 +543,7 @@ class SoundManager(models.Manager):
 class PublicSoundManager(models.Manager):
     """ a class which only returns public sounds """
     def get_queryset(self):
-        return super(PublicSoundManager, self).get_queryset().filter(moderation_state="OK", processing_state="OK")
+        return super().get_queryset().filter(moderation_state="OK", processing_state="OK")
 
 
 class Sound(SocialModel):
@@ -785,9 +780,9 @@ class Sound(SocialModel):
 
     def get_channels_display(self):
         if self.channels == 1:
-            return u"Mono"
+            return "Mono"
         elif self.channels == 2:
-            return u"Stereo"
+            return "Stereo"
         else:
             return self.channels
 
@@ -899,7 +894,7 @@ class Sound(SocialModel):
         """
         Returns a set object with the integer sound IDs of the current sources of the sound
         """
-        return set(source["id"] for source in self.sources.all().values("id"))
+        return {source["id"] for source in self.sources.all().values("id")}
 
     def set_sources(self, new_sources):
         """
@@ -1328,7 +1323,7 @@ class SoundOfTheDay(models.Model):
     objects = SoundOfTheDayManager()
 
     def __str__(self):
-        return u'Random sound of the day {0}'.format(self.date_display)
+        return 'Random sound of the day {}'.format(self.date_display)
 
     def notify_by_email(self):
         """Notify the user of this sound by email that their sound has been chosen
@@ -1674,9 +1669,9 @@ class Flag(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):
-        return u"%s: %s" % (self.reason_type, self.reason[:100])
+        return "%s: %s" % (self.reason_type, self.reason[:100])
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
 
 
@@ -1686,7 +1681,7 @@ class Download(models.Model):
     license = models.ForeignKey(License)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
         indexes = [
             models.Index(fields=['user', 'sound']),
@@ -1758,7 +1753,7 @@ class SoundLicenseHistory(models.Model):
     sound = models.ForeignKey(Sound)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
 
 
@@ -1859,7 +1854,7 @@ class SoundAnalysis(models.Model):
             file_contents = fid.read()
             fid.close()
             return file_contents
-        except IOError:
+        except OSError:
             return 'No logs available...'
 
     def re_run_analysis(self, verbose=True):
@@ -1868,7 +1863,7 @@ class SoundAnalysis(models.Model):
     def __str__(self):
         return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)
 
-    class Meta(object):
+    class Meta:
         unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination
 
 def on_delete_sound_analysis(sender, instance, **kwargs):

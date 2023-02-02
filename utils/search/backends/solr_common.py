@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -21,17 +19,13 @@
 #
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
-from builtins import map
-from builtins import range
-from builtins import object
 import json
 import urllib.request, urllib.parse, urllib.error
 
 from utils.search import SearchEngineException
 
 
-class SolrQuery(object):
+class SolrQuery:
     """A wrapper around a lot of Solr query funcionality.
     """
 
@@ -286,7 +280,7 @@ class SolrQuery(object):
         return params
 
 
-class SolrResponseInterpreter(object):
+class SolrResponseInterpreter:
     def __init__(self, response, next_page_query=None):
         if "grouped" in response:
             if "thread_title_grouped" in list(response["grouped"].keys()):

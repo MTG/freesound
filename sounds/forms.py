@@ -18,11 +18,9 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 
 import re
 
-from builtins import object
 from captcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
@@ -86,7 +84,7 @@ class SoundDescriptionForm(forms.Form):
             explicit_disable = kwargs.get('explicit_disable')
             del kwargs['explicit_disable']
 
-        super(SoundDescriptionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Disable is_explicit field if is already marked
         self.initial['is_explicit'] = explicit_disable
         self.fields['is_explicit'].disabled = explicit_disable
@@ -97,7 +95,7 @@ class RemixForm(forms.Form):
 
     def __init__(self, sound, *args, **kwargs):
         self.sound = sound
-        super(RemixForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean_sources(self):
         sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
@@ -105,7 +103,7 @@ class RemixForm(forms.Form):
         sources = re.sub("^,+", "", sources)
         sources = re.sub(",+$", "", sources)
         if len(sources) > 0:
-            sources = set([int(source) for source in sources.split(",")])
+            sources = {int(source) for source in sources.split(",")}
         else:
             sources = set()
 
@@ -126,7 +124,7 @@ class PackForm(forms.Form):
                                label="Or fill in the name of a new pack:", required=False, min_length=5)
 
     def __init__(self, pack_choices, *args, **kwargs):
-        super(PackForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
 
 
@@ -142,13 +140,13 @@ class PackEditForm(ModelForm):
         pack_sounds = re.sub("^,+", "", pack_sounds)
         pack_sounds = re.sub(",+$", "", pack_sounds)
         if len(pack_sounds) > 0:
-            pack_sounds = set([int(sound) for sound in pack_sounds.split(",")])
+            pack_sounds = {int(sound) for sound in pack_sounds.split(",")}
         else:
             pack_sounds = set()
         return pack_sounds
 
     def save(self, force_insert=False, force_update=False, commit=True):
-        pack = super(PackEditForm, self).save(commit=False)
+        pack = super().save(commit=False)
         affected_packs = list()
         affected_packs.append(pack)
         new_sounds = self.cleaned_data['pack_sounds']
@@ -171,7 +169,7 @@ class PackEditForm(ModelForm):
             affected_pack.process()
         return pack
 
-    class Meta(object):
+    class Meta:
         model = Pack
         fields = ('name', 'description',)
         widgets = {
@@ -186,7 +184,7 @@ class NewLicenseForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         hide_old_versions = kwargs.pop('hide_old_versions', False)
-        super(NewLicenseForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if hide_old_versions:
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
@@ -240,7 +238,7 @@ class DeleteSoundForm(forms.Form):
         kwargs['initial'] = {
                 'encrypted_link': encrypted_link
                 }
-        super(DeleteSoundForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseForm):
@@ -254,7 +252,7 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
     pack_name = forms.CharField(min_length=5, required=False)
 
     def __init__(self, *args, **kwargs):
-        super(SoundCSVDescriptionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['name'].required = False  # Make sound name not required
 
     def clean(self):
@@ -304,7 +302,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
         explicit_disable = kwargs.pop('explicit_disable', False)
         hide_old_license_versions = kwargs.pop('hide_old_license_versions', False)
         user_packs = kwargs.pop('user_packs', False)
-        super(BWSoundEditAndDescribeForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['is_explicit'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['remove_geotag'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['license'].widget.attrs['class'] = 'bw-radio'
@@ -354,7 +352,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
         sources = re.sub("^,+", "", sources)
         sources = re.sub(",+$", "", sources)
         if len(sources) > 0:
-            sources = set([int(source) for source in sources.split(",")])
+            sources = {int(source) for source in sources.split(",")}
         else:
             sources = set()
         return sources

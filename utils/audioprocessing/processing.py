@@ -20,14 +20,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
 
-from builtins import str
-from builtins import range
-from builtins import object
-from builtins import bytes
 from past.utils import old_div
 import math
 import os
@@ -46,7 +39,7 @@ class AudioProcessingException(Exception):
     pass
 
 
-class TestAudioFile(object):
+class TestAudioFile:
     """A class that mimics pysndfile.PySndfile but generates noise instead of reading
     a wave file. Additionally it can be told to have a "broken" header and thus crashing
     in the middle of the file. Also useful for testing ultra-short files of 20 samples."""
@@ -99,7 +92,7 @@ def get_max_level(filename):
     return max_value
 
 
-class AudioProcessor(object):
+class AudioProcessor:
     """
     The audio processor processes chunks of audio an calculates the spectrac centroid and the peak
     samples in that chunk of audio.
@@ -281,7 +274,7 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     return palette
 
 
-class WaveformImage(object):
+class WaveformImage:
     """
     Given peaks and spectral centroids from the AudioProcessor, this class will construct
     a wavefile image which can be saved as PNG.
@@ -361,7 +354,7 @@ class WaveformImage(object):
         self.image.save(filename)
 
 
-class SpectrogramImage(object):
+class SpectrogramImage:
     """
     Given spectra from the AudioProcessor, this class will construct a wavefile image which
     can be saved as PNG.

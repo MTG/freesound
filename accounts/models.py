@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,9 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import division
-from builtins import str
-from builtins import object
 from past.utils import old_div
 import datetime
 import os
@@ -87,7 +82,7 @@ class DeletedUser(models.Model):
     reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)
 
     def __str__(self):
-        return 'Deleted user object for: {0}'.format(self.username)
+        return 'Deleted user object for: {}'.format(self.username)
 
 
 class ProfileManager(models.Manager):
@@ -615,9 +610,9 @@ class UserFlag(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return u"Flag %s: %s" % (self.content_type, self.object_id)
+        return "Flag %s: %s" % (self.content_type, self.object_id)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-user__username",)
 
 
@@ -707,7 +702,7 @@ class OldUsername(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return '{0} > {1}'.format(self.username, self.user.username)
+        return '{} > {}'.format(self.username, self.user.username)
 
 
 class EmailBounce(models.Model):
@@ -728,7 +723,7 @@ class EmailBounce(models.Model):
 
     timestamp = models.DateTimeField(default=now)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-timestamp",)
         unique_together = ('user', 'type', 'timestamp')
 
@@ -810,7 +805,7 @@ def update_status_history(sender, instance, **kwargs):
         should_update_status_history = True
 
     if should_update_status_history:
-        instance.status_history += ['{0}: {1} ({2})'.format(pytz.utc.localize(datetime.datetime.utcnow()),
+        instance.status_history += ['{}: {} ({})'.format(pytz.utc.localize(datetime.datetime.utcnow()),
                                                             instance.get_status_display(),
                                                             instance.status)]
 

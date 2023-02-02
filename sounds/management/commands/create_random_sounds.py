@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import range
 import datetime
 
 from django.conf import settings

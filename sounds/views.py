@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,8 +18,6 @@ from __future__ import division
 #     See AUTHORS file.
 #
 
-from builtins import map
-from builtins import str
 from past.utils import old_div
 import datetime
 import json
@@ -205,7 +202,7 @@ def front_page(request):
     top_donor_user_id = cache.get("top_donor_user_id", None)
     top_donor_donation_amount = cache.get("top_donor_donation_amount", None)
     if popular_searches is not None:
-        popular_searches = [(query_terms, '{0}?q={1}'.format(reverse('sounds-search'), query_terms))
+        popular_searches = [(query_terms, '{}?q={}'.format(reverse('sounds-search'), query_terms))
                             for query_terms in popular_searches]
 
     current_forum_threads = get_hot_threads(n=10)
@@ -627,11 +624,11 @@ def edit_and_describe_sounds_helper(request):
                 sounds_to_process.append(sound)
                 if user.profile.is_whitelisted:
                     messages.add_message(request, messages.INFO,
-                        u'File <a href="{}">{}</a> has been described and has been added to freesound.'\
+                        'File <a href="{}">{}</a> has been described and has been added to freesound.'\
                             .format(sound.get_absolute_url(), sound.original_filename))
                 else:
                     messages.add_message(request, messages.INFO,
-                        u'File <a href="{}">{}</a> has been described and is now awaiting processing and moderation.'\
+                        'File <a href="{}">{}</a> has been described and is now awaiting processing and moderation.'\
                             .format(sound.get_absolute_url(), sound.original_filename))
                     invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
@@ -1039,7 +1036,7 @@ def pack(request, username, pack_id):
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect('{}?f=username:%22{}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
 
     user = request.parameter_user
     order = request.GET.get("order", "name")
@@ -1057,7 +1054,7 @@ def packs_for_user(request, username):
 @redirect_if_old_username_or_404
 def for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect('{}?f=username:%22{}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
 
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)

@@ -1,4 +1,3 @@
-from builtins import range
 import datetime
 from unittest import mock
 import base64
@@ -26,7 +25,7 @@ class DonationTest(TestCase):
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
-        custom = base64.b64encode(json.dumps({u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}).encode()).decode()
+        custom = base64.b64encode(json.dumps({'display_amount': True, 'user_id': 46280, 'campaign_id': 1, 'name': 'test'}).encode()).decode()
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
                 'custom': custom,
@@ -52,7 +51,7 @@ class DonationTest(TestCase):
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
-        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}).encode()).decode()
+        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'user_id': 46280, 'display_amount': True}).encode()).decode()
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
                 'custom': custom,
@@ -77,7 +76,7 @@ class DonationTest(TestCase):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
 
-        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}).encode()).decode()
+        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'name': 'Anonymous', 'display_amount': True}).encode()).decode()
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
                 'custom': custom,
@@ -101,7 +100,7 @@ class DonationTest(TestCase):
         self.user = User.objects.create_user(
             username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.force_login(self.user)
-        custom = base64.b64encode(json.dumps({u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}).encode()).decode()
+        custom = base64.b64encode(json.dumps({'display_amount': True, 'user_id': 46280, 'campaign_id': 1, 'name': 'test'}).encode()).decode()
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
@@ -131,7 +130,7 @@ class DonationTest(TestCase):
         self.user = User.objects.create_user(
             username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.force_login(self.user)
-        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}).encode()).decode()
+        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'user_id': 46280, 'display_amount': True}).encode()).decode()
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
@@ -158,7 +157,7 @@ class DonationTest(TestCase):
     def test_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}).encode()).decode()
+        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'name': 'Anonymous', 'display_amount': True}).encode()).decode()
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -22,7 +20,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import object
 import logging
 
 from collections import Counter
@@ -149,7 +146,7 @@ class Thread(models.Model):
         }
         return info_to_return
 
-    class Meta(object):
+    class Meta:
         ordering = ('-status', '-last_post__created')
 
     def __str__(self):
@@ -222,14 +219,14 @@ class Post(models.Model):
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 
-    class Meta(object):
+    class Meta:
         ordering = ('created',)
         permissions = (
             ("can_moderate_forum", "Can moderate posts."),
         )
 
     def __str__(self):
-        return u"Post by %s in %s" % (self.author, self.thread)
+        return "Post by %s in %s" % (self.author, self.thread)
 
     def get_absolute_url(self):
         return reverse("forums-post", args=[smart_text(self.thread.forum.name_slug), self.thread.id, self.id])
@@ -348,8 +345,8 @@ class Subscription(models.Model):
     thread = models.ForeignKey(Thread)
     is_active = models.BooleanField(db_index=True, default=True)
 
-    class Meta(object):
+    class Meta:
         unique_together = ("subscriber", "thread")
 
     def __str__(self):
-        return u"%s subscribed to %s" % (self.subscriber, self.thread)
+        return "%s subscribed to %s" % (self.subscriber, self.thread)

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import os
 import re
@@ -113,13 +111,13 @@ ADMIN_REORDER = (
         'oauth2_provider.RefreshToken',
         'oauth2_provider.Grant',
     )},
-    str('forum'),  # str() should be replaced when moving to Py3
+    'forum',
     {'app': 'donations', 'models': (
         'donations.Donation',
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-    str('sites'),  # str() should be replaced when moving to Py3
+    'sites',
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -273,23 +271,23 @@ AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period
 ALLOWED_EMAILS = []
 
 # Email subjects
-EMAIL_SUBJECT_PREFIX = u'[freesound]'
-EMAIL_SUBJECT_ACTIVATION_LINK = u'Your activation link'
-EMAIL_SUBJECT_USERNAME_REMINDER = u'Username reminder'
-EMAIL_SUBJECT_EMAIL_CHANGED = u'Email address changed'
-EMAIL_SUBJECT_USER_SPAM_REPORT = u'Spam/offensive report for user'
-EMAIL_SUBJECT_DONATION_THANK_YOU = u'Thanks for your donation!'
-EMAIL_SUBJECT_DONATION_REMINDER = u'Thanks for contributing to Freesound'
-EMAIL_SUBJECT_DONATION_REQUEST = u'Have you considered making a donation?'
-EMAIL_SUBJECT_STREAM_EMAILS = u'New sounds from users and tags you are following'
-EMAIL_SUBJECT_TOPIC_REPLY = u'Topic reply notification'
-EMAIL_SUBJECT_PRIVATE_MESSAGE = u'You have a private message'
-EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = u'Sound added as remix source'
-EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = u'One of your sounds has been chosen as random sound of the day!'
-EMAIL_SUBJECT_NEW_COMMENT = u'You have a new comment'
-EMAIL_SUBJECT_SOUND_FLAG = u'Sound flag'
-EMAIL_SUBJECT_SUPPORT_EMAIL = u'[support]'
-EMAIL_SUBJECT_MODERATION_HANDLED = u'A Freesound moderator handled your upload'
+EMAIL_SUBJECT_PREFIX = '[freesound]'
+EMAIL_SUBJECT_ACTIVATION_LINK = 'Your activation link'
+EMAIL_SUBJECT_USERNAME_REMINDER = 'Username reminder'
+EMAIL_SUBJECT_EMAIL_CHANGED = 'Email address changed'
+EMAIL_SUBJECT_USER_SPAM_REPORT = 'Spam/offensive report for user'
+EMAIL_SUBJECT_DONATION_THANK_YOU = 'Thanks for your donation!'
+EMAIL_SUBJECT_DONATION_REMINDER = 'Thanks for contributing to Freesound'
+EMAIL_SUBJECT_DONATION_REQUEST = 'Have you considered making a donation?'
+EMAIL_SUBJECT_STREAM_EMAILS = 'New sounds from users and tags you are following'
+EMAIL_SUBJECT_TOPIC_REPLY = 'Topic reply notification'
+EMAIL_SUBJECT_PRIVATE_MESSAGE = 'You have a private message'
+EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = 'Sound added as remix source'
+EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = 'One of your sounds has been chosen as random sound of the day!'
+EMAIL_SUBJECT_NEW_COMMENT = 'You have a new comment'
+EMAIL_SUBJECT_SOUND_FLAG = 'Sound flag'
+EMAIL_SUBJECT_SUPPORT_EMAIL = '[support]'
+EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 
 # -------------------------------------------------------------------------------
 # Media paths, URLS and static settings

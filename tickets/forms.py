@@ -38,7 +38,7 @@ class UserContactForm(UserMessageForm):
     title = HtmlCleaningCharField()
 
     def __init__(self, *args, **kwargs):
-        super(UserContactForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields.keyOrder = ['title', 'message']
 
 
@@ -52,7 +52,7 @@ class AnonymousContactForm(AnonymousMessageForm):
     email = forms.EmailField()
 
     def __init__(self, *args, **kwargs):
-        super(AnonymousContactForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields.keyOrder = ['email', 'title', 'message']
 
 

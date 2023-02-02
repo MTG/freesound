@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_text
@@ -30,7 +27,7 @@ class MessageBody(models.Model):
     body = models.TextField()
 
     def __str__(self):
-        return self.body[0:30] + u"[...]"
+        return self.body[0:30] + "[...]"
 
 
 class Message(models.Model):
@@ -102,7 +99,7 @@ class Message(models.Model):
         return "message", (smart_text(self.id),)
 
     def __str__(self):
-        return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
+        return "from: [%s] to: [%s]" % (self.user_from, self.user_to)
     
-    class Meta(object):
+    class Meta:
         ordering = ('-created',)

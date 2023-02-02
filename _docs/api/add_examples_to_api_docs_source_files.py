@@ -1,4 +1,3 @@
-from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 import sys
@@ -28,7 +27,7 @@ def get_formatted_examples_for_view(view_name):
     return output
 
 
-with open('source/resources.rst', 'r') as f:
+with open('source/resources.rst') as f:
     newlines = []
     for line in f.readlines():
         if '{{examples_' in line:

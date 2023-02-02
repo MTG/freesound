@@ -18,12 +18,8 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
-from __future__ import division
 
-from builtins import str
 from past.utils import old_div
-from builtins import object
 import json
 import os
 import signal
@@ -90,7 +86,7 @@ def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
                               "aborting task as there might not be enough space for temp files")
 
 
-class FreesoundAudioProcessorBase(object):
+class FreesoundAudioProcessorBase:
     """
     Base class to be used for Freesound processing and analysis code.
     It implements methods common to both use cases.
@@ -185,7 +181,7 @@ class FreesoundAudioProcessorBase(object):
 class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
     def set_failure(self, message, error=None):
-        super(FreesoundAudioProcessor, self).set_failure(message, error)
+        super().set_failure(message, error)
         self.sound.set_processing_ongoing_state("FI")
         self.sound.change_processing_state("FA", processing_log=self.work_log)
 

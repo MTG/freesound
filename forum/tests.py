@@ -19,8 +19,6 @@
 #
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
-from builtins import range
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core import mail
@@ -343,7 +341,7 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user is redirected to login page
         resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
-            u'body': [u'New thread body (first post)'], u'subscribe': [u'on'], u'title': [u'New thread title']
+            'body': ['New thread body (first post)'], 'subscribe': ['on'], 'title': ['New thread title']
         })
         self.assertRedirects(resp, '%s?next=%s' % (
             reverse('login'), reverse('forums-new-thread', args=[forum.name_slug])))
@@ -351,9 +349,9 @@ class ForumPageResponses(TestCase):
         # Assert logged in user can create new thread
         self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
-            u'body': [u'New thread body (first post)'], u'subscribe': [u'on'], u'title': [u'New thread title']
+            'body': ['New thread body (first post)'], 'subscribe': ['on'], 'title': ['New thread title']
         })
-        post = Post.objects.get(body=u'New thread body (first post)')
+        post = Post.objects.get(body='New thread body (first post)')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
     @override_settings(LAST_FORUM_POST_MINIMUM_TIME=0)
@@ -364,7 +362,7 @@ class ForumPageResponses(TestCase):
         long_title = 255 * '1'
         self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
-            u'body': [u'New thread body (first post)'], u'subscribe': [u'on'], u'title': [long_title]
+            'body': ['New thread body (first post)'], 'subscribe': ['on'], 'title': [long_title]
         })
         self.assertNotEqual(resp.context['form'].errors, None)
 
@@ -390,7 +388,7 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user is redirected to login page
         resp = self.client.post(reverse('forums-reply', args=[forum.name_slug, thread.id]), data={
-            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+            'body': ['Reply post body'], 'subscribe': ['on'],
         })
         self.assertRedirects(resp, '%s?next=%s' % (
             reverse('login'), reverse('forums-reply', args=[forum.name_slug, thread.id])))
@@ -398,9 +396,9 @@ class ForumPageResponses(TestCase):
         # Assert logged in user can reply
         self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-reply', args=[forum.name_slug, thread.id]), data={
-            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+            'body': ['Reply post body'], 'subscribe': ['on'],
         })
-        post = Post.objects.get(body=u'Reply post body')
+        post = Post.objects.get(body='Reply post body')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
     @override_settings(LAST_FORUM_POST_MINIMUM_TIME=0)
@@ -411,7 +409,7 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user is redirected to login page
         resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+            'body': ['Reply post body'], 'subscribe': ['on'],
         })
         self.assertRedirects(resp, '%s?next=%s' % (
             reverse('login'), reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id])))
@@ -419,9 +417,9 @@ class ForumPageResponses(TestCase):
         # Assert logged in user can reply
         self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+            'body': ['Reply post body'], 'subscribe': ['on'],
         })
-        post = Post.objects.get(body=u'Reply post body')
+        post = Post.objects.get(body='Reply post body')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
     def test_edit_post_response_ok(self):
@@ -431,7 +429,7 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user can't edit post
         resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
-            u'body': [u'Edited post body']
+            'body': ['Edited post body']
         })
         self.assertRedirects(resp, '%s?next=%s' % (reverse('login'), reverse('forums-post-edit', args=[post.id])))
 
@@ -439,18 +437,18 @@ class ForumPageResponses(TestCase):
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
         self.client.force_login(user2)
         resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
-            u'body': [u'Edited post body']
+            'body': ['Edited post body']
         })
         self.assertEqual(resp.status_code, 404)
 
         # Assert logged in user can edit post
         self.client.force_login(self.user)
         resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
-            u'body': [u'Edited post body']
+            'body': ['Edited post body']
         })
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
         edited_post = Post.objects.get(id=post.id)
-        self.assertEqual(edited_post.body, u'Edited post body')
+        self.assertEqual(edited_post.body, 'Edited post body')
 
     def test_delete_post_response_ok(self):
         forum = Forum.objects.first()
@@ -572,9 +570,9 @@ class ForumPageResponses(TestCase):
         self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 1)
 
         resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+            'body': ['Reply post body'], 'subscribe': ['on'],
         })
-        post = Post.objects.get(body=u'Reply post body')
+        post = Post.objects.get(body='Reply post body')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
         # Both users are subscribed but the email is not sent to the user that is sending the post
@@ -601,7 +599,7 @@ class ForumPageResponses(TestCase):
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
         self.client.force_login(user2)
         self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            u'body': [u'Reply post body'], u'subscribe': [u'on'],
+            'body': ['Reply post body'], 'subscribe': ['on'],
         })
 
         # No emails sent
@@ -627,7 +625,7 @@ class ForumModerationTestCase(TestCase):
         """If the user doesn't have forum.can_moderate_forum permission, they're redirected to login screen"""
         self.client.force_login(self.regular_user)
         resp = self.client.post(reverse('forums-moderate'), data={
-            u'action': [u'Delete'], u'post': [u'1'],
+            'action': ['Delete'], 'post': ['1'],
         })
         self.assertEqual(resp.status_code, 302)
 
@@ -636,7 +634,7 @@ class ForumModerationTestCase(TestCase):
 
         self.client.force_login(self.admin_user)
         resp = self.client.post(reverse('forums-moderate'), data={
-            u'action': [u'Approve'], u'post': [str(self.post.id)],
+            'action': ['Approve'], 'post': [str(self.post.id)],
         })
         self.assertEqual(resp.status_code, 200)
         self.post.refresh_from_db()
@@ -647,7 +645,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            u'action': [u'Delete User'], u'post': [str(self.post.id)],
+            'action': ['Delete User'], 'post': [str(self.post.id)],
         })
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
@@ -662,7 +660,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            u'action': [u'Delete Post'], u'post': [str(self.post.id)],
+            'action': ['Delete Post'], 'post': [str(self.post.id)],
         })
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
@@ -677,7 +675,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            u'action': [u'Delete Post'], u'post': [str(self.post.id+1)],
+            'action': ['Delete Post'], 'post': [str(self.post.id+1)],
         })
         self.assertEqual(resp.status_code, 200)
 

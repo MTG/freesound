@@ -1,4 +1,3 @@
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,10 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import map
-from builtins import str
-from builtins import zip
-from builtins import range
 import datetime
 import json
 import logging
@@ -160,7 +155,7 @@ def search_view_helper(request, tags_mode=False):
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
-        search_logger.info(u'Search (%s)' % json.dumps({
+        search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),
             'query': query_params['textual_query'],
             'filter': query_params['query_filter'],
@@ -488,5 +483,5 @@ def query_suggestions(request):
             'rain',
             'swoosh'
         ]):
-            suggestions.append({'id': count, 'label': '<p>{0}</p>'.format(suggestion), 'value': suggestion})
+            suggestions.append({'id': count, 'label': '<p>{}</p>'.format(suggestion), 'value': suggestion})
     return JsonResponse({'suggestions': suggestions})

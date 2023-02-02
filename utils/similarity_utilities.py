@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import logging
 import traceback
 

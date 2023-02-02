@@ -1,4 +1,3 @@
-from builtins import str
 from django.conf import settings
 import os
 import shutil
@@ -29,7 +28,7 @@ def copy_files(source_destination_tuples):
                 shutil.copy2(source_path, destination_path)
                 if settings.LOG_START_AND_END_COPYING_FILES:
                     web_logger.info('Finished copying file %s to %s' % (source_path, destination_path))
-            except IOError as e:
+            except OSError as e:
                 # File does not exist, no permissions, etc.
                 web_logger.error('Failed copying %s (%s)' % (source_path, str(e)))
 

@@ -51,5 +51,5 @@ class SoundSearchForm(forms.Form):
         return settings.SEARCH_SOUNDS_SORT_DEFAULT
         
     def __init__(self, sort_options, *args, **kargs):
-        super(SoundSearchForm, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         self.sort_options = sort_options

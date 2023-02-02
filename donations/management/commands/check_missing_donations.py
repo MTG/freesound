@@ -20,7 +20,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import range
 import datetime
 import logging
 import requests
@@ -76,7 +75,7 @@ class Command(LoggingBaseCommand):
                 # TODO: explore the other types of entries like "transfer"
                 max_range = len([key for key in raw_rsp.keys() if key.startswith("L_TYPE")])
                 for i in range(max_range):
-                    if raw_rsp['L_TYPE%d' % i][0] in [u'Donation', u'Payment']:
+                    if raw_rsp['L_TYPE%d' % i][0] in ['Donation', 'Payment']:
                         amount = raw_rsp['L_AMT%d' % i][0]
                         if float(amount) < 0:
                             continue  # Don't create objects for donations with negative amounts

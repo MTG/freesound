@@ -48,7 +48,7 @@ url_regex = re.compile(r"(https?://\S+)", re.IGNORECASE)
 
 
 def nofollow(attrs, new=False):
-    attrs[(None, u'rel')] = u'nofollow'
+    attrs[(None, 'rel')] = 'nofollow'
     return attrs
 
 
@@ -79,13 +79,13 @@ class EmptyLinkFilter(Filter):
 def clean_html(input):
     # Replace html tags from user input, see utils.test for examples
 
-    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"ul", u"li", u"p", u"br",  u"blockquote", u"code"]
-    ok_attributes = {u"a": [u"href", u"rel"], u"img": [u"src", u"alt", u"title"]}
+    ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br",  "blockquote", "code"]
+    ok_attributes = {"a": ["href", "rel"], "img": ["src", "alt", "title"]}
     # all other tags: replace with the content of the tag
 
     # If input contains link in the format: <http://> then convert it to < http:// >
     # This is because otherwise the library recognizes it as a tag and breaks the link.
-    input = re.sub("\<(http\S+?)\>", r'< \1 >', input)
+    input = re.sub(r"\<(http\S+?)\>", r'< \1 >', input)
 
     cleaner = bleach.Cleaner(
             filters=[

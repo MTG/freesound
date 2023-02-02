@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound API documentation build configuration file, created by
 # sphinx-quickstart on Mon Sep  6 11:41:46 2010.
@@ -37,8 +36,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Freesound API'
-copyright = u'2014, Universitat Pompeu Fabra'
+project = 'Freesound API'
+copyright = '2014, Universitat Pompeu Fabra'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -172,8 +171,8 @@ htmlhelp_basename = 'FreesoundAPIdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'FreesoundAPI.tex', u'Freesound API Documentation',
-   u'Vincent Akkermans, Bram de Jong', 'manual'),
+  ('index', 'FreesoundAPI.tex', 'Freesound API Documentation',
+   'Vincent Akkermans, Bram de Jong', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

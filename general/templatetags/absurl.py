@@ -29,7 +29,7 @@ register = Library()
 
 class AbsoluteURLNode(URLNode):
     def render(self, context):
-        path = super(AbsoluteURLNode, self).render(context)
+        path = super().render(context)
         domain = "https://%s" % Site.objects.get_current().domain
         return urllib.parse.urljoin(domain, path)
 

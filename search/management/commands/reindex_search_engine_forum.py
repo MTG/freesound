@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import range
 import logging
 
 from django.core.management.base import BaseCommand

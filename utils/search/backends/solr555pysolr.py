@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import json
 import random
 import re
@@ -159,7 +156,7 @@ def convert_sound_to_search_engine_document(sound):
                         value = ['{}'.format(item) for item in value]
                     suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
                     if suffix:
-                        document['{0}{1}'.format(key, suffix)] = value
+                        document['{}{}'.format(key, suffix)] = value
     return document
 
 
@@ -215,7 +212,7 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
                 query_filter = query_filter.replace(
-                    '{0}:'.format(db_descriptor_key),'{0}{1}:'.format(
+                    '{}:'.format(db_descriptor_key),'{}{}:'.format(
                         db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
     return query_filter
 
@@ -288,7 +285,7 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
     if 'geotag:"Intersects(' in query_filter:
         # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
         #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-        query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+        query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
     query_filter = search_filter_make_intersection(query_filter)
 

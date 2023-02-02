@@ -30,7 +30,7 @@ def smiley_replace(matchobj):
     except KeyError:
         return matchobj.group(0)
 
-smiley_replacer = re.compile("=\)|;\-?\)|8\-?\)|:'\(|:\-?[OoPpSsDd\)\(\|]")
+smiley_replacer = re.compile(r"=\)|;\-?\)|8\-?\)|:'\(|:\-?[OoPpSsDd\)\(\|]")
 
 @register.filter(is_safe=True)
 def smileys(string):

@@ -20,8 +20,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
-from builtins import range
 import io
 import csv
 import datetime
@@ -952,8 +950,8 @@ def download_attribution(request):
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
         output = io.StringIO()
         if download == 'csv':
-            output.write(u'Download Type,File Name,User,License\r\n')
-            csv_writer = csv.writer(output, delimiter=u',', quotechar=u'"', quoting=csv.QUOTE_MINIMAL)
+            output.write('Download Type,File Name,User,License\r\n')
+            csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
                 csv_writer.writerow(
                     [row['download_type'][0].upper(), row['sound__original_filename'],
@@ -962,7 +960,7 @@ def download_attribution(request):
                                           row['license__deed_url'] or row['sound__license__deed_url'])])
         elif download == 'txt':
             for row in qs:
-                output.write(u"{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
+                output.write("{}: {} by {} | License: {}\n".format(row['download_type'][0].upper(),
                              row['sound__original_filename'], row['sound__user__username'],
                              license_with_version(row['license__name'] or row['sound__license__name'],
                                                   row['license__deed_url'] or row['sound__license__deed_url'])))
@@ -1413,7 +1411,7 @@ def delete(request):
             delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
                 else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(request.user.id, delete_action))
+            web_logger.info('Requested async deletion of user {} - {}'.format(request.user.id, delete_action))
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -1563,8 +1561,8 @@ def problems_logging_in(request):
         if form.is_valid():
             username_or_email = form.cleaned_data['username_or_email']
             try:
-                user = User.objects.get((Q(email__iexact=username_or_email)\
-                         | Q(username__iexact=username_or_email)))
+                user = User.objects.get(Q(email__iexact=username_or_email)\
+                         | Q(username__iexact=username_or_email))
                 if not user.is_active:
                     # If user is not activated, send instructions to re-activate the user
                     send_activation(user)

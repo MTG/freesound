@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -21,11 +19,8 @@
 #
 
 
-from __future__ import absolute_import
-from __future__ import division
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
 from past.utils import old_div
 import datetime
 import json
@@ -407,7 +402,7 @@ class SoundInstance(RetrieveAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
-        return super(SoundInstance, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
 
 class SoundAnalysisView(GenericAPIView):  # Needs to be named SoundAnalysisView so it does not overlap with SoundAnalysis
@@ -516,7 +511,7 @@ class SoundComments(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i comments' % (int(self.kwargs['pk']))))
-        return super(SoundComments, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return Comment.objects.filter(sound_id=self.kwargs['pk'])
@@ -589,7 +584,7 @@ class UserInstance(RetrieveAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('user:%s instance' % (self.kwargs['username'])))
-        return super(UserInstance, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
 
 class UserSounds(ListAPIView):
@@ -605,7 +600,7 @@ class UserSounds(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('user:%s sounds' % (self.kwargs['username'])))
-        return super(UserSounds, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         try:
@@ -632,7 +627,7 @@ class UserPacks(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('user:%s packs' % (self.kwargs['username'])))
-        return super(UserPacks, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         try:
@@ -657,7 +652,7 @@ class UserBookmarkCategories(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('user:%s bookmark_categories' % (self.kwargs['username'])))
-        return super(UserBookmarkCategories, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         categories = BookmarkCategory.objects.filter(user__username=self.kwargs['username'])
@@ -688,7 +683,7 @@ class UserBookmarkCategorySounds(ListAPIView):
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
                                      % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
-        return super(UserBookmarkCategorySounds, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
 
@@ -728,7 +723,7 @@ class PackInstance(RetrieveAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('pack:%i instance' % (int(kwargs['pk']))))
-        return super(PackInstance, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
 
 class PackSounds(ListAPIView):
@@ -743,7 +738,7 @@ class PackSounds(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('pack:%i sounds' % (int(kwargs['pk']))))
-        return super(PackSounds, self).get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         try:
@@ -1312,7 +1307,7 @@ class FreesoundApiV2Resources(GenericAPIView):
             ]
 
         # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested
-        if request.accepted_renderer.format in [u'yaml']:
+        if request.accepted_renderer.format in ['yaml']:
             for element in api_index:
                 for key, ordered_dict in element.items():
                     element[key] = dict(ordered_dict)
@@ -1322,7 +1317,7 @@ class FreesoundApiV2Resources(GenericAPIView):
             # Remove white spaces, parenthesis, and add underscore in the beggining
             return '_' + key.replace(' ', '_').replace('(', '').replace(')', '')
 
-        if request.accepted_renderer.format == u'xml':
+        if request.accepted_renderer.format == 'xml':
             aux_api_index = list()
             for element in api_index:
                 aux_dict_a = dict()

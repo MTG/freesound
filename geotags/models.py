@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -43,7 +41,7 @@ class GeoTag(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return u"%s (%f,%f)" % (self.user, self.lat, self.lon)
+        return "%s (%f,%f)" % (self.user, self.lat, self.lon)
 
     def get_absolute_url(self):
         return reverse('geotag', args=[smart_text(self.id)])

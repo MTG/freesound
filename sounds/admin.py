@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -57,16 +55,16 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     change_actions = ('reprocess_sound', )
 
     def get_processing_state(self, obj):
-        processing_state = u'{}'.format(obj.get_processing_state_display())
+        processing_state = '{}'.format(obj.get_processing_state_display())
         ongoing_state_display = obj.get_processing_ongoing_state_display()
         if ongoing_state_display == 'Processing' or ongoing_state_display == 'Queued':
-            processing_state += u' ({})'.format(ongoing_state_display)
+            processing_state += ' ({})'.format(ongoing_state_display)
         return processing_state
     get_processing_state.short_description = 'Processing state'
 
     def get_sound_name(self, obj):
         max_len = 15
-        return u'{0}{1}'.format(obj.original_filename[:max_len], '...' if len(obj.original_filename) > max_len else '')
+        return '{}{}'.format(obj.original_filename[:max_len], '...' if len(obj.original_filename) > max_len else '')
     get_sound_name.short_description = 'Name'
 
     def reprocess_sound(self, request, queryset_or_object):
@@ -95,16 +93,16 @@ class DeletedSoundAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         # Override 'get_queryset' to optimize query by using select_related on appropriate fields
-        qs = super(DeletedSoundAdmin, self).get_queryset(request)
+        qs = super().get_queryset(request)
         qs = qs.select_related('user')
         return qs
 
     def user_link(self, obj):
         if obj.user is None:
             return '-'
-        return '<a href="{0}" target="_blank">{1}</a>'.format(
+        return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:auth_user_change', args=[obj.user.id]),
-            '{0}'.format(obj.user.username))
+            '{}'.format(obj.user.username))
 
     user_link.allow_tags = True
     user_link.admin_order_field = 'user'
@@ -127,12 +125,12 @@ class FlagAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         # overrride 'get_queryset' to optimize query by using select_related on 'sound' and 'reporting_user'
-        qs = super(FlagAdmin, self).get_queryset(request)
+        qs = super().get_queryset(request)
         qs = qs.select_related('sound', 'reporting_user')
         return qs
 
     def reporting_user_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(
+        return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('account', args=[obj.reporting_user.username]), obj.reporting_user.username) \
             if obj.reporting_user else '-'
     reporting_user_link.allow_tags = True
@@ -140,21 +138,21 @@ class FlagAdmin(admin.ModelAdmin):
     reporting_user_link.short_description = 'Reporting User'
 
     def email_link(self, obj):
-        return '<a href="mailto:{0}" target="_blank">{1}</a>'.format(obj.email, obj.email) \
+        return '<a href="mailto:{}" target="_blank">{}</a>'.format(obj.email, obj.email) \
             if obj.email else '-'
     email_link.allow_tags = True
     email_link.admin_order_field = 'email'
     email_link.short_description = 'Email'
 
     def sound_uploader_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('account', args=[obj.sound.user.username]),
+        return '<a href="{}" target="_blank">{}</a>'.format(reverse('account', args=[obj.sound.user.username]),
                                                               obj.sound.user.username)
     sound_uploader_link.allow_tags = True
     sound_uploader_link.admin_order_field = 'sound__user__username'
     sound_uploader_link.short_description = 'Uploader'
 
     def sound_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
+        return '<a href="{}" target="_blank">{}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
                                                               truncatechars(obj.sound.base_filename_slug, 50))
     sound_link.allow_tags = True
     sound_link.admin_order_field = 'sound__original_filename'
@@ -179,7 +177,7 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
     ordering = ('-date_display', )
 
     def get_urls(self):
-        urls = super(SoundOfTheDayAdmin, self).get_urls()
+        urls = super().get_urls()
         my_urls = [
             url('generate_new_sounds/', self.generate_new_sounds),
             url('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),

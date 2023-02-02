@@ -100,9 +100,9 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "PE")
         if create_sound_file:
             create_test_files(paths=[u'{}'.format(self.sound.locations('path'))], make_valid_wav_files=True, duration=2)
-
+    
     def setUp(self):
-        user, _, sounds = create_user_and_sounds(num_sounds=1, type="mp3")  # Use mp3 so it needs converstion to PCM
+        user, _, sounds = create_user_and_sounds(num_sounds=1, type="wav")
         self.sound = sounds[0]
         self.user = user
 
@@ -144,8 +144,6 @@ class AudioProcessingTestCase(TestCase):
     @override_processing_tmp_path_with_temp_directory
     @override_sounds_path_with_temp_directory
     def test_no_need_to_convert_to_pcm(self):
-        self.sound.type = 'wav'
-        self.sound.save()
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         self.sound.refresh_from_db()
@@ -177,7 +175,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.channels, 1)
         self.assertEqual(self.sound.samplerate, 44100)
         self.assertEqual(self.sound.bitrate, 0)
-        self.assertEqual(self.sound.bitdepth, 0)
+        self.assertEqual(self.sound.bitdepth, 16)
 
     @mock.patch('utils.audioprocessing.processing.convert_to_mp3', side_effect=convert_to_mp3_mock_fail)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
@@ -292,7 +290,7 @@ class AudioProcessingBeforeDescriptionTestCase(TestCase):
     fixtures = ['licenses']
 
     def setUp(self):
-        user, _, sounds = create_user_and_sounds(num_sounds=1, type="mp3")  # Use mp3 so it needs converstion to PCM
+        user, _, sounds = create_user_and_sounds(num_sounds=1, type="wav")
         self.sound = sounds[0]
         self.user = user
 

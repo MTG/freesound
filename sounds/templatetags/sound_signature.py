@@ -1,5 +1,3 @@
-from future import standard_library
-standard_library.install_aliases()
 import urllib.parse
 from django.urls import reverse
 from django.contrib.sites.models import Site

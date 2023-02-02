@@ -19,9 +19,6 @@
 #
 
 
-from future import standard_library
-
-standard_library.install_aliases()
 import django.forms as forms
 from django.conf import settings
 from urllib.parse import quote, unquote

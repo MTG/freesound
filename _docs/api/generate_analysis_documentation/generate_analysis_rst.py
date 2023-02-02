@@ -2,8 +2,6 @@
 # add essentia documentation links by hand
 
 
-from future import standard_library
-standard_library.install_aliases()
 import urllib.request, urllib.error, urllib.parse,json
 
 

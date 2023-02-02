@@ -34,8 +34,6 @@
 #   # if you want to get all info:
 #   paypal.get_transaction_details(response['transactionid'])
 
-from future import standard_library
-standard_library.install_aliases()
 import urllib.request, urllib.parse, urllib.error, cgi
 
 class Paypal:

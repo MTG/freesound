@@ -1,5 +1,3 @@
-from future import standard_library
-standard_library.install_aliases()
 import sys
 import urllib.request, urllib.parse, urllib.error
 sys.path.append("../../apiv2")

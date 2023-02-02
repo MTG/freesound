@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
 import urllib.parse
 from django.template import Library
 from django.template.defaulttags import URLNode, url

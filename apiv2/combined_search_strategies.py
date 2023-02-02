@@ -17,8 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from future import standard_library
-standard_library.install_aliases()
 from past.utils import old_div
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search

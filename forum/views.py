@@ -19,8 +19,6 @@
 #
 
 
-from future import standard_library
-standard_library.install_aliases()
 from past.utils import old_div
 import datetime
 import re

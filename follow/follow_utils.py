@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
 from follow.models import FollowingUserItem, FollowingQueryItem
 import sounds
 from utils.search import get_search_engine
@@ -149,4 +147,3 @@ def build_time_lapse(date_from, date_to):
     date_to = date_to.strftime("%Y-%m-%d")
     time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
     return time_lapse
-

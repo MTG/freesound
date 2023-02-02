@@ -34,6 +34,6 @@ def admin_move_ordered_model(request, direction, model_type_id, model_id):
     app_label = ModelClass._meta.app_label
     model_name = ModelClass.__name__.lower()
 
-    url = "/admin/%s/%s/" % (app_label, model_name)
+    url = "/admin/{}/{}/".format(app_label, model_name)
     
     return HttpResponseRedirect(url)

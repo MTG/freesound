@@ -575,7 +575,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
         query.set_query('*:*')
-        filter_query = 'username:"%s" AND pack:"%s"' % (username, pack_name)
+        filter_query = 'username:"{}" AND pack:"{}"'.format(username, pack_name)
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)

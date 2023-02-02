@@ -186,7 +186,7 @@ def create_sound(user,
             _remove_user_uploads_folder_if_empty(sound.user)
 
         except OSError as e:
-            raise CantMoveException("Failed to move file from %s to %s" % (sound.original_path, new_original_path))
+            raise CantMoveException("Failed to move file from {} to {}".format(sound.original_path, new_original_path))
         sound.original_path = new_original_path
         sound.save()
 
@@ -522,7 +522,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             console_logger.info('Skipping the following %i lines due to invalid data' % len(lines_with_errors))
         for line in lines_with_errors:
             errors = '; '.join(line['line_errors'].values())
-            console_logger.info('l%s: %s' % (line['line_no'], errors))
+            console_logger.info('l{}: {}'.format(line['line_no'], errors))
         if not force_import:
             return
 

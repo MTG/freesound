@@ -26,7 +26,7 @@ emoticons = dict(d)
 def smiley_replace(matchobj):
     try:
         expression = emoticons[matchobj.group(0).lower()]
-        return "<img src=\"%simages/smileys/%s.png\" alt=\"%s\" class=\"smiley\" />" % (settings.MEDIA_URL, expression, expression)
+        return "<img src=\"{}images/smileys/{}.png\" alt=\"{}\" class=\"smiley\" />".format(settings.MEDIA_URL, expression, expression)
     except KeyError:
         return matchobj.group(0)
 

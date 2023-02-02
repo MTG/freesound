@@ -66,7 +66,7 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
             zendesk_api.CustomField(id=30153729, value=num_comments),
         ]
 
-        user_url = "https://%s%s" % (
+        user_url = "https://{}{}".format(
             Site.objects.get_current().domain,
             reverse('account', args=[user.username])
         )

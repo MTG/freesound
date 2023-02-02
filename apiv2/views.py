@@ -321,7 +321,7 @@ class CombinedSearch(GenericAPIView):
         extra_parameters_string = ''
         if extra_parameters:
             for key, value in extra_parameters.items():
-                extra_parameters_string += '&%s=%s' % (key, str(value))
+                extra_parameters_string += '&{}={}'.format(key, str(value))
 
         response_data = dict()
         if self.analysis_file:

@@ -51,7 +51,7 @@ class TaggedItem(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return "%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
+        return "{} tagged {} - {}: {}".format(self.user, self.content_type, self.content_type, self.tag)
 
     def get_absolute_url(self):
         return reverse('tag', args=[smart_text(self.tag.id)])

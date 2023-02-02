@@ -32,7 +32,7 @@ class Comment(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return "%s comment on %s" % (self.user, self.sound)
+        return "{} comment on {}".format(self.user, self.sound)
 
     class Meta:
         ordering = ('-created', )

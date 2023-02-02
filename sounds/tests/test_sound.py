@@ -447,7 +447,7 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check sound can't be downloaded if user not logged in
             resp = self.client.get(reverse('sound-download', args=[self.sound.user.username, self.sound.id]))
-            self.assertRedirects(resp, '%s?next=%s' % (
+            self.assertRedirects(resp, '{}?next={}'.format(
             reverse('login'), reverse('sound', args=[self.sound.user.username, self.sound.id])))
 
             # Check download works successfully if user logged in
@@ -504,7 +504,7 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check sound can't be downloaded if user not logged in
             resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
-            self.assertRedirects(resp, '%s?next=%s' % (
+            self.assertRedirects(resp, '{}?next={}'.format(
             reverse('login'), reverse('pack', args=[self.sound.user.username, self.pack.id])))
 
             # Check donwload works successfully if user logged in

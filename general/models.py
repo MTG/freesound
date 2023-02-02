@@ -58,7 +58,7 @@ class OrderedModel(models.Model):
         url_up = reverse("admin-move", kwargs=kwargs)
         kwargs["direction"] = "down"
         url_down = reverse("admin-move", kwargs=kwargs)
-        return '<a href="%s">up</a> | <a href="%s">down</a>' % (url_up, url_down)
+        return '<a href="{}">up</a> | <a href="{}">down</a>'.format(url_up, url_down)
     change_order.allow_tags = True
     change_order.short_description = 'Move'
     change_order.admin_order_field = 'order'

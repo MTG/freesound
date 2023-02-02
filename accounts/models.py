@@ -610,7 +610,7 @@ class UserFlag(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return "Flag %s: %s" % (self.content_type, self.object_id)
+        return "Flag {}: {}".format(self.content_type, self.object_id)
 
     class Meta:
         ordering = ("-user__username",)

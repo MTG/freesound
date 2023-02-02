@@ -152,7 +152,7 @@ class FreesoundAPIViewMixin:
 
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
             if request.get_host().startswith('www'):
-                domain = "%s://%s" % ('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
+                domain = "{}://{}".format('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
                 return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
             if request.scheme != 'https' and not settings.DEBUG:
@@ -404,7 +404,7 @@ def log_message_helper(message, data_dict=None, info_dict=None, resource=None, r
         if request is not None and info_dict is None:
             info_dict = build_info_dict(request=request)
 
-    return '%s #!# %s #!# %s' % (message, json.dumps(data_dict), json.dumps(info_dict))
+    return '{} #!# {} #!# {}'.format(message, json.dumps(data_dict), json.dumps(info_dict))
 
 
 def build_info_dict(resource=None, request=None):
@@ -460,9 +460,9 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
             pass
 
     if use_https:
-        return "https://%s%s" % (Site.objects.get_current().domain, rel)
+        return "https://{}{}".format(Site.objects.get_current().domain, rel)
     else:
-        return "http://%s%s" % (Site.objects.get_current().domain, rel)
+        return "http://{}{}".format(Site.objects.get_current().domain, rel)
 
 
 def get_authentication_details_form_request(request):
@@ -496,7 +496,7 @@ def get_authentication_details_form_request(request):
 
 
 def request_parameters_info_for_log_message(get_parameters):
-    return ','.join(['%s=%s' % (key, value) for key, value in get_parameters.items()])
+    return ','.join(['{}={}'.format(key, value) for key, value in get_parameters.items()])
 
 
 class ApiSearchPaginator:
@@ -539,7 +539,7 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
 
             if element[0:5] == 'apiv2':
                 url = prepend_base('/' + element, dynamic_resolve=False, use_https=True)
-                output += '<span class="pln"><a href="%s">%s</a></span><br>' % (url, url)
+                output += '<span class="pln"><a href="{}">{}</a></span><br>'.format(url, url)
             else:
                 # This is only apiv2 oauth examples
                 url = prepend_base('', dynamic_resolve=False, use_https=True)

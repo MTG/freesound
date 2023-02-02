@@ -226,7 +226,7 @@ class Post(models.Model):
         )
 
     def __str__(self):
-        return "Post by %s in %s" % (self.author, self.thread)
+        return "Post by {} in {}".format(self.author, self.thread)
 
     def get_absolute_url(self):
         return reverse("forums-post", args=[smart_text(self.thread.forum.name_slug), self.thread.id, self.id])
@@ -349,4 +349,4 @@ class Subscription(models.Model):
         unique_together = ("subscriber", "thread")
 
     def __str__(self):
-        return "%s subscribed to %s" % (self.subscriber, self.thread)
+        return "{} subscribed to {}".format(self.subscriber, self.thread)

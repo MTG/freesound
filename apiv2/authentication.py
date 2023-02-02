@@ -78,12 +78,11 @@ class TokenAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
-
         # If the token is not provided through the header check if it is provided as a query parameter
         if not auth:
             token = request.GET.get('token', None)
             if token:
-                auth = ['Token', token]
+                auth = [b'Token', token.encode()]
 
         if not auth or auth[0].lower() != b'token':
             return None

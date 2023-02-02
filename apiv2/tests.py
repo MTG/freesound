@@ -198,6 +198,33 @@ class TestAPI(TestCase):
         resp = self.client.options("/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers)
         self.assertEqual(resp.status_code, 200)
 
+    def test_token_authentication_with_header(self):
+        user = User.objects.create_user("testuser")
+        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
+                        url="https://freesound.com", name="test")
+        c.save()
+        headers = {
+            'HTTP_AUTHORIZATION': 'Token %s' % c.key,
+        }
+        resp = self.client.get("/apiv2/", secure=True, **headers)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_token_authentication_with_query_param(self):
+        user = User.objects.create_user("testuser")
+        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
+                        url="https://freesound.com", name="test")
+        c.save()
+        resp = self.client.get("/apiv2/?token={}".format(c.key), secure=True)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_token_authentication_disabled_client(self):
+        user = User.objects.create_user("testuser")
+        c = ApiV2Client(user=user, status='NOT_OK', redirect_uri="https://freesound.com",
+                        url="https://freesound.com", name="test")
+        c.save()
+        resp = self.client.get("/apiv2/?token={}".format(c.key), secure=True)
+        self.assertEqual(resp.status_code, 401)
+        
 
 class ApiSearchPaginatorTest(TestCase):
     def test_page(self):

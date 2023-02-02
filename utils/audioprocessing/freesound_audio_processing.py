@@ -337,7 +337,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                         fft_size = 2048
                         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path, spectral_path, width, height,
                                                            fft_size, color_scheme=color_scheme)
-                        self.log_info("created wave and spectrogram images: {}, {}".format(waveform_path, spectral_path))
+                        self.log_info(f"created wave and spectrogram images: {waveform_path}, {spectral_path}")
                     except AudioProcessingException as e:
                         self.set_failure("creation of display images has failed", e)
                         return False
@@ -473,7 +473,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
             try:
                 audioprocessing.create_wave_images(tmp_wavefile2, self.output_wave_path, self.output_spectral_path, 780, 301,
                                                 fft_size=2048, color_scheme=color_schemes.BEASTWHOOSH_COLOR_SCHEME)
-                self.log_info("created wave and spectrogram images: {}, {}".format(self.output_wave_path, self.output_spectral_path))
+                self.log_info(f"created wave and spectrogram images: {self.output_wave_path}, {self.output_spectral_path}")
             except AudioProcessingException as e:
                 self.set_failure("creation of display images has failed", e)
                 return False

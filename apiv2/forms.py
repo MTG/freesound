@@ -208,7 +208,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&group_by_pack=%s' % self.cleaned_data['group_by_pack']
         else:
             link += '&group_by_pack=%s' % group_by_pack
-        return "https://{}{}{}".format(Site.objects.get_current().domain, base_url, link)
+        return f"https://{Site.objects.get_current().domain}{base_url}{link}"
 
 
 class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):

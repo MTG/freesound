@@ -98,7 +98,7 @@ class Ticket(models.Model):
         return reverse('ticket', args=[smart_text(self.key)])
 
     def __str__(self):
-        return "pk {}, key {}".format(self.id, self.key)
+        return f"pk {self.id}, key {self.key}"
 
     class Meta:
         ordering = ("-created",)

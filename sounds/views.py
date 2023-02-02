@@ -896,7 +896,7 @@ def pack_delete(request, username, pack_id):
         if pack_id != pack.id:
             raise PermissionDenied
         if not waited_too_long:
-            web_logger.info("User {} requested to delete pack {}".format(request.user.username, pack_id))
+            web_logger.info(f"User {request.user.username} requested to delete pack {pack_id}")
             pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
 
@@ -1085,7 +1085,7 @@ def delete(request, username, sound_id):
             form = DeleteSoundForm(sound_id=sound_id)
         else:
 
-            web_logger.info("User {} requested to delete sound {}".format(request.user.username,sound_id))
+            web_logger.info(f"User {request.user.username} requested to delete sound {sound_id}")
             try:
                 ticket = sound.ticket
                 tc = TicketComment(sender=request.user,
@@ -1135,7 +1135,7 @@ def flag(request, username, sound_id):
                 user_email = flag_form.cleaned_data["email"]
 
             send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "sounds/email_flag.txt", {"flag": flag},
-                                          extra_subject="{} - {}".format(sound.user.username, sound.original_filename),
+                                          extra_subject=f"{sound.user.username} - {sound.original_filename}",
                                           reply_to=user_email)
             return redirect(sound)
     else:
@@ -1240,7 +1240,7 @@ def embed_iframe(request, sound_id, player_size):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     tvars = {
         'sound': sound,
-        'username_and_filename': '{} - {}'.format(sound.user.username, sound.original_filename),
+        'username_and_filename': f'{sound.user.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',
         'show_toggle_display_button': request.GET.get('td', None) == '1',

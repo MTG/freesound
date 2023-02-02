@@ -255,7 +255,7 @@ def stream(request):
                         date_from = (datetime.strptime(date_to,"%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d") # A week before date to
                     if not date_to:
                         date_to = (datetime.strptime(date_from,"%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d") # A week after date from
-            time_lapse = '["{}T00:00:00Z" TO "{}T23:59:59.999Z"]'.format(date_from, date_to)
+            time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
 
     # if first time going into the page, the default is last week
     else:

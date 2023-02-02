@@ -404,7 +404,7 @@ def log_message_helper(message, data_dict=None, info_dict=None, resource=None, r
         if request is not None and info_dict is None:
             info_dict = build_info_dict(request=request)
 
-    return '{} #!# {} #!# {}'.format(message, json.dumps(data_dict), json.dumps(info_dict))
+    return f'{message} #!# {json.dumps(data_dict)} #!# {json.dumps(info_dict)}'
 
 
 def build_info_dict(resource=None, request=None):
@@ -460,9 +460,9 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
             pass
 
     if use_https:
-        return "https://{}{}".format(Site.objects.get_current().domain, rel)
+        return f"https://{Site.objects.get_current().domain}{rel}"
     else:
-        return "http://{}{}".format(Site.objects.get_current().domain, rel)
+        return f"http://{Site.objects.get_current().domain}{rel}"
 
 
 def get_authentication_details_form_request(request):
@@ -496,7 +496,7 @@ def get_authentication_details_form_request(request):
 
 
 def request_parameters_info_for_log_message(get_parameters):
-    return ','.join(['{}={}'.format(key, value) for key, value in get_parameters.items()])
+    return ','.join([f'{key}={value}' for key, value in get_parameters.items()])
 
 
 class ApiSearchPaginator:
@@ -539,7 +539,7 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
 
             if element[0:5] == 'apiv2':
                 url = prepend_base('/' + element, dynamic_resolve=False, use_https=True)
-                output += '<span class="pln"><a href="{}">{}</a></span><br>'.format(url, url)
+                output += f'<span class="pln"><a href="{url}">{url}</a></span><br>'
             else:
                 # This is only apiv2 oauth examples
                 url = prepend_base('', dynamic_resolve=False, use_https=True)

@@ -147,6 +147,6 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
 def build_time_lapse(date_from, date_to):
     date_from = date_from.strftime("%Y-%m-%d")
     date_to = date_to.strftime("%Y-%m-%d")
-    time_lapse = '["{}T00:00:00Z" TO "{}T23:59:59.999Z"]'.format(date_from, date_to)
+    time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
     return time_lapse
 

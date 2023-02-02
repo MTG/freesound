@@ -182,7 +182,7 @@ def search_view_helper(request, tags_mode=False):
         })
 
     except SearchEngineException as e:
-        search_logger.error('Search error: query: {} error {}'.format(str(query_params), e))
+        search_logger.error(f'Search error: query: {str(query_params)} error {e}')
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
         search_logger.error('Could probably not connect to Solr - %s' % e)
@@ -420,7 +420,7 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            error.warning("Search error: query: {} error {}".format(search_query, e))
+            error.warning(f"Search error: query: {search_query} error {e}")
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:

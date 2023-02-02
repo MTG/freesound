@@ -28,7 +28,7 @@ class FollowingUserItem(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "{} following {}".format(self.user_from, self.user_to)
+        return f"{self.user_from} following {self.user_to}"
 
     class Meta:
         verbose_name_plural = "Users"
@@ -42,7 +42,7 @@ class FollowingQueryItem(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "{} following tag '{}'".format(self.user, self.query)
+        return f"{self.user} following tag '{self.query}'"
 
     def get_slash_tags(self):
         return self.query.replace(" ", "/")

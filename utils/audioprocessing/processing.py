@@ -597,4 +597,4 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     stdout = stdout.decode()
     stderr = stderr.decode()
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException("ffmpeg returned an error\nstdout: {} \nstderr: {}".format(stdout, stderr))
+        raise AudioProcessingException(f"ffmpeg returned an error\nstdout: {stdout} \nstderr: {stderr}")

@@ -186,7 +186,7 @@ def create_sound(user,
             _remove_user_uploads_folder_if_empty(sound.user)
 
         except OSError as e:
-            raise CantMoveException("Failed to move file from {} to {}".format(sound.original_path, new_original_path))
+            raise CantMoveException(f"Failed to move file from {sound.original_path} to {new_original_path}")
         sound.original_path = new_original_path
         sound.save()
 

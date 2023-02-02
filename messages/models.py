@@ -99,7 +99,7 @@ class Message(models.Model):
         return "message", (smart_text(self.id),)
 
     def __str__(self):
-        return "from: [{}] to: [{}]".format(self.user_from, self.user_to)
+        return f"from: [{self.user_from}] to: [{self.user_to}]"
     
     class Meta:
         ordering = ('-created',)

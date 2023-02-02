@@ -503,9 +503,9 @@ class SoundManager(models.Manager):
                         self.get_analyzers_data_left_join_sql(),
                         where, )
         if order_by:
-            query = "{} ORDER BY {}".format(query, order_by)
+            query = f"{query} ORDER BY {order_by}"
         if limit:
-            query = "{} LIMIT {}".format(query, limit)
+            query = f"{query} LIMIT {limit}"
         return self.raw(query, args)
 
     def bulk_sounds_for_user(self, user_id, limit=None):
@@ -766,14 +766,14 @@ class Sound(SocialModel):
         if (preview_url.startswith('http')):
             # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
             return preview_url
-        return 'https://{}{}'.format(Site.objects.get_current().domain, preview_url)
+        return f'https://{Site.objects.get_current().domain}{preview_url}'
 
     def get_thumbnail_abs_url(self, size='M'):
         thumbnail_url = self.locations()['display']['wave'][size]['url']
         if (thumbnail_url.startswith('http')):
             # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
             return thumbnail_url
-        return 'https://{}{}'.format(Site.objects.get_current().domain, thumbnail_url)
+        return f'https://{Site.objects.get_current().domain}{thumbnail_url}'
 
     def get_large_thumbnail_abs_url(self):
         return self.get_thumbnail_abs_url(size='L')
@@ -1669,7 +1669,7 @@ class Flag(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):
-        return "{}: {}".format(self.reason_type, self.reason[:100])
+        return f"{self.reason_type}: {self.reason[:100]}"
 
     class Meta:
         ordering = ("-created",)

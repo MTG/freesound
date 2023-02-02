@@ -867,7 +867,7 @@ def describe_sounds(request):
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error('Sound with id {} could not be scheduled. ({})'.format(s.id, str(e)))
+            sounds_logger.error(f'Sound with id {s.id} could not be scheduled. ({str(e)})')
         for p in dirty_packs:
             p.process()
 
@@ -945,7 +945,7 @@ def download_attribution(request):
     download = request.GET.get('dl', '')
     if download in ['csv', 'txt']:
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = '{}_{}_attribution.{}'.format(request.user, now, download)
+        filename = f'{request.user}_{now}_attribution.{download}'
         response = HttpResponse(content_type='text/%s' % content[download])
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
         output = io.StringIO()

@@ -40,7 +40,8 @@ from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 from builtins import object
-import urllib.request, urllib.parse, urllib.error, cgi
+import urllib.request, urllib.parse, urllib.error
+
 
 class Paypal(object):
     
@@ -86,7 +87,7 @@ class Paypal(object):
         params_string = urllib.parse.urlencode( params )
         
         # get the response and parse it
-        response = cgi.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())
+        response = urllib.parse.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())
        
         # the parsed dict has a list for each value, but all Paypal replies are unique
         return dict([(key.lower(), value[0]) for (key,value) in response.items()])

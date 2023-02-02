@@ -20,7 +20,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from future.utils import raise_
 from django import template
 import feedparser
 import urllib.request, urllib.error, urllib.parse
@@ -42,7 +41,7 @@ class RssParserNode(template.Node):
             try:
                 context[self.var_name] = feedparser.parse(context[self.url_var_name], handlers=[proxy])
             except KeyError:
-                raise_(template.TemplateSyntaxError, "the variable \"%s\" can't be found in the context" % self.url_var_name)
+                raise template.TemplateSyntaxError(f"the variable '{self.url_var_name}' can't be found in the context")
         return ''
 
 import re
@@ -54,11 +53,11 @@ def get_rss(parser, token):
         # Splitting by None == splitting by spaces.
         tag_name, arg = token.contents.split(None, 1)
     except ValueError:
-        raise_(template.TemplateSyntaxError, "%r tag requires arguments" % token.contents.split()[0])
+        raise template.TemplateSyntaxError(f"{token.contents.split()[0]!r} tag requires arguments")
     
     m = re.search(r'(.*?) as (\w+)', arg)
     if not m:
-        raise_(template.TemplateSyntaxError, "%r tag had invalid arguments" % tag_name)
+        raise template.TemplateSyntaxError(f"{tag_name!r} tag had invalid arguments")
     url, var_name = m.groups()
     
     if url[0] == url[-1] and url[0] in ('"', "'"):

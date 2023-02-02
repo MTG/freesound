@@ -1,6 +1,8 @@
 from builtins import range
 import datetime
 import mock
+import base64
+import json
 
 from django.contrib.auth.models import User
 from django.core import mail
@@ -24,10 +26,10 @@ class DonationTest(TestCase):
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
-        # custom ={u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}
+        custom = base64.b64encode(json.dumps({u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}).encode()).decode()
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
-                'custom': 'eyJkaXNwbGF5X2Ftb3VudCI6IHRydWUsICJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDEsICJuYW1lIjogInRlc3QifQ==',
+                'custom': custom,
                 'mc_currency': 'EUR',
                 'mc_gross': '1.00'}
 
@@ -50,10 +52,10 @@ class DonationTest(TestCase):
                 goal=200, date_start=datetime.datetime.now(), id=1)
         self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
-        # custom = {u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}
+        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}).encode()).decode()
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
-                'custom': 'eyJkaXNwbGF5X2Ftb3VudCI6IHRydWUsICJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDF9',
+                'custom': custom,
                 'mc_currency': 'EUR',
                 'mc_gross': '1.00'}
 
@@ -75,9 +77,10 @@ class DonationTest(TestCase):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
 
+        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}).encode()).decode()
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
-                'custom': 'eyJkaXNwbGF5X2Ftb3VudCI6IHRydWUsICJjYW1wYWlnbl9pZCI6IDEsICJuYW1lIjogIkFub255bW91cyJ9',
+                'custom': custom,
                 'mc_currency': 'EUR',
                 'mc_gross': '1.00'}
 
@@ -98,8 +101,7 @@ class DonationTest(TestCase):
         self.user = User.objects.create_user(
             username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.force_login(self.user)
-        # custom ={u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}
-        custom = "eyJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MSwgIm5hbWUiOiAidGVzdCJ9"
+        custom = base64.b64encode(json.dumps({u'display_amount': True, u'user_id': 46280, u'campaign_id': 1, u'name': u'test'}).encode()).decode()
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
@@ -129,8 +131,7 @@ class DonationTest(TestCase):
         self.user = User.objects.create_user(
             username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.force_login(self.user)
-        # custom = {u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}
-        custom = "eyJ1c2VyX2lkIjogNDYyODAsICJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MX0="
+        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'user_id': 46280, u'display_amount': True}).encode()).decode()
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{
@@ -157,8 +158,7 @@ class DonationTest(TestCase):
     def test_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        # {u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}
-        custom = "eyJjYW1wYWlnbl9pZCI6IDEsICJkaXNwbGF5X2Ftb3VudCI6MSwgIm5hbWUiOiAiQW5vbnltb3VzIn0="
+        custom = base64.b64encode(json.dumps({u'campaign_id': 1, u'name': u'Anonymous', u'display_amount': True}).encode()).decode()
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
                   "display_items": [{

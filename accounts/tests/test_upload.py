@@ -22,8 +22,8 @@
 
 from builtins import range
 import os
+from unittest import mock
 
-import mock
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile

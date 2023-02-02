@@ -23,7 +23,7 @@ standard_library.install_aliases()
 from builtins import str
 from builtins import range
 import io
-from backports import csv
+import csv
 import datetime
 import errno
 import json

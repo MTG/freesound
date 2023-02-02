@@ -1,6 +1,5 @@
 akismet==1.0.1
 autopep8==1.5.7
-backports.csv
 beautifulsoup4==4.6.0
 bleach==3.1.5
 boto3==1.7.10
@@ -27,17 +26,14 @@ djangorestframework-xml==1.4.0
 djangorestframework-yaml==1.0.3
 djangorestframework==3.9.4
 fabric==2.6.0
-feedparser==5.2.1; python_version < "3"
-feedparser~=6.0.10; python_version > "3"
+feedparser~=6.0.10
 freezegun==0.3.11
 future~=0.18.2
 graypy==0.2.12
 gunicorn==19.9.0
-ipaddress==1.0.23
 ipython==4.2.0
 mapbox==0.18.0
 markdown==2.5.1
-mock==2.0.0
 networkx==1.5
 numpy==1.16.6
 pillow==6.2.2

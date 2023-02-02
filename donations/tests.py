@@ -1,6 +1,6 @@
 from builtins import range
 import datetime
-import mock
+from unittest import mock
 import base64
 import json
 

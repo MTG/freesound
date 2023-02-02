@@ -23,8 +23,8 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 import hashlib
+from unittest import mock
 
-import mock
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase

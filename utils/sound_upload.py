@@ -17,8 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-from backports import csv
+import csv
 from builtins import next
 from builtins import zip
 from builtins import str

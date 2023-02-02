@@ -1,6 +1,7 @@
+import os
+
 from django.apps import AppConfig
 from django.conf import settings
-from utils.filesystem import create_directories
 
 
 class GeneralConfig(AppConfig):
@@ -11,15 +12,15 @@ class GeneralConfig(AppConfig):
         Create the folders (if not already existing) for the base data directory and all needed subdirecotries.
         This code is run here as we want to run it at Django startup.
         """
-        create_directories(settings.DATA_PATH)
-        create_directories(settings.AVATARS_PATH)
-        create_directories(settings.PREVIEWS_PATH)
-        create_directories(settings.DISPLAYS_PATH)
-        create_directories(settings.SOUNDS_PATH)
-        create_directories(settings.PACKS_PATH)
-        create_directories(settings.UPLOADS_PATH)
-        create_directories(settings.CSV_PATH)
-        create_directories(settings.ANALYSIS_PATH)
-        create_directories(settings.FILE_UPLOAD_TEMP_DIR)
-        create_directories(settings.PROCESSING_TEMP_DIR)
-        create_directories(settings.PROCESSING_BEFORE_DESCRIPTION_DIR)
+        os.makedirs(settings.DATA_PATH, exist_ok=True)
+        os.makedirs(settings.AVATARS_PATH, exist_ok=True)
+        os.makedirs(settings.PREVIEWS_PATH, exist_ok=True)
+        os.makedirs(settings.DISPLAYS_PATH, exist_ok=True)
+        os.makedirs(settings.SOUNDS_PATH, exist_ok=True)
+        os.makedirs(settings.PACKS_PATH, exist_ok=True)
+        os.makedirs(settings.UPLOADS_PATH, exist_ok=True)
+        os.makedirs(settings.CSV_PATH, exist_ok=True)
+        os.makedirs(settings.ANALYSIS_PATH, exist_ok=True)
+        os.makedirs(settings.FILE_UPLOAD_TEMP_DIR, exist_ok=True)
+        os.makedirs(settings.PROCESSING_TEMP_DIR, exist_ok=True)
+        os.makedirs(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, exist_ok=True)

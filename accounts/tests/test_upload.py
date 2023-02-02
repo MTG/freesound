@@ -33,7 +33,7 @@ from django.urls import reverse
 
 from sounds.models import License, Sound, Pack, BulkUploadProgress
 from tags.models import Tag
-from utils.filesystem import File, create_directories
+from utils.filesystem import File
 from utils.test_helpers import create_test_files, override_uploads_path_with_temp_directory, \
     override_csv_path_with_temp_directory, create_user_and_sounds, test_using_bw_ui
 
@@ -69,7 +69,7 @@ class UserUploadAndDescribeSounds(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        create_directories(user_upload_path)
+        os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
 
         # Check that files are displayed in the template
@@ -126,7 +126,7 @@ class UserUploadAndDescribeSounds(TestCase):
         user.profile.save()
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        create_directories(user_upload_path)
+        os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
 
         # Set license and pack data in session
@@ -183,7 +183,7 @@ class UserUploadAndDescribeSounds(TestCase):
         user = User.objects.create_user("testuser", email="1@xmpl.com", password="testpass")
         self.client.force_login(user)
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        create_directories(user_upload_path)
+        os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
         _, _, sound_sources = create_user_and_sounds(
             num_sounds=3, num_packs=0, 

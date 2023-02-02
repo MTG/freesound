@@ -57,7 +57,7 @@ class DonateForm(forms.Form):
 
         annon = cleaned_data.get('donation_type')
 
-        # We store the user even if the donation is annonymous
+        # We store the user even if the donation is annonymous (but don't display the name)
         if self.user_id :
             returned_data['user_id'] = self.user_id
 
@@ -68,9 +68,8 @@ class DonateForm(forms.Form):
             if returned_data['name'] == '':
                 raise forms.ValidationError('You have to enter a name to display')
 
-
         # Paypal gives only one field to add extra data so we send it as b64
-        self.encoded_data = base64.b64encode(json.dumps(returned_data).encode())
+        self.encoded_data = base64.b64encode(json.dumps(returned_data).encode()).decode()
         return cleaned_data
 
 

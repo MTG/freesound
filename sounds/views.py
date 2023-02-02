@@ -18,6 +18,7 @@ from __future__ import division
 # Authors:
 #     See AUTHORS file.
 #
+from urllib.parse import urlparse
 
 from builtins import map
 from builtins import str
@@ -45,7 +46,6 @@ from django.http import HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse, resolve
-from django.utils.six.moves.urllib.parse import urlparse
 from ratelimit.decorators import ratelimit
 from django.core.signing import BadSignature, SignatureExpired
 

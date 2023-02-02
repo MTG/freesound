@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import datetime
-import logging.config
 import os
 import re
 
@@ -481,8 +477,6 @@ ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
 AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
-
-from builtins import str  # This is needed while moving from py2 to py3 for str type compatibility
 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {

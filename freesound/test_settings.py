@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from .settings import *
 
 postgres_username = os.getenv('FS_TEST_PG_USERNAME', None)

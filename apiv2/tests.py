@@ -219,7 +219,7 @@ class TestAPI(TestCase):
 
     def test_token_authentication_disabled_client(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(user=user, status='NOT_OK', redirect_uri="https://freesound.com",
+        c = ApiV2Client(user=user, status='REV', redirect_uri="https://freesound.com",
                         url="https://freesound.com", name="test")
         c.save()
         resp = self.client.get("/apiv2/?token={}".format(c.key), secure=True)

@@ -45,9 +45,6 @@ class File(object):
 
 
 def generate_tree(path):
-    # Force path to use the "old" py2 str type. This should not be needed when using py3
-    path = str(path)
-
     counter = 0
     lookups = {path: File(counter, path, path, True)}
     files = {}

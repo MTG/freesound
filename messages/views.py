@@ -213,7 +213,7 @@ def new_message(request, username=None, message_id=None):
 
 
 def quote_message_for_reply(body, username):
-    body = ''.join(BeautifulSoup(body, "html.parser").find_all(text=True))
+    body = ''.join(BeautifulSoup(body, "html.parser").find_all(string=True))
     body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
                         for line in body.split("\n")])
     body = "> --- " + username + " wrote:\n>\n" + body

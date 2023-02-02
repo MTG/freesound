@@ -127,7 +127,7 @@ class FreesoundAPIViewMixin:
         """
         if self.client_id is not None:
             now = datetime.datetime.now().date()
-            monitoring_key = '{}-{}-{}_{}'.format(now.year, now.month, now.day, self.client_id)
+            monitoring_key = f'{now.year}-{now.month}-{now.day}_{self.client_id}'
             current_value = cache_api_monitoring.get(monitoring_key, 0)
             cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
 

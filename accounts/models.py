@@ -82,7 +82,7 @@ class DeletedUser(models.Model):
     reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)
 
     def __str__(self):
-        return 'Deleted user object for: {}'.format(self.username)
+        return f'Deleted user object for: {self.username}'
 
 
 class ProfileManager(models.Manager):
@@ -702,7 +702,7 @@ class OldUsername(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return '{} > {}'.format(self.username, self.user.username)
+        return f'{self.username} > {self.user.username}'
 
 
 class EmailBounce(models.Model):

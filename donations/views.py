@@ -173,7 +173,7 @@ def donation_session_stripe(request):
             amount = form.cleaned_data['amount']
             domain = "https://%s" % Site.objects.get_current().domain
             return_url_success = urllib.parse.urljoin(domain, reverse('donation-success'))
-            return_url_success += '?token={}'.format(form.encoded_data)
+            return_url_success += f'?token={form.encoded_data}'
             return_url_cancel = urllib.parse.urljoin(domain, reverse('donate'))
             session = stripe.checkout.Session.create(
                 customer_email=email_to,

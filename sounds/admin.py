@@ -55,10 +55,10 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     change_actions = ('reprocess_sound', )
 
     def get_processing_state(self, obj):
-        processing_state = '{}'.format(obj.get_processing_state_display())
+        processing_state = f'{obj.get_processing_state_display()}'
         ongoing_state_display = obj.get_processing_ongoing_state_display()
         if ongoing_state_display == 'Processing' or ongoing_state_display == 'Queued':
-            processing_state += ' ({})'.format(ongoing_state_display)
+            processing_state += f' ({ongoing_state_display})'
         return processing_state
     get_processing_state.short_description = 'Processing state'
 
@@ -72,13 +72,13 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
             queryset_or_object.process(force=True, high_priority=True)
             queryset_or_object.analyze(force=True, high_priority=True)
             messages.add_message(request, messages.INFO,
-                                 'Sound {} was sent to re-process and re-analyze.'.format(queryset_or_object.id))
+                                 f'Sound {queryset_or_object.id} was sent to re-process and re-analyze.')
         else:
             for sound in queryset_or_object:
                 sound.process(force=True, high_priority=True)
                 sound.analyze(force=True, high_priority=True)
             messages.add_message(request, messages.INFO,
-                                 '{} sounds were send to re-process and re-analyze.'.format(queryset_or_object.count()))
+                                 f'{queryset_or_object.count()} sounds were send to re-process and re-analyze.')
 
     reprocess_sound.label = 'Re-process/analyze sound'
     reprocess_sound.short_description = 'Re-process and re-analyze sounds'
@@ -102,7 +102,7 @@ class DeletedSoundAdmin(admin.ModelAdmin):
             return '-'
         return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:auth_user_change', args=[obj.user.id]),
-            '{}'.format(obj.user.username))
+            f'{obj.user.username}')
 
     user_link.allow_tags = True
     user_link.admin_order_field = 'user'
@@ -138,7 +138,7 @@ class FlagAdmin(admin.ModelAdmin):
     reporting_user_link.short_description = 'Reporting User'
 
     def email_link(self, obj):
-        return '<a href="mailto:{}" target="_blank">{}</a>'.format(obj.email, obj.email) \
+        return f'<a href="mailto:{obj.email}" target="_blank">{obj.email}</a>' \
             if obj.email else '-'
     email_link.allow_tags = True
     email_link.admin_order_field = 'email'
@@ -237,7 +237,7 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
             for sound_analysis in queryset_or_object:
                 sound_analysis.re_run_analysis()
             messages.add_message(request, messages.INFO,
-                                 '{} sounds were send to re-analyze.'.format(queryset_or_object.count()))
+                                 f'{queryset_or_object.count()} sounds were send to re-analyze.')
     re_run_analysis.label = 'Re-run analysis'
     re_run_analysis.short_description = 'Re-run analysis with same analyzer'
 

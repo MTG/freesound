@@ -49,6 +49,6 @@ class Command(LoggingBaseCommand):
         with transaction.atomic():
             for count, geotag in enumerate(geotags):
                 geotag.retrieve_location_information()
-                console_logger.info('Retrieved information for geotag {} of {}'.format(count + 1, total))
+                console_logger.info(f'Retrieved information for geotag {count + 1} of {total}')
 
         self.log_end({'num_geotags': total})

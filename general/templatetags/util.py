@@ -54,7 +54,7 @@ def duration(value):
 def duration_hours(total_seconds):
     hours = int(total_seconds // 3600)
     minutes = int((total_seconds % 3600) // 60)
-    return '{}:{:02d}'.format(hours, minutes)
+    return f'{hours}:{minutes:02d}'
 
 
 @register.filter
@@ -78,9 +78,9 @@ def chunks(l, n):
 @register.filter
 def license_with_version(license_name, license_deed_url):
     if '3.0' in license_deed_url:
-        return '{} 3.0'.format(license_name)
+        return f'{license_name} 3.0'
     elif '4.0' in license_deed_url:
-        return '{} 4.0'.format(license_name)
+        return f'{license_name} 4.0'
     return license_name
 
 

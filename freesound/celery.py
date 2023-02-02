@@ -21,7 +21,7 @@ app.autodiscover_tasks()
 
 def get_queues_task_counts():
     raw_data = requests.get(
-        'http://{}:{}/rabbitmq-admin/api/queues'.format(settings.RABBITMQ_HOST, settings.RABBITMQ_API_PORT),
+        f'http://{settings.RABBITMQ_HOST}:{settings.RABBITMQ_API_PORT}/rabbitmq-admin/api/queues',
         auth=(settings.RABBITMQ_USER, settings.RABBITMQ_PASS)).json()
     data = []
     if 'error' not in raw_data:

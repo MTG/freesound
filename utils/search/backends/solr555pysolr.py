@@ -153,10 +153,10 @@ def convert_sound_to_search_engine_document(sound):
                 for key, value in analysis_data.items():
                     if isinstance(value, list):
                         # Make sure that the list is formed by strings
-                        value = ['{}'.format(item) for item in value]
+                        value = [f'{item}' for item in value]
                     suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
                     if suffix:
-                        document['{}{}'.format(key, suffix)] = value
+                        document[f'{key}{suffix}'] = value
     return document
 
 
@@ -212,7 +212,7 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
                 query_filter = query_filter.replace(
-                    '{}:'.format(db_descriptor_key),'{}{}:'.format(
+                    f'{db_descriptor_key}:','{}{}:'.format(
                         db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
     return query_filter
 
@@ -292,11 +292,11 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
     # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
     # our query to the sounds in that list of IDs.
     if only_sounds_within_ids:
-        sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+        sounds_within_ids_filter = ' OR '.join([f'id:{sound_id}' for sound_id in only_sounds_within_ids])
         if query_filter:
-            query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+            query_filter += f' AND ({sounds_within_ids_filter})'
         else:
-            query_filter = '({})'.format(sounds_within_ids_filter)
+            query_filter = f'({sounds_within_ids_filter})'
 
     return query_filter
 
@@ -368,7 +368,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             sound_id = sound_object_or_id
         else:
             sound_id = sound_object_or_id.id
-        response = self.search_sounds(query_filter='id:{}'.format(sound_id), offset=0, num_sounds=1)
+        response = self.search_sounds(query_filter=f'id:{sound_id}', offset=0, num_sounds=1)
         return response.num_found > 0
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
@@ -500,7 +500,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             post_id = forum_post_object_or_id
         else:
             post_id = forum_post_object_or_id.id
-        response = self.search_forum_posts(query_filter='id:{}'.format(post_id), offset=0, num_posts=1)
+        response = self.search_forum_posts(query_filter=f'id:{post_id}', offset=0, num_posts=1)
         return response.num_found > 0
 
     def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,

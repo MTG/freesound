@@ -42,8 +42,8 @@ class ReportSpamOffensive(TestCase):
         # Create users reporting spam
         self.reporters = []
         for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
-            reporter = User.objects.create_user(username='reporter_{}'.format(i),
-                                                email='reporter_{}@example.com'.format(i))
+            reporter = User.objects.create_user(username=f'reporter_{i}',
+                                                email=f'reporter_{i}@example.com')
             self.reporters.append(reporter)
 
         # Create user posting spam

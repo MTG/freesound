@@ -212,7 +212,7 @@ class TestAPI(TestCase):
         c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
                         url="https://freesound.com", name="test")
         c.save()
-        resp = self.client.get("/apiv2/?token={}".format(c.key), secure=True)
+        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 200)
 
     def test_token_authentication_disabled_client(self):
@@ -220,7 +220,7 @@ class TestAPI(TestCase):
         c = ApiV2Client(user=user, status='REV', redirect_uri="https://freesound.com",
                         url="https://freesound.com", name="test")
         c.save()
-        resp = self.client.get("/apiv2/?token={}".format(c.key), secure=True)
+        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 401)
         
 

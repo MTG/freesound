@@ -1245,7 +1245,7 @@ def handle_uploaded_file(user_id, f):
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     os.makedirs(dest_directory, exist_ok=True)
     dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
-    upload_logger.info("handling file upload and saving to {}".format(dest_path))
+    upload_logger.info(f"handling file upload and saving to {dest_path}")
     starttime = time.time()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
@@ -1270,11 +1270,11 @@ def handle_uploaded_file(user_id, f):
 
     # trigger processing of uploaded files before description
     tasks.process_before_description.delay(audio_file_path=dest_path.decode())
-    upload_logger.info("sent uploaded file {} to processing before description".format(dest_path))
+    upload_logger.info(f"sent uploaded file {dest_path} to processing before description")
 
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
     copy_uploaded_file_to_mirror_locations(dest_path)
-    upload_logger.info("handling file upload done, took {:.2f} seconds".format(time.time() - starttime))
+    upload_logger.info(f"handling file upload done, took {time.time() - starttime:.2f} seconds")
     return True
 
 
@@ -1411,7 +1411,7 @@ def delete(request):
             delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
                 else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
-            web_logger.info('Requested async deletion of user {} - {}'.format(request.user.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {request.user.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,

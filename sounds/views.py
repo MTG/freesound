@@ -650,7 +650,7 @@ def edit_and_describe_sounds_helper(request):
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error('Sound with id {} could not be sent to processing. ({})'.format(s.id, str(e)))
+            sounds_logger.error(f'Sound with id {s.id} could not be sent to processing. ({str(e)})')
         for p in dirty_packs:
             p.process()
 
@@ -703,9 +703,9 @@ def edit_and_describe_sounds_helper(request):
         
         sound.mark_index_dirty()  # Sound is saved here
         sound.invalidate_template_caches()
-        update_sound_tickets(sound, '{} updated one or more fields of the sound description.'.format(request.user.username))   
+        update_sound_tickets(sound, f'{request.user.username} updated one or more fields of the sound description.')   
         messages.add_message(request, messages.INFO,
-            'Sound <a href="{}">{}</a> succesfully edited!'.format(sound.get_absolute_url(), sound.original_filename))
+            f'Sound <a href="{sound.get_absolute_url()}">{sound.original_filename}</a> succesfully edited!')
 
         for packs_to_process in packs_to_process:
             packs_to_process.process()
@@ -817,7 +817,7 @@ def edit_and_describe_sounds_helper(request):
 
             # If no more sounds to describe, redirect to manage sound page, otherwise redirect to same page to proceed with second round
             messages.add_message(request, messages.INFO, 
-                'Successfully finished sound description round {} of {}!'.format(current_round, num_rounds))
+                f'Successfully finished sound description round {current_round} of {num_rounds}!')
             if not request.session['describe_sounds']:
                 clear_session_edit_and_describe_data(request)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds'))
@@ -832,7 +832,7 @@ def edit_and_describe_sounds_helper(request):
                 return HttpResponseRedirect(sounds[0].get_absolute_url())
 
             messages.add_message(request, messages.INFO, 
-                'Successfully finished sound editing round {} of {}!'.format(current_round, num_rounds))
+                f'Successfully finished sound editing round {current_round} of {num_rounds}!')
             if not request.session['edit_sounds']:
                 # If no more sounds to edit, redirect to manage sounds page
                 clear_session_edit_and_describe_data(request)

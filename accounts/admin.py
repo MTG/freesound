@@ -64,7 +64,7 @@ class DeletedUserAdmin(admin.ModelAdmin):
     def get_object_link(self, obj):
         return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:accounts_deleteduser_change', args=[obj.id]),
-            'DeletedUser: {}'.format(obj.username))
+            f'DeletedUser: {obj.username}')
     get_object_link.short_description = 'DeletedUser'
     get_object_link.allow_tags = True
     get_object_link.admin_order_field = 'username'
@@ -79,7 +79,7 @@ class DeletedUserAdmin(admin.ModelAdmin):
     get_view_link.allow_tags = True
 
     def get_num_sounds(self, obj):
-        return '{}'.format(obj.profile.num_sounds)
+        return f'{obj.profile.num_sounds}'
     get_num_sounds.short_description = '# sounds'
 
 
@@ -162,11 +162,11 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     get_view_link.allow_tags = True
 
     def get_num_sounds(self, obj):
-        return '{}'.format(obj.profile.num_sounds)
+        return f'{obj.profile.num_sounds}'
     get_num_sounds.short_description = '# sounds'
 
     def get_num_posts(self, obj):
-        return '{}'.format(obj.profile.num_posts)
+        return f'{obj.profile.num_posts}'
     get_num_posts.short_description = '# posts'
 
     def get_actions(self, request):
@@ -181,7 +181,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.DELETE_USER_KEEP_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
-            web_logger.info('Requested async deletion of user {} - {}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -213,7 +213,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.DELETE_USER_DELETE_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
-            web_logger.info('Requested async deletion of user {} - {}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -251,7 +251,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.DELETE_SPAMMER_USER_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_SPAMMER
-            web_logger.info('Requested async deletion of user {} - {}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -288,7 +288,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.FULL_DELETE_USER_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
-            web_logger.info('Requested async deletion of user {} - {}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -380,7 +380,7 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
             return '-'
         return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:accounts_deleteduser_change', args=[obj.deleted_user_id]),
-            'DeletedUser: {}'.format(obj.deleted_user.username))
+            f'DeletedUser: {obj.deleted_user.username}')
 
     deleted_user_link.allow_tags = True
     deleted_user_link.admin_order_field = 'deleted_user'

@@ -15,7 +15,7 @@ def update_existing_ac_analysis_objects(apps, schema_editor):
         if sa.analysis_data:
             updated_analysis_data = {}
             for key, value in sa.analysis_data.items():
-                updated_analysis_data['ac_{}'.format(key)] = value
+                updated_analysis_data[f'ac_{key}'] = value
             sa.analysis_data = updated_analysis_data
         sa.save()
 

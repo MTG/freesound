@@ -102,9 +102,9 @@ def add_bookmark(request, sound_id):
         form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
         if form.is_valid():
             saved_bookmark = form.save()
-            msg_to_return = 'Bookmark created with name "{}"'.format(saved_bookmark.name_or_sound_name)
+            msg_to_return = f'Bookmark created with name "{saved_bookmark.name_or_sound_name}"'
             if saved_bookmark.category:
-                msg_to_return += ' under category "{}".'.format(saved_bookmark.category.name)
+                msg_to_return += f' under category "{saved_bookmark.category.name}".'
             else:
                 msg_to_return += '.'
 

@@ -176,28 +176,28 @@ class UserDelete(TestCase):
     fixtures = ['licenses', 'sounds']
 
     def create_user_and_content(self, username="testuser", is_index_dirty=True):
-        user = User.objects.create_user(username, password="testpass", email="{}@freesound.org".format(username))
-        OldUsername.objects.create(user=user, username="{}_old_username".format(username))
+        user = User.objects.create_user(username, password="testpass", email=f"{username}@freesound.org")
+        OldUsername.objects.create(user=user, username=f"{username}_old_username")
 
         # Create comments
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
-            target_sound.add_comment(user, "{} comment {}".format(username, i))
+            target_sound.add_comment(user, f"{username} comment {i}")
         # Create threads and posts 
         forum, _ = Forum.objects.get_or_create(name="Test forum")
         self.forum = forum
-        thread = Thread.objects.create(author=user, title="Test thread by {}".format(username), forum=forum)
+        thread = Thread.objects.create(author=user, title=f"Test thread by {username}", forum=forum)
         for i in range(0, 3):
             Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
         # Create sounds and packs
-        pack = Pack.objects.create(user=user, name="Test pack by {}".format(username))
+        pack = Pack.objects.create(user=user, name=f"Test pack by {username}")
         for i in range(0, 3):
             Sound.objects.create(user=user,
-                                 original_filename="Test sound {} by {}".format(i, username),
+                                 original_filename=f"Test sound {i} by {username}",
                                  pack=pack,
                                  is_index_dirty=is_index_dirty,
                                  license=License.objects.all()[0],
-                                 md5="fake_unique_md5_{}_{}".format(i, username),
+                                 md5=f"fake_unique_md5_{i}_{username}",
                                  moderation_state="OK",
                                  processing_state="OK")
         return user

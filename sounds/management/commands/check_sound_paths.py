@@ -45,7 +45,7 @@ class Command(BaseCommand):
             if not os.path.exists(sound.locations('path')):
                 missing_sound_ids += [sound.id]
 
-        console_logger.info('Found {} sounds with missing audio files'.format(len(missing_sound_ids)))
+        console_logger.info(f'Found {len(missing_sound_ids)} sounds with missing audio files')
 
         if missing_sound_ids and options['outfile'] is not None:
             json.dump(missing_sound_ids, open(options['outfile'], 'w'))

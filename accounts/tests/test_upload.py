@@ -78,7 +78,7 @@ class UserUploadAndDescribeSounds(TestCase):
         sounds_to_describe_idx = [0]
         resp = self.client.post('/home/describe/', {
             'describe': ['Describe selected files'],
-            'sound-files': ['file{}'.format(idx) for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
+            'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, '/home/describe/sounds/')
         self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
@@ -88,7 +88,7 @@ class UserUploadAndDescribeSounds(TestCase):
         sounds_to_describe_idx = [1, 2, 3]
         resp = self.client.post('/home/describe/', {
             'describe': ['Describe selected files'],
-            'sound-files': ['file{}'.format(idx) for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
+            'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, '/home/describe/license/')
         self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
@@ -98,7 +98,7 @@ class UserUploadAndDescribeSounds(TestCase):
         sounds_to_delete_idx = [1, 2, 3]
         resp = self.client.post('/home/describe/', {
             'delete': ['Delete selected files'],
-            'sound-files': ['file{}'.format(idx) for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
+            'sound-files': [f'file{idx}' for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
         })
         self.assertEqual(resp.status_code, 200)
         self.assertListEqual(sorted(resp.context['filenames']), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
@@ -106,7 +106,7 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting confirmation of files to delete
         resp = self.client.post('/home/describe/', {
             'delete_confirm': ['delete_confirm'],
-            'sound-files': ['file{}'.format(idx) for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
+            'sound-files': [f'file{idx}' for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
         })
         self.assertRedirects(resp, '/home/describe/')
         self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(sounds_to_delete_idx))
@@ -141,7 +141,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '0-lon': ['3.515625'],
             '0-zoom': ['16'],
             '0-tags': ['testtag1 testtag2 testtag3'],
-            '0-pack': ['{}'.format(existing_pack.id)],
+            '0-pack': [f'{existing_pack.id}'],
             '0-license': ['3'],
             '0-description': ['a test description for the sound file'],
             '0-new_pack': [''],
@@ -218,7 +218,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '1-new_pack': ['Name of a new pack'],
             '1-zoom': [''],
             '1-tags': ['testtag1 testtag4 testtag5'],
-            '1-sources': ','.join(['{}'.format(s.id) for s in sound_sources]),
+            '1-sources': ','.join([f'{s.id}' for s in sound_sources]),
         })
         
         # Check that post redirected to first describe page with confirmation message on sounds described

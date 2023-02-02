@@ -139,7 +139,7 @@ class SearchResults:
         self.q_time = q_time
 
     def __str__(self):
-        return '<SearchResults with {} results found>'.format(self.num_found)
+        return f'<SearchResults with {self.num_found} results found>'
 
 
 class SearchResultsPaginator:

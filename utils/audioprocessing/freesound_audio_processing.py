@@ -369,10 +369,10 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         os.makedirs(os.path.dirname(self.output_preview_ogg), exist_ok=True)
 
     def log_info(self, message):
-        console_logger.info("{} - {}".format(self.audio_file_path, message))
+        console_logger.info(f"{self.audio_file_path} - {message}")
 
     def log_error(self, message):
-        console_logger.error("{} - {}".format(self.audio_file_path, message))
+        console_logger.error(f"{self.audio_file_path} - {message}")
 
     def set_failure(self, message, error=None):
         logging_message = "file with path %s failed\n" % self.audio_file_path
@@ -389,7 +389,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
 
     def process(self):
         with TemporaryDirectory(
-                prefix='processing_before_description_{}_'.format(os.path.basename(self.output_folder)),
+                prefix=f'processing_before_description_{os.path.basename(self.output_folder)}_',
                 dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             # Get the path of the original sound and convert to PCM

@@ -60,7 +60,7 @@ class Command(LoggingBaseCommand):
         # Send the sounds
         combined_ids =list(set(failed_ids + other_ids))
         qs = Sound.objects.filter(id__in=combined_ids)
-        console_logger.info('Will send {} sounds to processing'.format(qs.count()))
+        console_logger.info(f'Will send {qs.count()} sounds to processing')
         n_sent = 0
         for sound in qs:
             if not options['dry_run']:

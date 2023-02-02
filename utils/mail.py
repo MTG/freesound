@@ -104,9 +104,9 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     if settings.ALLOWED_EMAILS:  # for testing purposes, so we don't accidentally send emails to users
         email_to = [(username, email) for username, email in email_to if email in settings.ALLOWED_EMAILS]
 
-    full_subject = '{} {}'.format(settings.EMAIL_SUBJECT_PREFIX, subject)
+    full_subject = f'{settings.EMAIL_SUBJECT_PREFIX} {subject}'
     if extra_subject:
-        full_subject = '{} - {}'.format(full_subject, extra_subject)
+        full_subject = f'{full_subject} - {extra_subject}'
 
     try:
         emails = tuple(((full_subject, email_body, email_from, [email])

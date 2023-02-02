@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 import logging
-from utils.filesystem import remove_directory_if_empty, create_directories
+from utils.filesystem import remove_directory_if_empty
 
 web_logger = logging.getLogger('web')
 
@@ -24,7 +24,7 @@ def copy_files(source_destination_tuples):
                 web_logger.error('Failed copying %s (%s: %s)' % (source_path, str(e), e.output))
         else:
             # The destioantion path is a local volume
-            create_directories(os.path.dirname(destination_path), exist_ok=True)
+            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
             try:
                 shutil.copy2(source_path, destination_path)
                 if settings.LOG_START_AND_END_COPYING_FILES:

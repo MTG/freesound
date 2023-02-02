@@ -80,7 +80,7 @@ from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUpload
 from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
-from utils.filesystem import generate_tree, remove_directory_if_empty, create_directories
+from utils.filesystem import generate_tree, remove_directory_if_empty
 from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 from utils.images import extract_square
 from utils.logging_filters import get_client_ip
@@ -586,7 +586,7 @@ def edit(request):
 @transaction.atomic()
 def handle_uploaded_image(profile, f):
     upload_logger.info("\thandling profile image upload")
-    create_directories(os.path.dirname(profile.locations("avatar.L.path")), exist_ok=True)
+    os.makedirs(os.path.dirname(profile.locations("avatar.L.path")), exist_ok=True)
 
     ext = os.path.splitext(os.path.basename(f.name))[1]
     tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))
@@ -659,7 +659,7 @@ def describe(request):
         csv_form = BulkDescribeForm(request.POST, request.FILES, prefix='bulk')
         if csv_form.is_valid():
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
-            create_directories(directory, exist_ok=True)
+            os.makedirs(directory, exist_ok=True)
             extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
             new_csv_filename = str(uuid.uuid4()) + '.%s' % extension
             path = os.path.join(directory, new_csv_filename)
@@ -1245,7 +1245,7 @@ def account(request, username):
 def handle_uploaded_file(user_id, f):
     # Move or copy the uploaded file from the temporary folder created by Django to the /uploads path
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
-    create_directories(dest_directory, exist_ok=True)
+    os.makedirs(dest_directory, exist_ok=True)
     dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
     upload_logger.info("handling file upload and saving to {}".format(dest_path))
     starttime = time.time()

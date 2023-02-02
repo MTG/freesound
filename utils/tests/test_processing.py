@@ -29,7 +29,6 @@ from django.test import TestCase, override_settings
 from sounds.models import Sound
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor, FreesoundAudioProcessorBeforeDescription
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.filesystem import TemporaryDirectory
 from utils.sound_upload import get_processing_before_describe_sound_folder
 from utils.test_helpers import create_test_files, create_user_and_sounds, \
     override_sounds_path_with_temp_directory, override_uploads_path_with_temp_directory, \

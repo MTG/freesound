@@ -35,7 +35,6 @@ from donations.models import Donation, DonationsModalSettings
 from sounds.models import Sound, Pack, License, Download
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.filesystem import create_directories
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv, create_sound, \
     NoAudioException, AlreadyExistsException
 from utils.tags import clean_and_split_tags
@@ -70,7 +69,7 @@ class UtilsTest(TestCase):
         filenames = ['file1.wav', 'file2.wav']
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        create_directories(user_upload_path)
+        os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
         shutil.copyfile(user_upload_path + filenames[0], user_upload_path + "copy.wav")
         license = License.objects.all()[0]
@@ -272,12 +271,12 @@ class BulkDescribeUtils(TestCase):
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        create_directories(user_upload_path)
+        os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
-        create_directories(csv_file_base_path)
+        os.makedirs(csv_file_base_path, exist_ok=True)
 
         # Test CSV with all lines and metadata ok
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
@@ -397,12 +396,12 @@ class BulkDescribeUtils(TestCase):
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
-        create_directories(user_upload_path)
+        os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
-        create_directories(csv_file_base_path)
+        os.makedirs(csv_file_base_path, exist_ok=True)
 
         # Create Test CSV with some lines ok and some wrong lines
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [

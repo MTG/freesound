@@ -1077,7 +1077,7 @@ class Sound(SocialModel):
         for path in paths_to_rename:
             try:
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
-            except OSError:
+            except IOError:
                 web_logger.error('WARNING changing owner of sound %i: Could not rename file %s because '
                                  'it does not exist.\n' % (self.id, path))
 
@@ -1850,7 +1850,7 @@ class SoundAnalysis(models.Model):
             file_contents = fid.read()
             fid.close()
             return file_contents
-        except OSError:
+        except IOError:
             return 'No logs available...'
 
     def re_run_analysis(self, verbose=True):

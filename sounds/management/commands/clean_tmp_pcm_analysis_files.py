@@ -59,7 +59,7 @@ class Command(LoggingBaseCommand):
                         hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK)
                 if modification_time < date_cutoff:
                     files_to_remove.append(filepath)
-            except OSError:
+            except IOError:
                 # This can happen if the wav file was a tmp file that was renamed while command runs
                 pass
         data_to_log['converted_files_to_remove'] = len(files_to_remove)

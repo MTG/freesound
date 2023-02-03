@@ -103,7 +103,7 @@ class Command(LoggingBaseCommand):
                             donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
                             if 'user' in donation_data:
                                 donation_data['user'] = donation_data['user'].username  # Only log username in graylog
-                            commands_logger.info('Created donation object (%s)' % json.dumps(donation_data))
+                            commands_logger.info(f'Created donation object ({json.dumps(donation_data)})')
 
             start = start + one_day
             params['STARTDATE'] = start

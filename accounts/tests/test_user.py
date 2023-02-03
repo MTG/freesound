@@ -213,7 +213,7 @@ class UserDelete(TestCase):
         user.profile.delete_user()
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
 
-        self.assertEqual(user.username, "deleted_user_%s" % user.id)
+        self.assertEqual(user.username, f"deleted_user_{user.id}")
         self.assertEqual(user.profile.about, '')
         self.assertEqual(user.profile.home_page, '')
         self.assertEqual(user.profile.signature, '')
@@ -240,7 +240,7 @@ class UserDelete(TestCase):
         user.profile.delete_user(remove_sounds=True)
 
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
-        self.assertEqual(user.username, "deleted_user_%s" % user.id)
+        self.assertEqual(user.username, f"deleted_user_{user.id}")
         self.assertEqual(user.profile.about, '')
         self.assertEqual(user.profile.home_page, '')
         self.assertEqual(user.profile.signature, '')
@@ -636,11 +636,11 @@ class UserEmailsUniqueTestCase(TestCase):
         # not changed, he is still redirected to the duplicate email cleanup page
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
         resp = self.client.get(reverse('logout'))
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
 
     def test_fix_email_issues_with_secondary_user_email_change(self):
         # user_c changes his email and tries to login, redirect should go to email cleanup page and from there
@@ -650,7 +650,7 @@ class UserEmailsUniqueTestCase(TestCase):
         resp = self.client.post(reverse('login'), follow=True,
                                 data={'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertEqual(resp.redirect_chain[0][0],
-                          reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+                          reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
         self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
 
         # Also check that related SameUser objects have been removed
@@ -677,7 +677,7 @@ class UserEmailsUniqueTestCase(TestCase):
         resp = self.client.post(reverse('login'), follow=True,
                                 data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertEqual(resp.redirect_chain[0][0],
-                          reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+                          reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
         self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
 
         # Check that user_c email was changed
@@ -709,7 +709,7 @@ class UserEmailsUniqueTestCase(TestCase):
         resp = self.client.post(reverse('login'), follow=True,
                                 data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertEqual(resp.redirect_chain[0][0],
-                          reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+                          reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
         self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
 
         # Check that user_c email was not changed

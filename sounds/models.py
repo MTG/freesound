@@ -174,14 +174,14 @@ class BulkUploadProgress(models.Model):
             'n_lines_with_errors': len(self.validation_output['lines_with_errors']),
             'n_global_errors': len(self.validation_output['global_errors']),
         })
-        web_logger.info('Validated data file for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
+        web_logger.info(f'Validated data file for bulk upload ({json.dumps(bulk_upload_basic_data)})')
 
     def describe_sounds(self):
         """
         Start the actual description of the sounds and add them to Freesound.
         """
         bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
-        web_logger.info('Started creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
+        web_logger.info(f'Started creating sound objects for bulk upload ({json.dumps(bulk_upload_basic_data)})')
         bulk_describe_from_csv(
             self.csv_path,
             delete_already_existing=False,
@@ -189,7 +189,7 @@ class BulkUploadProgress(models.Model):
             sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
             username=self.user.username,
             bulkupload_progress_id=self.id)
-        web_logger.info('Finished creating sound objects for bulk upload (%s)' % json.dumps(bulk_upload_basic_data))
+        web_logger.info(f'Finished creating sound objects for bulk upload ({json.dumps(bulk_upload_basic_data)})')
 
     def store_progress_for_line(self, line_no, message):
         """
@@ -1150,7 +1150,7 @@ class Sound(SocialModel):
 
     def create_moderation_ticket(self):
         ticket = Ticket.objects.create(
-            title='Moderate sound %s' % self.original_filename,
+            title=f'Moderate sound {self.original_filename}',
             status=TICKET_STATUS_NEW,
             queue=Queue.objects.get(name='sound moderation'),
             sender=self.user,
@@ -1158,7 +1158,7 @@ class Sound(SocialModel):
         )
         TicketComment.objects.create(
             sender=self.user,
-            text="I've uploaded %s. Please moderate!" % self.original_filename,
+            text=f"I've uploaded {self.original_filename}. Please moderate!",
             ticket=ticket,
         )
 
@@ -1193,7 +1193,7 @@ class Sound(SocialModel):
         if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI") and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
-            sounds_logger.info("Send sound with id %s to queue 'process'" % self.id)
+            sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
             return True
 
     def estimate_num_processing_attemps(self):

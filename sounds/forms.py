@@ -189,7 +189,7 @@ class NewLicenseForm(forms.Form):
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
-        valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
+        valid_licenses = ', '.join([f'"{name}"' for name in list(self.license_qs.values_list('name', flat=True))])
         self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
                                                                         % valid_licenses})
     def clean_license(self):
@@ -316,8 +316,8 @@ class BWSoundEditAndDescribeForm(forms.Form):
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
-        valid_licenses = ', '.join(['"%s"' % name for name in list(self.license_qs.values_list('name', flat=True))])
-        self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s' % valid_licenses})
+        valid_licenses = ', '.join([f'"{name}"' for name in list(self.license_qs.values_list('name', flat=True))])
+        self.fields['license'].error_messages.update({'invalid_choice': f'Invalid license. Should be one of {valid_licenses}'})
 
         # Prepare pack field
         self.fields['pack'].queryset = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')

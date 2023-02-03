@@ -33,5 +33,5 @@ class Command(BaseCommand):
             f_mod_date = datetime.datetime.fromtimestamp(os.path.getmtime(settings.FILE_UPLOAD_TEMP_DIR + f))
             now = datetime.datetime.now()
             if (now - f_mod_date).total_seconds() > 3600*24:
-                print("Deleting %s" % f)
+                print(f"Deleting {f}")
                 os.remove(settings.FILE_UPLOAD_TEMP_DIR + f)

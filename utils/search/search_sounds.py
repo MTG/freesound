@@ -353,8 +353,8 @@ def add_sounds_to_search_engine(sound_objects):
         get_search_engine().add_sounds_to_index(sound_objects)
         return num_sounds
     except SearchEngineException as e:
-        console_logger.error("Failed to add sounds to search engine index: %s" % str(e))
-        search_logger.error("Failed to add sounds to search engine index: %s" % str(e))
+        console_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
+        search_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
         return 0
 
 
@@ -364,13 +364,13 @@ def delete_sounds_from_search_engine(sound_ids):
     Args:
         sound_ids (list[int]): IDs of the sounds to delete
     """
-    console_logger.info("Deleting %d sounds from search engine" % len(sound_ids))
-    search_logger.info("Deleting %d sounds from search engine" % len(sound_ids))
+    console_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
+    search_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
     try:
         get_search_engine().remove_sounds_from_index(sound_ids)
     except SearchEngineException as e:
-        console_logger.error("Could not delete sounds: %s" % str(e))
-        search_logger.error("Could not delete sounds: %s" % str(e))
+        console_logger.error(f"Could not delete sounds: {str(e)}")
+        search_logger.error(f"Could not delete sounds: {str(e)}")
 
 
 def delete_all_sounds_from_search_engine():
@@ -380,8 +380,8 @@ def delete_all_sounds_from_search_engine():
     try:
         get_search_engine().remove_all_sounds()
     except SearchEngineException as e:
-        console_logger.error("Could not delete sounds: %s" % str(e))
-        search_logger.error("Could not delete sounds: %s" % str(e))
+        console_logger.error(f"Could not delete sounds: {str(e)}")
+        search_logger.error(f"Could not delete sounds: {str(e)}")
 
 
 def get_all_sound_ids_from_search_engine(page_size=2000):
@@ -408,7 +408,7 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:
-        search_logger.error("Could not retrieve all sound IDs from search engine: %s" % str(e))
+        search_logger.error(f"Could not retrieve all sound IDs from search engine: {str(e)}")
     return sorted(solr_ids)
 
 
@@ -418,5 +418,5 @@ def get_random_sound_id_from_search_engine():
         search_logger.info("Making random sound query")
         return get_search_engine().get_random_sound_id()
     except SearchEngineException as e:
-        search_logger.error("Could not retrieve a random sound ID from search engine: %s" % str(e))
+        search_logger.error(f"Could not retrieve a random sound ID from search engine: {str(e)}")
     return 0

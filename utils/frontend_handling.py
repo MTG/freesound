@@ -160,7 +160,7 @@ def redirect_if_beastwhoosh(redirect_url_name='front-page', kwarg_keys=None, que
                     new_args = []
                 url = reverse(redirect_url_name, args=new_args)
                 if query_string:
-                    url += '?%s' % query_string
+                    url += f'?{query_string}'
                 return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator
@@ -184,7 +184,7 @@ def redirect_if_beastwhoosh_inline(function=None, redirect_url_name='front-page'
                     new_args = []
                 url = reverse(redirect_url_name, args=new_args)
                 if query_string:
-                    url += '?%s' % query_string
+                    url += f'?{query_string}'
                 return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator(function)

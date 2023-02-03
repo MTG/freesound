@@ -202,7 +202,7 @@ def front_page(request):
     top_donor_user_id = cache.get("top_donor_user_id", None)
     top_donor_donation_amount = cache.get("top_donor_donation_amount", None)
     if popular_searches is not None:
-        popular_searches = [(query_terms, '{}?q={}'.format(reverse('sounds-search'), query_terms))
+        popular_searches = [(query_terms, f"{reverse('sounds-search')}?q={query_terms}")
                             for query_terms in popular_searches]
 
     current_forum_threads = get_hot_threads(n=10)
@@ -329,7 +329,7 @@ def after_download_modal(request):
         modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
 
         if should_suggest_donation(request.user, len(modal_shown_timestamps)):
-            web_logger.info('Showing after download donate modal (%s)' % json.dumps({'user_id': request.user.id}))
+            web_logger.info(f"Showing after download donate modal ({json.dumps({'user_id': request.user.id})})")
             modal_shown_timestamps.append(time.time())
             cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps,
                       60 * 60 * 24)  # 24 lifetime cache
@@ -469,7 +469,7 @@ def sound_edit(request, username, sound_id):
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound description and/or tags.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound description and/or tags.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
@@ -503,7 +503,7 @@ def sound_edit(request, username, sound_id):
 
             sound.mark_index_dirty()  # Marks as dirty and saves
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound pack.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound pack.')
             for affected_pack in affected_packs:  # Process affected packs
                 affected_pack.process()
 
@@ -534,7 +534,7 @@ def sound_edit(request, username, sound_id):
 
             sound.mark_index_dirty()
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound geotag.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound geotag.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -554,7 +554,7 @@ def sound_edit(request, username, sound_id):
             if sound.pack:
                 sound.pack.process()  # Sound license changed, process pack (if sound has pack)
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound license.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license}, 
@@ -638,7 +638,7 @@ def edit_and_describe_sounds_helper(request):
             except NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
                 messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file {}.'.format(form.cleaned_data['name']))
+                                     f"Something went wrong with accessing the file {form.cleaned_data['name']}.")
             except AlreadyExistsException as e:
                 msg = e.message
                 messages.add_message(request, messages.WARNING, msg)
@@ -1036,7 +1036,7 @@ def pack(request, username, pack_id):
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{}?f=username:%22{}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(f"{reverse('sounds-search')}?f=username:%22{username}%22&s=Date+added+(newest+first)&g=1&only_p=1")
 
     user = request.parameter_user
     order = request.GET.get("order", "name")
@@ -1054,7 +1054,7 @@ def packs_for_user(request, username):
 @redirect_if_old_username_or_404
 def for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect('{}?f=username:%22{}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(f"{reverse('sounds-search')}?f=username:%22{username}%22&s=Date+added+(newest+first)&g=1")
 
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
@@ -1089,7 +1089,7 @@ def delete(request, username, sound_id):
             try:
                 ticket = sound.ticket
                 tc = TicketComment(sender=request.user,
-                                   text="User %s deleted the sound" % request.user,
+                                   text=f"User {request.user} deleted the sound",
                                    ticket=ticket,
                                    moderator_only=False)
                 tc.save()

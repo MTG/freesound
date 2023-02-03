@@ -72,24 +72,24 @@ class Command(LoggingBaseCommand):
 
         messages = []
         messages.append("\nNumber of sounds per index:\n--------------------------")
-        messages.append("Solr index\t\t%i" % len(solr_ids))
-        messages.append("Gaia index\t\t%i" % len(gaia_ids))
-        messages.append("Freesound\t\t%i  (moderated and processed)" % len(fs_mp))
-        messages.append("Freesound\t\t%i  (moderated, processed and analyzed)" % len(fs_mpa))
+        messages.append(f"Solr index\t\t{len(solr_ids)}")
+        messages.append(f"Gaia index\t\t{len(gaia_ids)}")
+        messages.append(f"Freesound\t\t{len(fs_mp)}  (moderated and processed)")
+        messages.append(f"Freesound\t\t{len(fs_mpa)}  (moderated, processed and analyzed)")
         messages.append("\n\n***************\nSOLR INDEX\n***************\n")
-        messages.append("Sounds in solr but not in fs:\t%i" % len(in_solr_not_in_fs))
-        messages.append("Sounds in fs but not in solr:\t%i" % len(in_fs_not_in_solr))
+        messages.append(f"Sounds in solr but not in fs:\t{len(in_solr_not_in_fs)}")
+        messages.append(f"Sounds in fs but not in solr:\t{len(in_fs_not_in_solr)}")
         console_logger.info('\n'.join(messages))
 
         if not options['no-changes']:
             # Mark fs sounds to go processing
             if in_fs_not_in_solr:
-                console_logger.info("Changing is_index_dirty_state of %i sounds" % len(in_fs_not_in_solr))
+                console_logger.info(f"Changing is_index_dirty_state of {len(in_fs_not_in_solr)} sounds")
                 Sound.objects.filter(id__in=in_fs_not_in_solr).update(is_index_dirty=True)
 
             # Delete sounds from solr that are not in the db
             if in_solr_not_in_fs:
-                console_logger.info("\nDeleting %i sounds that should not be in solr" % len(in_solr_not_in_fs))
+                console_logger.info(f"\nDeleting {len(in_solr_not_in_fs)} sounds that should not be in solr")
                 delete_sounds_from_search_engine(sound_ids=in_solr_not_in_fs)
 
         in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mpa))))
@@ -97,7 +97,7 @@ class Command(LoggingBaseCommand):
 
         messages = []
         messages.append("\n***************\nGAIA INDEX\n***************\n")
-        messages.append("Sounds in gaia but not in fs:\t%i" % len(in_gaia_not_in_fs))
+        messages.append(f"Sounds in gaia but not in fs:\t{len(in_gaia_not_in_fs)}")
         messages.append("Sounds in fs but not in gaia:\t%i  (only considering sounds correctly analyzed)" \
                    % len(in_fs_not_in_gaia))
         console_logger.info('\n'.join(messages))

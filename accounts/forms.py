@@ -578,7 +578,7 @@ class FsPasswordResetForm(forms.Form):
         """
         UserModel = get_user_model()
         active_users = UserModel._default_manager.filter(Q(**{
-                '%s__iexact' % UserModel.get_email_field_name(): username_or_email,
+                f'{UserModel.get_email_field_name()}__iexact': username_or_email,
                 'is_active': True,
             }) | Q(**{
                 'username__iexact': username_or_email,

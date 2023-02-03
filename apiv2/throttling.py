@@ -66,7 +66,7 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
             self.num_requests, self.duration = self.parse_rate(rate)
             passes_throttle = super().allow_request(request, view)
             if not passes_throttle:
-                msg = "Request was throttled because of exceeding a request limit rate (%s)" % rate
+                msg = f"Request was throttled because of exceeding a request limit rate ({rate})"
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
@@ -126,7 +126,7 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
             self.num_requests, self.duration = self.parse_rate(rate)
             passes_throttle = super().allow_request(request, view)
             if not passes_throttle:
-                msg = "Request was throttled because of exceeding a request limit rate (%s)" % rate
+                msg = f"Request was throttled because of exceeding a request limit rate ({rate})"
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
@@ -218,7 +218,7 @@ class IpBasedThrottling(SimpleRateThrottle):
                     passes_throttle = self.throttle_success()
 
             if not passes_throttle:
-                msg = "Request was throttled because of exceeding the concurrent ip limit rate (%s)" % rate
+                msg = f"Request was throttled because of exceeding the concurrent ip limit rate ({rate})"
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"

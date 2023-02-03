@@ -490,8 +490,8 @@ class Profile(SocialModel):
                 # If user object is not to be deleted from DB we need to anonymize it and remove sounds if requested
 
                 # Remove personal data from the user
-                self.user.username = 'deleted_user_%s' % self.user.id
-                self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
+                self.user.username = f'deleted_user_{self.user.id}'
+                self.user.email = f'deleted_user_{self.user.id}@freesound.org'
                 self.has_avatar = False
                 self.is_anonymized_user = True
                 self.user.set_unusable_password()

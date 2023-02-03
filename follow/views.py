@@ -62,7 +62,7 @@ def following_users(request, username):
         paginator = paginate(request, following, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?following={}'.format(paginator['current_page']),
+            'next_path': reverse('account', args=[username]) + f"?following={paginator['current_page']}",
             'follow_page': 'following'
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -99,7 +99,7 @@ def followers(request, username):
         paginator = paginate(request, followers, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?followers={}'.format(paginator['current_page']),
+            'next_path': reverse('account', args=[username]) + f"?followers={paginator['current_page']}",
             'follow_page': 'followers'
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -136,7 +136,7 @@ def following_tags(request, username):
         paginator = paginate(request, following_tags, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?followingTags={}'.format(paginator['current_page']),
+            'next_path': reverse('account', args=[username]) + f"?followingTags={paginator['current_page']}",
             'follow_page': 'tags' # Used in BW
         })
         return render(request, 'accounts/modal_follow.html', tvars)

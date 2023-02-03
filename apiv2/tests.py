@@ -168,7 +168,7 @@ class TestAPI(TestCase):
         sound.change_moderation_state("OK")
 
         headers = {
-            'HTTP_AUTHORIZATION': 'Token %s' % c.key,
+            'HTTP_AUTHORIZATION': f'Token {c.key}',
             'HTTP_ORIGIN': 'https://www.google.com'
         }
         resp = self.client.options(reverse('apiv2-sound-instance',
@@ -190,7 +190,7 @@ class TestAPI(TestCase):
         sound.change_moderation_state("OK")
 
         headers = {
-            'HTTP_AUTHORIZATION': 'Token %s' % c.key,
+            'HTTP_AUTHORIZATION': f'Token {c.key}',
         }
         # make query that can't be decoded
         resp = self.client.options("/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers)
@@ -202,7 +202,7 @@ class TestAPI(TestCase):
                         url="https://freesound.com", name="test")
         c.save()
         headers = {
-            'HTTP_AUTHORIZATION': 'Token %s' % c.key,
+            'HTTP_AUTHORIZATION': f'Token {c.key}',
         }
         resp = self.client.get("/apiv2/", secure=True, **headers)
         self.assertEqual(resp.status_code, 200)

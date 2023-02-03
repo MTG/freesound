@@ -105,7 +105,7 @@ class Command(LoggingBaseCommand):
                         # Before making the symlink, check again that sound exists, otherwise don't make it as there were problems copying sound
                         sound_exists = c.run(f'ls {dst_sound_path}', hide=True, warn=True).exited == 0
                         if sound_exists:
-                            c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  f'{sound_id}-*')), hide=True, warn=True)
+                            c.run(f"rm {os.path.join(cdn_symlinks_dir, folder_id, f'{sound_id}-*')}", hide=True, warn=True)
                             random_uuid = str(uuid.uuid4())
                             symlink_name = f'{sound_id}-{random_uuid}'
                             dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  symlink_name)

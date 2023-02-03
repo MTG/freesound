@@ -78,8 +78,8 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
     query_params['query_filter'] = extra_vars['filter_query_non_facets']
     cache_key = 'cluster-results-{textual_query}-{query_filter}-{sort}-{group_by_pack}'\
         .format(**query_params).replace(' ', '')
-    cache_key += '-{}'.format(str(query_params['query_fields']))
-    cache_key += '-{}'.format(features)
+    cache_key += f"-{str(query_params['query_fields'])}"
+    cache_key += f'-{features}'
     cache_key_hashed = hash_cache_key(cache_key)
 
     # check if result is in cache

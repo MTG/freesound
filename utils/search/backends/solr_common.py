@@ -143,12 +143,12 @@ class SolrQuery:
         except KeyError:
             raise SearchEngineException("you haven't defined any facet fields yet")
 
-        self.params['f.%s.facet.limit' % field] = limit
-        self.params['f.%s.facet.offset' % field] = offset
-        self.params['f.%s.facet.prefix' % field] = prefix
-        self.params['f.%s.facet.sort' % field] = sort
-        self.params['f.%s.facet.mincount' % field] = mincount
-        self.params['f.%s.facet.missing' % field] = count_missing
+        self.params[f'f.{field}.facet.limit'] = limit
+        self.params[f'f.{field}.facet.offset'] = offset
+        self.params[f'f.{field}.facet.prefix'] = prefix
+        self.params[f'f.{field}.facet.sort'] = sort
+        self.params[f'f.{field}.facet.mincount'] = mincount
+        self.params[f'f.{field}.facet.missing'] = count_missing
 
     def add_date_facet_fields(self, *args):
         """Add date facet fields
@@ -182,11 +182,11 @@ class SolrQuery:
         except KeyError:
             raise SearchEngineException("you haven't defined any date facet fields yet")
 
-        self.params['f.%s.date.start' % field] = start
-        self.params['f.%s.date.end' % field] = start
-        self.params['f.%s.date.gap' % field] = gap
-        self.params['f.%s.date.hardend' % field] = hardened
-        self.params['f.%s.date.other' % field] = count_other
+        self.params[f'f.{field}.date.start'] = start
+        self.params[f'f.{field}.date.end'] = start
+        self.params[f'f.{field}.date.gap'] = gap
+        self.params[f'f.{field}.date.hardend'] = hardened
+        self.params[f'f.{field}.date.other'] = count_other
 
     def set_highlighting_options_default(self, field_list=None, snippets=None, fragment_size=None,
                                          merge_contiguous=None, require_field_match=None, max_analyzed_chars=None,
@@ -238,12 +238,12 @@ class SolrQuery:
         except KeyError:
             raise SearchEngineException("you haven't defined any highlighting fields yet")
 
-        self.params['f.%s.hl.fl.snippets' % field] = snippets
-        self.params['f.%s.hl.fragsize' % field] = fragment_size
-        self.params['f.%s.hl.mergeContiguous' % field] = merge_contiguous
-        self.params['f.%s.hl.alternateField' % field] = alternate_field
-        self.params['f.%s.hl.simple.pre' % field] = pre
-        self.params['f.%s.hl.simple.post' % field] = post
+        self.params[f'f.{field}.hl.fl.snippets'] = snippets
+        self.params[f'f.{field}.hl.fragsize'] = fragment_size
+        self.params[f'f.{field}.hl.mergeContiguous'] = merge_contiguous
+        self.params[f'f.{field}.hl.alternateField'] = alternate_field
+        self.params[f'f.{field}.hl.simple.pre'] = pre
+        self.params[f'f.{field}.hl.simple.post'] = post
 
     def __str__(self):
         return urllib.parse.urlencode(self.params, doseq=True)

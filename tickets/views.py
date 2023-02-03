@@ -362,7 +362,7 @@ def moderation_assign_user(request, user_id, only_unassigned=True):
 
     tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
 
-    msg = 'You have been assigned all new sounds from %s.' % sender.username
+    msg = f'You have been assigned all new sounds from {sender.username}.'
     messages.add_message(request, messages.INFO, msg)
     invalidate_all_moderators_header_cache()
 
@@ -386,7 +386,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     ticket.save()
     invalidate_all_moderators_header_cache()
 
-    msg = 'You have been assigned ticket "%s".' % ticket.title
+    msg = f'You have been assigned ticket "{ticket.title}".'
     messages.add_message(request, messages.INFO, msg)
 
     next = request.GET.get("next", None)
@@ -396,11 +396,11 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
         if next == "tardy_users":
             return redirect("tickets-moderation-tardy-users")
         elif next == "tardy_moderators":
-            return redirect(reverse("tickets-moderation-tardy-moderators")+"?page=%s" % p)
+            return redirect(reverse("tickets-moderation-tardy-moderators")+f"?page={p}")
         elif next == "ticket":
             return redirect(reverse("tickets-ticket", kwargs={'ticket_key': ticket.key}))
         else:
-            return redirect(reverse("tickets-moderation-home")+"?page=%s" % p)
+            return redirect(reverse("tickets-moderation-home")+f"?page={p}")
     else:
         return redirect("tickets-moderation-home")
 

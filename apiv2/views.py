@@ -340,7 +340,7 @@ class CombinedSearch(GenericAPIView):
                 else:
                     response_data['more'] = None
             if extra_parameters_string:
-                response_data['more'] += '%s' % extra_parameters_string
+                response_data['more'] += f'{extra_parameters_string}'
         else:
             response_data['more'] = None
 
@@ -581,7 +581,7 @@ class UserInstance(RetrieveAPIView):
     queryset = User.objects.filter(is_active=True)
 
     def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message('user:%s instance' % (self.kwargs['username'])))
+        api_logger.info(self.log_message(f"user:{self.kwargs['username']} instance"))
         return super().get(request, *args, **kwargs)
 
 
@@ -597,7 +597,7 @@ class UserSounds(ListAPIView):
                   get_formatted_examples_for_view('UserSounds', 'apiv2-user-sound-list', max=5))
 
     def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message('user:%s sounds' % (self.kwargs['username'])))
+        api_logger.info(self.log_message(f"user:{self.kwargs['username']} sounds"))
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -624,7 +624,7 @@ class UserPacks(ListAPIView):
                   get_formatted_examples_for_view('UserPacks', 'apiv2-user-packs', max=5))
 
     def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message('user:%s packs' % (self.kwargs['username'])))
+        api_logger.info(self.log_message(f"user:{self.kwargs['username']} packs"))
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -649,7 +649,7 @@ class UserBookmarkCategories(ListAPIView):
                   get_formatted_examples_for_view('UserBookmarkCategories', 'apiv2-user-bookmark-categories', max=5))
 
     def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message('user:%s bookmark_categories' % (self.kwargs['username'])))
+        api_logger.info(self.log_message(f"user:{self.kwargs['username']} bookmark_categories"))
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -985,11 +985,11 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
             raise UnauthorizedException(msg='Not authorized. The sound you\'re trying to edit is not owned by '
                                             'the OAuth2 logged in user.', resource=self)
 
-        api_logger.info(self.log_message('sound:%s edit_description' % sound_id))
+        api_logger.info(self.log_message(f'sound:{sound_id} edit_description'))
         serializer = EditSoundDescriptionSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id,
+                return Response(data={'detail': f'Description of sound {sound_id} successfully edited.',
                                       'note': 'Description of sound %s has not been saved in the database as '
                                               'browseable API is only for testing purposes.' % sound_id},
                                 status=status.HTTP_200_OK)
@@ -1032,7 +1032,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 # Invalidate caches
                 sound.invalidate_template_caches()
 
-                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id},
+                return Response(data={'detail': f'Description of sound {sound_id} successfully edited.'},
                                 status=status.HTTP_200_OK)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -1054,11 +1054,11 @@ class BookmarkSound(WriteRequiredGenericAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-        api_logger.info(self.log_message('sound:%s create_bookmark' % sound_id))
+        api_logger.info(self.log_message(f'sound:{sound_id} create_bookmark'))
         serializer = CreateBookmarkSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id,
+                return Response(data={'detail': f'Successfully bookmarked sound {sound_id}.',
                                       'note': 'This bookmark has not been saved in the database as browseable API is '
                                               'only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
@@ -1071,7 +1071,7 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                 else:
                     bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id)
                 bookmark.save()
-                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id},
+                return Response(data={'detail': f'Successfully bookmarked sound {sound_id}.'},
                                 status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -1093,12 +1093,12 @@ class RateSound(WriteRequiredGenericAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-        api_logger.info(self.log_message('sound:%s create_rating' % sound_id))
+        api_logger.info(self.log_message(f'sound:{sound_id} create_rating'))
         serializer = CreateRatingSerializer(data=request.data)
         if serializer.is_valid():
             try:
                 if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id,
+                    return Response(data={'detail': f'Successfully rated sound {sound_id}.',
                                           'note': 'This rating has not been saved in the database as browseable API '
                                                   'is only for testing purposes.'},
                                     status=status.HTTP_201_CREATED)
@@ -1106,10 +1106,10 @@ class RateSound(WriteRequiredGenericAPIView):
                     SoundRating.objects.create(
                         user=self.user, sound_id=sound_id, rating=int(request.data['rating']) * 2)
                     Sound.objects.filter(id=sound_id).update(is_index_dirty=True)
-                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id},
+                    return Response(data={'detail': f'Successfully rated sound {sound_id}.'},
                                     status=status.HTTP_201_CREATED)
             except IntegrityError:
-                raise ConflictException(msg='User has already rated sound %s' % sound_id, resource=self)
+                raise ConflictException(msg=f'User has already rated sound {sound_id}', resource=self)
             except:
                 raise ServerErrorException(resource=self)
         else:
@@ -1132,17 +1132,17 @@ class CommentSound(WriteRequiredGenericAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-        api_logger.info(self.log_message('sound:%s create_comment' % sound_id))
+        api_logger.info(self.log_message(f'sound:{sound_id} create_comment'))
         serializer = CreateCommentSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id,
+                return Response(data={'detail': f'Successfully commented sound {sound_id}.',
                                       'note': 'This comment has not been saved in the database as browseable API is '
                                               'only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 sound.add_comment(self.user, request.data['comment'])
-                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id},
+                return Response(data={'detail': f'Successfully commented sound {sound_id}.'},
                                 status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -1394,7 +1394,7 @@ def edit_api_credential(request, key):
             client.description = form.cleaned_data['description']
             client.accepted_tos = form.cleaned_data['accepted_tos']
             client.save()
-            messages.add_message(request, messages.INFO, "Credentials with name %s have been updated." % client.name)
+            messages.add_message(request, messages.INFO, f"Credentials with name {client.name} have been updated.")
             return HttpResponseRedirect(reverse("apiv2-apply"))
     else:
         form = ApiV2ClientForm(initial={'name': client.name,
@@ -1457,7 +1457,7 @@ def delete_api_credential(request, key):
         client.delete()
     except ApiV2Client.DoesNotExist:
         pass
-    messages.add_message(request, messages.INFO, "Credentials with name %s have been deleted." % name)
+    messages.add_message(request, messages.INFO, f"Credentials with name {name} have been deleted.")
     return HttpResponseRedirect(reverse("apiv2-apply"))
 
 

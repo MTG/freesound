@@ -51,7 +51,7 @@ class ApiV2Client(models.Model):
     throttling_level = models.IntegerField(default=1)
 
     def __str__(self):
-        return "credentials for developer %s" % self.user.username
+        return f"credentials for developer {self.user.username}"
 
     def save(self, *args, **kwargs):
 

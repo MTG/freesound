@@ -35,7 +35,7 @@ def transform_unique_email(email):
     duplicated user emails by the contents returned in this function. This is reused for further
     checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup.
     """
-    return "dupemail+{}@freesound.org".format(email.replace("@", "%"))
+    return f"dupemail+{email.replace('@', '%')}@freesound.org"
 
 
 def _ensure_list(item):

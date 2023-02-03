@@ -1710,6 +1710,9 @@ class PackDownload(models.Model):
     pack = models.ForeignKey(Pack, related_name='downloads')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
+    class Meta:
+        ordering = ("-created",)
+
 
 class PackDownloadSound(models.Model):
     sound = models.ForeignKey(Sound)

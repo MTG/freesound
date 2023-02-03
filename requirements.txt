@@ -24,7 +24,7 @@ Django==1.11.29
 djangorestframework-jsonp==1.0.2
 djangorestframework-xml==2.0.0
 djangorestframework-yaml==2.0.0
-djangorestframework==3.9.4
+djangorestframework==3.10.0
 fabric==2.6.0
 feedparser~=6.0.10
 freezegun==0.3.11
@@ -33,7 +33,7 @@ graypy==0.2.12
 gunicorn==19.9.0
 ipython==4.2.0
 mapbox==0.18.0
-markdown==2.5.1
+markdown==3.4.1
 networkx==1.5
 numpy==1.16.6
 pillow==6.2.2

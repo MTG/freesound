@@ -107,6 +107,8 @@ def donation_complete_stripe(request):
             # Fulfill the purchase...
             amount = int(session['display_items'][0]['amount'])/100.0
             encoded_data = session['success_url'].split('?')[1].replace("token=", "")
+            if encoded_data.startswith("b'"):
+                encoded_data = encoded_data[2:-1]
             customer_email = session['customer_email']
             if customer_email == None:
                 customer = stripe.Customer.retrieve(session['customer'])

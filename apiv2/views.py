@@ -1160,7 +1160,7 @@ def download_from_token(request, token):
     try:
         token_contents = jwt.decode(token, settings.SECRET_KEY, leeway=10)
     except jwt.ExpiredSignatureError:
-        raise UnauthorizedException(msg='This token has expried.')
+        raise UnauthorizedException(msg='This token has expired.')
     except jwt.InvalidTokenError:
         raise UnauthorizedException(msg='Invalid token.')
     try:

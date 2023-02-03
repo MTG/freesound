@@ -34,7 +34,8 @@
 #   # if you want to get all info:
 #   paypal.get_transaction_details(response['transactionid'])
 
-import urllib.request, urllib.parse, urllib.error, cgi
+import urllib.request, urllib.parse, urllib.error
+
 
 class Paypal:
     
@@ -80,7 +81,7 @@ class Paypal:
         params_string = urllib.parse.urlencode( params )
         
         # get the response and parse it
-        response = cgi.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())
+        response = urllib.parse.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())
        
         # the parsed dict has a list for each value, but all Paypal replies are unique
         return {key.lower(): value[0] for (key,value) in response.items()}

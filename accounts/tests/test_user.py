@@ -32,7 +32,6 @@ from django.core.management import call_command
 from django.db import IntegrityError
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.test.utils import patch_logger
 from django.urls import reverse
 
 from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
@@ -464,13 +463,9 @@ class UserDelete(TestCase):
             self.assertRedirects(resp, reverse('front-page'))
 
         def call_command_get_console_log_output(command):
-            # NOTE: we use patch_logger to get the contents written to "console" logger used by the management command.
-            # We do that so we can get the content of the logs and then test its contents. We do it this way because
-            # Python 2.7 does not have TestCase.assertLogs implemented. Once we switch to Python3 we can remove this
-            # function and simply use TestCase.assertLogs below.
-            with patch_logger('console', 'info') as cm:
+            with self.assertLogs('console', 'INFO') as cm:
                 call_command(command)
-                return '\n'.join(cm)
+                return "\n".join(cm.output)
 
         # Create 3 users for the tests below
         user1 = self.create_user_and_content(username="testuser1")

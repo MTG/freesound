@@ -73,8 +73,6 @@ API_SORT_OPTIONS_MAP = {
 
 
 def my_quote(s):
-    # First encode to utf8 to avoid problems with non standard characters
-    s = s.encode('utf8')
     return quote(s, safe=",:[]*+()'")
 
 

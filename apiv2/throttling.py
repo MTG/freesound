@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
 from django.conf import settings
 from rest_framework.throttling import SimpleRateThrottle
@@ -67,7 +64,7 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
             rate = limit_rates[0]  # Get burst limit
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
-            passes_throttle = super(ClientBasedThrottlingBurst, self).allow_request(request, view)
+            passes_throttle = super().allow_request(request, view)
             if not passes_throttle:
                 msg = "Request was throttled because of exceeding a request limit rate (%s)" % rate
                 if client_throttle_level == 0:
@@ -127,7 +124,7 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
             rate = limit_rates[1]  # Get sustained limit
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
-            passes_throttle = super(ClientBasedThrottlingSustained, self).allow_request(request, view)
+            passes_throttle = super().allow_request(request, view)
             if not passes_throttle:
                 msg = "Request was throttled because of exceeding a request limit rate (%s)" % rate
                 if client_throttle_level == 0:

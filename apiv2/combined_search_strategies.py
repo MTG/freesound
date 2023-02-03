@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,12 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from __future__ import absolute_import
-from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
 from past.utils import old_div
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search

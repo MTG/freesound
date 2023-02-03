@@ -27,7 +27,7 @@ class CommentForm(forms.Form):
     
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        super(CommentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
     
     def clean_comment(self):
         comment = self.cleaned_data['comment']
@@ -42,7 +42,7 @@ class BwCommentForm(CommentForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwCommentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields['comment'].widget.attrs['placeholder'] = 'Write your comment here...'
         self.fields['comment'].widget.attrs['rows'] = False

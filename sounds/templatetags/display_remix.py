@@ -18,9 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import, division
 #avoid namespace clash with 'tags' templatetag
-from builtins import str
 from django import template
 import json
 

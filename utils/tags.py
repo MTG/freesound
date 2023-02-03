@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,10 +18,9 @@ from __future__ import division
 #     See AUTHORS file.
 #
 
-from builtins import zip
-from builtins import range
 from past.utils import old_div
 import re
+
 
 def size_generator(small_size, large_size, num_items):
     if num_items <= 1:
@@ -55,7 +53,7 @@ def annotate_tags(tags, sort=None, small_size=0.7, large_size=1.8):
     after this function the list will look like this:
     [ {"name": "tag1", "count": 1, "size": 0.7}, {"name": "tag2", "count": 200, "size": 1.8}, {"name": "tag3", "count": 200, "size": 1.8}]
     """
-    unique_counts = sorted(set(tag["count"] for tag in tags))
+    unique_counts = sorted({tag["count"] for tag in tags})
     lookup = dict(zip(unique_counts, size_generator(small_size, large_size, len(unique_counts))))
     tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
     if sort is not None:
@@ -81,4 +79,4 @@ def clean_and_split_tags(tags):
     tags = alphanum_only.sub(" ", tags)
     tags = multi_dashes.sub("-", tags)
     common_words = "the of to and an in is it you that he was for on are with as i his they be at".split() #@UnusedVariable
-    return set([tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words])
+    return {tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words}

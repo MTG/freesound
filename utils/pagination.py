@@ -37,7 +37,7 @@ class CountProvidedPaginator(Paginator):
         # If the count was provided return it, otherwise use the
         if self._count:
             return self._count
-        return super(CountProvidedPaginator, self).count
+        return super().count
 
 
 def paginate(request, qs, items_per_page=20, page_get_name='page', object_count=None):

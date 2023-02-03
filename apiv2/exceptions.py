@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
 import logging
 

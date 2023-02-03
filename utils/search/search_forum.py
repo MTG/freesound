@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import str
 import logging
 
 from utils.search import get_search_engine, SearchEngineException

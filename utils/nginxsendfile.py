@@ -32,8 +32,8 @@ def prepare_sendfile_arguments_for_sound_download(sound):
 
     if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
         sound_path = sound.locations("preview.LQ.mp3.path")
-        sound_friendly_filename = '{0}.{1}'.format(sound_friendly_filename[:sound_friendly_filename.rfind('.')], 'mp3')
-        sound_sendfile_url = '{0}.{1}'.format(sound_sendfile_url[:sound_sendfile_url.rfind('.')], 'mp3')
+        sound_friendly_filename = '{}.{}'.format(sound_friendly_filename[:sound_friendly_filename.rfind('.')], 'mp3')
+        sound_sendfile_url = '{}.{}'.format(sound_sendfile_url[:sound_sendfile_url.rfind('.')], 'mp3')
 
     return sound_path, sound_friendly_filename, sound_sendfile_url
 

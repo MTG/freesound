@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 
 from django.contrib.contenttypes.models import ContentType
@@ -40,9 +37,9 @@ class SoundRating(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return u"%s rated %s: %d" % (self.user, self.sound, self.rating)
+        return "%s rated %s: %d" % (self.user, self.sound, self.rating)
 
-    class Meta(object):
+    class Meta:
         unique_together = (('user', 'sound'),)
         ordering = ('-created',)
 

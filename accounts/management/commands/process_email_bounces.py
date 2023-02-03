@@ -49,7 +49,7 @@ def process_message(data):
             EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
             n_recipients += 1
         except User.DoesNotExist:  # user probably got deleted
-            console_logger.info('User {} not found in database (probably deleted)'.format(email))
+            console_logger.info(f'User {email} not found in database (probably deleted)')
         except IntegrityError:  # message duplicated
             is_duplicate = True
 

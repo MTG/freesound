@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import json
 import random
 import re
@@ -154,12 +151,12 @@ def convert_sound_to_search_engine_document(sound):
                 # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                 # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
                 for key, value in analysis_data.items():
-                    if type(value) == list:
+                    if isinstance(value, list):
                         # Make sure that the list is formed by strings
-                        value = ['{}'.format(item) for item in value]
+                        value = [f'{item}' for item in value]
                     suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
                     if suffix:
-                        document['{0}{1}'.format(key, suffix)] = value
+                        document[f'{key}{suffix}'] = value
     return document
 
 
@@ -215,7 +212,7 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
                 query_filter = query_filter.replace(
-                    '{0}:'.format(db_descriptor_key),'{0}{1}:'.format(
+                    f'{db_descriptor_key}:','{}{}:'.format(
                         db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
     return query_filter
 
@@ -288,18 +285,18 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
     if 'geotag:"Intersects(' in query_filter:
         # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
         #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-        query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+        query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
     query_filter = search_filter_make_intersection(query_filter)
 
     # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
     # our query to the sounds in that list of IDs.
     if only_sounds_within_ids:
-        sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+        sounds_within_ids_filter = ' OR '.join([f'id:{sound_id}' for sound_id in only_sounds_within_ids])
         if query_filter:
-            query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+            query_filter += f' AND ({sounds_within_ids_filter})'
         else:
-            query_filter = '({})'.format(sounds_within_ids_filter)
+            query_filter = f'({sounds_within_ids_filter})'
 
     return query_filter
 
@@ -351,7 +348,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def remove_sounds_from_index(self, sound_objects_or_ids):
         try:
             for sound_object_or_id in sound_objects_or_ids:
-                if type(sound_object_or_id) != Sound:
+                if not isinstance(sound_object_or_id, Sound):
                     sound_id = sound_object_or_id
                 else:
                     sound_id = sound_object_or_id.id
@@ -367,11 +364,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             raise SearchEngineException(e)
 
     def sound_exists_in_index(self, sound_object_or_id):
-        if type(sound_object_or_id) != Sound:
+        if not isinstance(sound_object_or_id, Sound):
             sound_id = sound_object_or_id
         else:
             sound_id = sound_object_or_id.id
-        response = self.search_sounds(query_filter='id:{}'.format(sound_id), offset=0, num_sounds=1)
+        response = self.search_sounds(query_filter=f'id:{sound_id}', offset=0, num_sounds=1)
         return response.num_found > 0
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
@@ -386,9 +383,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if query_fields is None:
             # If no fields provided, use the default
             query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
-        if type(query_fields) == list:
+        if isinstance(query_fields, list):
             query_fields = [add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)) for field in query_fields]
-        elif type(query_fields) == dict:
+        elif isinstance(query_fields, dict):
             # Also remove fields with weight <= 0
             query_fields = [(add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)), weight)
                 for field, weight in query_fields.items() if weight > 0]
@@ -482,7 +479,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         try:
             for post_object_or_id in forum_post_objects_or_ids:
-                if type(post_object_or_id) != Post:
+                if not isinstance(post_object_or_id, Post):
                     post_id = post_object_or_id
                 else:
                     post_id = post_object_or_id.id
@@ -499,11 +496,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             raise SearchEngineException(e)
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
-        if type(forum_post_object_or_id) != Post:
+        if not isinstance(forum_post_object_or_id, Post):
             post_id = forum_post_object_or_id
         else:
             post_id = forum_post_object_or_id.id
-        response = self.search_forum_posts(query_filter='id:{}'.format(post_id), offset=0, num_posts=1)
+        response = self.search_forum_posts(query_filter=f'id:{post_id}', offset=0, num_posts=1)
         return response.num_found > 0
 
     def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,
@@ -578,7 +575,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
         query.set_query('*:*')
-        filter_query = 'username:"%s" AND pack:"%s"' % (username, pack_name)
+        filter_query = f'username:"{username}" AND pack:"{pack_name}"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)

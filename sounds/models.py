@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,12 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
-from future.utils import python_2_unicode_compatible
-from builtins import str
-from builtins import object
 from past.utils import old_div
 import datetime
 import glob
@@ -77,7 +69,6 @@ web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 
 
-@python_2_unicode_compatible
 class License(OrderedModel):
     """A creative commons license model"""
     name = models.CharField(max_length=512)
@@ -103,7 +94,7 @@ class License(OrderedModel):
         if name == 'Attribution Noncommercial':
             # For dipslaying purposes, we make the name shorter, otherwise it overflows in BW sound page
             name = 'Noncommercial'
-        return '{}{}'.format(name, version_label)
+        return f'{name}{version_label}'
 
     def __str__(self):
         return self.name_with_version
@@ -218,7 +209,7 @@ class BulkUploadProgress(models.Model):
         sound_errors = []
         if self.description_output is not None:
             for line_no, value in self.description_output.items():
-                if type(value) == int:
+                if isinstance(value, int):
                     # Sound id, meaning a file for which a Sound object was successfully created
                     sound_ids_described_ok.append(value)
                 else:
@@ -295,7 +286,7 @@ class BulkUploadProgress(models.Model):
             return len(self.validation_output['lines_with_errors']) > 0
         return False
 
-    class Meta(object):
+    class Meta:
         permissions = (
             ("can_describe_in_bulk", "Can use the Bulk Describe feature."),
         )
@@ -387,7 +378,7 @@ class SoundManager(models.Manager):
     def get_analysis_state_essentia_exists_sql(self):
         """Returns the SQL bits to add analysis_state_essentia_exists to the returned data indicating if thers is a
         SoundAnalysis objects existing for th given sound_id for the essentia analyzer and with status OK"""
-        return "          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{0}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,".format(settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
+        return f"          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,"
 
     def bulk_query_solr(self, sound_ids):
         """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
@@ -508,9 +499,9 @@ class SoundManager(models.Manager):
                         self.get_analyzers_data_left_join_sql(),
                         where, )
         if order_by:
-            query = "%s ORDER BY %s" % (query, order_by)
+            query = f"{query} ORDER BY {order_by}"
         if limit:
-            query = "%s LIMIT %s" % (query, limit)
+            query = f"{query} LIMIT {limit}"
         return self.raw(query, args)
 
     def bulk_sounds_for_user(self, user_id, limit=None):
@@ -548,7 +539,7 @@ class SoundManager(models.Manager):
 class PublicSoundManager(models.Manager):
     """ a class which only returns public sounds """
     def get_queryset(self):
-        return super(PublicSoundManager, self).get_queryset().filter(moderation_state="OK", processing_state="OK")
+        return super().get_queryset().filter(moderation_state="OK", processing_state="OK")
 
 
 class Sound(SocialModel):
@@ -771,23 +762,23 @@ class Sound(SocialModel):
         if (preview_url.startswith('http')):
             # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
             return preview_url
-        return 'https://%s%s' % (Site.objects.get_current().domain, preview_url)
+        return f'https://{Site.objects.get_current().domain}{preview_url}'
 
     def get_thumbnail_abs_url(self, size='M'):
         thumbnail_url = self.locations()['display']['wave'][size]['url']
         if (thumbnail_url.startswith('http')):
             # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
             return thumbnail_url
-        return 'https://%s%s' % (Site.objects.get_current().domain, thumbnail_url)
+        return f'https://{Site.objects.get_current().domain}{thumbnail_url}'
 
     def get_large_thumbnail_abs_url(self):
         return self.get_thumbnail_abs_url(size='L')
 
     def get_channels_display(self):
         if self.channels == 1:
-            return u"Mono"
+            return "Mono"
         elif self.channels == 2:
-            return u"Stereo"
+            return "Stereo"
         else:
             return self.channels
 
@@ -899,7 +890,7 @@ class Sound(SocialModel):
         """
         Returns a set object with the integer sound IDs of the current sources of the sound
         """
-        return set(source["id"] for source in self.sources.all().values("id"))
+        return {source["id"] for source in self.sources.all().values("id")}
 
     def set_sources(self, new_sources):
         """
@@ -1028,7 +1019,7 @@ class Sound(SocialModel):
             self.processing_date = datetime.datetime.now()
             if self.processing_log is None:
                 self.processing_log = ''
-            self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
+            self.processing_log += f'----Processed sound {datetime.datetime.today()} - {self.id}\n{processing_log}'
             self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
 
             if new_state == 'FA':
@@ -1045,7 +1036,7 @@ class Sound(SocialModel):
             self.processing_date = datetime.datetime.now()
             if self.processing_log is None:
                 self.processing_log = ''
-            self.processing_log += '----Processed sound {} - {}\n{}'.format(datetime.datetime.today(), self.id, processing_log)
+            self.processing_log += f'----Processed sound {datetime.datetime.today()} - {self.id}\n{processing_log}'
             self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
@@ -1152,7 +1143,7 @@ class Sound(SocialModel):
             for data in iter(lambda: fp.read(settings.CRC_BUFFER_SIZE), b''):
                 crc = zlib.crc32(data, crc)
 
-        self.crc = '{:0>8x}'.format(crc & 0xffffffff)  # right aligned with zero-padding, width of 8 chars
+        self.crc = f'{crc & 0xffffffff:0>8x}'  # right aligned with zero-padding, width of 8 chars
 
         if commit:
             self.save()
@@ -1217,7 +1208,7 @@ class Sound(SocialModel):
         if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
             # If specified analyzer is not one of the analyzers configured, do nothing
             if verbose:
-                sounds_logger.info("Not sending sound {} to unknown analyzer {}".format(self.id, analyzer))
+                sounds_logger.info(f"Not sending sound {self.id} to unknown analyzer {analyzer}")
             return None
 
         sa, created = SoundAnalysis.objects.get_or_create(sound=self, analyzer=analyzer)
@@ -1234,10 +1225,10 @@ class Sound(SocialModel):
             celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
                         'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({'duration': self.duration})}, queue=analyzer)
             if verbose:
-                sounds_logger.info("Sending sound {} to analyzer {}".format(self.id, analyzer))
+                sounds_logger.info(f"Sending sound {self.id} to analyzer {analyzer}")
         else:
             if verbose:
-                sounds_logger.info("Not sending sound {} to analyzer {} as is already queued".format(self.id, analyzer))
+                sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
 
     def delete_from_indexes(self):
@@ -1271,9 +1262,9 @@ class Sound(SocialModel):
             if name:
                 return name
         if hasattr(self, 'geotag_lat'):
-            return '{:.3f}, {:.3f}'.format(self.geotag_lat, self.geotag_lon)
+            return f'{self.geotag_lat:.3f}, {self.geotag_lon:.3f}'
         else:
-            return '{:.3f}, {:.3f}'.format(self.geotag.lat, self.geotag.lon)
+            return f'{self.geotag.lat:.3f}, {self.geotag.lon:.3f}'
 
 
     class Meta(SocialModel.Meta):
@@ -1328,7 +1319,7 @@ class SoundOfTheDay(models.Model):
     objects = SoundOfTheDayManager()
 
     def __str__(self):
-        return u'Random sound of the day {0}'.format(self.date_display)
+        return f'Random sound of the day {self.date_display}'
 
     def notify_by_email(self):
         """Notify the user of this sound by email that their sound has been chosen
@@ -1674,9 +1665,9 @@ class Flag(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):
-        return u"%s: %s" % (self.reason_type, self.reason[:100])
+        return f"{self.reason_type}: {self.reason[:100]}"
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
 
 
@@ -1686,7 +1677,7 @@ class Download(models.Model):
     license = models.ForeignKey(License)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
         indexes = [
             models.Index(fields=['user', 'sound']),
@@ -1758,7 +1749,7 @@ class SoundLicenseHistory(models.Model):
     sound = models.ForeignKey(Sound)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
 
 
@@ -1790,7 +1781,7 @@ class SoundAnalysis(models.Model):
          could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
          the ANALYSIS_PATH and under a sound ID folder structure like sounds and other sound-related files."""
         id_folder = str(old_div(self.sound_id, 1000))
-        return os.path.join(settings.ANALYSIS_PATH, id_folder, "{}-{}".format(self.sound_id, self.analyzer))
+        return os.path.join(settings.ANALYSIS_PATH, id_folder, f"{self.sound_id}-{self.analyzer}")
 
     def load_analysis_data_from_file_to_db(self):
         """This method checks the analysis output data which has been written to a file, and loads it to the
@@ -1806,7 +1797,7 @@ class SoundAnalysis(models.Model):
             # Postgres JSON data field can not store float values of nan or inf. Ideally these values should have never
             # been outputted by the analyzers in the first place, but it can happen. We use this function here and skip
             # indexing key/value pairs where the value is not valid for Postgres JSON data fields.
-            if type(value) == float:
+            if isinstance(value, float):
                 return not math.isinf(value) and not math.isnan(value)
             return True
 
@@ -1859,16 +1850,16 @@ class SoundAnalysis(models.Model):
             file_contents = fid.read()
             fid.close()
             return file_contents
-        except IOError:
+        except OSError:
             return 'No logs available...'
 
     def re_run_analysis(self, verbose=True):
         self.sound.analyze(self.analyzer, force=True, verbose=verbose)
 
     def __str__(self):
-        return 'Analysis of sound {} with {}'.format(self.sound_id, self.analyzer)
+        return f'Analysis of sound {self.sound_id} with {self.analyzer}'
 
-    class Meta(object):
+    class Meta:
         unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination
 
 def on_delete_sound_analysis(sender, instance, **kwargs):

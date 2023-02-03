@@ -44,7 +44,7 @@ class MessageReplyForm(forms.Form):
 
     def __init__(self, request, *args, **kwargs):
         self.request = request  # This is used by MessageReplyFormWithCaptcha to be able to call is_spam function
-        super(MessageReplyForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class MessageReplyFormWithCaptcha(MessageReplyForm):
@@ -62,7 +62,7 @@ class BwMessageReplyForm(MessageReplyForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwMessageReplyForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
                     <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
@@ -84,7 +84,7 @@ class BwMessageReplyFormWithCaptcha(MessageReplyFormWithCaptcha):
     
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwMessageReplyFormWithCaptcha, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
                     <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,

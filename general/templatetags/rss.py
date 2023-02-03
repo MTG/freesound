@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
 from future.utils import raise_
 from django import template
 import feedparser

@@ -18,10 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import division
 
-from future import standard_library
-standard_library.install_aliases()
 from past.utils import old_div
 import datetime
 import re
@@ -262,7 +259,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                         subscription.is_active = False
                         subscription.save()
 
-                    if users_to_notify and post.thread.get_status_display() != u'Sunk':
+                    if users_to_notify and post.thread.get_status_display() != 'Sunk':
                         send_mail_template(
                             settings.EMAIL_SUBJECT_TOPIC_REPLY,
                             "forum/email_new_post_notification.txt",
@@ -380,7 +377,7 @@ def subscribe_to_thread(request, forum_name_slug, thread_id):
 def old_topic_link_redirect(request):
     post_id = request.GET.get("p", False)
     if post_id:
-        post_id = re.sub("\D", "", post_id)
+        post_id = re.sub(r"\D", "", post_id)
         try:
             post = get_object_or_404(Post, id=post_id)
         except ValueError:
@@ -390,7 +387,7 @@ def old_topic_link_redirect(request):
 
     thread_id = request.GET.get("t", False)
     if thread_id:
-        thread_id = re.sub("\D", "", thread_id)
+        thread_id = re.sub(r"\D", "", thread_id)
         try:
             thread = get_object_or_404(Thread, id=thread_id)
         except ValueError:

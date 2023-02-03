@@ -86,7 +86,7 @@ class BookmarksTest(TestCase):
         response = self.client.get(reverse('bookmarks'))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(3, len(response.context['page'].object_list))
+        self.assertEqual(3, len(response.context['page'].object_list))
 
     @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
     def test_others_bookmarks(self):
@@ -126,7 +126,7 @@ class BookmarksTest(TestCase):
                                            kwargs={'username': user.username, 'category_id': category.id}))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(2, len(response.context['page'].object_list))
+        self.assertEqual(2, len(response.context['page'].object_list))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')
@@ -155,7 +155,7 @@ class BookmarksTest(TestCase):
         # The response is a 200
         self.assertEqual(200, response.status_code)
 
-        self.assertEquals(2, len(response.context['page'].object_list))
+        self.assertEqual(2, len(response.context['page'].object_list))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')

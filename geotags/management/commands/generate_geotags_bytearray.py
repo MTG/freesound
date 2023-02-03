@@ -43,6 +43,6 @@ class Command(LoggingBaseCommand):
         count = sounds.count()
         computed_bytearray, num_geotags = generate_bytearray(sounds.all())
         cache.set(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY, [computed_bytearray, num_geotags], timeout=None)
-        console_logger.info('Generated all geotags bytarray with {} sounds'.format(count))
+        console_logger.info(f'Generated all geotags bytarray with {count} sounds')
 
         self.log_end({'all_geotags_bytearray_n_sounds': count})

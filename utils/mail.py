@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import logging
 import json
 
@@ -36,7 +35,7 @@ def transform_unique_email(email):
     duplicated user emails by the contents returned in this function. This is reused for further
     checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup.
     """
-    return "dupemail+%s@freesound.org" % (email.replace("@", "%"), )
+    return "dupemail+{}@freesound.org".format(email.replace("@", "%"))
 
 
 def _ensure_list(item):
@@ -105,9 +104,9 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     if settings.ALLOWED_EMAILS:  # for testing purposes, so we don't accidentally send emails to users
         email_to = [(username, email) for username, email in email_to if email in settings.ALLOWED_EMAILS]
 
-    full_subject = u'{} {}'.format(settings.EMAIL_SUBJECT_PREFIX, subject)
+    full_subject = f'{settings.EMAIL_SUBJECT_PREFIX} {subject}'
     if extra_subject:
-        full_subject = u'{} - {}'.format(full_subject, extra_subject)
+        full_subject = f'{full_subject} - {extra_subject}'
 
     try:
         emails = tuple(((full_subject, email_body, email_from, [email])

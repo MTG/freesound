@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import range
-from builtins import object
 import datetime
 
 from django.db import models
@@ -87,12 +85,12 @@ class ApiV2Client(models.Model):
             self.oauth_client.redirect_uris = self.redirect_uri
             self.oauth_client.save()
 
-        return super(ApiV2Client, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         # On delete, delete also oauth client
         self.oauth_client.delete()
-        super(ApiV2Client, self).delete(*args, **kwargs)
+        super().delete(*args, **kwargs)
 
     def get_usage_history(self, n_days_back=30, year=None):
         """Returns the total number of daily requests made per day for the current API client during the last 
@@ -147,6 +145,6 @@ class APIClientDailyUsageHistory(models.Model):
     number_of_requests = models.PositiveIntegerField(default=0)
     date = models.DateField()
 
-    class Meta(object):
+    class Meta:
         ordering = ("-date",)
         unique_together = ('apiv2_client', 'date')

@@ -18,9 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
-from builtins import zip
-from builtins import range
 import math
 
 from django import template

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
-from builtins import object
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
@@ -102,9 +98,9 @@ class Ticket(models.Model):
         return reverse('ticket', args=[smart_text(self.key)])
 
     def __str__(self):
-        return u"pk %s, key %s" % (self.id, self.key)
+        return f"pk {self.id}, key {self.key}"
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
         permissions = (
             ("can_moderate", "Can moderate stuff."),
@@ -119,10 +115,10 @@ class TicketComment(models.Model):
     moderator_only  = models.BooleanField(default=False)
 
     def __str__(self):
-        return u"<# Message - ticket_id: %s, ticket_key: %s>" % \
+        return "<# Message - ticket_id: %s, ticket_key: %s>" % \
                     (self.ticket.id, self.ticket.key)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
 
 

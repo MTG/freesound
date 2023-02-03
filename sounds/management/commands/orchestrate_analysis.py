@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import str
 import datetime
 import logging
 import json
@@ -79,8 +78,8 @@ class Command(LoggingBaseCommand):
             percentage_done = (ok + sk + fa) * 100.0/n_sounds
             # print one row per analyzer
             console_logger.info("{: >44} {: >11} {: >11} {: >11} {: >11} {: >11}".format(
-                *[analyzer_name + ' |', '{0} |'.format(ok), '{0} |'.format(sk),
-                  '{0} |'.format(fa), '{0} |'.format(qu), missing]))
+                *[analyzer_name + ' |', f'{ok} |', f'{sk} |',
+                  f'{fa} |', f'{qu} |', missing]))
 
             data_to_log[analyzer_name] = {
                 'OK': ok,
@@ -174,7 +173,7 @@ class Command(LoggingBaseCommand):
                     'analyzer': analyzer_name,
                     'percentage_completed': analyzer_data_to_log['Percentage']
                 })
-                commands_logger.info('Orchestrate analysis analyzer update ({0})'.format(json.dumps(analyzer_data_to_log)))
+                commands_logger.info(f'Orchestrate analysis analyzer update ({json.dumps(analyzer_data_to_log)})')
             console_logger.info('')
 
         # Now revise SoundAnalysis objects that have been stuck in QU status for some time and set them to Failed

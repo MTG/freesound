@@ -18,9 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 
-from builtins import object
 def locations_decorator(cache=True):
     """wraps a locations function and adds two things:
         * caching for the calculation done inside the function if cache is true
@@ -57,7 +55,7 @@ def pretty_print_locations(locations, indent=0):
 
 
 if __name__ == "__main__":
-    class X(object):
+    class X:
         @locations_decorator()
         def locations(self):
             return dict(a=5)

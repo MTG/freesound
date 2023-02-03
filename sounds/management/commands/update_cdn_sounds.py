@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import json
 import logging
 import os
@@ -64,7 +63,7 @@ class Command(LoggingBaseCommand):
         else:
             if file_path:
                 # If file path, simply update the redis cache with the data form the file and don't do anything else
-                console_logger.info('Adding cache items from file {}'.format(file_path))
+                console_logger.info(f'Adding cache items from file {file_path}')
                 map_data = json.load(open(file_path))
                 for sound_id, cdn_filename in map_data:
                     cache_cdn_map.set(str(sound_id), cdn_filename, timeout=None)  # No expiration
@@ -83,7 +82,7 @@ class Command(LoggingBaseCommand):
                 all_ss = Sound.objects.filter(id__gt=highest_sound_id_in_cache).order_by('id')
                 ss = all_ss[:limit]
                 total = ss.count()
-                console_logger.info('Found {} new sounds missing in the cache, will add first {}'.format(all_ss.count(), total))
+                console_logger.info(f'Found {all_ss.count()} new sounds missing in the cache, will add first {total}')
                 
                 # Copy sounds if not already there, make symlinks and add them to cache
                 with Connection(host=cdn_host, connect_kwargs={'key_filename': ssh_key_path}) as c:
@@ -93,30 +92,30 @@ class Command(LoggingBaseCommand):
                         src_sound_path = sound.locations('path')
                         folder_id = str(sound.id//1000)
                         dst_sound_path = os.path.join(cdn_sounds_dir, folder_id,  os.path.basename(src_sound_path))
-                        console_logger.info('Adding sound to the CDN [{}/{}] - {}'.format(count + 1, total, sound_id))
+                        console_logger.info(f'Adding sound to the CDN [{count + 1}/{total}] - {sound_id}')
 
                         # Check if sound already exists in the expected remote location    
-                        sound_exists = c.run('ls {}'.format(dst_sound_path), hide=True, warn=True).exited == 0
+                        sound_exists = c.run(f'ls {dst_sound_path}', hide=True, warn=True).exited == 0
                         if not sound_exists:
                             # Copy file to remote, make intermediate folders if needed
-                            c.run('mkdir -p {}'.format(os.path.dirname(dst_sound_path)))
+                            c.run(f'mkdir -p {os.path.dirname(dst_sound_path)}')
                             c.put(src_sound_path, dst_sound_path)
 
                         # Make symlink (remove previously existing symlinks for that sound if any already exists)
                         # Before making the symlink, check again that sound exists, otherwise don't make it as there were problems copying sound
-                        sound_exists = c.run('ls {}'.format(dst_sound_path), hide=True, warn=True).exited == 0
+                        sound_exists = c.run(f'ls {dst_sound_path}', hide=True, warn=True).exited == 0
                         if sound_exists:
-                            c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  '{}-*'.format(sound_id))), hide=True, warn=True)
+                            c.run('rm {}'.format(os.path.join(cdn_symlinks_dir, folder_id,  f'{sound_id}-*')), hide=True, warn=True)
                             random_uuid = str(uuid.uuid4())
-                            symlink_name = '{}-{}'.format(sound_id, random_uuid)
+                            symlink_name = f'{sound_id}-{random_uuid}'
                             dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  symlink_name)
-                            c.run('mkdir -p {}'.format(os.path.dirname(dst_symlink_path)))
-                            c.run('ln -s {} {}'.format(dst_sound_path, dst_symlink_path))
+                            c.run(f'mkdir -p {os.path.dirname(dst_symlink_path)}')
+                            c.run(f'ln -s {dst_sound_path} {dst_symlink_path}')
 
                             # Fill cache
                             # Before filling the cache, make sure symlink exists (has been cretated successfully), otherwise do not fill the cache
                             # as there were problems creating the symlink
-                            symlink_exists = c.run('ls {}'.format(dst_symlink_path), hide=True, warn=True).exited == 0
+                            symlink_exists = c.run(f'ls {dst_symlink_path}', hide=True, warn=True).exited == 0
                             if symlink_exists:
                                 cache_cdn_map.set(str(sound_id), symlink_name, timeout=None)  # No expiration
                                 num_added += 1
@@ -125,5 +124,5 @@ class Command(LoggingBaseCommand):
                         else:
                             num_failed += 1
 
-        console_logger.info('Done! Added {} items to cache ({} failed)'.format(num_added, num_failed))
+        console_logger.info(f'Done! Added {num_added} items to cache ({num_failed} failed)')
         self.log_end({'added_to_cache': num_added, 'failed_adding_to_cache': num_failed})

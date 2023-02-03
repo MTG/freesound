@@ -18,12 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
-from future import standard_library
-
-standard_library.install_aliases()
-from builtins import str
 import django.forms as forms
 from django.conf import settings
 from urllib.parse import quote, unquote
@@ -210,7 +205,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&group_by_pack=%s' % self.cleaned_data['group_by_pack']
         else:
             link += '&group_by_pack=%s' % group_by_pack
-        return "https://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
+        return f"https://{Site.objects.get_current().domain}{base_url}{link}"
 
 
 class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):

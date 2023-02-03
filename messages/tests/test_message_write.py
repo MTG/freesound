@@ -17,10 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import range
 import json
 
-import six
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -113,7 +111,7 @@ class UsernameLookup(TestCase):
     def test_get_previously_contacted_usernames(self):
         # Check get_previously_contacted_usernames helper function returns userames of users previously contacted by
         # the sender or users who previously contacted the sender
-        six.assertCountEqual(self, [self.receiver3.username, self.receiver2.username, self.receiver1.username,
+        self.assertCountEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username,
                                     self.sender2.username, self.sender.username],
                              get_previously_contacted_usernames(self.sender))
 
@@ -124,7 +122,7 @@ class UsernameLookup(TestCase):
         resp = self.client.get(reverse('messages-username_lookup'))
         response_json = json.loads(resp.content)
         self.assertEqual(resp.status_code, 200)
-        six.assertCountEqual(self, [self.receiver3.username, self.receiver2.username, self.receiver1.username,
+        self.assertCountEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username,
                                     self.sender2.username, self.sender.username],
                              response_json)
 

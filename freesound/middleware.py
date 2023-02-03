@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 import json
 import logging
 
@@ -46,7 +45,7 @@ def dont_redirect(path):
         and not path.startswith(settings.MEDIA_URL)
 
 
-class OnlineUsersHandler(object):
+class OnlineUsersHandler:
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -56,7 +55,7 @@ class OnlineUsersHandler(object):
         return response
 
 
-class BulkChangeLicenseHandler(object):
+class BulkChangeLicenseHandler:
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -77,7 +76,7 @@ class BulkChangeLicenseHandler(object):
         return response
 
 
-class FrontendPreferenceHandler(object):
+class FrontendPreferenceHandler:
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -97,7 +96,7 @@ class FrontendPreferenceHandler(object):
         return response
 
 
-class TosAcceptanceHandler(object):
+class TosAcceptanceHandler:
     """Checks if the user has accepted the updates to the Terms
     of Service in 2022. This replaces the agreement to the original ToS (2013, 2fd543f3a).
     When users agree with the new terms of service, they also agree on updating the
@@ -120,7 +119,7 @@ class TosAcceptanceHandler(object):
         return response
 
 
-class UpdateEmailHandler(object):
+class UpdateEmailHandler:
     message = "We have identified that some emails that we have sent to you didn't go through, thus it appears that " \
               "your email address is not valid. Please update your email address to a working one to continue using " \
               "Freesound"

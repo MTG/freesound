@@ -36,7 +36,7 @@ class HtmlCleaningCharField(forms.CharField):
     """ A field that removes disallowed HTML tags as implemented in utils.text.clean_html and checks for
      too many upper chase characters"""
     def clean(self, value):
-        value = super(HtmlCleaningCharField, self).clean(value)
+        value = super().clean(value)
         if is_shouting(value):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
         return clean_html(value)
@@ -47,7 +47,7 @@ class TagField(forms.CharField):
     unique tag strings """
 
     def __init__(self, **kwargs):
-        super(TagField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.validators.append(
             validators.MinLengthValidator(3, 'You should add at least 3 different tags. Tags must be separated by '
                                              'spaces'))
@@ -55,7 +55,7 @@ class TagField(forms.CharField):
             validators.MaxLengthValidator(30, 'There can be maximum 30 tags, please select the most relevant ones!'))
 
     def to_python(self, value):
-        value = super(TagField, self).to_python(value)
+        value = super().to_python(value)
         alphanum_only = re.compile(r"[^ a-zA-Z0-9-,]")
         if alphanum_only.search(value):
             raise ValidationError("Tags must contain only letters a-z, digits 0-9 and hyphen")

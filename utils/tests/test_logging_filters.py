@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,13 +17,12 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import object
 from django.test import TestCase
 
 from utils.logging_filters import get_client_ip
 
 
-class DummyRequest(object):
+class DummyRequest:
     """A dummy request to check the X-Forwarded-For header in logging_filters.get_client_ip"""
     def __init__(self, xforwardedfor):
         self.META = {"HTTP_X_FORWARDED_FOR": xforwardedfor}

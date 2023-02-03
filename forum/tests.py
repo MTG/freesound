@@ -429,7 +429,7 @@ class ForumPageResponses(TestCase):
         resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
             'body': ['Edited post body']
         })
-        self.assertRedirects(resp, '{}?next={}'.format(reverse('login'), reverse('forums-post-edit', args=[post.id])))
+        self.assertRedirects(resp, f"{reverse('login')}?next={reverse('forums-post-edit', args=[post.id])}")
 
         # Assert logged in user which is not author of post can't edit post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
@@ -455,7 +455,7 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user can't delete post
         resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
-        self.assertRedirects(resp, '{}?next={}'.format(reverse('login'), reverse('forums-post-delete', args=[post.id])))
+        self.assertRedirects(resp, f"{reverse('login')}?next={reverse('forums-post-delete', args=[post.id])}")
 
         # Assert logged in user which is not author of post can't delete post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
@@ -475,7 +475,7 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user can't delete post
         resp = self.client.post(reverse('forums-post-delete-confirm', args=[post.id]))
-        self.assertRedirects(resp, '{}?next={}'.format(reverse('login'), reverse('forums-post-delete-confirm', args=[post.id])))
+        self.assertRedirects(resp, f"{reverse('login')}?next={reverse('forums-post-delete-confirm', args=[post.id])}")
 
         # Assert logged in user which is not author of post can't delete post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
@@ -529,7 +529,7 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user can't subscribe
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
-        self.assertRedirects(resp, '{}?next={}'.format(reverse('login'), reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id])))
+        self.assertRedirects(resp, f"{reverse('login')}?next={reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id])}")
 
         # Assert logged in user can subscribe
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')

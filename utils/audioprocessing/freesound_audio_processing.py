@@ -128,7 +128,7 @@ class FreesoundAudioProcessorBase:
         if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
             sound_path = self.sound.locations('preview.LQ.mp3.path')
         if not os.path.exists(sound_path):
-            raise AudioProcessingException('could not find file with path %s' % sound_path)
+            raise AudioProcessingException(f'could not find file with path {sound_path}')
         self.log_info("file found in " + sound_path)
         return sound_path
 
@@ -166,12 +166,12 @@ class FreesoundAudioProcessorBase:
             try:
                 audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=mono)
             except AudioProcessingException as e:
-                raise AudioProcessingException("conversion to PCM failed: %s" % e)
+                raise AudioProcessingException(f"conversion to PCM failed: {e}")
             except OSError as e:
                 raise AudioProcessingException("conversion to PCM failed, "
                                                "make sure that ffmpeg executable exists: %s" % e)
         except Exception as e:
-            raise AudioProcessingException("unhandled exception while converting to PCM: %s" % e)
+            raise AudioProcessingException(f"unhandled exception while converting to PCM: {e}")
 
         self.log_info("PCM file path: " + tmp_wavefile)
         return tmp_wavefile
@@ -187,7 +187,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
     def process(self, skip_previews=False, skip_displays=False):
 
         with TemporaryDirectory(
-                prefix='processing_%s_' % self.sound.id,
+                prefix=f'processing_{self.sound.id}_',
                 dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             # Change ongoing processing state to "processing" in Sound model
@@ -371,10 +371,10 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         console_logger.error(f"{self.audio_file_path} - {message}")
 
     def set_failure(self, message, error=None):
-        logging_message = "file with path %s failed\n" % self.audio_file_path
-        logging_message += "\tmessage: %s\n" % message
+        logging_message = f"file with path {self.audio_file_path} failed\n"
+        logging_message += f"\tmessage: {message}\n"
         if error:
-            logging_message += "\terror: %s" % str(error)
+            logging_message += f"\terror: {str(error)}"
         self.log_error(logging_message)
 
     def get_sound_object(self, sound_id):

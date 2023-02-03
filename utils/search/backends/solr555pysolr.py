@@ -562,7 +562,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_user_tags(self, username):
         query = SolrQuery()
         query.set_query('*:*')
-        filter_query = 'username:"%s"' % username
+        filter_query = f'username:"{username}"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)

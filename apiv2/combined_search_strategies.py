@@ -303,7 +303,7 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
         elif e.status_code == 404:
             raise NotFoundException(msg=str(e))
         else:
-            raise ServerErrorException(msg='Similarity server error: %s' % str(e))
+            raise ServerErrorException(msg=f'Similarity server error: {str(e)}')
     except Exception as e:
         raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.')
 
@@ -319,7 +319,7 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         # Update solr filter to only return results in valid ids
         ids_filter = 'id:(' + ' OR '.join([str(item) for item in valid_ids]) + ')'
         if query_filter:
-            query_filter += ' %s' % ids_filter
+            query_filter += f' {ids_filter}'
         else:
             query_filter = ids_filter
 
@@ -353,7 +353,7 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             n_page_requests += 1
 
     except SearchEngineException as e:
-        raise ServerErrorException(msg='Search server error: %s' % str(e))
+        raise ServerErrorException(msg=f'Search server error: {str(e)}')
     except Exception as e:
         raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
     return solr_ids, solr_count

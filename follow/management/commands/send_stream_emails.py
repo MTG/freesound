@@ -83,12 +83,12 @@ class Command(LoggingBaseCommand):
                 users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
             except Exception as e:
                 # If error occur do not send the email
-                console_logger.info("could not get new sounds data for {}".format(username.encode('utf-8')))
+                console_logger.info(f"could not get new sounds data for {username.encode('utf-8')}")
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
             if not users_sounds and not tags_sounds:
-                console_logger.info("no news sounds for {}".format(username.encode('utf-8')))
+                console_logger.info(f"no news sounds for {username.encode('utf-8')}")
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 

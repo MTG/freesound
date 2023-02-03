@@ -146,7 +146,7 @@ def queries_stats_ajax(request):
         params = {
             'query': '*',
             'range': 14 * 60 * 60 * 24,
-            'filter': 'streams:%s' % settings.GRAYLOG_SEARCH_STREAM_ID,
+            'filter': f'streams:{settings.GRAYLOG_SEARCH_STREAM_ID}',
             'field': 'query'
         }
         req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/terms',

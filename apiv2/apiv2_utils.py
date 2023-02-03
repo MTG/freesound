@@ -150,11 +150,11 @@ class FreesoundAPIViewMixin:
 
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
             if request.get_host().startswith('www'):
-                domain = "{}://{}".format('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
+                domain = f"{'https' if not settings.DEBUG else 'http'}://{Site.objects.get_current().domain}"
                 return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
             if request.scheme != 'https' and not settings.DEBUG:
-                domain = "https://%s" % Site.objects.get_current().domain
+                domain = f"https://{Site.objects.get_current().domain}"
                 return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
         return response
@@ -325,7 +325,7 @@ def api_search(
             elif e.status_code == 404:
                 raise NotFoundException(msg=str(e), resource=resource)
             else:
-                raise ServerErrorException(msg='Similarity server error: %s' % str(e), resource=resource)
+                raise ServerErrorException(msg=f'Similarity server error: {str(e)}', resource=resource)
         except Exception as e:
             raise ServerErrorException(
                 msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource)
@@ -364,7 +364,7 @@ def api_search(
             if search_form.cleaned_data['filter'] is not None:
                 raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field '
                                               'names are correct)' % str(e), resource=resource)
-            raise BadRequestException(msg='Search server error: %s' % str(e), resource=resource)
+            raise BadRequestException(msg=f'Search server error: {str(e)}', resource=resource)
         except Exception as e:
             print(e)
             raise ServerErrorException(
@@ -541,7 +541,7 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
             else:
                 # This is only apiv2 oauth examples
                 url = prepend_base('', dynamic_resolve=False, use_https=True)
-                output += '<span class="pln">%s</span><br>' % (element % url)
+                output += f'<span class="pln">{element % url}</span><br>'
             count += 1
 
     output += '</pre></div>'

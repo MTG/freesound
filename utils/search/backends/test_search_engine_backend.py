@@ -65,7 +65,7 @@ class TestSearchEngineBackend():
                 results.highlighting
             ))
         for count, doc in enumerate(results.docs):
-            self.output_file.write('\t{}. {}: {}\n'.format(count + 1, doc['id'], doc))
+            self.output_file.write(f"\t{count + 1}. {doc['id']}: {doc}\n")
 
     def run_sounds_query_and_save_results(self, query_data):
         """Run a sounds search query in the search engine, save and return the results
@@ -424,7 +424,7 @@ class TestSearchEngineBackend():
         results = self.run_forum_query_and_save_results(dict(group_by_thread=False))
         for result1, result2 in zip(results.docs[:-1], results.docs[1:]):
             for field in expected_fields:
-                assert_and_continue(field in result1, '{} not present in result ID {}'.format(field, result1['id']))
+                assert_and_continue(field in result1, f"{field} not present in result ID {result1['id']}")
                 assert_and_continue(result1["thread_created"] >= result2["thread_created"],
                                     'Wrong sorting in query results')
 

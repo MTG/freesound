@@ -453,7 +453,7 @@ def convert_to_pcm(input_filename, output_filename):
     converts any audio file type to pcm audio
     """
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
     sound_type = get_sound_type(input_filename)
 
     if sound_type == "mp3":
@@ -500,7 +500,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     cmd = [stereofy_executble_path, "--input", input_filename, "--output", output_filename]
 
@@ -547,7 +547,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["lame", "--silent", "--abr", str(quality), input_filename, output_filename]
 
@@ -565,7 +565,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["oggenc", "-q", str(quality), input_filename, "-o", output_filename]
 
@@ -585,7 +585,7 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100"]
     if mono_out:

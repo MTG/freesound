@@ -49,4 +49,4 @@ class Command(BaseCommand):
 
         if missing_sound_ids and options['outfile'] is not None:
             json.dump(missing_sound_ids, open(options['outfile'], 'w'))
-            console_logger.info('List of sound IDs with missing files saved in "{}"'.format(options['outfile']))
+            console_logger.info(f"List of sound IDs with missing files saved in \"{options['outfile']}\"")

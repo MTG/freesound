@@ -71,7 +71,7 @@ class TagFieldTest(TestCase):
         # maximum number tags
         err_message = "There can be maximum 30 tags, please select the most relevant ones!"
         with self.assertRaisesMessage(ValidationError, err_message):
-            tags = " ".join(["tag%s" % i for i in range(35)])
+            tags = " ".join([f"tag{i}" for i in range(35)])
             f.clean(tags)
 
         # remove common words

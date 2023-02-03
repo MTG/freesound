@@ -50,7 +50,7 @@ def tags(request, multiple_tags=None):
         if multiple_tags:
             # If using BW and tags in URL, we re-write tags as query filter and redirect
             tags_as_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
-            return HttpResponseRedirect('{}?f={}'.format(reverse('tags'), tags_as_filter))
+            return HttpResponseRedirect(f"{reverse('tags')}?f={tags_as_filter}")
         else:
             # Share same view code as for the search view, but set "tags mode" on
             return search_view_helper(request, tags_mode=True)
@@ -101,10 +101,10 @@ def tags(request, multiple_tags=None):
 
     except SearchEngineException as e:
         error = True
-        search_logger.error('Search error: %s' % e)
+        search_logger.error(f'Search error: {e}')
     except Exception as e:
         error = True
-        search_logger.error('Could probably not connect to Solr - %s' % e)
+        search_logger.error(f'Could probably not connect to Solr - {e}')
 
     # Calculate follow_tags_url, unfollow_tags_url and show_unfollow_button tvars
     slash_tag = "/".join(multiple_tags)

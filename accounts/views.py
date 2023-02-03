@@ -107,7 +107,7 @@ def ratelimited_error(request, exception):
         path = request.path
     if not path.endswith('/'):
         path += '/'
-    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request), 'path': path})))
+    volatile_logger.info(f"Rate limited IP ({json.dumps({'ip': get_client_ip(request), 'path': path})})")
     return render(request, '429.html', status=429)
 
 
@@ -129,7 +129,7 @@ def login(request, template_name, authentication_form):
             redirect_url = reverse("accounts-multi-email-cleanup")
             next_param = request.POST.get('next', None)
             if next_param:
-                redirect_url += '?next=%s' % next_param
+                redirect_url += f'?next={next_param}'
             return HttpResponseRedirect(redirect_url)
         else:
             return response
@@ -336,7 +336,7 @@ def registration(request):
     if using_beastwhoosh(request):
         # In beastwhoosh we don't have a dedicated registration page, redirect to front-page and auto-open the
         # registration modal
-        return HttpResponseRedirect('{}?registration=1'.format(reverse('front-page')))
+        return HttpResponseRedirect(f"{reverse('front-page')}?registration=1")
     else:
         return render(request, 'accounts/registration.html', {'form': form})
 
@@ -657,7 +657,7 @@ def describe(request):
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
             os.makedirs(directory, exist_ok=True)
             extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
-            new_csv_filename = str(uuid.uuid4()) + '.%s' % extension
+            new_csv_filename = str(uuid.uuid4()) + f'.{extension}'
             path = os.path.join(directory, new_csv_filename)
             destination = open(path, 'wb')
 
@@ -847,7 +847,7 @@ def describe_sounds(request):
             except utils.sound_upload.NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
                 messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file %s.' % forms[i]['description'].cleaned_data['name'])
+                                     f"Something went wrong with accessing the file {forms[i]['description'].cleaned_data['name']}.")
             except utils.sound_upload.AlreadyExistsException as e:
                 messages.add_message(request, messages.WARNING, str(e))
             except utils.sound_upload.CantMoveException as e:
@@ -944,8 +944,8 @@ def download_attribution(request):
     if download in ['csv', 'txt']:
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         filename = f'{request.user}_{now}_attribution.{download}'
-        response = HttpResponse(content_type='text/%s' % content[download])
-        response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+        response = HttpResponse(content_type=f'text/{content[download]}')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         output = io.StringIO()
         if download == 'csv':
             output.write('Download Type,File Name,User,License\r\n')

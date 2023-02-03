@@ -29,7 +29,7 @@ class BookmarkCategory(models.Model):
     name = models.CharField(max_length=128, default="")
     
     def __str__(self):
-        return "%s" % self.name
+        return f"{self.name}"
 
 
 class Bookmark(models.Model):
@@ -40,7 +40,7 @@ class Bookmark(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __str__(self):
-        return "Bookmark: %s" % self.name
+        return f"Bookmark: {self.name}"
 
     @property
     def category_name_or_uncategorized(self):

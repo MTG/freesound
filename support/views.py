@@ -71,7 +71,7 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
             reverse('account', args=[user.username])
         )
 
-        message += "\n\n-- \n%s" % user_url
+        message += f"\n\n-- \n{user_url}"
 
         requester.name = user.username
 

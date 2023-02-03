@@ -92,7 +92,7 @@ class Command(BaseCommand):
         except ImportError as e:
             raise Exception(f'Backend class to test could not be imported: {e}')
 
-        console_logger.info('Testing search engine backend: {}'.format(options['backend_class']))
+        console_logger.info(f"Testing search engine backend: {options['backend_class']}")
         backend_name = options['backend_class']
         write_output = options['write_output']
 

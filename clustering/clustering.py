@@ -250,7 +250,7 @@ class ClusteringEngine(object):
             }
             with open(os.path.join(
                 clust_settings.SAVE_RESULTS_FOLDER, 
-                '{}.json'.format(query_params)
+                f'{query_params}.json'
             ), 'w') as f:
                 json.dump(result, f)
 

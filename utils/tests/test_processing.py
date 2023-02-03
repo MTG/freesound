@@ -97,7 +97,7 @@ class AudioProcessingTestCase(TestCase):
         # Do some stuff which needs to be carried out right before each test
         self.assertEqual(self.sound.processing_state, "PE")
         if create_sound_file:
-            create_test_files(paths=['{}'.format(self.sound.locations('path'))], make_valid_wav_files=True, duration=2)
+            create_test_files(paths=[f"{self.sound.locations('path')}"], make_valid_wav_files=True, duration=2)
     
     def setUp(self):
         user, _, sounds = create_user_and_sounds(num_sounds=1, type="wav")

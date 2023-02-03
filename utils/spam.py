@@ -40,7 +40,7 @@ def is_spam(request, comment):
             return True
 
     # Akismet check
-    domain = "https://%s" % Site.objects.get_current().domain
+    domain = f"https://{Site.objects.get_current().domain}"
     try:
         api = Akismet(key=settings.AKISMET_KEY, blog_url=domain)
     except (APIKeyError, ConfigurationError):

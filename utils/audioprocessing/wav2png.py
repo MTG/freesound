@@ -45,13 +45,13 @@ def main(args):
         this_args = (input_file, output_file_w, output_file_s, args.width, args.height, args.fft_size,
                      progress_callback, args.color_scheme)
 
-        print("processing file %s:\n\t" % input_file, end="")
+        print(f"processing file {input_file}:\n\t", end="")
 
         if not args.profile:
             try:
                 create_wave_images(*this_args)
             except AudioProcessingException as e:
-                print("Error running wav2png: %s" % e)
+                print(f"Error running wav2png: {e}")
         else:
             from hotshot import stats
             import hotshot

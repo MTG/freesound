@@ -64,7 +64,7 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     def get_sound_name(self, obj):
         max_len = 15
-        return '{}{}'.format(obj.original_filename[:max_len], '...' if len(obj.original_filename) > max_len else '')
+        return f"{obj.original_filename[:max_len]}{'...' if len(obj.original_filename) > max_len else ''}"
     get_sound_name.short_description = 'Name'
 
     def reprocess_sound(self, request, queryset_or_object):

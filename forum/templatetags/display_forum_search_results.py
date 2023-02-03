@@ -3,8 +3,6 @@ Created on Jul 1, 2011
 
 @author: stelios
 '''
-from __future__ import absolute_import
-from builtins import str
 from django import template
 
 register = template.Library()

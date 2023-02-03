@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -83,26 +82,26 @@ class SearchUtilsTest(TestCase):
             'num_sounds': settings.SOUNDS_PER_PAGE,
             'current_page': 1,
             'group_by_pack': False,
-            'query_filter': u'duration:[1 TO 10] is_geotagged:1',
-            'textual_query': u'dog',
+            'query_filter': 'duration:[1 TO 10] is_geotagged:1',
+            'textual_query': 'dog',
             'only_sounds_with_pack': False,
         }
 
         expected_extra_vars = {
-            'advanced': u'1',
-            'filter_query_link_more_when_grouping_packs': u'duration:[1+TO+10]+is_geotagged:1',
+            'advanced': '1',
+            'filter_query_link_more_when_grouping_packs': 'duration:[1+TO+10]+is_geotagged:1',
             'cluster_id': '',
-            'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
+            'filter_query_non_facets': 'duration:[1 TO 10] is_geotagged:1',
             'has_facet_filter': False,
-            'parsed_filters': [[u'duration', ':', '[', u'1', ' TO ', u'10', ']'], [u'is_geotagged', ':', u'1']],
+            'parsed_filters': [['duration', ':', '[', '1', ' TO ', '10', ']'], ['is_geotagged', ':', '1']],
             'parsing_error': False,
             'raw_weights_parameter': ''
         }
 
         expected_advanced_search_params_dict = {
-            'a_tag': u'1', 
+            'a_tag': '1', 
             'a_username': '', 
-            'a_description': u'1', 
+            'a_description': '1', 
             'a_packname': '', 
             'a_filename': '', 
             'a_soundid': '',
@@ -150,24 +149,24 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_non_ascii_query(self):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()
-        request = self.factory.get(reverse('sounds-search')+u'?q=Æ æ ¿ É')
+        request = self.factory.get(reverse('sounds-search')+'?q=Æ æ ¿ É')
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-        self.assertEqual(query_params['textual_query'], u'\xc6 \xe6 \xbf \xc9')
+        self.assertEqual(query_params['textual_query'], '\xc6 \xe6 \xbf \xc9')
 
     def test_split_filter_query_duration_and_facet(self):
         # We check that the combination of a duration filter and a facet filter (CC Attribution) works correctly.
-        filter_query_string = u'duration:[0 TO 10] license:"Attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
+        filter_query_string = 'duration:[0 TO 10] license:"Attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
 
         # duraton filter is not a facet, but should stay present when removing a facet.
         expected_filter_query_split = [
-            {'remove_url': u'duration:[0 TO 10]', 'name': u'license:Attribution'}, 
+            {'remove_url': 'duration:[0 TO 10]', 'name': 'license:Attribution'}, 
         ]
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': u'license:Attribution'}, 
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"'), 'name': u'username:XavierFav'}, 
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] license:"Attribution" username:"XavierFav"'), 'name': u'pack:best-pack-ever'},
+            {'remove_url': urlquote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': 'license:Attribution'}, 
+            {'remove_url': urlquote_plus('duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"'), 'name': 'username:XavierFav'}, 
+            {'remove_url': urlquote_plus('duration:[0 TO 10] license:"Attribution" username:"XavierFav"'), 'name': 'pack:best-pack-ever'},
         ]
 
         # the order does not matter for the list of facet dicts.
@@ -201,14 +200,14 @@ class SearchUtilsTest(TestCase):
                       filter_query_split[grouping_pack_facet_dict_idx]['remove_url'].replace('++', '+'))
 
     def test_split_filter_query_special_chars(self):
-        filter_query_string = u'license:"Sampling+" grouping_pack:"1_example pack + @ #()*"'
+        filter_query_string = 'license:"Sampling+" grouping_pack:"1_example pack + @ #()*"'
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
 
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus(u'grouping_pack:"1_example pack + @ #()*"'), 'name': u'license:Sampling+'},
-            {'remove_url': urlquote_plus(u'license:"Sampling+"'), 'name': u'pack:example pack + @ #()*'},
+            {'remove_url': urlquote_plus('grouping_pack:"1_example pack + @ #()*"'), 'name': 'license:Sampling+'},
+            {'remove_url': urlquote_plus('license:"Sampling+"'), 'name': 'pack:example pack + @ #()*'},
         ]
 
         cc_samplingplus_facet_dict_idx = filter_query_names.index('license:Sampling+')
@@ -273,14 +272,14 @@ class SearchUtilsTest(TestCase):
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter
         # works correctly.
-        filter_query_string = u'duration:[0 TO 10] license:"Attribution"'
+        filter_query_string = 'duration:[0 TO 10] license:"Attribution"'
         # the cluster filter is set in the second argument of split_filter_query()
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '1')
 
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10]'), 'name': u'license:Attribution'},
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] license:"Attribution"'), 'name': 'Cluster #1'}
+            {'remove_url': urlquote_plus('duration:[0 TO 10]'), 'name': 'license:Attribution'},
+            {'remove_url': urlquote_plus('duration:[0 TO 10] license:"Attribution"'), 'name': 'Cluster #1'}
         ]
 
         # check that the cluster facet exists

@@ -35,12 +35,12 @@ class SupportRequestsTest(TestCase):
         # try with existing email address
         request_email = 'test.user+1@gmail.com'
         send_email_to_support(request_email, subject, message)
-        self.assert_(True)  # This call is not really needed, but makes sense to me
+        self.assertTrue(True)  # This call is not really needed, but makes sense to me
 
         # try with non-existing email address
         request_email = 'test.user+1234678235@gmail.com'
         send_email_to_support(request_email, subject, message)
-        self.assert_(True)  # This call is not really needed, but makes sense to me
+        self.assertTrue(True)  # This call is not really needed, but makes sense to me
 
     def test_create_zendesk_ticket(self):
         subject = 'test subject'

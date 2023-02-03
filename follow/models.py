@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -31,9 +28,9 @@ class FollowingUserItem(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return u"%s following %s" % (self.user_from, self.user_to)
+        return f"{self.user_from} following {self.user_to}"
 
-    class Meta(object):
+    class Meta:
         verbose_name_plural = "Users"
         unique_together = ("user_from", "user_to")
 
@@ -45,7 +42,7 @@ class FollowingQueryItem(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return u"%s following tag '%s'" % (self.user, self.query)
+        return f"{self.user} following tag '{self.query}'"
 
     def get_slash_tags(self):
         return self.query.replace(" ", "/")
@@ -56,6 +53,6 @@ class FollowingQueryItem(models.Model):
     def get_space_tags(self):
         return self.query
 
-    class Meta(object):
+    class Meta:
         verbose_name_plural = 'Tags'
         unique_together = ("user", "query")

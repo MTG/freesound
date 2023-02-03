@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import str
 import datetime
 import json
 import logging
@@ -73,7 +72,7 @@ class Command(LoggingBaseCommand):
             week_first_day_str = week_first_day.strftime("%d %b").lstrip("0")
             week_last_day_str = week_last_day.strftime("%d %b").lstrip("0")
 
-            extra_email_subject = str(week_first_day_str) + u' to ' + str(week_last_day_str)
+            extra_email_subject = str(week_first_day_str) + ' to ' + str(week_last_day_str)
 
             # Set date range from which to get upload notifications
             time_lapse = follow_utils.build_time_lapse(week_first_day, week_last_day)
@@ -84,12 +83,12 @@ class Command(LoggingBaseCommand):
                 users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
             except Exception as e:
                 # If error occur do not send the email
-                console_logger.info("could not get new sounds data for {0}".format(username.encode('utf-8')))
+                console_logger.info("could not get new sounds data for {}".format(username.encode('utf-8')))
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
             if not users_sounds and not tags_sounds:
-                console_logger.info("no news sounds for {0}".format(username.encode('utf-8')))
+                console_logger.info("no news sounds for {}".format(username.encode('utf-8')))
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 

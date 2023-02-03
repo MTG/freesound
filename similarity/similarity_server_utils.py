@@ -82,15 +82,14 @@ def parse_filter(filter_string, layout_descriptor_names):
             current_pos = filter_string.find(op,min_pos)
             min_pos = current_pos + 1
             aux_ops[current_pos] = op#.append({'op':op,'pos':current_pos})
-    keylist = list(aux_ops.keys())
-    keylist.sort()
+    keylist = sorted(aux_ops.keys())
     for key in keylist:
         op = aux_ops[key]
         current_pos = key
 
         # Insert OPERATOR clause in appropiate place of filter_struct
         for i,f in enumerate(filter_struct):
-            if type(f) == dict:
+            if isinstance(f, dict):
                 if f['delimiter_position'] > current_pos:
                     filter_struct.insert(i,op)
                     break
@@ -101,13 +100,13 @@ def parse_filter(filter_string, layout_descriptor_names):
     final_filter_struct = []
     for i in range(0,len(filter_struct)):
         if i < len(filter_struct) -1:
-            if type(filter_struct[i]) == dict and type(filter_struct[i+1]) == dict:
+            if isinstance(filter_struct[i], dict) and isinstance(filter_struct[i+1], dict):
                 final_filter_struct.append(filter_struct[i])
                 final_filter_struct.append('AND')
-            elif type(filter_struct[i]) == dict and filter_struct[i+1] == "(":
+            elif isinstance(filter_struct[i], dict) and filter_struct[i+1] == "(":
                 final_filter_struct.append(filter_struct[i])
                 final_filter_struct.append('AND')
-            elif filter_struct[i] == ")" and type(filter_struct[i+1]) == dict:
+            elif filter_struct[i] == ")" and isinstance(filter_struct[i+1], dict):
                 final_filter_struct.append(filter_struct[i])
                 final_filter_struct.append('AND')
             else:
@@ -121,7 +120,7 @@ def parse_filter(filter_string, layout_descriptor_names):
 
     # Change values for current types
     for f in final_filter_struct:
-        if type(f) == dict:
+        if isinstance(f, dict):
             if f['type'] == 'NUMBER':
                 f['value'] = float(f['value'])
             elif f['type'] == 'ARRAY':
@@ -154,7 +153,7 @@ def parse_filter_list(filter_list, coeffs):
 
         filter = "WHERE"
         for f in filter_list:
-            if type(f) != dict:
+            if not isinstance(f, dict):
                 filter += f
             else:
                 if f['type'] == 'NUMBER' or f['type'] == 'STRING' or f['type'] == 'ARRAY':
@@ -299,7 +298,7 @@ def set_nested_dictionary_value(keys, dict, value):
 
 def get_nested_descriptor_names(structured_layout, accumulated_list=[], keys=[]):
     for key, item in structured_layout.items():
-        if type(item) == dict:
+        if isinstance(item, dict):
             keys.append(key)
             get_nested_descriptor_names(item, accumulated_list, keys)
         else:

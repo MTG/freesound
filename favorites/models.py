@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -36,8 +33,8 @@ class Favorite(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __str__(self):
-        return u"%s favorites %s - %s" % (self.user, self.content_type, self.content_type)
+        return f"{self.user} favorites {self.content_type} - {self.content_type}"
     
-    class Meta(object):
+    class Meta:
         unique_together = (('user', 'content_type', 'object_id'),)
         ordering = ("-created", )

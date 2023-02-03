@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -21,8 +20,6 @@
 
 import logging
 
-from builtins import object
-from builtins import str
 from captcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
@@ -122,7 +119,7 @@ class TermsOfServiceForm(forms.Form):
 class TermsOfServiceFormBW(TermsOfServiceForm):
 
     def __init__(self, *args, **kwargs):
-        super(TermsOfServiceFormBW, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['accepted_license_change'].widget.attrs['class'] = 'bw-checkbox'
         
@@ -148,7 +145,7 @@ class FileChoiceForm(forms.Form):
     files = forms.MultipleChoiceField()
 
     def __init__(self, files, *args, **kwargs):
-        super(FileChoiceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         choices = list(files.items())
         self.fields['files'].choices = choices
 
@@ -160,7 +157,7 @@ def get_user_by_email(email):
 class UsernameField(forms.CharField):
     """ Username field, 3~30 characters, allows only alphanumeric chars, required by default """
     def __init__(self, required=True):
-        super(UsernameField, self).__init__(
+        super().__init__(
             label="Username",
             min_length=3,
             max_length=30,
@@ -236,7 +233,7 @@ class RegistrationForm(forms.Form):
         return email1
 
     def clean(self):
-        cleaned_data = super(RegistrationForm, self).clean()
+        cleaned_data = super().clean()
         return cleaned_data
 
     def save(self):
@@ -261,7 +258,7 @@ class BwRegistrationForm(RegistrationForm):
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(auto_id='id_%s_registration'))
         kwargs.update(dict(label_suffix=''))
-        super(BwRegistrationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
         self.fields['username'].label = False
@@ -289,14 +286,14 @@ class BwProblemsLoggingInForm(forms.Form):
     username_or_email = forms.CharField(label="", help_text="", max_length=254)
 
     def __init__(self, *args, **kwargs):
-        super(BwProblemsLoggingInForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['username_or_email'].widget.attrs['placeholder'] = 'Your email or username'
 
 
 class FsAuthenticationForm(AuthenticationForm):
 
     def __init__(self, *args, **kwargs):
-        super(FsAuthenticationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.error_messages.update({
             'inactive': mark_safe("You are trying to log in with an inactive account, please <a href=\"%s\">activate "
                                   "your account</a> first." % reverse("accounts-resend-activation")),
@@ -309,7 +306,7 @@ class FsAuthenticationForm(AuthenticationForm):
 class BwFsAuthenticationForm(FsAuthenticationForm):
 
     def __init__(self, *args, **kwargs):
-        super(BwFsAuthenticationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Customize form placeholders and remove labels
         self.fields['username'].label = False
@@ -356,7 +353,7 @@ class ProfileForm(forms.ModelForm):
         kwargs.update(initial={
             'username': request.user.username
         })
-        super(ProfileForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.n_times_changed_username = OldUsername.objects.filter(user_id=self.request.user.id).count()
         if self.n_times_changed_username < 1:
@@ -422,7 +419,7 @@ class ProfileForm(forms.ModelForm):
 
         return sound_signature
 
-    class Meta(object):
+    class Meta:
         model = Profile
         fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
 
@@ -437,7 +434,7 @@ class BwProfileForm(ProfileForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwProfileForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
         self.fields['username'].widget.attrs['placeholder'] = 'Write your name here (30 characters maximum)'
@@ -465,7 +462,7 @@ class BwProfileForm(ProfileForm):
         self.fields['is_adult'].help_text = False
         self.fields['not_shown_in_online_users_list'].widget = forms.HiddenInput()
 
-    class Meta(object):
+    class Meta:
         model = Profile
         fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', )
 
@@ -477,7 +474,7 @@ class EmailResetForm(forms.Form):
     def __init__(self, *args, **kwargs):
         # Using init function to pass user variable so later we can perform check_password in clean_password function
         self.user = kwargs.pop('user', None)
-        super(EmailResetForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):
@@ -485,8 +482,8 @@ class EmailResetForm(forms.Form):
         return self.cleaned_data['password']
 
 
-DELETE_CHOICES = [('only_user', mark_safe(u'<span>Delete only my user account information</span>')),
-                  ('delete_sounds', mark_safe(u'<span>Delete my user account information, my sounds and packs</span>'))]
+DELETE_CHOICES = [('only_user', mark_safe('<span>Delete only my user account information</span>')),
+                  ('delete_sounds', mark_safe('<span>Delete my user account information, my sounds and packs</span>'))]
 
 
 class DeleteUserForm(forms.Form):
@@ -525,13 +522,13 @@ class DeleteUserForm(forms.Form):
                 'delete_sounds': 'only_user',
                 'encrypted_link': encrypted_link
                 }
-        super(DeleteUserForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class BwDeleteUserForm(DeleteUserForm):
 
     def __init__(self, *args, **kwargs):
-        super(BwDeleteUserForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['delete_sounds'].label = False
         # NOTE: the line below will add 'bw-radio' to all individual radio elements of
         # forms.RadioSelect but also to the main ul element that wraps them all. This is not
@@ -551,7 +548,7 @@ class EmailSettingsForm(forms.Form):
 class BwEmailSettingsForm(EmailSettingsForm):
 
     def __init__(self, *args, **kwargs):
-        super(BwEmailSettingsForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['email_types'].label = False
         # NOTE: the line below will add 'bw-checkbox' to all individual checkbox elements of
         # forms.CheckboxSelectMultiple but also to the main ul element that wraps them all. This is not
@@ -629,7 +626,7 @@ class FsPasswordResetForm(forms.Form):
 class BwSetPasswordForm(SetPasswordForm):
 
     def __init__(self, *args, **kwargs):
-        super(BwSetPasswordForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
         self.fields['new_password1'].label = False

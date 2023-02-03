@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
 from django import template
 import feedparser
 import urllib.request, urllib.error, urllib.parse

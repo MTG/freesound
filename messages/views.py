@@ -225,7 +225,7 @@ def get_previously_contacted_usernames(user):
     usernames = list(Message.objects.select_related('user_from', 'user_to')
                      .filter(Q(user_from=user) | Q(user_to=user))
                      .values_list('user_to__username', 'user_from__username'))
-    return list(set([item for sublist in usernames for item in sublist]))
+    return list({item for sublist in usernames for item in sublist})
 
 
 @login_required

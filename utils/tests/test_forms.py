@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import range
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 

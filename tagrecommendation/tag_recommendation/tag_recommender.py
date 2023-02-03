@@ -46,9 +46,9 @@ class TagRecommender(object):
 
     def set_heuristic(self, heuristic="hRankPercentage015"):
 
-        if type(heuristic) == str:
+        if isinstance(heuristic, str):
             self.heuristic = heuristics[heuristic].copy()
-        elif type(heuristic) == dict:
+        elif isinstance(heuristic, dict):
             self.heuristic = heuristic
         else:
             raise Exception("Wrong heuristic given")

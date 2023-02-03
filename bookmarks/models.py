@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -32,7 +29,7 @@ class BookmarkCategory(models.Model):
     name = models.CharField(max_length=128, default="")
     
     def __str__(self):
-        return u"%s" % self.name
+        return "%s" % self.name
 
 
 class Bookmark(models.Model):
@@ -43,7 +40,7 @@ class Bookmark(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __str__(self):
-        return u"Bookmark: %s" % self.name
+        return "Bookmark: %s" % self.name
 
     @property
     def category_name_or_uncategorized(self):
@@ -60,5 +57,5 @@ class Bookmark(models.Model):
         else:
             return self.sound.original_filename
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created", )

@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
 from urllib.error import HTTPError, URLError
 
 from akismet import Akismet, AkismetError, APIKeyError, ConfigurationError

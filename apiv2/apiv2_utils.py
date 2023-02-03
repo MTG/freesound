@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,15 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
 from past.utils import old_div
-from builtins import object
 import collections
 import datetime
 import json
@@ -108,7 +98,7 @@ def get_view_description(cls, html=False):
 #############################
 
 
-class FreesoundAPIViewMixin(object):
+class FreesoundAPIViewMixin:
     end_user_ip = None
     auth_method_name = None
     developer = None
@@ -135,7 +125,7 @@ class FreesoundAPIViewMixin(object):
         """
         if self.client_id is not None:
             now = datetime.datetime.now().date()
-            monitoring_key = '{0}-{1}-{2}_{3}'.format(now.year, now.month, now.day, self.client_id)
+            monitoring_key = f'{now.year}-{now.month}-{now.day}_{self.client_id}'
             current_value = cache_api_monitoring.get(monitoring_key, 0)
             cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
 
@@ -160,7 +150,7 @@ class FreesoundAPIViewMixin(object):
 
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
             if request.get_host().startswith('www'):
-                domain = "%s://%s" % ('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
+                domain = "{}://{}".format('https' if not settings.DEBUG else 'http', Site.objects.get_current().domain)
                 return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
             if request.scheme != 'https' and not settings.DEBUG:
@@ -181,7 +171,7 @@ class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     queryset = False
 
     def initial(self, request, *args, **kwargs):
-        super(GenericAPIView, self).initial(request, *args, **kwargs)
+        super().initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.store_monitor_usage()
 
@@ -191,7 +181,7 @@ class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         inside the 'initial' method because it raises an exception when the user is not logged in, that exception is
         handled by 'finalize_response' method of APIView.
         """
-        response = super(GenericAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
 
@@ -201,14 +191,14 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
-        super(OauthRequiredAPIView, self).initial(request, *args, **kwargs)
+        super().initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
         self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
-        response = super(OauthRequiredAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
 
@@ -218,7 +208,7 @@ class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
-        super(DownloadAPIView, self).initial(request, *args, **kwargs)
+        super().initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
         self.store_monitor_usage()
@@ -232,7 +222,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewM
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
-        super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
+        super().initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.throw_exception_if_not_https(request)
         self.store_monitor_usage()
@@ -244,7 +234,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewM
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
-        response = super(WriteRequiredGenericAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
 
@@ -254,7 +244,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
-        super(ListAPIView, self).initial(request, *args, **kwargs)
+        super().initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.store_monitor_usage()
 
@@ -264,7 +254,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
         kwargs['context'] = self.get_serializer_context()
         if 'SoundListSerializer' in str(serializer_class):
             # If we are trying to serialize sounds, check if we should and sound analysis data to them and add it
-            if isinstance(args[0], collections.Iterable):
+            if isinstance(args[0], collections.abc.Iterable):
                 sound_analysis_data = get_analysis_data_for_sound_ids(kwargs['context']['request'], sound_ids=[s.id for s in args[0]])
                 if sound_analysis_data:
                     kwargs['sound_analysis_data'] = sound_analysis_data
@@ -272,7 +262,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
-        response = super(ListAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
 
@@ -282,13 +272,13 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
-        super(RetrieveAPIView, self).initial(request, *args, **kwargs)
+        super().initial(request, *args, **kwargs)
         self.get_request_information(request)
         self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
-        response = super(RetrieveAPIView, self).finalize_response(request, response, *args, **kwargs)
+        response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
 
@@ -364,9 +354,9 @@ def api_search(
             more_from_pack_data = None
             if search_form.cleaned_data['group_by_pack']:
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
-                more_from_pack_data = dict([
-                    (int(group['id']), [group['n_more_in_group'], group['group_name']]) for group in result.docs
-                ])
+                more_from_pack_data = {
+                    int(group['id']): [group['n_more_in_group'], group['group_name']] for group in result.docs
+                }
 
             return ids_score, num_found, None, more_from_pack_data, None, None, None
 
@@ -412,7 +402,7 @@ def log_message_helper(message, data_dict=None, info_dict=None, resource=None, r
         if request is not None and info_dict is None:
             info_dict = build_info_dict(request=request)
 
-    return '%s #!# %s #!# %s' % (message, json.dumps(data_dict), json.dumps(info_dict))
+    return f'{message} #!# {json.dumps(data_dict)} #!# {json.dumps(info_dict)}'
 
 
 def build_info_dict(resource=None, request=None):
@@ -468,9 +458,9 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
             pass
 
     if use_https:
-        return "https://%s%s" % (Site.objects.get_current().domain, rel)
+        return f"https://{Site.objects.get_current().domain}{rel}"
     else:
-        return "http://%s%s" % (Site.objects.get_current().domain, rel)
+        return f"http://{Site.objects.get_current().domain}{rel}"
 
 
 def get_authentication_details_form_request(request):
@@ -504,10 +494,10 @@ def get_authentication_details_form_request(request):
 
 
 def request_parameters_info_for_log_message(get_parameters):
-    return ','.join(['%s=%s' % (key, value) for key, value in get_parameters.items()])
+    return ','.join([f'{key}={value}' for key, value in get_parameters.items()])
 
 
-class ApiSearchPaginator(object):
+class ApiSearchPaginator:
     def __init__(self, results, count, num_per_page):
         self.num_per_page = num_per_page
         self.count = count
@@ -547,7 +537,7 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
 
             if element[0:5] == 'apiv2':
                 url = prepend_base('/' + element, dynamic_resolve=False, use_https=True)
-                output += '<span class="pln"><a href="%s">%s</a></span><br>' % (url, url)
+                output += f'<span class="pln"><a href="{url}">{url}</a></span><br>'
             else:
                 # This is only apiv2 oauth examples
                 url = prepend_base('', dynamic_resolve=False, use_https=True)

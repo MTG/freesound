@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -46,7 +44,7 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
         Check that ApiV2Client associatied to the given acess_token has not been disabled.
         """
         try:
-            super_response = super(OAuth2Authentication, self).authenticate(request)
+            super_response = super().authenticate(request)
         except ValueError:
             # If the request contains html entities that don't decode to valid UTF8,
             # an exception is raised during oauth validation, even if it's on a field/parameter unrelated to oauth (#793)

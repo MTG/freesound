@@ -17,8 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from __future__ import absolute_import
-import six
 from django.test import TestCase, SimpleTestCase, RequestFactory
 from django.urls import reverse
 from django.conf import settings
@@ -214,7 +212,7 @@ class TestAPI(TestCase):
         c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
                         url="https://freesound.com", name="test")
         c.save()
-        resp = self.client.get("/apiv2/?token={}".format(c.key), secure=True)
+        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 200)
 
     def test_token_authentication_disabled_client(self):
@@ -222,7 +220,7 @@ class TestAPI(TestCase):
         c = ApiV2Client(user=user, status='REV', redirect_uri="https://freesound.com",
                         url="https://freesound.com", name="test")
         c.save()
-        resp = self.client.get("/apiv2/?token={}".format(c.key), secure=True)
+        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 401)
         
 
@@ -383,19 +381,19 @@ class TestSoundListSerializer(TestCase):
         # When 'fields' parameter is not used, return default ones
         dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': ''})
         serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
-        six.assertCountEqual(self, list(serialized_sound.keys()), DEFAULT_FIELDS_IN_SOUND_LIST.split(','))
+        self.assertCountEqual(list(serialized_sound.keys()), DEFAULT_FIELDS_IN_SOUND_LIST.split(','))
 
         # When only some parameters are specified
         fields_parameter = 'id,username'
         dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
         serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
-        six.assertCountEqual(self, list(serialized_sound.keys()), fields_parameter.split(','))
+        self.assertCountEqual(list(serialized_sound.keys()), fields_parameter.split(','))
 
         # When all parameters are specified
         fields_parameter = ','.join(SoundListSerializer.Meta.fields)
         dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': fields_parameter})
         serialized_sound = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
-        six.assertCountEqual(self, list(serialized_sound.keys()), fields_parameter.split(','))
+        self.assertCountEqual(list(serialized_sound.keys()), fields_parameter.split(','))
 
     def test_num_queries(self):
         # Test that the serializer does not perform any extra query when serializing sounds regardless of the number
@@ -449,7 +447,7 @@ class TestSoundSerializer(TestCase):
         with self.assertNumQueries(0):
             dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]))
             serialized_sound = SoundSerializer(self.sound, context={'request': dummy_request}).data
-            six.assertCountEqual(self, list(serialized_sound.keys()), SoundSerializer.Meta.fields)
+            self.assertCountEqual(list(serialized_sound.keys()), SoundSerializer.Meta.fields)
 
 
 class TestApiV2Client(TestCase):

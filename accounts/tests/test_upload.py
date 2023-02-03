@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import range
 import os
 from unittest import mock
 
@@ -80,8 +77,8 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting one file redirects to /home/describe/sounds/
         sounds_to_describe_idx = [0]
         resp = self.client.post('/home/describe/', {
-            'describe': [u'Describe selected files'],
-            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
+            'describe': ['Describe selected files'],
+            'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, '/home/describe/sounds/')
         self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
@@ -90,8 +87,8 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting multiple file redirects to /home/describe/license/
         sounds_to_describe_idx = [1, 2, 3]
         resp = self.client.post('/home/describe/', {
-            'describe': [u'Describe selected files'],
-            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
+            'describe': ['Describe selected files'],
+            'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, '/home/describe/license/')
         self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
@@ -100,16 +97,16 @@ class UserUploadAndDescribeSounds(TestCase):
         # Selecting files to delete, redirect to delete confirmation
         sounds_to_delete_idx = [1, 2, 3]
         resp = self.client.post('/home/describe/', {
-            'delete': [u'Delete selected files'],
-            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
+            'delete': ['Delete selected files'],
+            'sound-files': [f'file{idx}' for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
         })
         self.assertEqual(resp.status_code, 200)
         self.assertListEqual(sorted(resp.context['filenames']), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
 
         # Selecting confirmation of files to delete
         resp = self.client.post('/home/describe/', {
-            'delete_confirm': [u'delete_confirm'],
-            'sound-files': [u'file{}'.format(idx) for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
+            'delete_confirm': ['delete_confirm'],
+            'sound-files': [f'file{idx}' for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
         })
         self.assertRedirects(resp, '/home/describe/')
         self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(sounds_to_delete_idx))
@@ -139,25 +136,25 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Post description information
         resp = self.client.post('/home/describe/sounds/', {
-            'submit': [u'Submit and continue'],
-            '0-lat': [u'46.31658418182218'],
-            '0-lon': [u'3.515625'],
-            '0-zoom': [u'16'],
-            '0-tags': [u'testtag1 testtag2 testtag3'],
-            '0-pack': [u'{}'.format(existing_pack.id)],
-            '0-license': [u'3'],
-            '0-description': [u'a test description for the sound file'],
-            '0-new_pack': [u''],
+            'submit': ['Submit and continue'],
+            '0-lat': ['46.31658418182218'],
+            '0-lon': ['3.515625'],
+            '0-zoom': ['16'],
+            '0-tags': ['testtag1 testtag2 testtag3'],
+            '0-pack': [f'{existing_pack.id}'],
+            '0-license': ['3'],
+            '0-description': ['a test description for the sound file'],
+            '0-new_pack': [''],
             '0-name': [filenames[0]],
-            '1-license': [u'3'],
-            '1-description': [u'another test description'],
-            '1-lat': [u''],
-            '1-pack': [u''],
-            '1-lon': [u''],
+            '1-license': ['3'],
+            '1-description': ['another test description'],
+            '1-lat': [''],
+            '1-pack': [''],
+            '1-lon': [''],
             '1-name': [filenames[1]],
-            '1-new_pack': [u'Name of a new pack'],
-            '1-zoom': [u''],
-            '1-tags': [u'testtag1 testtag4 testtag5'],
+            '1-new_pack': ['Name of a new pack'],
+            '1-zoom': [''],
+            '1-tags': ['testtag1 testtag4 testtag5'],
         })
 
         # Check that post redirected to first describe page with confirmation message on sounds described
@@ -203,25 +200,25 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Post description information
         resp = self.client.post('/home/describe/sounds/', {
-            '0-lat': [u'46.31658418182218'],
-            '0-lon': [u'3.515625'],
-            '0-zoom': [u'16'],
-            '0-tags': [u'testtag1 testtag2 testtag3'],
-            '0-pack': [u''],
-            '0-license': [u'3'],
-            '0-description': [u'a test description for the sound file'],
-            '0-new_pack': [u''],
+            '0-lat': ['46.31658418182218'],
+            '0-lon': ['3.515625'],
+            '0-zoom': ['16'],
+            '0-tags': ['testtag1 testtag2 testtag3'],
+            '0-pack': [''],
+            '0-license': ['3'],
+            '0-description': ['a test description for the sound file'],
+            '0-new_pack': [''],
             '0-name': [filenames[0]],
-            '1-license': [u'3'],
-            '1-description': [u'another test description'],
-            '1-lat': [u''],
-            '1-pack': [u''],
-            '1-lon': [u''],
+            '1-license': ['3'],
+            '1-description': ['another test description'],
+            '1-lat': [''],
+            '1-pack': [''],
+            '1-lon': [''],
             '1-name': [filenames[1]],
-            '1-new_pack': [u'Name of a new pack'],
-            '1-zoom': [u''],
-            '1-tags': [u'testtag1 testtag4 testtag5'],
-            '1-sources': u','.join([u'{}'.format(s.id) for s in sound_sources]),
+            '1-new_pack': ['Name of a new pack'],
+            '1-zoom': [''],
+            '1-tags': ['testtag1 testtag4 testtag5'],
+            '1-sources': ','.join([f'{s.id}' for s in sound_sources]),
         })
         
         # Check that post redirected to first describe page with confirmation message on sounds described
@@ -237,7 +234,7 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
         sound_with_sources = user.sounds.get(original_filename=filenames[1])
-        self.assertEquals(sound_with_sources.sources.all().count(), len(sound_sources))
+        self.assertEqual(sound_with_sources.sources.all().count(), len(sound_sources))
 
 
 class BulkDescribe(TestCase):
@@ -279,7 +276,7 @@ class BulkDescribe(TestCase):
         # Test successful file upload and redirect
         filename = "file.csv"
         f = SimpleUploadedFile(filename, b"file_content")
-        resp = self.client.post(reverse('accounts-describe'), {u'bulk-csv_file': f})
+        resp = self.client.post(reverse('accounts-describe'), {'bulk-csv_file': f})
         bulk = BulkUploadProgress.objects.get(user=user)
         self.assertRedirects(resp, reverse('accounts-bulk-describe', args=[bulk.id]))
 

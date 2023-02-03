@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
 import datetime
 import json
@@ -119,7 +118,7 @@ def ticket(request, ticket_key):
                 clean_status_forms = True
                 clean_comment_form = True
                 sound_action = sound_form.cleaned_data.get('action')
-                comment = 'Moderator {} '.format(request.user)
+                comment = f'Moderator {request.user} '
                 notification = None
 
                 # If there is no one assigned, then changing the state self-assigns the ticket
@@ -153,7 +152,7 @@ def ticket(request, ticket_key):
 
                 elif sound_action == 'Whitelist':
                     whitelist_user.delay(ticket_ids=[ticket.id])  # async job should take care of whitelisting
-                    comment += 'whitelisted all sounds from user {}'.format(ticket.sender)
+                    comment += f'whitelisted all sounds from user {ticket.sender}'
                     notification = ticket.NOTIFICATION_WHITELISTED
 
                 if notification is not None:
@@ -340,7 +339,7 @@ def moderation_assign_all_new(request):
 
     tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
 
-    msg = 'You have been assigned all new sounds ({}) from the queue.'.format(tickets.count())
+    msg = f'You have been assigned all new sounds ({tickets.count()}) from the queue.'
     messages.add_message(request, messages.INFO, msg)
     invalidate_all_moderators_header_cache()
 

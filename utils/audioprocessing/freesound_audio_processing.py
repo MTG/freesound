@@ -18,12 +18,8 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
-from __future__ import division
 
-from builtins import str
 from past.utils import old_div
-from builtins import object
 import json
 import os
 import signal
@@ -90,7 +86,7 @@ def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
                               "aborting task as there might not be enough space for temp files")
 
 
-class FreesoundAudioProcessorBase(object):
+class FreesoundAudioProcessorBase:
     """
     Base class to be used for Freesound processing and analysis code.
     It implements methods common to both use cases.
@@ -185,7 +181,7 @@ class FreesoundAudioProcessorBase(object):
 class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
     def set_failure(self, message, error=None):
-        super(FreesoundAudioProcessor, self).set_failure(message, error)
+        super().set_failure(message, error)
         self.sound.set_processing_ongoing_state("FI")
         self.sound.change_processing_state("FA", processing_log=self.work_log)
 
@@ -341,7 +337,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                         fft_size = 2048
                         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path, spectral_path, width, height,
                                                            fft_size, color_scheme=color_scheme)
-                        self.log_info("created wave and spectrogram images: %s, %s" % (waveform_path, spectral_path))
+                        self.log_info(f"created wave and spectrogram images: {waveform_path}, {spectral_path}")
                     except AudioProcessingException as e:
                         self.set_failure("creation of display images has failed", e)
                         return False
@@ -373,10 +369,10 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         os.makedirs(os.path.dirname(self.output_preview_ogg), exist_ok=True)
 
     def log_info(self, message):
-        console_logger.info("{} - {}".format(self.audio_file_path, message))
+        console_logger.info(f"{self.audio_file_path} - {message}")
 
     def log_error(self, message):
-        console_logger.error("{} - {}".format(self.audio_file_path, message))
+        console_logger.error(f"{self.audio_file_path} - {message}")
 
     def set_failure(self, message, error=None):
         logging_message = "file with path %s failed\n" % self.audio_file_path
@@ -393,7 +389,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
 
     def process(self):
         with TemporaryDirectory(
-                prefix='processing_before_description_{}_'.format(os.path.basename(self.output_folder)),
+                prefix=f'processing_before_description_{os.path.basename(self.output_folder)}_',
                 dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             # Get the path of the original sound and convert to PCM
@@ -477,7 +473,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
             try:
                 audioprocessing.create_wave_images(tmp_wavefile2, self.output_wave_path, self.output_spectral_path, 780, 301,
                                                 fft_size=2048, color_scheme=color_schemes.BEASTWHOOSH_COLOR_SCHEME)
-                self.log_info("created wave and spectrogram images: %s, %s" % (self.output_wave_path, self.output_spectral_path))
+                self.log_info(f"created wave and spectrogram images: {self.output_wave_path}, {self.output_spectral_path}")
             except AudioProcessingException as e:
                 self.set_failure("creation of display images has failed", e)
                 return False

@@ -680,7 +680,7 @@ def describe(request):
                         os.remove(files[f].full_path)
                         utils.sound_upload.clean_processing_before_describe_files(files[f].full_path)
                         remove_uploaded_file_from_mirror_locations(files[f].full_path)
-                    except IOError as e:
+                    except OSError as e:
                         if e.errno == errno.ENOENT:
                             upload_logger.error("Failed to remove file %s", str(e))
                         else:

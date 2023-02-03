@@ -136,7 +136,7 @@ def create_sound(user,
     sound.original_path = sound_fields['dest_path']
     try:
         sound.filesize = os.path.getsize(sound.original_path)
-    except IOError:
+    except OSError:
         raise NoAudioException()
 
     if isinstance(sound_fields['license'], License):
@@ -185,7 +185,7 @@ def create_sound(user,
             remove_uploaded_file_from_mirror_locations(sound.original_path)
             _remove_user_uploads_folder_if_empty(sound.user)
 
-        except IOError as e:
+        except OSError as e:
             raise CantMoveException(f"Failed to move file from {sound.original_path} to {new_original_path}")
         sound.original_path = new_original_path
         sound.save()

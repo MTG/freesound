@@ -155,7 +155,7 @@ class FreesoundAudioProcessorBase:
                 tmp_wavefile = sound_path
                 self.log_info("no need to convert, this file is already PCM data")
 
-        except IOError as e:
+        except OSError as e:
             # Could not create tmp file
             raise AudioProcessingException(f"could not create tmp_wavefile file, "
                                            f"make sure that format conversion executables exist: {str(e)}")
@@ -167,7 +167,7 @@ class FreesoundAudioProcessorBase:
                 audioprocessing.convert_using_ffmpeg(sound_path, tmp_wavefile, mono_out=mono)
             except AudioProcessingException as e:
                 raise AudioProcessingException("conversion to PCM failed: %s" % e)
-            except IOError as e:
+            except OSError as e:
                 raise AudioProcessingException("conversion to PCM failed, "
                                                "make sure that ffmpeg executable exists: %s" % e)
         except Exception as e:
@@ -207,7 +207,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Close file handler as we don't use it from Python
                 os.close(fh)
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
-            except IOError as e:
+            except OSError as e:
                 # Could not create tmp file
                 self.set_failure(f"could not create tmp_wavefile2 file, "
                                  f"make stereofy sure executable exists at {settings.SOUNDS_PATH}", e)
@@ -268,7 +268,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Same directory is used for all MP3 and OGG previews of a given sound so we only need to run this once
                 try:
                     os.makedirs(os.path.dirname(self.sound.locations("preview.LQ.mp3.path")), exist_ok=True)
-                except IOError:
+                except OSError:
                     self.set_failure("could not create directory for previews")
                     return False
 
@@ -277,7 +277,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                                           (self.sound.locations("preview.HQ.mp3.path"), 192)]:
                     try:
                         audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
-                    except IOError as e:
+                    except OSError as e:
                         self.set_failure("conversion to mp3 (preview) has failed, "
                                          "make sure that lame executable exists: %s" % e)
                         return False
@@ -295,7 +295,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                                           (self.sound.locations("preview.HQ.ogg.path"), 6)]:
                     try:
                         audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
-                    except IOError as e:
+                    except OSError as e:
                         self.set_failure("conversion to ogg (preview) has failed, "
                                          "make sure that oggenc executable exists: %s" % e)
                         return False
@@ -314,7 +314,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Same directory is used for all displays of a given sound so we only need to run this once
                 try:
                     os.makedirs(os.path.dirname(self.sound.locations("display.wave.M.path")), exist_ok=True)
-                except IOError:
+                except OSError:
                     self.set_failure("could not create directory for displays")
                     return False
 
@@ -401,7 +401,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
                 # Close file handler as we don't use it from Python
                 os.close(fh)
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
-            except IOError as e:
+            except OSError as e:
                 # Could not create tmp file
                 self.set_failure(f"could not create tmp_wavefile2 file, "
                                  f"make stereofy sure executable exists at {settings.SOUNDS_PATH}", e)
@@ -435,7 +435,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
             # Generate previews
             try:
                 audioprocessing.convert_to_mp3(tmp_wavefile2, self.output_preview_mp3, 70)
-            except IOError as e:
+            except OSError as e:
                 self.set_failure("conversion to mp3 (preview) has failed, "
                                     "make sure that lame executable exists: %s" % e)
                 return False
@@ -450,7 +450,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
 
             try:
                 audioprocessing.convert_to_ogg(tmp_wavefile2, self.output_preview_ogg, 1)
-            except IOError as e:
+            except OSError as e:
                 self.set_failure("conversion to ogg (preview) has failed, "
                                     "make sure that oggenc executable exists: %s" % e)
                 return False

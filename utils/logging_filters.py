@@ -23,6 +23,7 @@ import ipaddress
 import logging
 import json
 
+import sentry_sdk
 from django.conf import settings
 
 
@@ -53,7 +54,7 @@ class GenericDataFilter(logging.Filter):
         XXX(YYY)
     Where XXX can be anything, YYY must be a serialized json object, and the message ends with )
     Assuming this format, the filter tries to separate the json part, unserialize it and add it as
-    properties of the emessage so graylog can process them. If the parsing does not succeed, the 
+    properties of the message so graylog can process them. If the parsing does not succeed, the
     message is sent as is.
     """
     def filter(self, record):
@@ -71,7 +72,7 @@ class GenericDataFilter(logging.Filter):
 class APILogsFilter(logging.Filter):
 
     def filter(self, record):
-        message = record.getMessage().encode('utf8')
+        message = record.getMessage()
         try:
             (message, data, info) = message.split(' #!# ')
             if ':' in message:
@@ -81,6 +82,6 @@ class APILogsFilter(logging.Filter):
                 setattr(record, key, value)
             for key, value in json.loads(data).items():
                 setattr(record, key, value)
-        except:
-            pass
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
         return True

@@ -80,9 +80,9 @@ class APILogsFilter(logging.Filter):
                     message = ' '.join([item.split(':')[0] for item in message.split(' ')])
                 record.api_resource = message
                 for key, value in json.loads(info).items():
-                    setattr(record, key, urllib.parse.unquote(value) if value is not None else value)
+                    setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
                 for key, value in json.loads(data).items():
-                    setattr(record, key, urllib.parse.unquote(value) if value is not None else value)
+                    setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
             except Exception as e:
                 print(e)
                 sentry_sdk.capture_exception(e)

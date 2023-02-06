@@ -77,6 +77,15 @@ class APILogsFilter(logging.Filter):
             if ':' in message:
                 message = ' '.join([item.split(':')[0] for item in message.split(' ')])
             record.api_resource = message
+
+            while '""' in data:
+                # This is to fix cases in which string is wrongly quotes like {"license:"Creative Commons 0""}
+                # TODO: investigate why this can happen when serializing api request query params
+                data = data.replace('""', '\'"')
+                position_of_replaced_quotes = data[0:data.rfind('\'"')]
+                quote_before_replaced_quotes = position_of_replaced_quotes.rfind('"')
+                data = data[:quote_before_replaced_quotes] + "'" + data[quote_before_replaced_quotes + 1:]
+
             for key, value in json.loads(info).items():
                 setattr(record, key, value)
             for key, value in json.loads(data).items():

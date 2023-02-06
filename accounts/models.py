@@ -56,7 +56,7 @@ from utils.search import get_search_engine, SearchEngineException
 
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
-    user = models.OneToOneField(User, db_index=True)
+    user = models.OneToOneField(User, db_index=True, on_delete=models.CASCADE)
 
 
 class DeletedUser(models.Model):
@@ -98,12 +98,12 @@ class ProfileManager(models.Manager):
 
 
 class Profile(SocialModel):
-    user = models.OneToOneField(User, related_name="profile")
+    user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
     sound_signature = models.TextField(max_length=256, null=True, blank=True)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
+    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
     has_avatar = models.BooleanField(default=False)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
     has_old_license = models.BooleanField(null=False, default=False)
@@ -602,9 +602,9 @@ class GdprAcceptance(models.Model):
 
 
 class UserFlag(models.Model):
-    user = models.ForeignKey(User, related_name="flags")
-    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
-    content_type = models.ForeignKey(ContentType, null=True)
+    user = models.ForeignKey(User, related_name="flags", on_delete=models.CASCADE)
+    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, null=True, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField(null=True)
     content_object = fields.GenericForeignKey('content_type', 'object_id')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -621,9 +621,9 @@ class SameUser(models.Model):
 
     # The main user is defined as the one who has logged in most recently
     # when we performed the migration. This is an arbitrary decision
-    main_user = models.ForeignKey(User, related_name="+")
+    main_user = models.ForeignKey(User, related_name="+", on_delete=models.CASCADE)
     main_orig_email = models.CharField(max_length=200)
-    secondary_user = models.ForeignKey(User, related_name="+")
+    secondary_user = models.ForeignKey(User, related_name="+", on_delete=models.CASCADE)
     secondary_orig_email = models.CharField(max_length=200)
 
     @property
@@ -692,12 +692,12 @@ class EmailPreferenceType(models.Model):
 
 
 class UserEmailSetting(models.Model):
-    user = models.ForeignKey(User, related_name="email_settings")
-    email_type = models.ForeignKey(EmailPreferenceType)
+    user = models.ForeignKey(User, related_name="email_settings", on_delete=models.CASCADE)
+    email_type = models.ForeignKey(EmailPreferenceType, on_delete=models.CASCADE)
 
 
 class OldUsername(models.Model):
-    user = models.ForeignKey(User, related_name="old_usernames")
+    user = models.ForeignKey(User, related_name="old_usernames", on_delete=models.CASCADE)
     username = models.CharField(max_length=255, db_index=True, unique=True)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -706,7 +706,7 @@ class OldUsername(models.Model):
 
 
 class EmailBounce(models.Model):
-    user = models.ForeignKey(User, related_name="email_bounces")
+    user = models.ForeignKey(User, related_name="email_bounces", on_delete=models.CASCADE)
 
     # Bounce types
     UNDETERMINED = 'UD'

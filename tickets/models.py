@@ -49,11 +49,11 @@ class Ticket(models.Model):
     created         = models.DateTimeField(db_index=True, auto_now_add=True)
     modified        = models.DateTimeField(auto_now=True)
     comment_date    = models.DateTimeField(null=True)
-    last_commenter  = models.ForeignKey(User, related_name='commented_tickets', null=True)
-    sender          = models.ForeignKey(User, related_name='sent_tickets', null=True)
+    last_commenter  = models.ForeignKey(User, related_name='commented_tickets', null=True, on_delete=models.SET_NULL)
+    sender          = models.ForeignKey(User, related_name='sent_tickets', null=True, on_delete=models.SET_NULL)
     sender_email    = models.EmailField(null=True)
-    assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True)
-    queue           = models.ForeignKey(Queue, related_name='tickets')
+    assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True, on_delete=models.SET_NULL)
+    queue           = models.ForeignKey(Queue, related_name='tickets', on_delete=models.CASCADE)
     sound           = models.OneToOneField('sounds.Sound', null=True, on_delete=models.SET_NULL)
 
     NOTIFICATION_QUESTION     = 'tickets/email_notification_question.txt'
@@ -108,10 +108,10 @@ class Ticket(models.Model):
 
 
 class TicketComment(models.Model):
-    sender          = models.ForeignKey(User, null=True)
+    sender          = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     text            = models.TextField()
     created         = models.DateTimeField(auto_now_add=True)
-    ticket          = models.ForeignKey(Ticket, related_name='messages')
+    ticket          = models.ForeignKey(Ticket, related_name='messages', on_delete=models.CASCADE)
     moderator_only  = models.BooleanField(default=False)
 
     def __str__(self):
@@ -133,6 +133,6 @@ post_save.connect(create_ticket_message, sender=TicketComment)
 
 
 class UserAnnotation(models.Model):
-    sender = models.ForeignKey(User, related_name='sent_annotations')
-    user = models.ForeignKey(User, related_name='annotations')
+    sender = models.ForeignKey(User, related_name='sent_annotations', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='annotations', on_delete=models.CASCADE)
     text = models.TextField()

@@ -31,7 +31,7 @@ web_logger = logging.getLogger("web")
 
 
 class GeoTag(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     lat = models.FloatField(db_index=True)
     lon = models.FloatField(db_index=True)
     zoom = models.IntegerField()

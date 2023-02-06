@@ -84,8 +84,8 @@ def forum_pre_save_set_slug(sender, instance, **kwargs):
 
 
 class Thread(models.Model):
-    forum = models.ForeignKey(Forum)
-    author = models.ForeignKey(User)
+    forum = models.ForeignKey(Forum, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=250)
 
     THREAD_STATUS_CHOICES = (
@@ -204,8 +204,8 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
 
 
 class Post(models.Model):
-    thread = models.ForeignKey(Thread)
-    author = models.ForeignKey(User, related_name='posts')
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='posts', on_delete=models.CASCADE)
     body = models.TextField()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -339,8 +339,8 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
 
 
 class Subscription(models.Model):
-    subscriber = models.ForeignKey(User)
-    thread = models.ForeignKey(Thread)
+    subscriber = models.ForeignKey(User, on_delete=models.CASCADE)
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     is_active = models.BooleanField(db_index=True, default=True)
 
     class Meta:

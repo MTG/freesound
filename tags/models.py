@@ -39,12 +39,12 @@ class Tag(models.Model):
 
 
 class TaggedItem(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    tag = models.ForeignKey(Tag)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
     #content_type = models.ForeignKey(ContentType, related_name='tags')
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField(db_index=True)
     content_object = fields.GenericForeignKey()
 
@@ -66,4 +66,4 @@ class FS1Tag(models.Model):
     # The old id from FS1
     fs1_id = models.IntegerField(unique=True, db_index=True)
 
-    tag = models.ForeignKey(Tag)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)

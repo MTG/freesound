@@ -23,8 +23,8 @@ from django.db import models
 
 
 class FollowingUserItem(models.Model):
-    user_from = models.ForeignKey(User, related_name='following_items')
-    user_to = models.ForeignKey(User, related_name='follower_items')
+    user_from = models.ForeignKey(User, related_name='following_items', on_delete=models.CASCADE)
+    user_to = models.ForeignKey(User, related_name='follower_items', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -36,7 +36,7 @@ class FollowingUserItem(models.Model):
 
 
 class FollowingQueryItem(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     # TODO: refactor this to name it "tags" instead of "query"
     query = models.TextField()
     created = models.DateTimeField(auto_now_add=True)

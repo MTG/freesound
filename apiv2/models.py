@@ -37,9 +37,10 @@ class ApiV2Client(models.Model):
 
     DEFAULT_STATUS = 'OK'
 
-    oauth_client = models.OneToOneField(Application, related_name='apiv2_client', default=None, null=True, blank=True)
+    oauth_client = models.OneToOneField(
+        Application, related_name='apiv2_client', default=None, null=True, blank=True, on_delete=models.CASCADE)
     key = models.CharField(max_length=40, blank=True)
-    user = models.ForeignKey(User, related_name='apiv2_client')
+    user = models.ForeignKey(User, related_name='apiv2_client', on_delete=models.CASCADE)
     status = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
     name = models.CharField(max_length=64)
     url = models.URLField(blank=True)
@@ -141,7 +142,7 @@ class ApiV2Client(models.Model):
 
 
 class APIClientDailyUsageHistory(models.Model):
-    apiv2_client = models.ForeignKey(ApiV2Client, related_name='usage')
+    apiv2_client = models.ForeignKey(ApiV2Client, related_name='usage', on_delete=models.CASCADE)
     number_of_requests = models.PositiveIntegerField(default=0)
     date = models.DateField()
 

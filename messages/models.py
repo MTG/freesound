@@ -82,12 +82,12 @@ class Message(models.Model):
     etc...
     """
 
-    user_from = models.ForeignKey(User, related_name='messages_sent')
-    user_to = models.ForeignKey(User, related_name='messages_received')
+    user_from = models.ForeignKey(User, related_name='messages_sent', on_delete=models.CASCADE)
+    user_to = models.ForeignKey(User, related_name='messages_received', on_delete=models.CASCADE)
     
     subject = models.CharField(max_length=128)
     
-    body = models.ForeignKey(MessageBody)
+    body = models.ForeignKey(MessageBody, on_delete=models.CASCADE)
 
     is_sent = models.BooleanField(default=True, db_index=True)
     is_read = models.BooleanField(default=False, db_index=True)

@@ -36,7 +36,7 @@ class SocialModel(models.Model):
         abstract = True
 
 class AkismetSpam(SocialModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     spam = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
 

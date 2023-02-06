@@ -855,7 +855,7 @@ def describe_sounds(request):
             except utils.sound_upload.AlreadyExistsException as e:
                 messages.add_message(request, messages.WARNING, str(e))
             except utils.sound_upload.CantMoveException as e:
-                upload_logger.error(str(e), e)
+                upload_logger.error(str(e))
 
         # Remove the files we just described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]

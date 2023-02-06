@@ -643,10 +643,9 @@ def edit_and_describe_sounds_helper(request):
                 messages.add_message(request, messages.ERROR,
                                      'Something went wrong with accessing the file {}.'.format(form.cleaned_data['name']))
             except AlreadyExistsException as e:
-                msg = e.message
-                messages.add_message(request, messages.WARNING, msg)
+                messages.add_message(request, messages.WARNING, str(e))
             except CantMoveException as e:
-                upload_logger.error(e.message, e)
+                upload_logger.error(str(e))
 
         # Trigger processing of sounds and of affected packs
         try:

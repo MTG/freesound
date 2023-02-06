@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
 import urllib.parse
 from django.template import Library
 from django.template.defaulttags import URLNode, url
@@ -29,8 +27,8 @@ register = Library()
 
 class AbsoluteURLNode(URLNode):
     def render(self, context):
-        path = super(AbsoluteURLNode, self).render(context)
-        domain = "https://%s" % Site.objects.get_current().domain
+        path = super().render(context)
+        domain = f"https://{Site.objects.get_current().domain}"
         return urllib.parse.urljoin(domain, path)
 
 def absurl(parser, token, node_cls=AbsoluteURLNode):

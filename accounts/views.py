@@ -18,10 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
 import io
 import csv
 import datetime
@@ -111,7 +107,7 @@ def ratelimited_error(request, exception):
         path = request.path
     if not path.endswith('/'):
         path += '/'
-    volatile_logger.info('Rate limited IP ({})'.format(json.dumps({'ip': get_client_ip(request), 'path': path})))
+    volatile_logger.info(f"Rate limited IP ({json.dumps({'ip': get_client_ip(request), 'path': path})})")
     return render(request, '429.html', status=429)
 
 
@@ -133,7 +129,7 @@ def login(request, template_name, authentication_form):
             redirect_url = reverse("accounts-multi-email-cleanup")
             next_param = request.POST.get('next', None)
             if next_param:
-                redirect_url += '?next=%s' % next_param
+                redirect_url += f'?next={next_param}'
             return HttpResponseRedirect(redirect_url)
         else:
             return response
@@ -340,7 +336,7 @@ def registration(request):
     if using_beastwhoosh(request):
         # In beastwhoosh we don't have a dedicated registration page, redirect to front-page and auto-open the
         # registration modal
-        return HttpResponseRedirect('{}?registration=1'.format(reverse('front-page')))
+        return HttpResponseRedirect(f"{reverse('front-page')}?registration=1")
     else:
         return render(request, 'accounts/registration.html', {'form': form})
 
@@ -661,7 +657,7 @@ def describe(request):
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
             os.makedirs(directory, exist_ok=True)
             extension = csv_form.cleaned_data['csv_file'].name.rsplit('.', 1)[-1].lower()
-            new_csv_filename = str(uuid.uuid4()) + '.%s' % extension
+            new_csv_filename = str(uuid.uuid4()) + f'.{extension}'
             path = os.path.join(directory, new_csv_filename)
             destination = open(path, 'wb')
 
@@ -851,7 +847,7 @@ def describe_sounds(request):
             except utils.sound_upload.NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
                 messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file %s.' % forms[i]['description'].cleaned_data['name'])
+                                     f"Something went wrong with accessing the file {forms[i]['description'].cleaned_data['name']}.")
             except utils.sound_upload.AlreadyExistsException as e:
                 messages.add_message(request, messages.WARNING, str(e))
             except utils.sound_upload.CantMoveException as e:
@@ -869,7 +865,7 @@ def describe_sounds(request):
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
+            sounds_logger.error(f'Sound with id {s.id} could not be scheduled. ({str(e)})')
         for p in dirty_packs:
             p.process()
 
@@ -947,13 +943,13 @@ def download_attribution(request):
     download = request.GET.get('dl', '')
     if download in ['csv', 'txt']:
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = '%s_%s_attribution.%s' % (request.user, now, download)
-        response = HttpResponse(content_type='text/%s' % content[download])
-        response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+        filename = f'{request.user}_{now}_attribution.{download}'
+        response = HttpResponse(content_type=f'text/{content[download]}')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         output = io.StringIO()
         if download == 'csv':
-            output.write(u'Download Type,File Name,User,License\r\n')
-            csv_writer = csv.writer(output, delimiter=u',', quotechar=u'"', quoting=csv.QUOTE_MINIMAL)
+            output.write('Download Type,File Name,User,License\r\n')
+            csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
                 csv_writer.writerow(
                     [row['download_type'][0].upper(), row['sound__original_filename'],
@@ -962,7 +958,7 @@ def download_attribution(request):
                                           row['license__deed_url'] or row['sound__license__deed_url'])])
         elif download == 'txt':
             for row in qs:
-                output.write(u"{0}: {1} by {2} | License: {3}\n".format(row['download_type'][0].upper(),
+                output.write("{}: {} by {} | License: {}\n".format(row['download_type'][0].upper(),
                              row['sound__original_filename'], row['sound__user__username'],
                              license_with_version(row['license__name'] or row['sound__license__name'],
                                                   row['license__deed_url'] or row['sound__license__deed_url'])))
@@ -1247,7 +1243,7 @@ def handle_uploaded_file(user_id, f):
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     os.makedirs(dest_directory, exist_ok=True)
     dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
-    upload_logger.info("handling file upload and saving to {}".format(dest_path))
+    upload_logger.info(f"handling file upload and saving to {dest_path}")
     starttime = time.time()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
@@ -1272,11 +1268,11 @@ def handle_uploaded_file(user_id, f):
 
     # trigger processing of uploaded files before description
     tasks.process_before_description.delay(audio_file_path=dest_path.decode())
-    upload_logger.info("sent uploaded file {} to processing before description".format(dest_path))
+    upload_logger.info(f"sent uploaded file {dest_path} to processing before description")
 
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
     copy_uploaded_file_to_mirror_locations(dest_path)
-    upload_logger.info("handling file upload done, took {:.2f} seconds".format(time.time() - starttime))
+    upload_logger.info(f"handling file upload done, took {time.time() - starttime:.2f} seconds")
     return True
 
 
@@ -1413,7 +1409,7 @@ def delete(request):
             delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
                 else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(request.user.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {request.user.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -1563,8 +1559,8 @@ def problems_logging_in(request):
         if form.is_valid():
             username_or_email = form.cleaned_data['username_or_email']
             try:
-                user = User.objects.get((Q(email__iexact=username_or_email)\
-                         | Q(username__iexact=username_or_email)))
+                user = User.objects.get(Q(email__iexact=username_or_email)\
+                         | Q(username__iexact=username_or_email))
                 if not user.is_active:
                     # If user is not activated, send instructions to re-activate the user
                     send_activation(user)

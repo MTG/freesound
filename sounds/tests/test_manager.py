@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import six
 from django.conf import settings
 from django.test import TestCase
 
@@ -70,7 +69,7 @@ class SoundManagerQueryMethods(TestCase):
             self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
             self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
             self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
-            six.assertCountEqual(self, Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
+            self.assertCountEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
 
     def test_bulk_query_solr_num_queries(self):
 
@@ -89,7 +88,7 @@ class SoundManagerQueryMethods(TestCase):
             self.assertEqual(Sound.objects.get(id=sound.id).md5, sound.md5)
             self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
             self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
-            six.assertCountEqual(self, Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
+            self.assertCountEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
 
     def test_ordered_ids(self):
 
@@ -123,7 +122,7 @@ class SoundManagerQueryMethods(TestCase):
             for i, sound in enumerate(Sound.objects.bulk_sounds_for_user(user_id=self.user.id)):
                 self.assertEqual(self.user.id, sound.user_id)
                 user_sound_ids_bulk_query.append(sound.id)
-        six.assertCountEqual(self, user_sound_ids, user_sound_ids_bulk_query)
+        self.assertCountEqual(user_sound_ids, user_sound_ids_bulk_query)
 
     def test_bulk_sounds_for_pack(self):
 
@@ -148,7 +147,7 @@ class SoundManagerQueryMethods(TestCase):
             for i, sound in enumerate(Sound.objects.bulk_sounds_for_pack(pack_id=self.pack.id)):
                 self.assertEqual(self.user.id, sound.user_id)
                 pack_sound_ids_bulk_query.append(sound.id)
-        six.assertCountEqual(self, pack_sound_ids, pack_sound_ids_bulk_query)
+        self.assertCountEqual(pack_sound_ids, pack_sound_ids_bulk_query)
 
 
 class PublicSoundManagerTest(TestCase):

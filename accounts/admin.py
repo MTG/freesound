@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -64,9 +62,9 @@ class DeletedUserAdmin(admin.ModelAdmin):
     search_fields = ('=username',)
 
     def get_object_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(
+        return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:accounts_deleteduser_change', args=[obj.id]),
-            'DeletedUser: {0}'.format(obj.username))
+            f'DeletedUser: {obj.username}')
     get_object_link.short_description = 'DeletedUser'
     get_object_link.allow_tags = True
     get_object_link.admin_order_field = 'username'
@@ -75,13 +73,13 @@ class DeletedUserAdmin(admin.ModelAdmin):
         if obj.user is None:
             return '-'
         else:
-            return '<a href="{0}" target="_blank">{1}</a>'.format(
+            return '<a href="{}" target="_blank">{}</a>'.format(
                 reverse('account', args=[obj.user.username]), obj.user.username)
     get_view_link.short_description = 'View on site'
     get_view_link.allow_tags = True
 
     def get_num_sounds(self, obj):
-        return '{0}'.format(obj.profile.num_sounds)
+        return f'{obj.profile.num_sounds}'
     get_num_sounds.short_description = '# sounds'
 
 
@@ -148,7 +146,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     def get_queryset(self, request):
         # Override 'get_queryset' to optimize query by using select_related on appropriate fields
-        qs = super(FreesoundUserAdmin, self).get_queryset(request)
+        qs = super().get_queryset(request)
         qs = qs.select_related('profile')
         return qs
 
@@ -158,22 +156,22 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         return False
 
     def get_view_link(self, obj):
-        return '<a href="{0}" target="_blank">{1}</a>'.format(
+        return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('account', args=[obj.username]), obj.username)
     get_view_link.short_description = 'View on site'
     get_view_link.allow_tags = True
 
     def get_num_sounds(self, obj):
-        return '{0}'.format(obj.profile.num_sounds)
+        return f'{obj.profile.num_sounds}'
     get_num_sounds.short_description = '# sounds'
 
     def get_num_posts(self, obj):
-        return '{0}'.format(obj.profile.num_posts)
+        return f'{obj.profile.num_posts}'
     get_num_posts.short_description = '# posts'
 
     def get_actions(self, request):
         # Disable the "delete" action in the list
-        actions = super(FreesoundUserAdmin, self).get_actions(request)
+        actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
@@ -183,7 +181,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.DELETE_USER_KEEP_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -215,7 +213,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.DELETE_USER_DELETE_SOUNDS_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -253,7 +251,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.DELETE_SPAMMER_USER_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_SPAMMER
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -290,7 +288,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         if request.method == "POST":
             delete_action = tasks.FULL_DELETE_USER_ACTION_NAME
             delete_reason = DeletedUser.DELETION_REASON_DELETED_BY_ADMIN
-            web_logger.info('Requested async deletion of user {0} - {1}'.format(obj.id, delete_action))
+            web_logger.info(f'Requested async deletion of user {obj.id} - {delete_action}')
 
             # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
             UserDeletionRequest.objects.create(user_from=request.user,
@@ -373,16 +371,16 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         # Override 'get_queryset' to optimize query by using select_related on appropriate fields
-        qs = super(UserDeletionRequestAdmin, self).get_queryset(request)
+        qs = super().get_queryset(request)
         qs = qs.select_related('user_from', 'deleted_user', 'user_to')
         return qs
 
     def deleted_user_link(self, obj):
         if obj.deleted_user is None:
             return '-'
-        return '<a href="{0}" target="_blank">{1}</a>'.format(
+        return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:accounts_deleteduser_change', args=[obj.deleted_user_id]),
-            'DeletedUser: {0}'.format(obj.deleted_user.username))
+            f'DeletedUser: {obj.deleted_user.username}')
 
     deleted_user_link.allow_tags = True
     deleted_user_link.admin_order_field = 'deleted_user'
@@ -391,7 +389,7 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
     def user_to_link(self, obj):
         if obj.user_to is None:
             return '-'
-        return '<a href="{0}" target="_blank">{1}</a>'.format(
+        return '<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:auth_user_change', args=[obj.user_to_id]), obj.user_to.username)
 
     user_to_link.allow_tags = True

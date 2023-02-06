@@ -1,6 +1,3 @@
-from __future__ import division
-from builtins import map
-from builtins import range
 from past.utils import old_div
 from PIL import ImageColor
 from functools import partial

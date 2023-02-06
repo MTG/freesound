@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import range
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -73,7 +71,7 @@ class TagFieldTest(TestCase):
         # maximum number tags
         err_message = "There can be maximum 30 tags, please select the most relevant ones!"
         with self.assertRaisesMessage(ValidationError, err_message):
-            tags = " ".join(["tag%s" % i for i in range(35)])
+            tags = " ".join([f"tag{i}" for i in range(35)])
             f.clean(tags)
 
         # remove common words

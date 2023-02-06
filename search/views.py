@@ -1,4 +1,3 @@
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,10 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import map
-from builtins import str
-from builtins import zip
-from builtins import range
 import datetime
 import json
 import logging
@@ -58,7 +53,7 @@ def search_view_helper(request, tags_mode=False):
 
     # check if there was a filter parsing error
     if extra_vars['parsing_error']:
-        search_logger.error('Query filter parsing error. filter: %s' % (request.GET.get("f", "")))
+        search_logger.error(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
         extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
         return render(request, 'search/search.html', extra_vars)
 
@@ -160,7 +155,7 @@ def search_view_helper(request, tags_mode=False):
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
-        search_logger.info(u'Search (%s)' % json.dumps({
+        search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),
             'query': query_params['textual_query'],
             'filter': query_params['query_filter'],
@@ -187,10 +182,10 @@ def search_view_helper(request, tags_mode=False):
         })
 
     except SearchEngineException as e:
-        search_logger.error('Search error: query: %s error %s' % (str(query_params), e))
+        search_logger.error(f'Search error: query: {str(query_params)} error {e}')
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
-        search_logger.error('Could probably not connect to Solr - %s' % e)
+        search_logger.error(f'Could probably not connect to Solr - {e}')
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     if request.GET.get("ajax", "") != "1":
@@ -425,11 +420,11 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            error.warning("Search error: query: %s error %s" % (search_query, e))
+            error.warning(f"Search error: query: {search_query} error {e}")
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            search_logger.error("Could probably not connect to the search engine - %s" % e)
+            search_logger.error(f"Could probably not connect to the search engine - {e}")
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 
@@ -488,5 +483,5 @@ def query_suggestions(request):
             'rain',
             'swoosh'
         ]):
-            suggestions.append({'id': count, 'label': '<p>{0}</p>'.format(suggestion), 'value': suggestion})
+            suggestions.append({'id': count, 'label': f'<p>{suggestion}</p>', 'value': suggestion})
     return JsonResponse({'suggestions': suggestions})

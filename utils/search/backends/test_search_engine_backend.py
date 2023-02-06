@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 
 import datetime
 import logging
@@ -38,7 +37,7 @@ console_logger = logging.getLogger("console")
 
 def assert_and_continue(expression, error_message):
     if not expression:
-        console_logger.info('Error: {}'.format(error_message))
+        console_logger.info(f'Error: {error_message}')
 
 
 class TestSearchEngineBackend():
@@ -51,12 +50,12 @@ class TestSearchEngineBackend():
             date_label = datetime.datetime.today().strftime('%Y%m%d_%H%M')
             self.output_file = open(os.path.join(base_dir, '{}_test_results_{}.txt'
                                                 .format(date_label, backend_name)), 'w')
-            self.output_file.write('TESTING SEARCH ENGINE BACKEND: {}\n'.format(backend_name))
+            self.output_file.write(f'TESTING SEARCH ENGINE BACKEND: {backend_name}\n')
         else:
             self.output_file = None
 
     def save_query_results(self, results, query_data, elapsed_time, query_type):
-        self.output_file.write('\n* QUERY {}: {} (took {:.2f} seconds)\n'.format(query_type, str(query_data), elapsed_time))
+        self.output_file.write(f'\n* QUERY {query_type}: {str(query_data)} (took {elapsed_time:.2f} seconds)\n')
         self.output_file.write(
             'num_found: {}\nnon_grouped_number_of_results: {}\nq_time: {}\nfacets: {}\nhighlighting: {}\ndocs:\n'.format(
                 results.num_found,
@@ -66,7 +65,7 @@ class TestSearchEngineBackend():
                 results.highlighting
             ))
         for count, doc in enumerate(results.docs):
-            self.output_file.write('\t{}. {}: {}\n'.format(count + 1, doc['id'], doc))
+            self.output_file.write(f"\t{count + 1}. {doc['id']}: {doc}\n")
 
     def run_sounds_query_and_save_results(self, query_data):
         """Run a sounds search query in the search engine, save and return the results
@@ -83,7 +82,7 @@ class TestSearchEngineBackend():
         end = time.time()
 
         # Assert that the result is of the expected type
-        assert_and_continue(type(results) == utils.search.SearchResults, 'Returned search results object of wrong type')
+        assert_and_continue(isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type')
 
         # Save results to file so the later we can compare between different search engine backends
         if self.output_file:
@@ -106,7 +105,7 @@ class TestSearchEngineBackend():
         end = time.time()
 
         # Assert that the result is of the expected type
-        assert_and_continue(type(results) == utils.search.SearchResults, 'Returned search results object of wrong type')
+        assert_and_continue(isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type')
 
         # Save results to file so the later we can compare between different search engine backends
         if self.output_file:
@@ -196,29 +195,29 @@ class TestSearchEngineBackend():
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST:
                     assert_and_continue(Download.objects.filter(sound=sound1).count() >=
                                         Download.objects.filter(sound=sound2).count(),
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST:
                     assert_and_continue(Download.objects.filter(sound=sound1).count() <=
                                         Download.objects.filter(sound=sound2).count(),
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST:
                     assert_and_continue(sound1.created <= sound2.created,
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST:
                     assert_and_continue(sound1.created >= sound2.created,
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST:
                     assert_and_continue(sound1.avg_rating <= sound2.avg_rating,
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST:
                     assert_and_continue(sound1.avg_rating >= sound2.avg_rating,
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST:
                     assert_and_continue(sound1.duration >= sound2.duration,
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST:
                     assert_and_continue(sound1.duration <= sound2.duration,
-                                        'Wrong ordering in {}'.format(sort_option_web))
+                                        f'Wrong ordering in {sort_option_web}')
 
     def sound_check_group_by_pack(self):
         # Test group by pack
@@ -250,10 +249,10 @@ class TestSearchEngineBackend():
         results = self.run_sounds_query_and_save_results(dict(facets=test_facet_options))
         assert_and_continue(len(results.facets) == 3, 'Wrong number of facets returned')
         for facet_field, facet_options in test_facet_options.items():
-            assert_and_continue(facet_field in results.facets, 'Facet {} not found in facets'.format(facet_field))
+            assert_and_continue(facet_field in results.facets, f'Facet {facet_field} not found in facets')
             if 'limit' in facet_options:
                 assert_and_continue(len(results.facets[facet_field]) == facet_options['limit'],
-                                    'Wrong number of items in facet {}'.format(facet_field))
+                                    f'Wrong number of items in facet {facet_field}')
 
         # Test if no facets requested, no facets returned
         results = self.run_sounds_query_and_save_results(dict())
@@ -282,7 +281,7 @@ class TestSearchEngineBackend():
         assert_and_continue(len(remaining_tags) == 0, "get_user_tags returned tags which the user hasn't tagged")
 
         if self.output_file:
-            self.output_file.write('\n* USER "{}" TOP TAGS FROM SEARCH ENGINE: {}\n'.format(sound.user.username, search_engine_tags))
+            self.output_file.write(f'\n* USER "{sound.user.username}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n')
 
     def sound_check_get_pack_tags(self, sounds):
         """
@@ -309,7 +308,7 @@ class TestSearchEngineBackend():
             assert_and_continue(len(remaining_tags) == 0, "get_pack_tags returned tags which the user hasn't tagged")
 
             if self.output_file:
-                self.output_file.write('\n* PACK "{}" TOP TAGS FROM SEARCH ENGINE: {}\n'.format(pack.id, search_engine_tags))
+                self.output_file.write(f'\n* PACK "{pack.id}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n')
 
     def test_search_enginge_backend_sounds(self):
         # Get sounds for testing
@@ -324,7 +323,7 @@ class TestSearchEngineBackend():
         self.search_engine.remove_sounds_from_index(sounds)
         for sound in sounds:
             assert_and_continue(not self.search_engine.sound_exists_in_index(sound),
-                                'Sound ID {} should not be in the search index'.format(sound.id))
+                                f'Sound ID {sound.id} should not be in the search index')
 
         # Index the sounds again
         self.search_engine.add_sounds_to_index(sounds)
@@ -332,27 +331,27 @@ class TestSearchEngineBackend():
         # Check that sounds are indexed (test with sound object and with ID)
         for sound in sounds:
             assert_and_continue(self.search_engine.sound_exists_in_index(sound),
-                                'Sound ID {} should be in the search index'.format(sound.id))
+                                f'Sound ID {sound.id} should be in the search index')
             assert_and_continue(self.search_engine.sound_exists_in_index(sound.id),
-                                'Sound ID {} should be in the search index'.format(sound.id))
+                                f'Sound ID {sound.id} should be in the search index')
 
         # Remove some sounds form the ones just indexed and check they do not exist
         removed_sounds_by_sound_object = sounds[0:3]
         self.search_engine.remove_sounds_from_index(removed_sounds_by_sound_object)
         for sound in removed_sounds_by_sound_object:
             assert_and_continue(not self.search_engine.sound_exists_in_index(sound),
-                                'Sound ID {} should not be in the search index'.format(sound.id))
+                                f'Sound ID {sound.id} should not be in the search index')
         removed_sounds_by_sound_id = [s.id for s in sounds[3:6]]
         self.search_engine.remove_sounds_from_index(removed_sounds_by_sound_id)
         for sid in removed_sounds_by_sound_id:
             assert_and_continue(not self.search_engine.sound_exists_in_index(sid),
-                                'Sound ID {} should not be in the search index'.format(sid))
+                                f'Sound ID {sid} should not be in the search index')
 
         # Check that all sounds which were not removed are still in the index
         remaining_sounds = sounds[6:]
         for sound in remaining_sounds:
             assert_and_continue(self.search_engine.sound_exists_in_index(sound),
-                                'Sound ID {} should be in search index'.format(sound.id))
+                                f'Sound ID {sound.id} should be in search index')
 
         # Re-index all sounds to leave index in "correct" state
         self.search_engine.add_sounds_to_index(sounds)
@@ -425,7 +424,7 @@ class TestSearchEngineBackend():
         results = self.run_forum_query_and_save_results(dict(group_by_thread=False))
         for result1, result2 in zip(results.docs[:-1], results.docs[1:]):
             for field in expected_fields:
-                assert_and_continue(field in result1, '{} not present in result ID {}'.format(field, result1['id']))
+                assert_and_continue(field in result1, f"{field} not present in result ID {result1['id']}")
                 assert_and_continue(result1["thread_created"] >= result2["thread_created"],
                                     'Wrong sorting in query results')
 
@@ -472,7 +471,7 @@ class TestSearchEngineBackend():
         self.search_engine.remove_forum_posts_from_index(posts)
         for post in posts:
             assert_and_continue(not self.search_engine.forum_post_exists_in_index(post),
-                                'Post ID {} should not be in the search index'.format(post.id))
+                                f'Post ID {post.id} should not be in the search index')
 
         # Index the posts again
         self.search_engine.add_forum_posts_to_index(posts)
@@ -480,27 +479,27 @@ class TestSearchEngineBackend():
         # Check that posts are indexed (test with sound object and with ID)
         for post in posts:
             assert_and_continue(self.search_engine.forum_post_exists_in_index(post),
-                                'Post ID {} should be in the search index'.format(post.id))
+                                f'Post ID {post.id} should be in the search index')
             assert_and_continue(self.search_engine.forum_post_exists_in_index(post.id),
-                                'Post ID {} should be in the search index'.format(post.id))
+                                f'Post ID {post.id} should be in the search index')
 
         # Remove some posts form the ones just indexed and check they do not exist
         removed_posts_by_post_object = posts[0:3]
         self.search_engine.remove_forum_posts_from_index(removed_posts_by_post_object)
         for post in removed_posts_by_post_object:
             assert_and_continue(not self.search_engine.forum_post_exists_in_index(post),
-                                'Post ID {} should not be in the search index'.format(post.id))
+                                f'Post ID {post.id} should not be in the search index')
         removed_posts_by_post_id = [s.id for s in posts[3:6]]
         self.search_engine.remove_forum_posts_from_index(removed_posts_by_post_id)
         for pid in removed_posts_by_post_id:
             assert_and_continue(not self.search_engine.forum_post_exists_in_index(pid),
-                                'Post ID {} should not be in the search index'.format(pid))
+                                f'Post ID {pid} should not be in the search index')
 
         # Check that all posts which were not removed are still in the index
         remaining_posts = posts[6:]
         for post in remaining_posts:
             assert_and_continue(self.search_engine.forum_post_exists_in_index(post),
-                                'Post ID {} should be in search index'.format(post.id))
+                                f'Post ID {post.id} should be in search index')
 
         # Re-index all posts to leave index in "correct" state
         self.search_engine.add_forum_posts_to_index(posts)

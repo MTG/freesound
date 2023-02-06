@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,9 +17,8 @@ from __future__ import division
 # Authors:
 #     See AUTHORS file.
 #
+from urllib.parse import urlparse
 
-from builtins import map
-from builtins import str
 from past.utils import old_div
 import datetime
 import json
@@ -45,7 +43,6 @@ from django.http import HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse, resolve
-from django.utils.six.moves.urllib.parse import urlparse
 from ratelimit.decorators import ratelimit
 from django.core.signing import BadSignature, SignatureExpired
 
@@ -205,7 +202,7 @@ def front_page(request):
     top_donor_user_id = cache.get("top_donor_user_id", None)
     top_donor_donation_amount = cache.get("top_donor_donation_amount", None)
     if popular_searches is not None:
-        popular_searches = [(query_terms, '{0}?q={1}'.format(reverse('sounds-search'), query_terms))
+        popular_searches = [(query_terms, f"{reverse('sounds-search')}?q={query_terms}")
                             for query_terms in popular_searches]
 
     current_forum_threads = get_hot_threads(n=10)
@@ -332,7 +329,7 @@ def after_download_modal(request):
         modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
 
         if should_suggest_donation(request.user, len(modal_shown_timestamps)):
-            web_logger.info('Showing after download donate modal (%s)' % json.dumps({'user_id': request.user.id}))
+            web_logger.info(f"Showing after download donate modal ({json.dumps({'user_id': request.user.id})})")
             modal_shown_timestamps.append(time.time())
             cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps,
                       60 * 60 * 24)  # 24 lifetime cache
@@ -357,7 +354,7 @@ def after_download_modal(request):
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
+        return HttpResponseRedirect('{}?next={}'.format(reverse("login"),
                                                     reverse("sound", args=[username, sound_id])))
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -391,7 +388,7 @@ def sound_download(request, username, sound_id):
 @transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect('%s?next=%s' % (reverse("login"),
+        return HttpResponseRedirect('{}?next={}'.format(reverse("login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -472,7 +469,7 @@ def sound_edit(request, username, sound_id):
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound description and/or tags.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound description and/or tags.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
@@ -506,7 +503,7 @@ def sound_edit(request, username, sound_id):
 
             sound.mark_index_dirty()  # Marks as dirty and saves
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound pack.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound pack.')
             for affected_pack in affected_packs:  # Process affected packs
                 affected_pack.process()
 
@@ -537,7 +534,7 @@ def sound_edit(request, username, sound_id):
 
             sound.mark_index_dirty()
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound geotag.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound geotag.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -557,7 +554,7 @@ def sound_edit(request, username, sound_id):
             if sound.pack:
                 sound.pack.process()  # Sound license changed, process pack (if sound has pack)
             sound.invalidate_template_caches()
-            update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
+            update_sound_tickets(sound, f'{request.user.username} updated the sound license.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license}, 
@@ -627,11 +624,11 @@ def edit_and_describe_sounds_helper(request):
                 sounds_to_process.append(sound)
                 if user.profile.is_whitelisted:
                     messages.add_message(request, messages.INFO,
-                        u'File <a href="{}">{}</a> has been described and has been added to freesound.'\
+                        'File <a href="{}">{}</a> has been described and has been added to freesound.'\
                             .format(sound.get_absolute_url(), sound.original_filename))
                 else:
                     messages.add_message(request, messages.INFO,
-                        u'File <a href="{}">{}</a> has been described and is now awaiting processing and moderation.'\
+                        'File <a href="{}">{}</a> has been described and is now awaiting processing and moderation.'\
                             .format(sound.get_absolute_url(), sound.original_filename))
                     invalidate_user_template_caches(request.user.id)
                     for moderator in Group.objects.get(name='moderators').user_set.all():
@@ -641,7 +638,7 @@ def edit_and_describe_sounds_helper(request):
             except NoAudioException:
                 # If for some reason audio file does not exist, skip creating this sound
                 messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file {}.'.format(form.cleaned_data['name']))
+                                     f"Something went wrong with accessing the file {form.cleaned_data['name']}.")
             except AlreadyExistsException as e:
                 messages.add_message(request, messages.WARNING, str(e))
             except CantMoveException as e:
@@ -652,7 +649,7 @@ def edit_and_describe_sounds_helper(request):
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error('Sound with id {} could not be sent to processing. ({})'.format(s.id, str(e)))
+            sounds_logger.error(f'Sound with id {s.id} could not be sent to processing. ({str(e)})')
         for p in dirty_packs:
             p.process()
 
@@ -705,9 +702,9 @@ def edit_and_describe_sounds_helper(request):
         
         sound.mark_index_dirty()  # Sound is saved here
         sound.invalidate_template_caches()
-        update_sound_tickets(sound, '{} updated one or more fields of the sound description.'.format(request.user.username))   
+        update_sound_tickets(sound, f'{request.user.username} updated one or more fields of the sound description.')   
         messages.add_message(request, messages.INFO,
-            'Sound <a href="{}">{}</a> succesfully edited!'.format(sound.get_absolute_url(), sound.original_filename))
+            f'Sound <a href="{sound.get_absolute_url()}">{sound.original_filename}</a> succesfully edited!')
 
         for packs_to_process in packs_to_process:
             packs_to_process.process()
@@ -819,7 +816,7 @@ def edit_and_describe_sounds_helper(request):
 
             # If no more sounds to describe, redirect to manage sound page, otherwise redirect to same page to proceed with second round
             messages.add_message(request, messages.INFO, 
-                'Successfully finished sound description round {} of {}!'.format(current_round, num_rounds))
+                f'Successfully finished sound description round {current_round} of {num_rounds}!')
             if not request.session['describe_sounds']:
                 clear_session_edit_and_describe_data(request)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds'))
@@ -834,7 +831,7 @@ def edit_and_describe_sounds_helper(request):
                 return HttpResponseRedirect(sounds[0].get_absolute_url())
 
             messages.add_message(request, messages.INFO, 
-                'Successfully finished sound editing round {} of {}!'.format(current_round, num_rounds))
+                f'Successfully finished sound editing round {current_round} of {num_rounds}!')
             if not request.session['edit_sounds']:
                 # If no more sounds to edit, redirect to manage sounds page
                 clear_session_edit_and_describe_data(request)
@@ -898,7 +895,7 @@ def pack_delete(request, username, pack_id):
         if pack_id != pack.id:
             raise PermissionDenied
         if not waited_too_long:
-            web_logger.info("User %s requested to delete pack %s" % (request.user.username, pack_id))
+            web_logger.info(f"User {request.user.username} requested to delete pack {pack_id}")
             pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
 
@@ -1038,7 +1035,7 @@ def pack(request, username, pack_id):
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1&only_p=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(f"{reverse('sounds-search')}?f=username:%22{username}%22&s=Date+added+(newest+first)&g=1&only_p=1")
 
     user = request.parameter_user
     order = request.GET.get("order", "name")
@@ -1056,7 +1053,7 @@ def packs_for_user(request, username):
 @redirect_if_old_username_or_404
 def for_user(request, username):
     if using_beastwhoosh(request):
-        return HttpResponseRedirect(u'{0}?f=username:%22{1}%22&s=Date+added+(newest+first)&g=1'.format(reverse('sounds-search'), username))
+        return HttpResponseRedirect(f"{reverse('sounds-search')}?f=username:%22{username}%22&s=Date+added+(newest+first)&g=1")
 
     sound_user = request.parameter_user
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
@@ -1087,11 +1084,11 @@ def delete(request, username, sound_id):
             form = DeleteSoundForm(sound_id=sound_id)
         else:
 
-            web_logger.info("User %s requested to delete sound %s" % (request.user.username,sound_id))
+            web_logger.info(f"User {request.user.username} requested to delete sound {sound_id}")
             try:
                 ticket = sound.ticket
                 tc = TicketComment(sender=request.user,
-                                   text="User %s deleted the sound" % request.user,
+                                   text=f"User {request.user} deleted the sound",
                                    ticket=ticket,
                                    moderator_only=False)
                 tc.save()
@@ -1137,7 +1134,7 @@ def flag(request, username, sound_id):
                 user_email = flag_form.cleaned_data["email"]
 
             send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "sounds/email_flag.txt", {"flag": flag},
-                                          extra_subject="%s - %s" % (sound.user.username, sound.original_filename),
+                                          extra_subject=f"{sound.user.username} - {sound.original_filename}",
                                           reply_to=user_email)
             return redirect(sound)
     else:
@@ -1242,7 +1239,7 @@ def embed_iframe(request, sound_id, player_size):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     tvars = {
         'sound': sound,
-        'username_and_filename': '%s - %s' % (sound.user.username, sound.original_filename),
+        'username_and_filename': f'{sound.user.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',
         'show_toggle_display_button': request.GET.get('td', None) == '1',

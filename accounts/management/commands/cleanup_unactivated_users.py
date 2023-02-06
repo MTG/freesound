@@ -55,4 +55,4 @@ class Command(BaseCommand):
         total, details = users.delete()
 
         deleted_users = details.get('auth.User', 0)
-        console_logger.info('Deleted {} users'.format(deleted_users))
+        console_logger.info(f'Deleted {deleted_users} users')

@@ -18,11 +18,6 @@
 #     See AUTHORS file.
 #
 import csv
-from builtins import next
-from builtins import zip
-from builtins import str
-from builtins import range
-from builtins import open
 import hashlib
 import json
 import logging
@@ -82,7 +77,7 @@ def clean_processing_before_describe_files(audio_file_path):
 def get_duration_from_processing_before_describe_files(audio_file_path):
     info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), 'info.json')
     try:
-        return float(json.load(open(info_file_path, 'r'))['duration'])
+        return float(json.load(open(info_file_path))['duration'])
     except Exception as e:
         return 0.0
 
@@ -144,7 +139,7 @@ def create_sound(user,
     except OSError:
         raise NoAudioException()
 
-    if type(sound_fields['license']) == License:
+    if isinstance(sound_fields['license'], License):
         license = sound_fields['license']
     else:
         # Get license, sort by -id so that 4.0 licenses appear before 3.0
@@ -190,8 +185,8 @@ def create_sound(user,
             remove_uploaded_file_from_mirror_locations(sound.original_path)
             _remove_user_uploads_folder_if_empty(sound.user)
 
-        except IOError as e:
-            raise CantMoveException("Failed to move file from %s to %s" % (sound.original_path, new_original_path))
+        except OSError as e:
+            raise CantMoveException(f"Failed to move file from {sound.original_path} to {new_original_path}")
         sound.original_path = new_original_path
         sound.save()
 
@@ -266,7 +261,7 @@ def create_sound(user,
             if sound.pack:
                 sound.pack.process()
         except Exception as e:
-            sounds_logger.info('Error sending sound to process and analyze: %s' % str(e))
+            sounds_logger.info(f'Error sending sound to process and analyze: {str(e)}')
 
     # Log
     if sound.uploaded_with_apiv2_client is not None:
@@ -300,7 +295,7 @@ def get_csv_lines(csv_file_path):
 
     if csv_file_path.endswith('.csv'):
         # Read CSV formatted file
-        reader = csv.reader(open(csv_file_path, 'r', newline='', encoding="utf-8"))
+        reader = csv.reader(open(csv_file_path, newline='', encoding="utf-8"))
         header = next(reader)
         lines = [dict(zip(header, row)) for row in reader]
     elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):
@@ -370,7 +365,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
 
             # Check that number of columns is ok
             if len(line) != len(EXPECTED_HEADER) and username is None:
-                line_errors['columns'] = 'Row should have %i columns but it has %i.' % (len(EXPECTED_HEADER), len(line))
+                line_errors['columns'] = f'Row should have {len(EXPECTED_HEADER)} columns but it has {len(line)}.'
                 n_columns_is_ok = False
 
             if len(line) != len(EXPECTED_HEADER_NO_USERNAME) and username is not None:
@@ -514,7 +509,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
         console_logger.info('Major issues were found while validating the CSV file. '
                             'Fix them and re-run the command.')
         for error in global_errors:
-            console_logger.info('- %s' % error)
+            console_logger.info(f'- {error}')
         return
 
     # Print line error messages if any
@@ -524,10 +519,10 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             console_logger.info('The following %i lines contain invalid data. Fix them or re-run with -f to import '
                                 'skipping these lines:' % len(lines_with_errors))
         else:
-            console_logger.info('Skipping the following %i lines due to invalid data' % len(lines_with_errors))
+            console_logger.info(f'Skipping the following {len(lines_with_errors)} lines due to invalid data')
         for line in lines_with_errors:
             errors = '; '.join(line['line_errors'].values())
-            console_logger.info('l%s: %s' % (line['line_no'], errors))
+            console_logger.info(f"l{line['line_no']}: {errors}")
         if not force_import:
             return
 
@@ -542,7 +537,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
     # Start the actual process of uploading files
     lines_ok = [line for line in lines_validated if not line['line_errors']]
-    console_logger.info('Adding %i sounds to Freesound' % len(lines_ok))
+    console_logger.info(f'Adding {len(lines_ok)} sounds to Freesound')
     for line in lines_ok:
         line_cleaned = line['line_cleaned']
 
@@ -590,7 +585,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
             message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (line['line_no'], sound.original_filename,)
             if error_sending_to_process is not None:
-                message += ' Sound could have not been sent to process (%s).' % error_sending_to_process
+                message += f' Sound could have not been sent to process ({error_sending_to_process}).'
             console_logger.info(message)
 
         except NoAudioException:

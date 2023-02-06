@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django import forms
 
 from bookmarks.models import BookmarkCategory, Bookmark
@@ -26,7 +25,7 @@ from bookmarks.models import BookmarkCategory, Bookmark
 
 class BookmarkCategoryForm(forms.ModelForm):
     
-    class Meta(object):
+    class Meta:
         model = BookmarkCategory
         fields = ('name',)
         widgets = {
@@ -40,7 +39,7 @@ class BookmarkForm(forms.ModelForm):
         required=False)
     use_last_category = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
 
-    class Meta(object):
+    class Meta:
         model = Bookmark
         fields = ('name','category')
         widgets = {
@@ -81,7 +80,7 @@ class BookmarkForm(forms.ModelForm):
 class BwBookmarkForm(BookmarkForm):
 
     def __init__(self, *args, **kwargs):
-        super(BwBookmarkForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['name'].widget = forms.HiddenInput()  # In BW we removed the concept of bookmark name
         self.fields['new_category_name'].label = False
         self.fields['new_category_name'].widget.attrs['placeholder'] = \

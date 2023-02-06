@@ -49,7 +49,7 @@ class RatingsTestCase(TestCase):
         self.assertEqual(self.sound.num_ratings, 1)
 
         RATING_VALUE = 3
-        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, RATING_VALUE))
+        resp = self.client.get(f"/people/Anton/sounds/{self.sound.id}/rate/{RATING_VALUE}/")
         self.assertContains(resp, "2")
 
         self.assertEqual(ratings.models.SoundRating.objects.count(), 2)
@@ -74,7 +74,7 @@ class RatingsTestCase(TestCase):
 
         r = ratings.models.SoundRating.objects.create(sound_id=self.sound.id, user_id=self.user1.id, rating=4)
 
-        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 5))
+        resp = self.client.get(f"/people/Anton/sounds/{self.sound.id}/rate/{5}/")
         newr = ratings.models.SoundRating.objects.first()
         self.assertEqual(ratings.models.SoundRating.objects.count(), 1)
         # Ratings in the database are 2x the value from the web call
@@ -89,11 +89,11 @@ class RatingsTestCase(TestCase):
         """ Change rating by a value which is not 1-5. """
         self.client.force_login(self.user1)
 
-        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 0))
+        resp = self.client.get(f"/people/Anton/sounds/{self.sound.id}/rate/{0}/")
         # After doing an invalid rating, there are still none for this sound
         self.assertContains(resp, "0")
 
-        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (self.sound.id, 6))
+        resp = self.client.get(f"/people/Anton/sounds/{self.sound.id}/rate/{6}/")
         self.assertContains(resp, "0")
 
     def test_delete_all_ratings(self):
@@ -112,11 +112,11 @@ class RatingsTestCase(TestCase):
 
         self.client.force_login(self.user1)
 
-        resp = self.client.get("/people/Anton/sounds/%s/rate/%s/" % (no_id, 2))
+        resp = self.client.get(f"/people/Anton/sounds/{no_id}/rate/{2}/")
         self.assertEqual(resp.status_code, 404)
 
         # If sound id doesn't match username
-        resp = self.client.get("/people/NotAnton/sounds/%s/rate/%s/" % (self.sound.id, 2))
+        resp = self.client.get(f"/people/NotAnton/sounds/{self.sound.id}/rate/{2}/")
         self.assertEqual(resp.status_code, 404)
 
 
@@ -133,16 +133,16 @@ class RatingsPageTestCase(TestCase):
 
         self.client.force_login(self.user1)
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertContains(resp, '<a href="/people/Anton/sounds/%s/rate/1/" title="pretty bad :-(" class="one-star">' % self.sound.id)
+        self.assertContains(resp, f'<a href="/people/Anton/sounds/{self.sound.id}/rate/1/" title="pretty bad :-(" class="one-star">')
 
     def test_no_rating_link_logged_out(self):
         """A logged out user doesn't see links to rate a sound"""
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, '<a href="/people/Anton/sounds/%s/rate/1/" title="pretty bad :-(" class="one-star">' % self.sound.id)
+        self.assertNotContains(resp, f'<a href="/people/Anton/sounds/{self.sound.id}/rate/1/" title="pretty bad :-(" class="one-star">')
 
     def test_no_rating_link_own_sound(self):
         """A user doesn't see links to rate their own sound"""
         user = User.objects.get(username="Anton")
         self.client.force_login(user)
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, '<a href="/people/Anton/sounds/%s/rate/1/" title="pretty bad :-(" class="one-star">' % self.sound.id)
+        self.assertNotContains(resp, f'<a href="/people/Anton/sounds/{self.sound.id}/rate/1/" title="pretty bad :-(" class="one-star">')

@@ -1,6 +1,3 @@
-from __future__ import print_function
-from future import standard_library
-standard_library.install_aliases()
 import sys
 import urllib.request, urllib.parse, urllib.error
 sys.path.append("../../apiv2")
@@ -11,24 +8,24 @@ def get_formatted_examples_for_view(view_name):
     try:
         data = examples[view_name]
     except:
-        print('Could not find examples for view %s' % view_name)
+        print(f'Could not find examples for view {view_name}')
         return ''
 
     output = ''
     for description, elements in data:
-        output += '\n\n%s:\n\n' % description
+        output += f'\n\n{description}:\n\n'
         output += '::\n\n'
         for element in elements:
             if element[0:5] == 'apiv2':
-                output += '  %s%s\n' % (base_url, urllib.parse.quote(element, safe='?/=&",:()'))
+                output += '  {}{}\n'.format(base_url, urllib.parse.quote(element, safe='?/=&",:()'))
                 #output += '  curl -H "Authorization: Token {{token}}" \'%s%s\'\n' % (base_url, element)
             else:
-                output += '  %s\n' % (element % base_url[:-1].replace('http:', 'https:'))
+                output += f"  {element % base_url[:-1].replace('http:', 'https:')}\n"
 
     return output
 
 
-with open('source/resources.rst', 'r') as f:
+with open('source/resources.rst') as f:
     newlines = []
     for line in f.readlines():
         if '{{examples_' in line:

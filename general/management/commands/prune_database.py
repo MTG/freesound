@@ -18,9 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 
-from builtins import range
 import logging
 import random
 
@@ -86,7 +84,7 @@ class Command(BaseCommand):
         post_save.disconnect(tickets.models.create_ticket_message, sender=tickets.models.TicketComment)
 
     def delete_some_users(self, userids):
-        console_logger.info('  Deleting {} users'.format(len(userids)))
+        console_logger.info(f'  Deleting {len(userids)} users')
         console_logger.info('   - downloads')
         # Do a bulk delete because it's faster than django deleting download rows individually for each user
         # TODO: This could be faster by making new download tables for only
@@ -110,13 +108,13 @@ class Command(BaseCommand):
         console_logger.info('Deleting some uploaders')
         userids = User.objects.values_list('id', flat=True).filter(profile__num_sounds__gt=0)
         numusers = len(userids)
-        console_logger.info('Number of uploaders: {}'.format(numusers))
+        console_logger.info(f'Number of uploaders: {numusers}')
         percentage_remove = 1.0 - (pkeep / 100.0)
         randusers = sorted(random.sample(userids, int(numusers*percentage_remove)))
         ch = [c for c in chunks(randusers, 100)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            console_logger.info(' {}/{}'.format(i, tot))
+            console_logger.info(f' {i}/{tot}')
             self.delete_some_users(c)
 
     def delete_downloaders(self, numkeep):
@@ -128,14 +126,14 @@ class Command(BaseCommand):
         userids = User.objects.values_list('id', flat=True).filter(profile__num_sounds=0)
         userids = list(userids)
         numusers = len(userids)
-        console_logger.info('Number of downloaders: {}'.format(numusers))
+        console_logger.info(f'Number of downloaders: {numusers}')
         random.shuffle(userids)
         # Keep `numkeep` users, and delete the rest
         randusers = sorted(userids[numkeep:])
         ch = [c for c in chunks(randusers, 100000)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            console_logger.info(' {}/{}'.format(i, tot))
+            console_logger.info(f' {i}/{tot}')
             self.delete_some_users(c)
 
     def handle(self,  *args, **options):

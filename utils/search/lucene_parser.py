@@ -17,11 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import map
-from builtins import chr
 import collections
 
-import six
 import pyparsing as pp
 from pyparsing import pyparsing_common as ppc
 
@@ -88,9 +85,8 @@ expression << pp.infixNotation(
 
 def flatten(l):
     for el in l:
-        if isinstance(el, collections.Iterable) and not isinstance(el, six.string_types):
-            for sub in flatten(el):
-                yield sub
+        if isinstance(el, collections.abc.Iterable) and not isinstance(el, str):
+            yield from flatten(el)
         else:
             # for range filter with TO, we manually add the mandatory spaces in the parsed output
             if el == 'TO':
@@ -131,7 +127,7 @@ def parse_query_filter_string(filter_query):
 
         # check if not nested meaning there is only one filter
         # if yes, make it nested to treat it the same way as if there were several filters
-        if isinstance(filter_list_str[0], six.string_types):
+        if isinstance(filter_list_str[0], str):
             filter_list_str = [filter_list_str]
 
         # we flatten the sub lists contained in the parsed output

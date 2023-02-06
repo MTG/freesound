@@ -97,7 +97,7 @@ class Command(LoggingBaseCommand):
                 .values('user_id').annotate(total_donations=Sum('amount')) \
                 .order_by('-total_donations')[0]
             top_donor_user_id = top_donor_user_data['user_id']
-            top_donor_donation_amount = '{:.2f} eur'.format(top_donor_user_data['total_donations'])
+            top_donor_donation_amount = f"{top_donor_user_data['total_donations']:.2f} eur"
         except IndexError:
             top_donor_user_id = None
             top_donor_donation_amount = None

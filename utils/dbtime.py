@@ -20,14 +20,13 @@
 
 from datetime import datetime
 
-from builtins import object
 from django.conf import settings
 from django.core.cache import cache
 
 from sounds.models import Sound, Download
 
 
-class DBTime(object):
+class DBTime:
     last_time = None
 
     @staticmethod

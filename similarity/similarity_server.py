@@ -158,8 +158,8 @@ class SimilarityServer(resource.Resource):
             elif target_type == 'descriptor_values':
                 try:
                     target = parse_target(target[0].replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
-                    if type(target) != dict:
-                        if type(target) == str:
+                    if not isinstance(target, dict):
+                        if isinstance(target, str):
                             return json.dumps({'error': True, 'result': target, 'status_code': BAD_REQUEST_CODE})
                         else:
                             return json.dumps({'error': True, 'result': 'Invalid descriptor values for target.', 'status_code': BAD_REQUEST_CODE})
@@ -181,8 +181,8 @@ class SimilarityServer(resource.Resource):
         if filter:
             try:
                 filter = parse_filter(filter[0].replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
-                if type(filter) != list:
-                    if type(filter) == str:
+                if not isinstance(filter, list):
+                    if isinstance(filter, str):
                         return json.dumps({'error': True, 'result': filter, 'status_code': BAD_REQUEST_CODE})
                     else:
                         return json.dumps({'error': True, 'result': 'Invalid filter.', 'status_code': BAD_REQUEST_CODE})

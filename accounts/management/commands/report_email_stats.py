@@ -60,5 +60,5 @@ class Command(BaseCommand):
             console_logger.error(str(e))
             return
 
-        commands_logger.info('Reporting AWS email stats ({})'.format(json.dumps(stats)))
-        console_logger.info('Reporting AWS email stats ({})'.format(json.dumps(stats)))
+        commands_logger.info(f'Reporting AWS email stats ({json.dumps(stats)})')
+        console_logger.info(f'Reporting AWS email stats ({json.dumps(stats)})')

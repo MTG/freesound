@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import str
 import datetime
 import hashlib
 import json
@@ -258,7 +257,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
     # Import Sound model from apps to avoid circular dependency
     Sound = apps.get_model('sounds.Sound')
 
-    set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing of sound %s timed out' % sound_id)
+    set_timeout_alarm(settings.WORKER_TIMEOUT, f'Processing of sound {sound_id} timed out')
     workers_logger.info("Starting processing of sound (%s)" % json.dumps({
         'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id}))
     start_time = time.time()
@@ -309,7 +308,7 @@ def process_before_description(audio_file_path):
     Args:
         audio_file_path (str): path to the uploaded file
     """
-    set_timeout_alarm(settings.WORKER_TIMEOUT, 'Processing-before-describe of sound %s timed out' % audio_file_path)
+    set_timeout_alarm(settings.WORKER_TIMEOUT, f'Processing-before-describe of sound {audio_file_path} timed out')
     workers_logger.info("Starting processing-before-describe of sound (%s)" % json.dumps({
         'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path}))
     start_time = time.time()

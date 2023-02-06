@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 
 import os
 
@@ -39,4 +38,4 @@ def create_locations(sender, **kwargs):
         if not os.path.isdir(folder):
             os.makedirs(folder, exist_ok=True)
         else:
-            print ("Folder: '%s' already exists" % folder)
+            print (f"Folder: '{folder}' already exists")

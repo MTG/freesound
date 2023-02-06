@@ -18,10 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
 import urllib.request, urllib.parse, urllib.error
 from django import template
 
@@ -57,14 +53,14 @@ def show_paginator(
             min_page_num -= min(total_wanted - num_items, paginator.num_pages - num_items)
 
     # although paginator objects are 0-based, we use 1-based paging
-    page_numbers = [n for n in range(min_page_num, max_page_num) if n > 0 and n <= paginator.num_pages]
+    page_numbers = [n for n in range(min_page_num, max_page_num) if 0 < n <= paginator.num_pages]
     params = urllib.parse.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
-                               if key.lower() != u"page"])
+                               if key.lower() != "page"])
 
     if params == "":
-        url = request.path + u"?page="
+        url = request.path + "?page="
     else:
-        url = request.path + u"?" + params + u"&page="
+        url = request.path + "?" + params + "&page="
 
     # The pagination could be over a queryset or over the result of a query to solr, so 'page' could be an object
     # if it's the case a query to the DB or a dict if it's the case of a query to solr

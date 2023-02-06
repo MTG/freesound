@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -99,7 +97,7 @@ class AudioProcessingTestCase(TestCase):
         # Do some stuff which needs to be carried out right before each test
         self.assertEqual(self.sound.processing_state, "PE")
         if create_sound_file:
-            create_test_files(paths=[u'{}'.format(self.sound.locations('path'))], make_valid_wav_files=True, duration=2)
+            create_test_files(paths=[f"{self.sound.locations('path')}"], make_valid_wav_files=True, duration=2)
     
     def setUp(self):
         user, _, sounds = create_user_and_sounds(num_sounds=1, type="wav")
@@ -298,7 +296,7 @@ class AudioProcessingBeforeDescriptionTestCase(TestCase):
     @override_processing_before_description_path_with_temp_directory
     @override_uploads_path_with_temp_directory
     def test_process_before_description(self):
-        for filename in [u'test_file.wav', u'test_filè2.wav']:
+        for filename in ['test_file.wav', 'test_filè2.wav']:
             uploaded_file_path = os.path.join(settings.UPLOADS_PATH, str(self.user.id), filename)
             create_test_files(paths=[uploaded_file_path], make_valid_wav_files=True, duration=2)
             result = FreesoundAudioProcessorBeforeDescription(audio_file_path=uploaded_file_path).process()

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from tickets import TICKET_STATUS_CLOSED
 from django.db import models, migrations
 from django.contrib.contenttypes.models import ContentType

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import json
 import base64
 from django import forms
@@ -22,7 +21,7 @@ class DonateForm(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         default_donation_amount = kwargs.pop('default_donation_amount', None)
-        super(DonateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         choices = [
             ('1', "Anonymous"),
             ('2', "Other... "),
@@ -41,7 +40,7 @@ class DonateForm(forms.Form):
             self.initial['amount'] = float(default_donation_amount)
 
     def clean(self):
-        cleaned_data = super(DonateForm, self).clean()
+        cleaned_data = super().clean()
         amount = cleaned_data.get('amount')
         try:
             if not amount or float(amount) < 1:
@@ -77,7 +76,7 @@ class BwDonateForm(DonateForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwDonateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields['donation_type'].label = \
             mark_safe('Please choose the <b>name</b> that will appear with the donation:')

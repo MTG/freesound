@@ -38,7 +38,7 @@ def remove_folder(folderpath, recursively=False):
         # Then delete the folder itself 
         shutil.rmtree(folderpath)
     except Exception as e:
-        console_logger.error('ERROR removing folder {}: {}'.format(folderpath, e))
+        console_logger.error(f'ERROR removing folder {folderpath}: {e}')
 
 
 class Command(LoggingBaseCommand):
@@ -67,7 +67,7 @@ class Command(LoggingBaseCommand):
             filepath = os.path.join(settings.FILE_UPLOAD_TEMP_DIR, filename)
             if datetime.datetime.fromtimestamp(os.path.getmtime(filepath)) < one_day_ago:
                 # Delete sound
-                console_logger.info('Deleting file {}'.format(filepath))
+                console_logger.info(f'Deleting file {filepath}')
                 cleaned_files['tmp_uploads'] += 1
                 if not options['dry_run']:
                     os.remove(filepath)
@@ -85,7 +85,7 @@ class Command(LoggingBaseCommand):
                         should_delete = True
                 if should_delete:
                     # Delete directory and contents
-                    console_logger.info('Deleting directory {}'.format(folderpath))
+                    console_logger.info(f'Deleting directory {folderpath}')
                     cleaned_files['tmp_processing'] += 1
                     if not options['dry_run']:
                         remove_folder(folderpath)
@@ -99,12 +99,11 @@ class Command(LoggingBaseCommand):
                 if not files_in_folder:
                     should_delete = True
                 else:
-                    # NOTE: add u''.format(x) below to avoid issues with filenames with non-ascii characters. This can probably be removed when fully migrating to py3
-                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, u''.format(sound_filename)))) < one_year_ago for sound_filename in files_in_folder]):
+                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, sound_filename))) < one_year_ago for sound_filename in files_in_folder]):
                         should_delete = True
                 if should_delete:
                     # Delete directory and contents
-                    console_logger.info('Deleting directory {}'.format(folderpath))
+                    console_logger.info(f'Deleting directory {folderpath}')
                     cleaned_files['uploads'] += 1
                     if not options['dry_run']:
                         remove_folder(folderpath)
@@ -114,7 +113,7 @@ class Command(LoggingBaseCommand):
             folderpath = os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, filename)
             corresponding_folderpath_in_uploads = os.path.join(settings.UPLOADS_PATH, filename)
             if not os.path.exists(corresponding_folderpath_in_uploads):
-                console_logger.info('Deleting directory {}'.format(folderpath))
+                console_logger.info(f'Deleting directory {folderpath}')
                 cleaned_files['processing_before_describe'] += 1
                 if not options['dry_run']:
                     remove_folder(folderpath, recursively=True)

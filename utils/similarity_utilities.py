@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import logging
 import traceback
 
@@ -72,7 +71,7 @@ def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS
 
 def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None, in_ids=None):
 
-    cache_key = 'api-search-t-%s-f-%s-nr-%s-o-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset)
+    cache_key = 'api-search-t-{}-f-{}-nr-{}-o-{}'.format(str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset)
     cache_key = hash_cache_key(cache_key)
     note = False
     if in_ids:

@@ -20,14 +20,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
 
-from builtins import str
-from builtins import range
-from builtins import object
-from builtins import bytes
 from past.utils import old_div
 import math
 import os
@@ -46,7 +39,7 @@ class AudioProcessingException(Exception):
     pass
 
 
-class TestAudioFile(object):
+class TestAudioFile:
     """A class that mimics pysndfile.PySndfile but generates noise instead of reading
     a wave file. Additionally it can be told to have a "broken" header and thus crashing
     in the middle of the file. Also useful for testing ultra-short files of 20 samples."""
@@ -99,7 +92,7 @@ def get_max_level(filename):
     return max_value
 
 
-class AudioProcessor(object):
+class AudioProcessor:
     """
     The audio processor processes chunks of audio an calculates the spectrac centroid and the peak
     samples in that chunk of audio.
@@ -281,7 +274,7 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     return palette
 
 
-class WaveformImage(object):
+class WaveformImage:
     """
     Given peaks and spectral centroids from the AudioProcessor, this class will construct
     a wavefile image which can be saved as PNG.
@@ -361,7 +354,7 @@ class WaveformImage(object):
         self.image.save(filename)
 
 
-class SpectrogramImage(object):
+class SpectrogramImage:
     """
     Given spectra from the AudioProcessor, this class will construct a wavefile image which
     can be saved as PNG.
@@ -460,7 +453,7 @@ def convert_to_pcm(input_filename, output_filename):
     converts any audio file type to pcm audio
     """
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
     sound_type = get_sound_type(input_filename)
 
     if sound_type == "mp3":
@@ -507,7 +500,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     cmd = [stereofy_executble_path, "--input", input_filename, "--output", output_filename]
 
@@ -554,7 +547,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["lame", "--silent", "--abr", str(quality), input_filename, output_filename]
 
@@ -572,7 +565,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["oggenc", "-q", str(quality), input_filename, "-o", output_filename]
 
@@ -592,7 +585,7 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100"]
     if mono_out:
@@ -604,4 +597,4 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     stdout = stdout.decode()
     stderr = stderr.decode()
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException("ffmpeg returned an error\nstdout: %s \nstderr: %s" % (stdout, stderr))
+        raise AudioProcessingException(f"ffmpeg returned an error\nstdout: {stdout} \nstderr: {stderr}")

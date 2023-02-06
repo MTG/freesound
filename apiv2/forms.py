@@ -18,12 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
-from future import standard_library
-
-standard_library.install_aliases()
-from builtins import str
 import django.forms as forms
 from django.conf import settings
 from urllib.parse import quote, unquote
@@ -78,8 +73,6 @@ API_SORT_OPTIONS_MAP = {
 
 
 def my_quote(s):
-    # First encode to utf8 to avoid problems with non standard characters
-    s = s.encode('utf8')
     return quote(s, safe=",:[]*+()'")
 
 
@@ -176,41 +169,41 @@ class SoundCombinedSearchFormAPI(forms.Form):
     def construct_link(self, base_url, page=None, filt=None, group_by_pack=None, include_page=True):
         link = "?"
         if self.cleaned_data['query'] is not None:
-            link += '&query=%s' % my_quote(self.cleaned_data['query'])
+            link += f"&query={my_quote(self.cleaned_data['query'])}"
         if not filt:
             if self.cleaned_data['filter']:
-                link += '&filter=%s' % my_quote(self.cleaned_data['filter'])
+                link += f"&filter={my_quote(self.cleaned_data['filter'])}"
         else:
-            link += '&filter=%s' % my_quote(filt)
+            link += f'&filter={my_quote(filt)}'
         if self.cleaned_data['weights'] is not None:
-            link += '&weights=%s' % self.cleaned_data['weights']
+            link += f"&weights={self.cleaned_data['weights']}"
         if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_SOUNDS_SORT_DEFAULT_API.split(' ')[0]:
-            link += '&sort=%s' % self.original_url_sort_value
+            link += f'&sort={self.original_url_sort_value}'
         if self.cleaned_data['descriptors_filter']:
-                link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
+                link += f"&descriptors_filter={self.cleaned_data['descriptors_filter']}"
         if self.cleaned_data['target']:
-                link += '&target=%s' % self.cleaned_data['target']
+                link += f"&target={self.cleaned_data['target']}"
         if include_page:
             if not page:
                 if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:
-                    link += '&page=%s' % self.cleaned_data['page']
+                    link += f"&page={self.cleaned_data['page']}"
             else:
-                link += '&page=%s' % str(page)
+                link += f'&page={str(page)}'
         if self.cleaned_data['page_size'] and \
                 not self.cleaned_data['page_size'] == settings.APIV2['PAGE_SIZE']:
-            link += '&page_size=%s' % str(self.cleaned_data['page_size'])
+            link += f"&page_size={str(self.cleaned_data['page_size'])}"
         if self.cleaned_data['fields']:
-            link += '&fields=%s' % my_quote(self.cleaned_data['fields'])
+            link += f"&fields={my_quote(self.cleaned_data['fields'])}"
         if self.cleaned_data['descriptors']:
-            link += '&descriptors=%s' % self.cleaned_data['descriptors']
+            link += f"&descriptors={self.cleaned_data['descriptors']}"
         if self.cleaned_data['normalized']:
-            link += '&normalized=%s' % self.cleaned_data['normalized']
+            link += f"&normalized={self.cleaned_data['normalized']}"
         if not group_by_pack:
             if self.cleaned_data['group_by_pack']:
-                link += '&group_by_pack=%s' % self.cleaned_data['group_by_pack']
+                link += f"&group_by_pack={self.cleaned_data['group_by_pack']}"
         else:
-            link += '&group_by_pack=%s' % group_by_pack
-        return "https://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
+            link += f'&group_by_pack={group_by_pack}'
+        return f"https://{Site.objects.get_current().domain}{base_url}{link}"
 
 
 class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):

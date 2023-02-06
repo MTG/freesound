@@ -213,7 +213,7 @@ def new_message(request, username=None, message_id=None):
 
 
 def quote_message_for_reply(body, username):
-    body = ''.join(BeautifulSoup(body).find_all(text=True))
+    body = ''.join(BeautifulSoup(body, "html.parser").find_all(string=True))
     body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
                         for line in body.split("\n")])
     body = "> --- " + username + " wrote:\n>\n" + body
@@ -225,7 +225,7 @@ def get_previously_contacted_usernames(user):
     usernames = list(Message.objects.select_related('user_from', 'user_to')
                      .filter(Q(user_from=user) | Q(user_to=user))
                      .values_list('user_to__username', 'user_from__username'))
-    return list(set([item for sublist in usernames for item in sublist]))
+    return list({item for sublist in usernames for item in sublist})
 
 
 @login_required

@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import range
 import datetime
 import os
 import shutil
@@ -221,7 +220,7 @@ class BulkDescribeUtils(TestCase):
 
     @staticmethod
     def create_file_with_lines(filename, lines, base_path):
-        csv_file_path = '%s/%s' % (base_path, filename)
+        csv_file_path = f'{base_path}/{filename}'
         csv_fid = open(csv_file_path, 'w')
         for line in lines:
             csv_fid.write(line + '\n')

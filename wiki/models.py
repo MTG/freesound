@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_text
@@ -46,7 +43,7 @@ class Content(models.Model):
     body = models.TextField()
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
-    class Meta(object):
+    class Meta:
         ordering = ('-created', )
         get_latest_by = 'created'
 

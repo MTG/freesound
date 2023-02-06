@@ -21,6 +21,7 @@
 import ipaddress
 import logging
 import json
+import urllib
 
 import sentry_sdk
 from django.conf import settings
@@ -72,24 +73,17 @@ class APILogsFilter(logging.Filter):
 
     def filter(self, record):
         message = record.getMessage()
-        try:
-            (message, data, info) = message.split(' #!# ')
-            if ':' in message:
-                message = ' '.join([item.split(':')[0] for item in message.split(' ')])
-            record.api_resource = message
-
-            while '""' in data:
-                # This is to fix cases in which string is wrongly quotes like {"license:"Creative Commons 0""}
-                # TODO: investigate why this can happen when serializing api request query params
-                data = data.replace('""', '\'"')
-                position_of_replaced_quotes = data[0:data.rfind('\'"')]
-                quote_before_replaced_quotes = position_of_replaced_quotes.rfind('"')
-                data = data[:quote_before_replaced_quotes] + "'" + data[quote_before_replaced_quotes + 1:]
-
-            for key, value in json.loads(info).items():
-                setattr(record, key, value)
-            for key, value in json.loads(data).items():
-                setattr(record, key, value)
-        except Exception as e:
-            sentry_sdk.capture_exception(e)
+        if '#!#' in message:
+            try:
+                (message, data, info) = message.split(' #!# ')
+                if ':' in message:
+                    message = ' '.join([item.split(':')[0] for item in message.split(' ')])
+                record.api_resource = message
+                for key, value in json.loads(info).items():
+                    setattr(record, key, urllib.parse.unquote(value) if value is not None else value)
+                for key, value in json.loads(data).items():
+                    setattr(record, key, urllib.parse.unquote(value) if value is not None else value)
+            except Exception as e:
+                print(e)
+                sentry_sdk.capture_exception(e)
         return True

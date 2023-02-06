@@ -395,6 +395,7 @@ def log_message_helper(message, data_dict=None, info_dict=None, resource=None, r
     if data_dict is None:
         if resource is not None:
             data_dict = resource.request.query_params.copy()
+            data_dict = {key: urllib.parse.quote(value, safe=",:") for key, value in data_dict.items()}
             data_dict.pop('token', None)  # Remove token from req params if it exists (we don't need it)
     if info_dict is None:
         if resource is not None:

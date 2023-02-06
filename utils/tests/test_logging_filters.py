@@ -21,8 +21,10 @@ import json
 import logging
 
 from django.test import TestCase
+from django.urls import reverse
 
 from utils.logging_filters import get_client_ip, APILogsFilter, GenericDataFilter
+from utils.test_helpers import create_user_and_sounds
 
 
 class DummyRequest:
@@ -45,6 +47,7 @@ class LogRecordsStoreHandler(logging.Handler):
 
 
 class LoggingFiltersTest(TestCase):
+    fixtures = ['licenses']
 
     def test_get_client_ip_valid(self):
         req = DummyRequest('127.0.0.1,10.10.10.10')
@@ -96,7 +99,7 @@ class LoggingFiltersTest(TestCase):
                 self.assertTrue(hasattr(log_record, prop))
                 self.assertEqual(getattr(log_record, prop), value)
 
-    def test_generic_log_api_filter(self):
+    def test_api_log_filter(self):
         logs_list = []
         logger = logging.getLogger("test_logger")
         logger.setLevel(logging.DEBUG)
@@ -104,13 +107,15 @@ class LoggingFiltersTest(TestCase):
         logger.addHandler(LogRecordsStoreHandler(logs_list))
 
         for count, (log_message, properties_to_check_in_output) in enumerate([
+            ('410 API error: End of life', {}),
             ('sound:376958 instance #!# {"fields": "id,url,name,duration,download,previews", '
-             '"filter": "license:\"Creative Commons 0\""} #!# {"api_version": "v2", "api_auth_type": "Token", '
+             '"filter": "license:%22Creative%20Commons%200%22"} #!# {"api_version": "v2", "api_auth_type": "Token", '
              '"api_client_username": "test_uname", "api_enduser_username": "None", "api_client_id": '
              '"fake_id", "api_client_name": "Test àpp", "ip": "1.1.1.1", '
              '"api_request_protocol": "https", "api_www": "none"}', {
                 'api_resource': 'sound instance',
                 'fields': 'id,url,name,duration,download,previews',
+                'filter': 'license:"Creative Commons 0"',
                 'api_client_username': 'test_uname',
                 'api_client_name': 'Test àpp'
             }),  # Note: I'm only testing a couple of fields as the test is complete enough with that
@@ -121,5 +126,26 @@ class LoggingFiltersTest(TestCase):
             for prop, value in properties_to_check_in_output.items():
                 self.assertTrue(hasattr(log_record, prop))
                 self.assertEqual(getattr(log_record, prop), value)
+
+    def test_api_view_with_logging(self):
+        user, _, _ = create_user_and_sounds(num_sounds=1, num_packs=0)
+        self.client.force_login(user)
+        logs_list = []
+        logger = logging.getLogger("api")
+        logger.addHandler(LogRecordsStoreHandler(logs_list))
+        logger.addFilter(APILogsFilter())
+        query_params = {
+            'query': 'dogs',
+            'fields': 'id,url,name,duration,download,previews',
+            'filter': 'license:"Creative Commons 0"'
+        }
+        params = '&'.join([f'{key}={value}' for key, value in query_params.items()])
+        self.client.get(reverse('apiv2-sound-text-search') + '?{}'.format(params))
+        log_record = logs_list[0]
+
+        for prop, value in query_params.items():
+            self.assertTrue(hasattr(log_record, prop))
+            self.assertEqual(getattr(log_record, prop), value)
+
 
 

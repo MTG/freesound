@@ -400,7 +400,7 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
     solr_count = None
     current_page = 1
     try:
-        while len(solr_ids) < solr_count or solr_count is None:
+        while solr_count is None or len(solr_ids) < solr_count:
             response = search_engine.search_sounds(query_filter="*:*",
                                                    sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
                                                    offset=(current_page - 1) * page_size,

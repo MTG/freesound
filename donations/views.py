@@ -169,7 +169,7 @@ def donation_session_stripe(request):
         FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
         form = FormToUse(request.POST, user=request.user)
         if form.is_valid():
-            email_to = request.user.email if request.user.is_authenticated() else None
+            email_to = request.user.email if request.user.is_authenticated else None
             amount = form.cleaned_data['amount']
             domain = f"https://{Site.objects.get_current().domain}"
             return_url_success = urllib.parse.urljoin(domain, reverse('donation-success'))

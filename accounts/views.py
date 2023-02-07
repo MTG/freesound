@@ -1193,7 +1193,7 @@ def account(request, username):
     following_tags = follow_utils.get_tags_following_qs(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
+    show_unfollow_button = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')

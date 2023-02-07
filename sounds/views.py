@@ -232,7 +232,7 @@ def front_page(request):
         'top_donor_user_id': top_donor_user_id,
         'top_donor_donation_amount': top_donor_donation_amount,
         'total_num_sounds': total_num_sounds,
-        'is_authenticated': request.user.is_authenticated(),
+        'is_authenticated': request.user.is_authenticated == True,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
         'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
@@ -290,7 +290,7 @@ def sound(request, username, sound_id):
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
     display_random_link = request.GET.get('random_browsing', False)
-    is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, sound.user)
+    is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
     tvars = {
@@ -1012,7 +1012,7 @@ def pack(request, username, pack_id):
     is_following = None
     geotags_in_pack_serialized = []
     if using_beastwhoosh(request):
-        is_following = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, pack.user)
+        is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, pack.user)
         if pack.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
             for sound in Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None):
                 geotags_in_pack_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
@@ -1201,7 +1201,7 @@ def display_sound_wrapper(request, username, sound_id):
         'media_url': settings.MEDIA_URL,
         'request': request,
         'is_explicit': is_explicit,
-        'is_authenticated': request.user.is_authenticated()  # cache computation is weird with CallableBool
+        'is_authenticated': request.user.is_authenticated == True
     }
     return render(request, 'sounds/display_sound.html', tvars)
 

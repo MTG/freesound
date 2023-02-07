@@ -664,6 +664,7 @@ def describe(request):
             f = csv_form.cleaned_data['csv_file']
             for chunk in f.chunks():
                 destination.write(chunk)
+            destination.close()
 
             bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
                                                      original_csv_filename=f.name)

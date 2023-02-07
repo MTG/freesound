@@ -20,7 +20,7 @@ django-ratelimit==3.0.1
 django-recaptcha==2.0.6
 django-redis==4.11.0
 django-silk==3.0.4
-Django==1.11.29
+Django==2.2
 djangorestframework-jsonp==1.0.2
 djangorestframework-xml==2.0.0
 djangorestframework-yaml==2.0.0

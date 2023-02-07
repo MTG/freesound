@@ -75,7 +75,7 @@ class Command(LoggingBaseCommand):
         total = Sound.objects.all().count()
 
         # Look at number of comments
-        for count, sound in enumerate(Sound.objects.all().annotate(real_num_comments=Count('comments')).iterator()):
+        for count, sound in enumerate(Sound.objects.all().annotate(real_num_comments=Count('comments')).order_by('id').iterator()):
             real_num_comments = sound.real_num_comments
             if real_num_comments != sound.num_comments:
                 mismatches_report['Sound.num_comments'] += 1
@@ -88,7 +88,7 @@ class Command(LoggingBaseCommand):
 
         # Look at number of ratings and average rating
         for count, sound in enumerate(Sound.objects.all().annotate(
-                real_num_ratings=Count('ratings'), real_avg_rating=Coalesce(Avg('ratings__rating'), Value(0))).iterator()):
+                real_num_ratings=Count('ratings'), real_avg_rating=Coalesce(Avg('ratings__rating'), Value(0))).order_by('id').iterator()):
             real_num_ratings = sound.real_num_ratings
             if real_num_ratings != sound.num_ratings:
                 mismatches_report['Sound.num_ratings'] += 1
@@ -103,7 +103,7 @@ class Command(LoggingBaseCommand):
         # Look at number of downloads
         if not options['skip-downloads']:
             for count, sound in enumerate(Sound.objects.all().annotate(
-                    real_num_downloads=Count('downloads')).iterator()):
+                    real_num_downloads=Count('downloads')).order_by('id').iterator()):
 
                 real_num_downloads = sound.real_num_downloads
                 if real_num_downloads != sound.num_downloads:
@@ -138,7 +138,7 @@ class Command(LoggingBaseCommand):
 
         # Look at number of downloads
         if not options['skip-downloads']:
-            for count, pack in enumerate(Pack.objects.all().annotate(real_num_downloads=Count('downloads')).iterator()):
+            for count, pack in enumerate(Pack.objects.all().annotate(real_num_downloads=Count('downloads')).order_by('id').iterator()):
                 real_num_downloads = pack.real_num_downloads
                 if real_num_downloads != pack.num_downloads:
                     mismatches_report['Pack.num_downloads'] += 1
@@ -176,7 +176,7 @@ class Command(LoggingBaseCommand):
 
         # Look at number of posts
         for count, user in enumerate(User.objects.filter(id__in=potential_user_ids).select_related('profile').annotate(
-                real_num_posts=Count('posts'),).iterator()):
+                real_num_posts=Count('posts'),).order_by('id').iterator()):
             user_profile = user.profile
             real_num_posts = user.real_num_posts
             if real_num_posts != user_profile.num_posts:
@@ -205,7 +205,7 @@ class Command(LoggingBaseCommand):
             # is not severely impacted when running, we decided that the optimization is probably not worth right now.
             # Same thing applies to pack downloads below.
             for count, user in enumerate(User.objects.filter(is_active=True).select_related('profile').
-                                         annotate(real_num_sound_downloads=Count('sound_downloads'),).iterator()):
+                                         annotate(real_num_sound_downloads=Count('sound_downloads'),).order_by('id').iterator()):
                 user_profile = user.profile
 
                 real_num_sound_downloads = user.real_num_sound_downloads
@@ -221,7 +221,7 @@ class Command(LoggingBaseCommand):
 
             # Look at number of pack downloads for all active users (see note above)
             for count, user in enumerate(User.objects.filter(is_active=True).select_related('profile').
-                                         annotate(real_num_pack_downloads=Count('pack_downloads'),).iterator()):
+                                         annotate(real_num_pack_downloads=Count('pack_downloads'),).order_by('id').iterator()):
                 user_profile = user.profile
 
                 real_num_pack_downloads = user.real_num_pack_downloads

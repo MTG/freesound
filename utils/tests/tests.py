@@ -246,15 +246,11 @@ class BulkDescribeUtils(TestCase):
                 if header_value == 'is_explicit':
                     # NOTE: Excel treats all numbers as floats, therefore for comparing rows that have numbers we
                     # first convert them all to float.
-                    self.assertTrue(
-                        float(lines_csv[j][header_value]) ==
-                        float(lines_xls[j][header_value]) ==
-                        float(lines_xlsx[j][header_value]))
+                    self.assertEqual(float(lines_csv[j][header_value]), float(lines_xls[j][header_value]))
+                    self.assertEqual(float(lines_xls[j][header_value]), float(lines_xlsx[j][header_value]))
                 else:
-                    self.assertTrue(
-                        lines_csv[j][header_value] ==
-                        lines_xls[j][header_value] ==
-                        lines_xlsx[j][header_value])
+                    self.assertEqual(lines_xls[j][header_value], lines_xlsx[j][header_value])
+                    self.assertEqual(lines_csv[j][header_value], lines_xls[j][header_value])
 
         # NOTE: more advance testing of this funciton would mean testing with different types of "good" and "bad" files
         # for each of the formats. For the CSV case that would rather feasible as we can generate the files

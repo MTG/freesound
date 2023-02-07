@@ -25,6 +25,7 @@ import os
 import shutil
 from collections import defaultdict
 
+import openpyxl
 import xlrd
 from django.apps import apps
 from django.conf import settings
@@ -300,13 +301,21 @@ def get_csv_lines(csv_file_path):
             reader = csv.reader(f)
             header = next(reader)
             lines = [dict(zip(header, row)) for row in reader]
-    elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):
+    elif csv_file_path.endswith('.xls'):
         # Read from Excel format
         wb = xlrd.open_workbook(csv_file_path)
         s = wb.sheet_by_index(0)  # Get first excel sheet
         header = s.row_values(0)
         lines = [dict(zip(header, row)) for row in
                  [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+    elif csv_file_path.endswith('.xlsx'):
+        # Read from Excel format
+        wb = openpyxl.load_workbook(filename=csv_file_path)
+        s = wb[wb.sheetnames[0]]  # Get first excel sheet
+        rows = list(s.values)
+        header = list(rows[0])
+        lines = [dict(zip(header, row)) for row in
+                 [[str(val) if val is not None else '' for val in rows[i]] for i in range(1, len(rows))]]
     else:
         header = []
         lines = []

@@ -25,6 +25,7 @@ from django.core.management import call_command
 from django.http import HttpResponseRedirect
 from django.template.defaultfilters import truncatechars
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
 from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis
@@ -100,11 +101,10 @@ class DeletedSoundAdmin(admin.ModelAdmin):
     def user_link(self, obj):
         if obj.user is None:
             return '-'
-        return '<a href="{}" target="_blank">{}</a>'.format(
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:auth_user_change', args=[obj.user.id]),
-            f'{obj.user.username}')
+            f'{obj.user.username}'))
 
-    user_link.allow_tags = True
     user_link.admin_order_field = 'user'
     user_link.short_description = 'User'
 
@@ -130,31 +130,27 @@ class FlagAdmin(admin.ModelAdmin):
         return qs
 
     def reporting_user_link(self, obj):
-        return '<a href="{}" target="_blank">{}</a>'.format(
-            reverse('account', args=[obj.reporting_user.username]), obj.reporting_user.username) \
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
+            reverse('account', args=[obj.reporting_user.username]), obj.reporting_user.username)) \
             if obj.reporting_user else '-'
-    reporting_user_link.allow_tags = True
     reporting_user_link.admin_order_field = 'reporting_user__username'
     reporting_user_link.short_description = 'Reporting User'
 
     def email_link(self, obj):
-        return f'<a href="mailto:{obj.email}" target="_blank">{obj.email}</a>' \
+        return mark_safe(f'<a href="mailto:{obj.email}" target="_blank">{obj.email}</a>') \
             if obj.email else '-'
-    email_link.allow_tags = True
     email_link.admin_order_field = 'email'
     email_link.short_description = 'Email'
 
     def sound_uploader_link(self, obj):
-        return '<a href="{}" target="_blank">{}</a>'.format(reverse('account', args=[obj.sound.user.username]),
-                                                              obj.sound.user.username)
-    sound_uploader_link.allow_tags = True
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(reverse('account', args=[obj.sound.user.username]),
+                                                              obj.sound.user.username))
     sound_uploader_link.admin_order_field = 'sound__user__username'
     sound_uploader_link.short_description = 'Uploader'
 
     def sound_link(self, obj):
-        return '<a href="{}" target="_blank">{}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
-                                                              truncatechars(obj.sound.base_filename_slug, 50))
-    sound_link.allow_tags = True
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
+                                                              truncatechars(obj.sound.base_filename_slug, 50)))
     sound_link.admin_order_field = 'sound__original_filename'
     sound_link.short_description = 'Sound'
 

@@ -162,7 +162,7 @@ def delete_sound_from_gaia(sound_id):
     try:
         Similarity.delete(sound_id)
     except Exception as e:
-        web_logger.warn("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
+       web_logger.warning("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
 
 
 def hash_cache_key(key):

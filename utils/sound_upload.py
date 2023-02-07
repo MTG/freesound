@@ -77,7 +77,8 @@ def clean_processing_before_describe_files(audio_file_path):
 def get_duration_from_processing_before_describe_files(audio_file_path):
     info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), 'info.json')
     try:
-        return float(json.load(open(info_file_path))['duration'])
+        with open(info_file_path) as f:
+            return float(json.load(f)['duration'])
     except Exception as e:
         return 0.0
 
@@ -295,9 +296,10 @@ def get_csv_lines(csv_file_path):
 
     if csv_file_path.endswith('.csv'):
         # Read CSV formatted file
-        reader = csv.reader(open(csv_file_path, newline='', encoding="utf-8"))
-        header = next(reader)
-        lines = [dict(zip(header, row)) for row in reader]
+        with open(csv_file_path, newline='', encoding="utf-8") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            lines = [dict(zip(header, row)) for row in reader]
     elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):
         # Read from Excel format
         wb = xlrd.open_workbook(csv_file_path)

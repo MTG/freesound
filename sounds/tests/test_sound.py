@@ -1096,7 +1096,8 @@ class SoundAnalysisModel(TestCase):
         analysis_filename = '%i-TestExtractor2.json' % sound.id
         sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(old_div(sound.id, 1000)))
         os.makedirs(sound_analysis_folder, exist_ok=True)
-        json.dump(analysis_data, open(os.path.join(sound_analysis_folder, analysis_filename), 'w'))
+        with open(os.path.join(sound_analysis_folder, analysis_filename), 'w') as f:
+            json.dump(analysis_data, f)
         sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 2)
         self.assertEqual(list(sa2.get_analysis_data().keys()), list(analysis_data.keys()))

@@ -1827,12 +1827,14 @@ class SoundAnalysis(models.Model):
         extensions .json and .yaml as these are the supported formats for analysis results"""
         if os.path.exists(self.analysis_filepath_base + '.json'):
             try:
-                return json.load(open(self.analysis_filepath_base + '.json'))
+                with open(self.analysis_filepath_base + '.json') as f:
+                    return json.load(f)
             except Exception:
                 pass
         if os.path.exists(self.analysis_filepath_base + '.yaml'):
             try:
-                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CSafeLoader)
+                with open(self.analysis_filepath_base + '.yaml') as f:
+                    return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
             except Exception:
                 pass
         return {}

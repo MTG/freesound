@@ -86,8 +86,9 @@ class UserEditProfile(TestCase):
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser")
-        f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb'), None, None, None, None, None)
-        handle_uploaded_image(user.profile, f)
+        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+            f = InMemoryUploadedFile(f, None, None, None, None, None)
+            handle_uploaded_image(user.profile, f)
 
         # Test that avatar files were created
         self.assertEqual(os.path.exists(user.profile.locations("avatar.S.path")), True)
@@ -153,10 +154,11 @@ class UserEditProfile(TestCase):
     def test_edit_user_avatar(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        self.client.post("/home/edit/", {
-            'image-file': open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb'),
-            'image-remove': False,
-        })
+        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+            self.client.post("/home/edit/", {
+                'image-file': f,
+                'image-remove': False,
+            })
 
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.has_avatar, True)

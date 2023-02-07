@@ -111,7 +111,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
     links = []
     remixgroup.save()   # need to save to have primary key before ManyToMany
     # FIXME: no idea why nx.weakly_connected_components(sg) return list in list...
-    remixgroup.sounds = set(nx.weakly_connected_components(sg)[0])
+    remixgroup.sounds.set(set(nx.weakly_connected_components(sg)[0]))
 
     for sound in remixgroup.sounds.all():
         sound.invalidate_template_caches()

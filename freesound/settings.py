@@ -20,6 +20,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should
 default_url = 'postgres://postgres@db/postgres'
 DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=default_url)}
 
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

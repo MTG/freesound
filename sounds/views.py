@@ -232,7 +232,7 @@ def front_page(request):
         'top_donor_user_id': top_donor_user_id,
         'top_donor_donation_amount': top_donor_donation_amount,
         'total_num_sounds': total_num_sounds,
-        'is_authenticated': request.user.is_authenticated == True,
+        'is_authenticated': request.user.is_authenticated,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
         'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
@@ -1201,7 +1201,7 @@ def display_sound_wrapper(request, username, sound_id):
         'media_url': settings.MEDIA_URL,
         'request': request,
         'is_explicit': is_explicit,
-        'is_authenticated': request.user.is_authenticated == True
+        'is_authenticated': request.user.is_authenticated
     }
     return render(request, 'sounds/display_sound.html', tvars)
 

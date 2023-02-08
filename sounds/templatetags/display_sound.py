@@ -114,7 +114,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
             'request': request,
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
-            'is_authenticated': request.user.is_authenticated == True,
+            'is_authenticated': request.user.is_authenticated,
             'show_bookmark_button': show_bookmark if show_bookmark is not None else
             (player_size == 'small' or player_size == 'small_no_info') and request.user.is_authenticated,  # Only BW
             'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,

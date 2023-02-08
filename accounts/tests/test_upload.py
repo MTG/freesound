@@ -156,7 +156,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '1-zoom': [''],
             '1-tags': ['testtag1 testtag4 testtag5'],
         })
-
+        print(resp.content, resp.cookies['messages'].value)
         # Check that post redirected to first describe page with confirmation message on sounds described
         self.assertRedirects(resp, '/home/describe/')
         self.assertEqual('You have described all the selected files' in resp.cookies['messages'].value, True)

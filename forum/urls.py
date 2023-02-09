@@ -18,26 +18,26 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import path, re_path
 import forum.views as forum_views
 import search.views as search_views
 
 urlpatterns = [
-    url(r'^$', forum_views.forums, name='forums-forums'),
-    url(r'^moderate/$', forum_views.moderate_posts, name="forums-moderate"),
-    url(r'^forums-search/$', search_views.search_forum, name="forums-search"),
-    url(r'^latest_posts/$', forum_views.latest_posts, name="forums-latest-posts"),
-    url(r'^hot_treads/$', forum_views.hot_threads, name="forums-hot-threads"),
-    url(r'^(?P<forum_name_slug>[\w\-]+)/$', forum_views.forum, name="forums-forum"),
-    url(r'^(?P<forum_name_slug>[\w\-]+)/new-thread/$', forum_views.new_thread, name="forums-new-thread"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', forum_views.thread, name="forums-thread"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/unsubscribe/$', forum_views.unsubscribe_from_thread, name="forums-thread-unsubscribe"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/subscribe/$', forum_views.subscribe_to_thread, name="forums-thread-subscribe"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/$', forum_views.post, name="forums-post"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/reply/$', forum_views.reply, name="forums-reply"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$', forum_views.reply, name="forums-reply-quote"),
+    path('', forum_views.forums, name='forums-forums'),
+    path('moderate/', forum_views.moderate_posts, name="forums-moderate"),
+    path('forums-search/', search_views.search_forum, name="forums-search"),
+    path('latest_posts/', forum_views.latest_posts, name="forums-latest-posts"),
+    path('hot_treads/', forum_views.hot_threads, name="forums-hot-threads"),
+    re_path(r'^(?P<forum_name_slug>[\w\-]+)/$', forum_views.forum, name="forums-forum"),
+    re_path(r'^(?P<forum_name_slug>[\w\-]+)/new-thread/$', forum_views.new_thread, name="forums-new-thread"),
+    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', forum_views.thread, name="forums-thread"),
+    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/unsubscribe/$', forum_views.unsubscribe_from_thread, name="forums-thread-unsubscribe"),
+    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/subscribe/$', forum_views.subscribe_to_thread, name="forums-thread-subscribe"),
+    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/$', forum_views.post, name="forums-post"),
+    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/reply/$', forum_views.reply, name="forums-reply"),
+    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$', forum_views.reply, name="forums-reply-quote"),
 
-    url(r'^post/(?P<post_id>\d+)/edit/$', forum_views.post_edit, name="forums-post-edit"),
-    url(r'^post/(?P<post_id>\d+)/delete/$', forum_views.post_delete, name="forums-post-delete"),
-    url(r'^post/(?P<post_id>\d+)/delete-confirm/$', forum_views.post_delete_confirm, name="forums-post-delete-confirm"),
+    path('post/<int:post_id>/edit/', forum_views.post_edit, name="forums-post-edit"),
+    path('post/<int:post_id>/delete/', forum_views.post_delete, name="forums-post-delete"),
+    path('post/<int:post_id>/delete-confirm/', forum_views.post_delete_confirm, name="forums-post-delete-confirm"),
 ]

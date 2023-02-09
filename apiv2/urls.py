@@ -24,7 +24,7 @@
 #   - markdown (for browseable api)
 
 
-from django.conf.urls import url, include
+from django.urls import include, path, re_path
 from django.contrib.auth.views import LogoutView
 from apiv2 import views
 from accounts.views import login
@@ -40,48 +40,48 @@ urlpatterns = [
     #############
 
     # Me
-    url(r'^me/$', views.Me.as_view(), name="apiv2-me"),
+    path('me/', views.Me.as_view(), name="apiv2-me"),
 
     # Available audio descriptors
-    url(r'^descriptors/$', views.AvailableAudioDescriptors.as_view(), name="apiv2-available-descriptors"),
+    path('descriptors/', views.AvailableAudioDescriptors.as_view(), name="apiv2-available-descriptors"),
 
     # Text/content/combined search
-    url(r'^search/text/$', views.TextSearch.as_view(), name="apiv2-sound-text-search"),
-    url(r'^search/content/$', views.ContentSearch.as_view(), name="apiv2-sound-content-search"),
-    url(r'^search/combined/$', views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),
+    path('search/text/', views.TextSearch.as_view(), name="apiv2-sound-text-search"),
+    path('search/content/', views.ContentSearch.as_view(), name="apiv2-sound-content-search"),
+    path('search/combined/', views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),
 
     # Sounds
-    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
-    url(r'^sounds/(?P<pk>[0-9]+)/comments/$', views.SoundComments.as_view(), name="apiv2-sound-comments"),
-    url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysisView.as_view(), name="apiv2-sound-analysis"),
-    url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
-    url(r'^sounds/(?P<pk>[0-9]+)/download/$', views.DownloadSound.as_view(), name="apiv2-sound-download"),
-    url(r'^sounds/(?P<pk>[0-9]+)/download/link/$', views.DownloadLink.as_view(), name="apiv2-sound-get-download-link"),
+    path('sounds/<int:pk>/', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
+    path('sounds/<int:pk>/comments/', views.SoundComments.as_view(), name="apiv2-sound-comments"),
+    path('sounds/<int:pk>/analysis/', views.SoundAnalysisView.as_view(), name="apiv2-sound-analysis"),
+    path('sounds/<int:pk>/similar/', views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
+    path('sounds/<int:pk>/download/', views.DownloadSound.as_view(), name="apiv2-sound-download"),
+    path('sounds/<int:pk>/download/link/', views.DownloadLink.as_view(), name="apiv2-sound-get-download-link"),
 
     # Create or edit
-    url(r'^sounds/(?P<pk>[0-9]+)/edit/$', views.EditSoundDescription.as_view(), name='apiv2-sound-edit'),
-    url(r'^sounds/(?P<pk>[0-9]+)/bookmark/$', views.BookmarkSound.as_view(), name='apiv2-user-create-bookmark'),
-    url(r'^sounds/(?P<pk>[0-9]+)/rate/$', views.RateSound.as_view(), name='apiv2-user-create-rating'),
-    url(r'^sounds/(?P<pk>[0-9]+)/comment/$', views.CommentSound.as_view(), name='apiv2-user-create-comment'),
+    path('sounds/<int:pk>/edit/', views.EditSoundDescription.as_view(), name='apiv2-sound-edit'),
+    path('sounds/<int:pk>/bookmark/', views.BookmarkSound.as_view(), name='apiv2-user-create-bookmark'),
+    path('sounds/<int:pk>/rate/', views.RateSound.as_view(), name='apiv2-user-create-rating'),
+    path('sounds/<int:pk>/comment/', views.CommentSound.as_view(), name='apiv2-user-create-comment'),
     # Upload and describe
-    url(r'^sounds/upload/$', views.UploadSound.as_view(), name="apiv2-uploads-upload"),
-    url(r'^sounds/describe/$', views.DescribeSound.as_view(), name="apiv2-uploads-describe"),
-    url(r'^sounds/pending_uploads/$', views.PendingUploads.as_view(), name="apiv2-uploads-pending"),
+    path('sounds/upload/', views.UploadSound.as_view(), name="apiv2-uploads-upload"),
+    path('sounds/describe/', views.DescribeSound.as_view(), name="apiv2-uploads-describe"),
+    path('sounds/pending_uploads/', views.PendingUploads.as_view(), name="apiv2-uploads-pending"),
 
     # Users
-    url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),
-    url(r'^users/(?P<username>[^//]+)/sounds/$', views.UserSounds.as_view(), name="apiv2-user-sound-list"),
-    url(r'^users/(?P<username>[^//]+)/packs/$', views.UserPacks.as_view(), name='apiv2-user-packs'),
-    url(r'^users/(?P<username>[^//]+)/bookmark_categories/$', views.UserBookmarkCategories.as_view(), name='apiv2-user-bookmark-categories'),
-    url(r'^users/(?P<username>[^//]+)/bookmark_categories/(?P<category_id>\d+)/sounds/$', views.UserBookmarkCategorySounds.as_view(), name='apiv2-user-bookmark-category-sounds'),
+    path('users/<username>/', views.UserInstance.as_view(), name="apiv2-user-instance"),
+    path('users/<username>/sounds/', views.UserSounds.as_view(), name="apiv2-user-sound-list"),
+    path('users/<username>/packs/', views.UserPacks.as_view(), name='apiv2-user-packs'),
+    path('users/<username>/bookmark_categories/', views.UserBookmarkCategories.as_view(), name='apiv2-user-bookmark-categories'),
+    path('users/<username>/bookmark_categories/<int:category_id>/sounds/', views.UserBookmarkCategorySounds.as_view(), name='apiv2-user-bookmark-category-sounds'),
 
     # Packs
-    url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),
-    url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSounds.as_view(), name='apiv2-pack-sound-list'),
-    url(r'^packs/(?P<pk>[0-9]+)/download/$', views.DownloadPack.as_view(), name='apiv2-pack-download'),
+    path('packs/<int:pk>/', views.PackInstance.as_view(), name='apiv2-pack-instance'),
+    path('packs/<int:pk>/sounds/', views.PackSounds.as_view(), name='apiv2-pack-sound-list'),
+    path('packs/<int:pk>/download/', views.DownloadPack.as_view(), name='apiv2-pack-download'),
 
     # Download item from link
-    url(r'^download/(?P<token>.+?)/$', views.download_from_token, name="apiv2-download_from_token"),
+    path('download/<token>/', views.download_from_token, name="apiv2-download_from_token"),
 
 
     #########################
@@ -90,20 +90,20 @@ urlpatterns = [
 
     # Client management
     # use apply[/]* for backwards compatibility with links to /apiv2/apply
-    url(r'^apply[/]*$', views.create_apiv2_key, name="apiv2-apply"),
-    url(r'^apply/credentials/(?P<key>[^//]+)/monitor/$', views.monitor_api_credential, name="apiv2-monitor-credential"),
-    url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
-    url(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
+    re_path(r'^apply[/]*$', views.create_apiv2_key, name="apiv2-apply"),
+    re_path(r'^apply/credentials/(?P<key>[^//]+)/monitor/$', views.monitor_api_credential, name="apiv2-monitor-credential"),
+    re_path(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
+    re_path(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 
     # Oauth2
-    url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
-    url(r'^login/$', login, {'template_name': 'api/minimal_login.html',
+    path('oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
+    path('login/', login, {'template_name': 'api/minimal_login.html',
                              'authentication_form': FsAuthenticationForm}, name="api-login"),
-    url(r'^logout/$', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
+    path('logout/', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
 
     #########
     # OTHER #
     #########
-    url(r'^$', views.FreesoundApiV2Resources.as_view()),
-    url(r'/$', views.invalid_url),
+    path('', views.FreesoundApiV2Resources.as_view()),
+    path('/', views.invalid_url),
 ]

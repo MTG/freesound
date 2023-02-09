@@ -20,7 +20,7 @@
 
 from apiv2.views import AuthorizationView
 from oauth2_provider import views
-from django.conf.urls import url
+from django.urls import re_path
 from django.conf import settings
 from django.contrib.auth import logout, REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
@@ -49,7 +49,7 @@ def force_login(view_func):
 app_name = 'oauth2_provider'
 
 urlpatterns = (
-    url(r'^authorize[/]*$', https_required(AuthorizationView.as_view()), name="authorize"),
-    url(r'^logout_and_authorize[/]*$', https_required(force_login(AuthorizationView.as_view())), name="logout_and_authorize"),
-    url(r'^access_token[/]*$', csrf_exempt(https_required(views.TokenView.as_view())), name="access_token"),
+    re_path(r'^authorize[/]*$', https_required(AuthorizationView.as_view()), name="authorize"),
+    re_path(r'^logout_and_authorize[/]*$', https_required(force_login(AuthorizationView.as_view())), name="logout_and_authorize"),
+    re_path(r'^access_token[/]*$', csrf_exempt(https_required(views.TokenView.as_view())), name="access_token"),
 )

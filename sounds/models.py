@@ -103,7 +103,7 @@ class License(OrderedModel):
 class BulkUploadProgress(models.Model):
     """Store progress status for a Bulk Describe process."""
 
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     CSV_CHOICES = (
         ("N", 'Not yet validated'),  # linked CSV file has not yet been validated
@@ -543,7 +543,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(SocialModel):
-    user = models.ForeignKey(User, related_name="sounds")
+    user = models.ForeignKey(User, related_name="sounds", on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     # "original_filename" is the name given to the sound, which typically is similar to the filename. note that this
@@ -565,7 +565,7 @@ class Sound(SocialModel):
     date_recorded = models.DateField(null=True, blank=True, default=None)
 
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
-    license = models.ForeignKey(License)
+    license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
@@ -1312,7 +1312,7 @@ class SoundOfTheDayManager(models.Manager):
 
 
 class SoundOfTheDay(models.Model):
-    sound = models.ForeignKey(Sound)
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     date_display = models.DateField(db_index=True)
     email_sent = models.BooleanField(default=False)
 
@@ -1467,7 +1467,7 @@ class PackManager(models.Manager):
 
 
 class Pack(SocialModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True, default=None)
     is_dirty = models.BooleanField(db_index=True, default=False)
@@ -1652,8 +1652,8 @@ class Pack(SocialModel):
 
 
 class Flag(models.Model):
-    sound = models.ForeignKey(Sound)
-    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
+    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None, on_delete=models.CASCADE)
     email = models.EmailField()
     REASON_TYPE_CHOICES = (
         ("O", 'Offending sound'),
@@ -1672,9 +1672,9 @@ class Flag(models.Model):
 
 
 class Download(models.Model):
-    user = models.ForeignKey(User, related_name='sound_downloads')
-    sound = models.ForeignKey(Sound, related_name='downloads')
-    license = models.ForeignKey(License)
+    user = models.ForeignKey(User, related_name='sound_downloads', on_delete=models.CASCADE)
+    sound = models.ForeignKey(Sound, related_name='downloads', on_delete=models.CASCADE)
+    license = models.ForeignKey(License, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     class Meta:
@@ -1706,8 +1706,8 @@ def update_num_downloads_on_insert(**kwargs):
 
 
 class PackDownload(models.Model):
-    user = models.ForeignKey(User, related_name='pack_downloads')
-    pack = models.ForeignKey(Pack, related_name='downloads')
+    user = models.ForeignKey(User, related_name='pack_downloads', on_delete=models.CASCADE)
+    pack = models.ForeignKey(Pack, related_name='downloads', on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     class Meta:
@@ -1715,9 +1715,9 @@ class PackDownload(models.Model):
 
 
 class PackDownloadSound(models.Model):
-    sound = models.ForeignKey(Sound)
-    pack_download = models.ForeignKey(PackDownload)
-    license = models.ForeignKey(License)
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
+    pack_download = models.ForeignKey(PackDownload, on_delete=models.CASCADE)
+    license = models.ForeignKey(License, on_delete=models.CASCADE)
 
 
 @receiver(post_delete, sender=PackDownload)
@@ -1748,8 +1748,8 @@ class RemixGroup(models.Model):
 
 class SoundLicenseHistory(models.Model):
     """Store history of licenses related to a sound"""
-    license = models.ForeignKey(License)
-    sound = models.ForeignKey(Sound)
+    license = models.ForeignKey(License, on_delete=models.CASCADE)
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     class Meta:
@@ -1768,7 +1768,7 @@ class SoundAnalysis(models.Model):
             ("FA", 'Failed'),
         )
 
-    sound = models.ForeignKey(Sound, related_name='analyses')
+    sound = models.ForeignKey(Sound, related_name='analyses', on_delete=models.CASCADE)
     last_sent_to_queue = models.DateTimeField(auto_now_add=True)
     last_analyzer_finished = models.DateTimeField(null=True)
     analyzer = models.CharField(db_index=True, max_length=255)  # Analyzer name including version
@@ -1827,12 +1827,14 @@ class SoundAnalysis(models.Model):
         extensions .json and .yaml as these are the supported formats for analysis results"""
         if os.path.exists(self.analysis_filepath_base + '.json'):
             try:
-                return json.load(open(self.analysis_filepath_base + '.json'))
+                with open(self.analysis_filepath_base + '.json') as f:
+                    return json.load(f)
             except Exception:
                 pass
         if os.path.exists(self.analysis_filepath_base + '.yaml'):
             try:
-                return yaml.load(open(self.analysis_filepath_base + '.yaml'), Loader=yaml.cyaml.CSafeLoader)
+                with open(self.analysis_filepath_base + '.yaml') as f:
+                    return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
             except Exception:
                 pass
         return {}

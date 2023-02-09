@@ -19,6 +19,7 @@
 #
 
 from django.conf.urls import url
+from django.urls import path
 from django.contrib.auth import views as auth_views
 from utils.session_checks import login_redirect
 import messages.views as messages
@@ -52,8 +53,7 @@ urlpatterns = [
         name='password_reset_done'),
     url(r'^password_change/$', accounts.password_change_form, name='password_change'),
     url(r'^password_change/done/$', accounts.password_change_done, name='password_change_done'),
-    url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
-        accounts.password_reset_confirm, name='password_reset_confirm'),
+    path('reset/<uidb64>/<token>/', accounts.password_reset_confirm, name='password_reset_confirm'),
     url(r'^reset/done/$', accounts.password_reset_complete, name='password_reset_complete'),
     url(r'^register/$', login_redirect(accounts.registration), name="accounts-register"),
     url(r'^reactivate/$', login_redirect(accounts.resend_activation), name="accounts-resend-activation"),

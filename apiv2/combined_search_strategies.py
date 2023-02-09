@@ -275,7 +275,7 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
         current_page = start_page
         n_page_requests = 1
         # Iterate over gaia result pages
-        while (len(gaia_ids) < gaia_count or gaia_count == None) and n_page_requests <= max_pages:
+        while (gaia_count is None or len(gaia_ids) < gaia_count) and n_page_requests <= max_pages:
             if not offset:
                 offset = (current_page - 1) * page_size
             results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
@@ -291,7 +291,6 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
                 # Save sound distance to target into so it can be later used in the view class and added to results
                 distance_to_target_data.update(dict(results))
 
-            #print 'Gaia page %i (total %i sounds)' % (current_page, gaia_count)
             current_page += 1
             n_page_requests += 1
 
@@ -330,7 +329,7 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         current_page = start_page
         n_page_requests = 1
         # Iterate over solr result pages
-        while (len(solr_ids) < solr_count or solr_count == None) and n_page_requests <= max_pages:
+        while (solr_count is None or len(solr_ids) < solr_count) and n_page_requests <= max_pages:
             # We need to convert the sort parameter to standard sorting options from
             # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
             # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
@@ -348,7 +347,6 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             solr_ids += [element['id'] for element in result.docs]
             solr_count = result.num_found
 
-            #print 'Solr page %i (total %i sounds)' % (current_page, solr_count)
             current_page += 1
             n_page_requests += 1
 

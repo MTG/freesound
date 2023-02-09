@@ -9,14 +9,14 @@ class DonationCampaign(models.Model):
 
 
 class Donation(models.Model):
-    user = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     email = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255, null=True)
     amount = models.DecimalField(max_digits=7, decimal_places=2)
     transaction_id = models.CharField(max_length=255, blank=True)
     currency = models.CharField(max_length=100) # Should always be EUR
     created = models.DateTimeField(auto_now_add=True)
-    campaign = models.ForeignKey(DonationCampaign, null=True)
+    campaign = models.ForeignKey(DonationCampaign, null=True, on_delete=models.SET_NULL)
     is_anonymous= models.BooleanField(default=True)
     display_amount = models.BooleanField(default=True)
 

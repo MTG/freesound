@@ -172,7 +172,7 @@ def bw_maps_js_scripts(context):
 
 @register.filter
 def user_following_tags(user, tags_slash):
-    if user.is_authenticated():
+    if user.is_authenticated:
         return is_user_following_tag(user, tags_slash)
     else:
         return False

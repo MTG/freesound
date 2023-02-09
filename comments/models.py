@@ -25,10 +25,11 @@ from django.db.models.signals import post_delete
 
 
 class Comment(models.Model):
-    user = models.ForeignKey(User)
-    sound = models.ForeignKey('sounds.Sound', null=True, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    sound = models.ForeignKey('sounds.Sound', null=True, related_name='comments', on_delete=models.CASCADE)
     comment = models.TextField()
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', default=None)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, related_name='replies', default=None, on_delete=models.SET_NULL)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):

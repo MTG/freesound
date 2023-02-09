@@ -32,6 +32,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
 from accounts.forms import username_taken_by_other_user
@@ -62,21 +63,19 @@ class DeletedUserAdmin(admin.ModelAdmin):
     search_fields = ('=username',)
 
     def get_object_link(self, obj):
-        return '<a href="{}" target="_blank">{}</a>'.format(
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:accounts_deleteduser_change', args=[obj.id]),
-            f'DeletedUser: {obj.username}')
+            f'DeletedUser: {obj.username}'))
     get_object_link.short_description = 'DeletedUser'
-    get_object_link.allow_tags = True
     get_object_link.admin_order_field = 'username'
 
     def get_view_link(self, obj):
         if obj.user is None:
             return '-'
         else:
-            return '<a href="{}" target="_blank">{}</a>'.format(
-                reverse('account', args=[obj.user.username]), obj.user.username)
+            return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
+                reverse('account', args=[obj.user.username]), obj.user.username))
     get_view_link.short_description = 'View on site'
-    get_view_link.allow_tags = True
 
     def get_num_sounds(self, obj):
         return f'{obj.profile.num_sounds}'
@@ -156,10 +155,9 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         return False
 
     def get_view_link(self, obj):
-        return '<a href="{}" target="_blank">{}</a>'.format(
-            reverse('account', args=[obj.username]), obj.username)
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
+            reverse('account', args=[obj.username]), obj.username))
     get_view_link.short_description = 'View on site'
-    get_view_link.allow_tags = True
 
     def get_num_sounds(self, obj):
         return f'{obj.profile.num_sounds}'
@@ -378,21 +376,19 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
     def deleted_user_link(self, obj):
         if obj.deleted_user is None:
             return '-'
-        return '<a href="{}" target="_blank">{}</a>'.format(
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:accounts_deleteduser_change', args=[obj.deleted_user_id]),
-            f'DeletedUser: {obj.deleted_user.username}')
+            f'DeletedUser: {obj.deleted_user.username}'))
 
-    deleted_user_link.allow_tags = True
     deleted_user_link.admin_order_field = 'deleted_user'
     deleted_user_link.short_description = 'DeletedUser'
 
     def user_to_link(self, obj):
         if obj.user_to is None:
             return '-'
-        return '<a href="{}" target="_blank">{}</a>'.format(
-            reverse('admin:auth_user_change', args=[obj.user_to_id]), obj.user_to.username)
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
+            reverse('admin:auth_user_change', args=[obj.user_to_id]), obj.user_to.username))
 
-    user_to_link.allow_tags = True
     user_to_link.admin_order_field = 'user_to'
     user_to_link.short_description = 'User to'
 
@@ -402,7 +398,6 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
         else:
             return '-'
 
-    get_reason.allow_tags = True
     get_reason.short_description = 'Reason'
 
 

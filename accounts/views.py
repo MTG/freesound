@@ -664,6 +664,7 @@ def describe(request):
             f = csv_form.cleaned_data['csv_file']
             for chunk in f.chunks():
                 destination.write(chunk)
+            destination.close()
 
             bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
                                                      original_csv_filename=f.name)
@@ -1193,7 +1194,7 @@ def account(request, username):
     following_tags = follow_utils.get_tags_following_qs(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
+    show_unfollow_button = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')

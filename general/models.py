@@ -36,7 +36,7 @@ class SocialModel(models.Model):
         abstract = True
 
 class AkismetSpam(SocialModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     spam = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
 
@@ -58,8 +58,7 @@ class OrderedModel(models.Model):
         url_up = reverse("admin-move", kwargs=kwargs)
         kwargs["direction"] = "down"
         url_down = reverse("admin-move", kwargs=kwargs)
-        return f'<a href="{url_up}">up</a> | <a href="{url_down}">down</a>'
-    change_order.allow_tags = True
+        return mark_safe(f'<a href="{url_up}">up</a> | <a href="{url_down}">down</a>')
     change_order.short_description = 'Move'
     change_order.admin_order_field = 'order'
                 

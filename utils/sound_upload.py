@@ -25,6 +25,7 @@ import os
 import shutil
 from collections import defaultdict
 
+import openpyxl
 import xlrd
 from django.apps import apps
 from django.conf import settings
@@ -77,7 +78,8 @@ def clean_processing_before_describe_files(audio_file_path):
 def get_duration_from_processing_before_describe_files(audio_file_path):
     info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), 'info.json')
     try:
-        return float(json.load(open(info_file_path))['duration'])
+        with open(info_file_path) as f:
+            return float(json.load(f)['duration'])
     except Exception as e:
         return 0.0
 
@@ -295,16 +297,25 @@ def get_csv_lines(csv_file_path):
 
     if csv_file_path.endswith('.csv'):
         # Read CSV formatted file
-        reader = csv.reader(open(csv_file_path, newline='', encoding="utf-8"))
-        header = next(reader)
-        lines = [dict(zip(header, row)) for row in reader]
-    elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):
+        with open(csv_file_path, newline='', encoding="utf-8") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            lines = [dict(zip(header, row)) for row in reader]
+    elif csv_file_path.endswith('.xls'):
         # Read from Excel format
         wb = xlrd.open_workbook(csv_file_path)
         s = wb.sheet_by_index(0)  # Get first excel sheet
         header = s.row_values(0)
         lines = [dict(zip(header, row)) for row in
                  [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+    elif csv_file_path.endswith('.xlsx'):
+        # Read from Excel format
+        wb = openpyxl.load_workbook(filename=csv_file_path)
+        s = wb[wb.sheetnames[0]]  # Get first excel sheet
+        rows = list(s.values)
+        header = list(rows[0])
+        lines = [dict(zip(header, row)) for row in
+                 [[str(val) if val is not None else '' for val in rows[i]] for i in range(1, len(rows))]]
     else:
         header = []
         lines = []

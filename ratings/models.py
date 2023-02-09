@@ -30,10 +30,10 @@ from django.dispatch import receiver
 
 
 class SoundRating(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     rating = models.IntegerField()
-    sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings')
+    sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings', on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):

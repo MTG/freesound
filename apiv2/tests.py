@@ -61,22 +61,6 @@ class TestAPiViews(TestCase):
                                kwargs={'pk': packs[0].id}), secure=True)
         self.assertEqual(resp.status_code, 200)
 
-    def test_oauth2_response_ok(self):
-        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
-        client = ApiV2Client.objects.create(user=user, description='',
-                                            name='', url='', redirect_uri='https://freesound.org')
-        # Login so api returns session login based responses
-        self.client.force_login(user)
-
-        # 200 response on Oauth2 authorize
-        resp = self.client.post(reverse('oauth2_provider:authorize'),
-                                {'client_id': client.id, 'response_type': 'code'}, secure=True)
-        self.assertEqual(resp.status_code, 200)
-
-        # 302 response on Oauth2 logout and authorize
-        resp = self.client.post(reverse('oauth2_provider:logout_and_authorize'),
-                                {'client_id': client.id}, secure=True)
-        self.assertEqual(resp.status_code, 302)
 
     def test_basic_user_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
@@ -196,33 +180,6 @@ class TestAPI(TestCase):
         resp = self.client.options("/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers)
         self.assertEqual(resp.status_code, 200)
 
-    def test_token_authentication_with_header(self):
-        user = User.objects.create_user("testuser")
-        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
-        c.save()
-        headers = {
-            'HTTP_AUTHORIZATION': f'Token {c.key}',
-        }
-        resp = self.client.get("/apiv2/", secure=True, **headers)
-        self.assertEqual(resp.status_code, 200)
-
-    def test_token_authentication_with_query_param(self):
-        user = User.objects.create_user("testuser")
-        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
-        c.save()
-        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
-        self.assertEqual(resp.status_code, 200)
-
-    def test_token_authentication_disabled_client(self):
-        user = User.objects.create_user("testuser")
-        c = ApiV2Client(user=user, status='REV', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
-        c.save()
-        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
-        self.assertEqual(resp.status_code, 401)
-        
 
 class ApiSearchPaginatorTest(TestCase):
     def test_page(self):
@@ -472,3 +429,270 @@ class TestApiV2Client(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn('redirect_uri', resp.context['form'].errors)
         self.assertIn('url', resp.context['form'].errors)
+
+
+class APIAuthenticationTestCase(TestCase):
+
+    def setUp(self):
+        # Create users
+        self.end_user_password = 'endpass'
+        self.end_user = User.objects.create_user("end_user", password=self.end_user_password, email='enduser@mail.com')
+        self.dev_user = User.objects.create_user("dev_user", password='devpass', email='devuser@mail.com')
+
+        # Create clients
+        ApiV2Client.objects.create(
+            name='PasswordClient',
+            user=self.dev_user,
+            allow_oauth_passoword_grant=True,
+        )
+        ApiV2Client.objects.create(
+            name='AuthorizationCodeClient',
+            user=self.dev_user,
+            allow_oauth_passoword_grant=False,
+        )
+
+    @staticmethod
+    def get_params_from_url(url):
+        params_part = url.split('?')[1]
+        return {item.split('=')[0]: item.split('=')[1] for item in params_part.split('&')}
+
+    @staticmethod
+    def fragment_params_from_url(url):
+        params_part = url.split('#')[1]
+        return {item.split('=')[0]: item.split('=')[1] for item in params_part.split('&')}
+
+    def check_dict_has_fields(self, dictionary, fields):
+        for field in fields:
+            self.assertIn(field, dictionary)
+
+    def check_access_token_response_fields(self, resp):
+        self.check_dict_has_fields(
+            resp.json(), ['expires_in', 'scope', 'refresh_token', 'access_token', 'token_type'])
+
+    def check_redirect_uri_access_token_frag_params(self, params):
+        self.check_dict_has_fields(
+            params, ['expires_in', 'scope', 'access_token', 'token_type'])
+
+    def test_oauth2_password_grant_flow(self):
+
+        # Return 'unauthorized_client' when trying password grant with a client with 'allow_oauth_passoword_grant' set
+        # to false
+        client = ApiV2Client.objects.get(name='AuthorizationCodeClient')
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                'grant_type': 'password',
+                'username': self.end_user.username,
+                'password': self.end_user_password,
+            }, secure=True)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['error'], 'unauthorized_client')
+
+        # Return 200 OK when trying password grant with a client with 'allow_oauth_passoword_grant' set to True
+        client.allow_oauth_passoword_grant = True
+        client.save()
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                'grant_type': 'password',
+                'username': self.end_user.username,
+                'password': self.end_user_password,
+            }, secure=True)
+        self.assertEqual(resp.status_code, 200)
+        self.check_access_token_response_fields(resp)
+
+        # Return 'invalid_client' when missing client_id
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                #'client_id': client.client_id,
+                'grant_type': 'password',
+                'username': self.end_user.username,
+                'password': self.end_user_password,
+            }, secure=True)
+        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.json()['error'], 'invalid_client')
+
+        # Return 'invalid_client' when client_id does not exist in db
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': 'thi5i5aninv3nt3dcli3ntid',
+                'grant_type': 'password',
+                'username': self.end_user.username,
+                'password': self.end_user_password,
+            }, secure=True)
+        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.json()['error'], 'invalid_client')
+
+        # Return 'unsupported_grant_type' when grant type does not exist
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                'grant_type': 'invented_grant',
+                'username': self.end_user.username,
+                'password': self.end_user_password,
+            }, secure=True)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['error'], 'unsupported_grant_type')
+
+        # Return 'invalid_request' when no username is provided
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                'grant_type': 'password',
+                #'username': self.end_user.username,
+                'password': self.end_user_password,
+            }, secure=True)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['error'], 'invalid_request')
+
+        # Return 'invalid_request' when no password is provided
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                'grant_type': 'password',
+                'username': self.end_user.username,
+                #'password': self.end_user_password,
+            }, secure=True)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['error'], 'invalid_request')
+
+    def test_oauth2_authorization_code_grant_flow(self):
+
+        # Redirect to login page when visiting authorize page with an AnonymousUser
+        client = ApiV2Client.objects.get(name='AuthorizationCodeClient')
+        resp = self.client.get(
+            reverse('oauth2_provider:authorize'),
+            {
+                'client_id': client.client_id,
+                'response_type': 'code',
+            }, secure=True, follow=True)
+        response_path = resp.request['PATH_INFO']
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('/login', response_path)
+
+        # Redirect includes 'error' param when using non-existing response type
+        self.client.force_login(self.end_user)
+        resp = self.client.get(
+            reverse('oauth2_provider:authorize'),
+            {
+                'client_id': client.client_id,
+                'response_type': 'non_existing_response_type',
+            }, secure=True)
+        self.assertEqual(resp.status_code, 302)
+        resp = self.client.get(resp.request['PATH_INFO'] + '?' + resp.request['QUERY_STRING'], secure=True)
+        self.assertTrue(resp.url.startswith(client.get_default_redirect_uri()))
+        resp_params = self.get_params_from_url(resp.url)
+        self.check_dict_has_fields(resp_params, ['error'])
+        self.assertEqual(resp_params['error'], 'unsupported_response_type')
+
+        # Redirect includes 'error' param when using non-supported response type
+        resp = self.client.get(
+            reverse('oauth2_provider:authorize'),
+            {
+                'client_id': client.client_id,
+                'response_type': 'token',
+            }, secure=True)
+        self.assertEqual(resp.status_code, 302)
+        resp = self.client.get(resp.request['PATH_INFO'] + '?' + resp.request['QUERY_STRING'], secure=True)
+        self.assertEquals(resp.url.startswith(client.get_default_redirect_uri()), True)
+        resp_params = self.get_params_from_url(resp.url)
+        self.check_dict_has_fields(resp_params, ['error'])
+        self.assertEqual(resp_params['error'], 'unauthorized_client')
+
+        # Authorization page is displayed with errors with non-existing client_id
+        resp = self.client.get(
+            reverse('oauth2_provider:authorize'),
+            {
+                'client_id': 'thi5i5aninv3nt3dcli3ntid',
+                'response_type': 'code',
+            }, secure=True)
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('Invalid client_id parameter value', str(resp.content))
+
+        #  Authorization page is displayed correctly when correct response_type and client_id
+        resp = self.client.get(
+            reverse('oauth2_provider:authorize'),
+            {
+                'client_id': client.client_id,
+                'response_type': 'code',
+            }, secure=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('name="allow" value="Authorize', str(resp.content))
+
+        # Redirect includes 'code' and 'state' params
+        resp = self.client.post(
+            reverse('oauth2_provider:authorize'),
+            {
+                'client_id': client.client_id,
+                'response_type': 'code',
+                'redirect_uri': client.get_default_redirect_uri(),
+                'scope': 'read',
+                'state': 'an_optional_state',
+                'allow': 'Authorize',
+            }, secure=True)
+        self.assertTrue(resp.url.startswith(client.get_default_redirect_uri()))
+        resp_params = self.get_params_from_url(resp.url)
+        self.assertEquals(resp_params['state'], 'an_optional_state')  # Check state is returned and preserved
+        self.check_dict_has_fields(resp_params, ['code'])  # Check code is there
+
+        # Return 200 OK when requesting access token setting client_id and client_secret in body params
+        code = resp_params['code']
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                'client_secret': client.client_secret,
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': client.get_default_redirect_uri()
+            }, secure=True)
+        self.assertEqual(resp.status_code, 200)
+        self.check_access_token_response_fields(resp)
+
+        # Return bad request when trying to get access without client_secret
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                #'client_secret': client.client_secret,
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': client.get_default_redirect_uri()
+            }, secure=True)
+
+        self.assertEqual(resp.status_code, 400)
+
+    def test_token_authentication_with_header(self):
+        user = User.objects.create_user("testuser")
+        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
+                        url="https://freesound.com", name="test")
+        c.save()
+        headers = {
+            'HTTP_AUTHORIZATION': f'Token {c.key}',
+        }
+        resp = self.client.get("/apiv2/", secure=True, **headers)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_token_authentication_with_query_param(self):
+        user = User.objects.create_user("testuser")
+        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
+                        url="https://freesound.com", name="test")
+        c.save()
+        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_token_authentication_disabled_client(self):
+        user = User.objects.create_user("testuser")
+        c = ApiV2Client(user=user, status='REV', redirect_uri="https://freesound.com",
+                        url="https://freesound.com", name="test")
+        c.save()
+        resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
+        self.assertEqual(resp.status_code, 401)
+

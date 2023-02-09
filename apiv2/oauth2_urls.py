@@ -46,6 +46,8 @@ def force_login(view_func):
     return _wrapped_view_func
 
 
+app_name = 'oauth2_provider'
+
 urlpatterns = (
     url(r'^authorize[/]*$', https_required(AuthorizationView.as_view()), name="authorize"),
     url(r'^logout_and_authorize[/]*$', https_required(force_login(AuthorizationView.as_view())), name="logout_and_authorize"),

@@ -27,6 +27,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='soundanalysis',
             name='analysis_status',
-            field=models.CharField(choices=[(b'QU', b'Queued'), (b'OK', b'Ok'), (b'SK', b'Skipped'), (b'FA', b'Failed')], db_index=True, default=b'QU', max_length=2),
+            field=models.CharField(choices=[('QU', 'Queued'), ('OK', 'Ok'), ('SK', 'Skipped'), ('FA', 'Failed')], db_index=True, default='QU', max_length=2),
         ),
     ]

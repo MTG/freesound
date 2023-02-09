@@ -25,7 +25,7 @@ from sounds.models import Sound
 
 
 class BookmarkCategory(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=128, default="")
     
     def __str__(self):
@@ -33,10 +33,11 @@ class BookmarkCategory(models.Model):
 
 
 class Bookmark(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=128, default="", blank=True)
-    category = models.ForeignKey(BookmarkCategory, blank=True, null=True, default=None, related_name='bookmarks')
-    sound = models.ForeignKey(Sound)
+    category = models.ForeignKey(
+        BookmarkCategory, blank=True, null=True, default=None, related_name='bookmarks', on_delete=models.SET_NULL)
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __str__(self):

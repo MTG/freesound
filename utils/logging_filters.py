@@ -79,11 +79,14 @@ class APILogsFilter(logging.Filter):
                 if ':' in message:
                     message = ' '.join([item.split(':')[0] for item in message.split(' ')])
                 record.api_resource = message
-                for key, value in json.loads(info).items():
-                    setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
-                for key, value in json.loads(data).items():
-                    setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
+                info_dict = json.loads(info)
+                if info_dict is not None:
+                    for key, value in info_dict.items():
+                        setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
+                data_dict = json.loads(data)
+                if data_dict is not None:
+                    for key, value in data_dict.items():
+                        setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
             except Exception as e:
-                print(e)
                 sentry_sdk.capture_exception(e)
         return True

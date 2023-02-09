@@ -360,7 +360,7 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if 'HTTP_RANGE' not in request.META:
+    if 'range' not in request.headers:
         """
         Download managers and some browsers use the range header to download files in multiple parts. We have observed 
         that all clients first make a GET with no range header (to get the file length) and then make multiple other 
@@ -394,7 +394,7 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    if 'HTTP_RANGE' not in request.META:
+    if 'range' not in request.headers:
         """
         Download managers and some browsers use the range header to download files in multiple parts. We have observed 
         that all clients first make a GET with no range header (to get the file length) and then make multiple other 

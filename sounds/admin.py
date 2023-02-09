@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import re_path
 from django.contrib import admin, messages
 from django.core.cache import cache
 from django.core.management import call_command
@@ -31,12 +31,13 @@ from django_object_actions import DjangoObjectActions
 from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis
 
 
+@admin.register(License)
 class LicenseAdmin(admin.ModelAdmin):
     list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
 
-admin.site.register(License, LicenseAdmin)
 
 
+@admin.register(Sound)
 class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     fieldsets = ((None, {'fields': ('user', 'num_downloads' )}),
                  ('Filenames', {'fields': ('base_filename_slug',)}),
@@ -55,19 +56,26 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     actions = ('reprocess_sound', )
     change_actions = ('reprocess_sound', )
 
+    @admin.display(
+        description='Processing state'
+    )
     def get_processing_state(self, obj):
         processing_state = f'{obj.get_processing_state_display()}'
         ongoing_state_display = obj.get_processing_ongoing_state_display()
         if ongoing_state_display == 'Processing' or ongoing_state_display == 'Queued':
             processing_state += f' ({ongoing_state_display})'
         return processing_state
-    get_processing_state.short_description = 'Processing state'
 
+    @admin.display(
+        description='Name'
+    )
     def get_sound_name(self, obj):
         max_len = 15
         return f"{obj.original_filename[:max_len]}{'...' if len(obj.original_filename) > max_len else ''}"
-    get_sound_name.short_description = 'Name'
 
+    @admin.action(
+        description='Re-process and re-analyze sounds'
+    )
     def reprocess_sound(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
             queryset_or_object.process(force=True, high_priority=True)
@@ -82,11 +90,10 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                                  f'{queryset_or_object.count()} sounds were send to re-process and re-analyze.')
 
     reprocess_sound.label = 'Re-process/analyze sound'
-    reprocess_sound.short_description = 'Re-process and re-analyze sounds'
-
-admin.site.register(Sound, SoundAdmin)
 
 
+
+@admin.register(DeletedSound)
 class DeletedSoundAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('sound_id', 'user_link', 'created')
@@ -98,6 +105,10 @@ class DeletedSoundAdmin(admin.ModelAdmin):
         qs = qs.select_related('user')
         return qs
 
+    @admin.display(
+        description='User',
+        ordering='user',
+    )
     def user_link(self, obj):
         if obj.user is None:
             return '-'
@@ -105,18 +116,16 @@ class DeletedSoundAdmin(admin.ModelAdmin):
             reverse('admin:auth_user_change', args=[obj.user.id]),
             f'{obj.user.username}'))
 
-    user_link.admin_order_field = 'user'
-    user_link.short_description = 'User'
-
-admin.site.register(DeletedSound, DeletedSoundAdmin)
 
 
+
+@admin.register(Pack)
 class PackAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'name', 'created')
-admin.site.register(Pack, PackAdmin)
 
 
+@admin.register(Flag)
 class FlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
     list_display = ('id', 'reporting_user_link', 'email_link', 'sound_link', 'sound_uploader_link', 'sound_is_explicit',
@@ -129,43 +138,53 @@ class FlagAdmin(admin.ModelAdmin):
         qs = qs.select_related('sound', 'reporting_user')
         return qs
 
+    @admin.display(
+        description='Reporting User',
+        ordering='reporting_user__username',
+    )
     def reporting_user_link(self, obj):
         return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
             reverse('account', args=[obj.reporting_user.username]), obj.reporting_user.username)) \
             if obj.reporting_user else '-'
-    reporting_user_link.admin_order_field = 'reporting_user__username'
-    reporting_user_link.short_description = 'Reporting User'
 
+    @admin.display(
+        description='Email',
+        ordering='email',
+    )
     def email_link(self, obj):
         return mark_safe(f'<a href="mailto:{obj.email}" target="_blank">{obj.email}</a>') \
             if obj.email else '-'
-    email_link.admin_order_field = 'email'
-    email_link.short_description = 'Email'
 
+    @admin.display(
+        description='Uploader',
+        ordering='sound__user__username',
+    )
     def sound_uploader_link(self, obj):
         return mark_safe('<a href="{}" target="_blank">{}</a>'.format(reverse('account', args=[obj.sound.user.username]),
                                                               obj.sound.user.username))
-    sound_uploader_link.admin_order_field = 'sound__user__username'
-    sound_uploader_link.short_description = 'Uploader'
 
+    @admin.display(
+        description='Sound',
+        ordering='sound__original_filename',
+    )
     def sound_link(self, obj):
         return mark_safe('<a href="{}" target="_blank">{}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
                                                               truncatechars(obj.sound.base_filename_slug, 50)))
-    sound_link.admin_order_field = 'sound__original_filename'
-    sound_link.short_description = 'Sound'
 
     def reason_summary(self, obj):
         reason_no_newlines = obj.reason.replace('\n', '|')
         return truncatechars(reason_no_newlines, 100)
 
+    @admin.display(
+        description='Is Explicit'
+    )
     def sound_is_explicit(self, obj):
         return obj.sound.is_explicit
-    sound_is_explicit.short_description = 'Is Explicit'
 
 
-admin.site.register(Flag, FlagAdmin)
 
 
+@admin.register(SoundOfTheDay)
 class SoundOfTheDayAdmin(admin.ModelAdmin):
     change_list_template = "admin_custom/sound_of_the_day_changelist.html"
     raw_id_fields = ('sound',)
@@ -175,8 +194,8 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            url('generate_new_sounds/', self.generate_new_sounds),
-            url('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
+            re_path('generate_new_sounds/', self.generate_new_sounds),
+            re_path('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
         ]
         return my_urls + urls
 
@@ -196,15 +215,15 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
 
         
 
-admin.site.register(SoundOfTheDay, SoundOfTheDayAdmin)
 
 
+@admin.register(BulkUploadProgress)
 class BulkUploadProgressAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'created', 'progress_type', 'sounds_valid')
-admin.site.register(BulkUploadProgress, BulkUploadProgressAdmin)
 
 
+@admin.register(SoundAnalysis)
 class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     list_display = ('analyzer', 'sound_id',  'analysis_status', 'last_sent_to_queue', 'last_analyzer_finished',
                     'num_analysis_attempts', 'analysis_time')
@@ -223,6 +242,9 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     def has_add_permission(self, request, obj=None):
         return False
 
+    @admin.action(
+        description='Re-run analysis with same analyzer'
+    )
     def re_run_analysis(self, request, queryset_or_object):
         if isinstance(queryset_or_object, SoundAnalysis):
             queryset_or_object.re_run_analysis()
@@ -235,19 +257,21 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
             messages.add_message(request, messages.INFO,
                                  f'{queryset_or_object.count()} sounds were send to re-analyze.')
     re_run_analysis.label = 'Re-run analysis'
-    re_run_analysis.short_description = 'Re-run analysis with same analyzer'
 
+    @admin.display(
+        description='Analysis logs',
+        ordering='Analysis logs',
+    )
     def analysis_logs(self, obj):
         return obj.get_analysis_logs()
-    analysis_logs.admin_order_field = 'Analysis logs'
-    analysis_logs.short_description = 'Analysis logs'
 
+    @admin.display(
+        description='Analysis data file',
+        ordering='Analysis data file',
+    )
     def analysis_data_file(self, obj):
         return obj.get_analysis_data_from_file()
-    analysis_data_file.admin_order_field = 'Analysis data file'
-    analysis_data_file.short_description = 'Analysis data file'
 
 
 
 
-admin.site.register(SoundAnalysis, SoundAnalysisAdmin)

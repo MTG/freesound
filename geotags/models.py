@@ -23,7 +23,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from mapbox import Geocoder
 
 web_logger = logging.getLogger("web")
@@ -43,7 +43,7 @@ class GeoTag(models.Model):
         return f"{self.user} ({self.lat:f},{self.lon:f})"
 
     def get_absolute_url(self):
-        return reverse('geotag', args=[smart_text(self.id)])
+        return reverse('geotag', args=[smart_str(self.id)])
 
     def retrieve_location_information(self):
         """Use the mapbox API to retrieve information about the latitude and longitude of this geotag.

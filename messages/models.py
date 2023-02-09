@@ -20,7 +20,7 @@
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 
 class MessageBody(models.Model):
@@ -96,7 +96,7 @@ class Message(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def get_absolute_url(self):
-        return "message", (smart_text(self.id),)
+        return "message", (smart_str(self.id),)
 
     def __str__(self):
         return f"from: [{self.user_from}] to: [{self.user_to}]"

@@ -21,7 +21,7 @@ from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
-from django.utils.http import urlquote_plus
+from urllib.parse import quote_plus
 from utils.search.search_sounds import search_prepare_parameters, split_filter_query, remove_facet_filters
 from utils.search.lucene_parser import parse_query_filter_string
 
@@ -164,9 +164,9 @@ class SearchUtilsTest(TestCase):
             {'remove_url': 'duration:[0 TO 10]', 'name': 'license:Attribution'}, 
         ]
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': 'license:Attribution'}, 
-            {'remove_url': urlquote_plus('duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"'), 'name': 'username:XavierFav'}, 
-            {'remove_url': urlquote_plus('duration:[0 TO 10] license:"Attribution" username:"XavierFav"'), 'name': 'pack:best-pack-ever'},
+            {'remove_url': quote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': 'license:Attribution'}, 
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"'), 'name': 'username:XavierFav'}, 
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution" username:"XavierFav"'), 'name': 'pack:best-pack-ever'},
         ]
 
         # the order does not matter for the list of facet dicts.
@@ -206,8 +206,8 @@ class SearchUtilsTest(TestCase):
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
 
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus('grouping_pack:"1_example pack + @ #()*"'), 'name': 'license:Sampling+'},
-            {'remove_url': urlquote_plus('license:"Sampling+"'), 'name': 'pack:example pack + @ #()*'},
+            {'remove_url': quote_plus('grouping_pack:"1_example pack + @ #()*"'), 'name': 'license:Sampling+'},
+            {'remove_url': quote_plus('license:"Sampling+"'), 'name': 'pack:example pack + @ #()*'},
         ]
 
         cc_samplingplus_facet_dict_idx = filter_query_names.index('license:Sampling+')
@@ -278,8 +278,8 @@ class SearchUtilsTest(TestCase):
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '1')
 
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus('duration:[0 TO 10]'), 'name': 'license:Attribution'},
-            {'remove_url': urlquote_plus('duration:[0 TO 10] license:"Attribution"'), 'name': 'Cluster #1'}
+            {'remove_url': quote_plus('duration:[0 TO 10]'), 'name': 'license:Attribution'},
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution"'), 'name': 'Cluster #1'}
         ]
 
         # check that the cluster facet exists

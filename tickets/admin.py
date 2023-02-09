@@ -21,14 +21,14 @@
 from django.contrib import admin
 from .models import Queue, Ticket
 
+@admin.register(Queue)
 class QueueAdmin(admin.ModelAdmin): 
     list_display = ('name',)
 
-admin.site.register(Queue, QueueAdmin)
 
 
+@admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
     raw_id_fields = ('sender', 'assignee') 
     list_display = ('id', 'status', 'assignee', 'sender')
 
-admin.site.register(Ticket, TicketAdmin)

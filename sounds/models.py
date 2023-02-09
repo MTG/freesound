@@ -41,7 +41,7 @@ from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 
@@ -819,7 +819,7 @@ class Sound(SocialModel):
         return old_div(self.avg_rating, 2)
 
     def get_absolute_url(self):
-        return reverse('sound', args=[self.user.username, smart_text(self.id)])
+        return reverse('sound', args=[self.user.username, smart_str(self.id)])
 
     @property
     def license_bw_icon_name(self):
@@ -1485,7 +1485,7 @@ class Pack(SocialModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('pack', args=[self.user.username, smart_text(self.id)])
+        return reverse('pack', args=[self.user.username, smart_str(self.id)])
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')

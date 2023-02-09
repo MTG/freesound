@@ -42,6 +42,7 @@ from general import tasks
 web_logger = logging.getLogger("web")
 
 
+@admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     readonly_fields = ('user', )
     raw_id_fields = ('geotag', )
@@ -51,35 +52,43 @@ class ProfileAdmin(admin.ModelAdmin):
     search_fields = ('=user__username', )
 
 
+@admin.register(UserFlag)
 class UserFlagAdmin(admin.ModelAdmin):
     readonly_fields = ('reporting_user', 'content_type', 'object_id', 'user')
     list_display = ('reporting_user', 'content_type', 'object_id', 'user')
 
 
+@admin.register(DeletedUser)
 class DeletedUserAdmin(admin.ModelAdmin):
     list_filter = ('reason', )
     readonly_fields = ('user', 'username', 'email', 'date_joined', 'last_login', 'deletion_date', 'reason')
     list_display = ('get_object_link', 'get_view_link', 'deletion_date', 'reason')
     search_fields = ('=username',)
 
+    @admin.display(
+        description='DeletedUser',
+        ordering='username',
+    )
     def get_object_link(self, obj):
         return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:accounts_deleteduser_change', args=[obj.id]),
             f'DeletedUser: {obj.username}'))
-    get_object_link.short_description = 'DeletedUser'
-    get_object_link.admin_order_field = 'username'
 
+    @admin.display(
+        description='View on site'
+    )
     def get_view_link(self, obj):
         if obj.user is None:
             return '-'
         else:
             return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
                 reverse('account', args=[obj.user.username]), obj.user.username))
-    get_view_link.short_description = 'View on site'
 
+    @admin.display(
+        description='# sounds'
+    )
     def get_num_sounds(self, obj):
         return f'{obj.profile.num_sounds}'
-    get_num_sounds.short_description = '# sounds'
 
 
 class LargeTablePaginator(Paginator):
@@ -154,18 +163,24 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         # We want to disable that button in favour of the custom asynchronous delete change actions
         return False
 
+    @admin.display(
+        description='View on site'
+    )
     def get_view_link(self, obj):
         return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
             reverse('account', args=[obj.username]), obj.username))
-    get_view_link.short_description = 'View on site'
 
+    @admin.display(
+        description='# sounds'
+    )
     def get_num_sounds(self, obj):
         return f'{obj.profile.num_sounds}'
-    get_num_sounds.short_description = '# sounds'
 
+    @admin.display(
+        description='# posts'
+    )
     def get_num_posts(self, obj):
         return f'{obj.profile.num_posts}'
-    get_num_posts.short_description = '# posts'
 
     def get_actions(self, request):
         # Disable the "delete" action in the list
@@ -174,6 +189,9 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
             del actions['delete_selected']
         return actions
 
+    @admin.action(
+        description="Delete the user but keep the sounds available"
+    )
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -204,8 +222,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         return render(request, 'accounts/delete_confirmation.html', tvars)
 
     delete_preserve_sounds.label = "Delete user only"
-    delete_preserve_sounds.short_description = "Delete the user but keep the sounds available"
 
+    @admin.action(
+        description="Delete the user and the sounds"
+    )
     def delete_include_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -242,8 +262,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         return render(request, 'accounts/delete_confirmation.html', tvars)
 
     delete_include_sounds.label = "Delete user and sounds"
-    delete_include_sounds.short_description = "Delete the user and the sounds"
 
+    @admin.action(
+        description="Delete the user and the sounds, mark deleted user as spammer"
+    )
     def delete_spammer(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -279,8 +301,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         return render(request, 'accounts/delete_confirmation.html', tvars)
 
     delete_spammer.label = "Delete as spammer"
-    delete_spammer.short_description = "Delete the user and the sounds, mark deleted user as spammer"
 
+    @admin.action(
+        description='Completely delete user from db'
+    )
     def full_delete(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -316,8 +340,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         return render(request, 'accounts/delete_confirmation.html', tvars)
 
     full_delete.label = "Full delete"
-    full_delete.short_description = 'Completely delete user from db'
 
+    @admin.action(
+        description='Clear all user flags for of spam reports and akismet'
+    )
     def clear_spam_flags(self, request, obj):
         num_akismet, _ = obj.akismetspam_set.all().delete()
         num_reports, _ = obj.flags.all().delete()
@@ -327,19 +353,22 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         return HttpResponseRedirect(reverse('admin:auth_user_change', args=[obj.id]))
 
     clear_spam_flags.label = "Clear spam flags"
-    clear_spam_flags.short_description = 'Clear all user flags for of spam reports and akismet'
 
+    @admin.action(
+        description='Open user on site'
+    )
     def view_on_site_action(self, request, obj):
         return HttpResponseRedirect(reverse('account', args=[obj.username]))
 
     view_on_site_action.label = "View on site"
-    view_on_site_action.short_description = 'Open user on site'
 
+    @admin.action(
+        description='Edit profile in admin'
+    )
     def edit_profile_admin(self, request, obj):
         return HttpResponseRedirect(reverse('admin:accounts_profile_change', args=[obj.profile.id]))
 
     edit_profile_admin.label = "Edit profile in admin"
-    edit_profile_admin.short_description = 'Edit profile in admin'
 
     # NOTE: in the line below we removed the 'full_delete' option as ideally we should never need to use it. In for
     # some unexpected reason we happen to need it, we can call the .delete() method on a user object using the terminal.
@@ -348,12 +377,14 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                       'delete_spammer', 'delete_include_sounds', 'delete_preserve_sounds', )
 
 
+@admin.register(OldUsername)
 class OldUsernameAdmin(admin.ModelAdmin):
     readonly_fields = ('user', 'username')
     search_fields = ('=username', )
     list_display = ('user', 'username')
 
 
+@admin.register(UserDeletionRequest)
 class UserDeletionRequestAdmin(admin.ModelAdmin):
     list_filter = ('status', )
     search_fields = ('=username_to', '=email_from')
@@ -373,6 +404,10 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
         qs = qs.select_related('user_from', 'deleted_user', 'user_to')
         return qs
 
+    @admin.display(
+        description='DeletedUser',
+        ordering='deleted_user',
+    )
     def deleted_user_link(self, obj):
         if obj.deleted_user is None:
             return '-'
@@ -380,33 +415,37 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
             reverse('admin:accounts_deleteduser_change', args=[obj.deleted_user_id]),
             f'DeletedUser: {obj.deleted_user.username}'))
 
-    deleted_user_link.admin_order_field = 'deleted_user'
-    deleted_user_link.short_description = 'DeletedUser'
 
+    @admin.display(
+        description='User to',
+        ordering='user_to',
+    )
     def user_to_link(self, obj):
         if obj.user_to is None:
             return '-'
         return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
             reverse('admin:auth_user_change', args=[obj.user_to_id]), obj.user_to.username))
 
-    user_to_link.admin_order_field = 'user_to'
-    user_to_link.short_description = 'User to'
 
+    @admin.display(
+        description='Reason'
+    )
     def get_reason(self, obj):
         if obj.triggered_deletion_reason:
             return [label for key, label in DeletedUser.DELETION_REASON_CHOICES if key == obj.triggered_deletion_reason][0]
         else:
             return '-'
 
-    get_reason.short_description = 'Reason'
 
 
+@admin.register(EmailBounce)
 class EmailBounceAdmin(admin.ModelAdmin):
     search_fields = ('=user__username',)
     list_display = ('user', 'type', 'timestamp')
     readonly_fields = ('user', 'type', 'timestamp')
 
 
+@admin.register(GdprAcceptance)
 class GdprAcceptanceAdmin(admin.ModelAdmin):
     search_fields = ('=user__username',)
     readonly_fields = ('user', )
@@ -417,11 +456,4 @@ class GdprAcceptanceAdmin(admin.ModelAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
-admin.site.register(Profile, ProfileAdmin)
-admin.site.register(UserFlag, UserFlagAdmin)
-admin.site.register(EmailBounce, EmailBounceAdmin)
 admin.site.register(EmailPreferenceType)
-admin.site.register(OldUsername, OldUsernameAdmin)
-admin.site.register(DeletedUser, DeletedUserAdmin)
-admin.site.register(UserDeletionRequest, UserDeletionRequestAdmin)
-admin.site.register(GdprAcceptance, GdprAcceptanceAdmin)

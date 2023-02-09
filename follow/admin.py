@@ -21,17 +21,17 @@
 from django.contrib import admin
 from follow.models import FollowingUserItem, FollowingQueryItem
 
+@admin.register(FollowingUserItem)
 class FollowUserAdmin(admin.ModelAdmin):
     # raw_id_fields = ('last_post', )
     list_display = ('user_from', 'user_to', 'created')
     # list_filter = ('user_from', 'user_to', 'created')
 
-admin.site.register(FollowingUserItem, FollowUserAdmin)
 
+@admin.register(FollowingQueryItem)
 class FollowTagAdmin(admin.ModelAdmin):
     # raw_id_fields = ('user',)
     list_display = ('user', 'query')
     # list_filters = ('status',)
     # search_fields = ('=author__username', "title")
 
-admin.site.register(FollowingQueryItem, FollowTagAdmin)

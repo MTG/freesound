@@ -175,7 +175,7 @@ class IpBasedThrottling(SimpleRateThrottle):
             client_throttle_level = 1
 
         # Get request ip
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.headers.get('x-forwarded-for')
         if x_forwarded_for:
             self.ip = x_forwarded_for.split(',')[0].strip()
         else:

@@ -82,9 +82,9 @@ def donation_complete_stripe(request):
     This view is called from Stripe when a new donation is completed, here we create and
     store the donation in the db.
     """
-    if "HTTP_STRIPE_SIGNATURE" in request.META:
+    if "stripe-signature" in request.headers:
         payload = request.body
-        sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+        sig_header = request.headers['stripe-signature']
         endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
         stripe.api_key = settings.STRIPE_PRIVATE_KEY
         event = None

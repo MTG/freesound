@@ -49,8 +49,8 @@ def is_spam(request, comment):
     try:
         if api.comment_check(
                 user_ip=request.META.get("REMOTE_ADDR", "127.0.0.1"),
-                user_agent=request.META.get("HTTP_USER_AGENT", None),
-                referrer=request.META.get("HTTP_REFERER", None),
+                user_agent=request.headers.get("user-agent", None),
+                referrer=request.headers.get("referer", None),
                 comment_type="comment",
                 comment_author=request.user.username.encode("utf-8") if request.user.is_authenticated else None,
                 comment_content=comment.encode("utf-8"),

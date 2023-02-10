@@ -1,6 +1,6 @@
 {% extends "simple_page.html" %}
 {% load display_sound %}
-{% load staticfiles %}
+{% load static %}
 {% load util %}
 
 {% block title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}

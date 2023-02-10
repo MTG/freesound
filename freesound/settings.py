@@ -31,7 +31,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
-    #'freesound.middleware.ModelAdminReorderWithNav',  # Commenting this
+    #'freesound.middleware.ModelAdminReorderWithNav',
     'ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
@@ -901,7 +901,6 @@ PROCESSING_BEFORE_DESCRIPTION_URL = DATA_URL + "processing_before_description/"
 # preview files (instead of the originals) for processing and downloading when the originals are not available.
 USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING = DEBUG
 
-'''
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     INSTALLED_APPS += ['debug_toolbar']
@@ -927,7 +926,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         # work in docker. Unconditionally show the toolbar when DEBUG is True
         'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG
     }
-'''
+
 # -------------------------------------------------------------------------------
 # Import logging settings
 from .logger import LOGGING

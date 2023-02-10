@@ -21,12 +21,12 @@
 from django.contrib import admin
 from wiki.models import Page, Content
 
+@admin.register(Page)
 class PageAdmin(admin.ModelAdmin):
     list_display = ('name', )
-admin.site.register(Page, PageAdmin)
 
 
+@admin.register(Content)
 class ContentAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', )
     list_display = ('page', 'author', 'title', 'created', )
-admin.site.register(Content, ContentAdmin)

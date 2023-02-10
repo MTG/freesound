@@ -155,11 +155,11 @@ class UserUploadAndDescribeSounds(TestCase):
             '1-new_pack': ['Name of a new pack'],
             '1-zoom': [''],
             '1-tags': ['testtag1 testtag4 testtag5'],
-        })
+        }, follow=True)
 
         # Check that post redirected to first describe page with confirmation message on sounds described
         self.assertRedirects(resp, '/home/describe/')
-        self.assertEqual('You have described all the selected files' in resp.cookies['messages'].value, True)
+        self.assertEqual('You have described all the selected files' in list(resp.context['messages'])[2].message, True)
 
         # Check that sounds have been created along with related tags, geotags and packs
         self.assertEqual(user.sounds.all().count(), 2)
@@ -219,11 +219,11 @@ class UserUploadAndDescribeSounds(TestCase):
             '1-zoom': [''],
             '1-tags': ['testtag1 testtag4 testtag5'],
             '1-sources': ','.join([f'{s.id}' for s in sound_sources]),
-        })
+        }, follow=True)
         
         # Check that post redirected to first describe page with confirmation message on sounds described
         self.assertRedirects(resp, '/home/sounds/manage/')
-        self.assertEqual('Successfully finished sound description round' in resp.cookies['messages'].value, True)
+        self.assertEqual('Successfully finished sound description round' in list(resp.context['messages'])[2].message, True)
 
         # Check that sounds have been created along with related tags, geotags and packs
         self.assertEqual(user.sounds.all().count(), 2)

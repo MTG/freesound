@@ -4,6 +4,7 @@ from .models import DonationCampaign, DonationsModalSettings, DonationsEmailSett
 admin.site.register(DonationCampaign)
 
 
+@admin.register(DonationsModalSettings)
 class DonationsModalSettingsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
@@ -14,6 +15,7 @@ class DonationsModalSettingsAdmin(admin.ModelAdmin):
             return True
 
 
+@admin.register(DonationsEmailSettings)
 class DonationsEmailSettingsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
@@ -24,6 +26,7 @@ class DonationsEmailSettingsAdmin(admin.ModelAdmin):
             return True
 
 
+@admin.register(Donation)
 class DonationAdmin(admin.ModelAdmin):
     raw_id_fields = ("user",)
 
@@ -31,6 +34,3 @@ class DonationAdmin(admin.ModelAdmin):
         return False
 
 
-admin.site.register(DonationsModalSettings, DonationsModalSettingsAdmin)
-admin.site.register(DonationsEmailSettings, DonationsEmailSettingsAdmin)
-admin.site.register(Donation, DonationAdmin)

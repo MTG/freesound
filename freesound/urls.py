@@ -41,7 +41,7 @@ from apiv2.apiv2_utils import apiv1_end_of_life_message
 admin.autodiscover()
 
 urlpatterns = [
-    re_path(r'^$', sounds.views.front_page, name='front-page'),
+    path('', sounds.views.front_page, name='front-page'),
 
     path('people/', accounts.views.accounts, name="accounts"),
     path('people/<username>/', accounts.views.account, name="account"),
@@ -164,6 +164,6 @@ if settings.DEBUG:
                 {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
         re_path(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve,
                 {'document_root': settings.DATA_PATH, 'show_indexes': True}),
-        re_path(r'^__debug__/', include(debug_toolbar.urls)),
+        path('__debug__/', include(debug_toolbar.urls)),
         re_path(r'^.*\.map$', serve_source_map_files),
     ]

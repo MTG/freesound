@@ -31,7 +31,7 @@ from django.contrib.sites.models import Site
 from django.core.cache import cache, caches
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import resolve
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
@@ -83,7 +83,7 @@ def get_view_description(cls, html=False):
         cached_description = cache.get(cache_key)
         if not cached_description:
             description = cls.get_description()
-            description = formatting.dedent(smart_text(description))
+            description = formatting.dedent(smart_str(description))
             # Cache for 1 hour (if we update description, it will take 1 hour to show)
             cache.set(cache_key, description, 60*60)
         else:

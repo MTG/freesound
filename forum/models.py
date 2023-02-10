@@ -28,7 +28,7 @@ from django.db.models.functions import Greatest
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 import accounts
 from general.models import OrderedModel
@@ -72,7 +72,7 @@ class Forum(OrderedModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("forums-forum", args=[smart_text(self.name_slug)])
+        return reverse("forums-forum", args=[smart_str(self.name_slug)])
 
 
 @receiver(pre_save, sender=Forum)
@@ -127,7 +127,7 @@ class Thread(models.Model):
             self.save(update_fields=['first_post'])
 
     def get_absolute_url(self):
-        return reverse("forums-thread", args=[smart_text(self.forum.name_slug), self.id])
+        return reverse("forums-thread", args=[smart_str(self.forum.name_slug), self.id])
 
     def is_user_subscribed(self, user):
         """A user is subscribed to a thread if a Subscription object exists that related the two of them"""
@@ -227,7 +227,7 @@ class Post(models.Model):
         return f"Post by {self.author} in {self.thread}"
 
     def get_absolute_url(self):
-        return reverse("forums-post", args=[smart_text(self.thread.forum.name_slug), self.thread.id, self.id])
+        return reverse("forums-post", args=[smart_str(self.thread.forum.name_slug), self.thread.id, self.id])
 
 
 @receiver(pre_save, sender=Post)

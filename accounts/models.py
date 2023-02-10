@@ -35,7 +35,7 @@ from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.utils.timezone import now
 
 import tickets.models
@@ -197,7 +197,7 @@ class Profile(SocialModel):
         return self.num_sound_downloads + self.num_pack_downloads
 
     def get_absolute_url(self):
-        return reverse('account', args=[smart_text(self.user.username)])
+        return reverse('account', args=[smart_str(self.user.username)])
 
     @staticmethod
     def locations_static(user_id, has_avatar):

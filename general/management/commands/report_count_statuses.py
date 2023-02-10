@@ -88,7 +88,7 @@ class Command(LoggingBaseCommand):
 
         # Look at number of ratings and average rating
         for count, sound in enumerate(Sound.objects.all().annotate(
-                real_num_ratings=Count('ratings'), real_avg_rating=Coalesce(Avg('ratings__rating'), Value(0))).order_by('id').iterator()):
+                real_num_ratings=Count('ratings'), real_avg_rating=Coalesce(Avg('ratings__rating'), 0.0)).order_by('id').iterator()):
             real_num_ratings = sound.real_num_ratings
             if real_num_ratings != sound.num_ratings:
                 mismatches_report['Sound.num_ratings'] += 1

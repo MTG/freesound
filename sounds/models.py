@@ -32,7 +32,6 @@ import zlib
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import JSONField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -42,7 +41,7 @@ from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 
@@ -116,9 +115,9 @@ class BulkUploadProgress(models.Model):
     progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
     csv_filename = models.CharField(max_length=512, null=True, blank=True, default=None)
     original_csv_filename = models.CharField(max_length=255)
-    validation_output = JSONField(null=True)
+    validation_output = models.JSONField(null=True)
     sounds_valid = models.PositiveIntegerField(null=False, default=0)
-    description_output = JSONField(null=True)
+    description_output = models.JSONField(null=True)
 
     @property
     def csv_path(self):
@@ -820,7 +819,7 @@ class Sound(SocialModel):
         return old_div(self.avg_rating, 2)
 
     def get_absolute_url(self):
-        return reverse('sound', args=[self.user.username, smart_text(self.id)])
+        return reverse('sound', args=[self.user.username, smart_str(self.id)])
 
     @property
     def license_bw_icon_name(self):
@@ -1353,7 +1352,7 @@ class DeletedSound(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     sound_id = models.IntegerField(default=0, db_index=True)
-    data = JSONField()
+    data = models.JSONField()
 
 
 def on_delete_sound(sender, instance, **kwargs):
@@ -1486,7 +1485,7 @@ class Pack(SocialModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('pack', args=[self.user.username, smart_text(self.id)])
+        return reverse('pack', args=[self.user.username, smart_str(self.id)])
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')
@@ -1772,7 +1771,7 @@ class SoundAnalysis(models.Model):
     last_sent_to_queue = models.DateTimeField(auto_now_add=True)
     last_analyzer_finished = models.DateTimeField(null=True)
     analyzer = models.CharField(db_index=True, max_length=255)  # Analyzer name including version
-    analysis_data = JSONField(null=True)
+    analysis_data = models.JSONField(null=True)
     analysis_status = models.CharField(null=False, default="QU", db_index=True, max_length=2, choices=STATUS_CHOICES)
     num_analysis_attempts = models.IntegerField(default=0)
     analysis_time = models.FloatField(default=0)

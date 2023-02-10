@@ -18,56 +18,56 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import path
 from tickets import views
 
 urlpatterns = [
 
-    url(r'^moderation/$',
+    path('moderation/',
         views.moderation_home,
         name='tickets-moderation-home'),
 
-    url(r'^moderation/tardy_users_sounds/$',
+    path('moderation/tardy_users_sounds/',
         views.moderation_tardy_users_sounds,
         name='tickets-moderation-tardy-users'),
 
-    url(r'^moderation/tardy_moderators_sounds/$',
+    path('moderation/tardy_moderators_sounds/',
         views.moderation_tardy_moderators_sounds,
         name='tickets-moderation-tardy-moderators'),
 
-    url(r'^moderation/assign/new/$',
+    path('moderation/assign/new/',
         views.moderation_assign_all_new,
         name='tickets-moderation-assign-all-new'),
 
-    url(r'^moderation/assign/(?P<user_id>\d+)/new$',
+    path('moderation/assign/<int:user_id>/new',
         views.moderation_assign_user,
         name='tickets-moderation-assign-user-new'),
 
-    url(r'^moderation/assign/(?P<user_id>\d+)/pending$',
+    path('moderation/assign/<int:user_id>/pending',
         views.moderation_assign_user_pending,
         name='tickets-moderation-assign-user-pending'),
 
-    url(r'^moderation/assigned/(?P<user_id>\d+)/$',
+    path('moderation/assigned/<int:user_id>/',
         views.moderation_assigned,
         name='tickets-moderation-assigned'),
 
-    url(r'^moderation/assign/ticket/(?P<user_id>\d+)/(?P<ticket_id>\d+)/$',
+    path('moderation/assign/ticket/<int:user_id>/<int:ticket_id>/',
         views.moderation_assign_single_ticket,
         name='tickets-moderation-assign-single-ticket'),
 
-    url(r'^moderation/annotations/(?P<user_id>\d+)/$',
+    path('moderation/annotations/<int:user_id>/',
         views.user_annotations,
         name='tickets-user-annotations'),
 
-    url(r'^moderation/pending/(?P<username>[^//]+)/$',
+    path('moderation/pending/<username>/',
         views.pending_tickets_per_user,
         name='tickets-user-pending_sounds'),
 
-    url(r'^(?P<ticket_key>[\w\d]+)/$',
+    path('<ticket_key>/',
         views.ticket,
         name='tickets-ticket'),
 
-    url(r'^(?P<ticket_key>[\w\d]+)/messages/$',
+    path('<ticket_key>/messages/',
         views.sound_ticket_messages,
         name='tickets-ticket-messages'),
 ]

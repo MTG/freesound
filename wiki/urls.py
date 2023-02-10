@@ -18,14 +18,14 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import path, re_path
 from django.views.generic import RedirectView
 
 import wiki.views as wiki
 
 urlpatterns = [
-    url(r'^$', RedirectView.as_view(url="/help/main/"), name="wiki"),
-    url(r'^(?P<name>[//\w_-]+)/history/$', wiki.history, name="wiki-page-history"),
-    url(r'^(?P<name>[//\w_-]+)/edit/$', wiki.editpage, name="wiki-page-edit"),
-    url(r'^(?P<name>[//\w_-]+)/$', wiki.page, name="wiki-page"),
+    path('', RedirectView.as_view(url="/help/main/"), name="wiki"),
+    re_path(r'^(?P<name>[//\w_-]+)/history/$', wiki.history, name="wiki-page-history"),
+    re_path(r'^(?P<name>[//\w_-]+)/edit/$', wiki.editpage, name="wiki-page-edit"),
+    re_path(r'^(?P<name>[//\w_-]+)/$', wiki.page, name="wiki-page"),
 ]

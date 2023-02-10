@@ -22,7 +22,7 @@ import logging
 
 from django.conf import settings
 from django.db.models.query import RawQuerySet
-from django.utils.http import urlquote_plus
+from urllib.parse import quote_plus
 from pyparsing import ParseException
 
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
@@ -254,7 +254,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
                 if valid_filter:
                     filter = {
                         'name': filter_display,
-                        'remove_url': urlquote_plus(filter_query.replace(filter_str, '')),
+                        'remove_url': quote_plus(filter_query.replace(filter_str, '')),
                         'cluster_id': cluster_id,
                     }
                     filter_query_split.append(filter)
@@ -264,7 +264,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
         if cluster_id and cluster_id.isdigit():
             filter_query_split.append({
                 'name': "Cluster #" + cluster_id,
-                'remove_url': urlquote_plus(filter_query),
+                'remove_url': quote_plus(filter_query),
                 'cluster_id': '',
             })
 

@@ -26,9 +26,9 @@ class TagAdmin(admin.ModelAdmin):
 
 admin.site.register(Tag)
 
+@admin.register(TaggedItem)
 class TaggedItemAdmin(admin.ModelAdmin):
     search_fields = ('=tag__name',)
     raw_id_fields = ('user', 'tag')
     list_display = ('user', 'content_type', 'object_id', 'tag', 'created')
 
-admin.site.register(TaggedItem, TaggedItemAdmin)

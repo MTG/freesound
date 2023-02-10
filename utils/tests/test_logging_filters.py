@@ -30,7 +30,7 @@ from utils.test_helpers import create_user_and_sounds
 class DummyRequest:
     """A dummy request to check the X-Forwarded-For header in logging_filters.get_client_ip"""
     def __init__(self, xforwardedfor):
-        self.META = {"HTTP_X_FORWARDED_FOR": xforwardedfor}
+        self.headers = {"x-forwarded-for": xforwardedfor}
 
 
 class LogRecordsStoreHandler(logging.Handler):

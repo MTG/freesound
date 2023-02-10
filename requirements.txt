@@ -8,7 +8,7 @@ importlib-metadata<5.0 # Required for celery, see https://github.com/python/impo
 debugpy==1.5.1
 dj-database-url==0.5.0
 django-amazon-ses==4.0.1
-django-cors-headers==3.11.0
+django-cors-headers==3.13.0
 django-debug-toolbar==3.1.1
 django-extensions==3.1.5
 django-modeladmin-reorder==0.3.1
@@ -19,8 +19,8 @@ django-object-actions==4.1.0
 django-ratelimit==3.0.1
 django-recaptcha==3.0.0
 django-redis==5.2.0
-django-silk==3.0.4
-Django==2.2.28
+django-silk==5.0.3
+Django==3.2.17
 djangorestframework-jsonp==1.0.2
 djangorestframework-xml==2.0.0
 djangorestframework-yaml==2.0.0

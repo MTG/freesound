@@ -1,6 +1,6 @@
 {% extends "simple_page.html" %}
 {% load bw_templatetags %}
-{% load staticfiles %}
+{% load static %}
 {% load filter_img %}
 
 {% block title %}Forums - {{forum.name}} - {{ thread.title }} - {% if editing %}Edit post{% else %}Post reply{% endif %}{% endblock %}

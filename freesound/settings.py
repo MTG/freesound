@@ -31,7 +31,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
-    'admin_reorder.middleware.ModelAdminReorder',
+    'freesound.middleware.ModelAdminReorderWithNav',
     'ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',

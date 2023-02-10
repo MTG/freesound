@@ -21,6 +21,7 @@
 import json
 import logging
 
+from admin_reorder.middleware import ModelAdminReorder
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -147,3 +148,25 @@ class UpdateEmailHandler:
 
         response = self.get_response(request)
         return response
+
+
+class ModelAdminReorderWithNav(ModelAdminReorder):
+    # Customize ModelAdminReorder middleware so that it also reorders new django admin sidebar in 3.1+
+    # from https://github.com/mishbahr/django-modeladmin-reorder/issues/47
+
+    def process_template_response(self, request, response):
+
+        if (
+            getattr(response, 'context_data', None)
+            and not response.context_data.get('app_list')
+            and response.context_data.get('available_apps')
+        ):
+            available_apps = response.context_data.get('available_apps')
+            response.context_data['app_list'] = available_apps
+            response = super().process_template_response(request, response)
+            response.context_data['available_apps'] = response.context_data[
+                'app_list'
+            ]
+            return response
+
+        return super().process_template_response(request, response)

@@ -1,13 +1,13 @@
 {% load bw_templatetags %}
-{% if form.errors %}
-<div class="v-spacing-2"><ul class="errorlist"><li>You must choose one license...</li></ul></div>
+{% if form.license.errors %}
+    <div class="v-spacing-2">{{ form.license.errors }}</div>
 {% endif %}
 <div>
     <div class="v-spacing-3">
         <label class="bw-radio-label">
             <div class="row no-gutters">
                 <div class="col-2 col-lg-1 middle center">
-                    <input class="bw-radio" type="radio" id="id_{% if form.prefix %}{{form.prefix}}-{% endif %}license-license_0" value="{{ cc0_license_id }}" name="{% if form.prefix %}{{form.prefix}}-{% endif %}license" title="Creative Commons 0" {% if form.data.license.name == 'Creative Commons 0' %}checked{% endif %}>
+                    <input class="bw-radio" type="radio" id="id_{% if form.prefix %}{{form.prefix}}-{% endif %}license_0" value="{{ cc0_license_id }}" name="{% if form.prefix %}{{form.prefix}}-{% endif %}license" title="Creative Commons 0" {% if form.license.value|slugify == cc0_license_id|slugify %}checked{% endif %}>
                 </div>
                 <div class="col-10 col-lg-11">
                     <h4>{% bw_icon 'zero' %} Creative Commons Zero</h4>
@@ -21,7 +21,7 @@
         <label class="v-spacing-3 bw-radio-label">
             <div class="row no-gutters">
                 <div class="col-2 col-lg-1 middle center">
-                    <input class="bw-radio" type="radio" id="id_{% if form.prefix %}{{form.prefix}}-{% endif %}license-license_1" value="{{ cc_by_license_id }}" name="{% if form.prefix %}{{form.prefix}}-{% endif %}license" title="Creative Commons Attribution"  {% if form.data.license.name == 'Attribution' %}checked{% endif %}>
+                    <input class="bw-radio" type="radio" id="id_{% if form.prefix %}{{form.prefix}}-{% endif %}license_1" value="{{ cc_by_license_id }}" name="{% if form.prefix %}{{form.prefix}}-{% endif %}license" title="Creative Commons Attribution"  {% if form.license.value|slugify == cc_by_license_id|slugify %}checked{% endif %}>
                 </div>
                 <div class="col-10 col-lg-11">
                     <h4>{% bw_icon 'by' %} Creative Commons Attribution</h4>
@@ -35,7 +35,7 @@
         <label class="bw-radio-label">
             <div class="row no-gutters">
                 <div class="col-2 col-lg-1 middle center">
-                    <input class="bw-radio" type="radio" id="id_{% if form.prefix %}{{form.prefix}}-{% endif %}license-license_2" value="{{ cc_by_nc_license_id }}" name="{% if form.prefix %}{{form.prefix}}-{% endif %}license" title="Creative Commons Attribution Non-Commercial" {% if form.data.license.name == 'Attribution Noncommercial' %}checked{% endif %}>
+                    <input class="bw-radio" type="radio" id="id_{% if form.prefix %}{{form.prefix}}-{% endif %}license_2" value="{{ cc_by_nc_license_id }}" name="{% if form.prefix %}{{form.prefix}}-{% endif %}license" title="Creative Commons Attribution Non-Commercial" {% if form.license.value|slugify == cc_by_nc_license_id|slugify %}checked{% endif %}>
                 </div>
                 <div class="col-10 col-lg-11">
                     <h4>{% bw_icon 'nc' %}Creative Commons Attribution Non-Commercial</h4>

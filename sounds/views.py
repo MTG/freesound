@@ -758,7 +758,7 @@ def edit_and_describe_sounds_helper(request):
                 explicit_disable=element.is_explicit if not describing else False,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
                 user_packs=user_packs)
-            forms.append(form)  
+            forms.append(form)
             if form.is_valid():
                 if not describing:
                     update_edited_sound(element, form.cleaned_data)

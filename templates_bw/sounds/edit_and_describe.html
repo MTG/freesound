@@ -2,6 +2,7 @@
 {% load display_sound %}
 {% load static %}
 {% load util %}
+{% load display_license_form %}
 
 {% block title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}
 {% block page-title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
@@ -72,11 +73,7 @@
 
             <div class="v-spacing-4">
                 <h5 class="text-light-grey v-spacing-2">Sound license</h5>
-                <div class="bw-multiple-checkbox">
-                    {{ form.license.errors }}
-                    {{ form.license.label_tag }}
-                    {{ form.license }}
-                </div>
+                {% display_license_form form %}
             </div>
 
             <div class="v-spacing-4">

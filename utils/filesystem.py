@@ -92,4 +92,8 @@ def remove_directory(path):
 
 def remove_directory_if_empty(path):
     if not os.listdir(path):
-        os.rmdir(path)
+        try:
+            os.rmdir(path)
+        except OSError:
+            # Directory not really empty (could happen if a file was just created)
+            pass

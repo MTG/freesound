@@ -142,7 +142,7 @@
             <div class="w-75  v-spacing-2">Click on the sound names below to scroll to their {% if describing %}description{% else %}editing{% endif %} form:</div>
             {% for form in forms %}
             <div class="v-spacing-1">
-                <a class="bw-link--grey" href="#form-{{ forloop.counter0 }}">#{{ forloop.counter }} {{ form.name.value }}</a>
+                <a class="bw-link--grey scroll-spy" href="#form-{{ forloop.counter0 }}">#{{ forloop.counter }} {{ form.name.value }}</a>
             </div>
             {% endfor %}
             {% if num_forms > 1 %}

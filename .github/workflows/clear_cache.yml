@@ -1,7 +1,7 @@
 name: Clear gh caches
 
 on:
-  workflow_run:
+  workflow_dispatch:
 
 permissions:
   actions: write

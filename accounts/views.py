@@ -723,12 +723,12 @@ def describe(request):
 @login_required
 def describe_license(request):
     if request.method == 'POST':
-        form = NewLicenseForm(request.POST)
+        form = NewLicenseForm(request.POST, hide_old_versions=True)
         if form.is_valid():
             request.session['describe_license'] = form.cleaned_data['license']
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
-        form = NewLicenseForm()
+        form = NewLicenseForm(hide_old_versions=True)
     tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
     return render(request, 'accounts/describe_license.html', tvars)
 

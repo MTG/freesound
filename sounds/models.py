@@ -74,6 +74,7 @@ class License(OrderedModel):
     abbreviation = models.CharField(max_length=8, db_index=True)
     summary = models.TextField()
     short_summary = models.TextField(null=True)
+    summary_for_describe_form = models.TextField(null=True)
     deed_url = models.URLField()
     legal_code_url = models.URLField()
     is_public = models.BooleanField(default=True)
@@ -81,6 +82,20 @@ class License(OrderedModel):
     def get_short_summary(self):
         return self.short_summary if self.short_summary is not None else Truncator(self.summary)\
             .words(20, html=True, truncate='...')
+
+    @staticmethod
+    def bw_cc_icon_name_from_license_name(license_name):
+        if '0' in license_name.lower():
+            return 'zero'
+        elif 'noncommercial' in license_name.lower():
+            return 'nc'
+        elif 'attribution' in license_name.lower():
+            return 'by'
+        return 'cc'
+    
+    @property
+    def icon_name(self):
+        return self.bw_cc_icon_name_from_license_name(self.name)
 
     @property
     def name_with_version(self):
@@ -823,14 +838,7 @@ class Sound(SocialModel):
 
     @property
     def license_bw_icon_name(self):
-        license_name = self.license.name
-        if '0' in license_name.lower():
-            return 'zero'
-        elif 'noncommercial' in license_name.lower():
-            return 'nc'
-        elif 'attribution' in license_name.lower():
-            return 'by'
-        return 'cc'
+        return self.license.icon_name
 
     def get_license_history(self):
         """
@@ -1614,13 +1622,7 @@ class Pack(SocialModel):
     @property
     def license_bw_icon_name(self):
         license_summary_name, _ = self.license_summary_name_and_id
-        if '0' in license_summary_name.lower():
-            return 'zero'
-        elif 'noncommercial' in license_summary_name.lower():
-            return 'nc'
-        elif 'attribution' in license_summary_name.lower():
-            return 'by'
-        return 'cc'
+        return License.bw_cc_icon_name_from_license_name(license_summary_name)
 
     @property
     def license_summary_text(self):

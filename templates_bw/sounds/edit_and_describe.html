@@ -58,11 +58,13 @@
                     {{ form.tags.errors }}
                     {{ form.tags.label_tag }}
                     {{ form.tags }}
+                    <span class="helptext">{{ form.tags.help_text|safe }}</span>
                 </div>
                 <div>
                     {{ form.description.errors }}
                     {{ form.description.label_tag }}
                     {{ form.description }}
+                    <span class="helptext">{{ form.description.help_text|safe }}</span>
                 </div>
                 <div>
                     {{ form.is_explicit.errors }}

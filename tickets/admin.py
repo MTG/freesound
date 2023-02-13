@@ -19,16 +19,29 @@
 #
 
 from django.contrib import admin
-from .models import Queue, Ticket
-
-@admin.register(Queue)
-class QueueAdmin(admin.ModelAdmin): 
-    list_display = ('name',)
-
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from .models import Ticket
 
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
-    raw_id_fields = ('sender', 'assignee') 
-    list_display = ('id', 'status', 'assignee', 'sender')
+    raw_id_fields = ('sender', 'assignee', 'sound') 
+    list_display = ('id', 'status', 'assignee', 'sender', 'sound_link', 'created')
+    list_filter = ('status', )
+    search_fields = ('=sender__username', '=sound__id', )
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.display(
+        description='Sound',
+        ordering='sound_id',
+    )
+    def sound_link(self, obj):
+        if obj.sound_id is None:
+            return '-'
+        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
+            reverse('short-sound-link', args=[obj.sound_id]), obj.sound))
+
 

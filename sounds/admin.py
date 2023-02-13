@@ -33,8 +33,13 @@ from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDa
 
 @admin.register(License)
 class LicenseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
+    list_display = ('name', 'deed_url', 'legal_code_url', )
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Sound)
@@ -55,6 +60,9 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     readonly_fields = ('num_downloads', )
     actions = ('reprocess_sound', )
     change_actions = ('reprocess_sound', )
+
+    def has_add_permission(self, request):
+        return False
 
     @admin.display(
         description='Processing state'
@@ -99,6 +107,15 @@ class DeletedSoundAdmin(admin.ModelAdmin):
     list_display = ('sound_id', 'user_link', 'created')
     readonly_fields = ('data', 'sound_id', 'user')
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
     def get_queryset(self, request):
         # Override 'get_queryset' to optimize query by using select_related on appropriate fields
         qs = super().get_queryset(request)
@@ -117,12 +134,14 @@ class DeletedSoundAdmin(admin.ModelAdmin):
             f'{obj.user.username}'))
 
 
-
-
 @admin.register(Pack)
 class PackAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'name', 'created')
+    search_fields = ('=user__username', '=name', )
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Flag)
@@ -131,6 +150,12 @@ class FlagAdmin(admin.ModelAdmin):
     list_display = ('id', 'reporting_user_link', 'email_link', 'sound_link', 'sound_uploader_link', 'sound_is_explicit',
                     'reason_type', 'reason_summary', )
     list_filter = ('reason_type', 'sound__is_explicit')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
     def get_queryset(self, request):
         # overrride 'get_queryset' to optimize query by using select_related on 'sound' and 'reporting_user'
@@ -222,6 +247,15 @@ class BulkUploadProgressAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'created', 'progress_type', 'sounds_valid')
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(SoundAnalysis)
 class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
@@ -233,6 +267,12 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     actions = ('re_run_analysis',)
     change_actions = ('re_run_analysis',)
     readonly_fields = []
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
     def get_readonly_fields(self, request, obj=None):
         return list(self.readonly_fields) + \
@@ -271,7 +311,3 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     )
     def analysis_data_file(self, obj):
         return obj.get_analysis_data_from_file()
-
-
-
-

@@ -51,11 +51,23 @@ class ProfileAdmin(admin.ModelAdmin):
     list_filter = ('is_whitelisted', )
     search_fields = ('=user__username', )
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(UserFlag)
 class UserFlagAdmin(admin.ModelAdmin):
     readonly_fields = ('reporting_user', 'content_type', 'object_id', 'user')
     list_display = ('reporting_user', 'content_type', 'object_id', 'user')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(DeletedUser)
@@ -383,6 +395,12 @@ class OldUsernameAdmin(admin.ModelAdmin):
     search_fields = ('=username', )
     list_display = ('user', 'username')
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(UserDeletionRequest)
 class UserDeletionRequestAdmin(admin.ModelAdmin):
@@ -437,21 +455,11 @@ class UserDeletionRequestAdmin(admin.ModelAdmin):
             return '-'
 
 
-
 @admin.register(EmailBounce)
 class EmailBounceAdmin(admin.ModelAdmin):
     search_fields = ('=user__username',)
     list_display = ('user', 'type', 'timestamp')
     readonly_fields = ('user', 'type', 'timestamp')
-
-
-@admin.register(GdprAcceptance)
-class GdprAcceptanceAdmin(admin.ModelAdmin):
-    search_fields = ('=user__username',)
-    readonly_fields = ('user', )
-
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 admin.site.unregister(User)

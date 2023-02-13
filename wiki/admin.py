@@ -25,8 +25,14 @@ from wiki.models import Page, Content
 class PageAdmin(admin.ModelAdmin):
     list_display = ('name', )
 
+    def has_add_permission(self, request):
+        return False
+
 
 @admin.register(Content)
 class ContentAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', )
     list_display = ('page', 'author', 'title', 'created', )
+
+    def has_add_permission(self, request):
+        return False

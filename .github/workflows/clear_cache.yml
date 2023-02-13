@@ -1,7 +1,7 @@
-name: Clear cache
+name: Clear gh caches
 
 on:
-  workflow_dispatch:
+  workflow_run:
 
 permissions:
   actions: write
@@ -20,7 +20,8 @@ jobs:
           REPO=${{ github.repository }}
 
           echo "Fetching list of cache key"
-          allCacheKeys=$(gh actions-cache list -R $REPO | cut -f 1 )
+          echo "Note no more than 100 results will be returned, you might want to run this workflow multiple times"
+          allCacheKeys=$(gh actions-cache list -R $REPO -L 100 | cut -f 1 )
 
           ## Setting this to not fail the workflow while deleting cache keys. 
           set +e

@@ -29,4 +29,11 @@ class ApiV2ClientAdmin(admin.ModelAdmin):
     list_filter = ('status', 'throttling_level')
     list_display = ("name", "url", "user", "status", "throttling_level")
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 

@@ -29,8 +29,11 @@ class DonationsEmailSettingsAdmin(admin.ModelAdmin):
 @admin.register(Donation)
 class DonationAdmin(admin.ModelAdmin):
     raw_id_fields = ("user",)
+    list_display = ('id', 'email', 'user', 'amount', 'currency', 'created', )
+    search_fields = ('=user__username', '=email', )
 
     def has_change_permission(self, request, obj=None):
         return False
 
-
+    def has_delete_permission(self, request, obj=None):
+        return False

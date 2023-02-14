@@ -54,7 +54,6 @@ class GeotaggingForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-
         if not data.get('remove_geotag'):
             lat = data.get('lat', False)
             lon = data.get('lon', False)
@@ -90,6 +89,18 @@ class SoundDescriptionForm(forms.Form):
         self.fields['is_explicit'].disabled = explicit_disable
 
 
+def _remix_form_clean_sources_helper(cleaned_data):
+    sources = re.sub("[^0-9,]", "", cleaned_data['sources'])
+    sources = re.sub(",+", ",", sources)
+    sources = re.sub("^,+", "", sources)
+    sources = re.sub(",+$", "", sources)
+    if len(sources) > 0:
+        sources = {int(source) for source in sources.split(",")}
+    else:
+        sources = set()
+    return sources
+
+
 class RemixForm(forms.Form):
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
@@ -98,16 +109,7 @@ class RemixForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean_sources(self):
-        sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
-        sources = re.sub(",+", ",", sources)
-        sources = re.sub("^,+", "", sources)
-        sources = re.sub(",+$", "", sources)
-        if len(sources) > 0:
-            sources = {int(source) for source in sources.split(",")}
-        else:
-            sources = set()
-
-        return sources
+        return _remix_form_clean_sources_helper(self.cleaned_data)
 
     def save(self):
         new_sources = self.cleaned_data['sources']
@@ -128,6 +130,29 @@ class PackForm(forms.Form):
         self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
 
 
+def _pack_form_clean_pack_helper(cleaned_data):
+    if 'pack' not in cleaned_data or int(cleaned_data['pack']) == -1:
+        # No pack selected
+        return None
+    elif int(cleaned_data['pack']) == 0:
+        # New pack option selected
+        # We need to return something different than for "no pack option" so we can disambiguate in the clean method
+        return False
+    try:
+        pack = Pack.objects.get(id=cleaned_data['pack'])
+    except Pack.DoesNotExist:
+        raise forms.ValidationError('The selected pack object does not exist.')   
+    return pack
+
+
+def _pack_form_clean_helper(cleaned_data):
+    if 'pack' in cleaned_data and cleaned_data['pack'] is False:
+        # This corresponds to the option "new pack"
+        if not cleaned_data['new_pack'].strip():
+            raise forms.ValidationError({'new_pack': ["A name is required for creating a new pack."]})
+    return cleaned_data
+
+
 class BWPackForm(forms.Form):
 
     pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[])
@@ -142,26 +167,10 @@ class BWPackForm(forms.Form):
         self.fields['pack'].widget.attrs = {'data-grey-items': '-1,0'}
 
     def clean_pack(self):
-        if int(self.cleaned_data['pack']) == -1:
-            # No pack selected
-            return None
-        elif int(self.cleaned_data['pack']) == 0:
-            # New pack option selected
-            # We need to return something different than for "no pack option" so we can disambiguate in the clean method
-            return False
-        try:
-            pack = Pack.objects.get(id=self.cleaned_data['pack'])
-        except Pack.DoesNotExist:
-            raise forms.ValidationError('The selected pack object does not exist.')   
-        return pack
+        return _pack_form_clean_pack_helper(self.cleaned_data)
 
     def clean(self):
-        data = self.cleaned_data
-        if self.cleaned_data['pack'] is False:
-            # This corresponds to the option "new pack"
-            if not data['new_pack'].strip():
-                raise forms.ValidationError({'new_pack': ["A name is required for creating a new pack."]})
-        return data
+        return _pack_form_clean_helper(self.cleaned_data)
 
 
 class PackEditForm(ModelForm):
@@ -214,6 +223,12 @@ class PackEditForm(ModelForm):
         }
 
 
+def _license_form_clean_license_helper(cleaned_data):
+    if "3.0" in cleaned_data['license'].name_with_version:
+        raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
+    return cleaned_data['license']
+
+
 class NewLicenseForm(forms.Form):
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
@@ -229,9 +244,7 @@ class NewLicenseForm(forms.Form):
         self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
                                                                         % valid_licenses})
     def clean_license(self):
-        if "3.0" in self.cleaned_data['license'].name_with_version:
-            raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
-        return self.cleaned_data['license']
+        return _license_form_clean_license_helper(self.cleaned_data)
 
 
 class FlagForm(forms.Form):
@@ -298,6 +311,7 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
 
 
 class BWSoundEditAndDescribeForm(forms.Form):
+    license_field_size = 'small'  # Used to show the small license field UI with this form
     file_full_path = None
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
@@ -363,6 +377,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
+        data = _pack_form_clean_helper(self.cleaned_data)
         if not data.get('remove_geotag'):
             lat = data.get('lat', False)
             lon = data.get('lon', False)
@@ -381,39 +396,10 @@ class BWSoundEditAndDescribeForm(forms.Form):
         return data
 
     def clean_license(self):
-        if "3.0" in self.cleaned_data['license'].name_with_version:
-            raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
-        return self.cleaned_data['license']
+        return _license_form_clean_license_helper(self.cleaned_data)
 
     def clean_sources(self):
-        sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
-        sources = re.sub(",+", ",", sources)
-        sources = re.sub("^,+", "", sources)
-        sources = re.sub(",+$", "", sources)
-        if len(sources) > 0:
-            sources = {int(source) for source in sources.split(",")}
-        else:
-            sources = set()
-        return sources
+        return _remix_form_clean_sources_helper(self.cleaned_data)
 
     def clean_pack(self):
-        if int(self.cleaned_data['pack']) == -1:
-            # No pack selected
-            return None
-        elif int(self.cleaned_data['pack']) == 0:
-            # New pack option selected
-            # We need to return something different than for "no pack option" so we can disambiguate in the clean method
-            return False
-        try:
-            pack = Pack.objects.get(id=self.cleaned_data['pack'])
-        except Pack.DoesNotExist:
-            raise forms.ValidationError('The selected pack object does not exist.')   
-        return pack
-
-    def clean(self):
-        data = self.cleaned_data
-        if self.cleaned_data['pack'] is False:
-            # This corresponds to the option "new pack"
-            if not data['new_pack'].strip():
-                raise forms.ValidationError({'new_pack': ["A name is required for creating a new pack."]})
-        return data
+        return _pack_form_clean_pack_helper(self.cleaned_data)

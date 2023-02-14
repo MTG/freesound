@@ -10,18 +10,7 @@
     You can change individual sound's pack later on.</div>
 <div class="col-lg-8 offset-lg-2">
 <form action="." method="post" class="bw-form">{% csrf_token %}
-    <div>
-        <div class="pack-select v-spacing-1">
-            {{ form.pack.errors }}
-            {{ form.pack.label_tag }}
-            {{ form.pack }}
-        </div>
-        <div class="new-pack-name display-none">
-            {{ form.new_pack.errors }}
-            {{ form.new_pack.label_tag }}
-            {{ form.new_pack }}
-        </div>
-    </div>
+    {% include "molecules/pack_form_field.html" %}
     <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">Save and continue with description</button>
 </form>
 </div>

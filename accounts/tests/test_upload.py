@@ -204,7 +204,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '0-lon': ['3.515625'],
             '0-zoom': ['16'],
             '0-tags': ['testtag1 testtag2 testtag3'],
-            '0-pack': [''],
+            '0-pack': ['-1'],  # -1 = no pack
             '0-license': ['3'],
             '0-description': ['a test description for the sound file'],
             '0-new_pack': [''],
@@ -212,7 +212,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '1-license': ['3'],
             '1-description': ['another test description'],
             '1-lat': [''],
-            '1-pack': [''],
+            '1-pack': ['-1'],  # -1 = no pack
             '1-lon': [''],
             '1-name': [filenames[1]],
             '1-new_pack': ['Name of a new pack'],

@@ -4,19 +4,19 @@
 {% endif %}
 <div class="row">
     {% for license in form.license_qs %}
-    <div class="{% if size == 'small' %}col-md-4 v-spacing-2{% else %}col-md-12 v-spacing-5{% endif %}">
+    <div class="{% if form.license_field_size == 'small' %}col-md-4 v-spacing-2{% else %}col-md-12 v-spacing-5{% endif %}">
         <label class="bw-radio-label">
             <div class="row no-gutters h-spacing-left-1">
                 <div class="col-2 col-lg-1 middle center">
                     <input class="bw-radio" type="radio" id="id_{% if form.prefix %}{{form.prefix}}-{% endif %}license_{{ license.id }}" value="{{ license.id }}" name="{% if form.prefix %}{{form.prefix}}-{% endif %}license" title="{{ license.name_with_version }}" {% if form.license.value|slugify == license.id|slugify %}checked{% endif %}>
                 </div>
                 <div class="col-10 col-lg-10">
-                    {% if size == 'small' %}
+                    {% if form.license_field_size == 'small' %}
                     <div class="padding-left:4px;"><b>{% bw_icon license.icon_name %}{{ license.name_with_version }}</b></div>
                     {% else %}
                     <h4>{% bw_icon license.icon_name %}{{ license.name_with_version }}</h4>
                     {% endif %}
-                    <div class="text-grey {% if size != 'small' %}v-spacing-top-1{% endif %} ">{{ license.summary_for_describe_form }}
+                    <div class="text-grey {% if form.license_field_size != 'small' %}v-spacing-top-1{% endif %} ">{{ license.summary_for_describe_form }}
                         <a href = "{{ license.deed_url }}" target=_blank>Read more..</a>
                     </div>
                 </div> 

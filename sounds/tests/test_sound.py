@@ -736,6 +736,7 @@ class SoundTemplateCacheTests(TestCase):
             '0-name': new_name,
             '0-tags': 'tag1 tag2 tag3',
             '0-license': ['3'],
+            '0-pack': ['-1'],  # -1 = no pack
         })
         self.assertEqual(resp.status_code, 302)
 
@@ -1214,7 +1215,7 @@ class SoundEditTestCase(TestCase):
             '0-tags': ' '.join(new_tags),
             '0-license': '3',
             '0-sources': ','.join([f'{s.id}' for s in new_sound_sources]),
-            '0-pack': '',
+            '0-pack': '0',  # 0 = create new pack
             '0-new_pack': new_pack_name,
             '0-lat': f'{geotag_lat}',
             '0-lon': '3.515625',

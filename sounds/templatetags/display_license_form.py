@@ -21,26 +21,19 @@
 from django import template
 
 from sounds.models import License
-from utils.frontend_handling import using_beastwhoosh
 
 register = template.Library()
 
 @register.inclusion_tag('sounds/license_form.html', takes_context=True)
-def display_license_form(context, form, size=None):
-    
-    if not using_beastwhoosh(context['request']):
-        cc0_license_id = License.objects.get(name='Creative Commons 0').id
-        cc_by_license_id =  License.objects.get(name="Attribution", deed_url__contains="4.0").id
-        cc_by_nc_license_id = License.objects.get(name="Attribution Noncommercial", deed_url__contains="4.0").id    
-        return {
-            'form': form, 
-            'media_url': context['media_url'],
-            'cc0_license_id': cc0_license_id, 
-            'cc_by_license_id': cc_by_license_id, 
-            'cc_by_nc_license_id': cc_by_nc_license_id
-        }
-    else:
-        return {
-            'form': form, 
-            'size': size,  # Only used in BW to differentiate license form in multi-sound pick license page or individual sound forms
-        }
+def display_license_form(context, form):
+    # NOTE: this is only used in old UI and can be safely removed when fully migrating to BW
+    cc0_license_id = License.objects.get(name='Creative Commons 0').id
+    cc_by_license_id =  License.objects.get(name="Attribution", deed_url__contains="4.0").id
+    cc_by_nc_license_id = License.objects.get(name="Attribution Noncommercial", deed_url__contains="4.0").id    
+    return {
+        'form': form, 
+        'media_url': context['media_url'],
+        'cc0_license_id': cc0_license_id, 
+        'cc_by_license_id': cc_by_license_id, 
+        'cc_by_nc_license_id': cc_by_nc_license_id
+    }

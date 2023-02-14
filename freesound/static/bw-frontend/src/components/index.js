@@ -27,3 +27,4 @@ import './unsecureImageCheck';
 import './followUnfollowTags';
 import './textareaCharactersCounter';
 import './scrollSpy';
+import './packForm';

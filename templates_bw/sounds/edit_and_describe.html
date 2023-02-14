@@ -83,14 +83,16 @@
                     <div class="v-spacing-4">
                         <h5 class="text-light-grey v-spacing-2">Sound pack</h5>
                         <div>
-                            {{ form.pack.errors }}
-                            {{ form.pack.label_tag }}
-                            {{ form.pack }}
-                        </div>
-                        <div>
-                            {{ form.new_pack.errors }}
-                            {{ form.new_pack.label_tag }}
-                            {{ form.new_pack }}
+                            <div class="pack-select v-spacing-1">
+                                {{ form.pack.errors }}
+                                {{ form.pack.label_tag }}
+                                {{ form.pack }}
+                            </div>
+                            <div class="new-pack-name display-none">
+                                {{ form.new_pack.errors }}
+                                {{ form.new_pack.label_tag }}
+                                {{ form.new_pack }}
+                            </div>
                         </div>
                     </div>
 

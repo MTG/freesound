@@ -71,7 +71,7 @@ from follow import follow_utils
 from forum.models import Post
 from general import tasks
 from messages.models import Message
-from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
+from sounds.forms import NewLicenseForm, PackForm, BWPackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
 from utils.cache import invalidate_user_template_caches
@@ -735,9 +735,10 @@ def describe_license(request):
 
 @login_required
 def describe_pack(request):
+    FormToUse = PackForm if not using_beastwhoosh(request) else BWPackForm
     packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     if request.method == 'POST':
-        form = PackForm(packs, request.POST, prefix="pack")
+        form = FormToUse(packs, request.POST, prefix="pack")
         if form.is_valid():
             data = form.cleaned_data
             if data['new_pack']:
@@ -749,7 +750,7 @@ def describe_pack(request):
                 request.session['describe_pack'] = False
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
-        form = PackForm(packs, prefix="pack")
+        form = FormToUse(packs, prefix="pack")
     tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
     return render(request, 'accounts/describe_pack.html', tvars)
 

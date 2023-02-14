@@ -783,7 +783,7 @@ def edit_and_describe_sounds_helper(request):
                 if preselected_license:
                     initial['license'] = preselected_license
                 if preselected_pack:
-                    initial['pack'] = preselected_pack
+                    initial['pack'] = preselected_pack.id
             form = BWSoundEditAndDescribeForm(
                 prefix=prefix, 
                 explicit_disable=element.is_explicit if not describing else False,

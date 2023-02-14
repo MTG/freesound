@@ -119,13 +119,49 @@ class PackChoiceField(forms.ModelChoiceField):
 
 
 class PackForm(forms.Form):
-    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
+    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False, empty_label="--- No pack ---")
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
                                label="Or fill in the name of a new pack:", required=False, min_length=5)
 
     def __init__(self, pack_choices, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+
+
+class BWPackForm(forms.Form):
+
+    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[])
+    new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
+                               required=False, min_length=5, label='')
+
+    def __init__(self, pack_choices, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pack_choices = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        self.fields['pack'].choices = [('-1', '--- No pack ---'), ('0', 'Create a new pack...')] + [(pack.id, pack.name) for pack in pack_choices]
+        # The attrs below are used so that some elements of the dropdown are displayed in gray 
+        self.fields['pack'].widget.attrs = {'data-grey-items': '-1,0'}
+
+    def clean_pack(self):
+        if int(self.cleaned_data['pack']) == -1:
+            # No pack selected
+            return None
+        elif int(self.cleaned_data['pack']) == 0:
+            # New pack option selected
+            # We need to return something different than for "no pack option" so we can disambiguate in the clean method
+            return False
+        try:
+            pack = Pack.objects.get(id=self.cleaned_data['pack'])
+        except Pack.DoesNotExist:
+            raise forms.ValidationError('The selected pack object does not exist.')   
+        return pack
+
+    def clean(self):
+        data = self.cleaned_data
+        if self.cleaned_data['pack'] is False:
+            # This corresponds to the option "new pack"
+            if not data['new_pack'].strip():
+                raise forms.ValidationError({'new_pack': ["A name is required for creating a new pack."]})
+        return data
 
 
 class PackEditForm(ModelForm):
@@ -277,9 +313,9 @@ class BWSoundEditAndDescribeForm(forms.Form):
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
-    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
-    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
-                               label="Or fill in the name of a new pack:", required=False, min_length=5)
+    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[])
+    new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
+                               required=False, min_length=5, label='')
     remove_geotag = forms.BooleanField(required=False, label="Remove geotag")
     lat = forms.FloatField(min_value=-90, max_value=90, required=False,
                            error_messages={
@@ -320,7 +356,10 @@ class BWSoundEditAndDescribeForm(forms.Form):
         self.fields['license'].error_messages.update({'invalid_choice': f'Invalid license. Should be one of {valid_licenses}'})
 
         # Prepare pack field
-        self.fields['pack'].queryset = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        self.fields['pack'].choices = [('-1', '--- No pack ---'), ('0', 'Create a new pack...')] + [(pack.id, pack.name) for pack in user_packs]
+        # The attrs below are used so that some elements of the dropdown are displayed in gray 
+        self.fields['pack'].widget.attrs = {'data-grey-items': '-1,0'}
 
     def clean(self):
         data = self.cleaned_data
@@ -356,3 +395,25 @@ class BWSoundEditAndDescribeForm(forms.Form):
         else:
             sources = set()
         return sources
+
+    def clean_pack(self):
+        if int(self.cleaned_data['pack']) == -1:
+            # No pack selected
+            return None
+        elif int(self.cleaned_data['pack']) == 0:
+            # New pack option selected
+            # We need to return something different than for "no pack option" so we can disambiguate in the clean method
+            return False
+        try:
+            pack = Pack.objects.get(id=self.cleaned_data['pack'])
+        except Pack.DoesNotExist:
+            raise forms.ValidationError('The selected pack object does not exist.')   
+        return pack
+
+    def clean(self):
+        data = self.cleaned_data
+        if self.cleaned_data['pack'] is False:
+            # This corresponds to the option "new pack"
+            if not data['new_pack'].strip():
+                raise forms.ValidationError({'new_pack': ["A name is required for creating a new pack."]})
+        return data

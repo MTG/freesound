@@ -25,10 +25,12 @@ function createSelect() {
         optionValue = select[select_i].options[i].value;
         optionText = document.createTextNode(select[select_i].options[i].text);
         liElement.className = 'select-dropdown__list-item';
+        if (select[select_i].dataset.greyItems.split(',').indexOf(optionValue.toString()) > -1){
+          liElement.className += ' text-grey';
+        }
         liElement.setAttribute('data-value', optionValue);
         liElement.appendChild(optionText);
         ulElement.appendChild(liElement);
-
         liElement.addEventListener(
           'click',
           function() {
@@ -84,8 +86,8 @@ function createSelect() {
         //parentNode[0].classList.toggle("active");
       }
     } else if (element.tagName == 'LI') {
-      var selectId = element.parentNode.parentNode.getElementsByTagName('select')[0];
-      selectElement(selectId.id, element.getAttribute('data-value'));
+      var select = element.parentNode.parentNode.getElementsByTagName('select')[0];
+      selectElement(select.id, element.getAttribute('data-value'));
       elementParentSpan = element.parentNode.parentNode.getElementsByTagName('span');
       element.parentNode.classList.toggle('active');
       elementParentSpan[0].textContent = element.textContent;

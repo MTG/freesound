@@ -28,3 +28,4 @@ import './followUnfollowTags';
 import './textareaCharactersCounter';
 import './scrollSpy';
 import './packForm';
+import './tagsField';

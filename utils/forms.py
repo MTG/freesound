@@ -50,7 +50,7 @@ class TagField(forms.CharField):
         super().__init__(**kwargs)
         self.validators.append(
             validators.MinLengthValidator(3, 'You should add at least 3 different tags. Tags must be separated by '
-                                             'spaces'))
+                                             'space.'))
         self.validators.append(
             validators.MaxLengthValidator(30, 'There can be maximum 30 tags, please select the most relevant ones!'))
 
@@ -58,5 +58,5 @@ class TagField(forms.CharField):
         value = super().to_python(value)
         alphanum_only = re.compile(r"[^ a-zA-Z0-9-,]")
         if alphanum_only.search(value):
-            raise ValidationError("Tags must contain only letters a-z, digits 0-9 and hyphen")
+            raise ValidationError("Tags must contain only letters a-z, digits 0-9 and hyphen.")
         return clean_and_split_tags(value)

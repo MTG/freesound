@@ -318,8 +318,9 @@ class BWSoundEditAndDescribeForm(forms.Form):
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
         help_text="Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                  "For example: <i>field-recording</i> is a popular tag."
-                  "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
+                  "For example: <i>field-recording</i> is a popular tag. "
+                  "Only use letters a-z and numbers 0-9 with no accents or diacritics. "
+                  "Note that you can <b>copy</b> and <b>paste</b> between tag fields.")
     description = HtmlCleaningCharField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
         help_text="You can add <i>timestamped</i> comments by using a syntax like \"#1:07 nice bird chirp\" in the description. "

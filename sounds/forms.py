@@ -131,7 +131,7 @@ class PackForm(forms.Form):
 
 
 def _pack_form_clean_pack_helper(cleaned_data):
-    if 'pack' not in cleaned_data or int(cleaned_data['pack']) == -1:
+    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or int(cleaned_data['pack']) == -1:
         # No pack selected
         return None
     elif int(cleaned_data['pack']) == 0:
@@ -148,14 +148,14 @@ def _pack_form_clean_pack_helper(cleaned_data):
 def _pack_form_clean_helper(cleaned_data):
     if 'pack' in cleaned_data and cleaned_data['pack'] is False:
         # This corresponds to the option "new pack"
-        if not cleaned_data['new_pack'].strip():
+        if 'new_pack' not in cleaned_data or not cleaned_data['new_pack'].strip():
             raise forms.ValidationError({'new_pack': ["A name is required for creating a new pack."]})
     return cleaned_data
 
 
 class BWPackForm(forms.Form):
 
-    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[])
+    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
                                required=False, min_length=5, label='')
 
@@ -327,7 +327,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
-    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[])
+    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
                                required=False, min_length=5, label='')
     remove_geotag = forms.BooleanField(required=False, label="Remove geotag")

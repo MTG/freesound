@@ -736,7 +736,6 @@ class SoundTemplateCacheTests(TestCase):
             '0-name': new_name,
             '0-tags': 'tag1 tag2 tag3',
             '0-license': ['3'],
-            '0-pack': ['-1'],  # -1 = no pack
         })
         self.assertEqual(resp.status_code, 302)
 

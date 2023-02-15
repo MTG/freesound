@@ -10,7 +10,6 @@ const addClassToSipedElement = () => {
         const separatdParts = linkElement.href.split("#");
         const targetElementId = separatdParts[separatdParts.length - 1];
         const targetElement = document.getElementById(targetElementId);
-        console.log(targetElementId, isScrolledIntoView(targetElement));
         if (isScrolledIntoView(targetElement)){
             elementToActivate = linkElement;
         }

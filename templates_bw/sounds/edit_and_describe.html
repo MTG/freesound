@@ -57,10 +57,7 @@
                             {{ form.name }}
                         </div>
                         <div>
-                            {{ form.tags.errors }}
-                            {{ form.tags.label_tag }}
-                            {{ form.tags }}
-                            <span class="helptext">{{ form.tags.help_text|safe }}</span>
+                            {% include "molecules/tags_form_field.html" %}
                         </div>
                         <div>
                             {{ form.description.errors }}

@@ -1,0 +1,36 @@
+<style>
+    .tags-input-wrapper {
+        width: 100%;
+        border: 1px solid #efeff2;
+        background-color: #f4f4f6;
+        padding: 5px 10px;
+        padding-top: 12px;
+        border-radius: 5px;
+        margin-bottom: 30px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .tags-input-wrapper-focused {
+        background-color: white;
+        border: 1px solid black;
+    }
+
+    .tags-input {
+        flex: 2;
+    }
+    
+    .tags-input::placeholder {
+        color: #9696aa;
+    }
+</style>
+
+<div class="tags-field">
+    {{ form.tags.errors }}
+    {{ form.tags.label_tag }}
+    {{ form.tags }}
+    <div class="tags-input-wrapper" data-current-tags="winter forest nature">
+        <input type="text" class="tags-input v-spacing-1" placeholder="Type your tags here..."/>
+    </div>
+    <span class="helptext">{{ form.tags.help_text|safe }}</span>
+</div>

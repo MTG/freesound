@@ -50,7 +50,7 @@ class TagField(forms.CharField):
         super().__init__(**kwargs)
         self.validators.append(
             validators.MinLengthValidator(3, 'You should add at least 3 different tags. Tags must be separated by '
-                                             'space.'))
+                                             'spaces.'))
         self.validators.append(
             validators.MaxLengthValidator(30, 'There can be maximum 30 tags, please select the most relevant ones!'))
 

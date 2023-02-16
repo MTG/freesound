@@ -52,7 +52,7 @@ from donations.models import DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
-from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
+from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, LicenseForm, PackEditForm, \
     RemixForm, PackForm, BWSoundEditAndDescribeForm
 from sounds.models import PackDownload, PackDownloadSound
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
@@ -543,8 +543,8 @@ def sound_edit(request, username, sound_id):
         else:
             geotag_form = GeotaggingForm(prefix="geotag")
 
-    license_form = NewLicenseForm(request.POST, 
-                                  hide_old_versions="3.0" not in sound.license.deed_url)
+    license_form = LicenseForm(request.POST, 
+                                  hide_old_license_versions="3.0" not in sound.license.deed_url)
     if request.method == 'POST':
         if license_form.is_valid():
             new_license = license_form.cleaned_data["license"]
@@ -557,8 +557,8 @@ def sound_edit(request, username, sound_id):
             update_sound_tickets(sound, f'{request.user.username} updated the sound license.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm(initial={'license': sound.license}, 
-                                      hide_old_versions="3.0" not in sound.license.deed_url)
+        license_form = LicenseForm(initial={'license': sound.license}, 
+                                      hide_old_license_versions="3.0" not in sound.license.deed_url)
 
     tvars = {
         'sound': sound,

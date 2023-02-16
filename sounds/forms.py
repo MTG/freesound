@@ -131,11 +131,10 @@ class PackForm(forms.Form):
 
 
 def _pack_form_clean_pack_helper(cleaned_data):
-    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or int(cleaned_data['pack']) == -1:
+    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or str(cleaned_data['pack']) == BWPackForm.NO_PACK_CHOICE_VALUE:
         # No pack selected
         return None
-    elif int(cleaned_data['pack']) == 0:
-        # New pack option selected
+    elif str(cleaned_data['pack']) == BWPackForm.NEW_PACK_CHOICE_VALUE:
         # We need to return something different than for "no pack option" so we can disambiguate in the clean method
         return False
     try:
@@ -155,6 +154,9 @@ def _pack_form_clean_helper(cleaned_data):
 
 class BWPackForm(forms.Form):
 
+    NO_PACK_CHOICE_VALUE = '-1'
+    NEW_PACK_CHOICE_VALUE = '0'
+
     pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
                                required=False, min_length=5, label='')
@@ -162,9 +164,9 @@ class BWPackForm(forms.Form):
     def __init__(self, pack_choices, *args, **kwargs):
         super().__init__(*args, **kwargs)
         pack_choices = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [('-1', '--- No pack ---'), ('0', 'Create a new pack...')] + [(pack.id, pack.name) for pack in pack_choices]
+        self.fields['pack'].choices = [(NO_PACK_CHOICE_VALUE, '--- No pack ---'), (NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in pack_choices]
         # The attrs below are used so that some elements of the dropdown are displayed in gray 
-        self.fields['pack'].widget.attrs = {'data-grey-items': '-1,0'}
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}'}
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
@@ -229,14 +231,14 @@ def _license_form_clean_license_helper(cleaned_data):
     return cleaned_data['license']
 
 
-class NewLicenseForm(forms.Form):
+class LicenseForm(forms.Form):
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
 
     def __init__(self, *args, **kwargs):
-        hide_old_versions = kwargs.pop('hide_old_versions', False)
+        hide_old_license_versions = kwargs.pop('hide_old_license_versions', False)
         super().__init__(*args, **kwargs)
-        if hide_old_versions:
+        if hide_old_license_versions:
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
@@ -290,13 +292,17 @@ class DeleteSoundForm(forms.Form):
         super().__init__(*args, **kwargs)
 
 
-class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseForm):
+class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, LicenseForm):
     """
     This is the form that we use to validate sound metadata provided via CSV bulk description.
     This form inherits from other existing forms to consolidate all sound description related fields in one single form.
     None of the forms from which SoundCSVDescriptionForm inherits are ModelForms, therefore this form is only intented
     to validate metadata fields passed to it (i.e. does not have save() method).
     The field "pack_name" is added manually because there is no logic that we want to replicate from PackForm.
+    NOTE: I'm not sure why the mulitple inheritance works well in this class. I think some of the individual
+    classes init methods are not called, it could be that it works because this is used for the CSV description only
+    and the potential errors due to using multiple inheritance do not manifest. This should be investigated
+    more closely.
     """
     pack_name = forms.CharField(min_length=5, required=False)
 
@@ -372,9 +378,9 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
         # Prepare pack field
         user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [('-1', '--- No pack ---'), ('0', 'Create a new pack...')] + [(pack.id, pack.name) for pack in user_packs]
+        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'), (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in user_packs]
         # The attrs below are used so that some elements of the dropdown are displayed in gray 
-        self.fields['pack'].widget.attrs = {'data-grey-items': '-1,0'}
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}'}
 
     def clean(self):
         data = self.cleaned_data

@@ -1,5 +1,3 @@
-import debounce from 'lodash.debounce'
-
 /**
  * @param {{ label: string, value: string, id?: number }} suggestion
  * @param {HTMLDivElement} optionsWrapper
@@ -40,21 +38,24 @@ export const addTypeAheadFeatures = (
   const optionsWrapper = document.createElement('div')
   optionsWrapper.classList.add('input-typeahead-suggestions', 'hidden')
   wrapper.appendChild(optionsWrapper)
-  const debouncedOnChange = debounce(onChange, 100, {leading:true, trailing:true})
-  input.addEventListener('input', async evt => {
-    suggestions = (await debouncedOnChange(evt.target)) || []  // Pass input element to "get suggestions" function
-    clearSuggestions(optionsWrapper)
-    focusedOptionIndex = -1
-    suggestions.forEach(suggestion => {
-      showSuggestion(suggestion, optionsWrapper, input, onSuggestionSelectedCallback)
+  
+  const eventTypes = ['input', 'focus'];
+  eventTypes.forEach(eventType => {
+    input.addEventListener(eventType, async evt => {
+      suggestions = (await onChange(evt.target)) || []  // Pass input element to "get suggestions" function
+      clearSuggestions(optionsWrapper)
+      focusedOptionIndex = -1
+      suggestions.forEach(suggestion => {
+        showSuggestion(suggestion, optionsWrapper, input, onSuggestionSelectedCallback)
+      })
+      if (suggestions.length > 0){
+        optionsWrapper.classList.remove('hidden')
+      } else {
+        optionsWrapper.classList.add('hidden')
+      }
     })
-    if (suggestions.length > 0){
-      optionsWrapper.classList.remove('hidden')
-    } else {
-      optionsWrapper.classList.add('hidden')
-    }
-  })
-
+  });
+  
   const updateFocusedOption = () => {
     const allOptions = [
       ...optionsWrapper.getElementsByClassName(
@@ -72,11 +73,7 @@ export const addTypeAheadFeatures = (
       }
     }
   }
-  input.addEventListener('focus', () => {
-    if (optionsWrapper.innerHTML !== ''){
-      optionsWrapper.classList.remove('hidden')
-    }
-  })
+
   input.addEventListener('blur', () => {
     // Use a timeout here so if blur is triggered because we clicked one of the suggestions, it has time
     // to tigger the suggestion's click event before hidden is applied (that would prevent click event from

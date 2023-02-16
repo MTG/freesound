@@ -2,8 +2,10 @@
     {{ form.tags.errors }}
     {{ form.tags.label_tag }}
     {{ form.tags.as_hidden }}
-    <div class="tags-input-wrapper">
-        <input type="text" class="tags-input v-spacing-1 padding-1" placeholder="Type tags here..."/>
+    <div class="typeahead-wrapper">
+        <div class="tags-input-wrapper">
+            <input type="text" class="tags-input v-spacing-1 padding-1" placeholder="Type tags here..." data-typeahead="true" data-typeahead-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"/>
+        </div>
     </div>
     <span class="helptext">{{ form.tags.help_text|safe }}</span>
 </div>

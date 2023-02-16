@@ -150,7 +150,7 @@ def convert_sound_to_search_engine_document(sound):
             if analysis_data is not None:
                 # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                 # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                for key, value in analysis_data.items():
+                for key, value in json.loads(analysis_data).items():
                     if isinstance(value, list):
                         # Make sure that the list is formed by strings
                         value = [f'{item}' for item in value]

@@ -81,6 +81,7 @@ tagsInputFields.forEach(tagsFieldElement => {
     
     inputElement.addEventListener('paste', evt => {
         let pasteText = (evt.clipboardData || window.clipboardData).getData('text');
+        pasteText = pasteText.replace(/\n/g, ' '); // Replace newlines with spaces, can happen if coppying from other tag fields
         updateTags(inputWrapperElement, inputElement, tagsHiddenInput, inputElement.value + pasteText);
         evt.preventDefault();   
     });

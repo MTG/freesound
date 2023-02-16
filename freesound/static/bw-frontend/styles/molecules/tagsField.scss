@@ -1,0 +1,33 @@
+.tags-input-wrapper {
+    width: 100%;
+    border: 1px solid $border-input;
+    background-color: $background-input;
+    padding: 2px 10px;
+    padding-top: 10px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 64px;
+
+    i {
+        margin-left: 5px; 
+        font-size: 70%; 
+        color: $navy-grey; 
+        cursor: pointer;
+    }
+}
+
+.tags-input-wrapper-focused {
+    background-color: $white;
+    border: 1px solid $black;
+}
+
+.tags-input {
+    flex: 2;
+
+    &::placeholder {
+        color: $navy-light-grey;
+    }
+}

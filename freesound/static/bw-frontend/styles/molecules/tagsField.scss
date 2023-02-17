@@ -1,3 +1,13 @@
+.tags-field {
+    .typeahead-wrapper {
+        .input-typeahead-suggestions:before {
+            content: 'Recommended tags:';
+            color: $navy-light-grey;
+            padding: 10px 10px 10px 23px;
+        }
+    }
+}
+
 .tags-input-wrapper {
     width: 100%;
     border: 1px solid $border-input;

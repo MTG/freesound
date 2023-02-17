@@ -25,8 +25,10 @@ function createSelect() {
         optionValue = select[select_i].options[i].value;
         optionText = document.createTextNode(select[select_i].options[i].text);
         liElement.className = 'select-dropdown__list-item';
-        if (select[select_i].dataset.greyItems.split(',').indexOf(optionValue.toString()) > -1){
-          liElement.className += ' text-grey';
+        if (select[select_i].dataset.greyItems !== undefined){
+          if (select[select_i].dataset.greyItems.split(',').indexOf(optionValue.toString()) > -1){
+            liElement.className += ' text-grey';
+          }
         }
         liElement.setAttribute('data-value', optionValue);
         liElement.appendChild(optionText);

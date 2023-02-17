@@ -1,23 +1,37 @@
 import { createIconElement } from '../utils/icons'
+import { getJSONFromPostRequestWithFetch } from "../utils/postRequest";
 import { addTypeAheadFeatures } from '../components/typeahead'
 
 const tagsInputFields = document.getElementsByClassName('tags-field');
 
 const fetchTagSuggestions = async inputElement => {
     const inputWrapperElement = inputElement.parentNode;
-    let query = '';
+    let allTags = '';
     if (inputWrapperElement.dataset.currentTags !== ''){
-        query = inputWrapperElement.dataset.currentTags + ' ' + inputElement.value;
+        allTags = inputWrapperElement.dataset.currentTags + ' ' + inputElement.value;
     } else {
-        query = inputElement.value;
+        allTags = inputElement.value;
     }
-    let response = await fetch(`${inputElement.dataset.typeaheadSuggestionsUrl}?q=${query}`)
-    let data = await response.json()
-    const suggestions = data.suggestions
-    return suggestions
+    const data = await getJSONFromPostRequestWithFetch(inputElement.dataset.typeaheadSuggestionsUrl, {'input_tags': allTags});
+    const sugggestions = [];
+    data[0].forEach(tag => {
+        sugggestions.push({'label': '<div class="padding-1">' + tag + '</div>', 'value': tag})
+    });
+    return  sugggestions
+}
+
+const onSuggestionSelectedFromDropdown = (suggestion, suggestionsWrapper, inputElement) => {
+    if (inputElement.focusoutTimeout !== undefined){ clearTimeout(inputElement.focusoutTimeout); inputElement.focusoutTimeout = undefined; }
+    inputElement.value = '';
+    updateTags(inputElement, suggestion.value);
+    if (document.activeElement == inputElement){
+        inputElement.dispatchEvent(new Event('input', {bubbles:true}));  // Dispatch "input" event to re-trigger tag recommendatiomn
+    } else {
+        inputElement.focus(); // Re-focus the input element (this will also re-trigger tag recommendation)
+    }
 }
   
-const drawWrapperContents = (inputWrapperElement, inputElement, tagsHiddenInput) => {
+const drawWrapperContents = (inputWrapperElement, inputElement) => {
     const currentTags = inputWrapperElement.dataset.currentTags;
 
     const existingTagElements = inputWrapperElement.getElementsByTagName('span');
@@ -36,7 +50,7 @@ const drawWrapperContents = (inputWrapperElement, inputElement, tagsHiddenInput)
                 const currentTagsArray = inputWrapperElement.dataset.currentTags.split(' ');
                 currentTagsArray.splice(index, 1)
                 inputWrapperElement.dataset.currentTags = currentTagsArray.join(' ');
-                updateTags(inputWrapperElement, inputElement, tagsHiddenInput, '');
+                updateTags(inputElement, '');
                 if (userWasEditingTags){
                     inputElement.focus();
                 } else {
@@ -53,14 +67,16 @@ const allowedTagCharactersTestRegex = new RegExp('^[a-zA-Z0-9-]$');
 const notAlphanumericDashOrSpaceRegex = new RegExp('[^a-zA-Z0-9- ]', 'g');
 const multiDashesRegex = new RegExp('-+', 'g');
 
-const updateTags = (inputWrapperElement, inputElement, tagsHiddenInput, newTagsStr)  => {
+const updateTags = (inputElement, newTagsStr)  => {
+    const inputWrapperElement = inputElement.parentNode;
+    const tagsHiddenInput = inputElement.parentNode.parentNode.parentNode.querySelectorAll('input[name$="tags"]')[0]
     inputWrapperElement.dataset.currentTags += ' ' + newTagsStr;
     inputWrapperElement.dataset.currentTags = inputWrapperElement.dataset.currentTags.replace(notAlphanumericDashOrSpaceRegex, '');  // Remove non-alphanumeric, dash or space
     inputWrapperElement.dataset.currentTags = inputWrapperElement.dataset.currentTags.replace(multiDashesRegex, '-');  // Remove multi-dashes
     inputWrapperElement.dataset.currentTags = inputWrapperElement.dataset.currentTags.split(' ').filter(item => !(item === '-')).join(' ');  // Remove 1 character tags which are a dash
     inputWrapperElement.dataset.currentTags = inputWrapperElement.dataset.currentTags.replace(/\s+/g, ' ').trim();  // Remove extra white spaces
     tagsHiddenInput.value = inputWrapperElement.dataset.currentTags;
-    drawWrapperContents(inputWrapperElement, inputElement, tagsHiddenInput);
+    drawWrapperContents(inputWrapperElement, inputElement);
 }
 
 tagsInputFields.forEach(tagsFieldElement => {
@@ -71,27 +87,20 @@ tagsInputFields.forEach(tagsFieldElement => {
     if (inputWrapperElement.dataset.currentTags === undefined){
         inputWrapperElement.dataset.currentTags = '';
     }
-    updateTags(inputWrapperElement, inputElement, tagsHiddenInput, tagsHiddenInput.value);
-
-    addTypeAheadFeatures(inputElement, fetchTagSuggestions, 
-        (suggestion, suggestionsWrapper, inputElemnent) => {
-            if (inputElement.focusoutTimeout !== undefined){ clearTimeout(inputElement.focusoutTimeout); inputElement.focusoutTimeout = undefined; }
-            inputElement.value = '';
-            updateTags(inputWrapperElement, inputElement, tagsHiddenInput, suggestion.value);
-            inputElement.focus();
-        }
-    );
+    updateTags(inputElement, tagsHiddenInput.value);
+    
+    addTypeAheadFeatures(inputElement, fetchTagSuggestions, onSuggestionSelectedFromDropdown);
 
     inputElement.addEventListener('keypress', evt => {
         if (evt.key == "Enter"){
             evt.preventDefault();  // Do not submit form
             const newTagsStr = inputElement.value;
             inputElement.value = '';
-            updateTags(inputWrapperElement, inputElement, tagsHiddenInput, newTagsStr);
+            updateTags(inputElement, newTagsStr);
         } else if (evt.key == " "){
             const newTagsStr = inputElement.value;
             inputElement.value = '';
-            updateTags(inputWrapperElement, inputElement, tagsHiddenInput, newTagsStr);
+            updateTags(inputElement, newTagsStr);
         } else if (!allowedTagCharactersTestRegex.test(evt.key)){
             evt.preventDefault();  // Do not allow characters which are not accepted in tags input
         }
@@ -114,7 +123,7 @@ tagsInputFields.forEach(tagsFieldElement => {
     inputElement.addEventListener('paste', evt => {
         let pasteText = (evt.clipboardData || window.clipboardData).getData('text');
         pasteText = pasteText.replace(/\n/g, ' '); // Replace newlines with spaces, can happen if coppying from other tag fields
-        updateTags(inputWrapperElement, inputElement, tagsHiddenInput, inputElement.value + pasteText);
+        updateTags(inputElement, inputElement.value + pasteText);
         evt.preventDefault();   
     });
 
@@ -133,7 +142,7 @@ tagsInputFields.forEach(tagsFieldElement => {
             // of the focusout event to be applied
             const newTagsStr = inputElement.value;
             inputElement.value = '';
-            updateTags(inputWrapperElement, inputElement, tagsHiddenInput, newTagsStr);
+            updateTags(inputElement, newTagsStr);
         }, 200);
     });
 });

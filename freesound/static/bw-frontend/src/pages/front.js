@@ -11,6 +11,9 @@ const fetchSuggestions = async inputElement => {
   let response = await fetch(`${inputElement.dataset.typeaheadSuggestionsUrl}?q=${query}`)
   let data = await response.json()
   const suggestions = data.suggestions
+  suggestions.forEach(suggestion => {
+    suggestion.label = '<div class="padding-1">' + suggestion.value + '</div>';
+  });
   return suggestions
 }
 

@@ -4,7 +4,7 @@
     {{ form.tags.as_hidden }}
     <div class="typeahead-wrapper">
         <div class="tags-input-wrapper">
-            <input type="text" class="tags-input v-spacing-1 padding-1" placeholder="Type tags here..." data-typeahead="true" data-typeahead-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"/>
+            <input type="text" class="tags-input v-spacing-1 padding-1" placeholder="Type tags here..." data-typeahead="true" data-typeahead-suggestions-url="{% url 'recommend-tags' %}" autocomplete="off"/>
         </div>
     </div>
     <span class="helptext">{{ form.tags.help_text|safe }}</span>

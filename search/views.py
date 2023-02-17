@@ -483,5 +483,5 @@ def query_suggestions(request):
             'rain',
             'swoosh'
         ]):
-            suggestions.append({'id': count, 'label': f'<p>{suggestion}</p>', 'value': suggestion})
+            suggestions.append({'id': count, 'value': suggestion})
     return JsonResponse({'suggestions': suggestions})

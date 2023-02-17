@@ -16,8 +16,7 @@ const makePostRequest = (url, data, successCallback, errorCallback) => {
         errorCallback(req.responseText);
     };
     req.setRequestHeader('X-CSRFToken', csrftoken);
-    // Header below needed for Django .is_ajax() to return true
-    req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');  // Header needed for Django .is_ajax() to return true
     const formData = new FormData();
     for (const key in data) {
         formData.append(key, data[key]);
@@ -25,4 +24,22 @@ const makePostRequest = (url, data, successCallback, errorCallback) => {
     req.send(formData);
 }
 
-export {makePostRequest};
+const getJSONFromPostRequestWithFetch = async (url, data) => {
+    const formData = new FormData();
+    for (const key in data) {
+        formData.append(key, data[key]);
+    }
+    let response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest'  // Header needed for Django .is_ajax() to return true
+        },
+        body: formData,
+      })
+    const returnedData = await response.json()
+    return returnedData;
+}
+
+
+export {makePostRequest, getJSONFromPostRequestWithFetch};

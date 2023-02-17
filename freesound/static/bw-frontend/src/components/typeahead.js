@@ -25,16 +25,24 @@ export const clearSuggestions = optionsWrapper => {
  * @param {HTMLInputElement} input
  * @param {(value: string) => Promise<Array<{ label: string, id: number }>>} onChange:
  * @param onSuggestionSelectedCallback
+ * @param wrapperElement
  */
 export const addTypeAheadFeatures = (
   input,
   onChange = () => Promise.resolve([]),
-  onSuggestionSelectedCallback
+  onSuggestionSelectedCallback,
+  wrapperElement,  // Where to "attatch" the dropdown
 ) => {
   if (input.dataset.typeahead !== 'true') return
   let suggestions = []
   let focusedOptionIndex = -1
-  const wrapper = input.parentElement.parentElement
+  let wrapper;
+  if (wrapperElement === undefined){
+    // By default, wrapper is taken as 2 parent nodes above
+    wrapper = input.parentElement.parentElement
+  } else {
+    wrapper = wrapperElement
+  }
   const optionsWrapper = document.createElement('div')
   optionsWrapper.classList.add('input-typeahead-suggestions', 'hidden')
   wrapper.appendChild(optionsWrapper)

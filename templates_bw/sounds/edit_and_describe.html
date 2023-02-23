@@ -3,6 +3,7 @@
 {% load static %}
 {% load util %}
 {% load display_license_form %}
+{% load bw_templatetags %}
 
 {% block title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}
 {% block page-title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
@@ -21,13 +22,16 @@
 <div class="row no-gutters">
     <div class="col-lg-8 {% if num_forms == 1 %}offset-lg-2{% endif %}">
         <div>
+            {% if num_forms == 1 and forms_have_errors %}
+            <ul class="errorlist v-spacing-2"><li>There are errors with the description provided for the sound. Please check the error messages below.</li></ul>
+            {% endif %}
             {% for form in forms %}
             <div id="form-{{ forloop.counter0 }}">
                 <div class="middle">
                     {% if num_forms > 1 %}
-                    <h2 class="text-grey">#{{ forloop.counter }}) {{ form.name.value }}</h2>
+                    <h2 class="text-grey">#{{ forloop.counter }}) {{ form.name.value }}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-blue h-spacing-left-1' %}{% endif %}{% endif %}</h2>
                     {% else %}
-                    <h2 class="text-grey">{{ form.name.value }}</h2>
+                    <h2 class="text-grey">{{ form.name.value }}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-blue h-spacing-left-1' %}{% endif %}{% endif %}</h2>
                     {% endif %}
                 </div>
                 <div>
@@ -128,9 +132,12 @@
         <div class="bw-sticky-top">
             <h4 class="v-spacing-2 text-grey">Sounds to {% if describing %}describe{% else %}edit{% endif %}</h4>
             <div class="w-75  v-spacing-2">Click on the sound names below to scroll to their {% if describing %}description{% else %}editing{% endif %} form:</div>
+            {% if forms_have_errors %}
+            <ul class="errorlist v-spacing-2"><li>There are errors in the descriptions provided for some of the sounds. Please check the description of the sounds marked with a warning symbol.</li></ul>
+            {% endif %}
             {% for form in forms %}
             <div class="v-spacing-1">
-                <a class="bw-link--grey scroll-spy" href="#form-{{ forloop.counter0 }}">#{{ forloop.counter }} {{ form.name.value }}</a>
+                <a class="bw-link--grey scroll-spy" href="#form-{{ forloop.counter0 }}">#{{ forloop.counter }} {{ form.name.value }}</a>{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-blue h-spacing-left-1' %}{% endif %}{% endif %}
             </div>
             {% endfor %}
             {% if num_forms > 1 %}

@@ -17,7 +17,7 @@
                     <h4>{% bw_icon license.icon_name %}{{ license.name_with_version }}</h4>
                     {% endif %}
                     <div class="text-grey {% if form.license_field_size != 'small' %}v-spacing-top-1{% endif %} ">{{ license.summary_for_describe_form }}
-                        <a href = "{{ license.deed_url }}" target=_blank>Read more..</a>
+                        <a {% if form.license_field_size == 'small' %}class="bw-link--black"{% endif %} href = "{{ license.deed_url }}" target=_blank>Read more..</a>
                     </div>
                 </div> 
             </div>

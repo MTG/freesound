@@ -797,6 +797,7 @@ def edit_and_describe_sounds_helper(request):
         'describing': describing,
         'num_forms': len(forms),
         'forms': forms,
+        'forms_have_errors': not all_forms_validated_ok,
         'sound_objects': sounds_to_edit_or_describe if not describing else None,
         'files_data_for_players': files_data_for_players,
         'current_round': current_round,

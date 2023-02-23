@@ -4,6 +4,7 @@
 {% load util %}
 {% load display_license_form %}
 {% load bw_templatetags %}
+{% load maps_js_scripts %}
 
 {% block title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}
 {% block page-title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
@@ -88,25 +89,27 @@
 
                     <div class="v-spacing-4">
                         <h5 class="text-light-grey v-spacing-2">Geolocation</h5>
-                        <div>
-                            {{ form.remove_geotag.errors }}
-                            {{ form.remove_geotag.label_tag }}
-                            {{ form.remove_geotag }}
-                        </div>
-                        <div>
-                            {{ form.lat.errors }}
-                            {{ form.lat.label_tag }}
-                            {{ form.lat }}
-                        </div>
-                        <div>
-                            {{ form.lon.errors }}
-                            {{ form.lon.label_tag }}
-                            {{ form.lon }}
-                        </div>
-                        <div>
-                            {{ form.zoom.errors }}
-                            {{ form.zoom.label_tag }}
-                            {{ form.zoom }}
+                        <div class="geotag-field">
+                            <div>
+                                {{ form.remove_geotag.errors }}
+                                {{ form.remove_geotag.label_tag }}
+                                {{ form.remove_geotag }}
+                            </div>
+                            <div>
+                                {{ form.lat.errors }}
+                                {{ form.lat.label_tag }}
+                                {{ form.lat }}
+                            </div>
+                            <div>
+                                {{ form.lon.errors }}
+                                {{ form.lon.label_tag }}
+                                {{ form.lon }}
+                            </div>
+                            <div>
+                                {{ form.zoom.errors }}
+                                {{ form.zoom.label_tag }}
+                                {{ form.zoom }}
+                            </div>
                         </div>
                     </div>
 
@@ -150,5 +153,6 @@
 {% endblock %}
 
 {% block extrabody %}
+    {% bw_maps_js_scripts %}
     <script src="{% static 'bw-frontend/dist/editDescribeSounds.js' %}"></script>
 {% endblock %}

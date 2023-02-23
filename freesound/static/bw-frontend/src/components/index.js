@@ -26,5 +26,6 @@ import './unsecureImageCheck';
 import './followUnfollowTags';
 import './textareaCharactersCounter';
 import './scrollSpy';
-import './packForm';
-import './tagsField';
+import './packFormField';
+import './tagsFormField';
+import './geotagFormField';

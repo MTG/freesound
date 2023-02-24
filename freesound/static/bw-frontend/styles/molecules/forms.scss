@@ -17,7 +17,7 @@
 
     input,
     textarea {
-      &:not(.tags-input) {
+      &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
         margin-top: 12px;
         margin-bottom: 30px;
         width: 100%;

@@ -337,20 +337,23 @@ class BWSoundEditAndDescribeForm(forms.Form):
     pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
                                required=False, min_length=5, label='')
-    remove_geotag = forms.BooleanField(required=False, label="Remove geotag")
+    remove_geotag = forms.BooleanField(required=False, label="Remove geolocation data")
     lat = forms.FloatField(min_value=-90, max_value=90, required=False,
+                           widget=forms.NumberInput (attrs={'placeholder': '-90 to 90'}),
                            error_messages={
                                'min_value': 'Latitude must be between -90 and 90.',
                                'max_value': 'Latitude must be between -90 and 90.'
-                           })
+                           }, label="Latitude")
     lon = forms.FloatField(min_value=-180, max_value=180, required=False,
+                           widget=forms.NumberInput (attrs={'placeholder': '-180 to 180'}),
                            error_messages={
                                'min_value': 'Longitude must be between -180 and 180.',
                                'max_value': 'Longitude must be between -180 and 180.'
-                           })
-    zoom = forms.IntegerField(min_value=11,
+                           }, label="Longitude")
+    zoom = forms.IntegerField(min_value=11, max_value=19,
+                              widget=forms.NumberInput (attrs={'placeholder': '11 to 19'}),
                               error_messages={'min_value': "The zoom value sould be at least 11."},
-                              required=False)
+                              required=False, label="Zoom")
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):

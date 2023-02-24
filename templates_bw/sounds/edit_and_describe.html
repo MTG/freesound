@@ -19,7 +19,7 @@
     {% if num_forms > 1%}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
 </div>
 
-<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit bw-form">{% csrf_token %}
+<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit bw-form" onkeydown="return event.key != 'Enter';">{% csrf_token %}
 <div class="row no-gutters">
     <div class="col-lg-8 {% if num_forms == 1 %}offset-lg-2{% endif %}">
         <div>
@@ -70,7 +70,7 @@
                             {{ form.description }}
                             <span class="helptext">{{ form.description.help_text|safe }}</span>
                         </div>
-                        <div>
+                        <div class="v-spacing-top-3">
                             {{ form.is_explicit.errors }}
                             {{ form.is_explicit.label_tag }}
                             {{ form.is_explicit }}
@@ -89,32 +89,12 @@
 
                     <div class="v-spacing-4">
                         <h5 class="text-light-grey v-spacing-2">Geolocation</h5>
-                        <div class="geotag-field">
-                            <div>
-                                {{ form.remove_geotag.errors }}
-                                {{ form.remove_geotag.label_tag }}
-                                {{ form.remove_geotag }}
-                            </div>
-                            <div>
-                                {{ form.lat.errors }}
-                                {{ form.lat.label_tag }}
-                                {{ form.lat }}
-                            </div>
-                            <div>
-                                {{ form.lon.errors }}
-                                {{ form.lon.label_tag }}
-                                {{ form.lon }}
-                            </div>
-                            <div>
-                                {{ form.zoom.errors }}
-                                {{ form.zoom.label_tag }}
-                                {{ form.zoom }}
-                            </div>
-                        </div>
+                        {% include "molecules/geotag_form_field.html" %}
                     </div>
 
                     <div class="v-spacing-4">
                         <h5 class="text-light-grey v-spacing-2">Sound sources</h5>
+                        <button class="btn-inverse">{% bw_icon 'plus' %}Add sound sources</button>
                         <div>
                             {{ form.sources }}
                         </div>
@@ -134,7 +114,7 @@
     <div class="{% if num_forms > 1 %}col-lg-3 offset-lg-1 d-lg-block {% endif %}display-none">
         <div class="bw-sticky-top">
             <h4 class="v-spacing-2 text-grey">Sounds to {% if describing %}describe{% else %}edit{% endif %}</h4>
-            <div class="w-75  v-spacing-2">Click on the sound names below to scroll to their {% if describing %}description{% else %}editing{% endif %} form:</div>
+            <div class="w-75 text-grey v-spacing-2">Click on the sound names below to scroll to their {% if describing %}description{% else %}editing{% endif %} form:</div>
             {% if forms_have_errors %}
             <ul class="errorlist v-spacing-2"><li>There are errors in the descriptions provided for some of the sounds. Please check the description of the sounds marked with a warning symbol.</li></ul>
             {% endif %}

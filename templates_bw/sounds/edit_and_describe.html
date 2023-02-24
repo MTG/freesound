@@ -95,6 +95,7 @@
                     <div class="v-spacing-4">
                         <h5 class="text-light-grey v-spacing-2">Sound sources</h5>
                         <button class="btn-inverse">{% bw_icon 'plus' %}Add sound sources</button>
+                        {% include "molecules/sounds_selector.html" %}
                         <div>
                             {{ form.sources }}
                         </div>

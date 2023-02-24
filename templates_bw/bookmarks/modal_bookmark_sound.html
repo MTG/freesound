@@ -3,11 +3,20 @@
 {% load bw_templatetags %}
 
 {% block id %}bookmarkSoundModal{% endblock %}
-{% block extra-class %}modal-width-60{% endblock %}
+{% block extra-class %}{% if request.user.is_authenticated %}modal-width-60{% endif %}{% endblock %}
 {% block aria-labelledby %}bookmarkSoundModalLabel{% endblock %}
 
 {% block body %}
 <div class="col-12">
+    {% if not request.user.is_authenticated %}
+        <div class="text-center">
+            <h5 class="v-spacing-5">Can't bookmark sound</h5>
+        </div>
+        <div class="v-spacing-4 text-center">
+            <div class="v-spacing-4">Please, login to Freesound before bookmarking any sounds.</div>
+            <button class="btn-primary" data-dismiss="modal">Ok</button>
+        </div>
+    {% else %}
     <div class="text-center">
         <h5 class="v-spacing-5">Bookmark this sound</h5>
     </div>
@@ -31,5 +40,6 @@
             <button class="btn-primary v-spacing-top-2">Add bookmark</button>
         </form>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -3,7 +3,6 @@
 {% load bw_templatetags %}
 
 {% if sound %}
-    {% cache 43200 bw_display_sound sound.id is_authenticated is_explicit player_size %}
     {% if player_size == 'small' %}
         {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
         {% if is_explicit %}
@@ -14,6 +13,7 @@
         {% endif %}
         <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}">
             {% include "sounds/player.html" %}
+            {% cache 43200 bw_display_sound sound.id player_size %}
             <h5 class="ellipsis line-height-percentage-150 v-spacing-top-1">
                 <a class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename }}</a>
             </h5>
@@ -25,6 +25,7 @@
                 {{ sound.description|striptags|safe|truncatewords_html:10 }}
             </div>
         </div>
+        {% endcache %}
 
     {% elif player_size == 'middle' %}
         {% comment %}This is the default player shown in search results and in places where the sound takes
@@ -40,6 +41,7 @@
                 <div class="col-3">
                     {% include "sounds/player.html" %}
                 </div>
+                {% cache 43200 bw_display_sound sound.id player_size %}
                 <div class="padding-left-3 w-75">
                     <div class="between">
                         <div>
@@ -52,11 +54,9 @@
                                     {% bw_icon 'similar' %}
                                 </button>
                             {% endif %}
-                            {% if is_authenticated %}
-                                <button title="Save as favorite" class="btn-neutral h-spacing-left-2" data-toggle="bookmark-modal-{{ sound.id }}">
-                                    {% bw_icon 'bookmark' %}
-                                </button>
-                            {% endif %}
+                            <button title="Save as favorite" class="btn-neutral h-spacing-left-2" data-toggle="bookmark-modal-{{ sound.id }}">
+                                {% bw_icon 'bookmark' %}
+                            </button>
                         </div>
                     </div>
 
@@ -123,6 +123,7 @@
                 </div>
             </div>
         </div>
+        {% endcache %}
 
     {% elif player_size == 'big_no_info' %}
         {% comment %}This size includes a placeholder for the controls of the big player but shows no sound
@@ -143,6 +144,7 @@
         {% comment %}This size is used in geotags map infowindows. If uses a small player and also shows some metadatata{% endcomment %}
         <div class="v-spacing-1 overfow-scroll">
             {% include "sounds/player.html" %}
+            {% cache 43200 bw_display_sound sound.id player_size %}
             <h5 class="v-spacing-top-1">
                 <a href="#"></a>{% comment %}Placing an empty anchor here is a workaround to prevent mapbox infowindows to focus first anchor found{% endcomment %}
                 <a target="_blank" class="bw-link--black" href="{% url 'sound' sound_user sound.id %}">{{ sound.original_filename|truncate_string:20 }}</a>
@@ -155,7 +157,7 @@
                 {{ sound.description|striptags|safe|truncatewords_html:30 }}
             </div>
         </div>
+        {% endcache %}
 
     {% endif %}
-    {% endcache %}
 {% endif %}

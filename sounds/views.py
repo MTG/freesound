@@ -724,7 +724,6 @@ def edit_and_describe_sounds_helper(request):
     len_original_describe_edit_sounds = request.session.get('len_original_describe_edit_sounds', 0)
     num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
-    user_packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
     preselected_license = request.session.get('describe_license', False)  # Pre-selected from the license selection page when describing mulitple sounds
     preselected_pack = request.session.get('describe_pack', False)  # Pre-selected from the pack selection page when describing mulitple sounds
@@ -757,7 +756,7 @@ def edit_and_describe_sounds_helper(request):
                 file_full_path=element.full_path if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
-                user_packs=user_packs)
+                user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(is_deleted=True))
             forms.append(form)
             if form.is_valid():
                 if not describing:
@@ -773,7 +772,7 @@ def edit_and_describe_sounds_helper(request):
                             description=element.description,
                             name=element.original_filename,
                             license=element.license,
-                            pack=element.pack,
+                            pack=element.pack.id,
                             lat=element.geotag.lat if element.geotag else None,
                             lon=element.geotag.lon if element.geotag else None,
                             zoom=element.geotag.zoom if element.geotag else None,
@@ -789,7 +788,7 @@ def edit_and_describe_sounds_helper(request):
                 explicit_disable=element.is_explicit if not describing else False,
                 initial=initial,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
-                user_packs=user_packs)
+                user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(is_deleted=True))
 
             forms.append(form)  
 

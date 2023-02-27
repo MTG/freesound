@@ -29,4 +29,4 @@ import './scrollSpy';
 import './packFormField';
 import './tagsFormField';
 import './geotagFormField';
-import './selectableSound';
+import './soundsSelector';

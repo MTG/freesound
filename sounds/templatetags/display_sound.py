@@ -203,6 +203,7 @@ def display_sound_big_no_sound_object(context, file_data):
 
 @register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
 def display_sound_small_selectable(context, sound, selected=False):
+    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
     tvars = display_sound_small_no_bookmark(context, sound)
     tvars.update({
         'selected': selected,

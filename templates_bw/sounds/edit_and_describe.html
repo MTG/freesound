@@ -5,6 +5,7 @@
 {% load display_license_form %}
 {% load bw_templatetags %}
 {% load maps_js_scripts %}
+{% load sounds_selector %}
 
 {% block title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}
 {% block page-title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
@@ -95,7 +96,6 @@
                     <div class="v-spacing-4">
                         <h5 class="text-light-grey v-spacing-2">Sound sources</h5>
                         <button class="btn-inverse">{% bw_icon 'plus' %}Add sound sources</button>
-                        {% include "molecules/sounds_selector.html" %}
                         <div>
                             {{ form.sources }}
                         </div>

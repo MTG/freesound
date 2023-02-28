@@ -52,6 +52,7 @@ from donations.models import DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
+from search.views import search_view_helper
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, LicenseForm, PackEditForm, \
     RemixForm, PackForm, BWSoundEditAndDescribeForm
 from sounds.models import PackDownload, PackDownloadSound
@@ -748,6 +749,8 @@ def edit_and_describe_sounds_helper(request):
                 # or there might have been problems while processing-before-description the sound. In that case
                 # we won't show the player
                 files_data_for_players.append(None)
+        
+        
 
         if request.method == "POST":
             form = BWSoundEditAndDescribeForm(
@@ -766,17 +769,19 @@ def edit_and_describe_sounds_helper(request):
                     pass
             else:
                 all_forms_validated_ok = False
+                form.sound_sources_ids = list(form.cleaned_data['sources'])  # Add sources ids to list so sources sound selector can be initialized
         else:
+            sound_sources_ids = list(element.get_sound_sources_as_set())
             if not describing:
                 initial = dict(tags=element.get_sound_tags_string(),
                             description=element.description,
                             name=element.original_filename,
                             license=element.license,
-                            pack=element.pack.id,
+                            pack=element.pack.id if element.pack else None,
                             lat=element.geotag.lat if element.geotag else None,
                             lon=element.geotag.lon if element.geotag else None,
                             zoom=element.geotag.zoom if element.geotag else None,
-                            sources=','.join([str(item) for item in element.get_sound_sources_as_set()]))
+                            sources=','.join([str(item) for item in sound_sources_ids]))
             else:
                 initial = dict(name=element.name)
                 if preselected_license:
@@ -789,7 +794,7 @@ def edit_and_describe_sounds_helper(request):
                 initial=initial,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
                 user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(is_deleted=True))
-
+            form.sound_sources_ids = sound_sources_ids
             forms.append(form)  
 
     tvars = {
@@ -933,6 +938,15 @@ def sound_edit_sources(request, username, sound_id):
         'current_sources': current_sources
     }
     return render(request, 'sounds/sound_edit_sources.html', tvars)
+
+
+@login_required
+def sound_edit_sources_search(request):
+    tvars = {'sounds_to_select': [], 'q': request.GET.get('q', '')}
+    if request.GET.get('q', '') != '':
+        search_tvars = search_view_helper(request, tags_mode=False)
+        tvars['sounds_to_select'] = [doc['sound'] for doc in search_tvars['docs'][0:9]]
+    return render(request, 'sounds/modal_edit_sources.html', tvars)
 
 
 @redirect_if_old_username_or_404

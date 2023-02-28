@@ -44,8 +44,6 @@ def tags(request, multiple_tags=None):
         multiple_tags = []
     multiple_tags = sorted([x for x in multiple_tags if x])
 
-    
-
     if using_beastwhoosh(request):
         if multiple_tags:
             # If using BW and tags in URL, we re-write tags as query filter and redirect
@@ -53,7 +51,8 @@ def tags(request, multiple_tags=None):
             return HttpResponseRedirect(f"{reverse('tags')}?f={tags_as_filter}")
         else:
             # Share same view code as for the search view, but set "tags mode" on
-            return search_view_helper(request, tags_mode=True)
+            tvars = search_view_helper(request, tags_mode=True)
+            return render(request, 'search/search.html', tvars)
 
     # NOTE: all code below will not be used when NG UI is retired as tags page is calcualted using search views
 

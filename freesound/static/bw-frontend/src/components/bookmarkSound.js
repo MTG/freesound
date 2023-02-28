@@ -3,7 +3,7 @@ import {createSelect} from "./select";
 import {showToast} from "./toast";
 import {makePostRequest} from "../utils/postRequest";
 
-// TODO: the 2 URLs below should be loaded somehow from Django, maybe using some generic element data properties (?)
+// TODO: the URLs below should be loaded somehow from Django, maybe using some generic element data properties (?)
 const addBookmarkUrl = '/home/bookmarks/add/';
 const bookmarkFormModalUrl = '/home/bookmarks/get_form_for_sound/';
 

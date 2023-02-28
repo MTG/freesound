@@ -55,7 +55,7 @@ def search_view_helper(request, tags_mode=False):
     if extra_vars['parsing_error']:
         search_logger.error(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
         extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
-        return render(request, 'search/search.html', extra_vars)
+        return extra_vars
 
     # get the url query params for later sending it to the clustering engine
     url_query_params_string = request.META['QUERY_STRING']
@@ -188,16 +188,14 @@ def search_view_helper(request, tags_mode=False):
         search_logger.error(f'Could probably not connect to Solr - {e}')
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
-    if request.GET.get("ajax", "") != "1":
-        return render(request, 'search/search.html', tvars)
-    else:
-        return render(request, 'search/search_ajax.html', tvars)
-
+    return tvars
 
 
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
-    return search_view_helper(request, tags_mode=False)
+    tvars = search_view_helper(request, tags_mode=False)
+    template = 'search/search.html' if request.GET.get("ajax", "") != "1" else 'search/search_ajax.html'
+    return render(request, template, tvars)
 
 
 def _get_ids_in_cluster(request, requested_cluster_id):

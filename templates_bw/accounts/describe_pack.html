@@ -1,4 +1,5 @@
 {% extends "simple_page.html" %}
+{% load static %}
 
 {% block title %}Describe sounds - pick a pack{% endblock %}
 {% block page-title %}Describe sounds{% endblock %}
@@ -8,8 +9,14 @@
 <div class="v-spacing-5 v-spacing-top-2">If you would like to add all {{ num_files }} selected files to a pack you can do so now.
     Pick an existing pack or create a new one by specifying its name. If you don't want to add the sounds to any pack, you can leave this form empty. 
     You can change individual sound's pack later on.</div>
+<div class="col-lg-8 offset-lg-2">
 <form action="." method="post" class="bw-form">{% csrf_token %}
-    {{ form.as_p }}
+    {% include "molecules/pack_form_field.html" %}
     <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">Save and continue with description</button>
 </form>
+</div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/editDescribeSounds.js' %}"></script>
 {% endblock %}

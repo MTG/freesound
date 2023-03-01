@@ -69,9 +69,11 @@ class BwMessageReplyForm(MessageReplyForm):
                     <code>blockquote</code> and <code>code</code>."""
 
         self.fields['to'].widget.attrs['placeholder'] = "Username of the user to send the message to"
-        self.fields['to'].widget.attrs['data-autocomplete-suggestions-url'] = reverse('messages-username_lookup')
+        self.fields['to'].widget.attrs['data-typeahead'] = 'true' 
+        self.fields['to'].widget.attrs['data-typeahead-suggestions-url'] = reverse('messages-username_lookup')
         self.fields['to'].widget.attrs['data-check-username-url'] = reverse('check_username')
         self.fields['to'].widget.attrs['id'] = "username-to-field"
+        self.fields['to'].widget.attrs['autocomplete'] = "off"
         self.fields['subject'].widget.attrs['placeholder'] = "Subject of your message, don't make it too long :)"
         self.fields['body'].widget.attrs['placeholder'] = "Write your message here"
         self.fields['body'].widget.attrs['rows'] = False
@@ -91,9 +93,11 @@ class BwMessageReplyFormWithCaptcha(MessageReplyFormWithCaptcha):
                     <code>blockquote</code> and <code>code</code>."""
 
         self.fields['to'].widget.attrs['placeholder'] = "Username of the user to send the message to"
-        self.fields['to'].widget.attrs['data-autocomplete-suggestions-url'] = reverse('messages-username_lookup')
+        self.fields['to'].widget.attrs['data-typeahead'] = 'true' 
+        self.fields['to'].widget.attrs['data-typeahead-suggestions-url'] = reverse('messages-username_lookup')
         self.fields['to'].widget.attrs['data-check-username-url'] = reverse('check_username')
         self.fields['to'].widget.attrs['id'] = "username-to-field"
+        self.fields['to'].widget.attrs['autocomplete'] = "off"
         self.fields['subject'].widget.attrs['placeholder'] = "Subject of your message, don't make it too long :)"
         self.fields['body'].widget.attrs['placeholder'] = "Write your message here"
         self.fields['body'].widget.attrs['rows'] = False

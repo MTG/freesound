@@ -61,6 +61,7 @@ input {
   max-height: 300px;
   z-index: get-z-index(dropdown);
   overflow: auto;
+  margin-top: -20px; // To compensate for input's margin where it will typically be displayed
 }
 
 .input-typeahead-suggestion-wrapper {

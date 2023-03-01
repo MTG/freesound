@@ -1,5 +1,14 @@
 .bw-wiki {
 
+  a {
+    &:target {  // This is to make sure wii titles are aligned on top when scrolling
+      display: block;
+      position: relative;
+      top: 20px;
+      visibility: hidden;
+    }
+  }
+
   h1 {
     margin-bottom: 24px;
   }

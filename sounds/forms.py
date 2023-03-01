@@ -54,7 +54,6 @@ class GeotaggingForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-
         if not data.get('remove_geotag'):
             lat = data.get('lat', False)
             lon = data.get('lon', False)
@@ -90,6 +89,18 @@ class SoundDescriptionForm(forms.Form):
         self.fields['is_explicit'].disabled = explicit_disable
 
 
+def _remix_form_clean_sources_helper(cleaned_data):
+    sources = re.sub("[^0-9,]", "", cleaned_data['sources'])
+    sources = re.sub(",+", ",", sources)
+    sources = re.sub("^,+", "", sources)
+    sources = re.sub(",+$", "", sources)
+    if len(sources) > 0:
+        sources = {int(source) for source in sources.split(",")}
+    else:
+        sources = set()
+    return sources
+
+
 class RemixForm(forms.Form):
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
@@ -98,16 +109,7 @@ class RemixForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean_sources(self):
-        sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
-        sources = re.sub(",+", ",", sources)
-        sources = re.sub("^,+", "", sources)
-        sources = re.sub(",+$", "", sources)
-        if len(sources) > 0:
-            sources = {int(source) for source in sources.split(",")}
-        else:
-            sources = set()
-
-        return sources
+        return _remix_form_clean_sources_helper(self.cleaned_data)
 
     def save(self):
         new_sources = self.cleaned_data['sources']
@@ -119,13 +121,58 @@ class PackChoiceField(forms.ModelChoiceField):
 
 
 class PackForm(forms.Form):
-    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
+    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False, empty_label="--- No pack ---")
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
                                label="Or fill in the name of a new pack:", required=False, min_length=5)
 
     def __init__(self, pack_choices, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+
+
+def _pack_form_clean_pack_helper(cleaned_data):
+    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or str(cleaned_data['pack']) == BWPackForm.NO_PACK_CHOICE_VALUE:
+        # No pack selected
+        return None
+    elif str(cleaned_data['pack']) == BWPackForm.NEW_PACK_CHOICE_VALUE:
+        # We need to return something different than for "no pack option" so we can disambiguate in the clean method
+        return False
+    try:
+        pack = Pack.objects.get(id=cleaned_data['pack'])
+    except Pack.DoesNotExist:
+        raise forms.ValidationError('The selected pack object does not exist.')   
+    return pack
+
+
+def _pack_form_clean_helper(cleaned_data):
+    if 'pack' in cleaned_data and cleaned_data['pack'] is False:
+        # This corresponds to the option "new pack"
+        if 'new_pack' not in cleaned_data or not cleaned_data['new_pack'].strip():
+            raise forms.ValidationError({'new_pack': ["A name is required for creating a new pack."]})
+    return cleaned_data
+
+
+class BWPackForm(forms.Form):
+
+    NO_PACK_CHOICE_VALUE = '-1'
+    NEW_PACK_CHOICE_VALUE = '0'
+
+    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
+    new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
+                               required=False, min_length=5, label='')
+
+    def __init__(self, pack_choices, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pack_choices = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        self.fields['pack'].choices = [(self.NO_PACK_CHOICE_VALUE, '--- No pack ---'), (self.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in pack_choices]
+        # The attrs below are used so that some elements of the dropdown are displayed in gray 
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}'}
+
+    def clean_pack(self):
+        return _pack_form_clean_pack_helper(self.cleaned_data)
+
+    def clean(self):
+        return _pack_form_clean_helper(self.cleaned_data)
 
 
 class PackEditForm(ModelForm):
@@ -178,14 +225,20 @@ class PackEditForm(ModelForm):
         }
 
 
-class NewLicenseForm(forms.Form):
+def _license_form_clean_license_helper(cleaned_data):
+    if "3.0" in cleaned_data['license'].name_with_version:
+        raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
+    return cleaned_data['license']
+
+
+class LicenseForm(forms.Form):
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
 
     def __init__(self, *args, **kwargs):
-        hide_old_versions = kwargs.pop('hide_old_versions', False)
+        hide_old_license_versions = kwargs.pop('hide_old_license_versions', False)
         super().__init__(*args, **kwargs)
-        if hide_old_versions:
+        if hide_old_license_versions:
             new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
@@ -193,9 +246,7 @@ class NewLicenseForm(forms.Form):
         self.fields['license'].error_messages.update({'invalid_choice': 'Invalid license. Should be one of %s'
                                                                         % valid_licenses})
     def clean_license(self):
-        if "3.0" in self.cleaned_data['license'].name_with_version:
-            raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
-        return self.cleaned_data['license']
+        return _license_form_clean_license_helper(self.cleaned_data)
 
 
 class FlagForm(forms.Form):
@@ -241,13 +292,17 @@ class DeleteSoundForm(forms.Form):
         super().__init__(*args, **kwargs)
 
 
-class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseForm):
+class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, LicenseForm):
     """
     This is the form that we use to validate sound metadata provided via CSV bulk description.
     This form inherits from other existing forms to consolidate all sound description related fields in one single form.
     None of the forms from which SoundCSVDescriptionForm inherits are ModelForms, therefore this form is only intented
     to validate metadata fields passed to it (i.e. does not have save() method).
     The field "pack_name" is added manually because there is no logic that we want to replicate from PackForm.
+    NOTE: I'm not sure why the mulitple inheritance works well in this class. I think some of the individual
+    classes init methods are not called, it could be that it works because this is used for the CSV description only
+    and the potential errors due to using multiple inheritance do not manifest. This should be investigated
+    more closely.
     """
     pack_name = forms.CharField(min_length=5, required=False)
 
@@ -262,14 +317,16 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, NewLicenseFo
 
 
 class BWSoundEditAndDescribeForm(forms.Form):
+    license_field_size = 'small'  # Used to show the small license field UI with this form
     file_full_path = None
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
         help_text="Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                  "For example: <i>field-recording</i> is a popular tag."
-                  "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
+                  "For example: <i>field-recording</i> is a popular tag. "
+                  "Only use letters a-z and numbers 0-9 with no accents or diacritics. "
+                  "Note that you can <b>copy</b> and <b>paste</b> between tag fields.")
     description = HtmlCleaningCharField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
         help_text="You can add <i>timestamped</i> comments by using a syntax like \"#1:07 nice bird chirp\" in the description. "
@@ -277,23 +334,26 @@ class BWSoundEditAndDescribeForm(forms.Form):
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
     license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
-    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
-    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
-                               label="Or fill in the name of a new pack:", required=False, min_length=5)
-    remove_geotag = forms.BooleanField(required=False, label="Remove geotag")
+    pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
+    new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
+                               required=False, min_length=5, label='')
+    remove_geotag = forms.BooleanField(required=False, label="Remove geolocation data")
     lat = forms.FloatField(min_value=-90, max_value=90, required=False,
+                           widget=forms.NumberInput (attrs={'placeholder': '-90 to 90'}),
                            error_messages={
                                'min_value': 'Latitude must be between -90 and 90.',
                                'max_value': 'Latitude must be between -90 and 90.'
-                           })
+                           }, label="Latitude")
     lon = forms.FloatField(min_value=-180, max_value=180, required=False,
+                           widget=forms.NumberInput (attrs={'placeholder': '-180 to 180'}),
                            error_messages={
                                'min_value': 'Longitude must be between -180 and 180.',
                                'max_value': 'Longitude must be between -180 and 180.'
-                           })
-    zoom = forms.IntegerField(min_value=11,
+                           }, label="Longitude")
+    zoom = forms.IntegerField(min_value=11, max_value=19,
+                              widget=forms.NumberInput (attrs={'placeholder': '11 to 19'}),
                               error_messages={'min_value': "The zoom value sould be at least 11."},
-                              required=False)
+                              required=False, label="Zoom")
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -320,10 +380,14 @@ class BWSoundEditAndDescribeForm(forms.Form):
         self.fields['license'].error_messages.update({'invalid_choice': f'Invalid license. Should be one of {valid_licenses}'})
 
         # Prepare pack field
-        self.fields['pack'].queryset = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'), (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in user_packs]
+        # The attrs below are used so that some elements of the dropdown are displayed in gray 
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}'}
 
     def clean(self):
         data = self.cleaned_data
+        data = _pack_form_clean_helper(self.cleaned_data)
         if not data.get('remove_geotag'):
             lat = data.get('lat', False)
             lon = data.get('lon', False)
@@ -342,17 +406,10 @@ class BWSoundEditAndDescribeForm(forms.Form):
         return data
 
     def clean_license(self):
-        if "3.0" in self.cleaned_data['license'].name_with_version:
-            raise forms.ValidationError('We are in the process of removing 3.0 licences, please choose the 4.0 equivalent.')                         
-        return self.cleaned_data['license']
+        return _license_form_clean_license_helper(self.cleaned_data)
 
     def clean_sources(self):
-        sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
-        sources = re.sub(",+", ",", sources)
-        sources = re.sub("^,+", "", sources)
-        sources = re.sub(",+$", "", sources)
-        if len(sources) > 0:
-            sources = {int(source) for source in sources.split(",")}
-        else:
-            sources = set()
-        return sources
+        return _remix_form_clean_sources_helper(self.cleaned_data)
+
+    def clean_pack(self):
+        return _pack_form_clean_pack_helper(self.cleaned_data)

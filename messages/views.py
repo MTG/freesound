@@ -232,10 +232,12 @@ def get_previously_contacted_usernames(user):
 def username_lookup(request):
     results = []
     if request.method == "GET":
-        results = get_previously_contacted_usernames(request.user)
-    if using_beastwhoosh(request):
-        # NOTE: key needs to be "suggestions" below so the autocomplete JS part of the code works properly
-        return JsonResponse({'suggestions': results})
-    else:
-        json_resp = json.dumps(results)
-        return HttpResponse(json_resp, content_type='application/json')
+        if not using_beastwhoosh(request):
+            results = get_previously_contacted_usernames(request.user)
+        else:
+            query = request.GET.get("q")
+            if query.strip():
+                results = get_previously_contacted_usernames(request.user)
+                results = [result for result in results if query in result]
+    json_resp = json.dumps(results)
+    return HttpResponse(json_resp, content_type='application/json')

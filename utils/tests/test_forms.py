@@ -49,7 +49,7 @@ class TagFieldTest(TestCase):
         self.assertEqual({"one", "two", "three"}, f.clean("three, one,two"))
         
         # Funny characters not allowed
-        err_message = "Tags must contain only letters a-z, digits 0-9 and hyphen"
+        err_message = "Tags must contain only letters a-z, digits 0-9 and hyphen."
         with self.assertRaisesMessage(ValidationError, err_message):
             f.clean("One t%wo")
         
@@ -64,7 +64,7 @@ class TagFieldTest(TestCase):
         self.assertEqual({"tag", "tag-name", "another-name"}, f.clean("tag--name tag another----name"))
 
         # minimum number tags
-        err_message = "You should add at least 3 different tags. Tags must be separated by spaces"
+        err_message = "You should add at least 3 different tags. Tags must be separated by spaces."
         with self.assertRaisesMessage(ValidationError, err_message):
             f.clean("One two")
 

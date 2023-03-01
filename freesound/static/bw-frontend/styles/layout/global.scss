@@ -4,6 +4,8 @@
 
 html {
   background-color: $black;
+  scroll-behavior:smooth;
+  scroll-padding-top: 110px;
 }
 
 body {
@@ -43,13 +45,6 @@ hr {
   border: 0;
   height: 1px;
   background-color: $navy-light-grey;
-}
-
-:target {
-  display: block;
-  position: relative;
-  top: -90px;
-  visibility: hidden;
 }
 
 img {

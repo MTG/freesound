@@ -71,7 +71,7 @@ from follow import follow_utils
 from forum.models import Post
 from general import tasks
 from messages.models import Message
-from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
+from sounds.forms import LicenseForm, PackForm, BWPackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
 from utils.cache import invalidate_user_template_caches
@@ -254,7 +254,7 @@ def check_username(request):
 @transaction.atomic()
 def bulk_license_change(request):
     if request.method == 'POST':
-        form = NewLicenseForm(request.POST)
+        form = LicenseForm(request.POST)
         if form.is_valid():
             selected_license = form.cleaned_data['license']
             Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
@@ -264,7 +264,7 @@ def bulk_license_change(request):
             request.user.profile.save()
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
-        form = NewLicenseForm()
+        form = LicenseForm()
     tvars = {'form': form}
     return render(request, 'accounts/choose_new_license.html', tvars)
 
@@ -723,21 +723,22 @@ def describe(request):
 @login_required
 def describe_license(request):
     if request.method == 'POST':
-        form = NewLicenseForm(request.POST)
+        form = LicenseForm(request.POST, hide_old_license_versions=True)
         if form.is_valid():
             request.session['describe_license'] = form.cleaned_data['license']
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
-        form = NewLicenseForm()
+        form = LicenseForm(hide_old_license_versions=True)
     tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
     return render(request, 'accounts/describe_license.html', tvars)
 
 
 @login_required
 def describe_pack(request):
+    FormToUse = PackForm if not using_beastwhoosh(request) else BWPackForm
     packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     if request.method == 'POST':
-        form = PackForm(packs, request.POST, prefix="pack")
+        form = FormToUse(packs, request.POST, prefix="pack")
         if form.is_valid():
             data = form.cleaned_data
             if data['new_pack']:
@@ -749,7 +750,7 @@ def describe_pack(request):
                 request.session['describe_pack'] = False
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
-        form = PackForm(packs, prefix="pack")
+        form = FormToUse(packs, prefix="pack")
     tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
     return render(request, 'accounts/describe_pack.html', tvars)
 
@@ -795,7 +796,7 @@ def describe_sounds(request):
             forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                         request.POST,
                                         prefix=prefix)
-            forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix, hide_old_versions=True)
+            forms[i]['license'] = LicenseForm(request.POST, prefix=prefix, hide_old_license_versions=True)
         # Validate each form
         for i in range(len(sounds_to_describe)):
             for f in ['license', 'geotag', 'pack', 'description']:
@@ -898,10 +899,10 @@ def describe_sounds(request):
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                             prefix=prefix)
             if selected_license:
-                forms[i]['license'] = NewLicenseForm(initial={'license': selected_license},
-                                                     prefix=prefix, hide_old_versions=True)
+                forms[i]['license'] = LicenseForm(initial={'license': selected_license},
+                                                     prefix=prefix, hide_old_license_versions=True)
             else:
-                forms[i]['license'] = NewLicenseForm(prefix=prefix, hide_old_versions=True)
+                forms[i]['license'] = LicenseForm(prefix=prefix, hide_old_license_versions=True)
 
     return render(request, 'accounts/describe_sounds.html', tvars)
 

@@ -2,6 +2,8 @@
 {% load display_sound %}
 {% load static %}
 {% load util %}
+{% load bw_templatetags %}
+{% load maps_js_scripts %}
 
 {% block title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}
 {% block page-title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
@@ -16,125 +18,117 @@
     {% if num_forms > 1%}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
 </div>
 
-<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit bw-form">{% csrf_token %}
-<div>
-    {% for form in forms%}
-    <div>
-        <div class="middle">
-            {% if num_forms > 1 %}
-            <h2 class="collapsable-toggle" data-target="collapsable-{{ forloop.counter0 }}" data-show-text="#{{ forloop.counter }}) {{ form.name.value }}" data-hide-text="#{{ forloop.counter }}) {{ form.name.value }}" data-hide-on-load></h2>
-            {% else %}
-            <h2 class="text-grey">{{ form.name.value }}</h2>
+<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit bw-form" onkeydown="return event.key != 'Enter';">{% csrf_token %}
+<div class="row no-gutters">
+    <div class="col-lg-8 {% if num_forms == 1 %}offset-lg-2{% endif %}">
+        <div>
+            {% if num_forms == 1 and forms_have_errors %}
+            <ul class="errorlist v-spacing-2"><li>There are errors with the description provided for the sound. Please check the error messages below.</li></ul>
             {% endif %}
-        </div>
-        <div id="collapsable-{{ forloop.counter0 }}" class="collapsable-block">
-            <div class="v-spacing-5">
-            {% if not describing %}
-                {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
-            {% else %}
-                {% with files_data_for_players|element_at_index:forloop.counter0 as sound_data %}
-                    {% if sound_data %}
-                        {% display_sound_big_no_sound_object sound_data %}
+            {% for form in forms %}
+            <div id="form-{{ forloop.counter0 }}">
+                <div class="middle">
+                    {% if num_forms > 1 %}
+                    <h2 class="text-grey">#{{ forloop.counter }}) {{ form.name.value }}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}</h2>
                     {% else %}
-                        <div class="center text-grey bg-navy-light-grey padding-7">Sound player not currently available</div>
+                    <h2 class="text-grey">{{ form.name.value }}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}</h2>
                     {% endif %}
-                {% endwith %}
+                </div>
+                <div>
+                    <div class="v-spacing-5 v-spacing-top-2">
+                    {% if not describing %}
+                        {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
+                    {% else %}
+                        {% with files_data_for_players|element_at_index:forloop.counter0 as sound_data %}
+                            {% if sound_data %}
+                                {% display_sound_big_no_sound_object sound_data %}
+                            {% else %}
+                                <div class="center text-grey bg-navy-light-grey padding-7">Sound player not currently available</div>
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                    </div>
+                    
+                    <div>
+                        {{ form.non_field_errors }}
+                    </div>
+                    
+                    <div class="v-spacing-4">
+                        <h5 class="text-light-grey v-spacing-2">Basic information</h5>
+                        <div>
+                            {{ form.name.errors }}
+                            {{ form.name.label_tag }}
+                            {{ form.name }}
+                        </div>
+                        <div>
+                            {% include "molecules/tags_form_field.html" %}
+                        </div>
+                        <div>
+                            {{ form.description.errors }}
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                            <span class="helptext">{{ form.description.help_text|safe }}</span>
+                        </div>
+                        <div class="v-spacing-top-3">
+                            {{ form.is_explicit.errors }}
+                            {{ form.is_explicit.label_tag }}
+                            {{ form.is_explicit }}
+                        </div>
+                    </div>
+
+                    <div class="v-spacing-4">
+                        <h5 class="text-light-grey v-spacing-2">Sound license</h5>
+                        {% include "molecules/license_form_field.html" %}
+                    </div>
+
+                    <div class="v-spacing-4">
+                        <h5 class="text-light-grey v-spacing-2">Sound pack</h5>
+                        {% include "molecules/pack_form_field.html" %}
+                    </div>
+
+                    <div class="v-spacing-4">
+                        <h5 class="text-light-grey v-spacing-2">Geolocation</h5>
+                        {% include "molecules/geotag_form_field.html" %}
+                    </div>
+
+                    <div class="v-spacing-4">
+                        <h5 class="text-light-grey v-spacing-2">Sound sources</h5>
+                        {% include "molecules/sources_form_field.html" %}
+                    </div>
+                        
+                    </div>
+                    {% if not forloop.last %}
+                        <hr class="v-spacing-4 v-spacing-top-4" />
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% if num_forms == 1 %}
+        <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>    
+        {% endif %}
+    </div>
+    <div class="{% if num_forms > 1 %}col-lg-3 offset-lg-1 d-lg-block {% endif %}display-none">
+        <div class="bw-sticky-top">
+            <h4 class="v-spacing-2 text-grey">Sounds to {% if describing %}describe{% else %}edit{% endif %}</h4>
+            <div class="w-75 text-grey v-spacing-2">Click on the sound names below to scroll to their {% if describing %}description{% else %}editing{% endif %} form:</div>
+            {% if forms_have_errors %}
+            <ul class="errorlist v-spacing-2"><li>There are errors in the descriptions provided for some of the sounds. Please check the description of the sounds marked with a warning symbol.</li></ul>
             {% endif %}
+            {% for form in forms %}
+            <div class="v-spacing-1">
+                <a class="bw-link--grey scroll-spy" href="#form-{{ forloop.counter0 }}">#{{ forloop.counter }} {{ form.name.value }}</a>{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}
             </div>
-            
-            <div>
-                {{ form.non_field_errors }}
-            </div>
-            
-            <div class="v-spacing-4">
-                <h5 class="text-light-grey v-spacing-2">Basic information</h5>
-                <div>
-                    {{ form.name.errors }}
-                    {{ form.name.label_tag }}
-                    {{ form.name }}
-                </div>
-                <div>
-                    {{ form.tags.errors }}
-                    {{ form.tags.label_tag }}
-                    {{ form.tags }}
-                </div>
-                <div>
-                    {{ form.description.errors }}
-                    {{ form.description.label_tag }}
-                    {{ form.description }}
-                </div>
-                <div>
-                    {{ form.is_explicit.errors }}
-                    {{ form.is_explicit.label_tag }}
-                    {{ form.is_explicit }}
-                </div>
-            </div>
-
-            <div class="v-spacing-4">
-                <h5 class="text-light-grey v-spacing-2">Sound license</h5>
-                <div class="bw-multiple-checkbox">
-                    {{ form.license.errors }}
-                    {{ form.license.label_tag }}
-                    {{ form.license }}
-                </div>
-            </div>
-
-            <div class="v-spacing-4">
-                <h5 class="text-light-grey v-spacing-2">Sound pack</h5>
-                <div>
-                    {{ form.pack.errors }}
-                    {{ form.pack.label_tag }}
-                    {{ form.pack }}
-                </div>
-                <div>
-                    {{ form.new_pack.errors }}
-                    {{ form.new_pack.label_tag }}
-                    {{ form.new_pack }}
-                </div>
-            </div>
-
-            <div class="v-spacing-4">
-                <h5 class="text-light-grey v-spacing-2">Geolocation</h5>
-                <div>
-                    {{ form.remove_geotag.errors }}
-                    {{ form.remove_geotag.label_tag }}
-                    {{ form.remove_geotag }}
-                </div>
-                <div>
-                    {{ form.lat.errors }}
-                    {{ form.lat.label_tag }}
-                    {{ form.lat }}
-                </div>
-                <div>
-                    {{ form.lon.errors }}
-                    {{ form.lon.label_tag }}
-                    {{ form.lon }}
-                </div>
-                <div>
-                    {{ form.zoom.errors }}
-                    {{ form.zoom.label_tag }}
-                    {{ form.zoom }}
-                </div>
-            </div>
-
-            <div class="v-spacing-4">
-                <h5 class="text-light-grey v-spacing-2">Sound sources</h5>
-                <div>
-                    {{ form.sources }}
-                </div>
-            </div>
-                
-            </div>
-            {% if not forloop.last %}
-                <hr class="v-spacing-3 v-spacing-top-3" />
+            {% endfor %}
+            {% if num_forms > 1 %}
+            <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>    
             {% endif %}
         </div>
-    {% endfor %}
+    </div>
 </div>
-<button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>
 </form>
 {% endblock %}
 
 {% block extrabody %}
+    {% bw_maps_js_scripts %}
     <script src="{% static 'bw-frontend/dist/editDescribeSounds.js' %}"></script>
 {% endblock %}

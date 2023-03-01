@@ -5,17 +5,29 @@ import { addTypeAheadFeatures } from '../components/typeahead'
 import wait from '../utils/wait'
 
 // Main search input box behaviour
-const input = document.getElementById('search-sounds')
-const querySuggestionsURL = input.dataset.typeaheadSuggestionsUrl
 
-const fetchSuggestions = async query => {
-  let response = await fetch(`${querySuggestionsURL}?q=${input.value}`)
+const fetchSuggestions = async inputElement => {
+  const query = inputElement.value;
+  let response = await fetch(`${inputElement.dataset.typeaheadSuggestionsUrl}?q=${query}`)
   let data = await response.json()
   const suggestions = data.suggestions
+  suggestions.forEach(suggestion => {
+    suggestion.label = '<div class="padding-1">' + suggestion.value + '</div>';
+  });
   return suggestions
 }
 
-addTypeAheadFeatures(input, fetchSuggestions)
+addTypeAheadFeatures(document.getElementById('search-sounds'), fetchSuggestions, 
+  (suggestion, suggestionsWrapper, inputElemnent) => {
+    suggestionsWrapper.classList.add('hidden');
+    inputElemnent.value = suggestion.value;
+    inputElemnent.blur();
+    setTimeout(() => {
+      // Add timeout so that input has time to update before form is submitted
+      inputElemnent.form.submit();
+    }, 50);
+  }
+);
 
 // Navbar search input box behaviour  (shouold only appear when heroSearch is not visible)
 const heroSearch = document.getElementsByClassName('bw-front__hero-search')[0]

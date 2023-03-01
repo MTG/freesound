@@ -58,6 +58,7 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
 
 def get_recommended_tags_view(request):
     if request.is_ajax() and request.method == 'POST':
+        print(request.POST)
         input_tags = request.POST.get('input_tags', False)
         if input_tags:
             input_tags = list(clean_and_split_tags(input_tags))

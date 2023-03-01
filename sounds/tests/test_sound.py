@@ -40,8 +40,8 @@ import accounts
 from accounts.models import EmailPreferenceType
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
-from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis
-from sounds.models import Pack, Sound, License, DeletedSound
+from sounds.forms import BWPackForm
+from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
 from utils.encryption import sign_with_timestamp
 from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory, test_using_bw_ui
@@ -660,7 +660,7 @@ class SoundTemplateCacheTests(TestCase):
         if frontend == settings.FRONTEND_NIGHTINGALE:
             return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit)]
         else:
-            return [get_template_cache_key('bw_display_sound', self.sound.id, is_authenticated, is_explicit, player_size)]
+            return [get_template_cache_key('bw_display_sound', self.sound.id, player_size)]
 
     def _assertCacheAbsent(self, cache_keys):
         for cache_key in cache_keys:
@@ -1214,7 +1214,7 @@ class SoundEditTestCase(TestCase):
             '0-tags': ' '.join(new_tags),
             '0-license': '3',
             '0-sources': ','.join([f'{s.id}' for s in new_sound_sources]),
-            '0-pack': '',
+            '0-pack': BWPackForm.NEW_PACK_CHOICE_VALUE,
             '0-new_pack': new_pack_name,
             '0-lat': f'{geotag_lat}',
             '0-lon': '3.515625',

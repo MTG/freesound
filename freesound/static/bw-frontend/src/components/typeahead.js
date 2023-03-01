@@ -1,21 +1,16 @@
-import debounce from 'lodash.debounce'
-
 /**
  * @param {{ label: string, value: string, id?: number }} suggestion
  * @param {HTMLDivElement} optionsWrapper
  * @param {HTMLDivElement} input
  */
-export const showSuggestion = (suggestion, optionsWrapper, input) => {
+export const showSuggestion = (suggestion, optionsWrapper, input, onSuggestionSelectedCallback) => {
   const suggestionWrapper = document.createElement('div')
   suggestionWrapper.classList.add('input-typeahead-suggestion-wrapper')
   suggestionWrapper.innerHTML = suggestion.label
   suggestionWrapper.addEventListener('click', evt => {
-    optionsWrapper.classList.add('hidden')
-    input.value = suggestion.value
-    input.blur()
-    input.form.submit()  // Submit the form so query is executed
+    evt.preventDefault();
+    onSuggestionSelectedCallback(suggestion, optionsWrapper, input);
   })
-
   optionsWrapper.appendChild(suggestionWrapper)
 }
 
@@ -29,28 +24,46 @@ export const clearSuggestions = optionsWrapper => {
 /**
  * @param {HTMLInputElement} input
  * @param {(value: string) => Promise<Array<{ label: string, id: number }>>} onChange:
+ * @param onSuggestionSelectedCallback
+ * @param wrapperElement
  */
 export const addTypeAheadFeatures = (
   input,
-  onChange = () => Promise.resolve([])
+  onChange = () => Promise.resolve([]),
+  onSuggestionSelectedCallback,
+  wrapperElement,  // Where to "attatch" the dropdown
 ) => {
   if (input.dataset.typeahead !== 'true') return
   let suggestions = []
   let focusedOptionIndex = -1
-  const wrapper = input.parentElement.parentElement
+  let wrapper;
+  if (wrapperElement === undefined){
+    // By default, wrapper is taken as 2 parent nodes above
+    wrapper = input.parentElement.parentElement
+  } else {
+    wrapper = wrapperElement
+  }
   const optionsWrapper = document.createElement('div')
   optionsWrapper.classList.add('input-typeahead-suggestions', 'hidden')
   wrapper.appendChild(optionsWrapper)
-  const debouncedOnChange = debounce(onChange, 100)
-  input.addEventListener('input', async evt => {
-    suggestions = (await debouncedOnChange(evt.target.value)) || []
-    clearSuggestions(optionsWrapper)
-    focusedOptionIndex = -1
-    suggestions.forEach(suggestion =>
-      showSuggestion(suggestion, optionsWrapper, input)
-    )
-  })
-
+  
+  const eventTypes = ['input', 'focus'];
+  eventTypes.forEach(eventType => {
+    input.addEventListener(eventType, async evt => {
+      suggestions = (await onChange(evt.target)) || []  // Pass input element to "get suggestions" function
+      clearSuggestions(optionsWrapper)
+      focusedOptionIndex = -1
+      suggestions.forEach(suggestion => {
+        showSuggestion(suggestion, optionsWrapper, input, onSuggestionSelectedCallback)
+      })
+      if (suggestions.length > 0){
+        optionsWrapper.classList.remove('hidden')
+      } else {
+        optionsWrapper.classList.add('hidden')
+      }
+    })
+  });
+  
   const updateFocusedOption = () => {
     const allOptions = [
       ...optionsWrapper.getElementsByClassName(
@@ -69,9 +82,6 @@ export const addTypeAheadFeatures = (
     }
   }
 
-  input.addEventListener('focus', () => {
-    optionsWrapper.classList.remove('hidden')
-  })
   input.addEventListener('blur', () => {
     // Use a timeout here so if blur is triggered because we clicked one of the suggestions, it has time
     // to tigger the suggestion's click event before hidden is applied (that would prevent click event from
@@ -97,9 +107,7 @@ export const addTypeAheadFeatures = (
       updateFocusedOption()
     } else if (evt.keyCode === ENTER_KEY && focusedOptionIndex >= 0) {
       evt.preventDefault()
-      input.value = suggestions[focusedOptionIndex].value
-      input.blur()
-      input.form.submit()  // Submit the form so query is executed
+      onSuggestionSelectedCallback(suggestions[focusedOptionIndex], optionsWrapper, input);
     }
   })
 }

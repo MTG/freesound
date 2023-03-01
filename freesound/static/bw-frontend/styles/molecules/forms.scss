@@ -17,24 +17,26 @@
 
     input,
     textarea {
-      margin-top: 12px;
-      margin-bottom: 30px;
-      width: 100%;
-      border: 1px solid $border-input-profile;
-      background-color: $background-input-profile;
-      padding: 10px 20px;
-      border-radius: 5px;
+      &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+        margin-top: 12px;
+        margin-bottom: 30px;
+        width: 100%;
+        border: 1px solid $border-input;
+        background-color: $background-input;
+        padding: 10px 20px;
+        border-radius: 5px;
 
-      &::placeholder {
-        color: $navy-light-grey;
-      }
+        &::placeholder {
+          color: $navy-light-grey;
+        }
 
-      &:focus {
-        background-color: $white;
-        border: 1px solid $black;
+        &:focus {
+          background-color: $white;
+          border: 1px solid $black;
+        }
       }
     }
-
+    
     textarea {
       min-height: 150px;
       resize: none;

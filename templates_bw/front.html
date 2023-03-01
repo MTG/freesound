@@ -34,7 +34,7 @@
         <div class="row bw-front__content">
             <main class="col-lg-9">
                 
-                {% cache 300 bw_front_page_latest_additions is_authenticated %}
+                {% cache 300 bw_front_page_latest_additions %}
                     {% with latest_sounds|chunks:3 as latest_sounds_chunks %}
                     {% if latest_sounds_chunks|length %}
                     <section class="v-spacing-3">
@@ -68,7 +68,7 @@
                 {% endif %}
 
                 {% if trending_sound_ids %}
-                    {% cache 300 bw_front_page_trending_sounds is_authenticated %}
+                    {% cache 300 bw_front_page_trending_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds during the last week">Trending sounds</h3>
                         <div class="bw-carousel-container">
@@ -94,7 +94,7 @@
                 {% endif %}
 
                 {% if trending_new_sound_ids %}
-                    {% cache 300 bw_front_page_trending_new_sounds is_authenticated %}
+                    {% cache 300 bw_front_page_trending_new_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
                         <div class="bw-carousel-container">
@@ -120,7 +120,7 @@
                 {% endif %}
 
                 {% if trending_new_pack_ids %}
-                    {% cache 300 bw_front_page_trending_new_packs is_authenticated %}
+                    {% cache 300 bw_front_page_trending_new_packs %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded pack created in the last week">Trending new packs</h3>
                         <div class="bw-carousel-container">
@@ -170,7 +170,7 @@
                 {% endif %}
 
                 {% if random_sound %}
-                    {% cache 300 bw_front_page_random_sound is_authenticated %}
+                    {% cache 300 bw_front_page_random_sound %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
                         {% with random_sound as sound %}
@@ -187,12 +187,10 @@
                                                     {% bw_icon 'similar' %}
                                                 </button>
                                             {% endif %}
-                                            {% if is_authenticated %}
-                                                <span class="h-spacing-left-2"></span>
-                                                <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
-                                                    {% bw_icon 'bookmark' %}
-                                                </button>
-                                            {% endif %}
+                                            <span class="h-spacing-left-2"></span>
+                                            <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
+                                                {% bw_icon 'bookmark' %}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

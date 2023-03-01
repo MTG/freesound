@@ -115,8 +115,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
             'is_authenticated': request.user.is_authenticated,
-            'show_bookmark_button': show_bookmark if show_bookmark is not None else
-            (player_size == 'small' or player_size == 'small_no_info') and request.user.is_authenticated,  # Only BW
+            'show_bookmark_button': show_bookmark if show_bookmark is not None else (player_size == 'small' or player_size == 'small_no_info'),  # Only BW
             'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,
             'player_size': player_size,
             'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
@@ -201,3 +200,12 @@ def display_sound_big_no_sound_object(context, file_data):
         'show_bookmark_button': False,
         'player_size': player_size
     }
+
+@register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
+def display_sound_small_selectable(context, sound, selected=False):
+    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
+    tvars = display_sound_small_no_bookmark(context, sound)
+    tvars.update({
+        'selected': selected,
+    })
+    return tvars

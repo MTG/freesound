@@ -1,3 +1,7 @@
+{% if not request.user.is_authenticated %}
+    <p>Please, login to Freesound before bookmarking any sounds.</p>
+{% else %}
+
 <script type="text/javascript">
     
     function post_bookmark(id)
@@ -43,7 +47,6 @@
     }
 
 </script>
-
 	
 <div class = "bookmark_info_message" id="bookmark_info_message_{{sound_id}}" style="display:none"></div>
 <p>
@@ -69,3 +72,4 @@
 </p>
 
 
+{% endif %}

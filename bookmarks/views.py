@@ -133,8 +133,11 @@ def delete_bookmark(request, bookmark_id):
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page))
 
 
-@login_required
 def get_form_for_sound(request, sound_id):
+    if not request.user.is_authenticated:
+        template = 'bookmarks/modal_bookmark_sound.html' if using_beastwhoosh(request) else 'bookmarks/bookmark_form.html'
+        return render(request, template, {})
+
     sound = Sound.objects.get(id=sound_id)
     FormToUse = BwBookmarkForm if using_beastwhoosh(request) else BookmarkForm
     try:

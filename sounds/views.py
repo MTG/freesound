@@ -52,7 +52,8 @@ from donations.models import DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
-from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, NewLicenseForm, PackEditForm, \
+from search.views import search_view_helper
+from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, LicenseForm, PackEditForm, \
     RemixForm, PackForm, BWSoundEditAndDescribeForm
 from sounds.models import PackDownload, PackDownloadSound
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
@@ -543,8 +544,8 @@ def sound_edit(request, username, sound_id):
         else:
             geotag_form = GeotaggingForm(prefix="geotag")
 
-    license_form = NewLicenseForm(request.POST, 
-                                  hide_old_versions="3.0" not in sound.license.deed_url)
+    license_form = LicenseForm(request.POST, 
+                                  hide_old_license_versions="3.0" not in sound.license.deed_url)
     if request.method == 'POST':
         if license_form.is_valid():
             new_license = license_form.cleaned_data["license"]
@@ -557,8 +558,8 @@ def sound_edit(request, username, sound_id):
             update_sound_tickets(sound, f'{request.user.username} updated the sound license.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm(initial={'license': sound.license}, 
-                                      hide_old_versions="3.0" not in sound.license.deed_url)
+        license_form = LicenseForm(initial={'license': sound.license}, 
+                                      hide_old_license_versions="3.0" not in sound.license.deed_url)
 
     tvars = {
         'sound': sound,
@@ -724,7 +725,6 @@ def edit_and_describe_sounds_helper(request):
     len_original_describe_edit_sounds = request.session.get('len_original_describe_edit_sounds', 0)
     num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
-    user_packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
     preselected_license = request.session.get('describe_license', False)  # Pre-selected from the license selection page when describing mulitple sounds
     preselected_pack = request.session.get('describe_pack', False)  # Pre-selected from the pack selection page when describing mulitple sounds
@@ -749,7 +749,7 @@ def edit_and_describe_sounds_helper(request):
                 # or there might have been problems while processing-before-description the sound. In that case
                 # we won't show the player
                 files_data_for_players.append(None)
-
+        
         if request.method == "POST":
             form = BWSoundEditAndDescribeForm(
                 request.POST, 
@@ -757,8 +757,8 @@ def edit_and_describe_sounds_helper(request):
                 file_full_path=element.full_path if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
-                user_packs=user_packs)
-            forms.append(form)  
+                user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(is_deleted=True))
+            forms.append(form)
             if form.is_valid():
                 if not describing:
                     update_edited_sound(element, form.cleaned_data)
@@ -767,36 +767,40 @@ def edit_and_describe_sounds_helper(request):
                     pass
             else:
                 all_forms_validated_ok = False
-        else:
+                form.sound_sources_ids = list(form.cleaned_data['sources'])  # Add sources ids to list so sources sound selector can be initialized
+        else:            
             if not describing:
+                sound_sources_ids = list(element.get_sound_sources_as_set())
                 initial = dict(tags=element.get_sound_tags_string(),
                             description=element.description,
                             name=element.original_filename,
                             license=element.license,
-                            pack=element.pack,
+                            pack=element.pack.id if element.pack else None,
                             lat=element.geotag.lat if element.geotag else None,
                             lon=element.geotag.lon if element.geotag else None,
                             zoom=element.geotag.zoom if element.geotag else None,
-                            sources=','.join([str(item) for item in element.get_sound_sources_as_set()]))
+                            sources=','.join([str(item) for item in sound_sources_ids]))
             else:
+                sound_sources_ids = []
                 initial = dict(name=element.name)
                 if preselected_license:
                     initial['license'] = preselected_license
                 if preselected_pack:
-                    initial['pack'] = preselected_pack
+                    initial['pack'] = preselected_pack.id
             form = BWSoundEditAndDescribeForm(
                 prefix=prefix, 
                 explicit_disable=element.is_explicit if not describing else False,
                 initial=initial,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
-                user_packs=user_packs)
-
+                user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(is_deleted=True))
+            form.sound_sources_ids = sound_sources_ids
             forms.append(form)  
 
     tvars = {
         'describing': describing,
         'num_forms': len(forms),
         'forms': forms,
+        'forms_have_errors': not all_forms_validated_ok,
         'sound_objects': sounds_to_edit_or_describe if not describing else None,
         'files_data_for_players': files_data_for_players,
         'current_round': current_round,
@@ -909,6 +913,7 @@ def pack_delete(request, username, pack_id):
 
 
 @login_required
+@redirect_if_beastwhoosh('sound-edit', kwarg_keys=['username', 'sound_id'])
 @transaction.atomic()
 def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
@@ -933,6 +938,15 @@ def sound_edit_sources(request, username, sound_id):
         'current_sources': current_sources
     }
     return render(request, 'sounds/sound_edit_sources.html', tvars)
+
+
+@login_required
+def sound_edit_sources_modal(request):
+    tvars = {'sounds_to_select': [], 'q': request.GET.get('q', '')}
+    if request.GET.get('q', '') != '':
+        search_tvars = search_view_helper(request, tags_mode=False)
+        tvars['sounds_to_select'] = [doc['sound'] for doc in search_tvars['docs'][0:9]]
+    return render(request, 'sounds/modal_edit_sources.html', tvars)
 
 
 @redirect_if_old_username_or_404

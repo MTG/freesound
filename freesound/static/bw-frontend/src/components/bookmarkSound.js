@@ -3,11 +3,8 @@ import {createSelect} from "./select";
 import {showToast} from "./toast";
 import {makePostRequest} from "../utils/postRequest";
 
-// TODO: the 2 URLs below should be loaded somehow from Django, maybe using some generic element data properties (?)
-const addBookmarkUrl = '/home/bookmarks/add/';
-const bookmarkFormModalUrl = '/home/bookmarks/get_form_for_sound/';
+const saveBookmark = (addBookmarkUrl, data) => {
 
-const saveBookmark = (soundId, data) => {
     let formData = {};
     if (data === undefined){
         formData.name = "";
@@ -17,10 +14,15 @@ const saveBookmark = (soundId, data) => {
     } else {
         formData = data;
     }
-    makePostRequest(`${ addBookmarkUrl }${ soundId }/`, formData, (responseText) => {
+    makePostRequest(addBookmarkUrl, formData, (responseText) => {
         // Bookmark saved successfully. Close model and show feedback
         handleDismissModal(`bookmarkSoundModal`);
-        showToast(JSON.parse(responseText).message);
+        try {
+            showToast(JSON.parse(responseText).message);
+        } catch (error) {
+            // If not logged in, the url will respond with a redirect and JSON parsing will fail
+            showToast("You need to be logged in before bookmarking sounds.")
+        }
     }, () => {
         // Unexpected errors happened while processing request: close modal and show error in toast
         handleDismissModal(`bookmarkSoundModal`);
@@ -38,7 +40,7 @@ const showHideNewCategoryName = (categoryValue, elementToShowHide) => {
     }
 }
 
-const initBookmarkFormModal = (soundId) => {
+const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
     const modalElement = document.getElementById(`bookmarkSoundModal`);
@@ -68,24 +70,23 @@ const initBookmarkFormModal = (soundId) => {
         data.name = document.getElementById(`id_${  soundId.toString()  }-name`).value;
         data.category = document.getElementById(`id_${  soundId.toString()  }-category`).value;
         data.new_category_name = document.getElementById(`id_${  soundId.toString()  }-new_category_name`).value;
-        saveBookmark(soundId, data);
+        saveBookmark(addBookmarkUrl, data);
     });
 };
 
 const bindBookmarkSoundButtons = () => {
-    const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle^="bookmark-modal-"]')];
+    const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle="bookmark-modal"]')];
     bookmarkSoundButtons.forEach(element => {
         element.addEventListener('click', (evt) => {
             evt.preventDefault();
-            const dataToggleAttributeSplit = element.getAttribute('data-toggle').split('-');
-            const soundId = parseInt(dataToggleAttributeSplit[dataToggleAttributeSplit.length - 1], 10);
-            const modalUrl = `${bookmarkFormModalUrl}${soundId}/`;
+            const modalUrlSplitted = element.dataset.modalUrl.split('/');
+            const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
             if (!evt.altKey) {
-                handleGenericModal(modalUrl, () => {
-                    initBookmarkFormModal(soundId);
+                handleGenericModal(element.dataset.modalUrl, () => {
+                    initBookmarkFormModal(soundId, element.dataset.addBookmarkUrl);
                 }, () => {}, true, false);
             } else {
-                saveBookmark(soundId);
+                saveBookmark(element.dataset.addBookmarkUrl);
             }
         });
     });

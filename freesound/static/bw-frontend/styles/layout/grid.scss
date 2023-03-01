@@ -73,4 +73,9 @@
   display: inline-block;
 }
 
+.bw-sticky-top {
+  position:sticky;
+  top:120px;
+}
+
 @include make-grid-columns();

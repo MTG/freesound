@@ -1,4 +1,5 @@
 {% extends "simple_page.html" %}
+{% load static %}
 
 {% block title %}Describe sounds - pick a pack{% endblock %}
 {% block page-title %}Describe sounds{% endblock %}
@@ -14,4 +15,8 @@
     <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">Save and continue with description</button>
 </form>
 </div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/editDescribeSounds.js' %}"></script>
 {% endblock %}

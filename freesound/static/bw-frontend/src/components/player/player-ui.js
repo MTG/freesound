@@ -384,7 +384,9 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
     // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
     //favoriteButtonContainer.classList.add('opacity-050')
   }
-  favoriteButtonContainer.setAttribute('data-toggle', `bookmark-modal-${ parentNode.dataset.soundId }`);
+  favoriteButtonContainer.setAttribute('data-toggle', 'bookmark-modal');
+  favoriteButtonContainer.setAttribute('data-modal-url', parentNode.dataset.bookmarkModalUrl);
+  favoriteButtonContainer.setAttribute('data-add-bookmark-url', parentNode.dataset.addBookmarkUrl);
   favoriteButtonContainer.appendChild(
     getIsFavorite() ? unfavoriteButton : favoriteButton
   )

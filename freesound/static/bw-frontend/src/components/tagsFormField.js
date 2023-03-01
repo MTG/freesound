@@ -2,8 +2,6 @@ import { createIconElement } from '../utils/icons'
 import { getJSONFromPostRequestWithFetch } from "../utils/postRequest";
 import { addTypeAheadFeatures } from '../components/typeahead'
 
-const tagsInputFields = document.getElementsByClassName('tags-field');
-
 const fetchTagSuggestions = async inputElement => {
     const inputWrapperElement = inputElement.parentNode;
     let allTags = '';
@@ -79,70 +77,75 @@ const updateTags = (inputElement, newTagsStr)  => {
     drawWrapperContents(inputWrapperElement, inputElement);
 }
 
-tagsInputFields.forEach(tagsFieldElement => {
-    const tagsHiddenInput = tagsFieldElement.querySelectorAll('input[name$="tags"]')[0];
-    const inputElement = tagsFieldElement.getElementsByClassName('tags-input')[0];
-    inputElement.focusoutTimeout = undefined;
-    const inputWrapperElement = tagsFieldElement.getElementsByClassName('tags-input-wrapper')[0];
-    if (inputWrapperElement.dataset.currentTags === undefined){
-        inputWrapperElement.dataset.currentTags = '';
-    }
-    updateTags(inputElement, tagsHiddenInput.value);
-    
-    addTypeAheadFeatures(inputElement, fetchTagSuggestions, onSuggestionSelectedFromDropdown);
-
-    inputElement.addEventListener('keypress', evt => {
-        if (evt.key == "Enter"){
-            evt.preventDefault();  // Do not submit form
-            const newTagsStr = inputElement.value;
-            inputElement.value = '';
-            updateTags(inputElement, newTagsStr);
-        } else if (evt.key == " "){
-            const newTagsStr = inputElement.value;
-            inputElement.value = '';
-            updateTags(inputElement, newTagsStr);
-        } else if (!allowedTagCharactersTestRegex.test(evt.key)){
-            evt.preventDefault();  // Do not allow characters which are not accepted in tags input
+const prepareTagsFormFields = () => {
+    const tagsInputFields = document.getElementsByClassName('tags-field');
+    tagsInputFields.forEach(tagsFieldElement => {
+        const tagsHiddenInput = tagsFieldElement.querySelectorAll('input[name$="tags"]')[0];
+        const inputElement = tagsFieldElement.getElementsByClassName('tags-input')[0];
+        inputElement.focusoutTimeout = undefined;
+        const inputWrapperElement = tagsFieldElement.getElementsByClassName('tags-input-wrapper')[0];
+        if (inputWrapperElement.dataset.currentTags === undefined){
+            inputWrapperElement.dataset.currentTags = '';
         }
-    })
+        updateTags(inputElement, tagsHiddenInput.value);
+        
+        addTypeAheadFeatures(inputElement, fetchTagSuggestions, onSuggestionSelectedFromDropdown);
 
-    inputElement.addEventListener('keydown', evt => {
-        if ((evt.key == "Backspace") && (inputElement.value.length == 0)){
-            // Backspace can only be detected in "keydown" events
-            const currentTagsArray = inputWrapperElement.dataset.currentTags.split(' ');
-            const lastIntroducedTag = inputWrapperElement.dataset.currentTags.split(' ')[currentTagsArray.length - 1];
-            inputWrapperElement.dataset.currentTags = currentTagsArray.slice(0,currentTagsArray.length - 1).join(" ");
-            const lastIntroducedTagElement = inputElement.previousSibling;
-            if (lastIntroducedTagElement != undefined){
-                lastIntroducedTagElement.remove();
+        inputElement.addEventListener('keypress', evt => {
+            if (evt.key == "Enter"){
+                evt.preventDefault();  // Do not submit form
+                const newTagsStr = inputElement.value;
+                inputElement.value = '';
+                updateTags(inputElement, newTagsStr);
+            } else if (evt.key == " "){
+                const newTagsStr = inputElement.value;
+                inputElement.value = '';
+                updateTags(inputElement, newTagsStr);
+            } else if (!allowedTagCharactersTestRegex.test(evt.key)){
+                evt.preventDefault();  // Do not allow characters which are not accepted in tags input
             }
-            inputElement.value = lastIntroducedTag.substring(0, lastIntroducedTag.length - 1);
-        }
-    })
-    
-    inputElement.addEventListener('paste', evt => {
-        let pasteText = (evt.clipboardData || window.clipboardData).getData('text');
-        pasteText = pasteText.replace(/\n/g, ' '); // Replace newlines with spaces, can happen if coppying from other tag fields
-        updateTags(inputElement, inputElement.value + pasteText);
-        evt.preventDefault();   
-    });
+        })
 
-    inputElement.addEventListener('focusin', evt => {
-        inputWrapperElement.classList.add('tags-input-wrapper-focused');
-    });
+        inputElement.addEventListener('keydown', evt => {
+            if ((evt.key == "Backspace") && (inputElement.value.length == 0)){
+                // Backspace can only be detected in "keydown" events
+                const currentTagsArray = inputWrapperElement.dataset.currentTags.split(' ');
+                const lastIntroducedTag = inputWrapperElement.dataset.currentTags.split(' ')[currentTagsArray.length - 1];
+                inputWrapperElement.dataset.currentTags = currentTagsArray.slice(0,currentTagsArray.length - 1).join(" ");
+                const lastIntroducedTagElement = inputElement.previousSibling;
+                if (lastIntroducedTagElement != undefined){
+                    lastIntroducedTagElement.remove();
+                }
+                inputElement.value = lastIntroducedTag.substring(0, lastIntroducedTag.length - 1);
+            }
+        })
+        
+        inputElement.addEventListener('paste', evt => {
+            let pasteText = (evt.clipboardData || window.clipboardData).getData('text');
+            pasteText = pasteText.replace(/\n/g, ' '); // Replace newlines with spaces, can happen if coppying from other tag fields
+            updateTags(inputElement, inputElement.value + pasteText);
+            evt.preventDefault();   
+        });
 
-    inputElement.addEventListener('focusout', evt => {
-        inputWrapperElement.classList.remove('tags-input-wrapper-focused');
-        inputElement.focusoutTimeout = setTimeout(() => {
-            inputElement.focusoutTimeout = undefined;  // Set variable to undefined so I can check if timer is running from outside
-            // Use timeout here to prevent the event of removing one tag to be cancelled by calling
-            // updateTags because clicking on the element removes focus from tags-input.
-            // Also we want to delay that action because when a focusout event is triggered because of
-            // user clicking on a tag suggestion (or when removing an existing tag), we don't want the effects 
-            // of the focusout event to be applied
-            const newTagsStr = inputElement.value;
-            inputElement.value = '';
-            updateTags(inputElement, newTagsStr);
-        }, 200);
+        inputElement.addEventListener('focusin', evt => {
+            inputWrapperElement.classList.add('tags-input-wrapper-focused');
+        });
+
+        inputElement.addEventListener('focusout', evt => {
+            inputWrapperElement.classList.remove('tags-input-wrapper-focused');
+            inputElement.focusoutTimeout = setTimeout(() => {
+                inputElement.focusoutTimeout = undefined;  // Set variable to undefined so I can check if timer is running from outside
+                // Use timeout here to prevent the event of removing one tag to be cancelled by calling
+                // updateTags because clicking on the element removes focus from tags-input.
+                // Also we want to delay that action because when a focusout event is triggered because of
+                // user clicking on a tag suggestion (or when removing an existing tag), we don't want the effects 
+                // of the focusout event to be applied
+                const newTagsStr = inputElement.value;
+                inputElement.value = '';
+                updateTags(inputElement, newTagsStr);
+            }, 200);
+        });
     });
-});
+}
+
+export {prepareTagsFormFields}

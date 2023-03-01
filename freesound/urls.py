@@ -104,7 +104,7 @@ urlpatterns = [
     path('clustered_graph/', search.views.clustered_graph, name='clustered-graph-json'),
     path('query_suggestions/', search.views.query_suggestions, name='query-suggestions'),
 
-    path('sources/search/', sounds.views.sound_edit_sources_search, name="sound-edit-sources-search"),
+    path('sources/search/', sounds.views.sound_edit_sources_modal, name="sound-edit-sources-modal"),
 
     path('', include('ratings.urls')),
     path('comments/', include('comments.urls')),

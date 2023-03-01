@@ -54,7 +54,7 @@
                                     {% bw_icon 'similar' %}
                                 </button>
                             {% endif %}
-                            <button title="Save as favorite" class="btn-neutral h-spacing-left-2" data-toggle="bookmark-modal-{{ sound.id }}">
+                            <button title="Save as favorite" class="btn-neutral h-spacing-left-2" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
                                 {% bw_icon 'bookmark' %}
                             </button>
                         </div>

@@ -1,0 +1,11 @@
+{% load bw_templatetags %}
+{% load sounds_selector %}
+<div class="sources-field">
+    {{ form.sources }}
+    <div class="text-light-grey v-spacing-top-2">Use this section to indicate if there are <b>other sounds from Freesound</b> that were <b>used to create this sound</b>.</div>
+    {% sounds_selector form.sound_sources_ids %}
+    <div class="between v-spacing-top-2">
+        <button class="btn-inverse" data-toggle="add-sources-modal" data-modal-url="{% url 'sound-edit-sources-modal' %}" data-form-idx="{{ forloop.counter0 }}">{% bw_icon 'plus' %}Add {% if form.sources.value %}more{% else %}sound{% endif %} sources</button>
+        <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sources</button>
+    </div>
+</div>

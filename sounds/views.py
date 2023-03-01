@@ -750,8 +750,6 @@ def edit_and_describe_sounds_helper(request):
                 # we won't show the player
                 files_data_for_players.append(None)
         
-        
-
         if request.method == "POST":
             form = BWSoundEditAndDescribeForm(
                 request.POST, 
@@ -770,9 +768,9 @@ def edit_and_describe_sounds_helper(request):
             else:
                 all_forms_validated_ok = False
                 form.sound_sources_ids = list(form.cleaned_data['sources'])  # Add sources ids to list so sources sound selector can be initialized
-        else:
-            sound_sources_ids = list(element.get_sound_sources_as_set())
+        else:            
             if not describing:
+                sound_sources_ids = list(element.get_sound_sources_as_set())
                 initial = dict(tags=element.get_sound_tags_string(),
                             description=element.description,
                             name=element.original_filename,
@@ -783,6 +781,7 @@ def edit_and_describe_sounds_helper(request):
                             zoom=element.geotag.zoom if element.geotag else None,
                             sources=','.join([str(item) for item in sound_sources_ids]))
             else:
+                sound_sources_ids = []
                 initial = dict(name=element.name)
                 if preselected_license:
                     initial['license'] = preselected_license
@@ -914,6 +913,7 @@ def pack_delete(request, username, pack_id):
 
 
 @login_required
+@redirect_if_beastwhoosh('sound-edit', kwarg_keys=['username', 'sound_id'])
 @transaction.atomic()
 def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
@@ -941,7 +941,7 @@ def sound_edit_sources(request, username, sound_id):
 
 
 @login_required
-def sound_edit_sources_search(request):
+def sound_edit_sources_modal(request):
     tvars = {'sounds_to_select': [], 'q': request.GET.get('q', '')}
     if request.GET.get('q', '') != '':
         search_tvars = search_view_helper(request, tags_mode=False)

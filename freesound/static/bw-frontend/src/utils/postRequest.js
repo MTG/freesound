@@ -3,7 +3,6 @@ import { getCookie } from "./cookies";
 const makePostRequest = (url, data, successCallback, errorCallback) => {
     const csrftoken = getCookie('csrftoken');
     const req = new XMLHttpRequest();
-    // TODO: do not hardcode the URL below
     req.open('POST', url, true);
     req.onload = () => {
         if (req.status >= 200 && req.status < 300) {

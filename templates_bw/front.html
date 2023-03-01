@@ -188,7 +188,7 @@
                                                 </button>
                                             {% endif %}
                                             <span class="h-spacing-left-2"></span>
-                                            <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
+                                            <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
                                                 {% bw_icon 'bookmark' %}
                                             </button>
                                         </div>

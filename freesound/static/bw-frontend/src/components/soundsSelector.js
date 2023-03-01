@@ -22,13 +22,15 @@ const debouncedUpdateSoundsSelectorDataProperties = debounce(updateSoundsSelecto
 
 
 const initializeSoundSelector = (selectorElement, onChangeCallback) => {
-    if (selectorElement.dataset.initialized != true){
-        selectorElement.dataset.initialized = true;  // Avoid re-initializing multiple times the same object
-        const debouncedOnChangeCallback = debounce(onChangeCallback);
-        const selectableSoundElements = [...selectorElement.getElementsByClassName('bw-selectable-sound')];
-        selectableSoundElements.forEach( element => {
+    // Note this can be safely called multiple times on the same selectorElement as event listeners will only be added if not already added
+    // Also note that if called multiple times, only the first passed onChangeCallback will remain active 
+    const debouncedOnChangeCallback = debounce(onChangeCallback);
+    const selectableSoundElements = [...selectorElement.getElementsByClassName('bw-selectable-sound')];
+    selectableSoundElements.forEach( element => {
+        const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
+        if (checkbox.dataset.initialized === undefined){
             debouncedUpdateSoundsSelectorDataProperties(element.parentNode.parentNode);
-            const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
+            checkbox.dataset.initialized = true;  // Avoid re-initializing multiple times the same object
             checkbox.addEventListener('change', evt => {
                 if (checkbox.checked) {
                     element.classList.add('selected');    
@@ -37,7 +39,7 @@ const initializeSoundSelector = (selectorElement, onChangeCallback) => {
                 }
                 debouncedUpdateSoundsSelectorDataProperties(element.parentNode.parentNode, debouncedOnChangeCallback);
             });
-        });
-    }
+        }
+    });
 }
-export {initializeSoundSelector};
+export {initializeSoundSelector, updateSoundsSelectorDataProperties};

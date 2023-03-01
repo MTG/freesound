@@ -84,8 +84,8 @@ const showGeotagFieldAndRemoveShowButton = (geotagFieldElement, buttonElement) =
     buttonElement.classList.add('display-none');
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    // This need to run in DOMContentLoaded event to make sure mapbxgl scripts have been loaded
+const prepareGeotagFormFields = () => {
+    // Note that this need to run after mapbox scripts have been load (for example, after the DOMContentLoaded is fired)
     const showGeolocationButtons = document.getElementsByClassName("show-geolocation-button");
     showGeolocationButtons.forEach(buttonElement => {
         const geotagFieldElement = buttonElement.parentNode;
@@ -98,4 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
     });
-});
+}
+
+export {prepareGeotagFormFields}

@@ -33,7 +33,7 @@ def sounds_selector(context, sounds, selected_sound_ids=[]):
     if sounds:
         if not isinstance(sounds[0], Sound):
             # sounds are passed as a list of sound ids, retrieve the Sound objects from DB
-            sounds = Sound.objects.bulk_query_id(sounds)  # Does this return results sorted in the same way?
+            sounds = Sound.objects.ordered_ids(sounds)
         for sound in sounds:
             sound.selected = sound.id in selected_sound_ids
     return {

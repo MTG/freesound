@@ -105,7 +105,7 @@ urlpatterns = [
     path('query_suggestions/', search.views.query_suggestions, name='query-suggestions'),
 
     path('sources/search/', sounds.views.sound_edit_sources_modal, name="sound-edit-sources-modal"),
-
+    
     path('', include('ratings.urls')),
     path('comments/', include('comments.urls')),
     path('help/', include('wiki.urls')),

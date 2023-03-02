@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'bw-icons';
-  src:  url('fonts/bw-icons.eot?gzke2h');
-  src:  url('fonts/bw-icons.eot?gzke2h#iefix') format('embedded-opentype'),
-    url('fonts/bw-icons.ttf?gzke2h') format('truetype'),
-    url('fonts/bw-icons.woff?gzke2h') format('woff'),
-    url('fonts/bw-icons.svg?gzke2h#bw-icons') format('svg');
+  src:  url('fonts/bw-icons.eot?maw0d9');
+  src:  url('fonts/bw-icons.eot?maw0d9#iefix') format('embedded-opentype'),
+    url('fonts/bw-icons.ttf?maw0d9') format('truetype'),
+    url('fonts/bw-icons.woff?maw0d9') format('woff'),
+    url('fonts/bw-icons.svg?maw0d9#bw-icons') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -327,4 +327,13 @@
 }
 .bw-icon-notification:before {
   content: "\ea08";
+}
+.bw-icon-file-text:before {
+  content: "\e951";
+}
+.bw-icon-cogs:before {
+  content: "\e995";
+}
+.bw-icon-clipboard:before {
+  content: "\e9b8";
 }

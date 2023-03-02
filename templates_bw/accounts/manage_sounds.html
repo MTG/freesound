@@ -1,24 +1,23 @@
 {% extends "simple_page.html" %}
 {% load static %}
 {% load sounds_selector %}
+{% load bw_templatetags %}
 
 {% block title %}Manage sounds{% endblock %}
 {% block page-title %}Manage sounds{% endblock %}
 
 {% block page-content %}
 
-
-
 <div class="divider-light v-spacing-top-4 v-spacing-4"></div>
     <ul class="navbar-messages center">
         <li class="nav-item">
-            <a class="nav-link {% if tab == "published" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'published' %}">Published</a>
+            <a class="nav-link {% if tab == "published" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'published' %}">Published{% if sounds_published_count %} ({{ sounds_published_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "pending_moderation" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_moderation' %}">Moderation</a>
+            <a class="nav-link {% if tab == "pending_moderation" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_moderation' %}">Moderation{% if sounds_moderation_count %} ({{ sounds_moderation_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "processing_stage" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing_stage' %}">Processing</a>
+            <a class="nav-link {% if tab == "processing_stage" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing_stage' %}">Processing{% if sounds_processing_count %} ({{ sounds_processing_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description</a>
@@ -26,33 +25,34 @@
     </ul>
 <div class="divider-light v-spacing-top-4 v-spacing-4"></div>
 
-
 <div class="row no-gutters">
     <div class="col-lg-8">
         {%if tab != 'pending_description' %}
             <div class="v-spacing-4">
                 <form method="post" action=".">{% csrf_token %}
-                <div class="row">
-                    <div class="col-md-6">
+                <div class="row middle">
+                    <div class="col-md-5">
                         <div class="input-wrapper w-100" style="padding:11px;">
                             <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Filter sounds" autocomplete="off" {% if filter_query %}value="{{ filter_query }}"{% endif %}>
                         </div>
                     </div>
-                    <div class="col-md-6 text-right">
-                        <div class="v-spacing-top-1">
-                            <span class="text-light-grey"><b>Sort by:</b></span>
-                            <select id="sort-by" name="s">
-                                {% for option in sort_options %}
-                                    <option value="{{ option.0 }}" {% if option.0 == sort_by %}selected{% endif %}>{{ option.1 }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    <div class="col-md-2 font-weight-bold text-center d-none d-md-inline">
+                        {{ paginator.count }} sound{{ paginator.count|pluralize }}
+                    </div>
+                    <div class="col-md-5 text-right v-spacing-top-2 v-spacing-2">
+                        <span class="text-light-grey"><b>Sort by:</b></span>
+                        <select id="sort-by" name="s">
+                            {% for option in sort_options %}
+                                <option value="{{ option.0 }}" {% if option.0 == sort_by %}selected{% endif %}>{{ option.1 }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
                 </form>
             </div>
-            {% if sounds %}
-                {% sounds_selector sounds %}
+            {% if sounds_to_select %}
+                {% sounds_selector sounds_to_select %}
+                {% bw_paginator paginator page current_page request "sound" %}
             {% else %}
                 <div class="v-spacing-7 v-spacing-top-6 text-center">
                     <h5>No sounds...</h5>
@@ -66,14 +66,19 @@
     <div class="col-lg-3 offset-lg-1 d-lg-block">
         <div class="bw-sticky-top">
             {% if tab == 'published' or tab == 'pending_moderation' %}
-            <button id="edit-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Edit description</button>
+            <form action="{% url 'accounts-edit-sounds-select' %}" method="post">{% csrf_token %}
+                <input type="hidden" name="sound-ids" value="">
+                <button id="edit-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" name="edit">Edit description</button>
+            </form>
             {% elif tab == 'pending_description' %}
             <button id="describe-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Describe sounds</button>
             <button id="csv-button" class="no-hover btn-blue display-inline-block w-100 text-center v-spacing-3" href="">Upload CSV file</button>
             {% elif tab == 'processing_stage' %}
             <button id="reprocess-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Re-process sounds</button>
             {% endif %}
+            {% if tab == 'pending_description' %}
             <button id="remove-button" class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-3" href="">Remove sounds</button>
+            {% endif %}
         </div>
     </div>
 </div>

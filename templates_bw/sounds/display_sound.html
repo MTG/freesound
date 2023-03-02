@@ -26,6 +26,16 @@
             </div>
         </div>
         {% endcache %}
+        {% if sound.show_moderation_ticket %}
+        <div class="v-spacing-3 v-spacing-top-negative-3">
+            <a class="bw-link--black" href="{% url 'tickets-ticket' sound.ticket.key %}">{% bw_icon "file-text" %} See moderation ticket</a>
+        </div>
+        {% endif %}
+        {% if sound.show_processing_status %}
+        <div class="v-spacing-3 v-spacing-top-negative-3 {% if sound.processing_state == "FA" and sound.processing_ongoing_state != "PR" %}text-red{% elif sound.processing_ongoing_state == "PR" %}text-green{% else %}text-blue{% endif %}">
+            {% if sound.processing_state == "FA" and sound.processing_ongoing_state != "PR" %}{% bw_icon "notification" %}Failed processing{% else %}{% if sound.processing_ongoing_state == "PR" %}{% bw_icon "cogs" %} Currently processing{% else %}{% bw_icon "clock" %} In queue{% endif %}{% endif %}
+        </div>
+        {% endif %}
 
     {% elif player_size == 'middle' %}
         {% comment %}This is the default player shown in search results and in places where the sound takes

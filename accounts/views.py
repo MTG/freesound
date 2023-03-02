@@ -633,7 +633,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def manage_sounds(request, tab):
-
+    
     # Process query and filter options
     sort_options = [
         ('created_desc', 'Date added (newest first)', '-created'),
@@ -654,32 +654,74 @@ def manage_sounds(request, tab):
         filter_db = Q()
         for term in filter_query.split():
             filter_db |= Q(original_filename__contains=term)
+            filter_db |= Q(id__contains=term)
 
-    # Select sounds according to selected tab and filters
+    # Select and prepare sounds according to selected tab and filters
+    sounds_published_base_qs = Sound.public.filter(user=request.user)
+    sounds_moderation_base_qs = Sound.objects.filter(user=request.user).exclude(moderation_state="OK")
+    sounds_processing_base_qs = Sound.objects.filter(user=request.user).exclude(processing_state="OK")
+    sounds_published_count = sounds_published_base_qs.count()
+    sounds_moderation_count = sounds_moderation_base_qs.count()
+    sounds_processing_count = sounds_processing_base_qs.count()
     if tab != 'pending_description':
         if tab == 'published':
-            sounds = Sound.public.filter(user=request.user)
+            sounds = sounds_published_base_qs
         elif tab == 'pending_moderation':
-            sounds = Sound.objects.filter(user=request.user).exclude(moderation_state="OK")
+            sounds = sounds_moderation_base_qs
         elif tab == 'processing_stage':
-            sounds = Sound.objects.filter(user=request.user).exclude(processing_state="OK")
+            sounds = sounds_processing_base_qs
         else:
             raise Http404  # Non-existing tab
         if filter_db is not None:
             sounds = sounds.filter(filter_db)
         sounds = sounds.order_by(sort_by_db)
+        sound_ids = sounds.values_list('id', flat=True)
     else:
-        sounds = []
-    
+        sound_ids = None
     
     tvars = {
-        'sounds': sounds, 
         'tab': tab,
         'sort_by': sort_by,
         'filter_query': filter_query,
-        'sort_options': sort_options
+        'sort_options': sort_options,
+        'sounds_to_select': [],
+        'sounds_published_count': sounds_published_count,
+        'sounds_moderation_count': sounds_moderation_count,
+        'sounds_processing_count': sounds_processing_count
     }
+    if sound_ids:
+        paginator = paginate(request, sound_ids, 12)
+        tvars.update(paginator)
+        sounds_to_select = Sound.objects.ordered_ids(paginator['page'].object_list)
+        for sound in sounds_to_select:
+            # We set these properties below so display_sound templatetag adds a bit more info to the sound display
+            if tab == 'pending_moderation':
+                sound.show_moderation_ticket = True
+            elif tab == 'processing_stage':
+                sound.show_processing_status = True
+        tvars['sounds_to_select'] = sounds_to_select
+
     return render(request, 'accounts/manage_sounds.html', tvars)
+
+
+@login_required
+def edit_sounds_select(request):
+    if request.POST:
+        try:
+            sound_ids = [int(part) for part in request.POST.get('sound-ids', '').split(',')]
+        except ValueError:
+            sound_ids = []
+        sounds = Sound.objects.ordered_ids(sound_ids)
+        if not request.user.is_superuser:
+            # Unless user is superuser, only allow to edit sounds owned by user
+            sounds = [sound for sound in sounds if sound.user == request.user]
+        if sounds:
+            clear_session_edit_and_describe_data(request)
+            request.session['edit_sounds'] = [sounds]  # Add the list of sounds to edit in the session object
+            request.session['len_original_describe_edit_sounds'] = len(sounds)
+            HttpResponseRedirect(reverse('accounts-edit-sounds'))
+
+    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
 
 
 @login_required

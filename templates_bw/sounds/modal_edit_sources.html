@@ -21,6 +21,12 @@
             </div>
         </div>
         {% sounds_selector sounds_to_select %}
+        {% if search_executed and not sounds_to_select %}
+        <div class="v-spacing-7 v-spacing-top-6 text-center">
+            <h5>No results... &#128543</h5>
+            <div class="text-grey v-spacing-2">Please try another query</div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

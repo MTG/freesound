@@ -942,10 +942,12 @@ def sound_edit_sources(request, username, sound_id):
 
 @login_required
 def sound_edit_sources_modal(request):
-    tvars = {'sounds_to_select': [], 'q': request.GET.get('q', '')}
-    if request.GET.get('q', '') != '':
-        search_tvars = search_view_helper(request, tags_mode=False)
-        tvars['sounds_to_select'] = [doc['sound'] for doc in search_tvars['docs'][0:9]]
+    tvars = {'sounds_to_select': [], 'q': request.GET.get('q', ''), 'search_executed': False}
+    if request.GET.get('q', None) != None:
+        tvars['search_executed'] = True
+        if request.GET['q'] != '':
+            search_tvars = search_view_helper(request, tags_mode=False)
+            tvars['sounds_to_select'] = [doc['sound'] for doc in search_tvars['docs'][0:9]]
     return render(request, 'sounds/modal_edit_sources.html', tvars)
 
 

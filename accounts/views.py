@@ -632,10 +632,53 @@ def handle_uploaded_image(profile, f):
 
 
 @login_required
-def manage_sounds(request):
-    # BW only view
-    # TODO: implement that view
-    tvars = {}
+def manage_sounds(request, tab):
+
+    # Process query and filter options
+    sort_options = [
+        ('created_desc', 'Date added (newest first)', '-created'),
+        ('created_ac', 'Date added (oldest first)', '-created'),
+        ('name', 'Name', 'original_filename'),
+    ]
+    sort_by = sort_options[0][0]
+    filter_query = ''
+    if request.POST:
+        sort_by = request.POST.get('s', sort_options[0][0])
+        filter_query = request.POST.get('q', '')
+    try:
+        sort_by_db = [option_db_name for option_name, _, option_db_name in sort_options if option_name == sort_by][0]
+    except IndexError:
+        sort_by_db = sort_options[0][2]
+    filter_db = None
+    if filter_query:
+        filter_db = Q()
+        for term in filter_query.split():
+            filter_db |= Q(original_filename__contains=term)
+
+    # Select sounds according to selected tab and filters
+    if tab != 'pending_description':
+        if tab == 'published':
+            sounds = Sound.public.filter(user=request.user)
+        elif tab == 'pending_moderation':
+            sounds = Sound.objects.filter(user=request.user).exclude(moderation_state="OK")
+        elif tab == 'processing_stage':
+            sounds = Sound.objects.filter(user=request.user).exclude(processing_state="OK")
+        else:
+            raise Http404  # Non-existing tab
+        if filter_db is not None:
+            sounds = sounds.filter(filter_db)
+        sounds = sounds.order_by(sort_by_db)
+    else:
+        sounds = []
+    
+    
+    tvars = {
+        'sounds': sounds, 
+        'tab': tab,
+        'sort_by': sort_by,
+        'filter_query': filter_query,
+        'sort_options': sort_options
+    }
     return render(request, 'accounts/manage_sounds.html', tvars)
 
 

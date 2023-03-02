@@ -1,8 +1,85 @@
 {% extends "simple_page.html" %}
+{% load static %}
+{% load sounds_selector %}
 
 {% block title %}Manage sounds{% endblock %}
 {% block page-title %}Manage sounds{% endblock %}
 
 {% block page-content %}
 
+
+
+<div class="divider-light v-spacing-top-4 v-spacing-4"></div>
+    <ul class="navbar-messages center">
+        <li class="nav-item">
+            <a class="nav-link {% if tab == "published" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'published' %}">Published</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if tab == "pending_moderation" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_moderation' %}">Moderation</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if tab == "processing_stage" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing_stage' %}">Processing</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description</a>
+        </li>
+    </ul>
+<div class="divider-light v-spacing-top-4 v-spacing-4"></div>
+
+
+<div class="row no-gutters">
+    <div class="col-lg-8">
+        {%if tab != 'pending_description' %}
+            <div class="v-spacing-4">
+                <form method="post" action=".">{% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-wrapper w-100" style="padding:11px;">
+                            <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Filter sounds" autocomplete="off" {% if filter_query %}value="{{ filter_query }}"{% endif %}>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <div class="v-spacing-top-1">
+                            <span class="text-light-grey"><b>Sort by:</b></span>
+                            <select id="sort-by" name="s">
+                                {% for option in sort_options %}
+                                    <option value="{{ option.0 }}" {% if option.0 == sort_by %}selected{% endif %}>{{ option.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                </form>
+            </div>
+            {% if sounds %}
+                {% sounds_selector sounds %}
+            {% else %}
+                <div class="v-spacing-7 v-spacing-top-6 text-center">
+                    <h5>No sounds...</h5>
+                    {% if filter_query %}
+                    <div class="text-grey v-spacing-2">Maybe try with a different filter?</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="col-lg-3 offset-lg-1 d-lg-block">
+        <div class="bw-sticky-top">
+            {% if tab == 'published' or tab == 'pending_moderation' %}
+            <button id="edit-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Edit description</button>
+            {% elif tab == 'pending_description' %}
+            <button id="describe-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Describe sounds</button>
+            <button id="csv-button" class="no-hover btn-blue display-inline-block w-100 text-center v-spacing-3" href="">Upload CSV file</button>
+            {% elif tab == 'processing_stage' %}
+            <button id="reprocess-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Re-process sounds</button>
+            {% endif %}
+            <button id="remove-button" class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-3" href="">Remove sounds</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/manageSounds.js' %}"></script>
 {% endblock %}

@@ -12,12 +12,18 @@ function createSelect() {
     // Check if select element already wrapped, otherwise wrap the element, make it invisible and create new visible version
     const alreadyWrapped = select[select_i].parentElement.classList.contains('select-dropdown');
     if (!alreadyWrapped){
+      if (select[select_i].selectedIndex > -1){
+        var selected_index_text = select[select_i].options[select[select_i].selectedIndex].text
+      } else {
+        var selected_index_text = select[select_i].options[0].text
+      }
+
       select[select_i].style.display = 'none';
       wrapElement(
         document.getElementById(select[select_i].id),
         document.createElement('div'),
         select_i,
-        select[select_i].options[select[select_i].selectedIndex].text
+        selected_index_text
       );
 
       for (var i = 0; i < select[select_i].options.length; i++) {

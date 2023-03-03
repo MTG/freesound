@@ -633,63 +633,137 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def manage_sounds(request, tab):
-    
-    # Process query and filter options
-    sort_options = [
-        ('created_desc', 'Date added (newest first)', '-created'),
-        ('created_ac', 'Date added (oldest first)', '-created'),
-        ('name', 'Name', 'original_filename'),
-    ]
-    sort_by = sort_options[0][0]
-    filter_query = ''
-    if request.POST:
-        sort_by = request.POST.get('s', sort_options[0][0])
-        filter_query = request.POST.get('q', '')
-    try:
-        sort_by_db = [option_db_name for option_name, _, option_db_name in sort_options if option_name == sort_by][0]
-    except IndexError:
-        sort_by_db = sort_options[0][2]
-    filter_db = None
-    if filter_query:
-        filter_db = Q()
-        for term in filter_query.split():
-            filter_db |= Q(original_filename__contains=term)
-            filter_db |= Q(id__contains=term)
 
-    # Select and prepare sounds according to selected tab and filters
+    def process_filter_and_sort_options(request, sort_options, tab):
+        sort_by = sort_options[0][0]
+        filter_query = ''
+        if request.POST:
+            sort_by = request.POST.get('s', sort_options[0][0])
+            filter_query = request.POST.get('q', '')
+        try:
+            sort_by_db = \
+                [option_db_name for option_name, _, option_db_name in sort_options if option_name == sort_by][0]
+        except IndexError:
+            sort_by_db = sort_options[0][2]
+        filter_db = None
+        if filter_query:
+            filter_db = Q()
+            for term in filter_query.split():
+                if tab == 'packs':
+                    filter_db |= Q(name__icontains=term)
+                else:
+                    filter_db |= Q(original_filename__icontains=term)
+                filter_db |= Q(id__contains=term)
+        return {
+            'sort_by': sort_by,
+            'filter_query': filter_query,
+            'sort_options': sort_options,
+        }, sort_by_db, filter_db
+
+    # First do some stuff common to all tabs
     sounds_published_base_qs = Sound.public.filter(user=request.user)
-    sounds_moderation_base_qs = Sound.objects.filter(user=request.user).exclude(moderation_state="OK")
+    sounds_moderation_base_qs = \
+        Sound.objects.filter(user=request.user, processing_state="OK").exclude(moderation_state="OK")
     sounds_processing_base_qs = Sound.objects.filter(user=request.user).exclude(processing_state="OK")
     sounds_published_count = sounds_published_base_qs.count()
     sounds_moderation_count = sounds_moderation_base_qs.count()
     sounds_processing_count = sounds_processing_base_qs.count()
-    if tab != 'pending_description':
+    packs_base_qs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
+    packs_count = packs_base_qs.count()
+    file_structure, files = generate_tree(request.user.profile.locations()['uploads_dir'])
+    sounds_pending_description_count = len(files)
+
+    tvars = {
+        'tab': tab,
+        'sounds_published_count': sounds_published_count,
+        'sounds_moderation_count': sounds_moderation_count,
+        'sounds_processing_count': sounds_processing_count,
+        'sounds_pending_description_count': sounds_pending_description_count,
+        'packs_count': packs_count,
+    }
+
+    # Then do dedicated processing for each tab
+    if tab == 'pending_description':
+        tvars_or_redirect = sounds_pending_description_helper(request, file_structure, files)
+        if isinstance(tvars_or_redirect, dict):
+            tvars.update(tvars_or_redirect)
+        else:
+            return tvars_or_redirect
+
+    elif tab == 'packs':
+        sort_options = [
+            ('updated_desc', 'Last modified (newest first)', '-last_updated'),
+            ('updated_asc', 'Last modified (oldest first)', 'last_updated'),
+            ('created_desc', 'Date added (newest first)', '-created'),
+            ('created_asc', 'Date added (oldest first)', 'created'),
+            ('name', 'Name', 'name'),
+            ('num_sounds', 'Number of sounds', 'num_sounds'),
+        ]
+        extra_tvars, sort_by_db, filter_db = process_filter_and_sort_options(request, sort_options, tab)
+        tvars.update(extra_tvars)
+        if filter_db is not None:
+            packs_base_qs = packs_base_qs.filter(filter_db)
+        packs = packs_base_qs.order_by(sort_by_db)
+        pack_ids = list(packs.values_list('id', flat=True))
+        paginator = paginate(request, pack_ids, 12)
+        tvars.update(paginator)
+        pack_objects = Pack.objects.ordered_ids(paginator['page'].object_list, exclude_deleted=False)
+        tvars['packs'] = pack_objects
+
+    elif tab in ['published', 'pending_moderation', 'processing']:
+        # If user has selected sounds to edit or to re-process
+        if request.POST and ('edit' in request.POST or 'process' in request.POST):
+            try:
+                sound_ids = [int(part) for part in request.POST.get('sound-ids', '').split(',')]
+            except ValueError:
+                sound_ids = []
+            sounds = Sound.objects.ordered_ids(sound_ids)
+            if not request.user.is_superuser:
+                # Unless user is superuser, only allow to edit sounds owned by user
+                sounds = [sound for sound in sounds if sound.user == request.user]
+            if sounds:
+                if 'edit' in request.POST:
+                    clear_session_edit_and_describe_data(request)
+                    request.session['edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
+                    request.session['len_original_describe_edit_sounds'] = len(sounds)
+                    return HttpResponseRedirect(reverse('accounts-edit-sounds'))
+                if 'process' in request.POST:
+                    n_send_to_processing = 0
+                    for sound in sounds:
+                        if sound.process():
+                            n_send_to_processing += 1
+                    sounds_skipped_msg_part = ''
+                    if n_send_to_processing != len(sounds):
+                        sounds_skipped_msg_part = f' {len(sounds) - n_send_to_processing} sounds were not send to ' \
+                                                  f'processing due to many failed processing attempts.'
+                    messages.add_message(request, messages.INFO,
+                                         f'Sent { n_send_to_processing } '
+                                         f'sound{ "s" if n_send_to_processing != 1 else "" } '
+                                         f'to re-process.{ sounds_skipped_msg_part }')
+                    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['processing']))
+    
+        # Process query and filter options
+        sort_options = [
+            ('created_desc', 'Date added (newest first)', '-created'),
+            ('created_asc', 'Date added (oldest first)', 'created'),
+            ('name', 'Name', 'original_filename'),
+        ]
+        extra_tvars, sort_by_db, filter_db = process_filter_and_sort_options(request, sort_options, tab)
+        tvars.update(extra_tvars)
+
+        # Select relevant sound ids depending on tab/filters
         if tab == 'published':
             sounds = sounds_published_base_qs
         elif tab == 'pending_moderation':
             sounds = sounds_moderation_base_qs
-        elif tab == 'processing_stage':
+        elif tab == 'processing':
             sounds = sounds_processing_base_qs
-        else:
-            raise Http404  # Non-existing tab
         if filter_db is not None:
             sounds = sounds.filter(filter_db)
         sounds = sounds.order_by(sort_by_db)
-        sound_ids = sounds.values_list('id', flat=True)
-    else:
-        sound_ids = None
-    
-    tvars = {
-        'tab': tab,
-        'sort_by': sort_by,
-        'filter_query': filter_query,
-        'sort_options': sort_options,
-        'sounds_to_select': [],
-        'sounds_published_count': sounds_published_count,
-        'sounds_moderation_count': sounds_moderation_count,
-        'sounds_processing_count': sounds_processing_count
-    }
-    if sound_ids:
+        sound_ids = list(sounds.values_list('id', flat=True))
+
+        # Paginate and get corresponding sound objects
         paginator = paginate(request, sound_ids, 12)
         tvars.update(paginator)
         sounds_to_select = Sound.objects.ordered_ids(paginator['page'].object_list)
@@ -697,31 +771,13 @@ def manage_sounds(request, tab):
             # We set these properties below so display_sound templatetag adds a bit more info to the sound display
             if tab == 'pending_moderation':
                 sound.show_moderation_ticket = True
-            elif tab == 'processing_stage':
+            elif tab == 'processing':
                 sound.show_processing_status = True
         tvars['sounds_to_select'] = sounds_to_select
+    else:
+        raise Http404  # Non-existing tab
 
     return render(request, 'accounts/manage_sounds.html', tvars)
-
-
-@login_required
-def edit_sounds_select(request):
-    if request.POST:
-        try:
-            sound_ids = [int(part) for part in request.POST.get('sound-ids', '').split(',')]
-        except ValueError:
-            sound_ids = []
-        sounds = Sound.objects.ordered_ids(sound_ids)
-        if not request.user.is_superuser:
-            # Unless user is superuser, only allow to edit sounds owned by user
-            sounds = [sound for sound in sounds if sound.user == request.user]
-        if sounds:
-            clear_session_edit_and_describe_data(request)
-            request.session['edit_sounds'] = [sounds]  # Add the list of sounds to edit in the session object
-            request.session['len_original_describe_edit_sounds'] = len(sounds)
-            HttpResponseRedirect(reverse('accounts-edit-sounds'))
-
-    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
 
 
 @login_required
@@ -730,9 +786,7 @@ def edit_sounds(request):
     return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
 
 
-@login_required
-def describe(request):
-    file_structure, files = generate_tree(request.user.profile.locations()['uploads_dir'])
+def sounds_pending_description_helper(request, file_structure, files):
     file_structure.name = ''
 
     if request.method == 'POST':
@@ -757,6 +811,7 @@ def describe(request):
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
             if "delete" in request.POST:
+                # NOTE: this bit is never reached in BW becauyse confirmation is done via javascript
                 filenames = [files[x].name for x in form.cleaned_data["files"]]
                 tvars = {'form': form, 'filenames': filenames}
                 return render(request, 'accounts/confirm_delete_undescribed_files.html', tvars)
@@ -791,7 +846,7 @@ def describe(request):
             else:
                 form = FileChoiceForm(files)
                 tvars = {'form': form, 'file_structure': file_structure}
-                return render(request, 'accounts/describe.html', tvars)
+                return tvars
     else:
         csv_form = BulkDescribeForm(prefix='bulk')
         form = FileChoiceForm(files, prefix='sound')
@@ -802,7 +857,19 @@ def describe(request):
         'csv_form': csv_form,
         'describe_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
     }
-    return render(request, 'accounts/describe.html', tvars)
+    return tvars
+
+
+@login_required
+def describe(request):
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
+    file_structure, files = generate_tree(request.user.profile.locations()['uploads_dir'])
+    tvars_or_redirect = sounds_pending_description_helper(request, file_structure, files)
+    if isinstance(tvars_or_redirect, dict):
+        return render(request, 'accounts/describe.html', tvars_or_redirect)
+    else:
+        return tvars_or_redirect
 
 
 @login_required
@@ -1274,7 +1341,7 @@ def account(request, username):
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                                .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
+                               .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
     following_tags = follow_utils.get_tags_following_qs(user)

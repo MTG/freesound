@@ -90,7 +90,6 @@ def validate_csvfile_extension(csv_file):
 class BulkDescribeForm(forms.Form):
     csv_file = forms.FileField(label='', validators=[validate_csvfile_extension])
 
-
 class UploadFileForm(forms.Form):
     files = MultiFileField(min_num=1, validators=[validate_file_extension], label="", required=False)
 

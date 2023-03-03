@@ -2,6 +2,8 @@
 {% load static %}
 {% load sounds_selector %}
 {% load bw_templatetags %}
+{% load display_pack %}
+{% load filefunctions %}
 
 {% block title %}Manage sounds{% endblock %}
 {% block page-title %}Manage sounds{% endblock %}
@@ -17,27 +19,30 @@
             <a class="nav-link {% if tab == "pending_moderation" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_moderation' %}">Moderation{% if sounds_moderation_count %} ({{ sounds_moderation_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "processing_stage" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing_stage' %}">Processing{% if sounds_processing_count %} ({{ sounds_processing_count }}){% endif %}</a>
+            <a class="nav-link {% if tab == "processing" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing' %}">Processing{% if sounds_processing_count %} ({{ sounds_processing_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description</a>
+            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description{% if sounds_pending_description_count %} ({{ sounds_pending_description_count }}){% endif %}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if tab == "packs" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'packs' %}">Packs{% if packs_count %} ({{ packs_count }}){% endif %}</a>
         </li>
     </ul>
 <div class="divider-light v-spacing-top-4 v-spacing-4"></div>
 
 <div class="row no-gutters">
-    <div class="col-lg-8">
-        {%if tab != 'pending_description' %}
+    <div class="{% if tab != "packs" %}col-lg-8{% else %}col-12{% endif %}">
+        {% if tab != 'pending_description' %}
             <div class="v-spacing-4">
                 <form method="post" action=".">{% csrf_token %}
                 <div class="row middle">
                     <div class="col-md-5">
                         <div class="input-wrapper w-100" style="padding:11px;">
-                            <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Filter sounds" autocomplete="off" {% if filter_query %}value="{{ filter_query }}"{% endif %}>
+                            <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Filter {% if tab == "packs" %}packs{% else %}sounds{% endif %}" autocomplete="off" {% if filter_query %}value="{{ filter_query }}"{% endif %}>
                         </div>
                     </div>
                     <div class="col-md-2 font-weight-bold text-center d-none d-md-inline">
-                        {{ paginator.count }} sound{{ paginator.count|pluralize }}
+                        {{ paginator.count }} {% if tab == "packs" %}pack{% else %}sound{% endif %}{{ paginator.count|pluralize }}
                     </div>
                     <div class="col-md-5 text-right v-spacing-top-2 v-spacing-2">
                         <span class="text-light-grey"><b>Sort by:</b></span>
@@ -50,37 +55,107 @@
                 </div>
                 </form>
             </div>
-            {% if sounds_to_select %}
-                {% sounds_selector sounds_to_select %}
-                {% bw_paginator paginator page current_page request "sound" %}
+            {% if tab == "packs" %}
+                {%  if packs %}
+                    <div class="row no-margins">
+                    {% for pack in packs %}
+                        <div class="col-4 col-sm-3">
+                            {% display_pack pack %}
+                            {% with pack.num_sounds_unpublished as num_sounds_unpublished %}
+                            {% if num_sounds_unpublished %}
+                                <div class="v-spacing-3 v-spacing-top-negative-2 text-red">
+                                    {% bw_icon "notification" %}Has {{ num_sounds_unpublished}} unpublished sounds
+                                </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    {% endfor %}
+                    </div>
+                    {% bw_paginator paginator page current_page request "pack" %}
+                {% else %}
+                    <div class="v-spacing-7 v-spacing-top-6 text-center">
+                        <h5>No packs...</h5>
+                        {% if filter_query %}
+                        <div class="text-grey v-spacing-2 v-spacing-top-1">Maybe try with a different filter?</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
             {% else %}
-                <div class="v-spacing-7 v-spacing-top-6 text-center">
-                    <h5>No sounds...</h5>
-                    {% if filter_query %}
-                    <div class="text-grey v-spacing-2">Maybe try with a different filter?</div>
+                {% if sounds_to_select %}
+                    {% sounds_selector sounds_to_select %}
+                    {% bw_paginator paginator page current_page request "sound" %}
+                {% else %}
+                    <div class="v-spacing-7 v-spacing-top-6 text-center">
+                        <h5>No sounds...</h5>
+                        {% if filter_query %}
+                        <div class="text-grey v-spacing-2 v-spacing-top-1">Maybe try with a different filter?</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% else %}
+            {% if describe_enabled %}
+                {% if not n_files %}
+                    <div class="v-spacing-7 w-100">
+                        <h5>No files to describe... &#128543</h5>
+                        <p class="text-grey v-spacing-2">It looks like you have not uploaded any audio files yet or all your files have already been described.
+                        <br>Please <a href="{% url 'accounts-upload' %}">upload some more files</a> before coming back here :).</p>
+                    </div>
+                {% else %}
+                    <div id="describe-file-checkboxes">
+                        {% show_file file_structure True %}
+                    </div>
+                    {% if request.user.profile.can_do_bulk_upload %}
+                        <div class="v-spacing-top-5">
+                            <div>
+                                <p>
+                                    Alternatively, you can provide descriptions for many files at once by <b>uploading a data file</b>.
+                                    To create your data file use the <a href="{{ media_url }}/sample.csv" target="_blank">CSV</a>, <a href="{{ media_url }}/sample.xls" target="_blank">XLS</a>
+                                    or <a href="{{ media_url }}/sample.xlsx" target="_blank">XLSX</a> template and follow
+                                    <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a>.
+                                    Upload your data file using the form below:
+                                </p>
+                                <form method="POST" enctype="multipart/form-data" action="">
+                                    {% csrf_token %}
+                                    {{ csv_form }}
+                                    <input class="btn-blue cursor-pointer" type="submit" name="Submit" value="Upload data file"/>
+                                </form>
+                            </div>
+                        </div>
                     {% endif %}
+                {% endif %}
+            {% else %}
+                <div class="v-spacing-7 v-spacing-top-6 w-100">
+                    <h5>Describing sounds is disabled... &#128543</h5>
+                    <p class="text-grey v-spacing-2">We're deeply sorry but describing sounds is <b>temporarily disabled</b>. We'll enable it again as soon as possible.</p>
                 </div>
             {% endif %}
         {% endif %}
     </div>
+    {% if tab != "packs" %}
     <div class="col-lg-3 offset-lg-1 d-lg-block">
         <div class="bw-sticky-top">
             {% if tab == 'published' or tab == 'pending_moderation' %}
-            <form action="{% url 'accounts-edit-sounds-select' %}" method="post">{% csrf_token %}
-                <input type="hidden" name="sound-ids" value="">
-                <button id="edit-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" name="edit">Edit description</button>
-            </form>
+                <form action="." method="post">{% csrf_token %}
+                    <input type="hidden" name="sound-ids" value="">
+                    <button id="edit-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" disabled  name="edit">Edit description</button>
+                </form>
             {% elif tab == 'pending_description' %}
-            <button id="describe-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Describe sounds</button>
-            <button id="csv-button" class="no-hover btn-blue display-inline-block w-100 text-center v-spacing-3" href="">Upload CSV file</button>
-            {% elif tab == 'processing_stage' %}
-            <button id="reprocess-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" href="">Re-process sounds</button>
-            {% endif %}
-            {% if tab == 'pending_description' %}
-            <button id="remove-button" class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-3" href="">Remove sounds</button>
+                <form action="." method="post" id="fileform">{% csrf_token %}
+                    <div class="display-none">{{form.as_p}}</div>
+                    <button id="describe-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" name="describe" disabled>Describe sounds</button>
+                    <button id="remove-button" class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-3" name="delete_confirm" disabled>Remove sounds</button>
+                    <button id="remove-button-hidden" class="display-none" name="delete_confirm"></button>
+                </form>
+            {% elif tab == 'processing' %}
+                <form action="." method="post">{% csrf_token %}
+                    <input type="hidden" name="sound-ids" value="">
+                    <button id="reprocess-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" disabled name="process">Re-process sounds</button>
+                </form>
             {% endif %}
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 

@@ -13,11 +13,15 @@
                     <div class="bw-carousel with-dots dots-distance-02">
                     {% comment %}get random sounds to show here so if cached we won't run this query{% endcomment %}
                     {% with pack.get_random_sounds_from_pack as sounds %}
+                        {% if sounds %}
                         {% for sound in sounds %}
                             <div>
                                 {% display_sound_small_no_info sound %}
                             </div>
                         {% endfor %}
+                        {% else %}
+                            <div class="bw-player-small-thumbnail-empty-space"></div>
+                        {% endif %}
                     {% endwith %}
                     </div>
                 </div>
@@ -38,6 +42,7 @@
     {% elif size == 'big' %}
         <div>
             {% with pack.get_random_sounds_from_pack as sounds %}
+                {% if sounds %}
                 <div class="row no-margins">
                     {% for sound in sounds %}
                         <div class="col-4">
@@ -45,6 +50,9 @@
                         </div>
                     {% endfor %}
                 </div>
+                {% else %}
+                    <div class="bw-player-small-thumbnail-empty-space"></div>
+                {% endif %}
             {% endwith %}
             <h5 class="v-spacing-top-1">
                 <span class="text-light-grey">Pack: </span><a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>

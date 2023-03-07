@@ -35,6 +35,10 @@ soundSelector.forEach(selectorElement => {
             reprocessSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
             reprocessSelectedSoundsButton.closest('form').querySelector('input[name="sound-ids"]').value = element.dataset.selectedIds;
         }
+        if (deleteSelectedSoundsButton !== null){
+            deleteSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
+            deleteSelectedSoundsButton.closest('form').querySelector('input[name="sound-ids"]').value = element.dataset.selectedIds;
+        }
         if (describeSelectedSoundsButton !== null){
             describeSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
         }
@@ -82,7 +86,9 @@ if (removeSelectedSoundsButton !== null){
     removeSelectedSoundsButton.addEventListener('click', evt =>{
         evt.preventDefault();
         const confirmationModalTitle = document.getElementById('confirmationModalTitle');
-        confirmationModalTitle.innerText = "Are you sure you want to remove these sound files?";
+        confirmationModalTitle.innerText = "Are you sure you want to remove these sounds?";
+        const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
+        confirmationModalHelpText.innerText = "Be aware that this action is irreversible..."
         const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
         const confirmationModalAcceptButton = confirmationModalAcceptForm.querySelectorAll('button')[0];
         confirmationModalAcceptButton.addEventListener('click', evt => {
@@ -92,4 +98,15 @@ if (removeSelectedSoundsButton !== null){
         })
         handleModal('confirmationModal');
     })
+}
+
+const bulkDescribeButton = document.getElementById('bulk-describe-button');
+if (bulkDescribeButton !== null) {
+    bulkDescribeButton.addEventListener('click', evt => {
+        evt.preventDefault();
+        handleModal('bulkDescribeModal');
+    })
+    if (bulkDescribeButton.dataset.formHasErrors !== undefined) {
+        handleModal('bulkDescribeModal');
+    }
 }

@@ -1,0 +1,28 @@
+{% extends "molecules/modal_base.html" %}
+{% load static %}
+
+{% block id %}bulkDescribeModal{% endblock %}
+{% block extra-class %}modal-width-70{% endblock %}
+{% block aria-labelledby %}bulkDescribeModalLabel{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <h5 class="v-spacing-5 text-center">Describe sounds using data file</h5>
+    <div class="v-spacing-top-5">
+        <div>
+            <p>
+                You can provide descriptions for many sound files at once by <b>uploading a data file</b>.
+                To create your data file use the <a href="{% static 'bw-frontend/public/sample.csv' %}" target="_blank">CSV</a>, <a href="{% static 'bw-frontend/public/sample.xls' %}" target="_blank">XLS</a>
+                or <a href="{% static 'bw-frontend/public/sample.xlsx' %}" target="_blank">XLSX</a> template and follow
+                <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a>.
+                Upload your data file using the form below:
+            </p>
+            <form method="POST" enctype="multipart/form-data" action="">
+                {% csrf_token %}
+                {{ csv_form }}
+                <button class="btn-primary" type="submit" name="Submit">Upload data file</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

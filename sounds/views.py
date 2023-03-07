@@ -1093,7 +1093,7 @@ def delete(request, username, sound_id):
         raise PermissionDenied
 
     error_message = None
-    if request.method == "POST" :
+    if request.method == "POST":
         form = DeleteSoundForm(request.POST, sound_id=sound_id)
         if not form.is_valid():
             error_message = "Sorry, you waited too long, ... try again?"

@@ -74,6 +74,7 @@ from messages.models import Message
 from sounds.forms import LicenseForm, PackForm, BWPackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
+from tickets.models import TicketComment, Ticket
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.filesystem import generate_tree, remove_directory_if_empty
@@ -712,22 +713,45 @@ def manage_sounds(request, tab):
 
     elif tab in ['published', 'pending_moderation', 'processing']:
         # If user has selected sounds to edit or to re-process
-        if request.POST and ('edit' in request.POST or 'process' in request.POST):
+        if request.POST and ('edit' in request.POST or 'process' in request.POST or 'delete_confirm' in request.POST):
             try:
                 sound_ids = [int(part) for part in request.POST.get('sound-ids', '').split(',')]
             except ValueError:
                 sound_ids = []
             sounds = Sound.objects.ordered_ids(sound_ids)
             if not request.user.is_superuser:
-                # Unless user is superuser, only allow to edit sounds owned by user
+                # Unless user is superuser, only allow to select sounds owned by user
                 sounds = [sound for sound in sounds if sound.user == request.user]
             if sounds:
                 if 'edit' in request.POST:
+                    # Edit the selected sounds
                     clear_session_edit_and_describe_data(request)
                     request.session['edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
                     request.session['len_original_describe_edit_sounds'] = len(sounds)
                     return HttpResponseRedirect(reverse('accounts-edit-sounds'))
-                if 'process' in request.POST:
+                elif 'delete_confirm' in request.POST:
+                    # Delete the selected sounds
+                    n_sounds_deleted = 0
+                    for sound in sounds:
+                        web_logger.info(f"User {request.user.username} requested to delete sound {sound.id}")
+                        try:
+                            ticket = sound.ticket
+                            tc = TicketComment(sender=request.user,
+                                               text=f"User {request.user} deleted the sound",
+                                               ticket=ticket,
+                                               moderator_only=False)
+                            tc.save()
+                        except Ticket.DoesNotExist:
+                            pass
+                        sound.delete()
+                        n_sounds_deleted += 1
+                    messages.add_message(request, messages.INFO,
+                                         f'Successfully deleted {n_sounds_deleted} '
+                                         f'sound{"s" if n_sounds_deleted != 1 else ""}')
+                    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
+
+                elif 'process' in request.POST:
+                    # Send selected sounds to re-process
                     n_send_to_processing = 0
                     for sound in sounds:
                         if sound.process():
@@ -740,7 +764,7 @@ def manage_sounds(request, tab):
                                          f'Sent { n_send_to_processing } '
                                          f'sound{ "s" if n_send_to_processing != 1 else "" } '
                                          f'to re-process.{ sounds_skipped_msg_part }')
-                    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['processing']))
+                    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
     
         # Process query and filter options
         sort_options = [
@@ -1504,7 +1528,10 @@ def bulk_describe(request, bulk_id):
         messages.add_message(request, messages.INFO, "Your user does not have permission to use the bulk describe "
                                                      "feature. You must upload at least %i sounds before being able"
                                                      "to use that feature." % settings.BULK_UPLOAD_MIN_SOUNDS)
-        return HttpResponseRedirect(reverse('accounts-home'))
+        if not using_beastwhoosh(request):
+            return HttpResponseRedirect(reverse('accounts-home'))
+        else:
+            return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
 
     bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
 
@@ -1517,15 +1544,21 @@ def bulk_describe(request, bulk_id):
     elif request.GET.get('action', False) == 'delete' and bulk.progress_type in ['N', 'V']:
         # If action is "delete", delete BulkUploadProgress object and go back to describe page
         bulk.delete()
-        return HttpResponseRedirect(reverse('accounts-describe'))
+        if not using_beastwhoosh(request):
+            return HttpResponseRedirect(reverse('accounts-describe'))
+        else:
+            return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
 
     elif request.GET.get('action', False) == 'close':
         # If action is "close", set the BulkUploadProgress object to closed state and redirect to home
         bulk.progress_type = 'C'
         bulk.save()
-        return HttpResponseRedirect(reverse('accounts-home'))
+        if not using_beastwhoosh(request):
+            return HttpResponseRedirect(reverse('accounts-home'))
+        else:
+            return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
 
-    # Get progress info to be display if sound descirption process has started
+    # Get progress info to be display if sound description process has started
     progress_info = bulk.get_description_progress_info()
 
     # Auto-reload if in "not yet validated" or in "started" state

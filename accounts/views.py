@@ -685,6 +685,8 @@ def manage_sounds(request, tab):
 
     # Then do dedicated processing for each tab
     if tab == 'pending_description':
+        unclosed_bulkdescribe = BulkUploadProgress.objects.filter(user=request.user).exclude(progress_type="C")
+        tvars.update({'unclosed_bulkdescribe': unclosed_bulkdescribe})
         tvars_or_redirect = sounds_pending_description_helper(request, file_structure, files)
         if isinstance(tvars_or_redirect, dict):
             tvars.update(tvars_or_redirect)
@@ -1535,28 +1537,29 @@ def bulk_describe(request, bulk_id):
 
     bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
 
-    if request.GET.get('action', False) == 'start' and bulk.progress_type == 'V':
-        # If action is "start" and CSV is validated, mark BulkUploadProgress as "stared" and start describing sounds
-        bulk.progress_type = 'S'
-        bulk.save()
-        tasks.bulk_describe.delay(bulk_upload_progress_object_id=bulk.id)
+    if request.POST:
+        if 'start' in request.POST and bulk.progress_type == 'V':
+            # If action is "start" and CSV is validated, mark BulkUploadProgress as "stared" and start describing sounds
+            bulk.progress_type = 'S'
+            bulk.save()
+            tasks.bulk_describe.delay(bulk_upload_progress_object_id=bulk.id)
 
-    elif request.GET.get('action', False) == 'delete' and bulk.progress_type in ['N', 'V']:
-        # If action is "delete", delete BulkUploadProgress object and go back to describe page
-        bulk.delete()
-        if not using_beastwhoosh(request):
-            return HttpResponseRedirect(reverse('accounts-describe'))
-        else:
-            return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
+        elif 'delete' in request.POST and bulk.progress_type in ['N', 'V']:
+            # If action is "delete", delete BulkUploadProgress object and go back to describe page
+            bulk.delete()
+            if not using_beastwhoosh(request):
+                return HttpResponseRedirect(reverse('accounts-describe'))
+            else:
+                return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
 
-    elif request.GET.get('action', False) == 'close':
-        # If action is "close", set the BulkUploadProgress object to closed state and redirect to home
-        bulk.progress_type = 'C'
-        bulk.save()
-        if not using_beastwhoosh(request):
-            return HttpResponseRedirect(reverse('accounts-home'))
-        else:
-            return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
+        elif 'close' in request.POST:
+            # If action is "close", set the BulkUploadProgress object to closed state and redirect to home
+            bulk.progress_type = 'C'
+            bulk.save()
+            if not using_beastwhoosh(request):
+                return HttpResponseRedirect(reverse('accounts-home'))
+            else:
+                return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
 
     # Get progress info to be display if sound description process has started
     progress_info = bulk.get_description_progress_info()

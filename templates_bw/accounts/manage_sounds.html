@@ -102,10 +102,38 @@
                         <br>Please <a href="{% url 'accounts-upload' %}">upload some more files</a> before coming back here :).</p>
                     </div>
                 {% else %}
-                    <h4 class="text-grey v-spacing-4">Select the files you want to describe:</h4>
-                    <div id="describe-file-checkboxes">
-                        {% show_file file_structure True %}
+                    <div class="v-spacing-5">
+                        <h5 class="v-spacing-3">Select the files you want to describe:</h5>
+                        <div class="v-spacing-2">
+                            <button id="select-all" class="btn-inverse">Select all</button>
+                            <button id="select-none" class="btn-inverse">Select none</button>
+                        </div>
+                        <div id="describe-file-checkboxes">
+                            {% show_file file_structure True %}
+                        </div>
                     </div>
+                {% endif %}
+                {% if unclosed_bulkdescribe %}
+                    <h5 class="v-spacing-2">Bulk description processes</h5>
+                    <p>Here is a list of your ongoing bulk description processes. Please click on the names of the data files to see more details and to modify them.</p>
+                    {% for bulk_describe in unclosed_bulkdescribe %}
+                        {% with bulk_describe.get_description_progress_info as progress_info %}
+                        <li>
+                        <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">{{ bulk_describe.original_csv_filename }}</a>. <span class="text-grey">Created on {{bulk_describe.created}}</span>
+                            {% if bulk_describe.progress_type == 'F' and progress_info.n_sounds_processing %}
+                                <span class="text-orange">{% bw_icon "cogs" %} {{ bulk_describe.get_progress_type_display }} ({{ progress_info.n_sounds_processing }} sounds still processing)</span>
+                            {% elif bulk_describe.progress_type == 'F' and not progress_info.n_sounds_processing %}
+                                <span class="text-green">{% bw_icon "check" %} Finished</span> (pending closing)
+                            {% elif bulk_describe.progress_type == 'V' and bulk_describe.has_line_validation_errors %}
+                                <span class="text-red">{% bw_icon "notification" %} Errors in validation</span>
+                            {% elif bulk_describe.progress_type == 'V' and bulk_describe.has_global_validation_errors %}
+                                <span class="text-red">{% bw_icon "notification" %} Errors in validation</span>
+                            {% else %}
+                                <span class="text-orange">{{ bulk_describe.get_progress_type_display }}</span>
+                            {% endif %}
+                        </li>
+                        {% endwith %}
+                    {% endfor %}
                 {% endif %}
             {% else %}
                 <div class="v-spacing-7 v-spacing-top-6 w-100">
@@ -127,11 +155,12 @@
                 <form action="." method="post" id="fileform">{% csrf_token %}
                     <div class="display-none">{{form.as_p}}</div>
                     <button id="describe-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" name="describe" disabled>Describe sound files</button>
-                    {% if request.user.profile.can_do_bulk_upload %}
-                    <button id="bulk-describe-button" class="no-hover btn-blue display-inline-block w-100 text-center v-spacing-3" {% if not n_files %}disabled{% endif %} {% if csv_form.errors %}data-form-has-errors="true"{% endif %}>Describe with data file</button>
-                    {% endif %}
                     <button id="remove-button" class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-3" name="delete_confirm" disabled>Remove sound files</button>
+                    {% if request.user.profile.can_do_bulk_upload %}
+                    <button id="bulk-describe-button" class="no-hover btn-blue display-inline-block w-100 text-center v-spacing-3" {% if not n_files %}disabled{% endif %} {% if csv_form.errors %}data-form-has-errors="true"{% endif %}>Bulk description with data file</button>
+                    {% endif %}
                     <button id="remove-button-hidden" class="display-none" name="delete_confirm"></button>
+                    <a href="{% url 'accounts-upload' %}" class="no-hover btn-inverse display-inline-block w-100 text-center v-spacing-3">{% bw_icon 'plus' %}Upload new sound files</a>
                 </form>
             {% elif tab == 'processing' %}
                 <form action="." method="post">{% csrf_token %}

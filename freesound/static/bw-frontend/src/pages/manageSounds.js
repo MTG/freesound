@@ -35,10 +35,6 @@ soundSelector.forEach(selectorElement => {
             reprocessSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
             reprocessSelectedSoundsButton.closest('form').querySelector('input[name="sound-ids"]').value = element.dataset.selectedIds;
         }
-        if (deleteSelectedSoundsButton !== null){
-            deleteSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
-            deleteSelectedSoundsButton.closest('form').querySelector('input[name="sound-ids"]').value = element.dataset.selectedIds;
-        }
         if (describeSelectedSoundsButton !== null){
             describeSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
         }
@@ -65,19 +61,25 @@ const noCheckboxSelected = describeFileCheckboxes => {
     return numChecked === 0;
 }
 
+
+const onCheckboxChanged = (checkboxElement, describeFileCheckboxes) => {
+var optionInFilesForm = describeFilesForm.querySelectorAll("option[value=" + checkboxElement.name + "]")[0];
+        if (checkboxElement.checked) {
+            optionInFilesForm.selected = true;
+        } else {
+            optionInFilesForm.selected = false;
+        }
+        const disabled = noCheckboxSelected(describeFileCheckboxes);
+        describeSelectedSoundsButton.disabled = disabled;
+            removeSelectedSoundsButton.disabled = disabled;
+}
+
+
 if (describeFileCheckboxesWrapper !== null){
     const describeFileCheckboxes = describeFileCheckboxesWrapper.querySelectorAll('input');
     describeFileCheckboxes.forEach(checkboxElement => {
         checkboxElement.addEventListener('change', evt => {
-            var optionInFilesForm = describeFilesForm.querySelectorAll("option[value=" + checkboxElement.name + "]")[0];
-            if (checkboxElement.checked) {
-                optionInFilesForm.selected = true;
-            } else {
-                optionInFilesForm.selected = false;
-            }
-            const disabled = noCheckboxSelected(describeFileCheckboxes);
-            describeSelectedSoundsButton.disabled = disabled;
-            removeSelectedSoundsButton.disabled = disabled;
+            onCheckboxChanged(checkboxElement, describeFileCheckboxes);
         });
     });
 }
@@ -109,4 +111,26 @@ if (bulkDescribeButton !== null) {
     if (bulkDescribeButton.dataset.formHasErrors !== undefined) {
         handleModal('bulkDescribeModal');
     }
+}
+
+const selectAllButton = document.getElementById('select-all');
+if (selectAllButton !== null) {
+    selectAllButton.addEventListener('click', evt => {
+        const describeFileCheckboxes = describeFileCheckboxesWrapper.querySelectorAll('input');
+        describeFileCheckboxes.forEach(checkboxElement => {
+            checkboxElement.checked = true;
+            onCheckboxChanged(checkboxElement, describeFileCheckboxes);
+        });
+    })
+}
+
+const selectNoneButton = document.getElementById('select-none');
+if (selectNoneButton !== null) {
+    selectNoneButton.addEventListener('click', evt => {
+        const describeFileCheckboxes = describeFileCheckboxesWrapper.querySelectorAll('input');
+        describeFileCheckboxes.forEach(checkboxElement => {
+            checkboxElement.checked = false;
+            onCheckboxChanged(checkboxElement, describeFileCheckboxes);
+        });
+    })
 }

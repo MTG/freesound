@@ -34,7 +34,7 @@
     <div class="{% if tab != "packs" %}col-lg-8{% else %}col-12{% endif %} v-spacing-4">
         {% if tab != 'pending_description' %}
             <div class="v-spacing-4">
-                <form method="post" action=".">{% csrf_token %}
+                <form method="get" action=".">
                 <div class="row middle">
                     <div class="col-md-5">
                         <div class="input-wrapper w-100" style="padding:11px;">

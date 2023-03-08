@@ -39,6 +39,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView, \
     PasswordChangeView, PasswordChangeDoneView
+from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import transaction
@@ -636,11 +637,8 @@ def handle_uploaded_image(profile, f):
 def manage_sounds(request, tab):
 
     def process_filter_and_sort_options(request, sort_options, tab):
-        sort_by = sort_options[0][0]
-        filter_query = ''
-        if request.POST:
-            sort_by = request.POST.get('s', sort_options[0][0])
-            filter_query = request.POST.get('q', '')
+        sort_by = request.GET.get('s', sort_options[0][0])
+        filter_query = request.GET.get('q', '')
         try:
             sort_by_db = \
                 [option_db_name for option_name, _, option_db_name in sort_options if option_name == sort_by][0]
@@ -648,18 +646,13 @@ def manage_sounds(request, tab):
             sort_by_db = sort_options[0][2]
         filter_db = None
         if filter_query:
-            filter_db = Q()
-            for term in filter_query.split():
-                if tab == 'packs':
-                    filter_db |= Q(name__icontains=term)
-                else:
-                    filter_db |= Q(original_filename__icontains=term)
-                filter_db |= Q(id__contains=term)
+            filter_db = SearchQuery(filter_query)
         return {
             'sort_by': sort_by,
             'filter_query': filter_query,
             'sort_options': sort_options,
         }, sort_by_db, filter_db
+        
 
     # First do some stuff common to all tabs
     sounds_published_base_qs = Sound.public.filter(user=request.user)
@@ -705,7 +698,7 @@ def manage_sounds(request, tab):
         extra_tvars, sort_by_db, filter_db = process_filter_and_sort_options(request, sort_options, tab)
         tvars.update(extra_tvars)
         if filter_db is not None:
-            packs_base_qs = packs_base_qs.filter(filter_db)
+            packs_base_qs = packs_base_qs.annotate(search=SearchVector('name', 'id', 'description')).filter(search=filter_db).distinct()
         packs = packs_base_qs.order_by(sort_by_db)
         pack_ids = list(packs.values_list('id', flat=True))
         paginator = paginate(request, pack_ids, 12)
@@ -785,7 +778,7 @@ def manage_sounds(request, tab):
         elif tab == 'processing':
             sounds = sounds_processing_base_qs
         if filter_db is not None:
-            sounds = sounds.filter(filter_db)
+            sounds = sounds.annotate(search=SearchVector('original_filename', 'id', 'description', 'tags__tag__name')).filter(search=filter_db).distinct()
         sounds = sounds.order_by(sort_by_db)
         sound_ids = list(sounds.values_list('id', flat=True))
 

@@ -223,7 +223,7 @@ class UserUploadAndDescribeSounds(TestCase):
         }, follow=True)
         
         # Check that post redirected to first describe page with confirmation message on sounds described
-        self.assertRedirects(resp, '/home/sounds/manage/')
+        self.assertRedirects(resp, '/home/sounds/manage/pending_description/')
         self.assertEqual('Successfully finished sound description round' in list(resp.context['messages'])[2].message, True)
 
         # Check that sounds have been created along with related tags, geotags and packs
@@ -333,13 +333,13 @@ class BulkDescribe(TestCase):
         self.assertContains(resp, 'Validation results of the data file')
 
         # Test that chosing option to delete existing BulkUploadProgress really does it
-        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=delete')
+        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'delete': True})
         self.assertRedirects(resp, reverse('accounts-describe'))  # Redirects to describe page after delete
         self.assertEqual(BulkUploadProgress.objects.filter(user=user).count(), 0)
 
         # Test that chosing option to start describing files triggers bulk describe gearmnan job
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
-        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]) + '?action=start')
+        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'start': True})
         self.assertEqual(resp.status_code, 200)
         submit_job.assert_called_once_with(bulk_upload_progress_object_id=bulk.id)
 
@@ -348,6 +348,12 @@ class BulkDescribe(TestCase):
         # Test that when BulkUploadProgress has started description and processing we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="S", user=user, original_csv_filename="test.csv")
+        bulk.validation_output = {
+            'lines_ok': list(range(1, 10)),
+            'lines_with_errors': [],
+            'global_errors': [],
+        }
+        bulk.save()
         self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertContains(resp, 'Your sounds are being described and processed')

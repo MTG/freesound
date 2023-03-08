@@ -129,7 +129,7 @@
                             {% elif bulk_describe.progress_type == 'V' and bulk_describe.has_global_validation_errors %}
                                 <span class="text-red">{% bw_icon "notification" %} Errors in validation</span>
                             {% else %}
-                                <span class="text-orange">{{ bulk_describe.get_progress_type_display }}</span>
+                                <span class="text-blue">{% bw_icon "clock" %}{{ bulk_describe.get_progress_type_display }}</span>
                             {% endif %}
                         </li>
                         {% endwith %}

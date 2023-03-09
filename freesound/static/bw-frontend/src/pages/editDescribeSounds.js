@@ -1,10 +1,9 @@
-import {prepareSourcesFormFields} from "../components/sourcesFormField"
 import {prepareTagsFormFields} from "../components/tagsFormField"
 import {prepareGeotagFormFields} from "../components/geotagFormField"
 import {preparePackFormFields} from "../components/packFormField"
+import {prepareAddSoundsModalAndFields} from "../components/addSoundsModal"
 
-
-prepareSourcesFormFields();
+prepareAddSoundsModalAndFields();
 prepareTagsFormFields();
 preparePackFormFields();
 document.addEventListener("DOMContentLoaded", () => {

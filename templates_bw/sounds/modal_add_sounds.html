@@ -2,22 +2,27 @@
 {% load sounds_selector %}
 {% load util %}
 
-{% block id %}editSourcesModal{% endblock %}
+{% block id %}addSoundsModal{% endblock %}
 {% block extra-class %}modal-width-80{% endblock %}
-{% block aria-labelledby %}editSourcesModalLabel{% endblock %}
+{% block aria-labelledby %}addSoundsModalLabel{% endblock %}
 
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">Add sound sources</h5>
+        <h5 class="v-spacing-5">{% if not modal_title %}Add sounds{% else %}{{ modal_title }}{% endif %}</h5>
     </div>
     <div class="v-spacing-4">
+        {% if help_text %}
+        <div class="text-grey v-spacing-3">
+            {{ help_text }}
+        </div>
+        {% endif %}
         <div class="center">
             <div class="input-wrapper w-50" style="padding:11px;">
                 <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Enter sound ID or query terms..." autocomplete="off" {% if q %}value="{{ q }}"{% endif %}>
             </div>
             <div class="h-spacing-left-3">
-                <button class="btn-primary">Add selected sounds as sources</button>
+                <button class="btn-primary">Add selected sounds</button>
             </div>
         </div>
         {% sounds_selector sounds_to_select %}

@@ -104,7 +104,8 @@ urlpatterns = [
     path('clustered_graph/', search.views.clustered_graph, name='clustered-graph-json'),
     path('query_suggestions/', search.views.query_suggestions, name='query-suggestions'),
 
-    path('sources/search/', sounds.views.sound_edit_sources_modal, name="sound-edit-sources-modal"),
+    path('add_sounds_modal/sources/', sounds.views.add_sounds_modal_for_edit_sources, name="add-sounds-modal-sources"),
+    path('add_sounds_modal/pack/<int:pack_id>/', sounds.views.add_sounds_modal_for_pack_edit, name="add-sounds-modal-pack"),
     
     path('', include('ratings.urls')),
     path('comments/', include('comments.urls')),

@@ -1,0 +1,41 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load util %}
+{% load bw_templatetags %}
+{% load sounds_selector %}
+
+{% block title %}Edit pack - {{ pack.name }}{% endblock %}
+{% block page-title %}Edit pack <span class="text-grey">{{ pack.name }}</span>{% endblock %}
+
+{% block page-content %}
+<div class="row no-gutters">
+    <div class="col-lg-8 offset-lg-2">
+        <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
+            {{ form.non_field_errors }}
+            {{ form.name.errors }}
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {{ form.description.errors }}
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            <div class="select-sounds-field v-spacing-5">
+                {{ form.pack_sounds }}
+                <label>Sounds in pack ({{ form.pack_sound_objects|length }}):</label>
+                {% if not form.pack_sounds.value %}
+                <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this pack yet</div>
+                {% endif %}
+                {% sounds_selector form.pack_sound_objects %}
+                <div class="between v-spacing-top-2">
+                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.pack_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-pack' pack.id %}">{% bw_icon 'plus' %}Add sounds</button>
+                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from pack</button>
+                </div>
+            </div>
+            <button class="btn-primary w-100">Save pack</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/packEdit.js' %}"></script>
+{% endblock %}

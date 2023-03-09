@@ -52,10 +52,6 @@
     <div class="col-md-4 col-6 v-spacing-1 v-spacing-top-1 right">
         {% if list_type %}
         <a class="btn-primary" href="{% url 'messages-new' %}"><span class="padding-right-1">+</span>New message</a>
-        {% else %}
-            {% if message %}
-            <a class="btn-primary" href="{% url "message-reply" message.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Reply</a>
-            {% endif %}
         {% endif %}
     </div>
 </div>

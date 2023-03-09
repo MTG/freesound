@@ -53,7 +53,10 @@ def bookmarks_for_user(request, username, category_id=None):
         raise Http404
     if using_beastwhoosh(request) and is_owner:
         # If accesing own bookmarks using the poeple/xx/bookmarks URL, redirect to the /home/bookmarks URL
-        return HttpResponseRedirect(reverse('bookmarks'))
+        if category_id:
+            return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
+        else:
+            return HttpResponseRedirect(reverse('bookmarks'))
     return bookmarks_view_helper(request, user, is_owner, category_id)
 
 

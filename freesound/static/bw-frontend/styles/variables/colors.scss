@@ -1,3 +1,6 @@
+@import 'color-theme';
+
+
 $red: #ff3546;
 $red-hover: #fd5b65;
 
@@ -22,3 +25,30 @@ $blue: #0064af;
 $blue-hover: #2f74b1;
 
 $green: #01ae01;
+
+@if ($color-theme == 'dark') {
+    $red: #ff3546;
+    $red-hover: #fd5b65;
+    
+    $black: #ffffff;
+    $black-hover: #f4f4f6;
+    
+    $navy-grey: #9696aa;
+    
+    $navy-light-grey: #49494f;
+    
+    $white: #141424;
+    
+    $search-bg: #484850;
+    
+    $border-input: #484850;
+    $background-input: #393947;
+    $background-textarea: #393947;
+    
+    $yellow-rating: #fd4;
+    
+    $blue: #0064af;
+    $blue-hover: #2f74b1;
+    
+    $green: #01ae01;
+}

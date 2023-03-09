@@ -19,7 +19,8 @@ const openAddSoundSourcesModal = (modalUrl, selectedSourcesDestinationElement, o
         inputElement.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
-                openAddSoundSourcesModal(`${modalUrl}?q=${inputElement.value}`, selectedSourcesDestinationElement, onSourcesSelectedCallback);
+                const baseUrl = modalUrl.split('?')[0]
+                openAddSoundSourcesModal(`${baseUrl}?q=${inputElement.value}`, selectedSourcesDestinationElement, onSourcesSelectedCallback);
             }
         });
 

@@ -407,8 +407,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                         src_path = os.path.join(sounds_base_dir, audio_filename)
                         if not os.path.exists(src_path):
                             line_errors['audio_filename'] = "Audio file does not exist. This should be the name of " \
-                                                            "one of the audio files you <a href='%s'>previously " \
-                                                            "uploaded</a>." % reverse('accounts-describe')
+                                                            "one of the audio files you previously uploaded."
                         else:
                             if src_path in filenames_to_describe:
                                 line_errors['audio_filename'] = "Audio file can only be described once."

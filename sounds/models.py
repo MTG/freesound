@@ -253,21 +253,26 @@ class BulkUploadProgress(models.Model):
                                                     n_sounds_currently_processing +
                                                     n_sounds_pending_processing +
                                                     n_sounds_failed_processing)
+        
         progress = 0
-        if self.description_output is not None:
-            progress = old_div(100.0 * (n_sounds_published +
-                                n_sounds_moderation +
-                                n_sounds_failed_processing +
-                                n_sounds_error +
-                                n_sounds_unknown), \
-                       (n_sounds_described_ok +
-                        n_sounds_error +
-                        n_sounds_remaining_to_describe))
-            progress = int(progress)
-            # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
-            # number of sounds that should have been described and processed. Sounds that fail processing or description
-            # are also counted as "done" as their status won't change.
-            # After the 'describe_sounds' method finishes, progress should always be 100.
+        if n_lines_validated_ok == 0:
+            # If no sounds were supposed to be described, set progress to 100
+            progress = 100
+        else:
+            if self.description_output is not None:
+                progress = old_div(100.0 * (n_sounds_published +
+                                    n_sounds_moderation +
+                                    n_sounds_failed_processing +
+                                    n_sounds_error +
+                                    n_sounds_unknown), \
+                        (n_sounds_described_ok +
+                            n_sounds_error +
+                            n_sounds_remaining_to_describe))
+                progress = int(progress)
+                # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
+                # number of sounds that should have been described and processed. Sounds that fail processing or description
+                # are also counted as "done" as their status won't change.
+                # After the 'describe_sounds' method finishes, progress should always be 100.
 
         return {
             'n_sounds_remaining_to_describe': n_sounds_remaining_to_describe,
@@ -488,6 +493,7 @@ class SoundManager(models.Manager):
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
           geotags_geotag.location_name as geotag_name,
+          tickets_ticket.key as ticket_key,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
           %s
@@ -505,6 +511,7 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+          LEFT JOIN tickets_ticket ON tickets_ticket.sound_id = sound.id
           %s
           LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
         WHERE %s """ % (self.get_analysis_state_essentia_exists_sql(),
@@ -1197,7 +1204,8 @@ class Sound(SocialModel):
         of the Sound model. This method returns "True" if sound was sent to process, None otherwise.
         NOTE: high_priority is not implemented and setting it has no effect
         """
-        if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI") and self.estimate_num_processing_attemps() <= 3):
+        if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI")
+                     and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
             sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
@@ -1458,7 +1466,7 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 class PackManager(models.Manager):
 
-    def ordered_ids(self, pack_ids):
+    def ordered_ids(self, pack_ids, exclude_deleted=True):
         """
         Returns a list of Pack objects with ID in pack_ids and in the same order. pack_ids can include ID duplicates
         and the returned list will also include duplicated Pack objects.
@@ -1470,7 +1478,10 @@ class PackManager(models.Manager):
             List[Pack]: List of Pack objects
 
         """
-        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.filter(id__in=pack_ids).exclude(is_deleted=True)}
+        base_qs = Pack.objects.filter(id__in=pack_ids)
+        if exclude_deleted:
+            base_qs = base_qs.exclude(is_deleted=True)
+        packs = {pack_obj.id: pack_obj for pack_obj in base_qs}
         return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
 
 
@@ -1506,11 +1517,13 @@ class Pack(SocialModel):
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
     def process(self):
+        # Note, can't use sounds.public below because this is a "RelatedManager" object
         sounds = self.sounds.filter(processing_state="OK", moderation_state="OK").order_by("-created")
         self.num_sounds = sounds.count()
         if self.num_sounds:
             self.last_updated = sounds[0].created
         self.save()
+        self.invalidate_template_caches()
 
     def get_random_sounds_from_pack(self, N=3):
         """
@@ -1560,6 +1573,10 @@ class Pack(SocialModel):
         self.is_deleted = True
         self.save()
 
+    def invalidate_template_caches(self):
+        for player_size in ['small', 'big']:
+            invalidate_template_cache("bw_display_pack", self.id, player_size)
+
     def get_attribution(self):
         sounds_list = self.sounds.filter(processing_state="OK",
                 moderation_state="OK").select_related('user', 'license')
@@ -1598,6 +1615,10 @@ class Pack(SocialModel):
         # TODO: don't compute this realtime, store it in DB
         durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
         return sum(durations)
+
+    def num_sounds_unpublished(self):
+        # TODO: don't compute this realtime, store it in DB (?)
+        return self.sounds.count() - self.num_sounds
 
     @cached_property
     def licenses_data(self):

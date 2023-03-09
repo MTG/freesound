@@ -5,8 +5,8 @@
 {% load bw_templatetags %}
 {% load maps_js_scripts %}
 
-{% block title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}
-{% block page-title %}{% if describing %}Describe sound{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
+{% block title %}{% if describing %}Describe sound file{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %}{% endblock %}
+{% block page-title %}{% if describing %}Describe sound file{{num_forms|pluralize}}{% else %}Edit sound{{num_forms|pluralize:",s'"}} description{% endif %} {% if num_rounds > 1 %}(round {{ current_round }} of {{ num_rounds }}){% endif %}{% endblock %}
 
 {% block page-content %}
 

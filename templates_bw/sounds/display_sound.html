@@ -26,6 +26,16 @@
             </div>
         </div>
         {% endcache %}
+        {% if sound.show_moderation_ticket and sound.ticket_key %}
+        <div class="v-spacing-3 v-spacing-top-negative-2">
+            <a class="bw-link--black" href="{% url 'tickets-ticket' sound.ticket_key %}">{% bw_icon "file-text" %} See moderation ticket</a>
+        </div>
+        {% endif %}
+        {% if sound.show_processing_status %}
+        <div class="v-spacing-3 v-spacing-top-negative-2">
+            {% include 'sounds/sound_state_processing_indicator.html' %}
+        </div>
+        {% endif %}
 
     {% elif player_size == 'middle' %}
         {% comment %}This is the default player shown in search results and in places where the sound takes

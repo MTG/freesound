@@ -87,9 +87,9 @@ urlpatterns = [
     path('describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),
     path('describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
 
-    path('sounds/manage/', accounts.manage_sounds, name="accounts-manage-sounds"),
-    path('sounds/edit/', accounts.edit_sounds, name="accounts-edit-sounds"),    
-
+    path('sounds/manage/<tab>/', accounts.manage_sounds, name="accounts-manage-sounds"),
+    path('sounds/edit/', accounts.edit_sounds, name="accounts-edit-sounds"),
+    
     path('bookmarks/', bookmarks.bookmarks, name="bookmarks"),
     path('bookmarks/category/<int:category_id>/', bookmarks.bookmarks, name="bookmarks-category"),
     path('bookmarks/add/<int:sound_id>/', bookmarks.add_bookmark, name="add-bookmark"),

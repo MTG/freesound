@@ -1,4 +1,4 @@
-
+{% load static %}
 {% if no_show %}
     <!-- do noting -->
 {% else %}
@@ -6,7 +6,7 @@
         <script type="text/javascript">
             function post_flag(div_id, flag_type, object_id, url) {
                 const wheelElement = document.getElementById(div_id + "_wheel");
-                wheelElement.innerHTML = '<img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/>';
+                wheelElement.innerHTML = '<img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"/>';
                 xhr = new XMLHttpRequest();
                 xhr.open('POST', url);
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');

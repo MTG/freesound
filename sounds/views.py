@@ -823,7 +823,7 @@ def edit_and_describe_sounds_helper(request):
                 f'Successfully finished sound description round {current_round} of {num_rounds}!')
             if not request.session['describe_sounds']:
                 clear_session_edit_and_describe_data(request)
-                return HttpResponseRedirect(reverse('accounts-manage-sounds'))
+                return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
             else:
                 return HttpResponseRedirect(reverse('accounts-describe-sounds'))
         else:
@@ -839,7 +839,7 @@ def edit_and_describe_sounds_helper(request):
             if not request.session['edit_sounds']:
                 # If no more sounds to edit, redirect to manage sounds page
                 clear_session_edit_and_describe_data(request)
-                return HttpResponseRedirect(reverse('accounts-manage-sounds'))
+                return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
             else:
                 # Otherwise, redirect to the same page to continue with next round of sounds
                 return HttpResponseRedirect(reverse('accounts-edit-sounds'))
@@ -942,10 +942,12 @@ def sound_edit_sources(request, username, sound_id):
 
 @login_required
 def sound_edit_sources_modal(request):
-    tvars = {'sounds_to_select': [], 'q': request.GET.get('q', '')}
-    if request.GET.get('q', '') != '':
-        search_tvars = search_view_helper(request, tags_mode=False)
-        tvars['sounds_to_select'] = [doc['sound'] for doc in search_tvars['docs'][0:9]]
+    tvars = {'sounds_to_select': [], 'q': request.GET.get('q', ''), 'search_executed': False}
+    if request.GET.get('q', None) != None:
+        tvars['search_executed'] = True
+        if request.GET['q'] != '':
+            search_tvars = search_view_helper(request, tags_mode=False)
+            tvars['sounds_to_select'] = [doc['sound'] for doc in search_tvars['docs'][0:9]]
     return render(request, 'sounds/modal_edit_sources.html', tvars)
 
 
@@ -1091,7 +1093,7 @@ def delete(request, username, sound_id):
         raise PermissionDenied
 
     error_message = None
-    if request.method == "POST" :
+    if request.method == "POST":
         form = DeleteSoundForm(request.POST, sound_id=sound_id)
         if not form.is_valid():
             error_message = "Sorry, you waited too long, ... try again?"

@@ -23,7 +23,6 @@ import re
 
 from captcha.fields import ReCaptchaField
 from django import forms
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
@@ -33,7 +32,6 @@ from accounts.forms import html_tags_help_text
 from sounds.models import License, Flag, Pack, Sound
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import TagField, HtmlCleaningCharField
-from utils.mail import send_mail_template
 
 
 class GeotaggingForm(forms.Form):
@@ -182,7 +180,8 @@ class PackEditForm(ModelForm):
     pack_sounds = forms.CharField(min_length=1,
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
                                   required=False)
-    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}), required=False)
+    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
+                                        help_text=html_tags_help_text, required=False)
 
     def clean_pack_sounds(self):
         pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])

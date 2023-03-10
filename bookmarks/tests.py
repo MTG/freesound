@@ -81,7 +81,7 @@ class BookmarksTest(TestCase):
 
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12)
 
         response = self.client.get(reverse('bookmarks'))
 
@@ -96,7 +96,7 @@ class BookmarksTest(TestCase):
         user = User.objects.get(username='Anton')
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12)
 
         response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
 
@@ -120,7 +120,7 @@ class BookmarksTest(TestCase):
         category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
 
         response = self.client.get(reverse('bookmarks-for-user-for-category',
                                            kwargs={'username': user.username, 'category_id': category.id}))
@@ -139,7 +139,7 @@ class BookmarksTest(TestCase):
         category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
 
         user.username = "new-username"
         user.save()

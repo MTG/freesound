@@ -106,7 +106,7 @@ class TestAPiViews(TestCase):
         Bookmark.objects.create(user=user, sound_id=sounds[0].id)
         Bookmark.objects.create(user=user, sound_id=sounds[1].id)
         Bookmark.objects.create(user=user, sound_id=sounds[2].id, category=category)
-        Bookmark.objects.create(user=user, sound_id=sounds[3].id, category=category, name='BookmarkedSound')
+        Bookmark.objects.create(user=user, sound_id=sounds[3].id, category=category)
 
         self.client.force_login(user)
 

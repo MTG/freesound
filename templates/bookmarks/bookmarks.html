@@ -38,7 +38,7 @@
 
 		<div class="bookmark_info">
 
-		    <a href="{% url "sound" bookmark.sound.user.username bookmark.sound.id %}">{{bookmark.name_or_sound_name|truncatechars:50}}</a> by <a href="{% url "account" bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>
+		    <a href="{% url "sound" bookmark.sound.user.username bookmark.sound.id %}">{{bookmark.sound_name|truncatechars:50}}</a> by <a href="{% url "account" bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>
 
 		    {% if is_owner %}
 			<a href="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete bookmark"/></a>

@@ -47,12 +47,12 @@ def bookmarks(request, category_id=None):
 def bookmarks_for_user(request, username, category_id=None):
     user = request.parameter_user
     is_owner = request.user.is_authenticated and user == request.user
-    if not settings.BW_BOOKMARK_PAGES_PUBLIC and not is_owner:
+    if using_beastwhoosh(request) and not settings.BW_BOOKMARK_PAGES_PUBLIC and not is_owner:
         # In BW we only make bookmarks available to bookmark owners (bookmarks are not public)
         # When fully moved to BW, then we can add @login_required and use only the url pattern under /home for bookmarks
         raise Http404
     if using_beastwhoosh(request) and is_owner:
-        # If accesing own bookmarks using the poeple/xx/bookmarks URL, redirect to the /home/bookmarks URL
+        # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
         if category_id:
             return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
         else:
@@ -105,7 +105,7 @@ def add_bookmark(request, sound_id):
         form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
         if form.is_valid():
             saved_bookmark = form.save()
-            msg_to_return = f'Bookmark created with name "{saved_bookmark.name_or_sound_name}"'
+            msg_to_return = f'Bookmark created with name "{saved_bookmark.sound_name}"'
             if saved_bookmark.category:
                 msg_to_return += f' under category "{saved_bookmark.category.name}".'
             else:
@@ -151,7 +151,7 @@ def get_form_for_sound(request, sound_id):
         last_category = last_user_bookmark.category
     except IndexError:
         last_category = None
-    form = FormToUse(instance=Bookmark(name=sound.original_filename),
+    form = FormToUse(instance=Bookmark(),
                      initial={'category': last_category}, prefix=sound.id)
     form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
     categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user,

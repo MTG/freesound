@@ -24,13 +24,13 @@ from bookmarks.models import BookmarkCategory, Bookmark
 
 
 class BookmarkCategoryForm(forms.ModelForm):
-    
     class Meta:
         model = BookmarkCategory
         fields = ('name',)
         widgets = {
-            'name': forms.TextInput(attrs={'class':'category_name_widget'}),
+            'name': forms.TextInput(attrs={'class': 'category_name_widget'}),
         }
+
 
 class BookmarkForm(forms.ModelForm):
     new_category_name = forms.CharField(
@@ -41,13 +41,10 @@ class BookmarkForm(forms.ModelForm):
 
     class Meta:
         model = Bookmark
-        fields = ('name','category')
-        widgets = {
-            'name': forms.TextInput(attrs={'class':'name_widget'}),
-        }
-    
+        fields = ('category', )
+
     def save(self, *args, **kwargs):
-        bookmark = Bookmark(user=self.instance.user,sound=self.instance.sound)
+        bookmark = Bookmark(user=self.instance.user, sound=self.instance.sound)
         if not self.cleaned_data['use_last_category']:
             if not self.cleaned_data['category']:
                 if self.cleaned_data['new_category_name'] != "":
@@ -69,10 +66,6 @@ class BookmarkForm(forms.ModelForm):
                 # This is first bookmark of the user
                 pass
 
-        if self.cleaned_data['name'] != "":
-            BookmarkCategory(user=self.instance.user, name=self.cleaned_data['new_category_name'])
-            bookmark.name = self.cleaned_data['name']
-
         bookmark.save()
         return bookmark
 
@@ -81,7 +74,6 @@ class BwBookmarkForm(BookmarkForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['name'].widget = forms.HiddenInput()  # In BW we removed the concept of bookmark name
         self.fields['new_category_name'].label = False
         self.fields['new_category_name'].widget.attrs['placeholder'] = \
             "Type the new category name here or leave blank for bookmarking without a category"

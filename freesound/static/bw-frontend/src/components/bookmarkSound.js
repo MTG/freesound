@@ -53,8 +53,7 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     wrapper.appendChild(label)
     wrapper.appendChild(selectElement)
     createSelect();  // We need to trigger create select elements because bookmark form has one
-    
-    
+
     const formElement = modalElement.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
@@ -67,7 +66,6 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     saveButtonElement.addEventListener('click', (e) => {
         e.preventDefault();
         const data = {};
-        data.name = document.getElementById(`id_${  soundId.toString()  }-name`).value;
         data.category = document.getElementById(`id_${  soundId.toString()  }-category`).value;
         data.new_category_name = document.getElementById(`id_${  soundId.toString()  }-new_category_name`).value;
         saveBookmark(addBookmarkUrl, data);

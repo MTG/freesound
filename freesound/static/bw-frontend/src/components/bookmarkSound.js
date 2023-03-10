@@ -31,14 +31,15 @@ const saveBookmark = (addBookmarkUrl, data) => {
 }
 
 
-const showHideNewCategoryName = (categoryValue, elementToShowHide) => {
-    if (categoryValue == ''){
+const toggleNewCategoryNameDiv = (select, newCategoryNameDiv) => {
+    if (select.value == '0'){
         // No category is selected, show the new category name input
-        elementToShowHide.style.display = 'block'
+        newCategoryNameDiv.classList.remove('display-none');
     } else {
-        elementToShowHide.style.display = 'none'
+        newCategoryNameDiv.classList.add('display-none');
     }
 }
+
 
 const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     
@@ -48,8 +49,9 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     const wrapper = document.createElement('div');
     selectElement.parentNode.insertBefore(wrapper, selectElement.parentNode.firstChild);
     const label = document.createElement('div');
-    label.innerHTML = "Category:"
+    label.innerHTML = "Select a bookmark category:"
     label.style = 'display:inline-block;';
+    label.classList.add('text-grey');
     wrapper.appendChild(label)
     wrapper.appendChild(selectElement)
     createSelect();  // We need to trigger create select elements because bookmark form has one
@@ -59,8 +61,10 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
     const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-category`);
     const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_category_name`);
-    showHideNewCategoryName(categorySelectElement.value, newCategoryNameElement);
-    categorySelectElement.addEventListener('change' , (e) => {showHideNewCategoryName(e.target.value, newCategoryNameElement)});
+    toggleNewCategoryNameDiv(categorySelectElement, newCategoryNameElement);
+    categorySelectElement.addEventListener('change', (event) => {
+        toggleNewCategoryNameDiv(categorySelectElement, newCategoryNameElement);
+    });
 
     // Bind action to save bookmark in "add bookmark button" (and prevent default form submit)
     saveButtonElement.addEventListener('click', (e) => {

@@ -164,9 +164,12 @@ class BWPackForm(forms.Form):
     def __init__(self, pack_choices, *args, **kwargs):
         super().__init__(*args, **kwargs)
         pack_choices = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [(self.NO_PACK_CHOICE_VALUE, '--- No pack ---'), (self.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in pack_choices]
+        self.fields['pack'].choices = [(self.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
+                                       (self.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] \
+                                      + ([(pack.id, pack.name) for pack in pack_choices] if pack_choices else [])
         # The attrs below are used so that some elements of the dropdown are displayed in gray 
-        self.fields['pack'].widget.attrs = {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}'}
+        self.fields['pack'].widget.attrs = \
+            {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}'}
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
@@ -381,7 +384,9 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
         # Prepare pack field
         user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'), (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in user_packs]
+        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
+                                       (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
+                                      ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
         # The attrs below are used so that some elements of the dropdown are displayed in gray 
         self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}'}
 

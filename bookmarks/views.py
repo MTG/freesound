@@ -61,8 +61,8 @@ def bookmarks_for_user(request, username, category_id=None):
 
 
 def bookmarks_view_helper(request, user, is_owner, category_id):
-    # NOTE: we use this helper for the bookmarks and bookmarks_for_user views so the code is reused. When fully switching to BW,
-    # the bookmarks_for_user view could be remove as bookmarks won't be public anymore
+    # NOTE: we use this helper for the bookmarks and bookmarks_for_user views so the code is reused. When fully
+    # switching to BW, the bookmarks_for_user view could be remove as bookmarks won't be public anymore
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()
     if not category_id:
         category = None
@@ -100,9 +100,12 @@ def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
     if request.method == 'POST':
+        user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
         FormToUse = BwBookmarkForm if using_beastwhoosh(request) else BookmarkForm
-        form = FormToUse(request.POST, instance=Bookmark(user=request.user, sound=sound))
-        form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
+        form = FormToUse(request.POST,
+                         user_bookmark_categories=user_bookmark_categories,
+                         sound_id=sound_id,
+                         user_saving_bookmark=request.user)
         if form.is_valid():
             saved_bookmark = form.save()
             msg_to_return = f'Bookmark created with name "{saved_bookmark.sound_name}"'
@@ -110,6 +113,8 @@ def add_bookmark(request, sound_id):
                 msg_to_return += f' under category "{saved_bookmark.category.name}".'
             else:
                 msg_to_return += '.'
+        else:
+            raise Exception()
 
     if request.is_ajax():
         return JsonResponse({'message': msg_to_return})
@@ -151,9 +156,10 @@ def get_form_for_sound(request, sound_id):
         last_category = last_user_bookmark.category
     except IndexError:
         last_category = None
-    form = FormToUse(instance=Bookmark(),
-                     initial={'category': last_category}, prefix=sound.id)
-    form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
+    user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
+    form = FormToUse(initial={'category': last_category.id if last_category else FormToUse.NO_CATEGORY_CHOICE_VALUE},
+                     prefix=sound.id,
+                     user_bookmark_categories=user_bookmark_categories)
     categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user,
                                                                           bookmarks__sound=sound).distinct()
     sound_has_bookmark_without_category = Bookmark.objects.filter(user=request.user, sound=sound, category=None).exists()

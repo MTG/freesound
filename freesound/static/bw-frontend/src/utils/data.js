@@ -1,8 +1,10 @@
 const serializedIdListToIntList = serializedIdList => {
     const outputList = [];
-    serializedIdList.split(',').forEach(splitPart => {
-        outputList.push(parseInt(splitPart, 10));
-    });
+    if (serializedIdList !== '' && serializedIdList !== undefined){
+        serializedIdList.split(',').forEach(splitPart => {
+            outputList.push(parseInt(splitPart, 10));
+        });
+    }
     return outputList;
 }
 

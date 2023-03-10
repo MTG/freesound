@@ -18,8 +18,9 @@ const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement,
         inputElement.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
-                const baseUrl = modalUrl.split('?')[0]
-                openAddSoundsModal(modalId, `${baseUrl}?q=${inputElement.value}`, selectedSoundsDestinationElement, onSoundsSelectedCallback);
+                const baseUrl = modalUrl.split('?')[0];
+                const soundIdsToExclude = combineIdsLists(serializedIdListToIntList(selectedSoundsDestinationElement.dataset.selectedIds), serializedIdListToIntList(selectedSoundsDestinationElement.dataset.unselectedIds)).join(',');
+                openAddSoundsModal(modalId, `${baseUrl}?q=${inputElement.value}&exclude=${soundIdsToExclude}`, selectedSoundsDestinationElement, onSoundsSelectedCallback);
             }
         });
 

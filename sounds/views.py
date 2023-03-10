@@ -67,7 +67,7 @@ from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search.search_sounds import get_random_sound_id_from_search_engine
+from utils.search.search_sounds import get_random_sound_id_from_search_engine, perform_search_engine_query
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
@@ -941,38 +941,39 @@ def sound_edit_sources(request, username, sound_id):
     return render(request, 'sounds/sound_edit_sources.html', tvars)
 
 
-def add_sounds_modal_helper(request, username=None, exclude_sound_ids=None):
+def add_sounds_modal_helper(request, username=None):
     tvars = {'sounds_to_select': [], 'q': request.GET.get('q', ''), 'search_executed': False}
-    if request.GET.get('q', None) != None:
+    if request.GET.get('q', None) is not None:
         tvars['search_executed'] = True
+        exclude_sound_ids = request.GET.get('exclude', '')
         if request.GET['q'] != '' or username is not None:
+            query = request.GET['q']
+            query_filter = ''
             if username is not None or exclude_sound_ids is not None:
-                modified_request_get = request.GET.copy()
                 filter_parts = []
                 if username is not None:
                     filter_parts.append(f'username:{username}')
-                if exclude_sound_ids is not None:
+                if exclude_sound_ids:
                     exclude_parts = []
-                    for sound_id in exclude_sound_ids:
+                    for sound_id in exclude_sound_ids.split(','):
                         exclude_parts.append(f'id:{sound_id}')
                     exclude_part = 'NOT (' + ' OR '.join(exclude_parts) + ')'
                     filter_parts.append(exclude_part)
-                modified_request_get['f'] = ' AND '.join(filter_parts)
-                print(modified_request_get['f'])
-                request.GET = modified_request_get
-            
-            search_tvars = search_view_helper(request, tags_mode=False)
-            tvars['sounds_to_select'] = [doc['sound'] for doc in search_tvars['docs'][0:9]]
+                query_filter = ' AND '.join(filter_parts)
+            results, _ = perform_search_engine_query(
+                {'textual_query': query, 'query_filter': query_filter, 'num_sounds': 9})
+            tvars['sounds_to_select'] = [doc['id'] for doc in results.docs]
     return tvars
 
 
 @login_required
 def add_sounds_modal_for_pack_edit(request, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
-    tvars = add_sounds_modal_helper(request, username=pack.user.username, exclude_sound_ids=list(pack.sounds.all().values_list('id', flat=True)))
+    tvars = add_sounds_modal_helper(request, username=pack.user.username)
     tvars.update({
         'modal_title': 'Add sounds to pack',
-        'help_text': 'Note that when adding a sound that already belongs to another pack it will be removed from the former pack.',
+        'help_text': 'Note that when adding a sound that already belongs to another pack it will be '
+                     'removed from the former pack.',
     })
     return render(request, 'sounds/modal_add_sounds.html', tvars)
 

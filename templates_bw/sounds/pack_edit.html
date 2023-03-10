@@ -5,11 +5,17 @@
 {% load sounds_selector %}
 
 {% block title %}Edit pack - {{ pack.name }}{% endblock %}
-{% block page-title %}Edit pack <span class="text-grey">{{ pack.name }}</span>{% endblock %}
+{% block page-title %}Edit pack{% endblock %}
 
 {% block page-content %}
+<div class="v-spacing-5 v-spacing-top-2">
+    <p>You can specify a <b>name</b> for the pack, a <b>description</b>, and the <b>sounds</b> that are part of the pack. You can only add <b>sounds uploaded by you</b>. Also, take into account that sounds can <b>only belong to one pack</b>. If adding sounds that already belog to other packs, these will be removed from the previous packs.
+
+    </p>
+</div>
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
+        <h2 class="v-spacing-3">{{ pack.name }}</h2>
         <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
             {{ form.non_field_errors }}
             {{ form.name.errors }}
@@ -21,7 +27,7 @@
             <span class="helptext">{{ form.description.help_text|safe }}</span>
             <div class="select-sounds-field v-spacing-5">
                 {{ form.pack_sounds }}
-                <label>Sounds in pack ({{ form.pack_sound_objects|length }}):</label>
+                <label>Sounds in pack ({{ form.pack_sound_objects|length }})</label>
                 {% if not form.pack_sounds.value %}
                 <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this pack yet</div>
                 {% endif %}

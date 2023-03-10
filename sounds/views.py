@@ -860,13 +860,13 @@ def pack_edit(request, username, pack_id):
 
     current_sounds = list()
     if request.method == "POST":
-        form = PackEditForm(request.POST, instance=pack)
+        form = PackEditForm(request.POST, instance=pack, label_suffix='' if using_beastwhoosh(request) else ':')
         if form.is_valid():
             form.save()
             pack.sounds.all().update(is_index_dirty=True)
             return HttpResponseRedirect(pack.get_absolute_url())
     else:
-        form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds))
+        form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds), label_suffix='' if using_beastwhoosh(request) else ':')
         current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
         form.pack_sound_objects = current_sounds
     tvars = {

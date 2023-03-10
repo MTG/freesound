@@ -91,7 +91,7 @@
         padding: 14px 21px;
         margin-bottom: 12px;
         margin-top: 12px;
-        background-color: #f4f4f6;
+        background-color: $background-input;
         border: 1px solid transparent;
 
         &:focus {
@@ -102,5 +102,9 @@
         &::placeholder {
         color: $navy-grey;
         }
+    }
+
+    label {
+      color: $navy-grey;
     }
 }

@@ -11,8 +11,8 @@
 
     <h1>Email notifications</h1>
 
-    <div class="v-spacing-top-7 w-100 v-spacing-5">
-        <p class="text-grey v-spacing-4">Send me an email when:</p>
+    <div class="v-spacing-top-4 w-100 v-spacing-5">
+        <div class="text-grey">Send me an email when:</div>
         <form method="post" action="." class="bw-form w-100">{% csrf_token %}
             <div class="bw-multiple-checkbox">
                 {{ form }}

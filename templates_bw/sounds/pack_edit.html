@@ -18,6 +18,7 @@
             {{ form.description.errors }}
             {{ form.description.label_tag }}
             {{ form.description }}
+            <span class="helptext">{{ form.description.help_text|safe }}</span>
             <div class="select-sounds-field v-spacing-5">
                 {{ form.pack_sounds }}
                 <label>Sounds in pack ({{ form.pack_sound_objects|length }}):</label>

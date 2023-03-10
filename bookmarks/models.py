@@ -34,7 +34,6 @@ class BookmarkCategory(models.Model):
 
 class Bookmark(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=128, default="", blank=True)
     category = models.ForeignKey(
         BookmarkCategory, blank=True, null=True, default=None, related_name='bookmarks', on_delete=models.SET_NULL)
     sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
@@ -51,12 +50,9 @@ class Bookmark(models.Model):
             return self.category.name
 
     @property
-    def name_or_sound_name(self):
-        # NOTE: this is no longer used in BW as we don't use the concept of custom names for boomarks
-        if self.name:
-            return self.name
-        else:
-            return self.sound.original_filename
+    def sound_name(self):
+        return self.sound.original_filename
 
     class Meta:
         ordering = ("-created", )
+        unique_together = (('user_id', 'category_id', 'sound_id'),)

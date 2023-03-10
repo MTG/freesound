@@ -1067,9 +1067,9 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                 category_name = serializer.data.get('category', None)
                 if category_name is not None:
                     category = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
-                    bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id, category=category[0])
+                    bookmark = Bookmark(user=self.user, sound_id=sound_id, category=category[0])
                 else:
-                    bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id)
+                    bookmark = Bookmark(user=self.user, sound_id=sound_id)
                 bookmark.save()
                 return Response(data={'detail': f'Successfully bookmarked sound {sound_id}.'},
                                 status=status.HTTP_201_CREATED)

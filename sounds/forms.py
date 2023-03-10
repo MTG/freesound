@@ -23,7 +23,6 @@ import re
 
 from captcha.fields import ReCaptchaField
 from django import forms
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
@@ -33,7 +32,6 @@ from accounts.forms import html_tags_help_text
 from sounds.models import License, Flag, Pack, Sound
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import TagField, HtmlCleaningCharField
-from utils.mail import send_mail_template
 
 
 class GeotaggingForm(forms.Form):
@@ -164,9 +162,12 @@ class BWPackForm(forms.Form):
     def __init__(self, pack_choices, *args, **kwargs):
         super().__init__(*args, **kwargs)
         pack_choices = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [(self.NO_PACK_CHOICE_VALUE, '--- No pack ---'), (self.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in pack_choices]
+        self.fields['pack'].choices = [(self.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
+                                       (self.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] \
+                                      + ([(pack.id, pack.name) for pack in pack_choices] if pack_choices else [])
         # The attrs below are used so that some elements of the dropdown are displayed in gray 
-        self.fields['pack'].widget.attrs = {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}'}
+        self.fields['pack'].widget.attrs = \
+            {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}'}
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
@@ -179,7 +180,8 @@ class PackEditForm(ModelForm):
     pack_sounds = forms.CharField(min_length=1,
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
                                   required=False)
-    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}), required=False)
+    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
+                                        help_text=html_tags_help_text, required=False)
 
     def clean_pack_sounds(self):
         pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])
@@ -381,7 +383,9 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
         # Prepare pack field
         user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'), (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + [(pack.id, pack.name) for pack in user_packs]
+        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
+                                       (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
+                                      ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
         # The attrs below are used so that some elements of the dropdown are displayed in gray 
         self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}'}
 

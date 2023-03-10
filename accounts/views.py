@@ -31,6 +31,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.forms import SetPasswordForm
@@ -63,7 +64,7 @@ from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordFor
     BwDeleteUserForm, UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
     UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, TermsOfServiceFormBW, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, \
-    UsernameField, BwProblemsLoggingInForm, username_taken_by_other_user
+    UsernameField, BwProblemsLoggingInForm, username_taken_by_other_user, BWPasswordChangeForm
 from general.templatetags.util import license_with_version
 from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
 from bookmarks.models import Bookmark
@@ -178,6 +179,7 @@ def password_change_form(request):
     This view is called when user requests to change the password and contains the form to do so.
     """
     response = PasswordChangeView.as_view(
+        form_class=BWPasswordChangeForm if using_beastwhoosh(request) else PasswordChangeForm,
         template_name='registration/password_change_form.html'
             if not using_beastwhoosh(request) else 'accounts/password_change_form.html',
         extra_context={'activePage': 'password'})(request)
@@ -1640,7 +1642,7 @@ def old_user_link_redirect(request):
 @transaction.atomic()
 def email_reset(request):
     if request.method == "POST":
-        form = EmailResetForm(request.POST, user=request.user)
+        form = EmailResetForm(request.POST, user=request.user, label_suffix='' if using_beastwhoosh(request) else ':')
         if form.is_valid():
             # First check that email is not already on the database, if it's already used we don't do anything.
             try:
@@ -1671,7 +1673,7 @@ def email_reset(request):
 
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
-        form = EmailResetForm(user=request.user)
+        form = EmailResetForm(user=request.user, label_suffix='' if using_beastwhoosh(request) else ':')
     tvars = {
         'form': form,
         'user': request.user,

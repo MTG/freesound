@@ -24,7 +24,7 @@ from captcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
@@ -527,6 +527,7 @@ class DeleteUserForm(forms.Form):
 class BwDeleteUserForm(DeleteUserForm):
 
     def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
         self.fields['delete_sounds'].label = False
         # NOTE: the line below will add 'bw-radio' to all individual radio elements of
@@ -634,3 +635,10 @@ class BwSetPasswordForm(SetPasswordForm):
         self.fields['new_password2'].label = False
         self.fields['new_password2'].help_text = False
         self.fields['new_password2'].widget.attrs['placeholder'] = 'New password confirmation'
+
+
+class BWPasswordChangeForm(PasswordChangeForm):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super().__init__(*args, **kwargs)

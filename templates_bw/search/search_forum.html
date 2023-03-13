@@ -23,11 +23,13 @@
                 </li>
             </ul>
         </div>
-        <div class="col-md-6 v-spacing-1 v-spacing-top-1 between">
-            <form method="get" action="{% url "forums-search" %}">
+        <div class="col-md-6 v-spacing-1 v-spacing-top-1 between middle">
+            <form method="get" action="{% url "forums-search" %}" class="w-75">
                 <input type="hidden" name="advanced_search"  value="0"/>
                 <input type="hidden" name="forum" value="{% if current_forum %}{{current_forum.name_slug}}{% else %}{% endif %}"/>
-                <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in this forum..." value="{{ search_query }}"/>
+                <div class="input-wrapper w-100">
+                    <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="{% if current_forum %}Search in this forum...{% else %}Search in all forums...{% endif %}" autocomplete="off" value="{{ search_query }}">
+                </div>
             </form>
             <div class="text-grey">
                 {% if paginator %}

@@ -430,6 +430,10 @@ class ProfileForm(forms.ModelForm):
 class BwProfileForm(ProfileForm):
     prefer_spectrogram = forms.BooleanField(label="Display spectrogram in sound players by default", required=False,
                                             widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    prefer_compact_mode = forms.BooleanField(label="Display search results in compact mode", required=False,
+                                             widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    #prefer_dark_mode = forms.BooleanField(label="Use dark mode", required=False,
+    #                                      widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))

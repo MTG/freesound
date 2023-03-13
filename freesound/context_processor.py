@@ -34,15 +34,12 @@ def context_extra(request):
     new_tickets_count = -1  # Initially set to -1 (to distinguish later users that can not moderate)
     num_pending_sounds = 0
     num_messages = 0
-    spectrogram_preference = False
 
     if request.user.is_authenticated:
         if request.user.has_perm('tickets.can_moderate'):
             new_tickets_count = new_sound_tickets_count()
         num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
         num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
-        # TODO: the value before should be retrieved from Profile object once preference is stored there
-        spectrogram_preference = request.session.get('preferSpectrogram', False)
 
     # Determine if anniversary special css and js content should be loaded
     # Animations will only be shown during the day of the anniversary
@@ -64,5 +61,4 @@ def context_extra(request):
         'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
         'registration_form': BwRegistrationForm(), # Used for beast whoosh login modal only
         'problems_logging_in_form': BwProblemsLoggingInForm(),  # Used for beast whoosh login modal only
-        'spectrogram_preference': spectrogram_preference,
     }

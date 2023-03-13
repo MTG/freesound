@@ -12,7 +12,11 @@
     <meta name="keywords" content="free, sound">
     {% block extrahead %}
     {% endblock %}
-    <link rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
+    {% if not request.session.preferDarkMode %}
+      <link rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
+    {% else %}
+      <link rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
+    {% endif %}
   </head>
   <body>
     <noscript>
@@ -46,7 +50,7 @@
     </div>
     {% bw_plausible_scripts %}
     <script>
-        document.cookie = "preferSpectrogram={{spectrogram_preference|yesno}}";
+        document.cookie = "preferSpectrogram={{request.session.preferSpectrogram|yesno}}";
         const siteWidth = 580;  // Minimum expected width. If screen is smaller, scale website.
         const scale = window.innerWidth / siteWidth;
         if (scale < 1){

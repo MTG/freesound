@@ -9,7 +9,6 @@ const tagsMode = tagsModeInput.value == '1';
 const searchInputBrowsePlaceholder = searchInputBrowse.getAttribute("placeholder");
 const removeSearchInputValueBrowse = document.getElementById('remove-content-search');
 
-
 const updateRemoveSearchInputButtonVisibility = (searchInputElement) => {
   if (searchInputElement.value.length) {
     removeSearchInputValueBrowse.style.opacity = 0.5;
@@ -233,6 +232,9 @@ function onDocumentReady(){
 
   // Update the text of the button to toggle advanced search options panel
   updateToggleAdvancedSearchOptionsText();
+
+  // Store values of advanced search filters so later we can check if they were modified
+  initialAdvancedSearchInputValues = serializeAdvanceSearchOptionsInputsData();
 }
 
 document.addEventListener('DOMContentLoaded', onDocumentReady);
@@ -334,3 +336,35 @@ if (search_page_navbar_form !== null){
   })
 }
 
+// Enable/disable "apply adbanced search filters" when filters are modified
+
+const serializeAdvanceSearchOptionsInputsData = () => {
+  const values = [];
+  advanced_search_options_div.getElementsByTagName("input").forEach(inputElement => {
+    if (inputElement.type == "hidden"){
+      // Don't include hidden elements as only the visible items are necessary
+    } else if (inputElement.type == "checkbox"){
+      values.push(inputElement.checked);
+    } else {
+      values.push(inputElement.value);
+    }
+  });
+  return values.join(",");
+}
+
+let initialAdvancedSearchInputValues = undefined;  // NOTE: this is filled out in onDocumentReady function
+
+const advancedSearchOptionsHaveChangedSinceLastQuery = () => {
+  const currentAdvancedSearchInputValues = serializeAdvanceSearchOptionsInputsData();
+  return initialAdvancedSearchInputValues != currentAdvancedSearchInputValues;
+}
+
+const onAdvancedSearchOptionsInputsChange = () => {
+  document.getElementById('avanced-search-apply-button').disabled = !advancedSearchOptionsHaveChangedSinceLastQuery();
+}
+
+advanced_search_options_div.getElementsByTagName("input").forEach(inputElement => {
+  inputElement.addEventListener('change', evt => {
+    onAdvancedSearchOptionsInputsChange();
+  });
+});

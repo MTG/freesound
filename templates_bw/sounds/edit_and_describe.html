@@ -124,6 +124,11 @@
             {% endif %}
         </div>
     </div>
+    <div class="col-12 d-lg-none">
+        {% if num_forms > 1 %}
+        <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>    
+        {% endif %}
+    </div>
 </div>
 </form>
 {% endblock %}

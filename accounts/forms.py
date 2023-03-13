@@ -432,8 +432,8 @@ class BwProfileForm(ProfileForm):
                                             widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
     prefer_compact_mode = forms.BooleanField(label="Display search results in compact mode", required=False,
                                              widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    #prefer_dark_mode = forms.BooleanField(label="Use dark mode", required=False,
-    #                                      widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    prefer_dark_mode = forms.BooleanField(label="Use dark mode", required=False,
+                                          widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))

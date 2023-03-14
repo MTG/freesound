@@ -48,7 +48,6 @@ def context_extra(request):
         datetime.datetime(2020, 4, 5, 0, 0) <= datetime.datetime.today() <= datetime.datetime(2020, 4, 20) or \
         request.GET.get('anniversary', '0') == '1'
 
-
     return {
         'media_url': settings.MEDIA_URL,
         'request': request,
@@ -61,4 +60,5 @@ def context_extra(request):
         'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
         'registration_form': BwRegistrationForm(), # Used for beast whoosh login modal only
         'problems_logging_in_form': BwProblemsLoggingInForm(),  # Used for beast whoosh login modal only
+        'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', False)  # Determine the user's system preference for dark/light theme
     }

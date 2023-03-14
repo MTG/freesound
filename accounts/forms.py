@@ -428,14 +428,16 @@ class ProfileForm(forms.ModelForm):
 
 
 class BwProfileForm(ProfileForm):
+    
+    disallow_simultaneous_playback = forms.BooleanField(
+        label="Disallow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
     prefer_spectrogram = forms.BooleanField(
         label="Display spectrogram in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
     prefer_compact_mode = forms.BooleanField(
         label="Display search results in compact mode", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    prefer_dark_mode = forms.BooleanField(
-        label="Use dark user interface theme", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    disallow_simultaneous_playback = forms.BooleanField(
-        label="Disallow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    ui_theme_preference = forms.ChoiceField(
+        label="User interface theme", required=False, choices=[('s', 'Follow system default'), ('l', 'Light'), ('d', 'Dark')])
+    
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))

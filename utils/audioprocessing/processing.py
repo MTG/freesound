@@ -284,11 +284,17 @@ class WaveformImage:
         if image_height % 2 == 0:
             print("WARNING: Height is not uneven, images look much better at uneven height")
 
-        waveform_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['wave_colors']
-        background_color = waveform_colors[0]
-        colors = waveform_colors[1:]
-
-        self.image = Image.new("RGB", (image_width, image_height), background_color)
+        if isinstance(color_scheme, dict):
+            self.color_scheme_to_use = color_scheme
+        else:
+            self.color_scheme_to_use = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])
+        
+        self.transparent_background = self.color_scheme_to_use.get('wave_transparent_background', False)
+        if self.transparent_background:
+            self.image = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+        else:
+            background_color = self.color_scheme_to_use['wave_colors'][0]  # Only used if transparent_background is False
+            self.image = Image.new("RGB", (image_width, image_height),  background_color)
 
         self.image_width = image_width
         self.image_height = image_height
@@ -296,6 +302,7 @@ class WaveformImage:
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
 
+        colors = self.color_scheme_to_use['wave_colors'][1:]
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
 
@@ -318,38 +325,43 @@ class WaveformImage:
 
     def draw_anti_aliased_pixels(self, x, y1, y2, color):
         """ vertical anti-aliasing at y1 and y2 """
-
+        
         y_max = max(y1, y2)
         y_max_int = int(y_max)
         alpha = y_max - y_max_int
 
         if alpha > 0.0 and alpha < 1.0 and y_max_int + 1 < self.image_height:
-            current_pix = self.pix[x, y_max_int + 1]
-
-            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
-            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
-            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
-
-            self.pix[x, y_max_int + 1] = (r, g, b)
+            if not self.transparent_background:
+                current_pix = self.pix[x, y_max_int + 1]
+                r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+                g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+                b = int((1 - alpha) * current_pix[2] + alpha * color[2])
+                self.pix[x, y_max_int + 1] = (r, g, b)
+            else:
+                # If using transparent background, don't do anti-aliasing
+                self.pix[x, y_max_int + 1] = (color[0], color[1], color[2], 255)
+                
 
         y_min = min(y1, y2)
         y_min_int = int(y_min)
         alpha = 1.0 - (y_min - y_min_int)
 
         if alpha > 0.0 and alpha < 1.0 and y_min_int - 1 >= 0:
-            current_pix = self.pix[x, y_min_int - 1]
-
-            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
-            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
-            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
-
-            self.pix[x, y_min_int - 1] = (r, g, b)
+            if not self.transparent_background:
+                r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+                g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+                b = int((1 - alpha) * current_pix[2] + alpha * color[2])
+                self.pix[x, y_min_int - 1] = (r, g, b)
+            else:
+                # If using transparent background, don't do anti-aliasing
+                self.pix[x, y_max_int + 1] = (color[0], color[1], color[2], 255)
 
     def save(self, filename):
         # draw a zero "zero" line
-        a = 25
-        for x in range(self.image_width):
-            self.pix[x, old_div(self.image_height, 2)] = tuple([p + a for p in self.pix[x, old_div(self.image_height, 2)]])
+        a = self.color_scheme_to_use.get('wave_zero_line_alpha', 0)
+        if a:
+            for x in range(self.image_width):
+                self.pix[x, old_div(self.image_height, 2)] = tuple([p + a for p in self.pix[x, old_div(self.image_height, 2)]])
 
         self.image.save(filename)
 
@@ -366,8 +378,11 @@ class SpectrogramImage:
         self.fft_size = fft_size
 
         self.image = Image.new("RGB", (image_height, image_width))
-        self.palette = interpolate_colors(COLOR_SCHEMES.get(color_scheme,
-                                                            COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['spec_colors'])
+        if isinstance(color_scheme, dict):
+            spectrogram_colors = color_scheme['spec_colors']
+        else:
+            spectrogram_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['spec_colors']
+        self.palette = interpolate_colors(spectrogram_colors)
 
         # generate the lookup which translates y-coordinate to fft-bin
         self.y_to_bin = []
@@ -404,7 +419,7 @@ class SpectrogramImage:
 
 
 def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size,
-                       progress_callback=None, color_scheme=None):
+                       progress_callback=None, color_scheme=None, use_transparent_background=False):
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     :param input_filename: input audio filename (must be PCM)

@@ -22,6 +22,7 @@ def color_from_value(value):
 
 FREESOUND2_COLOR_SCHEME = 'Freesound2'
 BEASTWHOOSH_COLOR_SCHEME = 'FreesoundBeastWhoosh'
+OLD_BEASTWHOOSH_COLOR_SCHEME = 'FreesoundBeastWhooshOld'
 CYBERPUNK_COLOR_SCHEME = 'Cyberpunk'
 RAINFOREST_COLOR_SCHEME = 'Rainforest'
 DEFAULT_COLOR_SCHEME_KEY = FREESOUND2_COLOR_SCHEME
@@ -44,9 +45,10 @@ COLOR_SCHEMES = {
             (224, 224, 44),
             (255, 60, 30),
             (255, 255, 255)
-         ]
+         ],
+         'wave_zero_line_alpha': 25,
     },
-    BEASTWHOOSH_COLOR_SCHEME: {
+    OLD_BEASTWHOOSH_COLOR_SCHEME: {
         'wave_colors': [
             (255, 255, 255),  # Background color
             (29, 159, 181),  # 1D9FB5, Low spectral centroid
@@ -61,6 +63,29 @@ COLOR_SCHEMES = {
             (255, 158, 53),  # FF9E35
             (255, 53, 70),  # FF3546, High spectral energy
          ]
+    },
+    BEASTWHOOSH_COLOR_SCHEME: {
+        'wave_colors': [
+            (20, 20, 36),  # Background color (not really used as we use transparent mode)
+            (29, 159, 181),  # Low spectral centroid
+            (0, 220, 80),
+            (255, 200, 58),
+            (255, 0, 70),  # High spectral centroid
+        ],
+        'spec_colors': [
+            (20, 20, 36),  # Low spectral energy
+            (0, 18, 25),
+            (0, 37, 56),
+            (11, 95, 118), 
+            (29, 159, 181),
+            (0, 220, 80),
+            (255, 200, 58),
+            (255, 125, 0),
+            (255, 0, 70),  
+            (255, 0, 20),  # High spectral energy
+        ],
+        'wave_transparent_background': True,
+        'wave_zero_line_alpha': 12,
     },
     CYBERPUNK_COLOR_SCHEME: {
         'wave_colors': [(0, 0, 0)] + [color_from_value(value/29.0) for value in range(0, 30)],

@@ -200,6 +200,9 @@
                                     </ul>
                                 </div>
                             </div>
+                            <div class="v-spacing-4 center">
+                                <button id="avanced-search-apply-button" class="btn-primary" disabled>Apply advanced search filters</button>
+                            </div>
                             <div class="divider-light"></div>
                         </div>
                     </div>
@@ -274,26 +277,48 @@
                         {% endif %}
                         <div class="v-spacing-6">
                             {% if paginator.count > 0 %}
-                                {% for result in docs %}
-                                    <div class="bw-search__result">
-                                        {% if not only_sounds_with_pack %}
-                                            {% display_sound_middle result.sound %}
-                                            {% if result.n_more_in_group and result.sound.pack is not None %}
+                                {% if request.session.preferCompactMode %}
+                                    <div class="row no-margins">
+                                        {% for result in docs %}
+                                            <div class="col-6 col-lg-4">
+                                            {% if not only_sounds_with_pack %}
+                                                {% display_sound_small result.sound %}
+                                                {% if result.n_more_in_group and result.sound.pack is not None %}
+                                                    <p class="text-grey text-right v-spacing-top-negative-2">
+                                                        {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from pack:</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                    </p>
+                                                {% endif %}
+                                            {% else %}
+                                                {% display_pack result.sound.pack_id %}
                                                 <p class="text-grey text-right v-spacing-top-negative-2">
-                                                    {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize }} from the same pack</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                    {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from pack</a>
                                                 </p>
                                             {% endif %}
-                                        {% else %}
-                                            {% display_pack_big result.sound.pack_id %}
-                                            <p class="text-grey text-right v-spacing-top-negative-2">
-                                                {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
-                                            </p>
-                                        {% endif %}
-                                        {% if not forloop.last %}
-                                            <div class="divider-light"></div>
-                                        {% endif %}
+                                            </div>
+                                        {% endfor %}      
                                     </div>
-                                {% endfor %}
+                                {% else %}
+                                    {% for result in docs %}
+                                        <div class="bw-search__result">
+                                            {% if not only_sounds_with_pack %}
+                                                {% display_sound_middle result.sound %}
+                                                {% if result.n_more_in_group and result.sound.pack is not None %}
+                                                    <p class="text-grey text-right v-spacing-top-negative-2">
+                                                        {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from pack:</a> <a class="bw-link--black" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                    </p>
+                                                {% endif %}
+                                            {% else %}
+                                                {% display_pack_big result.sound.pack_id %}
+                                                <p class="text-grey text-right v-spacing-top-negative-2">
+                                                    {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See all {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
+                                                </p>
+                                            {% endif %}
+                                            {% if not forloop.last %}
+                                                <div class="divider-light"></div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                             {% else %}
                                 <div class="v-spacing-7 v-spacing-top-6 w-100">
                                     <h5>No results... &#128543</h5>

@@ -164,12 +164,13 @@ def search_prepare_parameters(request):
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
+    compact_mode = request.session.get('preferCompactMode', False)
     query_params = {
         'textual_query': search_query,
         'query_filter': filter_query,
         'sort': sort,
         'current_page': current_page,
-        'num_sounds': settings.SOUNDS_PER_PAGE,
+        'num_sounds': settings.SOUNDS_PER_PAGE if not compact_mode else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
         'only_sounds_with_pack': only_sounds_with_pack,

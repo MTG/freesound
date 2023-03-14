@@ -4,6 +4,11 @@ export const isTouchEnabledDevice = () => {
   return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
 }
 
+export const simultaneousPlaybackDisallowed = () => {
+  return document.cookie.indexOf('disallowSimultaneousAudioPlayback=yes') > -1;
+}
+
+
 /**
  * @param {number} value
  */
@@ -60,12 +65,18 @@ export const playAtTime = (audioElement, timeInSeconds) => {
   if (audioElement.readyState > 0){
     // If player is ready to start playing, do it!
     audioElement.currentTime = timeInSeconds;
+    if (simultaneousPlaybackDisallowed()){
+      stopAllPlayers();
+    }
     audioElement.play();
   } else {
     // If player needs to load data, trigger data loading and then play at the required time
     audioElement.load();
     audioElement.addEventListener('loadeddata', () => {
       audioElement.currentTime = timeInSeconds;
+      if (simultaneousPlaybackDisallowed()){
+        stopAllPlayers();
+      }
       audioElement.play();
     });
   }

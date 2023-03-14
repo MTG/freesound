@@ -26,5 +26,5 @@ shell.exec(
 // 2) Copy the generated css files (js is not relevant)
 // 3) Remove that extra directory
 shell.exec(
-  `echo "\\$color-theme: 'dark';" > freesound/static/bw-frontend/styles/variables/color-theme.scss && parcel build freesound/static/bw-frontend/src/index.js -d ${outDirDarkMode} && cp ${outDirDarkMode}/index.css ${outDir}/index-dark.css && cp ${outDirDarkMode}/index.map ${outDir}/index-dark.map && rm -r ${outDirDarkMode}`
+  `echo "\\$color-theme: 'dark';" > freesound/static/bw-frontend/styles/variables/color-theme.scss && parcel build freesound/static/bw-frontend/src/index.js -d ${outDirDarkMode} && cp ${outDirDarkMode}/logo* ${outDir}/ && cp ${outDirDarkMode}/index.css ${outDir}/index-dark.css && cp ${outDirDarkMode}/index.map ${outDir}/index-dark.map && rm -r ${outDirDarkMode}`
 );

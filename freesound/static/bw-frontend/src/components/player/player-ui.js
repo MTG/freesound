@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import throttle from 'lodash.throttle'
 import playerSettings from './settings'
-import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty } from './utils'
+import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty, stopAllPlayers, simultaneousPlaybackDisallowed } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
 
@@ -163,6 +163,9 @@ const createPlayButton = (audioElement, playerSize) => {
     if (isPlaying) {
       audioElement.pause()
     } else {
+      if (simultaneousPlaybackDisallowed()){
+        stopAllPlayers();
+      }
       audioElement.play()
     }
     e.stopPropagation()

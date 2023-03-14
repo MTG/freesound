@@ -269,7 +269,7 @@
                              <span class="text-grey">Share url: </span><br><input class="w-100" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />
                         </div>
 
-                        <div id="embed-links" class="v-spacing-top-5">
+                        <div id="embed-links" class="v-spacing-top-5 bw-form">
                             <div class="v-spacing-1">
                                 <div>920 x 245</div>
                                 <img id="large-embed-image" src="{{ media_url }}images/widgets/embed_large_scaled_active_color.png" alt="Embed example, large size"/>
@@ -288,7 +288,7 @@
                                     data-size-medium="{{sizes.medium.0}},{{sizes.medium.1}}"
                                     data-size-small="{{sizes.small.0}},{{sizes.small.1}}"
                                     data-iframe-url-template="{% absurl 'embed-simple-sound-iframe' sound.id 'SIZE' %}"
-                                    rows="4"
+                                    style="min-height: 130px;"
                                     placeholder="The embed code will appear here"
                                     class="w-100 v-spacing-top-2">
                             </textarea>

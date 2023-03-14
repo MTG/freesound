@@ -522,13 +522,15 @@ def edit(request):
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
             # Update spectrogram/waveform and compact mode preference in user session
-            # TODO: this should be stored as a new field in the profile instead of in the session
+            # TODO: these should be stored as new fields in the profile instead of in the session
             if 'prefer_spectrogram' in profile_form.cleaned_data:
                 request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
             if 'prefer_compact_mode' in profile_form.cleaned_data:
                 request.session['preferCompactMode'] = profile_form.cleaned_data['prefer_compact_mode']
             if 'prefer_dark_mode' in profile_form.fields:
                 request.session['preferDarkMode'] = profile_form.cleaned_data['prefer_dark_mode']
+            if 'disallow_simultaneous_playback' in profile_form.fields:
+                request.session['disallowSimultaneousAudioPlayback'] = profile_form.cleaned_data['disallow_simultaneous_playback']
 
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
@@ -553,6 +555,8 @@ def edit(request):
             profile_form.fields['prefer_compact_mode'].initial = request.session.get('preferCompactMode')
         if 'prefer_dark_mode' in profile_form.fields:  # That field only exists in BW
             profile_form.fields['prefer_dark_mode'].initial = request.session.get('preferDarkMode')
+        if 'disallow_simultaneous_playback' in profile_form.fields: # That field only exists in BW
+            profile_form.fields['disallow_simultaneous_playback'].initial = request.session.get('disallowSimultaneousAudioPlayback')
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")

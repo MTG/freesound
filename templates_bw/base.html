@@ -50,7 +50,8 @@
     </div>
     {% bw_plausible_scripts %}
     <script>
-        document.cookie = "preferSpectrogram={{request.session.preferSpectrogram|yesno}}";
+        document.cookie = "preferSpectrogram={{request.session.preferSpectrogram|yesno}};path=/";
+        document.cookie = "disallowSimultaneousAudioPlayback={{request.session.disallowSimultaneousAudioPlayback|yesno}};path=/"
         const siteWidth = 580;  // Minimum expected width. If screen is smaller, scale website.
         const scale = window.innerWidth / siteWidth;
         if (scale < 1){

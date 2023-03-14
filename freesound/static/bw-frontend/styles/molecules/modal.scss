@@ -5,7 +5,7 @@
 @import 'node_modules/bootstrap/scss/modal';
 
 .modal {
-  background-color: #{$black}EE;
+  background-color: $modal-outer-bg-color;
   overflow: scroll;
 
   .modal-header {

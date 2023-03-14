@@ -1,54 +1,30 @@
-@import 'color-theme';
-
-
 $red: #ff3546;
 $red-hover: #fd5b65;
-
 $black: #141424;
 $black-hover: #393947;
-
 $navy-grey: #9696aa;
-
-$navy-light-grey: #cacad4;
-
+$navy-light-grey: #bbbbc4;
 $white: #ffffff;
+$yellow: #fd4;
+$blue: #0064af;
+$blue-hover: #2f74b1;
+$green: #01ae01;
+
+$primary-button-font-color: $white;
+$secondary-button-font-color: $white;
+$blue-button-font-color: $white;
+$inverse-button-font-color: $navy-grey;
+$inverse-button-hover: $black;
+$inverse-button-hover-font-color: $white;
+
+$modal-outer-bg-color: #{$black}EE;
+
+$carousel-bg-color: rgba(255, 255, 255, 0.85);
+
+$dividers-color: $navy-light-grey;
 
 $search-bg: #f7f7f9;
-
 $border-input: #efeff2;
 $background-input: #f4f4f6;
 $background-textarea: #f4f4f6;
-
-$yellow-rating: #fd4;
-
-$blue: #0064af;
-$blue-hover: #2f74b1;
-
-$green: #01ae01;
-
-@if ($color-theme == 'dark') {
-    $red: #ff3546;
-    $red-hover: #fd5b65;
-    
-    $black: #ffffff;
-    $black-hover: #f4f4f6;
-    
-    $navy-grey: #9696aa;
-    
-    $navy-light-grey: #49494f;
-    
-    $white: #141424;
-    
-    $search-bg: #484850;
-    
-    $border-input: #484850;
-    $background-input: #393947;
-    $background-textarea: #393947;
-    
-    $yellow-rating: #fd4;
-    
-    $blue: #0064af;
-    $blue-hover: #2f74b1;
-    
-    $green: #01ae01;
-}
+$color-footer: $black;

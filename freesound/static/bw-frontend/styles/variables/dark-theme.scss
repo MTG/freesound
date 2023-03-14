@@ -1,0 +1,36 @@
+@import 'color-theme';
+@if ($color-theme == 'dark') {
+    // Redefine colors
+    $red: #ff3546;
+    $red-hover: #fd5b65;
+    $black: #ffffff;
+    $black-hover: #f4f4f6;
+    $navy-grey: #848495;
+    $navy-light-grey: #6d6d7a;
+    $white: #141424;
+
+    $primary-button-font-color: #ffffff;
+    $secondary-button-font-color: #141424;
+    $blue-button-font-color: #ffffff;
+    $inverse-button-font-color: $navy-grey;
+    $inverse-button-hover: #1e1e32;
+    $inverse-button-hover-font-color: #ffffff;
+
+    $modal-outer-bg-color: #{$white}EE;
+
+    $dividers-color: #36363d;
+
+    $carousel-bg-color: #1e1e32;
+
+    $search-bg: #21212d;
+    $border-input: #333337;
+    $background-input: #21212d;
+    $background-textarea: #21212d;
+
+    $color-footer: #0f0f1b;
+
+    // Redefine logos
+    $logo-navbar: 'assets/logos/logo-white.svg';
+    $logo-navbar-text: 'assets/logos/logo-text-white.svg';
+    $logo-freesound-labs: 'assets/logos/logo-labs-text-white.svg';
+}

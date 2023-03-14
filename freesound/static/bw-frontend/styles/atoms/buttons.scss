@@ -12,25 +12,25 @@ button {
 
 .btn-primary {
   letter-spacing: -1px;
-  @include rounded-button($red, $red-hover);
+  @include rounded-button($red, $red-hover, $primary-button-font-color);
 }
 
 .btn-secondary {
   letter-spacing: -1px;
-  @include rounded-button($black, $black-hover);
+  @include rounded-button($black, $black-hover, $secondary-button-font-color);
 }
 
 .btn-blue {
   letter-spacing: -1px;
-  @include rounded-button($blue, $blue-hover);
+  @include rounded-button($blue, $blue-hover, $blue-button-font-color);
 }
 
 .btn-inverse {
   letter-spacing: -1px;
-  @include rounded-button(transparent, $black);
+  @include rounded-button(transparent, $inverse-button-hover, $inverse-button-font-color);
   color: $navy-grey;
   @include active() {
-    color: $white;
+    color: $inverse-button-hover-font-color;
   }
   border: 1px solid $navy-light-grey;
 }

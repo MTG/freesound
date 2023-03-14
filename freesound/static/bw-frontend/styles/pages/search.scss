@@ -95,7 +95,7 @@
   font-size: 32px;
   line-height: 38px;
   text-align: center;
-  background-color: #f7f7f9;
+  background-color: $search-bg;
   border-radius: 100px;
   padding-left: 10px;
   padding-right: 10px;
@@ -109,7 +109,7 @@
   font-weight: bold;
   width: 100%;
   /*padding-left: 60px;*/
-  color: #141424;
+  color: $black;
   text-align: center;
   
   &::placeholder {

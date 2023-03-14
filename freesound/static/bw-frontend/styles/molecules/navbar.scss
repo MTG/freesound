@@ -45,7 +45,7 @@ $navbar-height-mobile: 64px;
 .bw-nav__logo {
   width: 60px;
   height: 100%;
-  background-image: url('assets/logos/logo.svg');
+  background-image: url($logo-navbar);
   background-size: 100%;
   background-repeat: no-repeat;
   background-position: center;
@@ -60,7 +60,7 @@ $navbar-height-mobile: 64px;
   /* this version of the logo can show "freesound" text if used with bw-nav--expanded class */
   width: 60px;
   height: 100%;
-  background-image: url('assets/logos/logo.svg');
+  background-image: url($logo-navbar);
   background-size: 100%;
   background-repeat: no-repeat;
   background-position: center;
@@ -72,7 +72,7 @@ $navbar-height-mobile: 64px;
 
   .bw-nav--expanded & {
     width: 190px;
-    background-image: url('assets/logos/logo-text.svg');
+    background-image: url($logo-navbar-text);
   }
 }
 

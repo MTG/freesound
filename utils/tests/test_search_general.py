@@ -17,6 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
@@ -33,6 +34,9 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_without_query_params(self):
         request = self.factory.get(reverse('sounds-search'))
+        middleware = SessionMiddleware()
+        middleware.process_request(request)
+        request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
         expected_default_query_params = {
@@ -63,8 +67,11 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_with_query_params(self):
         # "dog" query, search only in tags and descriptions, duration from 1-10 sec, only geotag, sort by duration, no group by pack
-        url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=Duration+(long+first)&advanced=1&a_tag=1&a_description=1&g='
+        url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=Duration+(longest+first)&advanced=1&a_tag=1&a_description=1&g='
         request = self.factory.get(reverse('sounds-search')+url_query_str)
+        middleware = SessionMiddleware()
+        middleware.process_request(request)
+        request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
         expected_default_query_params = {
@@ -150,6 +157,9 @@ class SearchUtilsTest(TestCase):
     def test_search_prepare_parameters_non_ascii_query(self):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()
         request = self.factory.get(reverse('sounds-search')+'?q=Æ æ ¿ É')
+        middleware = SessionMiddleware()
+        middleware.process_request(request)
+        request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
         self.assertEqual(query_params['textual_query'], '\xc6 \xe6 \xbf \xc9')
 

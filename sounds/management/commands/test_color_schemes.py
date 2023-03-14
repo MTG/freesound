@@ -27,6 +27,8 @@ import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing import color_schemes
 import os
 
+# docker-compose run --rm web python manage.py test_color_schemes 415154,415144,413973,402737,403343,194761
+
 
 class Command(BaseCommand):
 
@@ -53,12 +55,12 @@ class Command(BaseCommand):
                 if os.path.exists(sound.locations('path')):
                     audioprocessing.convert_using_ffmpeg(sound.locations('path'), wav_file)
                 else:
-                    audioprocessing.convert_using_ffmpeg(sound.locations('preview.LQ.ogg.path'), wav_file)
+                    audioprocessing.convert_to_pcm(sound.locations('preview.LQ.mp3.path'), wav_file)
                 audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, wav_file, wav_file_st)
 
             for count, color_scheme in enumerate([color_schemes.FREESOUND2_COLOR_SCHEME, color_schemes.OLD_BEASTWHOOSH_COLOR_SCHEME, color_schemes.BEASTWHOOSH_COLOR_SCHEME]):
-                width = 500
-                height = 201
+                width = 195
+                height = 101
                 fft_size = 2048
                 waveform_filename = f'{sound.id}-{count}-wave.png'
                 spectral_filename = f'{sound.id}-{count}-spec.jpg'

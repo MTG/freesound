@@ -184,14 +184,15 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
         self.sound.set_processing_ongoing_state("FI")
         self.sound.change_processing_state("FA", processing_log=self.work_log)
 
-    def process(self, skip_previews=False, skip_displays=False):
+    def process(self, skip_previews=False, skip_displays=False, update_sound_processing_state_in_db=True):
 
         with TemporaryDirectory(
                 prefix=f'processing_{self.sound.id}_',
                 dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             # Change ongoing processing state to "processing" in Sound model
-            self.sound.set_processing_ongoing_state("PR")
+            if update_sound_processing_state_in_db:
+                self.sound.set_processing_ongoing_state("PR")
 
             # Get the path of the original sound and convert to PCM
             try:
@@ -342,12 +343,15 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                         return False
 
         # Change processing state and processing ongoing state in Sound model
-        self.sound.set_processing_ongoing_state("FI")
-        self.sound.change_processing_state("OK", processing_log=self.work_log)
+        if update_sound_processing_state_in_db:
+            self.sound.set_processing_ongoing_state("FI")
+            self.sound.change_processing_state("OK", processing_log=self.work_log)
 
         # Copy previews and display files to mirror locations
-        copy_previews_to_mirror_locations(self.sound)
-        copy_displays_to_mirror_locations(self.sound)
+        if not skip_previews:
+            copy_previews_to_mirror_locations(self.sound)
+        if not skip_displays:
+            copy_displays_to_mirror_locations(self.sound)
 
         return True
 

@@ -29,7 +29,7 @@ import sounds.models
 from follow import follow_utils
 from search.views import search_view_helper
 from tags.models import Tag, FS1Tag
-from utils.frontend_handling import using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.search import SearchEngineException
 from utils.search.search_sounds import perform_search_engine_query
 

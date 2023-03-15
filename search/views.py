@@ -28,7 +28,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render, reverse
+from django.shortcuts import reverse
 from ratelimit.decorators import ratelimit
 
 import forum

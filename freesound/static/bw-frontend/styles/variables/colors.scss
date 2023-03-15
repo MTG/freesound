@@ -5,6 +5,8 @@ $black-hover: #393947;
 $navy-grey: #9696aa;
 $navy-light-grey: #bbbbc4;
 $white: #ffffff;
+$almost-white: #f4f4f6;
+$almost-white-border: #efeff2;
 $yellow: #fd4;
 $blue: #0064af;
 $blue-hover: #2f74b1;
@@ -18,13 +20,12 @@ $inverse-button-hover: $black;
 $inverse-button-hover-font-color: $white;
 
 $modal-outer-bg-color: #{$black}EE;
-
 $carousel-bg-color: rgba(255, 255, 255, 0.85);
+$dividers-color: $almost-white-border;
 
-$dividers-color: $navy-light-grey;
+$border-input: $almost-white-border;
+$search-bg: $almost-white;
+$background-input: $almost-white;
+$background-textarea: $almost-white;
 
-$search-bg: #f7f7f9;
-$border-input: #efeff2;
-$background-input: #f4f4f6;
-$background-textarea: #f4f4f6;
 $color-footer: $black;

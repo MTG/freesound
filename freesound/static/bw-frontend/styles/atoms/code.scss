@@ -1,5 +1,5 @@
-.codehilite .hll { background-color: #ffffcc }
-.codehilite  { background: #f9f9f9; border-left: #abe190 solid 2px; padding: 14px 18px; margin-bottom: 18px; border-top: 4px #f3f3f3 solid; border-bottom: 4px #f3f3f3 solid; font-size: 14px; line-height: 18px}
+.codehilite .hll { background-color: $white }
+.codehilite  { background: $almost-white; border-left: #abe190 solid 2px; padding: 14px 18px; margin-bottom: 18px; border-top: 4px $almost-white solid; border-bottom: 4px $almost-white solid; font-size: 14px; line-height: 18px}
 .codehilite .c { color: #408080; font-style: italic } /* Comment */
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */

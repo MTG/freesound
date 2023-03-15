@@ -12,10 +12,16 @@
     <meta name="keywords" content="free, sound">
     {% block extrahead %}
     {% endblock %}
-    {% if not request.session.preferDarkMode %}
-      <link rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
+    {% if request.session.uiThemePreference == 'l' %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}" data-forced-theme="yes">
+    {% elif request.session.uiThemePreference == 'd' %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}" data-forced-theme="yes">
     {% else %}
-      <link rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
+    {% if system_prefers_dark_theme %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
+    {% else %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
+    {% endif %}
     {% endif %}
   </head>
   <body>

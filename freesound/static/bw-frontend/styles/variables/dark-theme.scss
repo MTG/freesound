@@ -8,6 +8,8 @@
     $navy-grey: #848495;
     $navy-light-grey: #6d6d7a;
     $white: #141424;
+    $almost-white: #21212d;
+    $almost-white-border: #333337;
 
     $primary-button-font-color: #ffffff;
     $secondary-button-font-color: #141424;
@@ -17,17 +19,16 @@
     $inverse-button-hover-font-color: #ffffff;
 
     $modal-outer-bg-color: #{$white}EE;
-
-    $dividers-color: #36363d;
-
     $carousel-bg-color: #1e1e32;
+    $dividers-color: $almost-white-border;
 
-    $search-bg: #21212d;
-    $border-input: #333337;
-    $background-input: #21212d;
-    $background-textarea: #21212d;
-
+    $border-input: $almost-white-border;
+    $search-bg: $almost-white;
+    $background-input: $almost-white;
+    $background-textarea: $almost-white;
+    
     $color-footer: #0f0f1b;
+
 
     // Redefine logos
     $logo-navbar: 'assets/logos/logo-white.svg';

@@ -527,8 +527,8 @@ def edit(request):
                 request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
             if 'prefer_compact_mode' in profile_form.cleaned_data:
                 request.session['preferCompactMode'] = profile_form.cleaned_data['prefer_compact_mode']
-            if 'prefer_dark_mode' in profile_form.fields:
-                request.session['preferDarkMode'] = profile_form.cleaned_data['prefer_dark_mode']
+            if 'ui_theme_preference' in profile_form.fields:
+                request.session['uiThemePreference'] = profile_form.cleaned_data['ui_theme_preference']
             if 'disallow_simultaneous_playback' in profile_form.fields:
                 request.session['disallowSimultaneousAudioPlayback'] = profile_form.cleaned_data['disallow_simultaneous_playback']
 
@@ -553,8 +553,8 @@ def edit(request):
             profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
         if 'prefer_compact_mode' in profile_form.fields:  # That field only exists in BW
             profile_form.fields['prefer_compact_mode'].initial = request.session.get('preferCompactMode')
-        if 'prefer_dark_mode' in profile_form.fields:  # That field only exists in BW
-            profile_form.fields['prefer_dark_mode'].initial = request.session.get('preferDarkMode')
+        if 'ui_theme_preference' in profile_form.fields:  # That field only exists in BW
+            profile_form.fields['ui_theme_preference'].initial = request.session.get('uiThemePreference')
         if 'disallow_simultaneous_playback' in profile_form.fields: # That field only exists in BW
             profile_form.fields['disallow_simultaneous_playback'].initial = request.session.get('disallowSimultaneousAudioPlayback')
 

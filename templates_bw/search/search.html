@@ -97,7 +97,7 @@
                                     <div class="bw-search__filter-section-name caps text-light-grey between">
                                         <span>Search in</span>
                                     </div>
-                                    <div class="row no-gutters v-spacing-top-2 {% if tags_mode %}opacity-030{% endif %}">
+                                    <div class="row no-gutters v-spacing-top-2 {% if tags_mode %}opacity-020{% endif %}">
                                         <div class="col-md-5">
                                             <ul class="bw-search__filter-value-list no-margins">
                                                 <li class="bw-search__filter-value v-padding-1">
@@ -180,7 +180,7 @@
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100 {% if disable_group_by_pack_option %}opacity-030{% endif %}">
+                                            <label class="between w-100 {% if disable_group_by_pack_option %}opacity-020{% endif %}">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="group_by_pack" type="checkbox" class="bw-checkbox" {% if group_by_pack_in_request == "1" %}checked{% endif %} {% if disable_group_by_pack_option %}disabled="disabled"{% endif %}/>
                                                     <input id="group_by_pack_hidden" type="hidden" name="g" {% ifequal group_by_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
@@ -189,7 +189,7 @@
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100 {% if disable_only_sounds_by_pack_option %}opacity-030{% endif %}">
+                                            <label class="between w-100 {% if disable_only_sounds_by_pack_option %}opacity-020{% endif %}">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="only_sounds_with_pack" type="checkbox" class="bw-checkbox" {% if only_sounds_with_pack_in_request == "1" %}checked{% endif %} {% if disable_only_sounds_by_pack_option %}disabled="disabled"{% endif %}/>
                                                     <input id="only_sounds_with_pack_hidden" type="hidden" name="only_p" {% ifequal only_sounds_with_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />

@@ -50,7 +50,7 @@
 
   &:disabled {
     cursor: default;
-    opacity: 0.5;
+    opacity: $disabled-button-opacity;
   }
 
 }

@@ -56,16 +56,16 @@ services:
             - ./utils/search/solr5.5.5/cores:/cores
             - ./utils/search/solr5.5.5/docker-entrypoint:/docker-entrypoint-initdb.d
         ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}"${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8983:8983"
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8983:8983"
 
     solr9:
-        image: solr:9.0.0
+        image: solr:9.1.1
         volumes:
             - solr9data:/opt/solr/server/solr/mycores
             - ./utils/search/solr9.0.0/cores:/cores
             - ./utils/search/solr9.0.0/docker-entrypoint:/docker-entrypoint-initdb.d
         ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8984:8983""
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8984:8983"
 
     # Redis (caches)
     redis:

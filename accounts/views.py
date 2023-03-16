@@ -578,9 +578,12 @@ def edit(request):
         image_form = AvatarForm(prefix="image")
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
-    has_old_avatar = not os.path.exists(profile.locations('avatar.XL.path')) \
-                     or os.path.getsize(profile.locations('avatar.XL.path')) == \
-                     os.path.getsize(profile.locations('avatar.L.path'))
+    has_old_avatar = False
+    if not os.path.exists(profile.locations('avatar.XL.path')) and os.path.exists(profile.locations('avatar.L.path')):
+        has_old_avatar = True
+    if os.path.exists(profile.locations('avatar.XL.path')) and os.path.exists(profile.locations('avatar.L.path')):
+        if os.path.getsize(profile.locations('avatar.XL.path')) == os.path.getsize(profile.locations('avatar.L.path')):
+            has_old_avatar = True
 
     tvars = {
         'user': request.user,

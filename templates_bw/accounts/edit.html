@@ -35,10 +35,10 @@
             </div>
         </div>
         {% if has_old_avatar %}
-            <div class="text-center text-grey v-spacing-top-2 center"><span class="text-red">Warning:</span> your avatar was uploaded with the previous version of Freesound. <br/>Please, re-upload the avatar to display it with optimal resolution.</span></div>
+            <div class="text-center text-grey v-spacing-top-2 center"><span class="text-red">Warning:&nbsp;</span> your avatar was uploaded with the previous version of Freesound. <br/>Please, re-upload the avatar to display it with optimal resolution.</span></div>
         {% endif %}
     {% else %}
-        <div class="text-center text-grey v-spacing-top-3 center"><span class="text-red">Warning:</span> avatar uploading is currently disabled. We'll enable it as soon as possible.</span></div>
+        <div class="text-center text-grey v-spacing-top-3 center"><span class="text-red">Warning:&nbsp;</span> avatar uploading is currently disabled. We'll enable it as soon as possible.</span></div>
     {% endif %}
     <div class="v-spacing-top-3 w-100 v-spacing-5">
         <form method="post" action="." class="bw-form w-100">{% csrf_token %}

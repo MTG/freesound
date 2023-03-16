@@ -135,12 +135,18 @@
   .bw-search_input-duration {
     padding: 16px 13px;
     border: 1px solid $navy-light-grey;
+    background-color: $background-input;
     border-radius: 5px;
     font-size: 14px;
     max-width: 85px;
 
     &::-webkit-calendar-picker-indicator {
       display: none;
+    }
+
+    &:focus {
+      background-color: $white;
+      border: 1px solid $black;
     }
   }
 }

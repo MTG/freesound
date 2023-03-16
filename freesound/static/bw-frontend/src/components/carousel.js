@@ -15,7 +15,17 @@ carousels.forEach(carousel => {
     ...carousel.getElementsByClassName('bw-carousel'),
   ][0]
   if (!carouselContainer) return
-  const totalPages = carouselContainer.childElementCount
+  
+  let totalPages = 0;
+  if (carousel.dataset.carouselType === "adaptive"){
+    const rowWithElements = carouselContainer.children[0];
+    const firstElement = rowWithElements.children[0];
+    const elementsPerPage = Math.round(rowWithElements.offsetWidth / firstElement.offsetWidth);
+    totalPages = Math.round(rowWithElements.childElementCount / elementsPerPage);
+  } else {
+    totalPages = carouselContainer.childElementCount
+  }
+  
   const hasDots = carouselContainer.classList.contains('with-dots')
   let currentPage = 0
   const leftArrow = document.createElement('div')

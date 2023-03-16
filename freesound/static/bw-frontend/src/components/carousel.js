@@ -18,6 +18,9 @@ carousels.forEach(carousel => {
   
   let totalPages = 0;
   if (carousel.dataset.carouselType === "adaptive"){
+    // Adaptive carousels will count the number of pages depending on the size of the child elements instead of separating 
+    // them in rows. In this way we can have players with adapted size depending on overall screen size and carousels will 
+    // adapt as well
     const rowWithElements = carouselContainer.children[0];
     const firstElement = rowWithElements.children[0];
     const elementsPerPage = Math.round(rowWithElements.offsetWidth / firstElement.offsetWidth);

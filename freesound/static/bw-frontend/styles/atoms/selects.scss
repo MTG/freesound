@@ -79,6 +79,10 @@
   }
 }
 
+select {
+  display: none;  /* Make "original" select's globally invisible so they don't show up before bw-select-forum is created */
+}
+
 .bw-select-forum {
   position: relative;
   margin-top: 12px;

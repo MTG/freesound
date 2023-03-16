@@ -43,7 +43,7 @@
         <div>
             {% with pack.get_random_sounds_from_pack as sounds %}
                 {% if sounds %}
-                <div class="row no-margins">
+                <div class="row no-margins" style="margin-left: -15px">
                     {% for sound in sounds %}
                         <div class="col-4">
                             {% display_sound_small_no_info sound.id %}
